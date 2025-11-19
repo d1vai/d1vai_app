@@ -150,12 +150,17 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
 
   /// 选择头像
   Future<void> _selectAvatar(String url) async {
+    if (!mounted) return;
     setState(() => _avatarUrl = url);
     try {
-      // 头像 URL 已在 AuthProvider 中保存
-      _showSuccess('头像选择成功');
+      final authProvider =
+          Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.updateAvatar(url);
+      if (!mounted) return;
+      _showSuccess('Avatar updated successfully');
     } catch (e) {
-      _showError('选择头像失败: $e');
+      if (!mounted) return;
+      _showError('Failed to update avatar: $e');
     }
   }
 
@@ -227,12 +232,17 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
 
   /// 构建步骤标题
   Widget _buildStepTitle() {
-    final titles = ['欢迎加入！🎉', '告诉我们您的公司信息', '选择您的头像', '完成设置'];
+    final titles = [
+      'Welcome to d1v.ai 🎉',
+      'Tell us about your organization',
+      'Add your avatar',
+      'Finish setup',
+    ];
     final subtitles = [
-      '输入邀请码以加入团队',
-      '这将帮助我们为您定制服务',
-      '上传个人头像或使用 AI 生成',
-      '您即将完成设置',
+      'Enter your invite code to join your team.',
+      'This helps us tailor templates and recommendations for your team.',
+      'Upload a profile image so collaborators can recognize you at a glance.',
+      'You are almost ready to start building.',
     ];
 
     return Column(
@@ -414,22 +424,48 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 头像预览
-          Center(
-            child: CircleAvatar(
-              radius: 60,
-              backgroundColor: Colors.grey.shade200,
-              backgroundImage: _avatarUrl.isNotEmpty
-                  ? NetworkImage(_avatarUrl) as ImageProvider
-                  : null,
-              child: _avatarUrl.isEmpty
-                  ? const Icon(Icons.person, size: 60, color: Colors.grey)
-                  : null,
-            ),
+          // Profile picture + description (mirrors web layout)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              CircleAvatar(
+                radius: 32,
+                backgroundColor: Colors.grey.shade200,
+                backgroundImage: _avatarUrl.isNotEmpty
+                    ? NetworkImage(_avatarUrl) as ImageProvider
+                    : null,
+                child: _avatarUrl.isEmpty
+                    ? const Icon(Icons.person, size: 32, color: Colors.grey)
+                    : null,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text(
+                      'Profile picture',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Recommended: square image, PNG/JPG/WEBP, up to 5MB.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 24),
 
-          // AI 头像生成
+          // AI Avatar Cards (AI 抽卡)
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -437,19 +473,18 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    'AI 随机头像',
-                    style: TextStyle(fontWeight: FontWeight.w600),
+                    'AI Avatar Cards',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
                   ),
-                  TextButton.icon(
-                    onPressed: _isGeneratingAvatars ? null : _generateAiAvatars,
-                    icon: _isGeneratingAvatars
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.refresh, size: 16),
-                    label: const Text('生成'),
+                  TextButton(
+                    onPressed:
+                        _isGeneratingAvatars ? null : _generateAiAvatars,
+                    child: _isGeneratingAvatars
+                        ? const Text('Generating…')
+                        : const Text('AI Random'),
                   ),
                 ],
               ),
@@ -458,8 +493,9 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
                 GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
+                  gridDelegate:
+                      const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4,
                     mainAxisSpacing: 8,
                     crossAxisSpacing: 8,
                   ),
@@ -472,15 +508,17 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
                       onTap: () => _selectAvatar(avatarUrl),
                       child: Container(
                         decoration: BoxDecoration(
+                          shape: BoxShape.circle,
                           border: Border.all(
-                            color: isSelected ? Colors.deepPurple : Colors.grey,
+                            color: isSelected
+                                ? Colors.deepPurple
+                                : Colors.grey.shade300,
                             width: isSelected ? 3 : 1,
                           ),
-                          borderRadius: BorderRadius.circular(8),
                         ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(avatarUrl, fit: BoxFit.cover),
+                        child: CircleAvatar(
+                          backgroundImage: NetworkImage(avatarUrl),
+                          backgroundColor: Colors.grey.shade200,
                         ),
                       ),
                     );
@@ -491,9 +529,10 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
                         Icons.auto_awesome,
@@ -502,8 +541,9 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '点击"生成"按钮创建 AI 头像',
-                        style: TextStyle(color: Colors.grey.shade600),
+                        'Tap "AI Random" to draw your AI avatar cards.',
+                        style: TextStyle(color: Colors.grey),
+                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),
@@ -516,7 +556,7 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
           OutlinedButton.icon(
             onPressed: _pickImageFromGallery,
             icon: const Icon(Icons.upload),
-            label: const Text('从相册选择'),
+            label: const Text('Choose File'),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12),
             ),

@@ -462,7 +462,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.auto_awesome),
-                title: const Text('Generate AI Avatar'),
+                title: const Text('AI Random'),
                 onTap: () async {
                   Navigator.pop(context);
                   await _handleAiAvatarGeneration(profileProvider);
@@ -517,7 +517,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Choose an Avatar'),
+          title: const Text('AI Avatar Cards'),
           content: SizedBox(
             width: double.maxFinite,
             child: GridView.builder(

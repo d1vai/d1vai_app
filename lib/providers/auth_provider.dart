@@ -64,6 +64,10 @@ class AuthProvider extends ChangeNotifier {
     try {
       final token = await _d1vaiService.postUserPasswordLogin(email, password);
 
+      if (token == null) {
+        throw Exception('Login failed: invalid response');
+      }
+
       await _storageService.saveAuthToken(token);
 
       _user = await _d1vaiService.getUserProfile();
@@ -86,6 +90,10 @@ class AuthProvider extends ChangeNotifier {
     try {
       final token = await _d1vaiService.postUserLogin(email, code);
 
+      if (token == null) {
+        throw Exception('Login failed: invalid response');
+      }
+
       await _storageService.saveAuthToken(token);
 
       _user = await _d1vaiService.getUserProfile();
@@ -104,7 +112,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// 发送验证码
-  Future<Map<String, dynamic>> sendVerifyCode(String email) async {
+  Future<Map<String, dynamic>?> sendVerifyCode(String email) async {
     try {
       final response = await _d1vaiService.postUserVerifyCode(email);
       return response;

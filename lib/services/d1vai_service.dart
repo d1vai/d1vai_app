@@ -14,26 +14,40 @@ class D1vaiService {
   // ============================================
 
   /// 发送验证码到邮箱
-  Future<Map<String, dynamic>> postUserVerifyCode(String email) async {
-    return _apiClient.postWithQuery<Map<String, dynamic>>('/user/verify-code', {
-      'email': email,
-    }, {});
+  Future<Map<String, dynamic>?> postUserVerifyCode(String email) async {
+    // 使用 POST 方法 + 查询参数（与 web 端完全一致）
+    // 验证码发送成功后返回 data: null，所以我们检查状态即可
+    await _apiClient.postWithQuery<void>(
+      '/user/verify-code',
+      {'email': email},  // 查询参数
+      {'email': email},  // 请求体（与 web 端一致）
+    );
+    // 返回空 map 表示发送成功（与 Web 端逻辑一致）
+    return {};
   }
 
   /// 使用验证码登录
-  Future<String> postUserLogin(String email, String pin) async {
-    return _apiClient.post<String>('/user/login', {
-      'email': email,
-      'verify_code': pin,
-    }, fromJsonT: (json) => json as String);
+  Future<String?> postUserLogin(String email, String pin) async {
+    return _apiClient.post<String?>(
+      '/user/login',
+      {
+        'email': email,
+        'verify_code': pin,
+      },
+      fromJsonT: (json) => json as String?,
+    );
   }
 
   /// 使用密码登录
-  Future<String> postUserPasswordLogin(String email, String password) async {
-    return _apiClient.post<String>('/user/login/password', {
-      'email': email,
-      'password': password,
-    }, fromJsonT: (json) => json as String);
+  Future<String?> postUserPasswordLogin(String email, String password) async {
+    return _apiClient.post<String?>(
+      '/user/login/password',
+      {
+        'email': email,
+        'password': password,
+      },
+      fromJsonT: (json) => json as String?,
+    );
   }
 
   /// 接受邀请码
