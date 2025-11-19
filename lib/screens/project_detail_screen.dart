@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../providers/project_provider.dart';
 import '../providers/auth_provider.dart';
 import '../models/project.dart';
+import '../services/d1vai_service.dart';
 import '../widgets/login_required_dialog.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
@@ -18,6 +19,9 @@ class ProjectDetailScreen extends StatefulWidget {
 class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  UserProject? _project;
+  bool _isLoading = true;
+  String? _error;
 
   final List<TabItem> _tabs = [
     TabItem('Overview', Icons.dashboard, 'overview'),
@@ -39,8 +43,41 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
       final user = Provider.of<AuthProvider>(context, listen: false).user;
       if (user == null) {
         _showLoginRequiredDialog();
+      } else {
+        _loadProject();
       }
     });
+  }
+
+  /// 加载项目详情
+  Future<void> _loadProject() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final projectProvider = Provider.of<ProjectProvider>(context, listen: false);
+
+      // 首先尝试从缓存获取
+      var project = projectProvider.getProjectById(widget.projectId);
+
+      if (project == null) {
+        // 如果缓存中没有，从 API 获取
+        final d1vaiService = D1vaiService();
+        project = await d1vaiService.getUserProjectById(widget.projectId);
+      }
+
+      setState(() {
+        _project = project;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -82,12 +119,41 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
 
   @override
   Widget build(BuildContext context) {
-    final projectProvider = Provider.of<ProjectProvider>(context);
-    final project = projectProvider.getProjectById(widget.projectId);
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_error != null) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 64, color: Colors.red),
+              const SizedBox(height: 16),
+              Text('Error: $_error'),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _loadProject,
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_project == null) {
+      return const Scaffold(
+        body: Center(child: Text('Project not found')),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(project?.projectName ?? 'Project'),
+        title: Text(_project!.projectName),
         actions: [
           IconButton(
             icon: const Icon(Icons.share),
@@ -130,7 +196,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
       body: TabBarView(
         controller: _tabController,
         children: [
-          _buildOverviewTab(context, project),
+          _buildOverviewTab(context, _project),
           _buildChatTab(context),
           _buildDatabaseTab(context),
           _buildApiTab(context),

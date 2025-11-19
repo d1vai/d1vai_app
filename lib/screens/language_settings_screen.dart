@@ -19,7 +19,7 @@ class LanguageSettingsScreen extends StatelessWidget {
       ),
       body: ListView.separated(
         itemCount: locales.length,
-        separatorBuilder: (_, __) => const Divider(height: 1),
+        separatorBuilder: (context, index) => const Divider(height: 1),
         itemBuilder: (context, index) {
           final locale = locales[index];
           final key = LocaleProvider.languageKeyFromLocale(locale);

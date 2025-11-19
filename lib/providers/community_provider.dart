@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import '../models/community.dart';
+import '../models/community_post.dart';
+import '../services/d1vai_service.dart';
 
 /// Community Provider - 管理社区页面状态
 class CommunityProvider extends ChangeNotifier {
+  final D1vaiService _d1vaiService = D1vaiService();
+
   // 数据状态
   List<CommunityPost> _posts = [];
   bool _isLoading = false;
@@ -13,8 +16,6 @@ class CommunityProvider extends ChangeNotifier {
 
   // 搜索状态
   String _searchQuery = '';
-  String _sort = 'published_at';
-  String _order = 'desc';
 
   // 错误状态
   String? _error;
@@ -42,16 +43,6 @@ class CommunityProvider extends ChangeNotifier {
     _searchQuery = query;
   }
 
-  void setSort(String sort) {
-    _sort = sort;
-    notifyListeners();
-  }
-
-  void setOrder(String order) {
-    _order = order;
-    notifyListeners();
-  }
-
   /// 刷新数据
   Future<void> refresh() async {
     _reset();
@@ -75,30 +66,19 @@ class CommunityProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // 创建查询参数
-      final query = CommunityPostsQuery(
-        q: _searchQuery.isEmpty ? null : _searchQuery,
+      // 调用真实 API 获取社区帖子
+      final List<CommunityPost> newPosts = await _d1vaiService.getCommunityPosts(
         limit: _limit,
         offset: _currentOffset,
-        sort: _sort,
-        order: _order,
       );
 
-      // 这里应该调用 API
-      // 注意：当前使用模拟数据，实际使用时需要替换为真实 API 调用
-      final response = await _fetchCommunityPostsMock(query);
-
-      if (response.code == 0) {
-        if (_currentOffset == 0) {
-          _posts = response.data;
-        } else {
-          _posts.addAll(response.data);
-        }
-        _currentOffset += response.data.length;
-        _hasMore = response.data.length == _limit;
+      if (_currentOffset == 0) {
+        _posts = newPosts;
       } else {
-        _error = response.message;
+        _posts.addAll(newPosts);
       }
+      _currentOffset += newPosts.length;
+      _hasMore = newPosts.length == _limit;
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -106,50 +86,6 @@ class CommunityProvider extends ChangeNotifier {
       _isLoadingMore = false;
       notifyListeners();
     }
-  }
-
-  /// 模拟 API 调用 - 实际使用时替换为真实 API
-  Future<CommunityPostsResponse> _fetchCommunityPostsMock(
-    CommunityPostsQuery query,
-  ) async {
-    // 模拟网络延迟
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    // 生成模拟数据
-    final posts = <CommunityPost>[];
-    final startIndex = query.offset;
-    final endIndex = startIndex + query.limit;
-
-    for (int i = startIndex; i < endIndex; i++) {
-      posts.add(
-        CommunityPost(
-          id: i + 1,
-          projectId: 'proj_${i + 1}',
-          userId: 1000 + i,
-          slug: 'awesome-project-$i',
-          title: 'Amazing Project Title $i',
-          summary:
-              'This is a sample description for an awesome project that showcases innovative features and cutting-edge technology. Check it out!',
-          coverUrl: 'https://picsum.photos/seed/project$i/400/200',
-          tags: ['Flutter', 'Mobile', 'Innovation'],
-          status: 'published',
-          publishedAt: DateTime.now().subtract(Duration(hours: i)),
-          embedUrl: 'https://example.com/demo$i',
-          author: Author(
-            slug: 'user$i',
-            email: 'user$i@example.com',
-            picture: 'https://i.pravatar.cc/150?img=$i',
-          ),
-        ),
-      );
-    }
-
-    return CommunityPostsResponse(
-      code: 0,
-      message: 'success',
-      data: posts,
-      total: 100, // 模拟总共 100 个帖子
-    );
   }
 
   /// 获取帖子的详细信息（根据 ID）
@@ -166,7 +102,7 @@ class CommunityProvider extends ChangeNotifier {
     if (query.isEmpty) return _posts;
     return _posts.where((post) {
       return post.title.toLowerCase().contains(query.toLowerCase()) ||
-          post.summary.toLowerCase().contains(query.toLowerCase());
+          post.content.toLowerCase().contains(query.toLowerCase());
     }).toList();
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import '../core/avatar_generator.dart';
 import '../models/user.dart';
 import '../models/onboarding.dart';
 import '../services/d1vai_service.dart';
@@ -9,6 +10,7 @@ import '../services/storage_service.dart';
 class AuthProvider extends ChangeNotifier {
   final D1vaiService _d1vaiService = D1vaiService();
   final StorageService _storageService = StorageService();
+  final DeveloperAvatarGenerator _avatarGenerator = DeveloperAvatarGenerator();
 
   User? _user;
   OnboardingData? _onboardingData;
@@ -163,20 +165,23 @@ class AuthProvider extends ChangeNotifier {
   /// 生成 AI 随机头像列表
   Future<List<String>> generateAiAvatars() async {
     try {
-      // 生成基于用户信息的随机种子
-      final seed = _user?.email ?? _user?.sub ?? 'user';
-      final random = Random(seed.hashCode);
+      // 与 web 端保持一致：基于用户信息生成种子，并使用
+      // DeveloperAvatarGenerator 生成多风格 AI 头像卡片
+      final baseSeed = _user?.email ?? _user?.sub ?? 'user-${_user?.id ?? 'guest'}';
+      final random = Random(baseSeed.hashCode);
 
-      // 生成 4-6 个头像 URL（这里使用 DiceBear API 作为示例）
+      // 生成 4-6 个头像 URL
       final count = 4 + random.nextInt(3); // 4-6 个
       final avatars = <String>[];
 
-      for (int i = 0; i < count; i++) {
-        final avatarSeed =
-            '$seed-${DateTime.now().millisecondsSinceEpoch}-$i-${random.nextInt(10000)}';
-        // 使用 DiceBear 头像生成服务
-        final avatarUrl =
-            'https://api.dicebear.com/7.x/avataaars/svg?seed=$avatarSeed&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc';
+      for (var i = 0; i < count; i++) {
+        final seed =
+            '$baseSeed-${DateTime.now().millisecondsSinceEpoch}-$i-${random.nextInt(1000000)}';
+        final avatarUrl = _avatarGenerator.generateAvatar(
+          seed,
+          size: 160,
+          consistent: false,
+        );
         avatars.add(avatarUrl);
       }
 

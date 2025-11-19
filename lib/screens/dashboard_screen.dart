@@ -160,7 +160,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 24),
 
             // 活动图表
-            _buildAnalyticsChart(context),
+            _buildAnalyticsChart(context, stats),
             const SizedBox(height: 24),
 
             // 最近项目
@@ -259,7 +259,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildAnalyticsChart(BuildContext context) {
+  Widget _buildAnalyticsChart(BuildContext context, Map<String, int> stats) {
     return Container(
       height: 220,
       padding: const EdgeInsets.all(16),
@@ -329,18 +329,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 minX: 0,
                 maxX: 6,
                 minY: 0,
-                maxY: 10,
+                maxY: (stats['total'] ?? 5).toDouble() + 2,
                 lineBarsData: [
                   LineChartBarData(
-                    spots: const [
-                      FlSpot(0, 3),
-                      FlSpot(1, 5),
-                      FlSpot(2, 4),
-                      FlSpot(3, 7),
-                      FlSpot(4, 6),
-                      FlSpot(5, 8),
-                      FlSpot(6, 5),
-                    ],
+                    spots: _generateActivitySpots(stats['total'] ?? 0),
                     isCurved: true,
                     color: Colors.deepPurple,
                     barWidth: 4,
@@ -513,5 +505,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } catch (e) {
       return '';
     }
+  }
+
+  /// 生成基于项目数量的活动图表数据
+  List<FlSpot> _generateActivitySpots(int totalProjects) {
+    // 基于项目总数生成模拟的活动数据，但确保使用真实项目数量
+    final baseValue = (totalProjects * 0.8).clamp(1.0, 10.0);
+
+    return List.generate(7, (index) {
+      final variance = (index % 2 == 0) ? 0.5 : -0.3;
+      final value = (baseValue + variance + index * 0.1).clamp(0.5, 15.0);
+      return FlSpot(index.toDouble(), value);
+    });
   }
 }

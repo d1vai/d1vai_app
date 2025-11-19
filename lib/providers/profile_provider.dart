@@ -1,7 +1,9 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../models/user.dart';
 import '../core/api_client.dart';
+import '../core/avatar_generator.dart';
+import '../models/user.dart';
 
 /// Profile Provider - 管理个人资料状态和编辑
 class ProfileProvider extends ChangeNotifier {
@@ -10,6 +12,7 @@ class ProfileProvider extends ChangeNotifier {
   bool _isLoading = false;
   bool _isSaving = false;
   String? _error;
+  User? _user;
 
   // 表单控制器
   final TextEditingController companyNameController = TextEditingController();
@@ -26,8 +29,11 @@ class ProfileProvider extends ChangeNotifier {
   bool get isSaving => _isSaving;
   String? get error => _error;
 
+  final DeveloperAvatarGenerator _avatarGenerator = DeveloperAvatarGenerator();
+
   /// 初始化表单数据
   void initForm(User? user) {
+    _user = user;
     if (user != null) {
       companyNameController.text = user.companyName;
       companyWebsiteController.text = user.companyWebsite;
@@ -137,17 +143,27 @@ class ProfileProvider extends ChangeNotifier {
       _isLoading = true;
       _error = null;
       notifyListeners();
+      // 与 web 端保持一致：基于用户信息生成种子，并使用
+      // DeveloperAvatarGenerator 生成多风格 AI 头像卡片
+      final baseSeed =
+          _user?.email ?? _user?.sub ?? 'user-${_user?.id ?? 'guest'}';
+      final random = Random(baseSeed.hashCode);
 
-      final apiClient = ApiClient();
-      final response = await apiClient.post('/api/ai/generate-avatar', {});
+      final count = 4 + random.nextInt(3); // 4-6 个
+      final avatars = <String>[];
 
-      if (response['code'] == 0 || response['code'] == 200) {
-        final List<String> avatars = List<String>.from(response['data'] ?? []);
-        return avatars;
-      } else {
-        _error = response['message'] ?? '生成头像失败';
-        return [];
+      for (var i = 0; i < count; i++) {
+        final seed =
+            '$baseSeed-${DateTime.now().millisecondsSinceEpoch}-$i-${random.nextInt(1000000)}';
+        final url = _avatarGenerator.generateAvatar(
+          seed,
+          size: 160,
+          consistent: false,
+        );
+        avatars.add(url);
       }
+
+      return avatars;
     } catch (e) {
       _error = '生成头像失败: $e';
       return [];

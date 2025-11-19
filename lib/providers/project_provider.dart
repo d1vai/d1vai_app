@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/project.dart';
+import '../services/d1vai_service.dart';
 
 /// Project Provider - 管理项目页面状态
 class ProjectProvider extends ChangeNotifier {
+  final D1vaiService _d1vaiService = D1vaiService();
+
   // 数据状态
   List<UserProject> _projects = [];
   bool _isLoading = false;
@@ -13,9 +16,6 @@ class ProjectProvider extends ChangeNotifier {
 
   // 搜索状态
   String _searchQuery = '';
-  String _sort = 'updated_at';
-  String _order = 'desc';
-  String? _status;
 
   // 错误状态
   String? _error;
@@ -43,19 +43,10 @@ class ProjectProvider extends ChangeNotifier {
     _searchQuery = query;
   }
 
-  void setSort(String sort) {
-    _sort = sort;
-    notifyListeners();
-  }
-
-  void setOrder(String order) {
-    _order = order;
-    notifyListeners();
-  }
-
+  /// 设置状态过滤
   void setStatus(String? status) {
-    _status = status;
-    notifyListeners();
+    // TODO: 未来将支持项目状态过滤
+    // 当前 API 不支持此功能
   }
 
   /// 刷新数据
@@ -81,30 +72,16 @@ class ProjectProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // 创建查询参数
-      final query = ProjectsQuery(
-        q: _searchQuery.isEmpty ? null : _searchQuery,
-        limit: _limit,
-        offset: _currentOffset,
-        sort: _sort,
-        order: _order,
-        status: _status,
-      );
+      // 调用真实 API 获取项目列表
+      final List<UserProject> newProjects = await _d1vaiService.getUserProjects();
 
-      // 调用 API 或使用模拟数据
-      final response = await _fetchProjectsMock(query);
-
-      if (response.code == 0) {
-        if (_currentOffset == 0) {
-          _projects = response.data;
-        } else {
-          _projects.addAll(response.data);
-        }
-        _currentOffset += response.data.length;
-        _hasMore = response.data.length == _limit;
+      if (_currentOffset == 0) {
+        _projects = newProjects;
       } else {
-        _error = response.message;
+        _projects.addAll(newProjects);
       }
+      _currentOffset += newProjects.length;
+      _hasMore = newProjects.length == _limit;
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -112,47 +89,6 @@ class ProjectProvider extends ChangeNotifier {
       _isLoadingMore = false;
       notifyListeners();
     }
-  }
-
-  /// 模拟 API 调用 - 实际使用时替换为真实 API
-  Future<ProjectsResponse> _fetchProjectsMock(ProjectsQuery query) async {
-    // 模拟网络延迟
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    // 生成模拟数据
-    final projects = <UserProject>[];
-    final startIndex = query.offset ?? 0;
-    final endIndex = startIndex + (query.limit ?? _limit);
-
-    for (int i = startIndex; i < endIndex; i++) {
-      projects.add(
-        UserProject(
-          id: 'proj_$i',
-          projectName: 'My Awesome Project $i',
-          projectDescription:
-              'This is a sample description for project $i. It showcases innovative features and cutting-edge technology.',
-          createdAt: DateTime.now()
-              .subtract(Duration(days: i * 7))
-              .toIso8601String(),
-          updatedAt: DateTime.now()
-              .subtract(Duration(days: i * 3))
-              .toIso8601String(),
-          userId: 1000,
-          projectPort: 3000 + i,
-          emoji: ['🚀', '💡', '🎨', '⚡', '🔥'][i % 5],
-          latestPreviewUrl: 'https://picsum.photos/seed/project$i/400/250',
-          tags: i % 3 == 0 ? ['Flutter', 'Mobile'] : ['Web', 'React'],
-          status: i % 10 == 0 ? 'archived' : 'active',
-        ),
-      );
-    }
-
-    return ProjectsResponse(
-      code: 0,
-      message: 'success',
-      data: projects,
-      total: 50, // 模拟总共 50 个项目
-    );
   }
 
   /// 获取项目的详细信息（根据 ID）
