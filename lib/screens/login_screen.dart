@@ -126,6 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   /// 显示错误消息
   void _showError(String message) {
+    debugPrint(message);
     final snackBar = SnackBar(
       elevation: 0,
       behavior: SnackBarBehavior.floating,
@@ -461,37 +462,38 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
                 const SizedBox(height: 32),
 
-                // 登录按钮
-                ElevatedButton(
-                  onPressed: _isLoading
-                      ? null
-                      : () {
-                          if (_loginMode == LoginMode.password) {
-                            _loginWithPassword();
-                          } else {
-                            _loginWithCode();
-                          }
-                        },
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 56),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                // 登录按钮 - 只有在密码模式或已发送验证码时才显示
+                if (_loginMode == LoginMode.password || _isCodeSent)
+                  ElevatedButton(
+                    onPressed: _isLoading
+                        ? null
+                        : () {
+                            if (_loginMode == LoginMode.password) {
+                              _loginWithPassword();
+                            } else {
+                              _loginWithCode();
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 56),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(
-                          _loginMode == LoginMode.password ? '登录' : '验证登录',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(
+                            _loginMode == LoginMode.password ? '登录' : '验证登录',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                ),
+                  ),
                 const SizedBox(height: 48),
 
                 // 底部提示

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/project_provider.dart';
+import '../providers/auth_provider.dart';
 import '../models/project.dart';
 import '../widgets/create_project_dialog.dart';
 
@@ -57,6 +58,36 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     provider.refresh();
   }
 
+  /// 处理登出
+  Future<void> _handleLogout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('确认登出'),
+        content: const Text('您确定要登出吗？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('确认登出', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      // 清除缓存
+      await Provider.of<AuthProvider>(context, listen: false).logout();
+      // 跳转到登录页面（替换当前页面，不保留返回栈）
+      if (mounted) {
+        context.go('/login');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -64,6 +95,25 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
         title: const Text('Projects'),
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _refreshData),
+          PopupMenuButton(
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'logout',
+                child: Row(
+                  children: [
+                    Icon(Icons.logout, color: Colors.red, size: 20),
+                    SizedBox(width: 8),
+                    Text('登出'),
+                  ],
+                ),
+              ),
+            ],
+            onSelected: (value) {
+              if (value == 'logout') {
+                _handleLogout();
+              }
+            },
+          ),
         ],
       ),
       body: Column(
