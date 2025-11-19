@@ -8,10 +8,7 @@ import '../providers/auth_provider.dart';
 class OnboardingWizard extends StatefulWidget {
   final VoidCallback? onCompleted;
 
-  const OnboardingWizard({
-    super.key,
-    this.onCompleted,
-  });
+  const OnboardingWizard({super.key, this.onCompleted});
 
   @override
   State<OnboardingWizard> createState() => _OnboardingWizardState();
@@ -196,20 +193,14 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
   /// 显示错误消息
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
   /// 显示成功消息
   void _showSuccess(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.green),
     );
   }
 
@@ -224,7 +215,9 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
           width: index == _currentStep ? 24 : 8,
           height: 8,
           decoration: BoxDecoration(
-            color: index <= _currentStep ? Colors.deepPurple : Colors.grey.shade300,
+            color: index <= _currentStep
+                ? Colors.deepPurple
+                : Colors.grey.shade300,
             borderRadius: BorderRadius.circular(4),
           ),
         );
@@ -234,12 +227,7 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
 
   /// 构建步骤标题
   Widget _buildStepTitle() {
-    final titles = [
-      '欢迎加入！🎉',
-      '告诉我们您的公司信息',
-      '选择您的头像',
-      '完成设置',
-    ];
+    final titles = ['欢迎加入！🎉', '告诉我们您的公司信息', '选择您的头像', '完成设置'];
     final subtitles = [
       '输入邀请码以加入团队',
       '这将帮助我们为您定制服务',
@@ -251,19 +239,13 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
       children: [
         Text(
           titles[_currentStep],
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
         Text(
           subtitles[_currentStep],
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey.shade600,
-          ),
+          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
           textAlign: TextAlign.center,
         ),
       ],
@@ -273,9 +255,7 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         padding: const EdgeInsets.all(24),
         constraints: const BoxConstraints(maxWidth: 500),
@@ -349,11 +329,7 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
     return Column(
       children: [
         const Spacer(),
-        const Icon(
-          Icons.card_giftcard,
-          size: 80,
-          color: Colors.deepPurple,
-        ),
+        const Icon(Icons.card_giftcard, size: 80, color: Colors.deepPurple),
         const SizedBox(height: 24),
         TextField(
           decoration: const InputDecoration(
@@ -368,10 +344,7 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
         const SizedBox(height: 16),
         Text(
           '提示：邀请码已发送到您的邮箱，请查收',
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey.shade600,
-          ),
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
         ),
         const Spacer(),
       ],
@@ -417,10 +390,10 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
               border: OutlineInputBorder(),
             ),
             items: _industries
-                .map((industry) => DropdownMenuItem(
-                      value: industry,
-                      child: Text(industry),
-                    ))
+                .map(
+                  (industry) =>
+                      DropdownMenuItem(value: industry, child: Text(industry)),
+                )
                 .toList(),
             onChanged: (value) {
               if (value != null) {
@@ -507,10 +480,7 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            avatarUrl,
-                            fit: BoxFit.cover,
-                          ),
+                          child: Image.network(avatarUrl, fit: BoxFit.cover),
                         ),
                       ),
                     );
@@ -561,26 +531,16 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
     return Column(
       children: [
         const Spacer(),
-        const Icon(
-          Icons.check_circle,
-          size: 100,
-          color: Colors.green,
-        ),
+        const Icon(Icons.check_circle, size: 100, color: Colors.green),
         const SizedBox(height: 24),
         const Text(
           '设置完成！',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         Text(
           '欢迎加入 d1vai，您即将进入应用',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey.shade600,
-          ),
+          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
           textAlign: TextAlign.center,
         ),
         const Spacer(),

@@ -7,14 +7,22 @@ import 'docs_screen.dart';
 import 'settings_screen.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final int initialIndex;
+
+  const MainScreen({super.key, this.initialIndex = 0});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
-  final PersistentTabController _controller = PersistentTabController(initialIndex: 0);
+  late final PersistentTabController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = PersistentTabController(initialIndex: widget.initialIndex);
+  }
 
   List<Widget> _buildScreens() {
     return [

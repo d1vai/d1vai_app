@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:shimmer/shimmer.dart';
 import '../providers/auth_provider.dart';
+import '../providers/project_provider.dart';
 import '../models/user.dart';
+import '../widgets/create_project_dialog.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -21,9 +23,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    // 加载项目数据
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) setState(() => _isLoading = false);
     });
+  }
+
+  /// 加载数据
+  void _loadData() {
+    Provider.of<ProjectProvider>(context, listen: false).loadProjects();
   }
 
   @override
@@ -35,6 +46,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<AuthProvider>(context).user;
+    final projectProvider = Provider.of<ProjectProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -49,7 +61,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 style: const TextStyle(color: Colors.white),
                 onChanged: (query) {
-                  // Handle search
+                  // TODO: 实现搜索功能
                 },
               )
             : const Text('Dashboard'),
@@ -67,7 +79,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      body: _isLoading ? _buildShimmer() : _buildContent(user, context),
+      body: _isLoading
+          ? _buildShimmer()
+          : _buildContent(user, context, projectProvider),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) => const CreateProjectDialog(),
+          );
+        },
+        child: const Icon(Icons.add),
+      ),
     );
   }
 
@@ -83,25 +106,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(width: 48.0, height: 48.0, color: Colors.white),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8.0),
-              ),
+              const Padding(padding: EdgeInsets.symmetric(horizontal: 8.0)),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(width: double.infinity, height: 8.0, color: Colors.white),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 2.0),
+                    Container(
+                      width: double.infinity,
+                      height: 8.0,
+                      color: Colors.white,
                     ),
-                    Container(width: double.infinity, height: 8.0, color: Colors.white),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 2.0),
+                    const Padding(padding: EdgeInsets.symmetric(vertical: 2.0)),
+                    Container(
+                      width: double.infinity,
+                      height: 8.0,
+                      color: Colors.white,
                     ),
+                    const Padding(padding: EdgeInsets.symmetric(vertical: 2.0)),
                     Container(width: 40.0, height: 8.0, color: Colors.white),
                   ],
                 ),
-              )
+              ),
             ],
           ),
         ),
@@ -109,26 +134,126 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildContent(User? user, BuildContext context) {
-    return SingleChildScrollView(
+  Widget _buildContent(
+    User? user,
+    BuildContext context,
+    ProjectProvider projectProvider,
+  ) {
+    final stats = projectProvider.getProjectStats();
+
+    return RefreshIndicator(
+      onRefresh: () async => await projectProvider.refresh(),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Welcome, ${user?.email ?? "User"}!',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 20),
+
+            // 项目统计卡片
+            _buildStatsCards(stats, context),
+            const SizedBox(height: 24),
+
+            // 活动图表
+            _buildAnalyticsChart(context),
+            const SizedBox(height: 24),
+
+            // 最近项目
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Recent Projects',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                TextButton(
+                  onPressed: () => context.push('/projects'),
+                  child: const Text('View All'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            _buildProjectList(context, projectProvider),
+            const SizedBox(height: 80), // Bottom padding for FAB
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 构建项目统计卡片
+  Widget _buildStatsCards(Map<String, int> stats, BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildStatCard(
+            'Total',
+            stats['total'].toString(),
+            Icons.folder,
+            Colors.blue,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildStatCard(
+            'Active',
+            stats['active'].toString(),
+            Icons.play_circle_outline,
+            Colors.green,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildStatCard(
+            'Archived',
+            stats['archived'].toString(),
+            Icons.archive,
+            Colors.orange,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 构建单个统计卡片
+  Widget _buildStatCard(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    return Container(
       padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Welcome, ${user?.email ?? "User"}!', style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: 20),
-          _buildAnalyticsChart(context),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Recent Projects', style: Theme.of(context).textTheme.titleLarge),
-              TextButton(onPressed: () {}, child: const Text('View All')),
-            ],
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 8),
-          _buildProjectList(context),
-          const SizedBox(height: 80), // Bottom padding for FAB
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+          ),
         ],
       ),
     );
@@ -142,29 +267,57 @@ class _DashboardScreenState extends State<DashboardScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Activity', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const Text(
+            'Activity',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
           const SizedBox(height: 16),
           Expanded(
             child: LineChart(
               LineChartData(
                 gridData: FlGridData(show: false),
                 titlesData: FlTitlesData(
-                  leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
                       getTitlesWidget: (value, meta) {
-                        const titles = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                        if (value.toInt() >= 0 && value.toInt() < titles.length) {
-                          return Text(titles[value.toInt()], style: const TextStyle(color: Colors.grey, fontSize: 12));
+                        const titles = [
+                          'Mon',
+                          'Tue',
+                          'Wed',
+                          'Thu',
+                          'Fri',
+                          'Sat',
+                          'Sun',
+                        ];
+                        if (value.toInt() >= 0 &&
+                            value.toInt() < titles.length) {
+                          return Text(
+                            titles[value.toInt()],
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                            ),
+                          );
                         }
                         return const Text('');
                       },
@@ -207,13 +360,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildProjectList(BuildContext context) {
-    // Mock data
-    final projects = [
-      {'id': '1', 'name': 'AI Chatbot', 'desc': 'Customer support bot', 'updated': '2h ago'},
-      {'id': '2', 'name': 'E-commerce App', 'desc': 'Flutter mobile app', 'updated': '5h ago'},
-      {'id': '3', 'name': 'Portfolio Site', 'desc': 'Personal website', 'updated': '1d ago'},
-    ];
+  Widget _buildProjectList(
+    BuildContext context,
+    ProjectProvider projectProvider,
+  ) {
+    final projects = projectProvider.projects.take(5).toList();
+
+    if (projects.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.folder_open, size: 48, color: Colors.grey.shade400),
+            const SizedBox(height: 16),
+            Text(
+              'No projects yet',
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Create your first project to get started',
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+            ),
+          ],
+        ),
+      );
+    }
 
     return ListView.separated(
       shrinkWrap: true,
@@ -223,7 +400,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       itemBuilder: (context, index) {
         final project = projects[index];
         return InkWell(
-          onTap: () => context.push('/projects/${project['id']}'),
+          onTap: () => context.push('/projects/${project.id}'),
           borderRadius: BorderRadius.circular(12),
           child: Container(
             padding: const EdgeInsets.all(16),
@@ -231,6 +408,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.grey.shade200),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Row(
               children: [
@@ -241,24 +425,93 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     color: Colors.deepPurple.shade50,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.rocket_launch, color: Colors.deepPurple),
+                  child: Text(
+                    project.emoji ?? '🚀',
+                    style: const TextStyle(fontSize: 24),
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(project['name']!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      Text(project['desc']!, style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
+                      Text(
+                        project.projectName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        project.projectDescription,
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 14,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.circle,
+                            size: 8,
+                            color: project.status == 'active'
+                                ? Colors.green
+                                : project.status == 'archived'
+                                ? Colors.orange
+                                : Colors.grey,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            project.status,
+                            style: TextStyle(
+                              color: Colors.grey.shade500,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
-                Text(project['updated']!, style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
+                const SizedBox(width: 8),
+                Text(
+                  _formatTimeAgo(project.updatedAt),
+                  style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
+                ),
               ],
             ),
           ),
         );
       },
     );
+  }
+
+  /// 格式化时间
+  String _formatTimeAgo(String isoString) {
+    try {
+      final dateTime = DateTime.parse(isoString);
+      final now = DateTime.now();
+      final difference = now.difference(dateTime);
+
+      if (difference.inMinutes < 1) {
+        return 'just now';
+      } else if (difference.inMinutes < 60) {
+        return '${difference.inMinutes}m ago';
+      } else if (difference.inHours < 24) {
+        return '${difference.inHours}h ago';
+      } else if (difference.inDays < 7) {
+        return '${difference.inDays}d ago';
+      } else {
+        return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+      }
+    } catch (e) {
+      return '';
+    }
   }
 }

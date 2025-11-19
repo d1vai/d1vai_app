@@ -5,18 +5,12 @@ class LoginRequiredDialog extends StatelessWidget {
   final VoidCallback? onLogin;
   final VoidCallback? onCancel;
 
-  const LoginRequiredDialog({
-    super.key,
-    this.onLogin,
-    this.onCancel,
-  });
+  const LoginRequiredDialog({super.key, this.onLogin, this.onCancel});
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -30,18 +24,12 @@ class LoginRequiredDialog extends StatelessWidget {
             const SizedBox(height: 24),
             const Text(
               'Login Required',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             const Text(
               'This feature requires you to be logged in. Please login to continue.',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),

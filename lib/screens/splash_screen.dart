@@ -61,10 +61,7 @@ class _SplashScreenState extends State<SplashScreen> {
           children: [
             Text(
               'd1vai',
-              style: TextStyle(
-                fontSize: 36,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 24),
             CircularProgressIndicator(),

@@ -109,7 +109,9 @@ class CommunityProvider extends ChangeNotifier {
   }
 
   /// 模拟 API 调用 - 实际使用时替换为真实 API
-  Future<CommunityPostsResponse> _fetchCommunityPostsMock(CommunityPostsQuery query) async {
+  Future<CommunityPostsResponse> _fetchCommunityPostsMock(
+    CommunityPostsQuery query,
+  ) async {
     // 模拟网络延迟
     await Future.delayed(const Duration(milliseconds: 500));
 
@@ -126,7 +128,8 @@ class CommunityProvider extends ChangeNotifier {
           userId: 1000 + i,
           slug: 'awesome-project-$i',
           title: 'Amazing Project Title $i',
-          summary: 'This is a sample description for an awesome project that showcases innovative features and cutting-edge technology. Check it out!',
+          summary:
+              'This is a sample description for an awesome project that showcases innovative features and cutting-edge technology. Check it out!',
           coverUrl: 'https://picsum.photos/seed/project$i/400/200',
           tags: ['Flutter', 'Mobile', 'Innovation'],
           status: 'published',
@@ -163,12 +166,7 @@ class CommunityProvider extends ChangeNotifier {
     if (query.isEmpty) return _posts;
     return _posts.where((post) {
       return post.title.toLowerCase().contains(query.toLowerCase()) ||
-             post.summary.toLowerCase().contains(query.toLowerCase());
+          post.summary.toLowerCase().contains(query.toLowerCase());
     }).toList();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
   }
 }

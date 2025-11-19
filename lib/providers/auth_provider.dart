@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
 import '../models/onboarding.dart';
 import '../services/d1vai_service.dart';
@@ -132,7 +131,11 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// 保存公司信息
-  Future<void> saveCompanyInfo(String name, String? website, String? industry) async {
+  Future<void> saveCompanyInfo(
+    String name,
+    String? website,
+    String? industry,
+  ) async {
     try {
       final updatedUser = await _d1vaiService.putUserProfile({
         'company_name': name,
@@ -169,9 +172,11 @@ class AuthProvider extends ChangeNotifier {
       final avatars = <String>[];
 
       for (int i = 0; i < count; i++) {
-        final avatarSeed = '$seed-${DateTime.now().millisecondsSinceEpoch}-$i-${random.nextInt(10000)}';
+        final avatarSeed =
+            '$seed-${DateTime.now().millisecondsSinceEpoch}-$i-${random.nextInt(10000)}';
         // 使用 DiceBear 头像生成服务
-        final avatarUrl = 'https://api.dicebear.com/7.x/avataaars/svg?seed=$avatarSeed&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc';
+        final avatarUrl =
+            'https://api.dicebear.com/7.x/avataaars/svg?seed=$avatarSeed&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc';
         avatars.add(avatarUrl);
       }
 
@@ -181,10 +186,31 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// 重新从服务器获取当前用户信息
+  Future<void> fetchUser() async {
+    try {
+      final token = _storageService.getAuthToken();
+
+      if (token == null) {
+        _user = null;
+      } else {
+        final user = await _d1vaiService.getUserProfile();
+        _user = user.copyWith(bearerToken: token);
+      }
+
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   /// 上传头像
   Future<String> uploadAvatar(Uint8List imageBytes, String fileName) async {
     try {
-      final avatarUrl = await _d1vaiService.postUserAvatarUpload(imageBytes, fileName);
+      final avatarUrl = await _d1vaiService.postUserAvatarUpload(
+        imageBytes,
+        fileName,
+      );
 
       // 更新用户信息
       final updatedUser = await _d1vaiService.putUserProfile({
@@ -198,6 +224,27 @@ class AuthProvider extends ChangeNotifier {
 
       notifyListeners();
       return avatarUrl;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// 使用已上传的头像 URL 更新当前用户头像
+  Future<void> updateAvatar(String avatarUrl) async {
+    try {
+      if (_user == null) return;
+
+      final updatedUser = await _d1vaiService.putUserProfile({
+        'picture': avatarUrl,
+      });
+
+      _user = updatedUser;
+
+      // 同步更新本地 onboarding 数据中的头像
+      _onboardingData ??= OnboardingData();
+      _onboardingData = _onboardingData!.copyWith(avatarUrl: avatarUrl);
+
+      notifyListeners();
     } catch (e) {
       rethrow;
     }
@@ -240,4 +287,3 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
-

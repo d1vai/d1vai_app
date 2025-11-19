@@ -4,11 +4,7 @@ class Author {
   final String email;
   final String picture;
 
-  Author({
-    required this.slug,
-    required this.email,
-    required this.picture,
-  });
+  Author({required this.slug, required this.email, required this.picture});
 
   factory Author.fromJson(Map<String, dynamic> json) {
     return Author(
@@ -19,11 +15,7 @@ class Author {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'slug': slug,
-      'email': email,
-      'picture': picture,
-    };
+    return {'slug': slug, 'email': email, 'picture': picture};
   }
 
   @override
@@ -85,11 +77,11 @@ class CommunityPost {
       title: json['title'] ?? '',
       summary: json['summary'] ?? '',
       coverUrl: json['cover_url'] ?? '',
-      tags: json['tags'] != null
-          ? List<String>.from(json['tags'])
-          : <String>[],
+      tags: json['tags'] != null ? List<String>.from(json['tags']) : <String>[],
       status: json['status'] ?? 'published',
-      publishedAt: DateTime.parse(json['published_at'] ?? DateTime.now().toIso8601String()),
+      publishedAt: DateTime.parse(
+        json['published_at'] ?? DateTime.now().toIso8601String(),
+      ),
       embedUrl: json['embed_url'],
       author: Author.fromJson(json['author'] ?? {}),
     );

@@ -7,16 +7,14 @@ import 'router/app_router.dart';
 void main() {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
-  
+
   runApp(
     MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-      ],
+      providers: [ChangeNotifierProvider(create: (_) => AuthProvider())],
       child: const MyApp(),
     ),
   );
-  
+
   // Remove splash screen after initialization (simulated delay in SplashScreen)
   Future.delayed(const Duration(seconds: 1), () {
     FlutterNativeSplash.remove();
@@ -35,7 +33,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         fontFamily: 'GoogleFonts.inter().fontFamily', // Placeholder for now
       ),
-      routerConfig: appRouter,
+      routerConfig: createAppRouter(context),
     );
   }
 }

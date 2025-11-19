@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../screens/splash_screen.dart';
 import '../screens/login_screen.dart';
-
 import '../screens/main_screen.dart';
 import '../screens/project_detail_screen.dart';
 import '../screens/app_detail_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/pricing_screen.dart';
+import '../providers/auth_provider.dart';
 
-Page<dynamic> _buildPageWithTransition(BuildContext context, GoRouterState state, Widget child) {
+Page<dynamic> _buildPageWithTransition(
+  BuildContext context,
+  GoRouterState state,
+  Widget child,
+) {
   return CustomTransitionPage(
     key: state.pageKey,
     child: child,
@@ -22,40 +27,95 @@ Page<dynamic> _buildPageWithTransition(BuildContext context, GoRouterState state
   );
 }
 
-final GoRouter appRouter = GoRouter(
-  initialLocation: '/',
-  routes: [
-    GoRoute(
-      path: '/',
-      builder: (context, state) => const SplashScreen(),
-    ),
-    GoRoute(
-      path: '/login',
-      pageBuilder: (context, state) => _buildPageWithTransition(context, state, const LoginScreen()),
-    ),
-    GoRoute(
-      path: '/dashboard',
-      pageBuilder: (context, state) => _buildPageWithTransition(context, state, const MainScreen()),
-    ),
-    GoRoute(
-      path: '/projects/new',
-      pageBuilder: (context, state) => _buildPageWithTransition(context, state, const Scaffold(body: Center(child: Text('New Project Screen')))),
-    ),
-    GoRoute(
-      path: '/projects/:id',
-      pageBuilder: (context, state) => _buildPageWithTransition(context, state, ProjectDetailScreen(projectId: state.pathParameters['id']!)),
-    ),
-    GoRoute(
-      path: '/apps/:slug',
-      pageBuilder: (context, state) => _buildPageWithTransition(context, state, AppDetailScreen(slug: state.pathParameters['slug']!)),
-    ),
-    GoRoute(
-      path: '/profile',
-      pageBuilder: (context, state) => _buildPageWithTransition(context, state, const ProfileScreen()),
-    ),
-    GoRoute(
-      path: '/pricing',
-      pageBuilder: (context, state) => _buildPageWithTransition(context, state, const PricingScreen()),
-    ),
-  ],
-);
+GoRouter createAppRouter(BuildContext context) {
+  return GoRouter(
+    initialLocation: '/',
+    redirect: (BuildContext context, GoRouterState state) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final isAuthenticated = authProvider.isAuthenticated;
+      final isLoading = authProvider.isLoading;
+      
+      final isLoginPage = state.matchedLocation == '/login';
+      final isSplashPage = state.matchedLocation == '/';
+      
+      // 如果正在加载，保持在当前页面
+      if (isLoading && !isSplashPage) {
+        return null;
+      }
+      
+      // 如果未登录且不在登录页，重定向到登录页
+      if (!isAuthenticated && !isLoginPage && !isSplashPage) {
+        return '/login';
+      }
+      
+      // 如果已登录且在登录页，重定向到 dashboard
+      if (isAuthenticated && isLoginPage) {
+        return '/dashboard';
+      }
+      
+      return null;
+    },
+    routes: [
+      GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
+      GoRoute(
+        path: '/login',
+        pageBuilder: (context, state) =>
+            _buildPageWithTransition(context, state, const LoginScreen()),
+      ),
+      GoRoute(
+        path: '/dashboard',
+        pageBuilder: (context, state) =>
+            _buildPageWithTransition(context, state, const MainScreen(initialIndex: 0)),
+      ),
+      GoRoute(
+        path: '/community',
+        pageBuilder: (context, state) =>
+            _buildPageWithTransition(context, state, const MainScreen(initialIndex: 1)),
+      ),
+      GoRoute(
+        path: '/docs',
+        pageBuilder: (context, state) =>
+            _buildPageWithTransition(context, state, const MainScreen(initialIndex: 2)),
+      ),
+      GoRoute(
+        path: '/settings',
+        pageBuilder: (context, state) =>
+            _buildPageWithTransition(context, state, const MainScreen(initialIndex: 3)),
+      ),
+      GoRoute(
+        path: '/projects/new',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const Scaffold(body: Center(child: Text('New Project Screen'))),
+        ),
+      ),
+      GoRoute(
+        path: '/projects/:id',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          ProjectDetailScreen(projectId: state.pathParameters['id']!),
+        ),
+      ),
+      GoRoute(
+        path: '/apps/:slug',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          AppDetailScreen(slug: state.pathParameters['slug']!),
+        ),
+      ),
+      GoRoute(
+        path: '/profile',
+        pageBuilder: (context, state) =>
+            _buildPageWithTransition(context, state, const ProfileScreen()),
+      ),
+      GoRoute(
+        path: '/pricing',
+        pageBuilder: (context, state) =>
+            _buildPageWithTransition(context, state, const PricingScreen()),
+      ),
+    ],
+  );
+}

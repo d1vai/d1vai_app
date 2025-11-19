@@ -15,7 +15,10 @@ class PricingScreen extends StatelessWidget {
               padding: EdgeInsets.all(16),
               child: Column(
                 children: [
-                  Text('Free Plan', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                  Text(
+                    'Free Plan',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
                   SizedBox(height: 8),
                   Text('\$0/month'),
                   SizedBox(height: 16),
@@ -30,7 +33,10 @@ class PricingScreen extends StatelessWidget {
               padding: EdgeInsets.all(16),
               child: Column(
                 children: [
-                  Text('Pro Plan', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                  Text(
+                    'Pro Plan',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
                   SizedBox(height: 8),
                   Text('\$29/month'),
                   SizedBox(height: 16),

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:easy_refresh/easy_refresh.dart';
+import 'package:intl/intl.dart';
+import '../services/d1vai_service.dart';
+import '../models/community_post.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -10,7 +13,14 @@ class CommunityScreen extends StatefulWidget {
 
 class _CommunityScreenState extends State<CommunityScreen> {
   late EasyRefreshController _controller;
-  int _count = 10;
+  final D1vaiService _d1vaiService = D1vaiService();
+  
+  List<CommunityPost> _posts = [];
+  bool _isLoading = true;
+  String? _error;
+  int _offset = 0;
+  final int _limit = 20;
+  bool _hasMore = true;
 
   @override
   void initState() {
@@ -19,6 +29,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
       controlFinishRefresh: true,
       controlFinishLoad: true,
     );
+    _loadPosts();
   }
 
   @override
@@ -27,84 +38,298 @@ class _CommunityScreenState extends State<CommunityScreen> {
     super.dispose();
   }
 
+  Future<void> _loadPosts({bool refresh = false}) async {
+    if (refresh) {
+      _offset = 0;
+      _hasMore = true;
+    }
+
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final posts = await _d1vaiService.getCommunityPosts(
+        limit: _limit,
+        offset: _offset,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        if (refresh) {
+          _posts = posts;
+        } else {
+          _posts.addAll(posts);
+        }
+        _isLoading = false;
+        _hasMore = posts.length >= _limit;
+        _offset += posts.length;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _error = e.toString();
+      });
+    }
+  }
+
+  String _formatTime(String timestamp) {
+    try {
+      final dateTime = DateTime.parse(timestamp);
+      final now = DateTime.now();
+      final difference = now.difference(dateTime);
+
+      if (difference.inMinutes < 1) {
+        return 'Just now';
+      } else if (difference.inHours < 1) {
+        return '${difference.inMinutes}m ago';
+      } else if (difference.inDays < 1) {
+        return '${difference.inHours}h ago';
+      } else if (difference.inDays < 7) {
+        return '${difference.inDays}d ago';
+      } else {
+        return DateFormat('MMM d').format(dateTime);
+      }
+    } catch (e) {
+      return timestamp;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Community')),
-      body: EasyRefresh(
-        controller: _controller,
-        header: const ClassicHeader(),
-        footer: const ClassicFooter(),
-        onRefresh: () async {
-          await Future.delayed(const Duration(seconds: 2));
-          if (!mounted) return;
-          setState(() {
-            _count = 10;
-          });
-          _controller.finishRefresh();
-        },
-        onLoad: () async {
-          await Future.delayed(const Duration(seconds: 2));
-          if (!mounted) return;
-          setState(() {
-            _count += 5;
-          });
-          _controller.finishLoad(_count >= 20 ? IndicatorResult.noMore : IndicatorResult.success);
-        },
-        child: ListView.builder(
-          itemCount: _count,
-          itemBuilder: (context, index) {
-            return Card(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: Colors.deepPurple.shade100,
-                          child: Text('U${index + 1}', style: const TextStyle(color: Colors.deepPurple)),
-                        ),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('User ${index + 1}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                            Text('2 hours ago', style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
-                          ],
-                        ),
-                        const Spacer(),
-                        const Icon(Icons.more_horiz, color: Colors.grey),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text('Community Post Title ${index + 1}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    Text(
-                      'This is a simulated community post content. It demonstrates how a longer text would look like in this card layout.',
-                      style: TextStyle(color: Colors.grey.shade700),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        const Icon(Icons.favorite_border, size: 20, color: Colors.grey),
-                        const SizedBox(width: 4),
-                        const Text('12', style: TextStyle(color: Colors.grey)),
-                        const SizedBox(width: 16),
-                        const Icon(Icons.chat_bubble_outline, size: 20, color: Colors.grey),
-                        const SizedBox(width: 4),
-                        const Text('4', style: TextStyle(color: Colors.grey)),
-                      ],
-                    ),
-                  ],
-                ),
+      appBar: AppBar(
+        title: const Text('Community'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () {
+              // TODO: Navigate to create post screen
+            },
+          ),
+        ],
+      ),
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading && _posts.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_error != null && _posts.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text(
+              'Failed to load posts',
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: () => _loadPosts(refresh: true),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_posts.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.forum_outlined, size: 64, color: Colors.grey.shade300),
+            const SizedBox(height: 16),
+            Text(
+              'No posts yet',
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey.shade600,
               ),
-            );
-          },
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Be the first to share something!',
+              style: TextStyle(color: Colors.grey.shade500),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return EasyRefresh(
+      controller: _controller,
+      header: const ClassicHeader(),
+      footer: const ClassicFooter(),
+      onRefresh: () async {
+        await _loadPosts(refresh: true);
+        _controller.finishRefresh();
+      },
+      onLoad: () async {
+        if (_hasMore) {
+          await _loadPosts();
+          _controller.finishLoad(
+            _hasMore ? IndicatorResult.success : IndicatorResult.noMore,
+          );
+        } else {
+          _controller.finishLoad(IndicatorResult.noMore);
+        }
+      },
+      child: ListView.builder(
+        itemCount: _posts.length,
+        itemBuilder: (context, index) {
+          final post = _posts[index];
+          return _buildPostCard(post);
+        },
+      ),
+    );
+  }
+
+  Widget _buildPostCard(CommunityPost post) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: InkWell(
+        onTap: () {
+          // TODO: Navigate to post detail
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // User info row
+              Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: Colors.deepPurple.shade100,
+                    backgroundImage: post.userAvatar != null
+                        ? NetworkImage(post.userAvatar!)
+                        : null,
+                    child: post.userAvatar == null
+                        ? Text(
+                            post.userName?.substring(0, 1).toUpperCase() ?? 'U',
+                            style: const TextStyle(color: Colors.deepPurple),
+                          )
+                        : null,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          post.userName ?? 'Anonymous',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          _formatTime(post.createdAt),
+                          style: TextStyle(
+                            color: Colors.grey.shade500,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.more_horiz, color: Colors.grey),
+                    onPressed: () {
+                      // TODO: Show post options
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              
+              // Post title
+              if (post.title.isNotEmpty) ...[
+                Text(
+                  post.title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+              
+              // Post content
+              Text(
+                post.content,
+                style: TextStyle(color: Colors.grey.shade700),
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+              ),
+              
+              // Post image
+              if (post.imageUrl != null) ...[
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    post.imageUrl!,
+                    width: double.infinity,
+                    height: 200,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 200,
+                        color: Colors.grey.shade200,
+                        child: const Center(
+                          child: Icon(Icons.broken_image, color: Colors.grey),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+              
+              const SizedBox(height: 16),
+              
+              // Interaction row
+              Row(
+                children: [
+                  Icon(
+                    post.isLiked ? Icons.favorite : Icons.favorite_border,
+                    size: 20,
+                    color: post.isLiked ? Colors.red : Colors.grey,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${post.likeCount}',
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                  const SizedBox(width: 16),
+                  const Icon(
+                    Icons.chat_bubble_outline,
+                    size: 20,
+                    color: Colors.grey,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${post.commentCount}',
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

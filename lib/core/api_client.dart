@@ -11,11 +11,16 @@ class ApiResponse<T> {
 
   ApiResponse({required this.code, required this.msg, this.data});
 
-  factory ApiResponse.fromJson(Map<String, dynamic> json, T Function(dynamic)? fromJsonT) {
+  factory ApiResponse.fromJson(
+    Map<String, dynamic> json,
+    T Function(dynamic)? fromJsonT,
+  ) {
     return ApiResponse(
       code: json['code'] ?? -1,
       msg: json['msg'] ?? 'Unknown error',
-      data: json['data'] != null && fromJsonT != null ? fromJsonT(json['data']) : json['data'],
+      data: json['data'] != null && fromJsonT != null
+          ? fromJsonT(json['data'])
+          : json['data'],
     );
   }
 
@@ -39,11 +44,18 @@ class ApiClient {
 
   Future<T> get<T>(String endpoint, {T Function(dynamic)? fromJsonT}) async {
     final headers = await _getHeaders();
-    final response = await client.get(Uri.parse('$baseUrl$endpoint'), headers: headers);
+    final response = await client.get(
+      Uri.parse('$baseUrl$endpoint'),
+      headers: headers,
+    );
     return _handleResponse<T>(response, fromJsonT);
   }
 
-  Future<T> post<T>(String endpoint, dynamic body, {T Function(dynamic)? fromJsonT}) async {
+  Future<T> post<T>(
+    String endpoint,
+    dynamic body, {
+    T Function(dynamic)? fromJsonT,
+  }) async {
     final headers = await _getHeaders();
     final response = await client.post(
       Uri.parse('$baseUrl$endpoint'),
@@ -53,7 +65,11 @@ class ApiClient {
     return _handleResponse<T>(response, fromJsonT);
   }
 
-  Future<T> put<T>(String endpoint, dynamic body, {T Function(dynamic)? fromJsonT}) async {
+  Future<T> put<T>(
+    String endpoint,
+    dynamic body, {
+    T Function(dynamic)? fromJsonT,
+  }) async {
     final headers = await _getHeaders();
     final response = await client.put(
       Uri.parse('$baseUrl$endpoint'),
@@ -63,40 +79,55 @@ class ApiClient {
     return _handleResponse<T>(response, fromJsonT);
   }
 
-  Future<T> delete<T>(String endpoint, {T Function(dynamic)? fromJsonT}) async {
+  // PATCH request method
+  Future<T> patch<T>(
+    String endpoint,
+    dynamic body, {
+    T Function(dynamic)? fromJsonT,
+  }) async {
     final headers = await _getHeaders();
-    final response = await client.delete(Uri.parse('$baseUrl$endpoint'), headers: headers);
+    final response = await client.patch(
+      Uri.parse('$baseUrl$endpoint'),
+      headers: headers,
+      body: jsonEncode(body),
+    );
     return _handleResponse<T>(response, fromJsonT);
   }
 
-  /// Upload file to the server
-  Future<T> uploadFile<T>(
-    String endpoint,
-    Uint8List fileBytes,
-    String fileName, {
-    T Function(dynamic)? fromJsonT,
-    String fieldName = 'file',
-  }) async {
+  Future<T> delete<T>(String endpoint, {T Function(dynamic)? fromJsonT}) async {
     final headers = await _getHeaders();
-    // Remove Content-Type header to let http set multipart boundary
-    headers.remove('Content-Type');
+    final response = await client.delete(
+      Uri.parse('$baseUrl$endpoint'),
+      headers: headers,
+    );
+    return _handleResponse<T>(response, fromJsonT);
+  }
 
-    final request = http.MultipartRequest('POST', Uri.parse('$baseUrl$endpoint'));
+  /// Simple avatar upload wrapper (uses generic upload endpoint)
+  Future<String> uploadFile(Uint8List fileBytes, String fileName) async {
+    final headers = await _getHeaders();
+    // Remove Content-Type to let multipart set boundary
+    headers.remove('Content-Type');
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$baseUrl/api/upload'),
+    );
     request.headers.addAll(headers);
+    final contentType = _getContentType(fileName);
     request.files.add(
       http.MultipartFile.fromBytes(
-        fieldName,
+        'file',
         fileBytes,
         filename: fileName,
-        contentType: _getContentType(fileName),
+        contentType: contentType,
       ),
     );
-
-    final response = await request.send();
-    final responseBody = await response.stream.bytesToString();
-    final httpResponse = http.Response(responseBody, response.statusCode);
-
-    return _handleResponse<T>(httpResponse, fromJsonT);
+    final streamed = await request.send();
+    final responseBody = await streamed.stream.bytesToString();
+    final httpResponse = http.Response(responseBody, streamed.statusCode);
+    // Expect the response to contain the URL string directly
+    final Map<String, dynamic> json = jsonDecode(httpResponse.body);
+    return json['data'] ?? '';
   }
 
   MediaType _getContentType(String fileName) {
@@ -116,7 +147,9 @@ class ApiClient {
 
   T _handleResponse<T>(http.Response response, T Function(dynamic)? fromJsonT) {
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      final Map<String, dynamic> json = jsonDecode(utf8.decode(response.bodyBytes));
+      final Map<String, dynamic> json = jsonDecode(
+        utf8.decode(response.bodyBytes),
+      );
       final apiResponse = ApiResponse<T>.fromJson(json, fromJsonT);
 
       if (apiResponse.isSuccess) {
@@ -129,4 +162,3 @@ class ApiClient {
     }
   }
 }
-

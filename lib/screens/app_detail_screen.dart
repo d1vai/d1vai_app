@@ -11,7 +11,9 @@ class AppDetailScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text('App: $slug')),
       body: InAppWebView(
-        initialUrlRequest: URLRequest(url: WebUri('https://d1vai.com/apps/$slug')),
+        initialUrlRequest: URLRequest(
+          url: WebUri('https://d1vai.com/apps/$slug'),
+        ),
       ),
     );
   }

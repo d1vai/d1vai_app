@@ -57,10 +57,7 @@ class _OtpInputFieldState extends State<OtpInputField> {
       widget.count,
       (index) => FocusNode(),
     );
-    _fieldKeys = List<GlobalKey>.generate(
-      widget.count,
-      (index) => GlobalKey(),
-    );
+    _fieldKeys = List<GlobalKey>.generate(widget.count, (index) => GlobalKey());
 
     // 为每个控制器添加监听器
     for (int i = 0; i < widget.count; i++) {
@@ -119,10 +116,7 @@ class _OtpInputFieldState extends State<OtpInputField> {
             autofocus: widget.autoFocus && index == 0,
             keyboardType: TextInputType.number,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             maxLength: 1,
             decoration: InputDecoration(
               counterText: '',
@@ -138,7 +132,10 @@ class _OtpInputFieldState extends State<OtpInputField> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+                borderSide: const BorderSide(
+                  color: Colors.deepPurple,
+                  width: 2,
+                ),
               ),
               errorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -218,7 +215,8 @@ class _SimpleOtpInputState extends State<SimpleOtpInput> {
 
     if (otpCode.length == widget.count) {
       widget.onCompleted(otpCode);
-    } else if (_controllers[index].text.isNotEmpty && index < widget.count - 1) {
+    } else if (_controllers[index].text.isNotEmpty &&
+        index < widget.count - 1) {
       FocusScope.of(context).requestFocus(_focusNodes[index + 1]);
     }
   }
@@ -249,10 +247,7 @@ class _SimpleOtpInputState extends State<SimpleOtpInput> {
             keyboardType: TextInputType.number,
             textAlign: TextAlign.center,
             maxLength: 1,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             decoration: InputDecoration(
               counterText: '',
               filled: true,
@@ -263,7 +258,10 @@ class _SimpleOtpInputState extends State<SimpleOtpInput> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+                borderSide: const BorderSide(
+                  color: Colors.deepPurple,
+                  width: 2,
+                ),
               ),
             ),
             inputFormatters: [

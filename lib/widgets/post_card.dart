@@ -31,7 +31,9 @@ class PostCard extends StatelessWidget {
           children: [
             // 封面图片
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12),
+              ),
               child: post.coverUrl.isNotEmpty
                   ? CachedNetworkImage(
                       imageUrl: post.coverUrl,
@@ -41,9 +43,7 @@ class PostCard extends StatelessWidget {
                       placeholder: (context, url) => Container(
                         height: 180,
                         color: Colors.grey.shade200,
-                        child: const Center(
-                          child: CircularProgressIndicator(),
-                        ),
+                        child: const Center(child: CircularProgressIndicator()),
                       ),
                       errorWidget: (context, url, error) => Container(
                         height: 180,
@@ -54,7 +54,11 @@ class PostCard extends StatelessWidget {
                   : Container(
                       height: 180,
                       color: Colors.grey.shade200,
-                      child: const Icon(Icons.image, size: 48, color: Colors.grey),
+                      child: const Icon(
+                        Icons.image,
+                        size: 48,
+                        color: Colors.grey,
+                      ),
                     ),
             ),
 
@@ -132,10 +136,7 @@ class PostCard extends StatelessWidget {
                   // 摘要
                   Text(
                     post.summary,
-                    style: TextStyle(
-                      color: Colors.grey.shade700,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -152,7 +153,8 @@ class PostCard extends StatelessWidget {
                             tag,
                             style: const TextStyle(fontSize: 12),
                           ),
-                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
                           visualDensity: VisualDensity.compact,
                         );
                       }).toList(),
@@ -168,7 +170,10 @@ class PostCard extends StatelessWidget {
                         onTap: onFavorite,
                         borderRadius: BorderRadius.circular(20),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           child: Row(
                             children: [
                               Icon(
@@ -196,7 +201,10 @@ class PostCard extends StatelessWidget {
                         onTap: onComment,
                         borderRadius: BorderRadius.circular(20),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           child: Row(
                             children: [
                               Icon(
@@ -220,7 +228,7 @@ class PostCard extends StatelessWidget {
                       const Spacer(),
 
                       // 查看链接
-                      if (post.embedUrl.isNotEmpty)
+                      if ((post.embedUrl ?? '').isNotEmpty)
                         TextButton.icon(
                           onPressed: () {
                             _openProjectDemo(context);
@@ -229,7 +237,10 @@ class PostCard extends StatelessWidget {
                           label: const Text('View'),
                           style: TextButton.styleFrom(
                             foregroundColor: Theme.of(context).primaryColor,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
                           ),
                         ),
                     ],
@@ -326,10 +337,10 @@ class PostCard extends StatelessWidget {
 
   /// 打开项目演示链接
   void _openProjectDemo(BuildContext context) {
-    if (post.embedUrl.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Opening ${post.title}...')),
-      );
+    if ((post.embedUrl ?? '').isNotEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Opening ${post.title}...')));
       // TODO: 使用 url_launcher 打开链接
     }
   }

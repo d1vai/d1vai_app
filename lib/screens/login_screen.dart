@@ -42,6 +42,9 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _isSendingCode = false;
 
+  // 验证码发送状态
+  bool _isCodeSent = false;
+
   // 倒计时相关
   Timer? _countdownTimer;
   int _countdownSeconds = 60;
@@ -53,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    _startCountdownTimer();
+    _countdownText = '';
   }
 
   @override
@@ -101,6 +104,10 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() {
       _loginMode = mode;
       _otpCode = '';
+      _isCodeSent = false;
+      _countdownSeconds = 60;
+      _countdownText = '';
+      _countdownTimer?.cancel();
     });
   }
 
@@ -160,10 +167,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
     try {
-      await Provider.of<AuthProvider>(context, listen: false).verifyCodeAndLogin(
-        _emailController.text.trim(),
-        _otpCode,
-      );
+      await Provider.of<AuthProvider>(
+        context,
+        listen: false,
+      ).verifyCodeAndLogin(_emailController.text.trim(), _otpCode);
       _showSuccess('登录成功');
       if (mounted) context.go('/dashboard');
     } catch (e) {
@@ -179,10 +186,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
     try {
-      await Provider.of<AuthProvider>(context, listen: false).login(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
+      await Provider.of<AuthProvider>(
+        context,
+        listen: false,
+      ).login(_emailController.text.trim(), _passwordController.text);
       _showSuccess('登录成功');
       if (mounted) context.go('/dashboard');
     } catch (e) {
@@ -201,9 +208,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isSendingCode = true);
     try {
-      await Provider.of<AuthProvider>(context, listen: false).sendVerifyCode(
-        _emailController.text.trim(),
-      );
+      await Provider.of<AuthProvider>(
+        context,
+        listen: false,
+      ).sendVerifyCode(_emailController.text.trim());
+
+      // 标记验证码已发送，显示输入框
+      setState(() {
+        _isCodeSent = true;
+      });
+
       _resetCountdown();
       _showSuccess('验证码已发送，请查收邮件');
     } catch (e) {
@@ -228,10 +242,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Logo
                 const Text(
                   'd1vai',
-                  style: TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 48),
@@ -251,12 +262,16 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
-                              color: isSelected ? Colors.white : Colors.transparent,
+                              color: isSelected
+                                  ? Colors.white
+                                  : Colors.transparent,
                               borderRadius: BorderRadius.circular(8),
                               boxShadow: isSelected
                                   ? [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.05),
+                                        color: Colors.black.withValues(
+                                          alpha: 0.05,
+                                        ),
                                         blurRadius: 4,
                                         offset: const Offset(0, 2),
                                       ),
@@ -267,8 +282,12 @@ class _LoginScreenState extends State<LoginScreen> {
                               mode.label,
                               style: TextStyle(
                                 fontSize: 14,
-                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                                color: isSelected ? Colors.deepPurple : Colors.grey.shade600,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                                color: isSelected
+                                    ? Colors.deepPurple
+                                    : Colors.grey.shade600,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -294,7 +313,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     if (value == null || value.isEmpty) {
                       return '请输入邮箱地址';
                     }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                    if (!RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                    ).hasMatch(value)) {
                       return '请输入有效的邮箱地址';
                     }
                     return null;
@@ -326,44 +347,115 @@ class _LoginScreenState extends State<LoginScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        '验证码',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
+                      // 发送验证码按钮 - 始终显示在顶部
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextButton.icon(
+                                onPressed:
+                                    _isSendingCode ||
+                                        (_countdownSeconds < 60 && _isCodeSent)
+                                    ? null
+                                    : _sendCode,
+                                icon: _isSendingCode
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                Colors.deepPurple,
+                                              ),
+                                        ),
+                                      )
+                                    : const Icon(
+                                        Icons.send_outlined,
+                                        size: 18,
+                                        color: Colors.deepPurple,
+                                      ),
+                                label: Text(
+                                  _isSendingCode
+                                      ? '发送中...'
+                                      : (_countdownSeconds < 60 && _isCodeSent
+                                            ? _countdownText
+                                            : (_isCodeSent
+                                                  ? '重新发送验证码'
+                                                  : '发送验证码')),
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.deepPurple,
+                                  ),
+                                ),
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      SimpleOtpInput(
-                        count: 6,
-                        onCompleted: _onOtpCompleted,
-                        onChanged: _onOtpChanged,
-                      ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
 
-                      // 发送验证码按钮
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          TextButton.icon(
-                            onPressed: _isSendingCode || _countdownSeconds < 60
-                                ? null
-                                : _sendCode,
-                            icon: _isSendingCode
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  )
-                                : const Icon(Icons.send_outlined, size: 18),
-                            label: Text(
-                              _countdownSeconds < 60
-                                  ? _countdownText
-                                  : '发送验证码',
-                            ),
+                      // 验证码输入框 - 只有发送后才显示
+                      if (_isCodeSent) ...[
+                        const Text(
+                          '请输入验证码',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey,
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 12),
+                        SimpleOtpInput(
+                          count: 6,
+                          onCompleted: _onOtpCompleted,
+                          onChanged: _onOtpChanged,
+                        ),
+                        const SizedBox(height: 16),
+
+                        // 发送状态提示
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.green.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.green.shade200),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.check_circle_outline,
+                                size: 18,
+                                color: Colors.green.shade700,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  '验证码已发送至 ${_emailController.text.trim()}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.green.shade700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                     ],
                   ),
                 ],
@@ -371,13 +463,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // 登录按钮
                 ElevatedButton(
-                  onPressed: _isLoading ? null : () {
-                    if (_loginMode == LoginMode.password) {
-                      _loginWithPassword();
-                    } else {
-                      _loginWithCode();
-                    }
-                  },
+                  onPressed: _isLoading
+                      ? null
+                      : () {
+                          if (_loginMode == LoginMode.password) {
+                            _loginWithPassword();
+                          } else {
+                            _loginWithCode();
+                          }
+                        },
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 56),
                     shape: RoundedRectangleBorder(
@@ -398,29 +492,12 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                 ),
-                const SizedBox(height: 24),
-
-                // 其他选项
-                if (_loginMode == LoginMode.code) ...[
-                  const Text(
-                    '提示：验证码已发送到您的邮箱，请查收并输入6位验证码',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-
                 const SizedBox(height: 48),
 
                 // 底部提示
                 const Text(
                   '登录即表示您同意我们的服务条款和隐私政策',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
               ],

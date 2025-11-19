@@ -1,0 +1,423 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
+import '../providers/project_provider.dart';
+import '../models/project.dart';
+import '../widgets/create_project_dialog.dart';
+
+class ProjectsScreen extends StatefulWidget {
+  const ProjectsScreen({super.key});
+
+  @override
+  State<ProjectsScreen> createState() => _ProjectsScreenState();
+}
+
+class _ProjectsScreenState extends State<ProjectsScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _selectedFilter = 'all';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<ProjectProvider>(context, listen: false).loadProjects();
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  /// 刷新数据
+  Future<void> _refreshData() async {
+    await Provider.of<ProjectProvider>(context, listen: false).refresh();
+  }
+
+  /// 加载更多数据
+  Future<void> _loadMore() async {
+    await Provider.of<ProjectProvider>(context, listen: false).loadMore();
+  }
+
+  /// 处理搜索
+  void _handleSearch(String query) {
+    final provider = Provider.of<ProjectProvider>(context, listen: false);
+    provider.setSearchQuery(query);
+    provider.refresh();
+  }
+
+  /// 处理过滤
+  void _handleFilter(String filter) {
+    setState(() {
+      _selectedFilter = filter;
+    });
+    final provider = Provider.of<ProjectProvider>(context, listen: false);
+    provider.setStatus(filter == 'all' ? null : filter);
+    provider.refresh();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Projects'),
+        actions: [
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _refreshData),
+        ],
+      ),
+      body: Column(
+        children: [
+          // 搜索栏
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search projects...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                filled: true,
+                fillColor: Colors.grey.shade100,
+              ),
+              onSubmitted: _handleSearch,
+            ),
+          ),
+
+          // 过滤器标签
+          Container(
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                _buildFilterChip('All', 'all', _selectedFilter, _handleFilter),
+                const SizedBox(width: 8),
+                _buildFilterChip(
+                  'Active',
+                  'active',
+                  _selectedFilter,
+                  _handleFilter,
+                ),
+                const SizedBox(width: 8),
+                _buildFilterChip(
+                  'Archived',
+                  'archived',
+                  _selectedFilter,
+                  _handleFilter,
+                ),
+                const SizedBox(width: 8),
+                _buildFilterChip(
+                  'Draft',
+                  'draft',
+                  _selectedFilter,
+                  _handleFilter,
+                ),
+              ],
+            ),
+          ),
+
+          // 项目列表
+          Expanded(
+            child: Consumer<ProjectProvider>(
+              builder: (context, provider, child) {
+                if (provider.isLoading && provider.projects.isEmpty) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (provider.error != null) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Colors.red.shade400,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          provider.error!,
+                          style: TextStyle(color: Colors.grey.shade600),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _refreshData,
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                if (provider.projects.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.folder_open,
+                          size: 64,
+                          color: Colors.grey.shade400,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No projects found',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return RefreshIndicator(
+                  onRefresh: _refreshData,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount:
+                        provider.projects.length + (provider.hasMore ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == provider.projects.length) {
+                        // 加载更多指示器
+                        if (provider.isLoadingMore) {
+                          return const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Center(child: CircularProgressIndicator()),
+                          );
+                        } else {
+                          return Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Center(
+                              child: ElevatedButton(
+                                onPressed: _loadMore,
+                                child: const Text('Load More'),
+                              ),
+                            ),
+                          );
+                        }
+                      }
+
+                      final project = provider.projects[index];
+                      return _buildProjectCard(project, context);
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) => const CreateProjectDialog(),
+          );
+        },
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  /// 构建过滤标签
+  Widget _buildFilterChip(
+    String label,
+    String value,
+    String selectedValue,
+    Function(String) onSelected,
+  ) {
+    final isSelected = selectedValue == value;
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (selected) => onSelected(value),
+      backgroundColor: Colors.grey.shade200,
+      selectedColor: Colors.deepPurple.shade100,
+      checkmarkColor: Colors.deepPurple,
+    );
+  }
+
+  /// 构建项目卡片
+  Widget _buildProjectCard(UserProject project, BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: () => context.push('/projects/${project.id}'),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  // 项目图标
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.deepPurple.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      project.emoji ?? '🚀',
+                      style: const TextStyle(fontSize: 24),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+
+                  // 项目信息
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          project.projectName,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          project.projectDescription,
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 14,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // 状态指示器
+                  _buildStatusIndicator(project.status),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              // 标签
+              if (project.tags.isNotEmpty)
+                Wrap(
+                  spacing: 8,
+                  children: project.tags.take(3).map((tag) {
+                    return Chip(
+                      label: Text(tag, style: const TextStyle(fontSize: 12)),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
+                    );
+                  }).toList(),
+                ),
+
+              const SizedBox(height: 12),
+
+              // 底部信息
+              Row(
+                children: [
+                  Icon(Icons.schedule, size: 16, color: Colors.grey.shade400),
+                  const SizedBox(width: 4),
+                  Text(
+                    _formatTimeAgo(project.updatedAt),
+                    style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                  ),
+                  const SizedBox(width: 16),
+                  if (project.latestPreviewUrl != null) ...[
+                    Icon(
+                      Icons.visibility,
+                      size: 16,
+                      color: Colors.grey.shade400,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Preview available',
+                      style: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 构建状态指示器
+  Widget _buildStatusIndicator(String status) {
+    Color color;
+    String label;
+
+    switch (status) {
+      case 'active':
+        color = Colors.green;
+        label = 'Active';
+        break;
+      case 'archived':
+        color = Colors.orange;
+        label = 'Archived';
+        break;
+      case 'draft':
+        color = Colors.grey;
+        label = 'Draft';
+        break;
+      default:
+        color = Colors.grey;
+        label = status;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  /// 格式化时间
+  String _formatTimeAgo(String isoString) {
+    try {
+      final dateTime = DateTime.parse(isoString);
+      final now = DateTime.now();
+      final difference = now.difference(dateTime);
+
+      if (difference.inMinutes < 1) {
+        return 'just now';
+      } else if (difference.inMinutes < 60) {
+        return '${difference.inMinutes}m ago';
+      } else if (difference.inHours < 24) {
+        return '${difference.inHours}h ago';
+      } else if (difference.inDays < 7) {
+        return '${difference.inDays}d ago';
+      } else {
+        return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+      }
+    } catch (e) {
+      return '';
+    }
+  }
+}
