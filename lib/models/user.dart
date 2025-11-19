@@ -96,4 +96,53 @@ class User {
       'bearerToken': bearerToken,
     };
   }
+
+  /// 复制对象并更新字段
+  User copyWith({
+    int? id,
+    String? slug,
+    bool? isAgent,
+    String? picture,
+    bool? isOnboarded,
+    bool? isAdmin,
+    bool? isSuperAdmin,
+    bool? isCompany,
+    String? companyName,
+    String? companyWebsite,
+    String? industry,
+    String? inviteCode,
+    String? referralCode,
+    String? solWallet,
+    String? suiWallet,
+    String? evmWallet,
+    String? sub,
+    String? email,
+    String? lastLoginType,
+    String? stripeCustomerId,
+    String? bearerToken,
+  }) {
+    return User(
+      id: id ?? this.id,
+      slug: slug ?? this.slug,
+      isAgent: isAgent ?? this.isAgent,
+      picture: picture ?? this.picture,
+      isOnboarded: isOnboarded ?? this.isOnboarded,
+      isAdmin: isAdmin ?? this.isAdmin,
+      isSuperAdmin: isSuperAdmin ?? this.isSuperAdmin,
+      isCompany: isCompany ?? this.isCompany,
+      companyName: companyName ?? this.companyName,
+      companyWebsite: companyWebsite ?? this.companyWebsite,
+      industry: industry ?? this.industry,
+      inviteCode: inviteCode ?? this.inviteCode,
+      referralCode: referralCode ?? this.referralCode,
+      solWallet: solWallet ?? this.solWallet,
+      suiWallet: suiWallet ?? this.suiWallet,
+      evmWallet: evmWallet ?? this.evmWallet,
+      sub: sub ?? this.sub,
+      email: email ?? this.email,
+      lastLoginType: lastLoginType ?? this.lastLoginType,
+      stripeCustomerId: stripeCustomerId ?? this.stripeCustomerId,
+      bearerToken: bearerToken ?? this.bearerToken,
+    );
+  }
 }

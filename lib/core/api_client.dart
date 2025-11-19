@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http_parser/http_parser.dart';
 
 class ApiResponse<T> {
   final int code;
@@ -67,11 +69,56 @@ class ApiClient {
     return _handleResponse<T>(response, fromJsonT);
   }
 
+  /// Upload file to the server
+  Future<T> uploadFile<T>(
+    String endpoint,
+    Uint8List fileBytes,
+    String fileName, {
+    T Function(dynamic)? fromJsonT,
+    String fieldName = 'file',
+  }) async {
+    final headers = await _getHeaders();
+    // Remove Content-Type header to let http set multipart boundary
+    headers.remove('Content-Type');
+
+    final request = http.MultipartRequest('POST', Uri.parse('$baseUrl$endpoint'));
+    request.headers.addAll(headers);
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        fieldName,
+        fileBytes,
+        filename: fileName,
+        contentType: _getContentType(fileName),
+      ),
+    );
+
+    final response = await request.send();
+    final responseBody = await response.stream.bytesToString();
+    final httpResponse = http.Response(responseBody, response.statusCode);
+
+    return _handleResponse<T>(httpResponse, fromJsonT);
+  }
+
+  MediaType _getContentType(String fileName) {
+    final extension = fileName.split('.').last.toLowerCase();
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+        return MediaType.parse('image/jpeg');
+      case 'png':
+        return MediaType.parse('image/png');
+      case 'webp':
+        return MediaType.parse('image/webp');
+      default:
+        return MediaType.parse('application/octet-stream');
+    }
+  }
+
   T _handleResponse<T>(http.Response response, T Function(dynamic)? fromJsonT) {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       final Map<String, dynamic> json = jsonDecode(utf8.decode(response.bodyBytes));
       final apiResponse = ApiResponse<T>.fromJson(json, fromJsonT);
-      
+
       if (apiResponse.isSuccess) {
         return apiResponse.data as T;
       } else {
