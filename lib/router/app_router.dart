@@ -8,6 +8,7 @@ import '../screens/project_detail_screen.dart';
 import '../screens/app_detail_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/pricing_screen.dart';
+import '../screens/language_settings_screen.dart';
 import '../providers/auth_provider.dart';
 
 Page<dynamic> _buildPageWithTransition(
@@ -81,6 +82,14 @@ GoRouter createAppRouter(BuildContext context) {
         path: '/settings',
         pageBuilder: (context, state) =>
             _buildPageWithTransition(context, state, const MainScreen(initialIndex: 3)),
+      ),
+      GoRoute(
+        path: '/settings/language',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const LanguageSettingsScreen(),
+        ),
       ),
       GoRoute(
         path: '/projects/new',

@@ -141,6 +141,70 @@ class AppLocalizations {
       'sort': '排序',
       'refresh': '刷新',
     },
+    'zh_Hant': {
+      // Auth
+      'login': '登入',
+      'logout': '登出',
+      'email': '電子郵件',
+      'password': '密碼',
+      'verify_code': '驗證碼',
+      'send_code': '發送驗證碼',
+      'login_with_password': '使用密碼登入',
+      'login_with_code': '使用驗證碼登入',
+
+      // Navigation
+      'dashboard': '儀表板',
+      'community': '社群',
+      'docs': '文件',
+      'settings': '設定',
+      'profile': '個人資料',
+      'pricing': '定價',
+
+      // Dashboard
+      'welcome': '歡迎',
+      'recent_projects': '最近的專案',
+      'activity': '活動',
+      'create_project': '建立專案',
+
+      // Community
+      'no_posts_yet': '暫無貼文',
+      'be_first_to_share': '成為第一個分享的人！',
+      'failed_to_load_posts': '載入貼文失敗',
+      'retry': '重試',
+      'just_now': '剛剛',
+
+      // Profile
+      'edit_profile': '編輯資料',
+      'save_changes': '儲存變更',
+      'cancel': '取消',
+      'company_name': '公司名稱',
+      'company_website': '公司網站',
+      'industry': '產業',
+      'basic_information': '基本資訊',
+      'wallet_addresses': '錢包地址',
+      'other': '其他',
+
+      // Settings
+      'language': '語言',
+      'appearance': '外觀',
+      'notifications': '通知',
+      'privacy': '隱私',
+      'about': '關於',
+      'contact_support': '聯絡客服',
+
+      // Common
+      'loading': '載入中...',
+      'error': '錯誤',
+      'success': '成功',
+      'confirm': '確認',
+      'delete': '刪除',
+      'edit': '編輯',
+      'save': '儲存',
+      'search': '搜尋',
+      'filter': '篩選',
+      'sort': '排序',
+      'refresh': '重新整理',
+    },
     'es': {
       // Auth
       'login': 'Iniciar sesión',
@@ -268,6 +332,70 @@ class AppLocalizations {
       'filter': 'تصفية',
       'sort': 'ترتيب',
       'refresh': 'تحديث',
+    },
+    'ja': {
+      // Auth
+      'login': 'ログイン',
+      'logout': 'ログアウト',
+      'email': 'メールアドレス',
+      'password': 'パスワード',
+      'verify_code': '認証コード',
+      'send_code': 'コードを送信',
+      'login_with_password': 'パスワードでログイン',
+      'login_with_code': 'コードでログイン',
+
+      // Navigation
+      'dashboard': 'ダッシュボード',
+      'community': 'コミュニティ',
+      'docs': 'ドキュメント',
+      'settings': '設定',
+      'profile': 'プロフィール',
+      'pricing': '料金',
+
+      // Dashboard
+      'welcome': 'ようこそ',
+      'recent_projects': '最近のプロジェクト',
+      'activity': 'アクティビティ',
+      'create_project': 'プロジェクトを作成',
+
+      // Community
+      'no_posts_yet': 'まだ投稿がありません',
+      'be_first_to_share': '最初の投稿者になりましょう！',
+      'failed_to_load_posts': '投稿の読み込みに失敗しました',
+      'retry': '再試行',
+      'just_now': 'たった今',
+
+      // Profile
+      'edit_profile': 'プロフィールを編集',
+      'save_changes': '変更を保存',
+      'cancel': 'キャンセル',
+      'company_name': '会社名',
+      'company_website': '会社のウェブサイト',
+      'industry': '業種',
+      'basic_information': '基本情報',
+      'wallet_addresses': 'ウォレットアドレス',
+      'other': 'その他',
+
+      // Settings
+      'language': '言語',
+      'appearance': '外観',
+      'notifications': '通知',
+      'privacy': 'プライバシー',
+      'about': 'このアプリについて',
+      'contact_support': 'サポートに連絡',
+
+      // Common
+      'loading': '読み込み中...',
+      'error': 'エラー',
+      'success': '成功',
+      'confirm': '確認',
+      'delete': '削除',
+      'edit': '編集',
+      'save': '保存',
+      'search': '検索',
+      'filter': 'フィルター',
+      'sort': '並べ替え',
+      'refresh': '更新',
     },
     'fr': {
       // Auth
@@ -399,8 +527,25 @@ class AppLocalizations {
     },
   };
 
+  static String _localeKeyFromLocale(Locale locale) {
+    if (locale.languageCode == 'zh') {
+      if (locale.scriptCode == 'Hant' ||
+          locale.countryCode == 'TW' ||
+          locale.countryCode == 'HK' ||
+          locale.countryCode == 'MO') {
+        return 'zh_Hant';
+      }
+      return 'zh';
+    }
+
+    return locale.languageCode;
+  }
+
   String translate(String key) {
-    return _localizedValues[locale.languageCode]?[key] ?? key;
+    final localeKey = _localeKeyFromLocale(locale);
+    return _localizedValues[localeKey]?[key] ??
+        _localizedValues['en']?[key] ??
+        key;
   }
 }
 
@@ -410,7 +555,8 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) {
-    return ['en', 'zh', 'es', 'ar', 'fr', 'ru'].contains(locale.languageCode);
+    final localeKey = AppLocalizations._localeKeyFromLocale(locale);
+    return ['en', 'zh', 'zh_Hant', 'ja', 'fr', 'ru'].contains(localeKey);
   }
 
   @override

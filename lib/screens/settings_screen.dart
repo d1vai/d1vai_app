@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
+import '../providers/locale_provider.dart';
+import '../l10n/app_localizations.dart';
 import '../widgets/login_required_dialog.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -36,9 +38,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: Text(loc?.translate('settings') ?? 'Settings'),
         actions: [
           IconButton(
             icon: const Icon(Icons.close),
@@ -53,7 +56,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
             child: Row(
               children: [
-                Expanded(child: _buildTabButton(0, 'Profile', Icons.person)),
+                Expanded(
+                  child: _buildTabButton(
+                    0,
+                    loc?.translate('profile') ?? 'Profile',
+                    Icons.person,
+                  ),
+                ),
                 const SizedBox(width: 8),
                 Expanded(child: _buildTabButton(1, 'GitHub', Icons.code)),
                 const SizedBox(width: 8),
@@ -109,6 +118,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildProfileTab() {
     return Consumer2<AuthProvider, ProfileProvider>(
       builder: (context, authProvider, profileProvider, child) {
+        final loc = AppLocalizations.of(context);
+        final localeProvider = Provider.of<LocaleProvider>(context);
         final user = authProvider.user;
 
         if (user == null) {
@@ -152,15 +163,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const Divider(height: 1),
                   ListTile(
                     leading: const Icon(Icons.language),
-                    title: const Text('Language'),
-                    subtitle: const Text('English'),
+                    title: Text(loc?.translate('language') ?? 'Language'),
+                    subtitle: Text(localeProvider.currentLanguageName),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Language feature coming soon'),
-                        ),
-                      );
+                      context.push('/settings/language');
                     },
                   ),
                   const Divider(height: 1),
@@ -213,9 +220,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   context.go('/login');
                 },
                 icon: const Icon(Icons.logout, color: Colors.red),
-                label: const Text(
-                  'Logout',
-                  style: TextStyle(color: Colors.red),
+                label: Text(
+                  loc?.translate('logout') ?? 'Logout',
+                  style: const TextStyle(color: Colors.red),
                 ),
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: Colors.red),

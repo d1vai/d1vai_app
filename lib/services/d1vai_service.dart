@@ -15,9 +15,9 @@ class D1vaiService {
 
   /// 发送验证码到邮箱
   Future<Map<String, dynamic>> postUserVerifyCode(String email) async {
-    return _apiClient.post<Map<String, dynamic>>('/user/verify-code', {
+    return _apiClient.postWithQuery<Map<String, dynamic>>('/user/verify-code', {
       'email': email,
-    });
+    }, {});
   }
 
   /// 使用验证码登录
@@ -38,7 +38,9 @@ class D1vaiService {
 
   /// 接受邀请码
   Future<void> postUserAcceptInvitation(String code) async {
-    return _apiClient.post<void>('/user/accept-invitation', {'code': code});
+    return _apiClient.post<void>('/user/invitation/accept', {
+      'invite_code': code,
+    });
   }
 
   // ============================================
@@ -56,7 +58,7 @@ class D1vaiService {
   /// 更新用户资料
   Future<User> putUserProfile(Map<String, dynamic> data) async {
     return _apiClient.put<User>(
-      '/user/profile',
+      '/user/info',
       data,
       fromJsonT: (json) => User.fromJson(json),
     );
@@ -64,9 +66,7 @@ class D1vaiService {
 
   /// 设置 onboarding 状态
   Future<void> postUserOnboardedSet(bool isOnboarded) async {
-    return _apiClient.post<void>('/user/onboarded', {
-      'is_onboarded': isOnboarded,
-    });
+    return _apiClient.post<void>('/user/onboarded/set', {'value': isOnboarded});
   }
 
   /// 上传头像

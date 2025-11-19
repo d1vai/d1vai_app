@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import '../l10n/app_localizations.dart';
 import 'dashboard_screen.dart';
 import 'community_screen.dart';
 import 'docs_screen.dart';
@@ -33,29 +34,30 @@ class _MainScreenState extends State<MainScreen> {
     ];
   }
 
-  List<PersistentBottomNavBarItem> _navBarsItems() {
+  List<PersistentBottomNavBarItem> _navBarsItems(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     return [
       PersistentBottomNavBarItem(
         icon: Icon(PhosphorIcons.house()),
-        title: ("Dashboard"),
+        title: (loc?.translate('dashboard') ?? 'Dashboard'),
         activeColorPrimary: Colors.deepPurple,
         inactiveColorPrimary: Colors.grey,
       ),
       PersistentBottomNavBarItem(
         icon: Icon(PhosphorIcons.users()),
-        title: ("Community"),
+        title: (loc?.translate('community') ?? 'Community'),
         activeColorPrimary: Colors.deepPurple,
         inactiveColorPrimary: Colors.grey,
       ),
       PersistentBottomNavBarItem(
         icon: Icon(PhosphorIcons.book()),
-        title: ("Docs"),
+        title: (loc?.translate('docs') ?? 'Docs'),
         activeColorPrimary: Colors.deepPurple,
         inactiveColorPrimary: Colors.grey,
       ),
       PersistentBottomNavBarItem(
         icon: Icon(PhosphorIcons.gear()),
-        title: ("Settings"),
+        title: (loc?.translate('settings') ?? 'Settings'),
         activeColorPrimary: Colors.deepPurple,
         inactiveColorPrimary: Colors.grey,
       ),
@@ -68,7 +70,7 @@ class _MainScreenState extends State<MainScreen> {
       context,
       controller: _controller,
       screens: _buildScreens(),
-      items: _navBarsItems(),
+      items: _navBarsItems(context),
       confineToSafeArea: true,
       backgroundColor: Colors.white,
       handleAndroidBackButtonPress: true,

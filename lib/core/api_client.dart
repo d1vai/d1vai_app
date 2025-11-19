@@ -42,11 +42,33 @@ class ApiClient {
     };
   }
 
-  Future<T> get<T>(String endpoint, {T Function(dynamic)? fromJsonT}) async {
+  Future<T> get<T>(
+    String endpoint, {
+    T Function(dynamic)? fromJsonT,
+    Map<String, String>? queryParams,
+  }) async {
     final headers = await _getHeaders();
-    final response = await client.get(
-      Uri.parse('$baseUrl$endpoint'),
+    final uri = Uri.parse(
+      '$baseUrl$endpoint',
+    ).replace(queryParameters: queryParams);
+    final response = await client.get(uri, headers: headers);
+    return _handleResponse<T>(response, fromJsonT);
+  }
+
+  Future<T> postWithQuery<T>(
+    String endpoint,
+    Map<String, String> queryParams,
+    dynamic body, {
+    T Function(dynamic)? fromJsonT,
+  }) async {
+    final headers = await _getHeaders();
+    final uri = Uri.parse(
+      '$baseUrl$endpoint',
+    ).replace(queryParameters: queryParams);
+    final response = await client.post(
+      uri,
       headers: headers,
+      body: jsonEncode(body),
     );
     return _handleResponse<T>(response, fromJsonT);
   }
