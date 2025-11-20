@@ -24,6 +24,26 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+
+	<!-- 网络访问配置 -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+
+	<!-- 存储访问权限描述 -->
+	<key>NSUserTrackingUsageDescription</key>
+	<string>此应用需要访问设备存储以保存用户数据和缓存</string>
+
+	<!-- 摄像头权限描述 (拍照修改头像) -->
+	<key>NSCameraUsageDescription</key>
+	<string>此应用需要访问相机以拍摄头像照片</string>
+
+	<!-- 相册访问权限描述 (选择头像照片) -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>此应用需要访问相册以选择头像照片</string>
+
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

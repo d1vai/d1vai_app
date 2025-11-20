@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../screens/splash_screen.dart';
 import '../screens/login_screen.dart';
+import '../screens/onboarding_screen.dart';
 import '../screens/main_screen.dart';
 import '../screens/project_detail_screen.dart';
 import '../screens/app_detail_screen.dart';
@@ -35,25 +36,37 @@ GoRouter createAppRouter(BuildContext context) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final isAuthenticated = authProvider.isAuthenticated;
       final isLoading = authProvider.isLoading;
-      
+      final needsOnboarding = authProvider.needsOnboarding;
+
       final isLoginPage = state.matchedLocation == '/login';
       final isSplashPage = state.matchedLocation == '/';
-      
+      final isOnboardingPage = state.matchedLocation == '/onboarding';
+
       // 如果正在加载，保持在当前页面
       if (isLoading && !isSplashPage) {
         return null;
       }
-      
+
       // 如果未登录且不在登录页，重定向到登录页
       if (!isAuthenticated && !isLoginPage && !isSplashPage) {
         return '/login';
       }
-      
+
+      // 如果已登录且需要完成 onboarding，且不在 onboarding 页面，重定向到 onboarding
+      if (isAuthenticated && needsOnboarding && !isOnboardingPage) {
+        return '/onboarding';
+      }
+
+      // 如果已登录且已完成 onboarding，且在 onboarding 页面，重定向到 dashboard
+      if (isAuthenticated && !needsOnboarding && isOnboardingPage) {
+        return '/dashboard';
+      }
+
       // 如果已登录且在登录页，重定向到 dashboard
       if (isAuthenticated && isLoginPage) {
         return '/dashboard';
       }
-      
+
       return null;
     },
     routes: [
@@ -62,6 +75,14 @@ GoRouter createAppRouter(BuildContext context) {
         path: '/login',
         pageBuilder: (context, state) =>
             _buildPageWithTransition(context, state, const LoginScreen()),
+      ),
+      GoRoute(
+        path: '/onboarding',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const OnboardingScreen(),
+        ),
       ),
       GoRoute(
         path: '/dashboard',

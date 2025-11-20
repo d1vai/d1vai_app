@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
 import '../models/user.dart';
@@ -28,6 +29,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Provider.of<ProfileProvider>(context, listen: false).initForm(user);
       }
     });
+  }
+
+  /// 构建网络图像（支持 SVG 和位图）
+  Widget _buildNetworkImage(String imageUrl) {
+    if (imageUrl.endsWith('.svg')) {
+      return SvgPicture.network(
+        imageUrl,
+        fit: BoxFit.cover,
+      );
+    } else {
+      return CachedNetworkImage(
+        imageUrl: imageUrl,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => Container(
+          color: Colors.grey.shade200,
+          child: const Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+        errorWidget: (context, url, error) => Container(
+          color: Colors.grey.shade200,
+          child: const Icon(Icons.error),
+        ),
+      );
+    }
   }
 
   /// 显示登录提示对话框
@@ -100,20 +126,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
               CircleAvatar(
                 radius: 60,
                 backgroundColor: Colors.grey.shade200,
-                backgroundImage: user.picture.isNotEmpty
+                backgroundImage: user.picture.isNotEmpty && !user.picture.endsWith('.svg')
                     ? CachedNetworkImageProvider(user.picture)
                     : null,
-                child: user.picture.isEmpty
-                    ? Text(
-                        user.companyName.isNotEmpty
-                            ? user.companyName.substring(0, 1).toUpperCase()
-                            : 'U',
-                        style: const TextStyle(
-                          fontSize: 48,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
-                        ),
-                      )
+                child: user.picture.isEmpty || user.picture.endsWith('.svg')
+                    ? (user.picture.isNotEmpty && user.picture.endsWith('.svg')
+                        ? ClipOval(
+                            child: SvgPicture.network(
+                              user.picture,
+                              width: 120,
+                              height: 120,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : Text(
+                            user.companyName.isNotEmpty
+                                ? user.companyName.substring(0, 1).toUpperCase()
+                                : 'U',
+                            style: const TextStyle(
+                              fontSize: 48,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                            ),
+                          ))
                     : null,
               ),
               Positioned(
@@ -218,20 +253,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
               CircleAvatar(
                 radius: 60,
                 backgroundColor: Colors.grey.shade200,
-                backgroundImage: user.picture.isNotEmpty
+                backgroundImage: user.picture.isNotEmpty && !user.picture.endsWith('.svg')
                     ? CachedNetworkImageProvider(user.picture)
                     : null,
-                child: user.picture.isEmpty
-                    ? Text(
-                        user.companyName.isNotEmpty
-                            ? user.companyName.substring(0, 1).toUpperCase()
-                            : 'U',
-                        style: const TextStyle(
-                          fontSize: 48,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
-                        ),
-                      )
+                child: user.picture.isEmpty || user.picture.endsWith('.svg')
+                    ? (user.picture.isNotEmpty && user.picture.endsWith('.svg')
+                        ? ClipOval(
+                            child: SvgPicture.network(
+                              user.picture,
+                              width: 120,
+                              height: 120,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : Text(
+                            user.companyName.isNotEmpty
+                                ? user.companyName.substring(0, 1).toUpperCase()
+                                : 'U',
+                            style: const TextStyle(
+                              fontSize: 48,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                            ),
+                          ))
                     : null,
               ),
               Positioned(
@@ -552,10 +596,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   },
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: CachedNetworkImage(
-                      imageUrl: avatarUrl,
-                      fit: BoxFit.cover,
-                    ),
+                    child: _buildNetworkImage(avatarUrl),
                   ),
                 );
               },

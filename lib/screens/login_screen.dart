@@ -5,15 +5,26 @@ import 'package:go_router/go_router.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/otp_input_field.dart';
+import '../l10n/app_localizations.dart';
 
 /// 登录模式枚举
 enum LoginMode {
-  code('code', '验证码登录'),
-  password('password', '密码登录');
+  code('code'),
+  password('password');
 
-  const LoginMode(this.value, this.label);
+  const LoginMode(this.value);
   final String value;
-  final String label;
+
+  String getLabel(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      // fallback for old usage before init
+      return this == code ? '验证码登录' : '密码登录';
+    }
+    return this == code
+        ? loc.translate('login_with_code')
+        : loc.translate('login_with_password');
+  }
 
   static LoginMode fromString(String code) {
     return LoginMode.values.firstWhere(
@@ -80,9 +91,11 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       } else {
         if (mounted) {
+          final loc = AppLocalizations.of(context);
+          final suffix = loc?.translate('resend_after') ?? '秒后重发';
           setState(() {
             _countdownSeconds--;
-            _countdownText = '$_countdownSeconds秒后重发';
+            _countdownText = '$_countdownSeconds$suffix';
           });
         }
       }
@@ -93,8 +106,10 @@ class _LoginScreenState extends State<LoginScreen> {
   void _resetCountdown() {
     _countdownTimer?.cancel();
     _countdownSeconds = 60;
+    final loc = AppLocalizations.of(context);
+    final suffix = loc?.translate('resend_after') ?? '秒后重发';
     setState(() {
-      _countdownText = '60秒后重发';
+      _countdownText = '60$suffix';
     });
     _startCountdownTimer();
   }
@@ -127,12 +142,14 @@ class _LoginScreenState extends State<LoginScreen> {
   /// 显示错误消息
   void _showError(String message) {
     debugPrint(message);
+    final loc = AppLocalizations.of(context);
+    final title = loc?.translate('login_failed') ?? '登录失败';
     final snackBar = SnackBar(
       elevation: 0,
       behavior: SnackBarBehavior.floating,
       backgroundColor: Colors.transparent,
       content: AwesomeSnackbarContent(
-        title: '登录失败',
+        title: title,
         message: message,
         contentType: ContentType.failure,
       ),
@@ -142,12 +159,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
   /// 显示成功消息
   void _showSuccess(String message) {
+    final loc = AppLocalizations.of(context);
+    final title = loc?.translate('success') ?? '成功';
     final snackBar = SnackBar(
       elevation: 0,
       behavior: SnackBarBehavior.floating,
       backgroundColor: Colors.transparent,
       content: AwesomeSnackbarContent(
-        title: '成功',
+        title: title,
         message: message,
         contentType: ContentType.success,
       ),
@@ -157,12 +176,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   /// 验证码登录
   Future<void> _loginWithCode() async {
+    final loc = AppLocalizations.of(context);
     if (_emailController.text.isEmpty) {
-      _showError('请输入邮箱地址');
+      _showError(loc?.translate('email_required') ?? '请输入邮箱地址');
       return;
     }
     if (_otpCode.length != 6) {
-      _showError('请输入完整的验证码');
+      _showError(loc?.translate('verify_code_complete') ?? '请输入完整的验证码');
       return;
     }
 
@@ -172,7 +192,7 @@ class _LoginScreenState extends State<LoginScreen> {
         context,
         listen: false,
       ).verifyCodeAndLogin(_emailController.text.trim(), _otpCode);
-      _showSuccess('登录成功');
+      _showSuccess(loc?.translate('login_success') ?? '登录成功');
       if (mounted) context.go('/dashboard');
     } catch (e) {
       _showError(e.toString());
@@ -183,6 +203,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   /// 密码登录
   Future<void> _loginWithPassword() async {
+    final loc = AppLocalizations.of(context);
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
@@ -191,7 +212,7 @@ class _LoginScreenState extends State<LoginScreen> {
         context,
         listen: false,
       ).login(_emailController.text.trim(), _passwordController.text);
-      _showSuccess('登录成功');
+      _showSuccess(loc?.translate('login_success') ?? '登录成功');
       if (mounted) context.go('/dashboard');
     } catch (e) {
       _showError(e.toString());
@@ -202,8 +223,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   /// 发送验证码
   Future<void> _sendCode() async {
+    final loc = AppLocalizations.of(context);
     if (_emailController.text.isEmpty) {
-      _showError('请输入邮箱地址');
+      _showError(loc?.translate('email_required') ?? '请输入邮箱地址');
       return;
     }
 
@@ -220,7 +242,7 @@ class _LoginScreenState extends State<LoginScreen> {
       });
 
       _resetCountdown();
-      _showSuccess('验证码已发送，请查收邮件');
+      _showSuccess(loc?.translate('code_sent_success') ?? '验证码已发送，请查收邮件');
     } catch (e) {
       _showError(e.toString());
     } finally {
@@ -230,6 +252,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -280,7 +304,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   : null,
                             ),
                             child: Text(
-                              mode.label,
+                              mode.getLabel(context),
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: isSelected
@@ -304,20 +328,20 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: '邮箱地址',
-                    hintText: '请输入您的邮箱',
-                    prefixIcon: Icon(Icons.email_outlined),
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: loc?.translate('email_address') ?? '邮箱地址',
+                    hintText: loc?.translate('enter_email') ?? '请输入您的邮箱',
+                    prefixIcon: const Icon(Icons.email_outlined),
+                    border: const OutlineInputBorder(),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return '请输入邮箱地址';
+                      return loc?.translate('email_required') ?? '请输入邮箱地址';
                     }
                     if (!RegExp(
                       r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
                     ).hasMatch(value)) {
-                      return '请输入有效的邮箱地址';
+                      return loc?.translate('email_invalid') ?? '请输入有效的邮箱地址';
                     }
                     return null;
                   },
@@ -330,15 +354,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextFormField(
                     controller: _passwordController,
                     obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: '密码',
-                      hintText: '请输入密码',
-                      prefixIcon: Icon(Icons.lock_outline),
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: loc?.translate('password') ?? '密码',
+                      hintText: loc?.translate('enter_password') ?? '请输入密码',
+                      prefixIcon: const Icon(Icons.lock_outline),
+                      border: const OutlineInputBorder(),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return '请输入密码';
+                        return loc?.translate('password_required') ?? '请输入密码';
                       }
                       return null;
                     },
@@ -382,12 +406,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                 label: Text(
                                   _isSendingCode
-                                      ? '发送中...'
+                                      ? loc?.translate('sending') ?? '发送中...'
                                       : (_countdownSeconds < 60 && _isCodeSent
                                             ? _countdownText
                                             : (_isCodeSent
-                                                  ? '重新发送验证码'
-                                                  : '发送验证码')),
+                                                  ? loc?.translate('resend_code') ?? '重新发送验证码'
+                                                  : loc?.translate('send_code') ?? '发送验证码')),
                                   style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,
@@ -411,9 +435,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       // 验证码输入框 - 只有发送后才显示
                       if (_isCodeSent) ...[
-                        const Text(
-                          '请输入验证码',
-                          style: TextStyle(
+                        Text(
+                          loc?.translate('verify_code') ?? '验证码',
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                             color: Colors.grey,
@@ -445,7 +469,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  '验证码已发送至 ${_emailController.text.trim()}',
+                                  '${loc?.translate('code_sent_to') ?? '验证码已发送至'} ${_emailController.text.trim()}',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Colors.green.shade700,
@@ -487,7 +511,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : Text(
-                            _loginMode == LoginMode.password ? '登录' : '验证登录',
+                            _loginMode == LoginMode.password
+                                ? (loc?.translate('login') ?? '登录')
+                                : (loc?.translate('verify_login') ?? '验证登录'),
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -497,9 +523,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 48),
 
                 // 底部提示
-                const Text(
-                  '登录即表示您同意我们的服务条款和隐私政策',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                Text(
+                  loc?.translate('agree_terms') ?? '登录即表示您同意我们的服务条款和隐私政策',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
               ],

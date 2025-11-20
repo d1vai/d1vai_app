@@ -31,11 +31,20 @@ class ApiClient {
   static const String baseUrl = 'https://api.d1v.ai/api';
   final http.Client client;
 
-  ApiClient({http.Client? client}) : client = client ?? http.Client();
+  // 缓存 SharedPreferences 实例以避免重复调用
+  static SharedPreferences? _sharedPreferences;
+
+  ApiClient({http.Client? client}) : client = client ?? http.Client() {
+    _init();
+  }
+
+  Future<void> _init() async {
+    _sharedPreferences ??= await SharedPreferences.getInstance();
+  }
 
   Future<Map<String, String>> _getHeaders() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token');
+    _sharedPreferences ??= await SharedPreferences.getInstance();
+    final token = _sharedPreferences!.getString('auth_token');
     return {
       'Content-Type': 'application/json',
       if (token != null) 'Authorization': 'Bearer $token',

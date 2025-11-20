@@ -183,8 +183,8 @@ class AuthProvider extends ChangeNotifier {
       final avatars = <String>[];
 
       for (var i = 0; i < count; i++) {
-        final seed =
-            '$baseSeed-${DateTime.now().millisecondsSinceEpoch}-$i-${random.nextInt(1000000)}';
+        // 移除时间戳，使用一致性种子生成，确保相同用户生成相同头像列表
+        final seed = '$baseSeed-$i-${random.nextInt(1000000)}';
         final avatarUrl = _avatarGenerator.generateAvatar(
           seed,
           size: 160,

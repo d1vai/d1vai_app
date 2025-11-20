@@ -165,7 +165,7 @@ class _OtpInputFieldState extends State<OtpInputField> {
   }
 }
 
-/// 简化的 OTP 输入框 - 使用 Row 和 TextField 实现
+/// 优化的 OTP 输入框 - 支持一次性输入、粘贴和流畅操作
 class SimpleOtpInput extends StatefulWidget {
   final int count;
   final Function(String) onCompleted;
@@ -197,15 +197,21 @@ class _SimpleOtpInputState extends State<SimpleOtpInput> {
       _focusNodes.add(FocusNode());
       _otpValues.add('');
 
-      _controllers[i].addListener(() {
-        _onTextChanged(i);
-      });
+      _controllers[i].addListener(() => _onTextChanged(i));
     }
   }
 
   void _onTextChanged(int index) {
+    final currentValue = _controllers[index].text;
+
+    // 检查是否是粘贴操作（输入超过1个字符）
+    if (currentValue.length > 1) {
+      _handlePaste(currentValue, index);
+      return;
+    }
+
     setState(() {
-      _otpValues[index] = _controllers[index].text;
+      _otpValues[index] = currentValue;
     });
 
     final otpCode = _otpValues.join('');
@@ -213,11 +219,68 @@ class _SimpleOtpInputState extends State<SimpleOtpInput> {
       widget.onChanged!(otpCode);
     }
 
+    // 如果有输入，自动跳转到下一个框
+    if (currentValue.isNotEmpty && index < widget.count - 1) {
+      FocusScope.of(context).requestFocus(_focusNodes[index + 1]);
+    }
+
+    // 如果是删除操作且当前框为空，自动跳转到前一个框
+    if (currentValue.isEmpty && index > 0) {
+      // 检查是否是删除操作（检查前一个值不为空）
+      FocusScope.of(context).requestFocus(_focusNodes[index - 1]);
+      // 选中文本，方便用户继续删除或替换
+      _controllers[index - 1].selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: _controllers[index - 1].text.length,
+      );
+    }
+
+    // 检查是否完成输入
     if (otpCode.length == widget.count) {
       widget.onCompleted(otpCode);
-    } else if (_controllers[index].text.isNotEmpty &&
-        index < widget.count - 1) {
-      FocusScope.of(context).requestFocus(_focusNodes[index + 1]);
+    }
+  }
+
+  /// 处理粘贴操作
+  void _handlePaste(String value, int index) {
+    // 提取数字
+    final digits = value.replaceAll(RegExp(r'[^0-9]'), '');
+
+    if (digits.isEmpty) return;
+
+    // 从粘贴位置开始填充
+    int startIndex = index;
+    int digitIndex = 0;
+
+    // 填充当前框及后续框
+    while (digitIndex < digits.length && startIndex < widget.count) {
+      setState(() {
+        _otpValues[startIndex] = digits[digitIndex];
+        _controllers[startIndex].text = digits[digitIndex];
+      });
+
+      digitIndex++;
+      startIndex++;
+    }
+
+    // 通知变化
+    final otpCode = _otpValues.join('');
+    if (widget.onChanged != null) {
+      widget.onChanged!(otpCode);
+    }
+
+    // 跳转到下一个未填写的框
+    int nextIndex = startIndex;
+    if (nextIndex < widget.count) {
+      FocusScope.of(context).requestFocus(_focusNodes[nextIndex]);
+    } else {
+      // 所有框都填写完成，关闭键盘
+      FocusScope.of(context).unfocus();
+    }
+
+    // 检查是否完成输入
+    if (otpCode.length == widget.count) {
+      widget.onCompleted(otpCode);
     }
   }
 
@@ -246,7 +309,7 @@ class _SimpleOtpInputState extends State<SimpleOtpInput> {
             autofocus: widget.autoFocus && index == 0,
             keyboardType: TextInputType.number,
             textAlign: TextAlign.center,
-            maxLength: 1,
+            maxLength: 6, // 允许粘贴时输入多个字符
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             decoration: InputDecoration(
               counterText: '',
@@ -267,9 +330,26 @@ class _SimpleOtpInputState extends State<SimpleOtpInput> {
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
             ],
+            // 添加长按粘贴支持
+            onTap: () {
+              // 如果框为空且不是第一个，尝试从左框移动光标
+              if (_controllers[index].text.isEmpty && index > 0) {
+                _controllers[index - 1].selection = TextSelection.collapsed(
+                  offset: _controllers[index - 1].text.length,
+                );
+                FocusScope.of(context).requestFocus(_focusNodes[index - 1]);
+              }
+            },
             onFieldSubmitted: (value) {
               if (index < widget.count - 1 && value.isNotEmpty) {
                 FocusScope.of(context).requestFocus(_focusNodes[index + 1]);
+              } else if (index == widget.count - 1 && value.isNotEmpty) {
+                // 最后一个框，关闭键盘
+                final otpCode = _otpValues.join('');
+                if (otpCode.length == widget.count) {
+                  widget.onCompleted(otpCode);
+                }
+                FocusScope.of(context).unfocus();
               }
             },
           ),
