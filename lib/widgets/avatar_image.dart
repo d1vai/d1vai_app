@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 /// 通用头像显示组件
 /// 自动检测 SVG 和普通图片格式
@@ -29,20 +31,28 @@ class AvatarImage extends StatelessWidget {
     return ClipRRect(
       borderRadius: effectiveBorderRadius,
       child: isSvg
-          ? SvgPicture.network(
-              imageUrl,
-              width: size,
-              height: size,
-              fit: fit,
-              placeholderBuilder: (context) => _buildPlaceholder(),
-              // 忽略 SVG 中的 metadata 等不支持的标签
-              allowDrawingOutsideViewBox: true,
+          ? FutureBuilder<String>(
+              future: _loadAndCleanSvg(imageUrl),
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  return SvgPicture.string(
+                    snapshot.data!,
+                    width: size,
+                    height: size,
+                    fit: fit,
+                    excludeFromSemantics: true,
+                    placeholderBuilder: (context) => _buildPlaceholder(),
+                  );
+                }
+                return _buildPlaceholder();
+              },
             )
           : Image.network(
               imageUrl,
               width: size,
               height: size,
               fit: fit,
+              excludeFromSemantics: true,
               loadingBuilder: (context, child, loadingProgress) {
                 if (loadingProgress == null) return child;
                 return _buildPlaceholder();
@@ -50,6 +60,47 @@ class AvatarImage extends StatelessWidget {
               errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
             ),
     );
+  }
+
+  /// 加载并清理 SVG 数据，移除不支持的标签
+  Future<String> _loadAndCleanSvg(String url) async {
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        String svgContent = utf8.decode(response.bodyBytes);
+
+        // 清理 SVG 中不支持的标签和属性
+        svgContent = _cleanSvg(svgContent);
+
+        return svgContent;
+      }
+    } catch (e) {
+      // 静默处理错误，返回空 SVG
+      debugPrint('SVG 加载失败: $e');
+    }
+
+    // 返回简单的空 SVG
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="$size" height="$size"></svg>';
+  }
+
+  /// 清理 SVG 内容，移除可能导致警告的标签
+  String _cleanSvg(String svg) {
+    // 移除 <metadata> 标签及其内容
+    svg = svg.replaceAllMapped(
+      RegExp(r'<metadata[^>]*>[\s\S]*?</metadata>', caseSensitive: false),
+      (match) => '',
+    );
+
+    // 移除 <desc> 和 <title> 标签（这些可能导致警告）
+    svg = svg.replaceAllMapped(
+      RegExp(r'<(desc|title)[^>]*>[\s\S]*?</\1>', caseSensitive: false),
+      (match) => '',
+    );
+
+    // 清理 xmlns:xlink 属性（如果存在）
+    svg = svg.replaceAll('xmlns:xlink="http://www.w3.org/1999/xlink"', '');
+
+    return svg;
   }
 
   Widget _buildPlaceholder() {
