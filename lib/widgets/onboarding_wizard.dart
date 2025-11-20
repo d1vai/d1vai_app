@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../providers/auth_provider.dart';
+import 'avatar_image.dart';
 
 /// Onboarding 向导组件 - 管理完整的 Onboarding 流程
 class OnboardingWizard extends StatefulWidget {
@@ -428,15 +429,9 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              CircleAvatar(
-                radius: 32,
-                backgroundColor: Colors.grey.shade200,
-                backgroundImage: _avatarUrl.isNotEmpty
-                    ? NetworkImage(_avatarUrl) as ImageProvider
-                    : null,
-                child: _avatarUrl.isEmpty
-                    ? const Icon(Icons.person, size: 32, color: Colors.grey)
-                    : null,
+              CircularAvatarImage(
+                imageUrl: _avatarUrl.isEmpty ? 'placeholder' : _avatarUrl,
+                size: 64,
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -516,9 +511,9 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
                             width: isSelected ? 3 : 1,
                           ),
                         ),
-                        child: CircleAvatar(
-                          backgroundImage: NetworkImage(avatarUrl),
-                          backgroundColor: Colors.grey.shade200,
+                        child: CircularAvatarImage(
+                          imageUrl: avatarUrl,
+                          size: 60,
                         ),
                       ),
                     );

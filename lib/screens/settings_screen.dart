@@ -6,6 +6,7 @@ import '../providers/profile_provider.dart';
 import '../providers/locale_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/login_required_dialog.dart';
+import '../widgets/avatar_image.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -131,11 +132,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             Card(
               child: ListTile(
-                leading: CircleAvatar(
-                  backgroundImage: user.picture.isNotEmpty
-                      ? NetworkImage(user.picture)
-                      : null,
-                  child: user.picture.isEmpty ? const Icon(Icons.person) : null,
+                leading: CircularAvatarImage(
+                  imageUrl: user.picture.isEmpty ? 'placeholder' : user.picture,
+                  size: 40,
+                  placeholderText: user.companyName.isNotEmpty
+                      ? user.companyName
+                      : 'U',
                 ),
                 title: Text(
                   user.companyName.isNotEmpty ? user.companyName : 'User',
@@ -215,9 +217,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: () {
-                  Provider.of<AuthProvider>(context, listen: false).logout();
-                  context.go('/login');
+                onPressed: () async {
+                  final authProvider = Provider.of<AuthProvider>(
+                    context,
+                    listen: false,
+                  );
+
+                  try {
+                    // 显示加载提示
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('正在退出登录...'),
+                        duration: Duration(seconds: 1),
+                      ),
+                    );
+
+                    // 执行登出
+                    await authProvider.logout();
+
+                    if (!mounted) return;
+
+                    // 跳转到登录页
+                    context.go('/login');
+                  } catch (e) {
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('退出登录失败: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 },
                 icon: const Icon(Icons.logout, color: Colors.red),
                 label: Text(

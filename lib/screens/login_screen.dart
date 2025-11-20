@@ -2,9 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/otp_input_field.dart';
+import '../widgets/snackbar_helper.dart';
 import '../l10n/app_localizations.dart';
 
 /// 登录模式枚举
@@ -18,8 +18,8 @@ enum LoginMode {
   String getLabel(BuildContext context) {
     final loc = AppLocalizations.of(context);
     if (loc == null) {
-      // fallback for old usage before init
-      return this == code ? '验证码登录' : '密码登录';
+      // 使用英文作为默认回退，确保多语言一致性
+      return this == code ? 'Login with Code' : 'Login with Password';
     }
     return this == code
         ? loc.translate('login_with_code')
@@ -74,30 +74,38 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    // 安全地取消计时器
     _countdownTimer?.cancel();
+    _countdownTimer = null;
     super.dispose();
   }
 
   /// 启动倒计时定时器
   void _startCountdownTimer() {
+    // 取消之前的计时器
     _countdownTimer?.cancel();
+
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      // 检查组件是否已卸载
+      if (!mounted) {
+        timer.cancel();
+        _countdownTimer = null;
+        return;
+      }
+
       if (_countdownSeconds == 0) {
         timer.cancel();
-        if (mounted) {
-          setState(() {
-            _countdownText = '';
-          });
-        }
+        _countdownTimer = null;
+        setState(() {
+          _countdownText = '';
+        });
       } else {
-        if (mounted) {
-          final loc = AppLocalizations.of(context);
-          final suffix = loc?.translate('resend_after') ?? '秒后重发';
-          setState(() {
-            _countdownSeconds--;
-            _countdownText = '$_countdownSeconds$suffix';
-          });
-        }
+        final loc = AppLocalizations.of(context);
+        final suffix = loc?.translate('resend_after') ?? '秒后重发';
+        setState(() {
+          _countdownSeconds--;
+          _countdownText = '$_countdownSeconds$suffix';
+        });
       }
     });
   }
@@ -144,34 +152,26 @@ class _LoginScreenState extends State<LoginScreen> {
     debugPrint(message);
     final loc = AppLocalizations.of(context);
     final title = loc?.translate('login_failed') ?? '登录失败';
-    final snackBar = SnackBar(
-      elevation: 0,
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: Colors.transparent,
-      content: AwesomeSnackbarContent(
+    if (mounted) {
+      SnackBarHelper.showError(
+        context,
         title: title,
         message: message,
-        contentType: ContentType.failure,
-      ),
-    );
-    if (mounted) ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      );
+    }
   }
 
   /// 显示成功消息
   void _showSuccess(String message) {
     final loc = AppLocalizations.of(context);
     final title = loc?.translate('success') ?? '成功';
-    final snackBar = SnackBar(
-      elevation: 0,
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: Colors.transparent,
-      content: AwesomeSnackbarContent(
+    if (mounted) {
+      SnackBarHelper.showSuccess(
+        context,
         title: title,
         message: message,
-        contentType: ContentType.success,
-      ),
-    );
-    if (mounted) ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      );
+    }
   }
 
   /// 验证码登录
@@ -444,10 +444,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        SimpleOtpInput(
+                        OptimizedOtpInput(
                           count: 6,
                           onCompleted: _onOtpCompleted,
                           onChanged: _onOtpChanged,
+                          autoSubmit: true,
                         ),
                         const SizedBox(height: 16),
 
@@ -486,18 +487,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
                 const SizedBox(height: 32),
 
-                // 登录按钮 - 只有在密码模式或已发送验证码时才显示
-                if (_loginMode == LoginMode.password || _isCodeSent)
+                // 登录按钮 - 仅在密码模式下显示
+                if (_loginMode == LoginMode.password)
                   ElevatedButton(
-                    onPressed: _isLoading
-                        ? null
-                        : () {
-                            if (_loginMode == LoginMode.password) {
-                              _loginWithPassword();
-                            } else {
-                              _loginWithCode();
-                            }
-                          },
+                    onPressed: _isLoading ? null : _loginWithPassword,
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size(double.infinity, 56),
                       shape: RoundedRectangleBorder(
@@ -511,9 +504,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : Text(
-                            _loginMode == LoginMode.password
-                                ? (loc?.translate('login') ?? '登录')
-                                : (loc?.translate('verify_login') ?? '验证登录'),
+                            loc?.translate('login') ?? '登录',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,

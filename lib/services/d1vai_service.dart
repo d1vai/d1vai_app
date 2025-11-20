@@ -3,11 +3,15 @@ import '../core/api_client.dart';
 import '../models/user.dart';
 import '../models/project.dart';
 import '../models/community_post.dart';
+import 'cache_service.dart';
 
 class D1vaiService {
   final ApiClient _apiClient;
+  final CacheService _cacheService;
 
-  D1vaiService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
+  D1vaiService({ApiClient? apiClient})
+      : _apiClient = apiClient ?? ApiClient(),
+        _cacheService = CacheService();
 
   // ============================================
   // Auth Methods - 认证相关方法
@@ -96,13 +100,39 @@ class D1vaiService {
   // Projects Methods - 项目相关方法
   // ============================================
 
-  /// 获取用户项目列表
+  /// 获取用户项目列表（带缓存）
   Future<List<UserProject>> getUserProjects() async {
-    return _apiClient.get<List<UserProject>>(
+    const cacheKey = 'user_projects';
+
+    // 尝试从缓存获取
+    final cachedData = await _cacheService.get<List<UserProject>>(
+      cacheKey,
+      (json) {
+        final data = json['data'] as List;
+        return data.map((e) => UserProject.fromJson(e)).toList();
+      },
+    );
+
+    if (cachedData != null) {
+      return cachedData;
+    }
+
+    // 缓存未命中，从 API 获取
+    final data = await _apiClient.get<List<UserProject>>(
       '/projects',
       fromJsonT: (json) =>
           (json as List).map((e) => UserProject.fromJson(e)).toList(),
     );
+
+    // 存入缓存，设置 5 分钟过期
+    await _cacheService.set<List<UserProject>>(
+      cacheKey,
+      data,
+      (projects) => {'data': projects.map((p) => p.toJson()).toList()},
+      ttl: const Duration(minutes: 5),
+    );
+
+    return data;
   }
 
   /// 根据 ID 获取项目详情
@@ -123,21 +153,51 @@ class D1vaiService {
   // Community Methods - 社区相关方法
   // ============================================
 
-  /// 获取社区帖子列表
+  /// 获取社区帖子列表（带缓存）
   Future<List<CommunityPost>> getCommunityPosts({
     int limit = 20,
     int offset = 0,
   }) async {
-    return _apiClient.get<List<CommunityPost>>(
+    final cacheKey = 'community_posts_${limit}_$offset';
+
+    // 尝试从缓存获取
+    final cachedData = await _cacheService.get<List<CommunityPost>>(
+      cacheKey,
+      (json) {
+        final data = json['data'] as List;
+        return data
+            .map((e) => CommunityPost.fromJson(e as Map<String, dynamic>))
+            .toList();
+      },
+    );
+
+    if (cachedData != null) {
+      return cachedData;
+    }
+
+    // 缓存未命中，从 API 获取
+    final data = await _apiClient.get<List<CommunityPost>>(
       '/community/posts?limit=$limit&offset=$offset',
       fromJsonT: (json) => (json as List)
           .map((e) => CommunityPost.fromJson(e as Map<String, dynamic>))
           .toList(),
     );
+
+    // 存入缓存，设置 3 分钟过期（社区帖子更新更频繁）
+    await _cacheService.set<List<CommunityPost>>(
+      cacheKey,
+      data,
+      (posts) => {'data': posts.map((p) => p.toJson()).toList()},
+      ttl: const Duration(minutes: 3),
+    );
+
+    return data;
   }
 
   /// 发布社区帖子
   Future<dynamic> postCommunityPost(Map<String, dynamic> data) async {
+    // 清除社区帖子缓存，确保下次获取最新数据
+    await _cacheService.clearCommunityCache();
     return _apiClient.post('/community/posts', data);
   }
 }

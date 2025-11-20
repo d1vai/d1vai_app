@@ -153,8 +153,8 @@ class ProfileProvider extends ChangeNotifier {
       final avatars = <String>[];
 
       for (var i = 0; i < count; i++) {
-        final seed =
-            '$baseSeed-${DateTime.now().millisecondsSinceEpoch}-$i-${random.nextInt(1000000)}';
+        // 移除时间戳，使用一致性种子生成
+        final seed = '$baseSeed-$i-${random.nextInt(1000000)}';
         final url = _avatarGenerator.generateAvatar(
           seed,
           size: 160,

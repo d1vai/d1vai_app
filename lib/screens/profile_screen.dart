@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
 import '../models/user.dart';
 import '../widgets/login_required_dialog.dart';
+import '../widgets/avatar_image.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -31,30 +30,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
-  /// 构建网络图像（支持 SVG 和位图）
-  Widget _buildNetworkImage(String imageUrl) {
-    if (imageUrl.endsWith('.svg')) {
-      return SvgPicture.network(
-        imageUrl,
-        fit: BoxFit.cover,
-      );
-    } else {
-      return CachedNetworkImage(
-        imageUrl: imageUrl,
-        fit: BoxFit.cover,
-        placeholder: (context, url) => Container(
-          color: Colors.grey.shade200,
-          child: const Center(
-            child: CircularProgressIndicator(),
-          ),
-        ),
-        errorWidget: (context, url, error) => Container(
-          color: Colors.grey.shade200,
-          child: const Icon(Icons.error),
-        ),
-      );
-    }
-  }
 
   /// 显示登录提示对话框
   void _showLoginRequiredDialog() {
@@ -123,33 +98,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Center(
           child: Stack(
             children: [
-              CircleAvatar(
-                radius: 60,
-                backgroundColor: Colors.grey.shade200,
-                backgroundImage: user.picture.isNotEmpty && !user.picture.endsWith('.svg')
-                    ? CachedNetworkImageProvider(user.picture)
-                    : null,
-                child: user.picture.isEmpty || user.picture.endsWith('.svg')
-                    ? (user.picture.isNotEmpty && user.picture.endsWith('.svg')
-                        ? ClipOval(
-                            child: SvgPicture.network(
-                              user.picture,
-                              width: 120,
-                              height: 120,
-                              fit: BoxFit.cover,
-                            ),
-                          )
-                        : Text(
-                            user.companyName.isNotEmpty
-                                ? user.companyName.substring(0, 1).toUpperCase()
-                                : 'U',
-                            style: const TextStyle(
-                              fontSize: 48,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey,
-                            ),
-                          ))
-                    : null,
+              CircularAvatarImage(
+                imageUrl: user.picture.isEmpty
+                    ? 'placeholder'
+                    : user.picture,
+                size: 120,
+                placeholderText: user.companyName.isNotEmpty
+                    ? user.companyName
+                    : 'U',
               ),
               Positioned(
                 bottom: 0,
@@ -250,33 +206,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Center(
           child: Stack(
             children: [
-              CircleAvatar(
-                radius: 60,
-                backgroundColor: Colors.grey.shade200,
-                backgroundImage: user.picture.isNotEmpty && !user.picture.endsWith('.svg')
-                    ? CachedNetworkImageProvider(user.picture)
-                    : null,
-                child: user.picture.isEmpty || user.picture.endsWith('.svg')
-                    ? (user.picture.isNotEmpty && user.picture.endsWith('.svg')
-                        ? ClipOval(
-                            child: SvgPicture.network(
-                              user.picture,
-                              width: 120,
-                              height: 120,
-                              fit: BoxFit.cover,
-                            ),
-                          )
-                        : Text(
-                            user.companyName.isNotEmpty
-                                ? user.companyName.substring(0, 1).toUpperCase()
-                                : 'U',
-                            style: const TextStyle(
-                              fontSize: 48,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey,
-                            ),
-                          ))
-                    : null,
+              CircularAvatarImage(
+                imageUrl: user.picture.isEmpty
+                    ? 'placeholder'
+                    : user.picture,
+                size: 120,
+                placeholderText: user.companyName.isNotEmpty
+                    ? user.companyName
+                    : 'U',
               ),
               Positioned(
                 bottom: 0,
@@ -560,48 +497,74 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showDialog(
       context: context,
       builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('AI Avatar Cards'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: GridView.builder(
-              shrinkWrap: true,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
+        return StatefulBuilder(
+          builder: (dialogContext, dialogSetState) {
+            return AlertDialog(
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('AI Avatar Cards'),
+                  IconButton(
+                    icon: const Icon(Icons.refresh),
+                    onPressed: () async {
+                      dialogSetState(() {});
+                      final newAvatars =
+                          await profileProvider.generateAiAvatars();
+                      if (!mounted) return;
+
+                      if (!dialogContext.mounted) return;
+                      dialogSetState(() {
+                        avatars.clear();
+                        avatars.addAll(newAvatars);
+                      });
+                    },
+                    tooltip: '刷新头像',
+                  ),
+                ],
               ),
-              itemCount: avatars.length,
-              itemBuilder: (context, index) {
-                final avatarUrl = avatars[index];
-                return GestureDetector(
-                  onTap: () async {
-                    Navigator.pop(dialogContext);
+              content: SizedBox(
+                width: double.maxFinite,
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                  ),
+                  itemCount: avatars.length,
+                  itemBuilder: (context, index) {
+                    final avatarUrl = avatars[index];
+                    return GestureDetector(
+                      onTap: () async {
+                        Navigator.pop(dialogContext);
 
-                    if (!mounted) return;
-                    final messenger = ScaffoldMessenger.of(context);
-                    final authProvider = Provider.of<AuthProvider>(
-                      context,
-                      listen: false,
-                    );
-                    await authProvider.updateAvatar(avatarUrl);
+                        if (!mounted) return;
+                        final messenger = ScaffoldMessenger.of(context);
+                        final authProvider = Provider.of<AuthProvider>(
+                          context,
+                          listen: false,
+                        );
+                        await authProvider.updateAvatar(avatarUrl);
 
-                    if (!mounted) return;
+                        if (!mounted) return;
 
-                    messenger.showSnackBar(
-                      const SnackBar(
-                        content: Text('Avatar updated successfully'),
+                        messenger.showSnackBar(
+                          const SnackBar(
+                            content: Text('Avatar updated successfully'),
+                          ),
+                        );
+                      },
+                      child: AvatarImage(
+                        imageUrl: avatarUrl,
+                        size: 80,
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     );
                   },
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: _buildNetworkImage(avatarUrl),
-                  ),
-                );
-              },
-            ),
-          ),
+                ),
+              ),
+            );
+          },
         );
       },
     );

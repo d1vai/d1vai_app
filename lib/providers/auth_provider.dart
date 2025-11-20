@@ -6,10 +6,12 @@ import '../models/user.dart';
 import '../models/onboarding.dart';
 import '../services/d1vai_service.dart';
 import '../services/storage_service.dart';
+import '../services/cache_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final D1vaiService _d1vaiService = D1vaiService();
   final StorageService _storageService = StorageService();
+  final CacheService _cacheService = CacheService();
   final DeveloperAvatarGenerator _avatarGenerator = DeveloperAvatarGenerator();
 
   User? _user;
@@ -77,8 +79,11 @@ class AuthProvider extends ChangeNotifier {
       if (_user != null && !_user!.isOnboarded) {
         _onboardingData = OnboardingData();
         await _storageService.saveOnboardingData(_onboardingData!);
+      } else {
+        _onboardingData = null;
       }
 
+      // 只需调用一次 notifyListeners
       notifyListeners();
     } catch (e) {
       rethrow;
@@ -103,8 +108,11 @@ class AuthProvider extends ChangeNotifier {
       if (_user != null && !_user!.isOnboarded) {
         _onboardingData = OnboardingData();
         await _storageService.saveOnboardingData(_onboardingData!);
+      } else {
+        _onboardingData = null;
       }
 
+      // 只需调用一次 notifyListeners
       notifyListeners();
     } catch (e) {
       rethrow;
@@ -290,13 +298,31 @@ class AuthProvider extends ChangeNotifier {
 
   /// 登出
   Future<void> logout() async {
-    await _storageService.clearAuthToken();
-    await _storageService.clearOnboardingData();
+    try {
+      // 清除认证相关数据
+      await _storageService.clearAuthToken();
+      await _storageService.clearOnboardingData();
 
-    _user = null;
-    _onboardingData = null;
-    _isLoading = false;
+      // 清除所有缓存数据
+      await _cacheService.clear();
 
-    notifyListeners();
+      // 清除头像生成器缓存
+      _avatarGenerator.clearCache();
+
+      // 重置状态
+      _user = null;
+      _onboardingData = null;
+      _isLoading = false;
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Logout error: $e');
+      // 即使出错也要重置状态
+      _user = null;
+      _onboardingData = null;
+      _isLoading = false;
+      notifyListeners();
+      rethrow;
+    }
   }
 }

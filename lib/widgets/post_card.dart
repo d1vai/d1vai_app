@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/community.dart';
+import 'avatar_image.dart';
 
 /// 社区帖子卡片组件
 class PostCard extends StatelessWidget {
@@ -71,20 +72,12 @@ class PostCard extends StatelessWidget {
                   // 作者信息
                   Row(
                     children: [
-                      CircleAvatar(
-                        radius: 20,
-                        backgroundImage: post.author.picture.isNotEmpty
-                            ? NetworkImage(post.author.picture)
-                            : null,
-                        child: post.author.picture.isEmpty
-                            ? Text(
-                                post.author.slug.substring(0, 1).toUpperCase(),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : null,
+                      CircularAvatarImage(
+                        imageUrl: post.author.picture.isEmpty
+                            ? 'placeholder'
+                            : post.author.picture,
+                        size: 40,
+                        placeholderText: post.author.slug,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
