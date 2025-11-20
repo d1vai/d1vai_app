@@ -30,7 +30,7 @@ class ApiResponse<T> {
 }
 
 class ApiClient {
-  static const String baseUrl = 'https://api.d1v.ai/api';
+  static const String baseUrl = 'https://api.d1v.ai';
   final http.Client client;
 
   // 缓存 SharedPreferences 实例以避免重复调用
@@ -202,7 +202,7 @@ class ApiClient {
 
     final request = http.MultipartRequest(
       'POST',
-      Uri.parse('$baseUrl/api/upload'),
+      Uri.parse('$baseUrl/upload'),
     );
     request.headers.addAll(headers);
     final contentType = _getContentType(fileName);

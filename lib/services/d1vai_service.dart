@@ -22,7 +22,7 @@ class D1vaiService {
     // 使用 POST 方法 + 查询参数（与 web 端完全一致）
     // 验证码发送成功后返回 data: null，所以我们检查状态即可
     await _apiClient.postWithQuery<void>(
-      '/user/verify-code',
+      '/api/user/verify-code',
       {'email': email},  // 查询参数
       {'email': email},  // 请求体（与 web 端一致）
     );
@@ -33,7 +33,7 @@ class D1vaiService {
   /// 使用验证码登录
   Future<String?> postUserLogin(String email, String pin) async {
     return _apiClient.post<String?>(
-      '/user/login',
+      '/api/user/login',
       {
         'email': email,
         'verify_code': pin,
@@ -45,7 +45,7 @@ class D1vaiService {
   /// 使用密码登录
   Future<String?> postUserPasswordLogin(String email, String password) async {
     return _apiClient.post<String?>(
-      '/user/login/password',
+      '/api/user/login/password',
       {
         'email': email,
         'password': password,
@@ -56,7 +56,7 @@ class D1vaiService {
 
   /// 接受邀请码
   Future<void> postUserAcceptInvitation(String code) async {
-    return _apiClient.post<void>('/user/invitation/accept', {
+    return _apiClient.post<void>('/api/user/invitation/accept', {
       'invite_code': code,
     });
   }
@@ -68,7 +68,7 @@ class D1vaiService {
   /// 获取用户资料
   Future<User> getUserProfile() async {
     return _apiClient.get<User>(
-      '/user/info',
+      '/api/user/info',
       fromJsonT: (json) => User.fromJson(json),
     );
   }
@@ -76,7 +76,7 @@ class D1vaiService {
   /// 更新用户资料
   Future<User> putUserProfile(Map<String, dynamic> data) async {
     return _apiClient.put<User>(
-      '/user/info',
+      '/api/user/info',
       data,
       fromJsonT: (json) => User.fromJson(json),
     );
@@ -84,7 +84,7 @@ class D1vaiService {
 
   /// 设置 onboarding 状态
   Future<void> postUserOnboardedSet(bool isOnboarded) async {
-    return _apiClient.post<void>('/user/onboarded/set', {'value': isOnboarded});
+    return _apiClient.post<void>('/api/user/onboarded/set', {'value': isOnboarded});
   }
 
   /// 上传头像
@@ -119,7 +119,7 @@ class D1vaiService {
 
     // 缓存未命中，从 API 获取
     final data = await _apiClient.get<List<UserProject>>(
-      '/projects',
+      '/api/projects',
       fromJsonT: (json) =>
           (json as List).map((e) => UserProject.fromJson(e)).toList(),
     );
@@ -138,7 +138,7 @@ class D1vaiService {
   /// 根据 ID 获取项目详情
   Future<UserProject> getUserProjectById(String id) async {
     return _apiClient.get<UserProject>(
-      '/projects/$id',
+      '/api/projects/$id',
       fromJsonT: (json) => UserProject.fromJson(json),
     );
   }
@@ -146,7 +146,7 @@ class D1vaiService {
   /// 创建新项目
   Future<dynamic> createUserProject(Map<String, dynamic> data) async {
     // TODO: Define CreateProjectResponse model
-    return _apiClient.post('/projects', data);
+    return _apiClient.post('/api/projects', data);
   }
 
   // ============================================
@@ -177,7 +177,7 @@ class D1vaiService {
 
     // 缓存未命中，从 API 获取
     final data = await _apiClient.get<List<CommunityPost>>(
-      '/community/posts?limit=$limit&offset=$offset',
+      '/api/community/posts?limit=$limit&offset=$offset',
       fromJsonT: (json) => (json as List)
           .map((e) => CommunityPost.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -198,6 +198,6 @@ class D1vaiService {
   Future<dynamic> postCommunityPost(Map<String, dynamic> data) async {
     // 清除社区帖子缓存，确保下次获取最新数据
     await _cacheService.clearCommunityCache();
-    return _apiClient.post('/community/posts', data);
+    return _apiClient.post('/api/community/posts', data);
   }
 }

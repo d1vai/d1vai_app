@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import '../core/api_client.dart';
 import '../core/avatar_generator.dart';
 import '../models/user.dart';
+import '../services/d1vai_service.dart';
 
 /// Profile Provider - 管理个人资料状态和编辑
 class ProfileProvider extends ChangeNotifier {
@@ -91,8 +92,9 @@ class ProfileProvider extends ChangeNotifier {
       _error = null;
       notifyListeners();
 
-      final apiClient = ApiClient();
-      final response = await apiClient.patch('/api/users/me/', {
+      // 使用 D1vaiService 更新用户资料
+      final d1vaiService = D1vaiService();
+      await d1vaiService.putUserProfile({
         'company_name': companyNameController.text,
         'company_website': companyWebsiteController.text.isEmpty
             ? null
@@ -103,14 +105,9 @@ class ProfileProvider extends ChangeNotifier {
         'evm_wallet': evmWalletController.text,
       });
 
-      if (response['code'] == 0 || response['code'] == 200) {
-        _isEditing = false;
-        notifyListeners();
-        return true;
-      } else {
-        _error = response['message'] ?? '保存失败';
-        return false;
-      }
+      _isEditing = false;
+      notifyListeners();
+      return true;
     } catch (e) {
       _error = '保存失败: $e';
       return false;
