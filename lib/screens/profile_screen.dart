@@ -5,6 +5,7 @@ import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
 import '../models/user.dart';
 import '../widgets/login_required_dialog.dart';
+import '../widgets/ai_avatar_selector_dialog.dart';
 import '../widgets/avatar_image.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -98,14 +99,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Center(
           child: Stack(
             children: [
-              CircularAvatarImage(
+              AvatarImage(
                 imageUrl: user.picture.isEmpty
                     ? 'placeholder'
                     : user.picture,
                 size: 120,
-                placeholderText: user.companyName.isNotEmpty
-                    ? user.companyName
-                    : 'U',
+                borderRadius: BorderRadius.circular(60),
+                fit: BoxFit.cover,
               ),
               Positioned(
                 bottom: 0,
@@ -206,14 +206,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Center(
           child: Stack(
             children: [
-              CircularAvatarImage(
+              AvatarImage(
                 imageUrl: user.picture.isEmpty
                     ? 'placeholder'
                     : user.picture,
                 size: 120,
-                placeholderText: user.companyName.isNotEmpty
-                    ? user.companyName
-                    : 'U',
+                borderRadius: BorderRadius.circular(60),
+                fit: BoxFit.cover,
               ),
               Positioned(
                 bottom: 0,
@@ -480,6 +479,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _handleAiAvatarGeneration(
     ProfileProvider profileProvider,
   ) async {
+    // 初始生成头像
     final avatars = await profileProvider.generateAiAvatars();
     if (!mounted) return;
 
@@ -492,77 +492,77 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return;
     }
 
-    if (!mounted || avatars.isEmpty) return;
-
+    // 显示带动画的 AI Avatar 选择对话框
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (dialogContext) {
+        // 将状态变量移到 StatefulBuilder 外部
+        List<String> currentAvatars = List.from(avatars);
+        bool isGenerating = false;
+
         return StatefulBuilder(
           builder: (dialogContext, dialogSetState) {
-            return AlertDialog(
-              title: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('AI Avatar Cards'),
-                  IconButton(
-                    icon: const Icon(Icons.refresh),
-                    onPressed: () async {
-                      dialogSetState(() {});
-                      final newAvatars =
-                          await profileProvider.generateAiAvatars();
-                      if (!mounted) return;
+            return AiAvatarSelectorDialog(
+              avatars: currentAvatars,
+              selectedAvatar: null,
+              isGenerating: isGenerating,
+              onSelect: (selectedAvatarUrl) async {
+                // 先关闭对话框，避免 Hero tag 冲突
+                Navigator.of(dialogContext).pop();
+                
+                if (!mounted) return;
 
-                      if (!dialogContext.mounted) return;
-                      dialogSetState(() {
-                        avatars.clear();
-                        avatars.addAll(newAvatars);
-                      });
-                    },
-                    tooltip: '刷新头像',
-                  ),
-                ],
-              ),
-              content: SizedBox(
-                width: double.maxFinite,
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
-                  ),
-                  itemCount: avatars.length,
-                  itemBuilder: (context, index) {
-                    final avatarUrl = avatars[index];
-                    return GestureDetector(
-                      onTap: () async {
-                        Navigator.pop(dialogContext);
+                final messenger = ScaffoldMessenger.of(context);
+                final authProvider = Provider.of<AuthProvider>(
+                  context,
+                  listen: false,
+                );
 
-                        if (!mounted) return;
-                        final messenger = ScaffoldMessenger.of(context);
-                        final authProvider = Provider.of<AuthProvider>(
-                          context,
-                          listen: false,
-                        );
-                        await authProvider.updateAvatar(avatarUrl);
+                try {
+                  await authProvider.updateAvatar(selectedAvatarUrl);
 
-                        if (!mounted) return;
+                  if (!mounted) return;
+                  
+                  // 等待一帧，确保对话框完全关闭
+                  await Future.delayed(const Duration(milliseconds: 100));
+                  
+                  if (!mounted) return;
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('Avatar updated successfully'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } catch (e) {
+                  if (!mounted) return;
+                  
+                  await Future.delayed(const Duration(milliseconds: 100));
+                  
+                  if (!mounted) return;
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to update avatar: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              onRefresh: () async {
+                dialogSetState(() {
+                  isGenerating = true;
+                });
 
-                        messenger.showSnackBar(
-                          const SnackBar(
-                            content: Text('Avatar updated successfully'),
-                          ),
-                        );
-                      },
-                      child: AvatarImage(
-                        imageUrl: avatarUrl,
-                        size: 80,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    );
-                  },
-                ),
-              ),
+                final newAvatars = await profileProvider.generateAiAvatars();
+
+                if (!dialogContext.mounted) return;
+
+                dialogSetState(() {
+                  currentAvatars.clear();
+                  currentAvatars.addAll(newAvatars);
+                  isGenerating = false;
+                });
+              },
             );
           },
         );

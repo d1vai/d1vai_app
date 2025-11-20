@@ -35,6 +35,8 @@ class AvatarImage extends StatelessWidget {
               height: size,
               fit: fit,
               placeholderBuilder: (context) => _buildPlaceholder(),
+              // 忽略 SVG 中的 metadata 等不支持的标签
+              allowDrawingOutsideViewBox: true,
             )
           : Image.network(
               imageUrl,
@@ -85,30 +87,6 @@ class AvatarImage extends StatelessWidget {
         size: size * 0.5,
         color: Colors.grey.shade400,
       ),
-    );
-  }
-}
-
-/// 圆形头像组件
-class CircularAvatarImage extends StatelessWidget {
-  final String imageUrl;
-  final double size;
-  final String? placeholderText;
-
-  const CircularAvatarImage({
-    super.key,
-    required this.imageUrl,
-    this.size = 50,
-    this.placeholderText,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AvatarImage(
-      imageUrl: imageUrl,
-      size: size,
-      borderRadius: BorderRadius.circular(size / 2),
-      placeholderText: placeholderText,
     );
   }
 }

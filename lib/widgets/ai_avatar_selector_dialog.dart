@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'avatar_image.dart';
 
 /// AI Avatar 选择对话框 - 带有优雅的动画效果
 class AiAvatarSelectorDialog extends StatefulWidget {
@@ -31,7 +31,6 @@ class _AiAvatarSelectorDialogState extends State<AiAvatarSelectorDialog>
 
   String? _selectedAvatar;
   List<String> _currentAvatars = [];
-  bool _isFirstLoad = true;
 
   @override
   void initState() {
@@ -46,11 +45,9 @@ class _AiAvatarSelectorDialogState extends State<AiAvatarSelectorDialog>
   void didUpdateWidget(AiAvatarSelectorDialog oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // 检测到新的头像列表
-    if (widget.avatars != oldWidget.avatars &&
-        widget.avatars.isNotEmpty &&
+    // 检测到新的头像列表（使用内容比较而不是引用比较）
+    if (widget.avatars.isNotEmpty &&
         !_listEquals(widget.avatars, _currentAvatars)) {
-      _isFirstLoad = false;
       _refreshAvatars();
     }
   }
@@ -178,7 +175,7 @@ class _AiAvatarSelectorDialogState extends State<AiAvatarSelectorDialog>
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.3),
+              color: Colors.deepPurple.withValues(alpha: 0.3),
               blurRadius: 30,
               offset: const Offset(0, 10),
             ),
@@ -226,7 +223,7 @@ class _AiAvatarSelectorDialogState extends State<AiAvatarSelectorDialog>
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
@@ -261,7 +258,7 @@ class _AiAvatarSelectorDialogState extends State<AiAvatarSelectorDialog>
           ),
           // 刷新按钮
           Material(
-            color: Colors.white.withOpacity(0.2),
+            color: Colors.white.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(12),
             child: InkWell(
               onTap: widget.isGenerating ? null : widget.onRefresh,
@@ -375,7 +372,7 @@ class _AiAvatarSelectorDialogState extends State<AiAvatarSelectorDialog>
           boxShadow: [
             if (isSelected)
               BoxShadow(
-                color: Colors.deepPurple.withOpacity(0.4),
+                color: Colors.deepPurple.withValues(alpha: 0.4),
                 blurRadius: 20,
                 spreadRadius: 2,
                 offset: const Offset(0, 4),
@@ -399,30 +396,16 @@ class _AiAvatarSelectorDialogState extends State<AiAvatarSelectorDialog>
             Positioned.fill(
               child: Padding(
                 padding: EdgeInsets.all(isSelected ? 8.0 : 4.0),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: CachedNetworkImage(
-                    imageUrl: avatarUrl,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      color: Colors.grey.shade100,
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.deepPurple.shade200,
-                          ),
-                        ),
-                      ),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      color: Colors.grey.shade100,
-                      child: Icon(
-                        Icons.error_outline,
-                        color: Colors.grey.shade400,
-                      ),
-                    ),
-                  ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final size = constraints.maxWidth;
+                    return AvatarImage(
+                      imageUrl: avatarUrl,
+                      size: size,
+                      borderRadius: BorderRadius.circular(16),
+                      fit: BoxFit.cover,
+                    );
+                  },
                 ),
               ),
             ),
@@ -439,7 +422,7 @@ class _AiAvatarSelectorDialogState extends State<AiAvatarSelectorDialog>
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.deepPurple.withOpacity(0.5),
+                        color: Colors.deepPurple.withValues(alpha: 0.5),
                         blurRadius: 8,
                         spreadRadius: 1,
                       ),
@@ -488,8 +471,8 @@ class _AiAvatarSelectorDialogState extends State<AiAvatarSelectorDialog>
               onPressed: _selectedAvatar == null
                   ? null
                   : () {
+                      // 调用回调，由外部负责关闭对话框
                       widget.onSelect(_selectedAvatar!);
-                      Navigator.of(context).pop();
                     },
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -497,7 +480,7 @@ class _AiAvatarSelectorDialogState extends State<AiAvatarSelectorDialog>
                 foregroundColor: Colors.white,
                 disabledBackgroundColor: Colors.grey.shade300,
                 elevation: _selectedAvatar == null ? 0 : 4,
-                shadowColor: Colors.deepPurple.withOpacity(0.5),
+                shadowColor: Colors.deepPurple.withValues(alpha: 0.5),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

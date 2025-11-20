@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../providers/auth_provider.dart';
+import 'ai_avatar_selector_dialog.dart';
 import 'avatar_image.dart';
 
 /// Onboarding 向导组件 - 管理完整的 Onboarding 流程
@@ -29,7 +30,7 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
   // UI 状态
   bool _isLoading = false;
   bool _isGeneratingAvatars = false;
-  List<String> _aiAvatars = [];
+  final List<String> _aiAvatars = [];
 
   // 行业列表
   final List<String> _industries = [
@@ -130,22 +131,110 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
     }
   }
 
-  /// 生成 AI 头像
+  /// 生成 AI 头像 - 显示带动画的选择对话框
   Future<void> _generateAiAvatars() async {
     if (!mounted) return;
+
     setState(() => _isGeneratingAvatars = true);
+
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final avatars = await authProvider.generateAiAvatars();
+
       if (!mounted) return;
-      setState(() {
-        _aiAvatars = avatars;
-      });
+
+      setState(() => _isGeneratingAvatars = false);
+
+      if (avatars.isEmpty) {
+        _showError('生成 AI 头像失败');
+        return;
+      }
+
+      // 显示带动画的 AI Avatar 选择对话框
+      if (!mounted) return;
+
+
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) {
+          // 将状态变量移到 StatefulBuilder 外部
+          List<String> currentAvatars = List.from(avatars);
+          bool isGenerating = false;
+
+          return StatefulBuilder(
+            builder: (dialogContext, dialogSetState) {
+              return AiAvatarSelectorDialog(
+                avatars: currentAvatars,
+                selectedAvatar: _avatarUrl.isEmpty ? null : _avatarUrl,
+                isGenerating: isGenerating,
+                onSelect: (selectedAvatarUrl) async {
+                  // 先关闭对话框，避免 Hero tag 冲突
+                  Navigator.of(dialogContext).pop();
+                  
+                  if (!mounted) return;
+
+                  final authProvider =
+                      Provider.of<AuthProvider>(context, listen: false);
+
+                  try {
+                    await authProvider.updateAvatar(selectedAvatarUrl);
+
+                    if (!mounted) return;
+
+                    setState(() => _avatarUrl = selectedAvatarUrl);
+                    
+                    // 等待一帧，确保对话框完全关闭
+                    await Future.delayed(const Duration(milliseconds: 100));
+                    
+                    if (!mounted) return;
+                    _showSuccess('头像选择成功');
+                  } catch (e) {
+                    if (!mounted) return;
+                    
+                    await Future.delayed(const Duration(milliseconds: 100));
+                    
+                    if (!mounted) return;
+                    _showError('选择头像失败: $e');
+                  }
+                },
+                onRefresh: () async {
+                  dialogSetState(() {
+                    isGenerating = true;
+                  });
+
+                  try {
+                    final authProvider =
+                        Provider.of<AuthProvider>(context, listen: false);
+                    final newAvatars = await authProvider.generateAiAvatars();
+
+                    if (!dialogContext.mounted) return;
+
+                    dialogSetState(() {
+                      currentAvatars.clear();
+                      currentAvatars.addAll(newAvatars);
+                      isGenerating = false;
+                    });
+                  } catch (e) {
+                    if (!dialogContext.mounted) return;
+
+                    dialogSetState(() {
+                      isGenerating = false;
+                    });
+
+                    if (!mounted) return;
+                    _showError('刷新头像失败: $e');
+                  }
+                },
+              );
+            },
+          );
+        },
+      );
     } catch (e) {
       if (!mounted) return;
+      setState(() => _isGeneratingAvatars = false);
       _showError('生成 AI 头像失败: $e');
-    } finally {
-      if (mounted) setState(() => _isGeneratingAvatars = false);
     }
   }
 
@@ -429,9 +518,11 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              CircularAvatarImage(
+              AvatarImage(
                 imageUrl: _avatarUrl.isEmpty ? 'placeholder' : _avatarUrl,
                 size: 64,
+                borderRadius: BorderRadius.circular(32),
+                fit: BoxFit.cover,
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -511,9 +602,11 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
                             width: isSelected ? 3 : 1,
                           ),
                         ),
-                        child: CircularAvatarImage(
+                        child: AvatarImage(
                           imageUrl: avatarUrl,
                           size: 60,
+                          borderRadius: BorderRadius.circular(30),
+                          fit: BoxFit.cover,
                         ),
                       ),
                     );

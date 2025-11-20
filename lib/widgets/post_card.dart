@@ -72,12 +72,13 @@ class PostCard extends StatelessWidget {
                   // 作者信息
                   Row(
                     children: [
-                      CircularAvatarImage(
+                      AvatarImage(
                         imageUrl: post.author.picture.isEmpty
                             ? 'placeholder'
                             : post.author.picture,
                         size: 40,
-                        placeholderText: post.author.slug,
+                        borderRadius: BorderRadius.circular(20),
+                        fit: BoxFit.cover,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
