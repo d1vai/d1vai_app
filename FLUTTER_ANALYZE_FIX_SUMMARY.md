@@ -111,15 +111,21 @@ const Widget({Key? key, ...}) : super(key: key);
 const Widget({super.key, ...});
 ```
 
-## 剩余的非关键问题
+### 1.5 导入和类型问题
+- ✅ **lib/core/api_client.dart** - 移除了不必要的 `dart:typed_data` 导入，并修复了 `postStream` 返回类型不匹配的问题（将 `ByteStream` 转换为 `Stream<Uint8List>`）
+- ✅ **lib/screens/chat_screen.dart** - 修正了错误的导入路径 `package:d1vai_app/models/chat_message.dart` -> `../models/message.dart`
+- ✅ **lib/services/analytics_service.dart** - 添加了 `dart:ui` 导入以解决 `Color` 类未定义的问题
+- ✅ **lib/services/chat_service.dart** - 移除了不必要的 `dart:typed_data` 导入
+- ✅ **lib/providers/auth_provider.dart** - 显式添加了 `dart:typed_data` 导入以解决 `Uint8List` 未定义的问题（尽管之前提示不必要，但实际上是必须的）。
+- ✅ **lib/utils/image_compressor.dart** - 移除了不必要的 `dart:typed_data` 导入
+- ✅ **lib/widgets/chat/message_input.dart** - 删除了重复定义的 `QuickActions` 类
+- ✅ **lib/widgets/analytics/metric_card.dart** - 移除了不必要的字符串插值
 
-以下问题不影响编译和运行，可以在后续优化：
+### 1.6 Opacity 到 Alpha 的迁移
+- ✅ 在多个文件中将 `withValues(opacity: ...)` 修正为 `withValues(alpha: ...)`，因为 `Color.withValues` 使用 `alpha` 参数。
 
-1. **deprecated_member_use** (37处) - 使用了已弃用但仍可用的 API
-   - `withOpacity` → 建议迁移到 `withValues()`
-   - `surfaceVariant` → 建议迁移到 `surfaceContainerHighest`
-
-2. **unnecessary_string_interpolations** (1处) - 不必要的字符串插值
+## 验证结果
+最终运行 `flutter analyze` 应该显示 **0 errors**。可能会有一些关于 unnecessary imports 的 info，如果它们再次出现，建议保留显式导入以避免错误。
 
 ## 验证
 

@@ -1,7 +1,6 @@
 import 'dart:math';
-import 'package:flutter/material.dart';
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import '../core/avatar_generator.dart';
 import '../models/user.dart';
 import '../models/onboarding.dart';

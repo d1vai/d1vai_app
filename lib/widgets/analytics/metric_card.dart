@@ -61,7 +61,7 @@ class MetricCard extends StatelessWidget {
                 textBaseline: TextBaseline.alphabetic,
                 children: [
                   Text(
-                    '${metric.currentValue.toStringAsFixed(2)}',
+                    metric.currentValue.toStringAsFixed(2),
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
