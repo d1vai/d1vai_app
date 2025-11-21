@@ -7,6 +7,7 @@ import '../models/user.dart';
 import '../widgets/login_required_dialog.dart';
 import '../widgets/ai_avatar_selector_dialog.dart';
 import '../widgets/avatar_image.dart';
+import '../widgets/snackbar_helper.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -349,9 +350,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 : () async {
                     final validation = profileProvider.validateForm();
                     if (validation != null) {
-                      ScaffoldMessenger.of(
+                      SnackBarHelper.showError(
                         context,
-                      ).showSnackBar(SnackBar(content: Text(validation)));
+                        title: 'Validation Error',
+                        message: validation,
+                      );
                       return;
                     }
 
@@ -359,10 +362,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     if (!context.mounted) return;
 
                     if (success) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Profile updated successfully'),
-                        ),
+                      SnackBarHelper.showSuccess(
+                        context,
+                        title: 'Success',
+                        message: 'Profile updated successfully',
                       );
 
                       // 刷新用户数据
@@ -371,13 +374,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         listen: false,
                       ).fetchUser();
                     } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            profileProvider.error ?? 'Failed to update profile',
-                          ),
-                          backgroundColor: Colors.red,
-                        ),
+                      SnackBarHelper.showError(
+                        context,
+                        title: 'Error',
+                        message: profileProvider.error ?? 'Failed to update profile',
                       );
                     }
                   },
@@ -472,8 +472,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     ).updateAvatar(avatarUrl);
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Avatar updated successfully')),
+    SnackBarHelper.showSuccess(
+      context,
+      title: 'Success',
+      message: 'Avatar updated successfully',
     );
   }
 
@@ -486,10 +488,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!mounted) return;
 
     if (avatars.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(profileProvider.error ?? 'Failed to generate avatars'),
-        ),
+      SnackBarHelper.showError(
+        context,
+        title: 'Error',
+        message: profileProvider.error ?? 'Failed to generate avatars',
       );
       return;
     }
@@ -530,11 +532,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   await Future.delayed(const Duration(milliseconds: 100));
                   
                   if (!mounted) return;
-                  messenger.showSnackBar(
-                    const SnackBar(
-                      content: Text('Avatar updated successfully'),
-                      backgroundColor: Colors.green,
-                    ),
+                  SnackBarHelper.showSuccess(
+                    context,
+                    title: 'Success',
+                    message: 'Avatar updated successfully',
                   );
                 } catch (e) {
                   if (!mounted) return;
@@ -542,11 +543,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   await Future.delayed(const Duration(milliseconds: 100));
                   
                   if (!mounted) return;
-                  messenger.showSnackBar(
-                    SnackBar(
-                      content: Text('Failed to update avatar: $e'),
-                      backgroundColor: Colors.red,
-                    ),
+                  SnackBarHelper.showError(
+                    context,
+                    title: 'Error',
+                    message: 'Failed to update avatar: $e',
                   );
                 }
               },

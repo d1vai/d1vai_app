@@ -7,6 +7,7 @@ import '../providers/locale_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/login_required_dialog.dart';
 import '../widgets/avatar_image.dart';
+import '../widgets/snackbar_helper.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -179,10 +180,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     subtitle: const Text('Manage notifications'),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Notifications feature coming soon'),
-                        ),
+                      SnackBarHelper.showInfo(
+                        context,
+                        title: 'Coming Soon',
+                        message: 'Notifications feature coming soon',
                       );
                     },
                   ),
@@ -193,10 +194,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     subtitle: const Text('Get help and support'),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Help feature coming soon'),
-                        ),
+                      SnackBarHelper.showInfo(
+                        context,
+                        title: 'Coming Soon',
+                        message: 'Help feature coming soon',
                       );
                     },
                   ),
@@ -224,11 +225,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   );
 
                   // 立即显示加载提示
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('正在退出登录...'),
-                      duration: Duration(seconds: 1),
-                    ),
+                  SnackBarHelper.showInfo(
+                    context,
+                    title: 'Logging out',
+                    message: '正在退出登录...',
                   );
 
                   // 异步执行登出（不等待）
@@ -238,11 +238,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     }
                   }).catchError((e) {
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('退出登录失败: $e'),
-                          backgroundColor: Colors.red,
-                        ),
+                      SnackBarHelper.showError(
+                        context,
+                        title: 'Error',
+                        message: '退出登录失败: $e',
                       );
                     }
                   });
@@ -328,8 +327,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 subtitle: const Text('Update your repository list'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Syncing repositories...')),
+                  SnackBarHelper.showInfo(
+                    context,
+                    title: 'Syncing',
+                    message: 'Syncing repositories...',
                   );
                 },
               ),
@@ -340,8 +341,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 subtitle: const Text('Import a public repository'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Import feature coming soon')),
+                  SnackBarHelper.showInfo(
+                    context,
+                    title: 'Coming Soon',
+                    message: 'Import feature coming soon',
                   );
                 },
               ),
@@ -383,8 +386,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     suffixIcon: IconButton(
                       icon: const Icon(Icons.copy),
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Invite code copied')),
+                        SnackBarHelper.showSuccess(
+                          context,
+                          title: 'Copied',
+                          message: 'Invite code copied',
                         );
                       },
                     ),
@@ -416,10 +421,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 subtitle: const Text('View your invitation history'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Invite history feature coming soon'),
-                    ),
+                  SnackBarHelper.showInfo(
+                    context,
+                    title: 'Coming Soon',
+                    message: 'Invite history feature coming soon',
                   );
                 },
               ),
@@ -430,10 +435,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 subtitle: const Text('0 friends'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Referral feature coming soon'),
-                    ),
+                  SnackBarHelper.showInfo(
+                    context,
+                    title: 'Coming Soon',
+                    message: 'Referral feature coming soon',
                   );
                 },
               ),
@@ -459,8 +464,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: const Text('Light Mode'),
                 onTap: () {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Theme feature coming soon')),
+                  SnackBarHelper.showInfo(
+                    context,
+                    title: 'Coming Soon',
+                    message: 'Theme feature coming soon',
                   );
                 },
               ),
@@ -469,8 +476,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: const Text('Dark Mode'),
                 onTap: () {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Theme feature coming soon')),
+                  SnackBarHelper.showInfo(
+                    context,
+                    title: 'Coming Soon',
+                    message: 'Theme feature coming soon',
                   );
                 },
               ),
@@ -479,8 +488,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: const Text('System'),
                 onTap: () {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Theme feature coming soon')),
+                  SnackBarHelper.showInfo(
+                    context,
+                    title: 'Coming Soon',
+                    message: 'Theme feature coming soon',
                   );
                 },
               ),
@@ -504,15 +515,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   /// 连接 GitHub
   void _connectGithub() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('GitHub integration feature coming soon')),
+    SnackBarHelper.showInfo(
+      context,
+      title: 'Coming Soon',
+      message: 'GitHub integration feature coming soon',
     );
   }
 
   /// 分享邀请码
   void _shareInviteCode() {
-    ScaffoldMessenger.of(
+    SnackBarHelper.showInfo(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Share feature coming soon')));
+      title: 'Coming Soon',
+      message: 'Share feature coming soon',
+    );
   }
 }

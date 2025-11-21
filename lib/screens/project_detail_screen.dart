@@ -6,6 +6,7 @@ import '../providers/auth_provider.dart';
 import '../models/project.dart';
 import '../services/d1vai_service.dart';
 import '../widgets/login_required_dialog.dart';
+import '../widgets/snackbar_helper.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   final String projectId;
@@ -158,8 +159,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           IconButton(
             icon: const Icon(Icons.share),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Share feature coming soon')),
+              SnackBarHelper.showInfo(
+                context,
+                title: 'Coming Soon',
+                message: 'Share feature coming soon',
               );
             },
           ),
@@ -292,8 +295,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                   onTap: () {
                     if (project.latestPreviewUrl != null) {
                       // TODO: Open preview URL
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Opening preview...')),
+                      SnackBarHelper.showInfo(
+                        context,
+                        title: 'Opening Preview',
+                        message: 'Opening preview...',
                       );
                     }
                   },
@@ -306,10 +311,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
                     // TODO: Open GitHub repo
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('GitHub feature coming soon'),
-                      ),
+                    SnackBarHelper.showInfo(
+                      context,
+                      title: 'Coming Soon',
+                      message: 'GitHub feature coming soon',
                     );
                   },
                 ),
@@ -355,8 +360,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
             subtitle: const Text('5 tables'),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Database feature coming soon')),
+              SnackBarHelper.showInfo(
+                context,
+                title: 'Coming Soon',
+                message: 'Database feature coming soon',
               );
             },
           ),
@@ -386,8 +393,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
             subtitle: const Text('Manage your API keys'),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('API feature coming soon')),
+              SnackBarHelper.showInfo(
+                context,
+                title: 'Coming Soon',
+                message: 'API feature coming soon',
               );
             },
           ),
@@ -428,10 +437,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('GitHub feature coming soon'),
-                      ),
+                    SnackBarHelper.showInfo(
+                      context,
+                      title: 'Coming Soon',
+                      message: 'GitHub feature coming soon',
                     );
                   },
                   icon: const Icon(Icons.link),
@@ -461,8 +470,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
             subtitle: const Text('Configure payment settings'),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Payment feature coming soon')),
+              SnackBarHelper.showInfo(
+                context,
+                title: 'Coming Soon',
+                message: 'Payment feature coming soon',
               );
             },
           ),
@@ -502,10 +513,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                   title: const Text('View Deployment History'),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Deployment history feature coming soon'),
-                      ),
+                    SnackBarHelper.showInfo(
+                      context,
+                      title: 'Coming Soon',
+                      message: 'Deployment history feature coming soon',
                     );
                   },
                 ),
@@ -538,10 +549,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                   title: const Text('View Analytics Dashboard'),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Analytics feature coming soon'),
-                      ),
+                    SnackBarHelper.showInfo(
+                      context,
+                      title: 'Coming Soon',
+                      message: 'Analytics feature coming soon',
                     );
                   },
                 ),
@@ -674,8 +685,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
               onPressed: () {
                 Navigator.pop(context);
                 context.pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Project deleted')),
+                SnackBarHelper.showSuccess(
+                  context,
+                  title: 'Success',
+                  message: 'Project deleted',
                 );
               },
               child: const Text('Delete', style: TextStyle(color: Colors.red)),

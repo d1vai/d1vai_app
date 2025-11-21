@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/community.dart';
 import 'avatar_image.dart';
+import 'snackbar_helper.dart';
 
 /// 社区帖子卡片组件
 class PostCard extends StatelessWidget {
@@ -310,31 +311,39 @@ class PostCard extends StatelessWidget {
 
   /// 分享帖子
   void _sharePost(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Share functionality coming soon')),
+    SnackBarHelper.showInfo(
+      context,
+      title: 'Coming Soon',
+      message: 'Share functionality coming soon',
     );
   }
 
   /// 保存帖子
   void _savePost(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Save functionality coming soon')),
+    SnackBarHelper.showInfo(
+      context,
+      title: 'Coming Soon',
+      message: 'Save functionality coming soon',
     );
   }
 
   /// 举报帖子
   void _reportPost(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Report functionality coming soon')),
+    SnackBarHelper.showInfo(
+      context,
+      title: 'Coming Soon',
+      message: 'Report functionality coming soon',
     );
   }
 
   /// 打开项目演示链接
   void _openProjectDemo(BuildContext context) {
     if ((post.embedUrl ?? '').isNotEmpty) {
-      ScaffoldMessenger.of(
+      SnackBarHelper.showInfo(
         context,
-      ).showSnackBar(SnackBar(content: Text('Opening ${post.title}...')));
+        title: 'Opening Project',
+        message: 'Opening ${post.title}...',
+      );
       // TODO: 使用 url_launcher 打开链接
     }
   }

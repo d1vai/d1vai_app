@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../providers/auth_provider.dart';
 import 'ai_avatar_selector_dialog.dart';
 import 'avatar_image.dart';
+import 'snackbar_helper.dart';
 
 /// Onboarding 向导组件 - 管理完整的 Onboarding 流程
 class OnboardingWizard extends StatefulWidget {
@@ -287,15 +288,19 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
 
   /// 显示错误消息
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    SnackBarHelper.showError(
+      context,
+      title: 'Error',
+      message: message,
     );
   }
 
   /// 显示成功消息
   void _showSuccess(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.green),
+    SnackBarHelper.showSuccess(
+      context,
+      title: 'Success',
+      message: message,
     );
   }
 

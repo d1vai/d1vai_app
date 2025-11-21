@@ -78,6 +78,7 @@ class SnackBarHelper {
       ),
     );
 
+    ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 }

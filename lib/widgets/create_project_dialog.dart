@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../providers/project_provider.dart';
 import '../models/project.dart';
+import 'snackbar_helper.dart';
 
 /// 项目创建对话框
 class CreateProjectDialog extends StatefulWidget {
@@ -299,8 +300,10 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
       final router = GoRouter.of(context);
       Navigator.pop(context);
 
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Project created successfully!')),
+      SnackBarHelper.showSuccess(
+        context,
+        title: 'Success',
+        message: 'Project created successfully!',
       );
 
       widget.onCreated?.call(
@@ -351,8 +354,10 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
 
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Repository imported successfully!')),
+        SnackBarHelper.showSuccess(
+          context,
+          title: 'Success',
+          message: 'Repository imported successfully!',
         );
 
         // 跳转到项目列表

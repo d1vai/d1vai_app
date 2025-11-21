@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/snackbar_helper.dart';
 
 class DocsScreen extends StatefulWidget {
   const DocsScreen({super.key});
@@ -205,9 +206,11 @@ class _DocsScreenState extends State<DocsScreen> {
 
   void _navigateToDoc(BuildContext context, String href) {
     // TODO: Implement navigation to specific doc pages
-    ScaffoldMessenger.of(
+    SnackBarHelper.showInfo(
       context,
-    ).showSnackBar(SnackBar(content: Text('Opening $href...')));
+      title: 'Opening Doc',
+      message: 'Opening $href...',
+    );
   }
 }
 
