@@ -519,6 +519,7 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               AvatarImage(
+                key: ValueKey(_avatarUrl), // 添加 key 以确保头像更新时重新构建
                 imageUrl: _avatarUrl.isEmpty ? 'placeholder' : _avatarUrl,
                 size: 64,
                 borderRadius: BorderRadius.circular(32),

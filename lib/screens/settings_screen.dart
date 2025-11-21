@@ -133,6 +133,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Card(
               child: ListTile(
                 leading: AvatarImage(
+                  key: ValueKey(user.picture), // 添加 key 以确保头像更新时重新构建
                   imageUrl: user.picture.isEmpty ? 'placeholder' : user.picture,
                   size: 40,
                   borderRadius: BorderRadius.circular(20),

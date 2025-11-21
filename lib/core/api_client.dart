@@ -1,6 +1,7 @@
+
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http_parser/http_parser.dart';
@@ -246,6 +247,32 @@ class ApiClient {
         return MediaType.parse('image/webp');
       default:
         return MediaType.parse('application/octet-stream');
+    }
+  }
+
+  /// POST request with streaming response
+  /// Returns a stream of bytes for streaming responses
+  Future<Stream<Uint8List>> postStream(
+    String endpoint,
+    dynamic body,
+  ) async {
+    final headers = await _getHeaders();
+    final request = http.Request(
+      'POST',
+      Uri.parse('$baseUrl$endpoint'),
+    );
+    request.headers.addAll(headers);
+    request.body = jsonEncode(body);
+
+    final streamedResponse = await client.send(request);
+
+    if (streamedResponse.statusCode >= 200 &&
+        streamedResponse.statusCode < 300) {
+      return streamedResponse.stream.map((bytes) => Uint8List.fromList(bytes));
+    } else {
+      final responseBody = await streamedResponse.stream.bytesToString();
+      throw Exception(
+          'HTTP Error: ${streamedResponse.statusCode} $responseBody');
     }
   }
 

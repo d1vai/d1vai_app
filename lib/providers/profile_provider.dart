@@ -146,7 +146,7 @@ class ProfileProvider extends ChangeNotifier {
           _user?.email ?? _user?.sub ?? 'user-${_user?.id ?? 'guest'}';
       final random = Random(baseSeed.hashCode);
 
-      final count = 4 + random.nextInt(3); // 4-6 个
+      final count = 6; // 固定生成 6 个头像
       final avatars = <String>[];
 
       for (var i = 0; i < count; i++) {

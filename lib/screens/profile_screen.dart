@@ -100,6 +100,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Stack(
             children: [
               AvatarImage(
+                key: ValueKey(user.picture), // 添加 key 以确保头像更新时重新构建
                 imageUrl: user.picture.isEmpty
                     ? 'placeholder'
                     : user.picture,
@@ -207,6 +208,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Stack(
             children: [
               AvatarImage(
+                key: ValueKey(user.picture), // 添加 key 以确保头像更新时重新构建
                 imageUrl: user.picture.isEmpty
                     ? 'placeholder'
                     : user.picture,

@@ -10,6 +10,8 @@ import '../screens/app_detail_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/pricing_screen.dart';
 import '../screens/language_settings_screen.dart';
+import '../screens/chat_screen.dart';
+import '../screens/realtime_analytics_screen.dart';
 import '../providers/auth_provider.dart';
 
 Page<dynamic> _buildPageWithTransition(
@@ -126,6 +128,22 @@ GoRouter createAppRouter(BuildContext context) {
           context,
           state,
           ProjectDetailScreen(projectId: state.pathParameters['id']!),
+        ),
+      ),
+      GoRoute(
+        path: '/projects/:id/chat',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          ChatScreen(projectId: state.pathParameters['id']!),
+        ),
+      ),
+      GoRoute(
+        path: '/projects/:id/analytics/realtime',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          RealtimeAnalyticsScreen(projectId: state.pathParameters['id']!),
         ),
       ),
       GoRoute(
