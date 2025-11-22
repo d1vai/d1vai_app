@@ -37,23 +37,36 @@ class UserProject {
   });
 
   factory UserProject.fromJson(Map<String, dynamic> json) {
+    int? parseInt(dynamic value) {
+      if (value == null) return null;
+      if (value is int) return value;
+      if (value is String) {
+        try {
+          return int.parse(value);
+        } catch (e) {
+          return null;
+        }
+      }
+      return null;
+    }
+
     return UserProject(
-      id: json['id'],
-      projectName: json['project_name'] ?? '',
-      projectDescription: json['project_description'] ?? '',
-      createdAt: json['created_at'] ?? '',
-      updatedAt: json['updated_at'] ?? '',
-      userId: json['user_id'] ?? 0,
-      projectPort: json['project_port'] ?? 0,
-      emoji: json['emoji'],
-      latestPreviewUrl: json['latest_preview_url'],
+      id: json['id']?.toString() ?? '',
+      projectName: json['project_name']?.toString() ?? '',
+      projectDescription: json['project_description']?.toString() ?? '',
+      createdAt: json['created_at']?.toString() ?? '',
+      updatedAt: json['updated_at']?.toString() ?? '',
+      userId: parseInt(json['user_id']) ?? 0,
+      projectPort: parseInt(json['project_port']) ?? 0,
+      emoji: json['emoji']?.toString(),
+      latestPreviewUrl: json['latest_preview_url']?.toString(),
       tags: json['tags'] != null ? List<String>.from(json['tags']) : [],
-      status: json['status'] ?? 'active',
-      analyticsEnabled: json['analytics_enabled'],
-      projectDatabaseId: json['project_database_id'],
-      projectPayId: json['project_pay_id'],
-      vercelProdDomain: json['vercel_prod_domain'],
-      latestProdDeploymentUrl: json['latest_prod_deployment_url'],
+      status: json['status']?.toString() ?? 'active',
+      analyticsEnabled: json['analytics_enabled'] is bool ? json['analytics_enabled'] : null,
+      projectDatabaseId: parseInt(json['project_database_id']),
+      projectPayId: parseInt(json['project_pay_id']),
+      vercelProdDomain: json['vercel_prod_domain']?.toString(),
+      latestProdDeploymentUrl: json['latest_prod_deployment_url']?.toString(),
     );
   }
 

@@ -97,7 +97,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      body: _isLoading
+      body: (_isLoading || projectProvider.isLoading)
           ? _buildShimmer()
           : _buildContent(user, context, projectProvider),
       floatingActionButton: FloatingActionButton(
@@ -158,6 +158,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ProjectProvider projectProvider,
   ) {
     final stats = projectProvider.getProjectStats();
+
+    // 如果有错误，显示错误提示
+    if (projectProvider.error != null && projectProvider.projects.isEmpty) {
+      return _buildErrorState(context, projectProvider);
+    }
 
     return RefreshIndicator(
       onRefresh: () async => await projectProvider.refresh(),
@@ -541,5 +546,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final value = (baseValue + variance + index * 0.1).clamp(0.5, 15.0);
       return FlSpot(index.toDouble(), value);
     });
+  }
+
+  /// 构建错误状态
+  Widget _buildErrorState(BuildContext context, ProjectProvider projectProvider) {
+    return RefreshIndicator(
+      onRefresh: () async => await projectProvider.refresh(),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color: Colors.red.shade400,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Failed to load projects',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: Colors.red.shade400,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              projectProvider.error ?? 'Unknown error',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Colors.grey.shade600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () async {
+                await projectProvider.refresh();
+              },
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepPurple,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
