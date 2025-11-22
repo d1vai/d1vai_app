@@ -517,7 +517,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 
                 if (!mounted) return;
 
-                final messenger = ScaffoldMessenger.of(context);
                 final authProvider = Provider.of<AuthProvider>(
                   context,
                   listen: false,
@@ -527,10 +526,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   await authProvider.updateAvatar(selectedAvatarUrl);
 
                   if (!mounted) return;
-                  
+
                   // 等待一帧，确保对话框完全关闭
-                  await Future.delayed(const Duration(milliseconds: 100));
-                  
+                  await Future.delayed(const Duration(milliseconds: 300));
+
                   if (!mounted) return;
                   SnackBarHelper.showSuccess(
                     context,
@@ -539,8 +538,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   );
                 } catch (e) {
                   if (!mounted) return;
-                  
-                  await Future.delayed(const Duration(milliseconds: 100));
+
+                  await Future.delayed(const Duration(milliseconds: 300));
                   
                   if (!mounted) return;
                   SnackBarHelper.showError(
