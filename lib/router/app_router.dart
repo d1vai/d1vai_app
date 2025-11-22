@@ -12,6 +12,10 @@ import '../screens/pricing_screen.dart';
 import '../screens/language_settings_screen.dart';
 import '../screens/chat_screen.dart';
 import '../screens/realtime_analytics_screen.dart';
+import '../screens/invites_list_screen.dart';
+import '../screens/notification_settings_screen.dart';
+import '../screens/help_support_screen.dart';
+import '../screens/github_settings_screen.dart';
 import '../providers/auth_provider.dart';
 
 Page<dynamic> _buildPageWithTransition(
@@ -112,6 +116,38 @@ GoRouter createAppRouter(BuildContext context) {
           context,
           state,
           const LanguageSettingsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/settings/invites',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const InvitesListScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/settings/notifications',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const NotificationSettingsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/settings/help',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const HelpSupportScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/settings/github',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const GithubSettingsScreen(),
         ),
       ),
       GoRoute(

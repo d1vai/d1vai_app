@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
 import '../providers/locale_provider.dart';
+import '../providers/theme_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/login_required_dialog.dart';
 import '../widgets/avatar_image.dart';
@@ -180,11 +182,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     subtitle: const Text('Manage notifications'),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
-                      SnackBarHelper.showInfo(
-                        context,
-                        title: 'Coming Soon',
-                        message: 'Notifications feature coming soon',
-                      );
+                      context.push('/settings/notifications');
                     },
                   ),
                   const Divider(height: 1),
@@ -194,11 +192,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     subtitle: const Text('Get help and support'),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
-                      SnackBarHelper.showInfo(
-                        context,
-                        title: 'Coming Soon',
-                        message: 'Help feature coming soon',
-                      );
+                      context.push('/settings/help');
                     },
                   ),
                   const Divider(height: 1),
@@ -302,7 +296,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      _connectGithub();
+                      context.push('/settings/github');
                     },
                     icon: const Icon(Icons.link),
                     label: const Text('Connect GitHub'),
@@ -378,22 +372,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
                 ),
                 const SizedBox(height: 16),
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Your Invite Code',
-                    hintText: 'Enter invite code',
-                    border: const OutlineInputBorder(),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.copy),
-                      onPressed: () {
-                        SnackBarHelper.showSuccess(
-                          context,
-                          title: 'Copied',
-                          message: 'Invite code copied',
-                        );
-                      },
-                    ),
-                  ),
+                Consumer<AuthProvider>(
+                  builder: (context, authProvider, _) {
+                    final user = authProvider.user;
+                    final inviteCode = user?.inviteCode ?? 'Loading...';
+
+                    return Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: ListTile(
+                        title: Text(
+                          inviteCode,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 2,
+                          ),
+                        ),
+                        subtitle: const Text('Your Invite Code'),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.copy),
+                          onPressed: () {
+                            if (inviteCode.isNotEmpty && inviteCode != 'Loading...') {
+                              SnackBarHelper.showSuccess(
+                                context,
+                                title: 'Copied',
+                                message: 'Invite code copied to clipboard',
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
@@ -421,11 +434,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 subtitle: const Text('View your invitation history'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () {
-                  SnackBarHelper.showInfo(
-                    context,
-                    title: 'Coming Soon',
-                    message: 'Invite history feature coming soon',
-                  );
+                  context.push('/settings/invites');
                 },
               ),
               const Divider(height: 1),
@@ -454,49 +463,86 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Choose Theme'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.light_mode),
-                title: const Text('Light Mode'),
-                onTap: () {
-                  Navigator.pop(context);
-                  SnackBarHelper.showInfo(
+        return Consumer<ThemeProvider>(
+          builder: (context, themeProvider, child) {
+            return AlertDialog(
+              title: const Text('Choose Theme'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildThemeOption(
                     context,
-                    title: 'Coming Soon',
-                    message: 'Theme feature coming soon',
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.dark_mode),
-                title: const Text('Dark Mode'),
-                onTap: () {
-                  Navigator.pop(context);
-                  SnackBarHelper.showInfo(
+                    themeProvider,
+                    AppThemeMode.light,
+                    Icons.light_mode,
+                    'Light Mode',
+                  ),
+                  _buildThemeOption(
                     context,
-                    title: 'Coming Soon',
-                    message: 'Theme feature coming soon',
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.brightness_auto),
-                title: const Text('System'),
-                onTap: () {
-                  Navigator.pop(context);
-                  SnackBarHelper.showInfo(
+                    themeProvider,
+                    AppThemeMode.dark,
+                    Icons.dark_mode,
+                    'Dark Mode',
+                  ),
+                  _buildThemeOption(
                     context,
-                    title: 'Coming Soon',
-                    message: 'Theme feature coming soon',
-                  );
-                },
+                    themeProvider,
+                    AppThemeMode.system,
+                    Icons.brightness_auto,
+                    'System',
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// 构建主题选项
+  Widget _buildThemeOption(
+    BuildContext context,
+    ThemeProvider themeProvider,
+    AppThemeMode mode,
+    IconData icon,
+    String title,
+  ) {
+    final isSelected = themeProvider.themeMode == mode;
+
+    return ListTile(
+      leading: Icon(icon, color: isSelected ? Colors.deepPurple : null),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          color: isSelected ? Colors.deepPurple : null,
+        ),
+      ),
+      trailing: Radio<AppThemeMode>(
+        // ignore: deprecated_member_use
+        groupValue: themeProvider.themeMode,
+        // ignore: deprecated_member_use
+        onChanged: (AppThemeMode? newMode) {
+          if (newMode != null) {
+            Navigator.pop(context);
+            themeProvider.setThemeMode(newMode);
+            SnackBarHelper.showSuccess(
+              context,
+              title: 'Theme Updated',
+              message: 'Switched to $title',
+            );
+          }
+        },
+        value: mode,
+      ),
+      onTap: () {
+        Navigator.pop(context);
+        themeProvider.setThemeMode(mode);
+        SnackBarHelper.showSuccess(
+          context,
+          title: 'Theme Updated',
+          message: 'Switched to $title',
         );
       },
     );
@@ -513,21 +559,63 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// 连接 GitHub
-  void _connectGithub() {
-    SnackBarHelper.showInfo(
-      context,
-      title: 'Coming Soon',
-      message: 'GitHub integration feature coming soon',
-    );
-  }
-
   /// 分享邀请码
-  void _shareInviteCode() {
-    SnackBarHelper.showInfo(
-      context,
-      title: 'Coming Soon',
-      message: 'Share feature coming soon',
-    );
+  Future<void> _shareInviteCode() async {
+    final user = Provider.of<AuthProvider>(context, listen: false).user;
+    if (user == null) {
+      if (mounted) {
+        SnackBarHelper.showError(
+          context,
+          title: 'Error',
+          message: 'Please login first',
+        );
+      }
+      return;
+    }
+
+    final inviteCode = user.inviteCode;
+    if (inviteCode.isEmpty) {
+      if (mounted) {
+        SnackBarHelper.showError(
+          context,
+          title: 'Error',
+          message: 'Invite code not available',
+        );
+      }
+      return;
+    }
+
+    final inviteLink = 'https://d1v.ai/login?invite=$inviteCode';
+
+    final message = '''Join me on d1v.ai! 🚀
+
+Use my invite code: $inviteCode
+
+Click the link to get started:
+$inviteLink
+
+Together, let's build the future of AI-powered applications!''';
+
+    try {
+      await Share.share(
+        message,
+        subject: 'Join me on d1v.ai',
+      );
+      if (mounted) {
+        SnackBarHelper.showSuccess(
+          context,
+          title: 'Shared',
+          message: 'Invite code shared successfully',
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        SnackBarHelper.showError(
+          context,
+          title: 'Error',
+          message: 'Failed to share: $error',
+        );
+      }
+    }
   }
 }

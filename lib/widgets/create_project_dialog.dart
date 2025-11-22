@@ -296,7 +296,6 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
 
       if (!mounted) return;
 
-      final messenger = ScaffoldMessenger.of(context);
       final router = GoRouter.of(context);
       Navigator.pop(context);
 

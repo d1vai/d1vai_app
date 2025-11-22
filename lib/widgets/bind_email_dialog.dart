@@ -126,7 +126,7 @@ class _BindEmailDialogState extends State<BindEmailDialog> {
       final service = Provider.of<D1vaiService>(context, listen: false);
 
       if (widget.mode == EmailDialogMode.change) {
-        await service.postUserChangeEmailConfirm(email, code, null);
+        await service.postUserChangeEmailConfirm(email, code);
         if (mounted) {
           _showSuccess('Email changed successfully');
         }

@@ -14,13 +14,14 @@ class CommunityScreen extends StatefulWidget {
 class _CommunityScreenState extends State<CommunityScreen> {
   late EasyRefreshController _controller;
   final D1vaiService _d1vaiService = D1vaiService();
-  
+
   List<CommunityPost> _posts = [];
   bool _isLoading = true;
   String? _error;
   int _offset = 0;
   final int _limit = 20;
   bool _hasMore = true;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -53,6 +54,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
       final posts = await _d1vaiService.getCommunityPosts(
         limit: _limit,
         offset: _offset,
+        searchQuery: _searchQuery.isNotEmpty ? _searchQuery : null,
       );
 
       if (!mounted) return;
@@ -98,6 +100,17 @@ class _CommunityScreenState extends State<CommunityScreen> {
     }
   }
 
+  Future<void> _handleSearch(String query) async {
+    setState(() {
+      _searchQuery = query;
+    });
+    await _loadPosts(refresh: true);
+  }
+
+  Future<void> _clearSearch() async {
+    await _handleSearch('');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -112,7 +125,35 @@ class _CommunityScreenState extends State<CommunityScreen> {
           ),
         ],
       ),
-      body: _buildBody(),
+      body: Column(
+        children: [
+          // Search bar
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Search posts...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: _clearSearch,
+                      )
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                filled: true,
+                fillColor: Colors.grey.shade50,
+              ),
+              onSubmitted: _handleSearch,
+            ),
+          ),
+          Expanded(
+            child: _buildBody(),
+          ),
+        ],
+      ),
     );
   }
 
@@ -147,10 +188,14 @@ class _CommunityScreenState extends State<CommunityScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.forum_outlined, size: 64, color: Colors.grey.shade300),
+            Icon(
+              _searchQuery.isNotEmpty ? Icons.search_off : Icons.forum_outlined,
+              size: 64,
+              color: Colors.grey.shade300,
+            ),
             const SizedBox(height: 16),
             Text(
-              'No posts yet',
+              _searchQuery.isNotEmpty ? 'No results found' : 'No posts yet',
               style: TextStyle(
                 fontSize: 18,
                 color: Colors.grey.shade600,
@@ -158,7 +203,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Be the first to share something!',
+              _searchQuery.isNotEmpty
+                  ? 'Try a different search term'
+                  : 'Be the first to share something!',
               style: TextStyle(color: Colors.grey.shade500),
             ),
           ],
