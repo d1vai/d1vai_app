@@ -3,6 +3,7 @@ class CommunityPost {
   final int userId;
   final String? userName;
   final String? userAvatar;
+  final String? userEmail;
   final String title;
   final String content;
   final String? imageUrl;
@@ -17,6 +18,7 @@ class CommunityPost {
     required this.userId,
     this.userName,
     this.userAvatar,
+    this.userEmail,
     required this.title,
     required this.content,
     this.imageUrl,
@@ -33,6 +35,7 @@ class CommunityPost {
       userId: json['user_id'] ?? 0,
       userName: json['user_name'],
       userAvatar: json['user_avatar'],
+      userEmail: json['user_email'],
       title: json['title'] ?? '',
       content: json['content'] ?? '',
       imageUrl: json['image_url'],
@@ -50,6 +53,7 @@ class CommunityPost {
       'user_id': userId,
       'user_name': userName,
       'user_avatar': userAvatar,
+      'user_email': userEmail,
       'title': title,
       'content': content,
       'image_url': imageUrl,

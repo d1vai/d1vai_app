@@ -100,6 +100,13 @@ class _CommunityScreenState extends State<CommunityScreen> {
     }
   }
 
+  String _getEmailPrefix(String? email) {
+    if (email == null || email.isEmpty) return '';
+    final atIndex = email.indexOf('@');
+    if (atIndex == -1) return email;
+    return email.substring(0, atIndex);
+  }
+
   Future<void> _handleSearch(String query) async {
     setState(() {
       _searchQuery = query;
@@ -284,6 +291,16 @@ class _CommunityScreenState extends State<CommunityScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                        if (post.userEmail != null && post.userEmail!.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            '@${_getEmailPrefix(post.userEmail)}',
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                         Text(
                           _formatTime(post.createdAt),
                           style: TextStyle(

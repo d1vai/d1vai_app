@@ -132,35 +132,8 @@ class _InvitesListScreenState extends State<InvitesListScreen> {
   Widget _buildUserCard(dynamic user) {
     final email = user['email'] as String? ?? 'Unknown';
     final joinedAt = user['joined_at'] as String?;
-    final status = user['status'] as String? ?? 'pending';
     final companyName = user['company_name'] as String?;
-
-    Color statusColor;
-    IconData statusIcon;
-    String statusText;
-
-    switch (status) {
-      case 'active':
-      case 'joined':
-        statusColor = Colors.green;
-        statusIcon = Icons.check_circle;
-        statusText = 'Joined';
-        break;
-      case 'pending':
-        statusColor = Colors.orange;
-        statusIcon = Icons.pending;
-        statusText = 'Pending';
-        break;
-      case 'expired':
-        statusColor = Colors.grey;
-        statusIcon = Icons.cancel;
-        statusText = 'Expired';
-        break;
-      default:
-        statusColor = Colors.blue;
-        statusIcon = Icons.info;
-        statusText = status;
-    }
+    final avatarUrl = user['picture'] as String?;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -168,18 +141,23 @@ class _InvitesListScreenState extends State<InvitesListScreen> {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            // Avatar
+            // Avatar with real image support
             CircleAvatar(
               radius: 24,
               backgroundColor: Colors.deepPurple.shade100,
-              child: Text(
-                email.isNotEmpty ? email[0].toUpperCase() : '?',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.deepPurple.shade700,
-                ),
-              ),
+              backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty
+                  ? NetworkImage(avatarUrl)
+                  : null,
+              child: (avatarUrl == null || avatarUrl.isEmpty)
+                  ? Text(
+                      email.isNotEmpty ? email[0].toUpperCase() : '?',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepPurple.shade700,
+                      ),
+                    )
+                  : null,
             ),
             const SizedBox(width: 16),
             // User info
@@ -205,34 +183,15 @@ class _InvitesListScreenState extends State<InvitesListScreen> {
                     ),
                   ],
                   const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(
-                        statusIcon,
-                        size: 16,
-                        color: statusColor,
+                  if (joinedAt != null) ...[
+                    Text(
+                      'Joined ${_formatDate(joinedAt)}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade600,
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        statusText,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: statusColor,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      if (joinedAt != null) ...[
-                        const SizedBox(width: 12),
-                        Text(
-                          '• ${_formatDate(joinedAt)}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
+                    ),
+                  ],
                 ],
               ),
             ),
