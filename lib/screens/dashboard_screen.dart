@@ -6,6 +6,7 @@ import 'package:shimmer/shimmer.dart';
 import '../providers/auth_provider.dart';
 import '../providers/project_provider.dart';
 import '../models/user.dart';
+import '../models/project.dart';
 import '../widgets/create_project_dialog.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -19,6 +20,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _isLoading = true;
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
+  List<UserProject> _searchResults = [];
 
   @override
   void initState() {
@@ -43,6 +45,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.dispose();
   }
 
+  /// 执行搜索
+  void _performSearch(String query) {
+    final provider = Provider.of<ProjectProvider>(context, listen: false);
+    if (query.trim().isEmpty) {
+      setState(() {
+        _searchResults = [];
+      });
+    } else {
+      final results = provider.searchProjects(query.trim());
+      setState(() {
+        _searchResults = results;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<AuthProvider>(context).user;
@@ -61,7 +78,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 style: const TextStyle(color: Colors.white),
                 onChanged: (query) {
-                  // TODO: 实现搜索功能
+                  _performSearch(query);
                 },
               )
             : const Text('Dashboard'),
@@ -73,6 +90,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 _isSearching = !_isSearching;
                 if (!_isSearching) {
                   _searchController.clear();
+                  _searchResults = [];
                 }
               });
             },
@@ -168,7 +186,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Recent Projects',
+                  _isSearching && _searchController.text.isNotEmpty
+                      ? 'Search Results (${_searchResults.length})'
+                      : 'Recent Projects',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 TextButton(
@@ -178,7 +198,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            _buildProjectList(context, projectProvider),
+            _buildProjectList(context, projectProvider, isSearchResults: _isSearching && _searchController.text.isNotEmpty),
             const SizedBox(height: 80), // Bottom padding for FAB
           ],
         ),
@@ -354,9 +374,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildProjectList(
     BuildContext context,
-    ProjectProvider projectProvider,
-  ) {
-    final projects = projectProvider.projects.take(5).toList();
+    ProjectProvider projectProvider, {
+    bool isSearchResults = false,
+  }) {
+    final List<UserProject> projects = isSearchResults
+        ? _searchResults.take(5).toList()
+        : projectProvider.projects.take(5).toList();
 
     if (projects.isEmpty) {
       return Container(
@@ -419,7 +442,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   child: Text(
                     project.emoji ?? '🚀',
-                    style: const TextStyle(fontSize: 24),
+                    style: const TextStyle(fontSize: 36),
+                    textAlign: TextAlign.center,
                   ),
                 ),
                 const SizedBox(width: 16),

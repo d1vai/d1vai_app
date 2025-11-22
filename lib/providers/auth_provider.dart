@@ -288,6 +288,21 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// 刷新用户信息
+  Future<void> refreshUser() async {
+    try {
+      if (_user != null) {
+        final token = _storageService.getAuthToken();
+        _user = await _d1vaiService.getUserProfile();
+        _user = _user?.copyWith(bearerToken: token);
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Refresh user error: $e');
+      rethrow;
+    }
+  }
+
   /// 更新 onboarding 步骤
   Future<void> updateOnboardingStep(OnboardingStep step) async {
     _onboardingData ??= OnboardingData();

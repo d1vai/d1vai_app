@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:intl/intl.dart';
+import 'package:shimmer/shimmer.dart';
 import '../services/d1vai_service.dart';
 import '../models/community_post.dart';
 
@@ -107,6 +108,17 @@ class _CommunityScreenState extends State<CommunityScreen> {
     return email.substring(0, atIndex);
   }
 
+  String _getAuthorDisplayName(CommunityPost post) {
+    if (post.author?.slug != null && post.author!.slug!.isNotEmpty) {
+      return post.author!.slug!;
+    }
+    if (post.author?.email != null && post.author!.email!.isNotEmpty) {
+      final prefix = _getEmailPrefix(post.author!.email);
+      return prefix.isNotEmpty ? prefix : 'Anonymous';
+    }
+    return 'Anonymous';
+  }
+
   Future<void> _handleSearch(String query) async {
     setState(() {
       _searchQuery = query;
@@ -124,10 +136,14 @@ class _CommunityScreenState extends State<CommunityScreen> {
       appBar: AppBar(
         title: const Text('Community'),
         actions: [
-          IconButton(
+IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
-              // TODO: Navigate to create post screen
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Create post feature coming soon'),
+                ),
+              );
             },
           ),
         ],
@@ -166,7 +182,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
   Widget _buildBody() {
     if (_isLoading && _posts.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return _buildShimmer();
     }
 
     if (_error != null && _posts.isEmpty) {
@@ -257,7 +273,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
       ),
       child: InkWell(
         onTap: () {
-          // TODO: Navigate to post detail
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Post detail feature coming soon'),
+            ),
+          );
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
@@ -269,14 +289,20 @@ class _CommunityScreenState extends State<CommunityScreen> {
               Row(
                 children: [
                   CircleAvatar(
+                    radius: 20,
                     backgroundColor: Colors.deepPurple.shade100,
-                    backgroundImage: post.userAvatar != null
-                        ? NetworkImage(post.userAvatar!)
+                    backgroundImage: post.author?.picture != null
+                        ? NetworkImage(post.author!.picture!)
                         : null,
-                    child: post.userAvatar == null
+                    child: (post.author?.picture == null)
                         ? Text(
-                            post.userName?.substring(0, 1).toUpperCase() ?? 'U',
-                            style: const TextStyle(color: Colors.deepPurple),
+                            _getAuthorDisplayName(post).isNotEmpty
+                                ? _getAuthorDisplayName(post)[0].toUpperCase()
+                                : 'U',
+                            style: const TextStyle(
+                              color: Colors.deepPurple,
+                              fontWeight: FontWeight.bold,
+                            ),
                           )
                         : null,
                   ),
@@ -286,15 +312,15 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          post.userName ?? 'Anonymous',
+                          _getAuthorDisplayName(post),
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        if (post.userEmail != null && post.userEmail!.isNotEmpty) ...[
+                        if (post.author?.email != null && post.author!.email!.isNotEmpty) ...[
                           const SizedBox(height: 2),
                           Text(
-                            '@${_getEmailPrefix(post.userEmail)}',
+                            '@${_getEmailPrefix(post.author!.email)}',
                             style: TextStyle(
                               color: Colors.grey.shade600,
                               fontSize: 12,
@@ -311,43 +337,55 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       ],
                     ),
                   ),
-                  IconButton(
+IconButton(
                     icon: const Icon(Icons.more_horiz, color: Colors.grey),
                     onPressed: () {
-                      // TODO: Show post options
+                      showModalBottomSheet(
+                        context: context,
+                        builder: (context) {
+                          return Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ListTile(
+                                leading: const Icon(Icons.share),
+                                title: const Text('Share'),
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Share feature coming soon'),
+                                    ),
+                                  );
+                                },
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.flag, color: Colors.orange),
+                                title: const Text('Report'),
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Report feature coming soon'),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
                     },
                   ),
                 ],
               ),
               const SizedBox(height: 12),
-              
-              // Post title
-              if (post.title.isNotEmpty) ...[
-                Text(
-                  post.title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-              
-              // Post content
-              Text(
-                post.content,
-                style: TextStyle(color: Colors.grey.shade700),
-                maxLines: 4,
-                overflow: TextOverflow.ellipsis,
-              ),
-              
-              // Post image
-              if (post.imageUrl != null) ...[
-                const SizedBox(height: 12),
+
+              // Cover image (like d1vai frontend)
+              if (post.coverUrl != null) ...[
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: Image.network(
-                    post.imageUrl!,
+                    post.coverUrl!,
                     width: double.infinity,
                     height: 200,
                     fit: BoxFit.cover,
@@ -362,10 +400,40 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     },
                   ),
                 ),
+                const SizedBox(height: 12),
               ],
-              
+
+              // Post title
+              if (post.title.isNotEmpty) ...[
+                Text(
+                  post.title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+
+              // Post summary or content
+              if (post.summary != null && post.summary!.isNotEmpty) ...[
+                Text(
+                  post.summary!,
+                  style: TextStyle(color: Colors.grey.shade700),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ] else if (post.content != null && post.content!.isNotEmpty) ...[
+                Text(
+                  post.content!,
+                  style: TextStyle(color: Colors.grey.shade700),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+
               const SizedBox(height: 16),
-              
+
               // Interaction row
               Row(
                 children: [
@@ -395,6 +463,119 @@ class _CommunityScreenState extends State<CommunityScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  /// 构建骨架屏加载效果
+  Widget _buildShimmer() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: 6,
+        itemBuilder: (context, index) {
+          return Card(
+            margin: const EdgeInsets.only(bottom: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 用户信息行
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.white,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: double.infinity,
+                              height: 14,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(height: 4),
+                            Container(
+                              width: 60,
+                              height: 12,
+                              color: Colors.white,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // 帖子标题
+                  Container(
+                    width: double.infinity,
+                    height: 18,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(height: 8),
+
+                  // 帖子内容
+                  Container(
+                    width: double.infinity,
+                    height: 14,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    width: MediaQuery.of(context).size.width * 0.8,
+                    height: 14,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 封面图片占位
+                  Container(
+                    width: double.infinity,
+                    height: 200,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // 操作按钮行
+                  Row(
+                    children: [
+                      Container(
+                        width: 60,
+                        height: 20,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 16),
+                      Container(
+                        width: 60,
+                        height: 20,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 16),
+                      Container(
+                        width: 60,
+                        height: 20,
+                        color: Colors.white,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }

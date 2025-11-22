@@ -106,9 +106,14 @@ GoRouter createAppRouter(BuildContext context) {
             _buildPageWithTransition(context, state, const MainScreen(initialIndex: 2)),
       ),
       GoRoute(
-        path: '/settings',
+        path: '/orders',
         pageBuilder: (context, state) =>
             _buildPageWithTransition(context, state, const MainScreen(initialIndex: 3)),
+      ),
+      GoRoute(
+        path: '/settings',
+        pageBuilder: (context, state) =>
+            _buildPageWithTransition(context, state, const MainScreen(initialIndex: 4)),
       ),
       GoRoute(
         path: '/settings/language',

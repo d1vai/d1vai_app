@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../widgets/snackbar_helper.dart';
 
 class DocsScreen extends StatefulWidget {
@@ -204,13 +205,18 @@ class _DocsScreenState extends State<DocsScreen> {
     );
   }
 
-  void _navigateToDoc(BuildContext context, String href) {
-    // TODO: Implement navigation to specific doc pages
+  void _navigateToDoc(BuildContext context, String href) async {
     SnackBarHelper.showInfo(
       context,
       title: 'Opening Doc',
       message: 'Opening $href...',
     );
+
+    final url = 'https://docs.d1v.ai$href';
+    final uri = Uri.tryParse(url);
+    if (uri != null && await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 }
 

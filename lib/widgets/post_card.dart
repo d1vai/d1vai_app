@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/community.dart';
 import 'avatar_image.dart';
 import 'snackbar_helper.dart';
@@ -337,14 +338,28 @@ class PostCard extends StatelessWidget {
   }
 
   /// 打开项目演示链接
-  void _openProjectDemo(BuildContext context) {
+  void _openProjectDemo(BuildContext context) async {
     if ((post.embedUrl ?? '').isNotEmpty) {
       SnackBarHelper.showInfo(
         context,
         title: 'Opening Project',
         message: 'Opening ${post.title}...',
       );
-      // TODO: 使用 url_launcher 打开链接
+      final url = post.embedUrl!;
+      try {
+        await launchUrl(
+          Uri.parse(url),
+          mode: LaunchMode.externalApplication,
+        );
+      } catch (e) {
+        if (context.mounted) {
+          SnackBarHelper.showError(
+            context,
+            title: 'Error',
+            message: 'Could not open link: $e',
+          );
+        }
+      }
     }
   }
 }

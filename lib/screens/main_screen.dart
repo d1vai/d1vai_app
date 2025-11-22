@@ -6,6 +6,7 @@ import 'dashboard_screen.dart';
 import 'community_screen.dart';
 import 'docs_screen.dart';
 import 'settings_screen.dart';
+import 'order_screen.dart';
 
 class MainScreen extends StatefulWidget {
   final int initialIndex;
@@ -30,6 +31,7 @@ class _MainScreenState extends State<MainScreen> {
       const DashboardScreen(),
       const CommunityScreen(),
       const DocsScreen(),
+      const OrderScreen(),
       const SettingsScreen(),
     ];
   }
@@ -52,6 +54,12 @@ class _MainScreenState extends State<MainScreen> {
       PersistentBottomNavBarItem(
         icon: Icon(PhosphorIcons.book()),
         title: (loc?.translate('docs') ?? 'Docs'),
+        activeColorPrimary: Colors.deepPurple,
+        inactiveColorPrimary: Colors.grey,
+      ),
+      PersistentBottomNavBarItem(
+        icon: Icon(PhosphorIcons.receipt()),
+        title: 'Orders',
         activeColorPrimary: Colors.deepPurple,
         inactiveColorPrimary: Colors.grey,
       ),

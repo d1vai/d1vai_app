@@ -17,16 +17,27 @@ class ProjectProvider extends ChangeNotifier {
   // 搜索状态
   String _searchQuery = '';
 
+  // 状态过滤
+  String? _statusFilter;
+
   // 错误状态
   String? _error;
 
   // Getter
   List<UserProject> get projects => _projects;
+  List<UserProject> get filteredProjects {
+    if (_statusFilter == null || _statusFilter!.isEmpty) {
+      return _projects;
+    }
+    return _projects.where((project) => project.status == _statusFilter).toList();
+  }
+
   bool get isLoading => _isLoading;
   bool get isLoadingMore => _isLoadingMore;
   bool get hasMore => _hasMore;
   String? get error => _error;
   String get searchQuery => _searchQuery;
+  String? get statusFilter => _statusFilter;
   int get totalProjects => _projects.length;
 
   /// 重置状态
@@ -41,12 +52,13 @@ class ProjectProvider extends ChangeNotifier {
   /// 设置搜索参数
   void setSearchQuery(String query) {
     _searchQuery = query;
+    notifyListeners();
   }
 
   /// 设置状态过滤
   void setStatus(String? status) {
-    // TODO: 未来将支持项目状态过滤
-    // 当前 API 不支持此功能
+    _statusFilter = status;
+    notifyListeners();
   }
 
   /// 刷新数据

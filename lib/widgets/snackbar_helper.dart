@@ -9,12 +9,18 @@ class SnackBarHelper {
     BuildContext context, {
     required String title,
     required String message,
+    String? actionLabel,
+    VoidCallback? onActionPressed,
+    Duration? duration,
   }) {
     _showSnackBar(
       context,
       title: title,
       message: message,
       contentType: ContentType.success,
+      actionLabel: actionLabel,
+      onActionPressed: onActionPressed,
+      duration: duration,
     );
   }
 
@@ -23,12 +29,18 @@ class SnackBarHelper {
     BuildContext context, {
     required String title,
     required String message,
+    String? actionLabel,
+    VoidCallback? onActionPressed,
+    Duration? duration,
   }) {
     _showSnackBar(
       context,
       title: title,
       message: message,
       contentType: ContentType.failure,
+      actionLabel: actionLabel,
+      onActionPressed: onActionPressed,
+      duration: duration,
     );
   }
 
@@ -37,12 +49,18 @@ class SnackBarHelper {
     BuildContext context, {
     required String title,
     required String message,
+    String? actionLabel,
+    VoidCallback? onActionPressed,
+    Duration? duration,
   }) {
     _showSnackBar(
       context,
       title: title,
       message: message,
       contentType: ContentType.warning,
+      actionLabel: actionLabel,
+      onActionPressed: onActionPressed,
+      duration: duration,
     );
   }
 
@@ -51,12 +69,18 @@ class SnackBarHelper {
     BuildContext context, {
     required String title,
     required String message,
+    String? actionLabel,
+    VoidCallback? onActionPressed,
+    Duration? duration,
   }) {
     _showSnackBar(
       context,
       title: title,
       message: message,
       contentType: ContentType.help,
+      actionLabel: actionLabel,
+      onActionPressed: onActionPressed,
+      duration: duration,
     );
   }
 
@@ -66,19 +90,65 @@ class SnackBarHelper {
     required String title,
     required String message,
     required ContentType contentType,
+    String? actionLabel,
+    VoidCallback? onActionPressed,
+    Duration? duration,
   }) {
     final snackBar = SnackBar(
       elevation: 0,
       behavior: SnackBarBehavior.floating,
-      backgroundColor: Colors.transparent,
-      content: AwesomeSnackbarContent(
-        title: title,
-        message: message,
-        contentType: contentType,
+      backgroundColor: _getContentColor(contentType),
+      duration: duration ?? const Duration(seconds: 4),
+      content: Row(
+        children: [
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  message,
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
+      action: actionLabel != null && onActionPressed != null
+          ? SnackBarAction(
+              label: actionLabel,
+              onPressed: onActionPressed,
+              textColor: Colors.white,
+            )
+          : null,
     );
 
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
+  /// 获取内容类型的颜色
+  static Color _getContentColor(ContentType contentType) {
+    switch (contentType) {
+      case ContentType.success:
+        return Colors.green.shade600;
+      case ContentType.failure:
+        return Colors.red.shade600;
+      case ContentType.warning:
+        return Colors.orange.shade600;
+      case ContentType.help:
+        return Colors.blue.shade600;
+      default:
+        return Colors.grey.shade800;
+    }
   }
 }

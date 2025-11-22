@@ -3,6 +3,7 @@ import '../core/api_client.dart';
 import '../models/user.dart';
 import '../models/project.dart';
 import '../models/community_post.dart';
+import '../models/deployment.dart';
 import 'cache_service.dart';
 
 class D1vaiService {
@@ -261,9 +262,12 @@ class D1vaiService {
   }
 
   /// 创建新项目
-  Future<dynamic> createUserProject(Map<String, dynamic> data) async {
-    // TODO: Define CreateProjectResponse model
-    return _apiClient.post('/api/projects', data);
+  Future<CreateProjectResponse> createUserProject(Map<String, dynamic> data) async {
+    return _apiClient.post<CreateProjectResponse>(
+      '/api/projects',
+      data,
+      fromJsonT: (json) => CreateProjectResponse.fromJson(json),
+    );
   }
 
   /// AI 生成项目元数据
@@ -1227,6 +1231,33 @@ class D1vaiService {
     return _apiClient.get<Map<String, dynamic>>(
       '/api/deployment/logs/$vercelDeploymentId',
     );
+  }
+
+  /// 获取项目部署历史（带类型转换）
+  Future<List<DeploymentHistory>> getProjectDeploymentHistory(
+    String projectId, {
+    String? environment,
+    int? limit,
+  }) async {
+    final response = await getProjectDeployments(
+      projectId,
+      environment: environment,
+      limit: limit,
+    );
+
+    // Try to extract the deployments list from the response
+    List<dynamic> deploymentsList = [];
+    if (response['data'] != null && response['data'] is List) {
+      deploymentsList = response['data'] as List;
+    } else if (response['items'] != null && response['items'] is List) {
+      deploymentsList = response['items'] as List;
+    } else if (response['deployments'] != null && response['deployments'] is List) {
+      deploymentsList = response['deployments'] as List;
+    }
+
+    return deploymentsList
+        .map((item) => DeploymentHistory.fromJson(item as Map<String, dynamic>))
+        .toList();
   }
 
   /// 部署到生产环境

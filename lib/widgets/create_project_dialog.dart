@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../providers/project_provider.dart';
 import '../models/project.dart';
+import '../services/d1vai_service.dart';
 import 'snackbar_helper.dart';
 
 /// 项目创建对话框
@@ -21,10 +22,29 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
   final TextEditingController _urlController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _repoNameController = TextEditingController();
+  final TextEditingController _projectNameController = TextEditingController();
+  final TextEditingController _tagController = TextEditingController();
 
   int _activeTab = 0;
   bool _isLoading = false;
   String _error = '';
+  String _selectedEmoji = '🚀';
+  bool _enableDatabase = false;
+  bool _enablePayment = false;
+  bool _isGeneratingName = false;
+  List<String> _tags = [];
+
+  // Validation states
+  String? _projectNameError;
+  String? _descriptionError;
+  String? _tagError;
+
+  final List<String> _popularEmojis = [
+    '🚀', '💡', '🎯', '📱', '🌐', '⚡', '🎨', '🔧',
+    '💻', '📊', '🛒', '🎮', '📝', '🔐', '🗄️', '📡',
+    '🤖', '📚', '🎬', '🎵', '🏠', '🏪', '💰', '📈',
+    '🎓', '🏥', '🚗', '✈️', '🎉', '💡', '🔥', '⭐',
+  ];
 
   @override
   void dispose() {
@@ -32,6 +52,8 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     _urlController.dispose();
     _nameController.dispose();
     _repoNameController.dispose();
+    _projectNameController.dispose();
+    _tagController.dispose();
     super.dispose();
   }
 
@@ -140,6 +162,197 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
         : Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Emoji Selector
+              const Text(
+                'Choose an emoji for your project',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Select an emoji that represents your project',
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(12),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 8,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                  ),
+                  itemCount: _popularEmojis.length,
+                  itemBuilder: (context, index) {
+                    final emoji = _popularEmojis[index];
+                    final isSelected = _selectedEmoji == emoji;
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedEmoji = emoji;
+                        });
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? Colors.deepPurple.shade100
+                              : Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isSelected
+                                ? Colors.deepPurple
+                                : Colors.grey.shade200,
+                            width: isSelected ? 2 : 1,
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            emoji,
+                            style: const TextStyle(fontSize: 24),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Integration Options
+              const Text(
+                'Integrations',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Optional: Enable services for your project',
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: BorderSide(color: Colors.grey.shade300),
+                ),
+                child: Column(
+                  children: [
+                    // Database Integration
+                    SwitchListTile(
+                      secondary: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(Icons.storage, color: Colors.blue, size: 20),
+                      ),
+                      title: const Text('Database (Neon)'),
+                      subtitle: const Text('PostgreSQL database with automatic setup'),
+                      value: _enableDatabase,
+                      onChanged: (value) {
+                        setState(() {
+                          _enableDatabase = value;
+                        });
+                      },
+                      controlAffinity: ListTileControlAffinity.trailing,
+                    ),
+                    const Divider(height: 1, indent: 72),
+                    // Payment Integration
+                    SwitchListTile(
+                      secondary: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.green.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(Icons.payment, color: Colors.green, size: 20),
+                      ),
+                      title: const Text('Payment (Stripe)'),
+                      subtitle: const Text('Accept payments with Stripe integration'),
+                      value: _enablePayment,
+                      onChanged: (value) {
+                        setState(() {
+                          _enablePayment = value;
+                        });
+                      },
+                      controlAffinity: ListTileControlAffinity.trailing,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Project Name
+              const Text(
+                'Project Name',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Enter a name for your project or generate with AI',
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: TextField(
+                      controller: _projectNameController,
+                      onChanged: (value) {
+                        // Real-time validation
+                        final error = _validateProjectName(value.trim());
+                        setState(() {
+                          _projectNameError = error;
+                        });
+                      },
+                      decoration: InputDecoration(
+                        labelText: 'Project Name',
+                        hintText: 'my-awesome-project',
+                        border: const OutlineInputBorder(),
+                        errorText: _projectNameError,
+                        errorMaxLines: 2,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _descriptionController.text.trim().isEmpty ||
+                              _isGeneratingName
+                          ? null
+                          : _generateProjectName,
+                      icon: _isGeneratingName
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.auto_awesome, size: 18),
+                      label: Text(
+                        _isGeneratingName ? 'Generating...' : 'Generate',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: Colors.deepPurple,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Project Description
               const Text(
                 'Describe your project',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -153,9 +366,18 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
               TextField(
                 controller: _descriptionController,
                 maxLines: 6,
-                decoration: const InputDecoration(
+                onChanged: (value) {
+                  // Real-time validation
+                  final error = _validateDescription(value.trim());
+                  setState(() {
+                    _descriptionError = error;
+                  });
+                },
+                decoration: InputDecoration(
                   hintText: 'Enter project description...',
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
+                  errorText: _descriptionError,
+                  errorMaxLines: 2,
                 ),
               ),
               const SizedBox(height: 16),
@@ -163,13 +385,81 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
                 'Tip: Include target user, problem, solution approach, and key flows.',
                 style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
               ),
-              const Spacer(),
+              const SizedBox(height: 24),
+
+              // Tags Section
+              const Text(
+                'Tags',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Add tags to help categorize your project',
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              // Add Tag Input
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _tagController,
+                      decoration: InputDecoration(
+                        labelText: 'Add Tag',
+                        hintText: 'e.g., web-app, e-commerce, ai',
+                        border: const OutlineInputBorder(),
+                        errorText: _tagError,
+                        errorMaxLines: 2,
+                      ),
+                      onSubmitted: (value) {
+                        _addTag(value);
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: () {
+                      _addTag(_tagController.text);
+                    },
+                    icon: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.deepPurple,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.add, color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Tags Chips
+              if (_tags.isNotEmpty)
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _tags.map((tag) {
+                    return Chip(
+                      label: Text(tag),
+                      deleteIcon: const Icon(Icons.close, size: 18),
+                      onDeleted: () => _removeTag(tag),
+                      backgroundColor: Colors.deepPurple.shade50,
+                      labelStyle: TextStyle(
+                        color: Colors.deepPurple.shade700,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              const SizedBox(height: 24),
+
+              // Create Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _descriptionController.text.trim().isEmpty
-                      ? null
-                      : _handleCreateProject,
+                  onPressed: _shouldEnableCreateButton()
+                      ? _handleCreateProject
+                      : null,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
@@ -267,12 +557,189 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     );
   }
 
-  /// 处理创建项目
-  Future<void> _handleCreateProject() async {
+  /// AI 生成项目名称
+  Future<void> _generateProjectName() async {
     final description = _descriptionController.text.trim();
     if (description.isEmpty) {
       setState(() {
-        _error = 'Please enter a project description';
+        _error = 'Please enter a project description first';
+      });
+      return;
+    }
+
+    setState(() {
+      _isGeneratingName = true;
+      _error = '';
+    });
+
+    try {
+      final d1vaiService = D1vaiService();
+
+      // 使用 AI 生成项目元数据
+      final metadata = await d1vaiService.generateProjectMeta(
+        prompt: description,
+        maxDescLen: 500,
+      );
+
+      if (!mounted) return;
+
+      final generatedName = metadata['project_name'] as String?;
+      final generatedTags = metadata['tags'] as List<dynamic>?;
+
+      setState(() {
+        if (generatedName != null && generatedName.isNotEmpty) {
+          _projectNameController.text = generatedName;
+        }
+        if (generatedTags != null && generatedTags.isNotEmpty) {
+          _tags = generatedTags.cast<String>();
+        }
+      });
+
+      SnackBarHelper.showSuccess(
+        context,
+        title: 'Generated',
+        message: 'Project name and tags generated successfully!',
+      );
+    } catch (e) {
+      setState(() {
+        _error = 'Failed to generate project name: $e';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isGeneratingName = false;
+        });
+      }
+    }
+  }
+
+  /// 添加标签
+  void _addTag(String tag) {
+    if (tag.trim().isEmpty) return;
+
+    // Validate tag
+    final trimmedTag = tag.trim();
+    if (trimmedTag.length > 20) {
+      setState(() {
+        _tagError = 'Tag must be 20 characters or less';
+      });
+      return;
+    }
+
+    if (_tags.length >= 10) {
+      setState(() {
+        _tagError = 'Maximum 10 tags allowed';
+      });
+      return;
+    }
+
+    if (_tags.contains(trimmedTag)) {
+      setState(() {
+        _tagError = 'Tag already exists';
+      });
+      return;
+    }
+
+    setState(() {
+      _tags.add(trimmedTag);
+      _tagError = null;
+    });
+    _tagController.clear();
+  }
+
+  /// 移除标签
+  void _removeTag(String tag) {
+    setState(() {
+      _tags.remove(tag);
+      _tagError = null;
+    });
+  }
+
+  /// 验证项目名称
+  String? _validateProjectName(String name) {
+    if (name.isEmpty) {
+      return 'Project name is required';
+    }
+
+    if (name.length < 3) {
+      return 'Must be at least 3 characters';
+    }
+
+    if (name.length > 30) {
+      return 'Must be 30 characters or less';
+    }
+
+    // Check for valid characters (letters, numbers, hyphens, underscores)
+    final nameRegex = RegExp(r'^[a-zA-Z0-9_-]+$');
+    if (!nameRegex.hasMatch(name)) {
+      return 'Only letters, numbers, hyphens, and underscores allowed';
+    }
+
+    // Cannot start or end with hyphen
+    if (name.startsWith('-') || name.endsWith('-')) {
+      return 'Cannot start or end with hyphen';
+    }
+
+    return null;
+  }
+
+  /// 验证项目描述
+  String? _validateDescription(String description) {
+    if (description.isEmpty) {
+      return 'Project description is required';
+    }
+
+    if (description.length < 10) {
+      return 'Must be at least 10 characters';
+    }
+
+    if (description.length > 500) {
+      return 'Must be 500 characters or less';
+    }
+
+    return null;
+  }
+
+  /// 检查是否应该启用创建按钮
+  bool _shouldEnableCreateButton() {
+    final description = _descriptionController.text.trim();
+    final projectName = _projectNameController.text.trim();
+
+    // Check if required fields are empty
+    if (description.isEmpty || projectName.isEmpty) {
+      return false;
+    }
+
+    // Check if there are any validation errors
+    if (_validateProjectName(projectName) != null) {
+      return false;
+    }
+
+    if (_validateDescription(description) != null) {
+      return false;
+    }
+
+    if (_tagError != null) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /// 处理创建项目
+  Future<void> _handleCreateProject() async {
+    final description = _descriptionController.text.trim();
+    final projectName = _projectNameController.text.trim();
+
+    // Validate inputs
+    final projectNameError = _validateProjectName(projectName);
+    final descriptionError = _validateDescription(description);
+
+    if (projectNameError != null || descriptionError != null) {
+      setState(() {
+        _projectNameError = projectNameError;
+        _descriptionError = descriptionError;
+        _error = 'Please fix the errors above';
       });
       return;
     }
@@ -280,11 +747,33 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     setState(() {
       _isLoading = true;
       _error = '';
+      _projectNameError = null;
+      _descriptionError = null;
     });
 
     try {
-      // 模拟创建项目
-      await Future.delayed(const Duration(seconds: 2));
+      final d1vaiService = D1vaiService();
+
+      // 使用 AI 生成项目元数据，并传递集成选项
+      final result = await d1vaiService.createProjectWithIntegrations(
+        prompt: description,
+        maxDescLen: 500,
+        enableDatabase: _enableDatabase,
+        enablePay: _enablePayment,
+      );
+
+      if (!mounted) return;
+
+      // 更新项目名称为用户指定的名称
+      final projectId = result['project_id'] as String?;
+      if (projectId != null) {
+        final updateData = {
+          'project_name': projectName,
+          'emoji': _selectedEmoji,
+          'tags': _tags,
+        };
+        await d1vaiService.updateUserProject(projectId, updateData);
+      }
 
       if (!mounted) return;
 
@@ -303,21 +792,6 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
         context,
         title: 'Success',
         message: 'Project created successfully!',
-      );
-
-      widget.onCreated?.call(
-        UserProject(
-          id: 'proj_${DateTime.now().millisecondsSinceEpoch}',
-          projectName: 'My Awesome Project',
-          projectDescription: description,
-          createdAt: DateTime.now().toIso8601String(),
-          updatedAt: DateTime.now().toIso8601String(),
-          userId: 1000,
-          projectPort: 3000,
-          emoji: '🚀',
-          tags: [],
-          status: 'active',
-        ),
       );
 
       // 跳转到项目列表

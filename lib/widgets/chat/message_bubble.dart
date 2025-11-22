@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../models/message.dart';
 
 /// Message bubble widget for displaying chat messages
@@ -148,10 +149,20 @@ class MessageBubble extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                IconButton(
+IconButton(
                   icon: const Icon(Icons.copy, size: 16.0),
-                  onPressed: () {
-                    // TODO: Implement copy to clipboard
+                  onPressed: () async {
+                    await Clipboard.setData(
+                      ClipboardData(text: content.code),
+                    );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Code copied to clipboard'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    }
                   },
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(

@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:shimmer/shimmer.dart';
 import '../models/analytics.dart';
 import '../services/analytics_service.dart';
 import '../widgets/analytics/metric_card.dart';
@@ -154,8 +156,13 @@ class _RealtimeAnalyticsScreenState
         message: 'Export started. Download will begin shortly.',
       );
 
-      // TODO: Open download URL
-      debugPrint('Download URL: $downloadUrl');
+      // Open download URL
+      final uri = Uri.tryParse(downloadUrl);
+      if (uri != null && await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        debugPrint('Download URL: $downloadUrl');
+      }
     } catch (e) {
       if (!mounted) return;
       SnackBarHelper.showError(context, title: 'Error', message: 'Failed to export: $e');
@@ -208,9 +215,7 @@ class _RealtimeAnalyticsScreenState
   }
 
   Widget _buildLoadingState() {
-    return const Center(
-      child: CircularProgressIndicator(),
-    );
+    return _buildShimmer();
   }
 
   Widget _buildContent() {
@@ -426,7 +431,7 @@ class _RealtimeAnalyticsScreenState
         return MetricCard(
           metric: metric,
           onTap: () {
-            // TODO: Navigate to metric detail
+            _showMetricDetail(metric);
           },
         );
       },
@@ -496,10 +501,14 @@ class _RealtimeAnalyticsScreenState
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                IconButton(
+IconButton(
                   icon: const Icon(Icons.fullscreen),
                   onPressed: () {
-                    // TODO: Navigate to world map screen
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('World map feature coming soon'),
+                      ),
+                    );
                   },
                 ),
               ],
@@ -517,6 +526,168 @@ class _RealtimeAnalyticsScreenState
                 style: TextStyle(
                   color: Colors.grey,
                 ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 显示指标详情
+  void _showMetricDetail(RealtimeMetric metric) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${metric.name} Details',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                _buildDetailRow('Current Value', '${metric.currentValue} ${metric.unit}'),
+                const SizedBox(height: 12),
+                _buildDetailRow(
+                  'Change',
+                  '${metric.percentageChange >= 0 ? '+' : ''}${metric.percentageChange.toStringAsFixed(2)}%',
+                ),
+                const SizedBox(height: 12),
+                _buildDetailRow('Description', metric.description),
+                const SizedBox(height: 12),
+                _buildDetailRow(
+                  'Last Updated',
+                  '${metric.lastUpdated.year}-${metric.lastUpdated.month.toString().padLeft(2, '0')}-${metric.lastUpdated.day.toString().padLeft(2, '0')} ${metric.lastUpdated.hour.toString().padLeft(2, '0')}:${metric.lastUpdated.minute.toString().padLeft(2, '0')}',
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// 构建详情行
+  Widget _buildDetailRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 120,
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.grey,
+              fontSize: 14,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 构建骨架屏加载效果
+  Widget _buildShimmer() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // KPI 卡片行
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              childAspectRatio: 1.3,
+              children: List.generate(4, (index) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        width: double.infinity,
+                        height: 16,
+                        color: Colors.grey[200],
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        width: 60,
+                        height: 20,
+                        color: Colors.grey[200],
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ),
+            const SizedBox(height: 24),
+
+            // 图表区域
+            Container(
+              width: double.infinity,
+              height: 300,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // 地理分布区域
+            Container(
+              width: double.infinity,
+              height: 350,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
           ],

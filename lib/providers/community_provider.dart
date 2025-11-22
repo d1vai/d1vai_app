@@ -102,7 +102,7 @@ class CommunityProvider extends ChangeNotifier {
     if (query.isEmpty) return _posts;
     return _posts.where((post) {
       return post.title.toLowerCase().contains(query.toLowerCase()) ||
-          post.content.toLowerCase().contains(query.toLowerCase());
+          (post.content?.toLowerCase().contains(query.toLowerCase()) ?? false);
     }).toList();
   }
 }

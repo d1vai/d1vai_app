@@ -1,12 +1,40 @@
+class Author {
+  final String? slug;
+  final String? email;
+  final String? picture;
+
+  Author({
+    this.slug,
+    this.email,
+    this.picture,
+  });
+
+  factory Author.fromJson(Map<String, dynamic> json) {
+    return Author(
+      slug: json['slug'],
+      email: json['email'],
+      picture: json['picture'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'slug': slug,
+      'email': email,
+      'picture': picture,
+    };
+  }
+}
+
 class CommunityPost {
   final int id;
-  final int userId;
-  final String? userName;
-  final String? userAvatar;
-  final String? userEmail;
+  final String slug;
   final String title;
-  final String content;
-  final String? imageUrl;
+  final String? summary;
+  final String? content;
+  final String? coverUrl;
+  final String? embedUrl;
+  final Author? author;
   final int likeCount;
   final int commentCount;
   final bool isLiked;
@@ -15,13 +43,13 @@ class CommunityPost {
 
   CommunityPost({
     required this.id,
-    required this.userId,
-    this.userName,
-    this.userAvatar,
-    this.userEmail,
+    required this.slug,
     required this.title,
-    required this.content,
-    this.imageUrl,
+    this.summary,
+    this.content,
+    this.coverUrl,
+    this.embedUrl,
+    this.author,
     required this.likeCount,
     required this.commentCount,
     required this.isLiked,
@@ -30,15 +58,29 @@ class CommunityPost {
   });
 
   factory CommunityPost.fromJson(Map<String, dynamic> json) {
+    Author? author;
+    if (json['author'] != null) {
+      author = Author.fromJson(json['author'] as Map<String, dynamic>);
+    }
+
+    // Backward compatibility with flat structure (user_name, user_avatar, user_email)
+    if (author == null && (json['user_name'] != null || json['user_avatar'] != null || json['user_email'] != null)) {
+      author = Author(
+        slug: json['user_id']?.toString(),
+        email: json['user_email'],
+        picture: json['user_avatar'],
+      );
+    }
+
     return CommunityPost(
       id: json['id'] ?? 0,
-      userId: json['user_id'] ?? 0,
-      userName: json['user_name'],
-      userAvatar: json['user_avatar'],
-      userEmail: json['user_email'],
+      slug: json['slug'] ?? json['id']?.toString() ?? '',
       title: json['title'] ?? '',
-      content: json['content'] ?? '',
-      imageUrl: json['image_url'],
+      summary: json['summary'],
+      content: json['content'],
+      coverUrl: json['cover_url'] ?? json['image_url'],
+      embedUrl: json['embed_url'],
+      author: author,
       likeCount: json['like_count'] ?? 0,
       commentCount: json['comment_count'] ?? 0,
       isLiked: json['is_liked'] ?? false,
@@ -50,13 +92,13 @@ class CommunityPost {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'user_id': userId,
-      'user_name': userName,
-      'user_avatar': userAvatar,
-      'user_email': userEmail,
+      'slug': slug,
       'title': title,
+      'summary': summary,
       'content': content,
-      'image_url': imageUrl,
+      'cover_url': coverUrl,
+      'embed_url': embedUrl,
+      'author': author?.toJson(),
       'like_count': likeCount,
       'comment_count': commentCount,
       'is_liked': isLiked,

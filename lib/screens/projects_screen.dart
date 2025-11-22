@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shimmer/shimmer.dart';
 import '../providers/project_provider.dart';
 import '../providers/auth_provider.dart';
 import '../models/project.dart';
@@ -194,7 +195,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
             child: Consumer<ProjectProvider>(
               builder: (context, provider, child) {
                 if (provider.isLoading && provider.projects.isEmpty) {
-                  return const Center(child: CircularProgressIndicator());
+                  return _buildShimmer();
                 }
 
                 if (provider.error != null) {
@@ -495,5 +496,73 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     } catch (e) {
       return '';
     }
+  }
+
+  /// 构建骨架屏加载效果
+  Widget _buildShimmer() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: 8,
+        itemBuilder: (context, index) {
+          return Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: double.infinity,
+                              height: 16,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              width: MediaQuery.of(context).size.width * 0.6,
+                              height: 14,
+                              color: Colors.white,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    height: 12,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    width: MediaQuery.of(context).size.width * 0.4,
+                    height: 12,
+                    color: Colors.white,
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 }

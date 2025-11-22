@@ -11,6 +11,11 @@ class UserProject {
   final String? latestPreviewUrl;
   final List<String> tags;
   final String status;
+  final bool? analyticsEnabled;
+  final int? projectDatabaseId;
+  final int? projectPayId;
+  final String? vercelProdDomain;
+  final String? latestProdDeploymentUrl;
 
   const UserProject({
     required this.id,
@@ -24,6 +29,11 @@ class UserProject {
     this.latestPreviewUrl,
     this.tags = const [],
     this.status = 'active',
+    this.analyticsEnabled,
+    this.projectDatabaseId,
+    this.projectPayId,
+    this.vercelProdDomain,
+    this.latestProdDeploymentUrl,
   });
 
   factory UserProject.fromJson(Map<String, dynamic> json) {
@@ -39,6 +49,11 @@ class UserProject {
       latestPreviewUrl: json['latest_preview_url'],
       tags: json['tags'] != null ? List<String>.from(json['tags']) : [],
       status: json['status'] ?? 'active',
+      analyticsEnabled: json['analytics_enabled'],
+      projectDatabaseId: json['project_database_id'],
+      projectPayId: json['project_pay_id'],
+      vercelProdDomain: json['vercel_prod_domain'],
+      latestProdDeploymentUrl: json['latest_prod_deployment_url'],
     );
   }
 
@@ -55,6 +70,11 @@ class UserProject {
       'latest_preview_url': latestPreviewUrl,
       'tags': tags,
       'status': status,
+      'analytics_enabled': analyticsEnabled,
+      'project_database_id': projectDatabaseId,
+      'project_pay_id': projectPayId,
+      'vercel_prod_domain': vercelProdDomain,
+      'latest_prod_deployment_url': latestProdDeploymentUrl,
     };
   }
 
@@ -71,6 +91,11 @@ class UserProject {
     String? latestPreviewUrl,
     List<String>? tags,
     String? status,
+    bool? analyticsEnabled,
+    int? projectDatabaseId,
+    int? projectPayId,
+    String? vercelProdDomain,
+    String? latestProdDeploymentUrl,
   }) {
     return UserProject(
       id: id ?? this.id,
@@ -84,6 +109,11 @@ class UserProject {
       latestPreviewUrl: latestPreviewUrl ?? this.latestPreviewUrl,
       tags: tags ?? this.tags,
       status: status ?? this.status,
+      analyticsEnabled: analyticsEnabled ?? this.analyticsEnabled,
+      projectDatabaseId: projectDatabaseId ?? this.projectDatabaseId,
+      projectPayId: projectPayId ?? this.projectPayId,
+      vercelProdDomain: vercelProdDomain ?? this.vercelProdDomain,
+      latestProdDeploymentUrl: latestProdDeploymentUrl ?? this.latestProdDeploymentUrl,
     );
   }
 
@@ -160,6 +190,27 @@ class ProjectsResponse {
             )
           : [],
       total: json['total'] ?? 0,
+    );
+  }
+}
+
+/// 创建项目响应
+class CreateProjectResponse {
+  final int code;
+  final String message;
+  final UserProject data;
+
+  const CreateProjectResponse({
+    required this.code,
+    required this.message,
+    required this.data,
+  });
+
+  factory CreateProjectResponse.fromJson(Map<String, dynamic> json) {
+    return CreateProjectResponse(
+      code: json['code'] ?? 0,
+      message: json['message'] ?? '',
+      data: UserProject.fromJson(json['data'] ?? {}),
     );
   }
 }

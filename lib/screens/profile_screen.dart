@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
 import '../models/user.dart';
@@ -579,6 +580,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  /// 打开链接
+  Future<void> _openLink(String url) async {
+    if (!mounted) return;
+
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+
+    final canLaunch = await canLaunchUrl(uri);
+
+    if (mounted && canLaunch) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else if (mounted) {
+      SnackBarHelper.showError(
+        context,
+        title: 'Error',
+        message: 'Could not open link: $url',
+      );
+    }
+  }
+
   /// 构建信息卡片
   Widget _buildInfoCard(
     String label,
@@ -593,7 +614,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: Text(label),
         subtitle: isLink
             ? GestureDetector(
-                onTap: () => {/* TODO: Open link */},
+                onTap: () {
+                  _openLink(value);
+                },
                 child: Text(
                   value,
                   style: const TextStyle(
