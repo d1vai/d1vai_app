@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 class AppPreview extends StatefulWidget {
-  final String projectSlug;
+  final String? previewUrl;
   final String? projectName;
 
   const AppPreview({
     super.key,
-    required this.projectSlug,
+    this.previewUrl,
     this.projectName,
   });
 
@@ -40,7 +40,9 @@ class _AppPreviewState extends State<AppPreview> {
   }
 
   void _openInBrowser() {
-    final appUrl = 'https://d1vai.com/apps/${widget.projectSlug}';
+    final appUrl = widget.previewUrl;
+    if (appUrl == null || appUrl.isEmpty) return;
+
     // In a real implementation, you'd use url_launcher package
     // For now, we'll show a dialog
     showDialog(
@@ -78,6 +80,9 @@ class _AppPreviewState extends State<AppPreview> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final hasPreviewUrl = widget.previewUrl != null && widget.previewUrl!.isNotEmpty;
+
     return Card(
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -88,16 +93,16 @@ class _AppPreviewState extends State<AppPreview> {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.grey.shade50,
+              color: theme.colorScheme.surfaceContainerHighest,
               border: Border(
-                bottom: BorderSide(color: Colors.grey.shade200),
+                bottom: BorderSide(color: theme.colorScheme.outlineVariant),
               ),
             ),
             child: Row(
               children: [
                 Icon(
                   Icons.phone_android,
-                  color: Colors.deepPurple,
+                  color: theme.colorScheme.primary,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -114,22 +119,24 @@ class _AppPreviewState extends State<AppPreview> {
                       Text(
                         widget.projectName ?? 'Your deployed application',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey.shade600,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
                   ),
                 ),
-                IconButton(
-                  onPressed: _refresh,
-                  icon: const Icon(Icons.refresh),
-                  tooltip: 'Refresh',
-                ),
-                IconButton(
-                  onPressed: _openInBrowser,
-                  icon: const Icon(Icons.open_in_new),
-                  tooltip: 'Open in Browser',
-                ),
+                if (hasPreviewUrl) ...[
+                  IconButton(
+                    onPressed: _refresh,
+                    icon: const Icon(Icons.refresh),
+                    tooltip: 'Refresh',
+                  ),
+                  IconButton(
+                    onPressed: _openInBrowser,
+                    icon: const Icon(Icons.open_in_new),
+                    tooltip: 'Open in Browser',
+                  ),
+                ],
               ],
             ),
           ),
@@ -190,18 +197,20 @@ class _AppPreviewState extends State<AppPreview> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: _hasError
-                      ? _buildErrorState()
-                      : InAppWebView(
-                          contextMenu: ContextMenu(),
-                          initialUrlRequest: URLRequest(
-                            url: WebUri('https://d1vai.com/apps/${widget.projectSlug}'),
-                          ),
-                          onWebViewCreated: _onWebViewCreated,
-                          onLoadStart: _onLoadStart,
-                          onLoadStop: _onLoadStop,
-                          onProgressChanged: _onProgressChanged,
-                        ),
+                  child: hasPreviewUrl
+                      ? (_hasError
+                          ? _buildErrorState()
+                          : InAppWebView(
+                              contextMenu: ContextMenu(),
+                              initialUrlRequest: URLRequest(
+                                url: WebUri(widget.previewUrl!),
+                              ),
+                              onWebViewCreated: _onWebViewCreated,
+                              onLoadStart: _onLoadStart,
+                              onLoadStop: _onLoadStop,
+                              onProgressChanged: _onProgressChanged,
+                            ))
+                      : _buildNoPreviewState(),
                 ),
               ],
             ),
@@ -212,9 +221,9 @@ class _AppPreviewState extends State<AppPreview> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.grey.shade50,
+              color: theme.colorScheme.surfaceContainerHighest,
               border: Border(
-                top: BorderSide(color: Colors.grey.shade200),
+                top: BorderSide(color: theme.colorScheme.outlineVariant),
               ),
             ),
             child: Row(
@@ -222,15 +231,17 @@ class _AppPreviewState extends State<AppPreview> {
                 Icon(
                   Icons.info_outline,
                   size: 16,
-                  color: Colors.grey.shade600,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Preview updates automatically. Use the refresh button to reload.',
+                    hasPreviewUrl
+                        ? 'Preview updates automatically. Use the refresh button to reload.'
+                        : 'No preview available. Deploy your project to see preview.',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey.shade600,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -242,10 +253,51 @@ class _AppPreviewState extends State<AppPreview> {
     );
   }
 
-  Widget _buildErrorState() {
+  Widget _buildNoPreviewState() {
+    final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.web_asset_off,
+              size: 48,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No preview available',
+              style: TextStyle(
+                color: theme.colorScheme.onSurface,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Deploy your project to see preview',
+              style: TextStyle(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontSize: 13,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    final theme = Theme.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Center(
@@ -255,13 +307,13 @@ class _AppPreviewState extends State<AppPreview> {
             Icon(
               Icons.error_outline,
               size: 48,
-              color: Colors.red.shade300,
+              color: theme.colorScheme.error,
             ),
             const SizedBox(height: 16),
             Text(
               'Failed to load preview',
               style: TextStyle(
-                color: Colors.grey.shade700,
+                color: theme.colorScheme.onSurface,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
@@ -270,7 +322,7 @@ class _AppPreviewState extends State<AppPreview> {
             Text(
               'The app may not be deployed yet or the URL is invalid',
               style: TextStyle(
-                color: Colors.grey.shade600,
+                color: theme.colorScheme.onSurfaceVariant,
                 fontSize: 13,
               ),
               textAlign: TextAlign.center,
@@ -281,8 +333,8 @@ class _AppPreviewState extends State<AppPreview> {
               icon: const Icon(Icons.refresh, size: 18),
               label: const Text('Retry'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,
-                foregroundColor: Colors.white,
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
               ),
             ),
           ],

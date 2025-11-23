@@ -79,6 +79,49 @@ class GitPushMessageContent extends MessageContent {
   }) : super('git_push');
 }
 
+/// Deployment status message
+class DeploymentMessageContent extends MessageContent {
+  final String status;
+  final String? environment;
+  final String? url;
+  final String? message;
+  final String? deploymentId;
+
+  const DeploymentMessageContent({
+    required this.status,
+    this.environment,
+    this.url,
+    this.message,
+    this.deploymentId,
+  }) : super('deployment');
+}
+
+/// Error message
+class ErrorMessageContent extends MessageContent {
+  final String message;
+  final String? code;
+  final dynamic details;
+
+  const ErrorMessageContent({
+    required this.message,
+    this.code,
+    this.details,
+  }) : super('error');
+}
+
+/// Completion/success message (for finished tasks, deployments, etc.)
+class CompletionMessageContent extends MessageContent {
+  final String message;
+  final bool success;
+  final String? details;
+
+  const CompletionMessageContent({
+    required this.message,
+    required this.success,
+    this.details,
+  }) : super('completion');
+}
+
 /// Complete chat message model
 class ChatMessage {
   final String id;
@@ -138,6 +181,26 @@ class ChatMessage {
             branch: contentJson['branch'] as String,
             success: contentJson['success'] as bool,
             error: contentJson['error'] as String?,
+          );
+        case 'deployment':
+          return DeploymentMessageContent(
+            status: contentJson['status'] as String,
+            environment: contentJson['environment'] as String?,
+            url: contentJson['url'] as String?,
+            message: contentJson['message'] as String?,
+            deploymentId: contentJson['deploymentId'] as String?,
+          );
+        case 'error':
+          return ErrorMessageContent(
+            message: contentJson['message'] as String,
+            code: contentJson['code'] as String?,
+            details: contentJson['details'],
+          );
+        case 'completion':
+          return CompletionMessageContent(
+            message: contentJson['message'] as String,
+            success: contentJson['success'] as bool? ?? false,
+            details: contentJson['details'] as String?,
           );
         default:
           return TextMessageContent(
@@ -206,6 +269,29 @@ class ChatMessage {
             'branch': content.branch,
             'success': content.success,
             'error': content.error,
+          };
+        } else if (content is DeploymentMessageContent) {
+          return {
+            'type': 'deployment',
+            'status': content.status,
+            'environment': content.environment,
+            'url': content.url,
+            'message': content.message,
+            'deploymentId': content.deploymentId,
+          };
+        } else if (content is ErrorMessageContent) {
+          return {
+            'type': 'error',
+            'message': content.message,
+            'code': content.code,
+            'details': content.details,
+          };
+        } else if (content is CompletionMessageContent) {
+          return {
+            'type': 'completion',
+            'message': content.message,
+            'success': content.success,
+            'details': content.details,
           };
         }
         return {};

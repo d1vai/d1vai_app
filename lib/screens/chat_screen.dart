@@ -177,23 +177,33 @@ class _ChatScreenState extends State<ChatScreen>
         _webSocket!.add(text);
       } else {
         // Fallback to HTTP request
-        final response = await _chatService.sendMessageStream(
-          projectId: widget.projectId,
-          sessionId: _currentSessionId!,
-          message: text,
-        );
-
-        await for (final data in response) {
-          final message = _chatService.parseWebSocketMessage(
-            String.fromCharCodes(data),
+        // Create new session or continue existing one
+        if (_currentSessionId == null) {
+          // Create new session
+          final response = await _chatService.executeSession(
+            projectId: widget.projectId,
+            prompt: text,
+            sessionType: 'new',
           );
-          if (message != null) {
-            setState(() {
-              _messages.add(message);
-              _isTyping = false;
-            });
-            _scrollToBottom();
-          }
+
+          if (!mounted) return;
+
+          setState(() {
+            _currentSessionId = response.sessionId;
+            _websocketUrl = response.websocketUrl;
+          });
+
+          _connectWebSocket();
+        } else {
+          // Continue existing session
+          final response = await _chatService.executeSession(
+            projectId: widget.projectId,
+            prompt: text,
+            sessionType: 'continue',
+            sessionId: _currentSessionId!,
+          );
+
+          // Response will come through WebSocket
         }
       }
     } catch (e) {

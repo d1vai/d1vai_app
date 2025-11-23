@@ -1,24 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../models/message.dart';
+import 'expandable_text.dart';
+import 'tools/enhanced_tool_message.dart';
+import 'message_context_menu.dart';
 
 /// Message bubble widget for displaying chat messages
 class MessageBubble extends StatelessWidget {
   final ChatMessage message;
   final bool isUser;
   final VoidCallback? onTap;
+  final VoidCallback? onReply;
+  final VoidCallback? onForward;
+  final VoidCallback? onDelete;
+  final bool showContextMenu;
 
   const MessageBubble({
     super.key,
     required this.message,
     required this.isUser,
     this.onTap,
+    this.onReply,
+    this.onForward,
+    this.onDelete,
+    this.showContextMenu = true,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
+      onLongPress: showContextMenu
+          ? () {
+              showMessageActions(context);
+            }
+          : null,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
         child: Row(
@@ -51,9 +67,36 @@ class MessageBubble extends StatelessWidget {
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: message.contents.map((content) {
-                    return _buildMessageContent(content, isUser, context);
-                  }).toList(),
+                  children: [
+                    ...message.contents.map((content) {
+                      return _buildMessageContent(content, isUser, context);
+                    }),
+                    if (showContextMenu) ...[
+                      const SizedBox(height: 4),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: MessageContextMenu(
+                          message: message,
+                          showDelete: isUser,
+                          onActionSelected: (action) {
+                            switch (action) {
+                              case MessageAction.reply:
+                                onReply?.call();
+                                break;
+                              case MessageAction.forward:
+                                onForward?.call();
+                                break;
+                              case MessageAction.delete:
+                                onDelete?.call();
+                                break;
+                              default:
+                                break;
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ),
@@ -65,6 +108,122 @@ class MessageBubble extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void showMessageActions(BuildContext context) {
+    final RenderBox? renderBox =
+        context.findRenderObject() as RenderBox?;
+    if (renderBox == null) return;
+
+    final Offset offset = renderBox.localToGlobal(
+      Offset(renderBox.size.width - 40, renderBox.size.height / 2),
+    );
+
+    showMenu<MessageAction>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        offset.dx,
+        offset.dy,
+        offset.dx,
+        offset.dy,
+      ),
+      items: [
+        const PopupMenuItem<MessageAction>(
+          value: MessageAction.copy,
+          child: Row(
+            children: [
+              Icon(Icons.copy, size: 18),
+              SizedBox(width: 12),
+              Text('Copy'),
+            ],
+          ),
+        ),
+        if (!isUser)
+          const PopupMenuItem<MessageAction>(
+            value: MessageAction.reply,
+            child: Row(
+              children: [
+                Icon(Icons.reply, size: 18),
+                SizedBox(width: 12),
+                Text('Reply'),
+              ],
+            ),
+          ),
+        const PopupMenuItem<MessageAction>(
+          value: MessageAction.forward,
+          child: Row(
+            children: [
+              Icon(Icons.forward, size: 18),
+              SizedBox(width: 12),
+              Text('Forward'),
+            ],
+          ),
+        ),
+        if (isUser)
+          const PopupMenuItem<MessageAction>(
+            value: MessageAction.delete,
+            child: Row(
+              children: [
+                Icon(Icons.delete, size: 18, color: Colors.red),
+                SizedBox(width: 12),
+                Text('Delete', style: TextStyle(color: Colors.red)),
+              ],
+            ),
+          ),
+      ],
+    ).then((action) {
+      if (action != null && context.mounted) {
+        _handleAction(context, action);
+      }
+    });
+  }
+
+  void _handleAction(BuildContext context, MessageAction action) {
+    switch (action) {
+      case MessageAction.copy:
+        _copyToClipboard(context);
+        break;
+      case MessageAction.reply:
+        onReply?.call();
+        break;
+      case MessageAction.forward:
+        onForward?.call();
+        break;
+      case MessageAction.delete:
+        onDelete?.call();
+        break;
+    }
+  }
+
+  void _copyToClipboard(BuildContext context) {
+    String text = '';
+    for (var content in message.contents) {
+      if (content is TextMessageContent) {
+        text += content.text;
+      } else if (content is ThinkingMessageContent) {
+        text += content.text;
+      } else if (content is CodeMessageContent) {
+        text += content.code;
+      } else if (content is ErrorMessageContent) {
+        text += content.message;
+      } else if (content is CompletionMessageContent) {
+        text += content.message;
+      } else {
+        text += content.toString();
+      }
+    }
+
+    Clipboard.setData(ClipboardData(text: text));
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Message copied'),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Widget _buildAvatar(BuildContext context) {
@@ -96,8 +255,9 @@ class MessageBubble extends StatelessWidget {
     if (content is TextMessageContent) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 2.0),
-        child: Text(
-          content.text,
+        child: ExpandableText(
+          text: content.text,
+          maxLines: 6,
           style: TextStyle(
             color: textColor,
             fontSize: 16.0,
@@ -189,51 +349,7 @@ IconButton(
         ),
       );
     } else if (content is ToolMessageContent) {
-      return Container(
-        margin: const EdgeInsets.symmetric(vertical: 4.0),
-        padding: const EdgeInsets.all(8.0),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(8.0),
-          border: Border.all(
-            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.build,
-                  size: 16.0,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(width: 4.0),
-                Text(
-                  'Tool: ${content.name}',
-                  style: TextStyle(
-                    color: textColor,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14.0,
-                  ),
-                ),
-              ],
-            ),
-            if (content.input != null) ...[
-              const SizedBox(height: 4.0),
-              Text(
-                content.input.toString(),
-                style: TextStyle(
-                  color: textColor.withValues(alpha: 0.8),
-                  fontSize: 13.0,
-                  fontFamily: 'monospace',
-                ),
-              ),
-            ],
-          ],
-        ),
-      );
+      return EnhancedToolMessage(content: content);
     } else if (content is GitCommitMessageContent) {
       return Container(
         margin: const EdgeInsets.symmetric(vertical: 4.0),
@@ -329,6 +445,291 @@ IconButton(
                 content.error!,
                 style: TextStyle(
                   color: theme.colorScheme.error,
+                  fontSize: 12.0,
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    } else if (content is ResultMessageContent) {
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 4.0),
+        padding: const EdgeInsets.all(8.0),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(8.0),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.check_circle_outline,
+                  size: 16.0,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 4.0),
+                Text(
+                  'Result',
+                  style: TextStyle(
+                    color: textColor,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14.0,
+                  ),
+                ),
+              ],
+            ),
+            if (content.payload != null) ...[
+              const SizedBox(height: 4.0),
+              Container(
+                padding: const EdgeInsets.all(6.0),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(4.0),
+                ),
+                child: SelectableText(
+                  content.payload.toString(),
+                  style: TextStyle(
+                    color: textColor.withValues(alpha: 0.9),
+                    fontSize: 13.0,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    } else if (content is DeploymentMessageContent) {
+      final isSuccess = content.status.toLowerCase() == 'success';
+      final isPending = content.status.toLowerCase() == 'pending';
+      final isFailed = content.status.toLowerCase() == 'failed';
+
+      Color statusColor;
+      IconData statusIcon;
+
+      if (isSuccess) {
+        statusColor = theme.colorScheme.primary;
+        statusIcon = Icons.check_circle;
+      } else if (isPending) {
+        statusColor = theme.colorScheme.tertiary;
+        statusIcon = Icons.hourglass_empty;
+      } else if (isFailed) {
+        statusColor = theme.colorScheme.error;
+        statusIcon = Icons.error;
+      } else {
+        statusColor = theme.colorScheme.onSurfaceVariant;
+        statusIcon = Icons.info;
+      }
+
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 4.0),
+        padding: const EdgeInsets.all(8.0),
+        decoration: BoxDecoration(
+          color: isSuccess
+              ? theme.colorScheme.primaryContainer
+              : isFailed
+                  ? theme.colorScheme.errorContainer
+                  : theme.colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(8.0),
+          border: Border.all(
+            color: isSuccess
+                ? theme.colorScheme.outlineVariant
+                : isFailed
+                    ? theme.colorScheme.error.withValues(alpha: 0.3)
+                    : theme.colorScheme.outline.withValues(alpha: 0.2),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  statusIcon,
+                  size: 16.0,
+                  color: statusColor,
+                ),
+                const SizedBox(width: 4.0),
+                Text(
+                  'Deployment ${content.environment ?? ''}',
+                  style: TextStyle(
+                    color: textColor,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14.0,
+                  ),
+                ),
+                const SizedBox(width: 8.0),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    content.status.toUpperCase(),
+                    style: TextStyle(
+                      color: statusColor,
+                      fontSize: 10.0,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (content.message != null && content.message!.isNotEmpty) ...[
+              const SizedBox(height: 4.0),
+              Text(
+                content.message!,
+                style: TextStyle(
+                  color: textColor.withValues(alpha: 0.9),
+                  fontSize: 13.0,
+                ),
+              ),
+            ],
+            if (content.url != null && content.url!.isNotEmpty) ...[
+              const SizedBox(height: 4.0),
+              Row(
+                children: [
+                  Icon(
+                    Icons.link,
+                    size: 14.0,
+                    color: textColor.withValues(alpha: 0.7),
+                  ),
+                  const SizedBox(width: 4.0),
+                  Expanded(
+                    child: Text(
+                      content.url!,
+                      style: TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontSize: 12.0,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      );
+    } else if (content is ErrorMessageContent) {
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 4.0),
+        padding: const EdgeInsets.all(8.0),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.errorContainer,
+          borderRadius: BorderRadius.circular(8.0),
+          border: Border.all(
+            color: theme.colorScheme.error.withValues(alpha: 0.3),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  size: 16.0,
+                  color: theme.colorScheme.error,
+                ),
+                const SizedBox(width: 4.0),
+                Text(
+                  content.code != null ? 'Error ${content.code}' : 'Error',
+                  style: TextStyle(
+                    color: theme.colorScheme.error,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14.0,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4.0),
+            ExpandableText(
+              text: content.message,
+              maxLines: 4,
+              style: TextStyle(
+                color: textColor,
+                fontSize: 13.0,
+              ),
+            ),
+            if (content.details != null) ...[
+              const SizedBox(height: 4.0),
+              Container(
+                padding: const EdgeInsets.all(6.0),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(4.0),
+                ),
+                child: SelectableText(
+                  content.details.toString(),
+                  style: TextStyle(
+                    color: textColor.withValues(alpha: 0.8),
+                    fontSize: 12.0,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    } else if (content is CompletionMessageContent) {
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 4.0),
+        padding: const EdgeInsets.all(8.0),
+        decoration: BoxDecoration(
+          color: content.success
+              ? theme.colorScheme.primaryContainer
+              : theme.colorScheme.errorContainer,
+          borderRadius: BorderRadius.circular(8.0),
+          border: Border.all(
+            color: content.success
+                ? theme.colorScheme.outlineVariant
+                : theme.colorScheme.error.withValues(alpha: 0.3),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 8.0,
+                  height: 8.0,
+                  decoration: BoxDecoration(
+                    color: content.success
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.error,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8.0),
+                Expanded(
+                  child: Text(
+                    content.message,
+                    style: TextStyle(
+                      color: textColor,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14.0,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (content.details != null && content.details!.isNotEmpty) ...[
+              const SizedBox(height: 4.0),
+              ExpandableText(
+                text: content.details!,
+                maxLines: 4,
+                style: TextStyle(
+                  color: textColor.withValues(alpha: 0.9),
                   fontSize: 12.0,
                 ),
               ),

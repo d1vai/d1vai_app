@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -22,6 +23,8 @@ import '../widgets/table_detail_dialog.dart';
 import '../widgets/chat/message_list.dart';
 import '../widgets/chat/message_input.dart';
 import '../widgets/chat/quick_actions.dart';
+import '../widgets/chat/floating_chat_button.dart';
+import '../widgets/chat/chat_bottom_sheet.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   final String projectId;
@@ -60,6 +63,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   String? _websocketUrl;
   StreamSubscription? _webSocketSubscription;
   final ScrollController _chatScrollController = ScrollController();
+
+  // Mobile chat bottom sheet state
+  bool _showMobileChat = false;
 
   final List<TabItem> _tabs = [
     TabItem('Overview', Icons.dashboard, 'overview'),
@@ -559,6 +565,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     if (_currentSessionId != null) return; // 已经初始化过了
 
     try {
+      // First, load chat history
+      await _loadChatHistory();
+
+      // Then create a new session for the WebSocket connection
       final response = await _chatService.executeSession(
         projectId: widget.projectId,
         prompt: '',
@@ -580,6 +590,116 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         title: 'Error',
         message: 'Failed to initialize chat: $e',
       );
+    }
+  }
+
+  /// 加载聊天历史
+  Future<void> _loadChatHistory() async {
+    try {
+      final history = await _chatService.getChatHistory(
+        projectId: widget.projectId,
+        limit: 50,
+        messageType: 'all', // Load all message types
+      );
+
+      if (!mounted) return;
+
+      // Convert ChatHistoryEntry to ChatMessage
+      final messages = <ChatMessage>[];
+      for (final entry in history) {
+        final message = _convertHistoryEntryToChatMessage(entry);
+        if (message != null) {
+          messages.add(message);
+        }
+      }
+
+      setState(() {
+        _chatMessages.clear();
+        _chatMessages.addAll(messages);
+      });
+    } catch (e) {
+      debugPrint('Failed to load chat history: $e');
+      // Don't show error to user, just log it
+    }
+  }
+
+  /// 将 ChatHistoryEntry 转换为 ChatMessage
+  ChatMessage? _convertHistoryEntryToChatMessage(ChatHistoryEntry entry) {
+    try {
+      final role = entry.direction == 'user' ? 'user' : 'assistant';
+      final contents = <MessageContent>[];
+
+      // Parse the payload to extract message content
+      if (entry.payload != null) {
+        final payload = entry.payload;
+
+        // Handle prompt messages
+        if (entry.messageType == 'prompt' && payload['prompt'] != null) {
+          contents.add(TextMessageContent(text: payload['prompt'] as String));
+        }
+        // Handle result messages
+        else if (entry.messageType == 'result') {
+          if (payload['text'] != null) {
+            contents.add(TextMessageContent(text: payload['text'] as String));
+          } else if (payload['content'] != null) {
+            contents.add(TextMessageContent(text: payload['content'] as String));
+          } else if (payload['result'] != null) {
+            contents.add(ResultMessageContent(payload: payload['result']));
+          }
+        }
+        // Handle git commit messages
+        else if (entry.messageType == 'git_commit') {
+          contents.add(GitCommitMessageContent(
+            projectId: payload['projectId'] as String?,
+            message: payload['message'] as String? ?? '',
+            files: (payload['files'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList(),
+          ));
+        }
+        // Handle completion messages
+        else if (entry.messageType == 'complete') {
+          final success = payload['success'] as bool? ?? false;
+          final message = payload['message'] as String? ?? '';
+          contents.add(CompletionMessageContent(
+            message: message,
+            success: success,
+            details: payload['details'] as String?,
+          ));
+        }
+        // Handle error messages
+        else if (entry.messageType == 'error') {
+          contents.add(ErrorMessageContent(
+            message: payload['message'] as String? ?? 'Unknown error',
+            code: payload['code'] as String?,
+            details: payload['details'],
+          ));
+        }
+        // Fallback for unknown types
+        else {
+          final text = entry.messageText ??
+              (payload['text'] as String?) ??
+              (payload['content'] as String?) ??
+              json.encode(payload);
+          contents.add(TextMessageContent(text: text));
+        }
+      }
+      // Fallback if no payload
+      else if (entry.messageText != null) {
+        contents.add(TextMessageContent(text: entry.messageText!));
+      } else {
+        return null; // Skip entries with no content
+      }
+
+      return ChatMessage(
+        id: entry.id.toString(),
+        role: role,
+        createdAt: entry.createdAt,
+        contents: contents,
+      );
+    } catch (e) {
+      debugPrint('Failed to convert history entry: $e');
+      return null;
     }
   }
 
@@ -655,28 +775,109 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     _scrollToBottom();
 
     try {
-      final response = await _chatService.sendMessageStream(
-        projectId: widget.projectId,
-        sessionId: _currentSessionId!,
-        message: text,
-      );
-
-      await for (final data in response) {
-        final message = _chatService.parseWebSocketMessage(
-          String.fromCharCodes(data),
+      // 如果会话不存在，创建新会话；如果存在，继续会话
+      if (_currentSessionId == null) {
+        // 创建新会话
+        final response = await _chatService.executeSession(
+          projectId: widget.projectId,
+          prompt: text,
+          sessionType: 'new',
         );
-        if (message != null) {
-          setState(() {
-            _chatMessages.add(message);
-            _isTyping = false;
-          });
-          _scrollToBottom();
-        }
+
+        if (!mounted) return;
+
+        setState(() {
+          _currentSessionId = response.sessionId;
+          _websocketUrl = response.websocketUrl;
+        });
+
+        _connectWebSocket();
+      } else {
+        // 继续现有会话
+        final response = await _chatService.executeSession(
+          projectId: widget.projectId,
+          prompt: text,
+          sessionType: 'continue',
+          sessionId: _currentSessionId!,
+        );
+
+        // The response will come through the WebSocket connection
+        // We don't need to parse it here as the WebSocket listener will handle it
       }
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _isTyping = false;
+      });
+      SnackBarHelper.showError(
+        context,
+        title: 'Error',
+        message: 'Failed to send message: $e',
+      );
+    }
+  }
+
+  /// 发送第一条消息（如果会话不存在则创建会话）
+  void _sendFirstMessage(String text) async {
+    if (text.trim().isEmpty || _isChatLoading) return;
+
+    setState(() {
+      _isChatLoading = true;
+    });
+
+    final userMessage = ChatMessage(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      role: 'user',
+      createdAt: DateTime.now(),
+      contents: [TextMessageContent(text: text)],
+    );
+
+    setState(() {
+      _chatMessages.add(userMessage);
+      _isTyping = true;
+    });
+
+    _scrollToBottom();
+
+    try {
+      // 如果会话不存在，创建新会话并发送消息
+      if (_currentSessionId == null) {
+        final response = await _chatService.executeSession(
+          projectId: widget.projectId,
+          prompt: text,
+          sessionType: 'new',
+        );
+
+        if (!mounted) return;
+
+        setState(() {
+          _currentSessionId = response.sessionId;
+          _websocketUrl = response.websocketUrl;
+          _isChatLoading = false;
+        });
+
+        _connectWebSocket();
+      } else {
+        // 会话已存在，继续会话
+        setState(() {
+          _isChatLoading = false;
+        });
+
+        final response = await _chatService.executeSession(
+          projectId: widget.projectId,
+          prompt: text,
+          sessionType: 'continue',
+          sessionId: _currentSessionId!,
+        );
+
+        // The response will come through the WebSocket connection
+        // We don't need to parse it here as the WebSocket listener will handle it
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isTyping = false;
+        _isChatLoading = false;
       });
       SnackBarHelper.showError(
         context,
@@ -701,125 +902,63 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
 
   /// 向 AI 询问代码相关问题
   void _askAiAboutCode(String question) {
-    // 如果聊天会话还没有初始化，先初始化
-    if (_currentSessionId == null) {
-      _initializeChat();
-    }
-
-    // 发送消息到聊天
-    _sendChatMessage(question);
+    _sendFirstMessage(question);
   }
 
   /// 向 AI 询问环境变量相关问题
   void _askAiAboutEnv(String key, String? value) {
-    // 如果聊天会话还没有初始化，先初始化
-    if (_currentSessionId == null) {
-      _initializeChat();
-    }
-
     // 构建关于环境变量的智能问题
     final question = 'Can you explain what the environment variable "$key" is for and how it should be configured?';
-
-    // 发送消息到聊天
-    _sendChatMessage(question);
+    _sendFirstMessage(question);
   }
 
   /// 向 AI 询问数据库表相关问题
   void _askAiAboutDatabase(DatabaseTable table) {
-    // 如果聊天会话还没有初始化，先初始化
-    if (_currentSessionId == null) {
-      _initializeChat();
-    }
-
     // 构建关于数据库表的智能问题
     final question = 'Can you analyze the database table "${table.displayName}" and explain its purpose, structure, and any suggestions for optimization or best practices?';
-
-    // 发送消息到聊天
-    _sendChatMessage(question);
+    _sendFirstMessage(question);
   }
 
   /// 向 AI 询问支付产品相关问题
   void _askAiAboutPaymentProduct(PayProduct product) {
-    // 如果聊天会话还没有初始化，先初始化
-    if (_currentSessionId == null) {
-      _initializeChat();
-    }
-
     // 构建关于支付产品的智能问题
     final question = 'Can you analyze the payment product "${product.name}" and provide suggestions on pricing strategy, configuration, or marketing improvements?';
-
-    // 发送消息到聊天
-    _sendChatMessage(question);
+    _sendFirstMessage(question);
   }
 
   /// 向 AI 询问部署相关问题
   void _askAiAboutDeployment(String environment) {
-    // 如果聊天会话还没有初始化，先初始化
-    if (_currentSessionId == null) {
-      _initializeChat();
-    }
-
     // 构建关于部署的智能问题
     final question = 'Can you provide insights and recommendations about the $environment deployment, including performance optimization, troubleshooting, and best practices?';
-
-    // 发送消息到聊天
-    _sendChatMessage(question);
+    _sendFirstMessage(question);
   }
 
   /// 向 AI 询问分析仪表板相关问题
   void _askAiAboutAnalyticsDashboard() {
-    // 如果聊天会话还没有初始化，先初始化
-    if (_currentSessionId == null) {
-      _initializeChat();
-    }
-
     // 构建关于分析仪表板的智能问题
     final question = 'Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?';
-
-    // 发送消息到聊天
-    _sendChatMessage(question);
+    _sendFirstMessage(question);
   }
 
   /// 向 AI 询问自定义事件相关问题
   void _askAiAboutCustomEvents() {
-    // 如果聊天会话还没有初始化，先初始化
-    if (_currentSessionId == null) {
-      _initializeChat();
-    }
-
     // 构建关于自定义事件的智能问题
     final question = 'Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?';
-
-    // 发送消息到聊天
-    _sendChatMessage(question);
+    _sendFirstMessage(question);
   }
 
   /// 向 AI 询问指标相关问题
   void _askAiAboutMetric(String metricName) {
-    // 如果聊天会话还没有初始化，先初始化
-    if (_currentSessionId == null) {
-      _initializeChat();
-    }
-
     // 构建关于指标的智能问题
     final question = 'Can you analyze the "$metricName" metric for my project and provide insights on what it means and how to improve it?';
-
-    // 发送消息到聊天
-    _sendChatMessage(question);
+    _sendFirstMessage(question);
   }
 
   /// 向 AI 询问交易相关问题
   void _askAiAboutTransaction(PaymentTransaction transaction) {
-    // 如果聊天会话还没有初始化，先初始化
-    if (_currentSessionId == null) {
-      _initializeChat();
-    }
-
     // 构建关于交易的智能问题
     final question = 'Can you analyze this payment transaction (${transaction.formattedAmount}, ${transaction.statusLabel}) and provide insights about payment patterns or recommendations?';
-
-    // 发送消息到聊天
-    _sendChatMessage(question);
+    _sendFirstMessage(question);
   }
 
   /// 切换到聊天标签页
@@ -1046,7 +1185,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           const SizedBox(height: 16),
           // App Preview
           AppPreview(
-            projectSlug: project.projectPort.toString(),
+            previewUrl: project.latestPreviewUrl,
             projectName: project.projectName,
           ),
           const SizedBox(height: 16),
@@ -1438,8 +1577,137 @@ ListTile(
     );
   }
 
+  /// 判断是否为移动端设备
+  bool _isMobile(BuildContext context) {
+    return MediaQuery.of(context).size.width < 768;
+  }
+
   /// 构建聊天标签
   Widget _buildChatTab(BuildContext context) {
+    final isMobile = _isMobile(context);
+
+    if (isMobile) {
+      // 移动端布局：只显示内容，悬浮按钮在底部
+      return _buildChatTabMobile(context);
+    } else {
+      // 桌面端布局：包含聊天消息和输入框
+      return _buildChatTabDesktop(context);
+    }
+  }
+
+  /// 移动端聊天标签布局
+  Widget _buildChatTabMobile(BuildContext context) {
+    return Stack(
+      children: [
+        Column(
+          children: [
+            // Tab Bar
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildChatTabButton(0, 'Preview', Icons.preview),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildChatTabButton(1, 'Code', Icons.code),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildChatTabButton(2, 'Env', Icons.settings),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            // Tab Content
+            Expanded(
+              child: IndexedStack(
+                index: _currentChatTabIndex,
+                children: [
+                  _buildChatPreviewTabMobile(),
+                  _buildChatCodeTab(),
+                  _buildChatEnvTab(),
+                ],
+              ),
+            ),
+          ],
+        ),
+        // 悬浮聊天按钮
+        Positioned(
+          bottom: 12,
+          right: 12,
+          child: FloatingChatButton(
+            onPressed: () {
+              setState(() {
+                _showMobileChat = true;
+              });
+              // 初始化聊天（如果还未初始化）
+              _initializeChat();
+            },
+            statusLabel: _isChatLoading
+                ? 'Sending...'
+                : _isTyping
+                    ? 'Thinking...'
+                    : 'Ready',
+            isError: false,
+            isDone: false,
+            isWorking: _isChatLoading,
+            isThinking: _isTyping,
+            isDeploying: false,
+          ),
+        ),
+        // 底部抽屉
+        if (_showMobileChat)
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _showMobileChat = false;
+                });
+              },
+              child: Container(
+                color: Colors.black.withValues(alpha: 0.5),
+                child: GestureDetector(
+                  onTap: () {}, // 防止事件冒泡
+                  child: DraggableScrollableSheet(
+                    initialChildSize: 0.7,
+                    minChildSize: 0.5,
+                    maxChildSize: 0.95,
+                    builder: (context, scrollController) {
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(16),
+                          ),
+                        ),
+                        child: ChatBottomSheet(
+                          messages: _chatMessages,
+                          isTyping: _isTyping,
+                          isLoading: _isChatLoading,
+                          scrollController: _chatScrollController,
+                          onSendMessage: _sendChatMessage,
+                          onClose: () {
+                            setState(() {
+                              _showMobileChat = false;
+                            });
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// 桌面端聊天标签布局（原始布局）
+  Widget _buildChatTabDesktop(BuildContext context) {
     return Column(
       children: [
         // Tab Bar
@@ -1474,6 +1742,96 @@ ListTile(
           ),
         ),
       ],
+    );
+  }
+
+  /// 移动端预览标签（不包含聊天消息和输入框）
+  Widget _buildChatPreviewTabMobile() {
+    final theme = Theme.of(context);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Project Preview',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: theme.colorScheme.outlineVariant,
+              ),
+            ),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 32,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Chat with AI to interact with your project',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Tap the chat button below to ask questions about your code, request features, or get help with development.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.lightbulb_outline, color: theme.colorScheme.onPrimaryContainer),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Quick Tip',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Try asking:\n'
+            '• "Add a new page to my app"\n'
+            '• "How does this API work?"\n'
+            '• "Help me debug this issue"\n'
+            '• "Optimize my code"',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

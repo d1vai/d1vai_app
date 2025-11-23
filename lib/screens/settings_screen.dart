@@ -38,7 +38,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _showLoginRequiredDialog() {
     showDialog(
       context: context,
-      builder: (context) => const LoginRequiredDialog(),
+      barrierDismissible: false, // 防止点击外部关闭
+      builder: (context) => LoginRequiredDialog(
+        onLogin: () {
+          // 跳转到登录页面
+          context.go('/login');
+        },
+        onCancel: () {
+          // 返回上一页
+          context.pop();
+        },
+      ),
     );
   }
 

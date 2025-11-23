@@ -65,10 +65,14 @@ class ApiClient {
       '$baseUrl$endpoint',
     ).replace(queryParameters: queryParams);
 
+    debugPrint('🌐 API Request: GET $endpoint');
+
     return executeWithRetry<T>(
       () => client.get(uri, headers: headers),
       fromJsonT,
       retries: retries,
+      endpoint: endpoint,
+      requestBody: null,
     );
   }
 
@@ -84,6 +88,9 @@ class ApiClient {
       '$baseUrl$endpoint',
     ).replace(queryParameters: queryParams);
 
+    debugPrint('🌐 API Request: POST $endpoint');
+    debugPrint('📤 Request Body: ${jsonEncode(body)}');
+
     return executeWithRetry<T>(
       () => client.post(
         uri,
@@ -92,6 +99,8 @@ class ApiClient {
       ),
       fromJsonT,
       retries: retries,
+      endpoint: endpoint,
+      requestBody: body,
     );
   }
 
@@ -102,6 +111,10 @@ class ApiClient {
     int retries = 3,
   }) async {
     final headers = await _getHeaders();
+
+    debugPrint('🌐 API Request: POST $endpoint');
+    debugPrint('📤 Request Body: ${jsonEncode(body)}');
+
     return executeWithRetry<T>(
       () => client.post(
         Uri.parse('$baseUrl$endpoint'),
@@ -110,6 +123,8 @@ class ApiClient {
       ),
       fromJsonT,
       retries: retries,
+      endpoint: endpoint,
+      requestBody: body,
     );
   }
 
@@ -120,6 +135,10 @@ class ApiClient {
     int retries = 3,
   }) async {
     final headers = await _getHeaders();
+
+    debugPrint('🌐 API Request: PUT $endpoint');
+    debugPrint('📤 Request Body: ${jsonEncode(body)}');
+
     return executeWithRetry<T>(
       () => client.put(
         Uri.parse('$baseUrl$endpoint'),
@@ -128,6 +147,8 @@ class ApiClient {
       ),
       fromJsonT,
       retries: retries,
+      endpoint: endpoint,
+      requestBody: body,
     );
   }
 
@@ -139,6 +160,10 @@ class ApiClient {
     int retries = 3,
   }) async {
     final headers = await _getHeaders();
+
+    debugPrint('🌐 API Request: PATCH $endpoint');
+    debugPrint('📤 Request Body: ${jsonEncode(body)}');
+
     return executeWithRetry<T>(
       () => client.patch(
         Uri.parse('$baseUrl$endpoint'),
@@ -147,6 +172,8 @@ class ApiClient {
       ),
       fromJsonT,
       retries: retries,
+      endpoint: endpoint,
+      requestBody: body,
     );
   }
 
@@ -156,6 +183,9 @@ class ApiClient {
     int retries = 3,
   }) async {
     final headers = await _getHeaders();
+
+    debugPrint('🌐 API Request: DELETE $endpoint');
+
     return executeWithRetry<T>(
       () => client.delete(
         Uri.parse('$baseUrl$endpoint'),
@@ -163,6 +193,8 @@ class ApiClient {
       ),
       fromJsonT,
       retries: retries,
+      endpoint: endpoint,
+      requestBody: null,
     );
   }
 
@@ -201,6 +233,10 @@ class ApiClient {
     final headers = await _getHeaders();
     headers.remove('Content-Type');
 
+    debugPrint('🌐 API Request: POST /upload');
+    debugPrint('📁 File Name: $fileName');
+    debugPrint('📏 File Size: ${finalBytes.length} bytes');
+
     final request = http.MultipartRequest(
       'POST',
       Uri.parse('$baseUrl/upload'),
@@ -225,6 +261,14 @@ class ApiClient {
       final Map<String, dynamic> json = jsonDecode(httpResponse.body);
       return json['data'] ?? '';
     } else {
+      // 打印上传错误
+      debugPrint('═══════════════════════════════════════');
+      debugPrint('API Upload Error Detected');
+      debugPrint('═══════════════════════════════════════');
+      debugPrint('📍 API Path: /upload');
+      debugPrint('🔢 HTTP Status Code: ${httpResponse.statusCode}');
+      debugPrint('📥 Response Body: $responseBody');
+      debugPrint('═══════════════════════════════════════');
       throw Exception('Upload failed: ${httpResponse.statusCode} ${httpResponse.body}');
     }
   }
@@ -264,6 +308,9 @@ class ApiClient {
     request.headers.addAll(headers);
     request.body = jsonEncode(body);
 
+    debugPrint('🌐 API Request: POST (Stream) $endpoint');
+    debugPrint('📤 Request Body: ${jsonEncode(body)}');
+
     final streamedResponse = await client.send(request);
 
     if (streamedResponse.statusCode >= 200 &&
@@ -271,6 +318,16 @@ class ApiClient {
       return streamedResponse.stream.map((bytes) => Uint8List.fromList(bytes));
     } else {
       final responseBody = await streamedResponse.stream.bytesToString();
+
+      // 打印流式请求错误
+      debugPrint('═══════════════════════════════════════');
+      debugPrint('API Stream Error Detected');
+      debugPrint('═══════════════════════════════════════');
+      debugPrint('📍 API Path: $endpoint');
+      debugPrint('🔢 HTTP Status Code: ${streamedResponse.statusCode}');
+      debugPrint('📥 Response Body: $responseBody');
+      debugPrint('═══════════════════════════════════════');
+
       throw Exception(
           'HTTP Error: ${streamedResponse.statusCode} $responseBody');
     }
@@ -284,6 +341,8 @@ class ApiClient {
     T Function(dynamic)? fromJsonT, {
     int retries = 3,
     Duration initialDelay = const Duration(seconds: 1),
+    String? endpoint,
+    dynamic requestBody,
   }) async {
     int attempt = 0;
     Duration delay = initialDelay;
@@ -291,32 +350,83 @@ class ApiClient {
     while (attempt <= retries) {
       try {
         final response = await requestBuilder();
-        return _handleResponse<T>(response, fromJsonT);
+        return _handleResponse<T>(
+          response,
+          fromJsonT,
+          endpoint: endpoint,
+          requestBody: requestBody,
+        );
       } on SocketException catch (e) {
         // 网络错误，可以重试
         if (attempt == retries) {
+          debugPrint('═══════════════════════════════════════');
+          debugPrint('Network Error - Max Retries Exceeded');
+          debugPrint('═══════════════════════════════════════');
+          if (endpoint != null) {
+            debugPrint('📍 API Path: $endpoint');
+          }
+          debugPrint('🔢 Retry Count: $retries');
+          debugPrint('💥 Error: $e');
+          debugPrint('═══════════════════════════════════════');
           throw Exception('Network error after $retries retries: $e');
         }
-        debugPrint('Network error on attempt ${attempt + 1}, retrying in ${delay.inMilliseconds}ms: $e');
+        debugPrint('🔄 Network error on attempt ${attempt + 1}/$retries, retrying in ${delay.inMilliseconds}ms: $e');
+        if (endpoint != null) {
+          debugPrint('📍 API Path: $endpoint');
+        }
         await Future.delayed(delay);
         delay *= 2; // 指数退避
         attempt++;
-      } on HttpException {
+      } on HttpException catch (e) {
         // HTTP 错误，通常不重试
+        debugPrint('═══════════════════════════════════════');
+        debugPrint('HTTP Exception');
+        debugPrint('═══════════════════════════════════════');
+        if (endpoint != null) {
+          debugPrint('📍 API Path: $endpoint');
+        }
+        debugPrint('💥 Error: $e');
+        if (requestBody != null) {
+          debugPrint('📤 Request Body: ${jsonEncode(requestBody)}');
+        }
+        debugPrint('═══════════════════════════════════════');
         rethrow;
       } catch (e) {
         // 其他错误，检查是否包含可重试的状态码
         if (e.toString().contains('HTTP Error: 5')) {
           // 服务器错误，可以重试
           if (attempt == retries) {
+            debugPrint('═══════════════════════════════════════');
+            debugPrint('Server Error - Max Retries Exceeded');
+            debugPrint('═══════════════════════════════════════');
+            if (endpoint != null) {
+              debugPrint('📍 API Path: $endpoint');
+            }
+            debugPrint('🔢 Retry Count: $retries');
+            debugPrint('💥 Error: $e');
+            debugPrint('═══════════════════════════════════════');
             rethrow;
           }
-          debugPrint('Server error on attempt ${attempt + 1}, retrying in ${delay.inMilliseconds}ms: $e');
+          debugPrint('🔄 Server error on attempt ${attempt + 1}/$retries, retrying in ${delay.inMilliseconds}ms: $e');
+          if (endpoint != null) {
+            debugPrint('📍 API Path: $endpoint');
+          }
           await Future.delayed(delay);
           delay *= 2;
           attempt++;
         } else {
           // 客户端错误或其他错误，不重试
+          debugPrint('═══════════════════════════════════════');
+          debugPrint('Client Error or Other Exception');
+          debugPrint('═══════════════════════════════════════');
+          if (endpoint != null) {
+            debugPrint('📍 API Path: $endpoint');
+          }
+          debugPrint('💥 Error: $e');
+          if (requestBody != null) {
+            debugPrint('📤 Request Body: ${jsonEncode(requestBody)}');
+          }
+          debugPrint('═══════════════════════════════════════');
           rethrow;
         }
       }
@@ -325,7 +435,12 @@ class ApiClient {
     throw Exception('Max retries exceeded');
   }
 
-  T _handleResponse<T>(http.Response response, T Function(dynamic)? fromJsonT) {
+  T _handleResponse<T>(
+    http.Response response,
+    T Function(dynamic)? fromJsonT, {
+    String? endpoint,
+    dynamic requestBody,
+  }) {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       final Map<String, dynamic> json = jsonDecode(
         utf8.decode(response.bodyBytes),
@@ -335,9 +450,53 @@ class ApiClient {
       if (apiResponse.isSuccess) {
         return apiResponse.data as T;
       } else {
+        // 打印业务逻辑错误
+        debugPrint('═══════════════════════════════════════');
+        debugPrint('API Business Error Detected');
+        debugPrint('═══════════════════════════════════════');
+        if (endpoint != null) {
+          debugPrint('📍 API Path: $endpoint');
+        }
+        debugPrint('🔢 Status Code: ${response.statusCode}');
+        debugPrint('📝 Error Message: ${apiResponse.msg}');
+        if (requestBody != null) {
+          debugPrint('📤 Request Body: ${jsonEncode(requestBody)}');
+        }
+        debugPrint('📥 Response Body: ${jsonEncode(json)}');
+        debugPrint('═══════════════════════════════════════');
         throw Exception(apiResponse.msg);
       }
     } else {
+      // 打印 HTTP 错误
+      debugPrint('═══════════════════════════════════════');
+      debugPrint('API HTTP Error Detected');
+      debugPrint('═══════════════════════════════════════');
+      if (endpoint != null) {
+        debugPrint('📍 API Path: $endpoint');
+      }
+      debugPrint('🔢 HTTP Status Code: ${response.statusCode}');
+
+      // 解析响应体
+      try {
+        final responseBody = utf8.decode(response.bodyBytes);
+        debugPrint('📥 Response Body: $responseBody');
+
+        // 尝试解析为 JSON
+        try {
+          final json = jsonDecode(responseBody);
+          debugPrint('📦 Parsed JSON: ${jsonEncode(json, toEncodable: (obj) => obj)}');
+        } catch (e) {
+          debugPrint('⚠️  Failed to parse response as JSON');
+        }
+      } catch (e) {
+        debugPrint('⚠️  Failed to decode response body');
+      }
+
+      if (requestBody != null) {
+        debugPrint('📤 Request Body: ${jsonEncode(requestBody)}');
+      }
+
+      debugPrint('═══════════════════════════════════════');
       throw Exception('HTTP Error: ${response.statusCode} ${response.body}');
     }
   }

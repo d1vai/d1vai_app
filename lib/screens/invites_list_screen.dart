@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/d1vai_service.dart';
 import '../widgets/snackbar_helper.dart';
 import '../widgets/empty_state_widget.dart';
+import '../widgets/avatar_image.dart';
 
 class InvitesListScreen extends StatefulWidget {
   const InvitesListScreen({super.key});
@@ -141,23 +142,11 @@ class _InvitesListScreenState extends State<InvitesListScreen> {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            // Avatar with real image support
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: Colors.deepPurple.shade100,
-              backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty
-                  ? NetworkImage(avatarUrl)
-                  : null,
-              child: (avatarUrl == null || avatarUrl.isEmpty)
-                  ? Text(
-                      email.isNotEmpty ? email[0].toUpperCase() : '?',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.deepPurple.shade700,
-                      ),
-                    )
-                  : null,
+            // Avatar with real image support (PNG and SVG)
+            AvatarImage(
+              imageUrl: avatarUrl ?? '',
+              size: 48,
+              placeholderText: email.isNotEmpty ? email[0].toUpperCase() : '?',
             ),
             const SizedBox(width: 16),
             // User info
