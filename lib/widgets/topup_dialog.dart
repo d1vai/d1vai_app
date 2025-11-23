@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/wallet_service.dart';
 
 class TopUpDialog extends StatefulWidget {
   final VoidCallback? onSuccess;
@@ -10,6 +11,7 @@ class TopUpDialog extends StatefulWidget {
 
 class _TopUpDialogState extends State<TopUpDialog> {
   final TextEditingController _amountController = TextEditingController();
+  final WalletService _walletService = WalletService();
   bool _isLoading = false;
   String? _error;
 
@@ -66,20 +68,46 @@ class _TopUpDialogState extends State<TopUpDialog> {
     });
 
     try {
-      // Simulate Stripe checkout
-      await Future.delayed(const Duration(seconds: 2));
+      // Create success and cancel URLs
+      final Uri currentUri = Uri.base;
+      final successUrl = '${currentUri.scheme}://${currentUri.host}/orders?pay=success';
+      final cancelUrl = currentUri.toString();
+
+      // Call API to initiate top-up
+      final response = await _walletService.initiateTopup(
+        amountUsd: amount,
+        successUrl: successUrl,
+        cancelUrl: cancelUrl,
+      );
 
       if (!mounted) return;
+
+      // Get the checkout URL from response
+      final checkoutUrl = response['url'] as String?;
+      if (checkoutUrl == null) {
+        throw Exception('Invalid response from server');
+      }
 
       // Close dialog
       Navigator.of(context).pop();
 
+      // Redirect to Stripe checkout
+      // In a real app, you would use a WebView or url_launcher
+      // For now, we'll just show a message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Redirecting to Stripe...'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
       // Call success callback to refresh balance
       widget.onSuccess?.call();
     } catch (e) {
+      debugPrint('Top-up failed: $e');
       setState(() {
         _isLoading = false;
-        _error = 'Failed to process payment. Please try again.';
+        _error = 'Failed to process payment: $e';
       });
     }
   }

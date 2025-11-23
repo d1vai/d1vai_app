@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../services/usage_service.dart';
+import '../models/llm_usage.dart';
+import '../models/db_usage.dart';
 
 class UsageStats extends StatefulWidget {
   const UsageStats({super.key});
@@ -8,20 +11,18 @@ class UsageStats extends StatefulWidget {
 }
 
 class _UsageStatsState extends State<UsageStats> {
+  final UsageService _usageService = UsageService();
   bool _isLoading = true;
 
-  // Mock data for database usage
-  double _databaseStorage = 0.0;
-  int _databaseQueries = 0;
-  int _databaseConnections = 0;
+  // Real database usage data
+  DbUsageResponse? _dbUsage;
 
-  // Mock data for LLM usage
-  int _llmTokens = 0;
-  int _llmRequests = 0;
-  double _llmCost = 0.0;
+  // Real LLM usage data
+  List<ProjectMonthlyUsage> _projectUsage = [];
 
-  // Mock data for project breakdown
-  List<Map<String, dynamic>> _projectUsage = [];
+  // LLM usage month selector
+  int _selectedMonths = 12;
+  final List<int> _availableMonths = [3, 6, 12, 24];
 
   @override
   void initState() {
@@ -34,49 +35,65 @@ class _UsageStatsState extends State<UsageStats> {
       _isLoading = true;
     });
 
-    // Simulate API call
-    await Future.delayed(const Duration(milliseconds: 1000));
+    try {
+      // Load database usage from API
+      try {
+        final dbUsage = await _usageService.getDbUsage();
+        setState(() {
+          _dbUsage = dbUsage;
+        });
+      } catch (e) {
+        debugPrint('Failed to load DB usage: $e');
+        // Don't show error for DB usage, it's optional
+      }
 
-    // Mock data - in real implementation, fetch from API
+      // Load LLM usage from API with selected months
+      final llmUsage = await _usageService.getLlmUsage(_selectedMonths);
+      setState(() {
+        _projectUsage = llmUsage.projects;
+      });
+    } catch (e) {
+      debugPrint('Failed to load usage stats: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load usage stats: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+
     setState(() {
-      _databaseStorage = 2.4; // GB
-      _databaseQueries = 1247; // Total queries
-      _databaseConnections = 12; // Active connections
-
-      _llmTokens = 125430; // Total tokens
-      _llmRequests = 156; // Total requests
-      _llmCost = 4.82; // USD
-
-      // Mock project usage data
-      _projectUsage = [
-        {
-          'name': 'E-commerce App',
-          'emoji': '🛒',
-          'databaseStorage': 1.2,
-          'llmTokens': 45000,
-          'llmRequests': 68,
-          'llmCost': 2.15,
-        },
-        {
-          'name': 'AI Chatbot',
-          'emoji': '🤖',
-          'databaseStorage': 0.8,
-          'llmTokens': 52300,
-          'llmRequests': 54,
-          'llmCost': 1.82,
-        },
-        {
-          'name': 'Analytics Dashboard',
-          'emoji': '📊',
-          'databaseStorage': 0.4,
-          'llmTokens': 28130,
-          'llmRequests': 34,
-          'llmCost': 0.85,
-        },
-      ];
-
       _isLoading = false;
     });
+  }
+
+  /// Calculate aggregated LLM usage from project data
+  Map<String, dynamic> _getAggregatedLlmUsage() {
+    if (_projectUsage.isEmpty) {
+      return {
+        'totalInput': 0,
+        'totalOutput': 0,
+        'totalCost': 0.0,
+      };
+    }
+
+    int totalInput = 0;
+    int totalOutput = 0;
+    double totalCost = 0.0;
+
+    for (final project in _projectUsage) {
+      totalInput += project.totalInputTokens;
+      totalOutput += project.totalOutputTokens;
+      totalCost += project.totalCostUsd;
+    }
+
+    return {
+      'totalInput': totalInput,
+      'totalOutput': totalOutput,
+      'totalCost': totalCost,
+    };
   }
 
   @override
@@ -102,6 +119,8 @@ class _UsageStatsState extends State<UsageStats> {
           _buildSectionHeader('LLM Usage'),
           const SizedBox(height: 12),
           _buildLLMStatsCard(),
+          const SizedBox(height: 12),
+          _buildMonthSelector(),
           const SizedBox(height: 24),
           _buildSectionHeader('Project Breakdown'),
           const SizedBox(height: 12),
@@ -131,6 +150,42 @@ class _UsageStatsState extends State<UsageStats> {
   }
 
   Widget _buildDatabaseStatsCard() {
+    // If no DB usage data, show placeholder
+    if (_dbUsage == null) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              _buildStatRow(
+                icon: Icons.storage,
+                label: 'Storage Used',
+                value: 'N/A',
+                color: Colors.blue,
+                subtitle: 'loading...',
+              ),
+              const Divider(),
+              _buildStatRow(
+                icon: Icons.search,
+                label: 'Total Queries',
+                value: 'N/A',
+                color: Colors.green,
+                subtitle: 'loading...',
+              ),
+              const Divider(),
+              _buildStatRow(
+                icon: Icons.link,
+                label: 'Active Connections',
+                value: 'N/A',
+                color: Colors.orange,
+                subtitle: 'loading...',
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -139,15 +194,15 @@ class _UsageStatsState extends State<UsageStats> {
             _buildStatRow(
               icon: Icons.storage,
               label: 'Storage Used',
-              value: '${_databaseStorage.toStringAsFixed(1)} GB',
+              value: '${_dbUsage!.storageUsedGb.toStringAsFixed(2)} GB',
               color: Colors.blue,
-              subtitle: 'of 10 GB limit',
+              subtitle: 'of ${_dbUsage!.storageLimitGb.toStringAsFixed(1)} GB limit (${_dbUsage!.storageUsedPercentage.toStringAsFixed(1)}%)',
             ),
             const Divider(),
             _buildStatRow(
               icon: Icons.search,
               label: 'Total Queries',
-              value: _databaseQueries.toString(),
+              value: _dbUsage!.totalQueries.toString(),
               color: Colors.green,
               subtitle: 'this month',
             ),
@@ -155,7 +210,7 @@ class _UsageStatsState extends State<UsageStats> {
             _buildStatRow(
               icon: Icons.link,
               label: 'Active Connections',
-              value: _databaseConnections.toString(),
+              value: _dbUsage!.activeConnections.toString(),
               color: Colors.orange,
               subtitle: 'currently active',
             ),
@@ -166,6 +221,8 @@ class _UsageStatsState extends State<UsageStats> {
   }
 
   Widget _buildLLMStatsCard() {
+    final usage = _getAggregatedLlmUsage();
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -173,24 +230,24 @@ class _UsageStatsState extends State<UsageStats> {
           children: [
             _buildStatRow(
               icon: Icons.token,
-              label: 'Tokens Consumed',
-              value: _formatNumber(_llmTokens),
+              label: 'Input Tokens',
+              value: _formatNumber(usage['totalInput']),
               color: Colors.purple,
-              subtitle: 'total tokens',
+              subtitle: 'total input tokens',
             ),
             const Divider(),
             _buildStatRow(
-              icon: Icons.send,
-              label: 'API Requests',
-              value: _llmRequests.toString(),
+              icon: Icons.arrow_forward,
+              label: 'Output Tokens',
+              value: _formatNumber(usage['totalOutput']),
               color: Colors.teal,
-              subtitle: 'this month',
+              subtitle: 'total output tokens',
             ),
             const Divider(),
             _buildStatRow(
               icon: Icons.attach_money,
               label: 'Total Cost',
-              value: '\$${_llmCost.toStringAsFixed(2)}',
+              value: '\$${usage['totalCost'].toStringAsFixed(4)}',
               color: Colors.red,
               subtitle: 'estimated cost',
             ),
@@ -267,7 +324,106 @@ class _UsageStatsState extends State<UsageStats> {
     return number.toString();
   }
 
+  Widget _buildMonthSelector() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Time Range',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _availableMonths.map((months) {
+                final isSelected = _selectedMonths == months;
+                return GestureDetector(
+                  onTap: () async {
+                    setState(() {
+                      _selectedMonths = months;
+                      _isLoading = true;
+                    });
+                    await _loadUsageStats();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? Colors.deepPurple
+                          : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isSelected
+                            ? Colors.deepPurple
+                            : Colors.grey.shade300,
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      '$months months',
+                      style: TextStyle(
+                        color: isSelected
+                            ? Colors.white
+                            : Colors.grey.shade700,
+                        fontWeight: isSelected
+                            ? FontWeight.w600
+                            : FontWeight.w500,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildProjectBreakdown() {
+    if (_projectUsage.isEmpty) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Center(
+            child: Column(
+              children: [
+                Icon(
+                  Icons.inbox,
+                  size: 48,
+                  color: Colors.grey.shade400,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No usage data available',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Your LLM usage will appear here',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -278,7 +434,7 @@ class _UsageStatsState extends State<UsageStats> {
               child: Row(
                 children: [
                   Text(
-                    project['emoji'],
+                    project.emoji ?? '🧠',
                     style: const TextStyle(fontSize: 24),
                   ),
                   const SizedBox(width: 12),
@@ -287,27 +443,38 @@ class _UsageStatsState extends State<UsageStats> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          project['name'],
+                          project.projectName,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
                         ),
+                        if (project.archived) ...[
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade50,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                color: Colors.red.shade200,
+                              ),
+                            ),
+                            child: Text(
+                              'Deleted',
+                              style: TextStyle(
+                                color: Colors.red.shade700,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            Icon(
-                              Icons.storage,
-                              size: 14,
-                              color: Colors.blue.shade600,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${project['databaseStorage']} GB',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Colors.grey.shade600,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
                             Icon(
                               Icons.token,
                               size: 14,
@@ -315,7 +482,22 @@ class _UsageStatsState extends State<UsageStats> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              _formatNumber(project['llmTokens']),
+                              _formatNumber(
+                                project.totalInputTokens + project.totalOutputTokens,
+                              ),
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Icon(
+                              Icons.memory,
+                              size: 14,
+                              color: Colors.blue.shade600,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _formatNumber(project.totalCacheReadTokens),
                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                 color: Colors.grey.shade600,
                               ),
@@ -329,7 +511,7 @@ class _UsageStatsState extends State<UsageStats> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        '\$${project['llmCost'].toStringAsFixed(2)}',
+                        '\$${project.totalCostUsd.toStringAsFixed(4)}',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                           color: Colors.deepPurple,
@@ -337,7 +519,7 @@ class _UsageStatsState extends State<UsageStats> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${project['llmRequests']} requests',
+                        'in=${project.totalInputTokens.toString()} • out=${project.totalOutputTokens.toString()}',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Colors.grey.shade600,
                         ),

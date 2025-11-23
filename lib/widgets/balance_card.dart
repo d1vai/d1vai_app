@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/wallet_service.dart';
 import 'topup_dialog.dart';
 
 class BalanceCard extends StatefulWidget {
@@ -9,12 +10,14 @@ class BalanceCard extends StatefulWidget {
 }
 
 class _BalanceCardState extends State<BalanceCard> {
+  final WalletService _walletService = WalletService();
   bool _isLoading = false;
   bool _isProcessingPayment = false;
   bool _showSuccessBanner = false;
   double _totalBalance = 0.0;
   double _expiringBalance = 0.0;
   double _nonExpiringBalance = 0.0;
+  String? _expiringExpiresAt;
 
   @override
   void initState() {
@@ -27,16 +30,31 @@ class _BalanceCardState extends State<BalanceCard> {
       _isLoading = true;
     });
 
-    // Simulate API call
-    await Future.delayed(const Duration(milliseconds: 800));
-
-    // Mock data - in real implementation, fetch from API
-    setState(() {
-      _totalBalance = 125.50;
-      _expiringBalance = 25.00;
-      _nonExpiringBalance = 100.50;
-      _isLoading = false;
-    });
+    try {
+      final balance = await _walletService.getBalance();
+      setState(() {
+        _expiringBalance = balance.balanceExpiringUsd;
+        _nonExpiringBalance = balance.balanceNonExpiringUsd;
+        _expiringExpiresAt = balance.balanceExpiringExpiresAt;
+        _totalBalance = balance.totalBalanceUsd ??
+            (_expiringBalance + _nonExpiringBalance);
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Failed to load balance: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load balance: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _handleTopUpSuccess() async {
@@ -113,7 +131,9 @@ class _BalanceCardState extends State<BalanceCard> {
               '\$${_expiringBalance.toStringAsFixed(2)}',
               Icons.schedule,
               Colors.orange,
-              subtitle: 'Expires: 2025-12-31', // Mock expiry date
+              subtitle: _expiringExpiresAt != null
+                  ? 'Expires: ${_formatDate(_expiringExpiresAt!)}'
+                  : 'No expiry date',
             ),
             const Divider(height: 32),
             Row(
@@ -136,6 +156,15 @@ class _BalanceCardState extends State<BalanceCard> {
         ),
       ),
     );
+  }
+
+  String _formatDate(String dateString) {
+    try {
+      final date = DateTime.parse(dateString);
+      return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return dateString;
+    }
   }
 
   Widget _buildDetailRow(

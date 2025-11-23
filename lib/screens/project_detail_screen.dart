@@ -633,7 +633,18 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         final payload = entry.payload;
 
         debugPrint('Payload type: ${payload.runtimeType}');
-        debugPrint('Payload keys: ${payload.keys}');
+
+        // Ensure payload is a Map, not a String or other type
+        if (payload is! Map<String, dynamic>) {
+          debugPrint('Payload is not a Map, converting to text');
+          contents.add(TextMessageContent(text: payload.toString()));
+          return ChatMessage(
+            id: entry.id.toString(),
+            role: role,
+            createdAt: entry.createdAt,
+            contents: contents,
+          );
+        }
 
         // Handle assistant messages (have nested message structure)
         if (entry.messageType == 'assistant') {
@@ -642,43 +653,58 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
             final message = payload['message'];
             debugPrint('Message type: ${message.runtimeType}');
 
-            if (message is Map) {
-              final contentArray = message['content'];
-              debugPrint('Content array type: ${contentArray.runtimeType}');
+            // Ensure message is a Map
+            if (message is! Map<String, dynamic>) {
+              debugPrint('Message is not a Map, fallback to payload text');
+              contents.add(TextMessageContent(text: json.encode(payload)));
+              return ChatMessage(
+                id: entry.id.toString(),
+                role: role,
+                createdAt: entry.createdAt,
+                contents: contents,
+              );
+            }
 
-              if (contentArray is List) {
-                debugPrint('Processing ${contentArray.length} content items');
-                for (int i = 0; i < contentArray.length; i++) {
-                  final contentItem = contentArray[i];
-                  debugPrint('Content item $i type: ${contentItem.runtimeType}');
+            final contentArray = message['content'];
+            debugPrint('Content array type: ${contentArray?.runtimeType}');
 
-                  if (contentItem is Map) {
-                    final contentType = contentItem['type'];
-                    debugPrint('Content item $i type: ${contentType.runtimeType} = $contentType');
+            // Ensure contentArray is a List
+            if (contentArray is! List<dynamic>) {
+              debugPrint('Content array is not a List');
+            } else {
+              debugPrint('Processing ${contentArray.length} content items');
+              for (int i = 0; i < contentArray.length; i++) {
+                final contentItem = contentArray[i];
+                debugPrint('Content item $i type: ${contentItem.runtimeType}');
 
-                    try {
-                      if (contentType == 'thinking' && contentItem['thinking'] != null) {
-                        contents.add(ThinkingMessageContent(text: contentItem['thinking'].toString()));
-                      } else if (contentType == 'text' && contentItem['text'] != null) {
-                        contents.add(TextMessageContent(text: contentItem['text'].toString()));
-                      } else if (contentType == 'tool_use' && contentItem['name'] != null) {
-                        contents.add(ToolMessageContent(
-                          name: contentItem['name'].toString(),
-                          input: contentItem['input'],
-                        ));
-                      } else if (contentType == 'tool_result' && contentItem['content'] != null) {
-                        contents.add(ResultMessageContent(payload: contentItem['content']));
-                      }
-                    } catch (itemError) {
-                      debugPrint('Error processing content item $i: $itemError');
+                if (contentItem is Map<String, dynamic>) {
+                  final contentType = contentItem['type'];
+                  debugPrint('Content item $i type: ${contentType.runtimeType} = $contentType');
+
+                  try {
+                    if (contentType == 'thinking' && contentItem['thinking'] != null) {
+                      contents.add(ThinkingMessageContent(text: contentItem['thinking'].toString()));
+                    } else if (contentType == 'text' && contentItem['text'] != null) {
+                      contents.add(TextMessageContent(text: contentItem['text'].toString()));
+                    } else if (contentType == 'tool_use' && contentItem['name'] != null) {
+                      contents.add(ToolMessageContent(
+                        name: contentItem['name'].toString(),
+                        input: contentItem['input'],
+                      ));
+                    } else if (contentType == 'tool_result' && contentItem['content'] != null) {
+                      contents.add(ResultMessageContent(payload: contentItem['content']));
                     }
+                  } catch (itemError) {
+                    debugPrint('Error processing content item $i: $itemError');
                   }
+                } else {
+                  debugPrint('Content item $i is not a Map, skipping');
                 }
               }
-              // Also try to get text directly from message field
-              if (contents.isEmpty && message['text'] != null) {
-                contents.add(TextMessageContent(text: message['text'].toString()));
-              }
+            }
+            // Also try to get text directly from message field
+            if (contents.isEmpty && message['text'] != null) {
+              contents.add(TextMessageContent(text: message['text'].toString()));
             }
           } catch (msgError) {
             debugPrint('Error processing assistant message: $msgError');

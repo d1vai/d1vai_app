@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/payment.dart';
+import '../services/wallet_service.dart';
 import 'order_detail_dialog.dart';
 
 class OrderHistory extends StatefulWidget {
@@ -10,6 +11,7 @@ class OrderHistory extends StatefulWidget {
 }
 
 class _OrderHistoryState extends State<OrderHistory> {
+  final WalletService _walletService = WalletService();
   bool _isLoading = true;
   List<PaymentTransaction> _orders = [];
 
@@ -24,75 +26,35 @@ class _OrderHistoryState extends State<OrderHistory> {
       _isLoading = true;
     });
 
-    // Simulate API call
-    await Future.delayed(const Duration(milliseconds: 1000));
+    try {
+      final orders = await _walletService.getTransactions(limit: 50);
 
-    // Mock data - in real implementation, fetch from API
-    final mockOrders = [
-      PaymentTransaction(
-        id: 'TXN-2024-001',
-        productId: 'PRO-PLAN-PRO',
-        productName: 'Professional Plan',
-        amount: 99.00,
-        currency: 'USD',
-        status: 'succeeded',
-        customerEmail: 'user@example.com',
-        createdAt: DateTime.now().subtract(const Duration(days: 5)).toIso8601String(),
-        completedAt: DateTime.now().subtract(const Duration(days: 5)).toIso8601String(),
-        paymentMethod: 'stripe',
-      ),
-      PaymentTransaction(
-        id: 'TXN-2024-002',
-        productId: 'TOP-50',
-        productName: 'Top-up Credits',
-        amount: 50.00,
-        currency: 'USD',
-        status: 'succeeded',
-        customerEmail: 'user@example.com',
-        createdAt: DateTime.now().subtract(const Duration(days: 10)).toIso8601String(),
-        completedAt: DateTime.now().subtract(const Duration(days: 10)).toIso8601String(),
-        paymentMethod: 'stripe',
-      ),
-      PaymentTransaction(
-        id: 'TXN-2024-003',
-        productId: 'PRO-PLAN-BASIC',
-        productName: 'Basic Plan',
-        amount: 29.00,
-        currency: 'USD',
-        status: 'succeeded',
-        customerEmail: 'user@example.com',
-        createdAt: DateTime.now().subtract(const Duration(days: 15)).toIso8601String(),
-        completedAt: DateTime.now().subtract(const Duration(days: 15)).toIso8601String(),
-        paymentMethod: 'stripe',
-      ),
-      PaymentTransaction(
-        id: 'TXN-2024-004',
-        productId: 'TOP-25',
-        productName: 'Top-up Credits',
-        amount: 25.00,
-        currency: 'USD',
-        status: 'pending',
-        customerEmail: 'user@example.com',
-        createdAt: DateTime.now().subtract(const Duration(days: 2)).toIso8601String(),
-        paymentMethod: 'stripe',
-      ),
-      PaymentTransaction(
-        id: 'TXN-2024-005',
-        productId: 'TOP-100',
-        productName: 'Top-up Credits',
-        amount: 100.00,
-        currency: 'USD',
-        status: 'failed',
-        customerEmail: 'user@example.com',
-        createdAt: DateTime.now().subtract(const Duration(days: 3)).toIso8601String(),
-        paymentMethod: 'stripe',
-      ),
-    ];
+      // Sort by created date (newest first)
+      orders.sort((a, b) {
+        final aDate = a.createdAt ?? '';
+        final bDate = b.createdAt ?? '';
+        return bDate.compareTo(aDate);
+      });
 
-    setState(() {
-      _orders = mockOrders;
-      _isLoading = false;
-    });
+      setState(() {
+        _orders = orders;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Failed to load transactions: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load transactions: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
