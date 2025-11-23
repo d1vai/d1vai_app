@@ -3,12 +3,14 @@ import '../../models/message.dart';
 import 'message_list.dart';
 import 'message_input.dart';
 import 'quick_actions.dart';
+import 'message_skeleton.dart';
 
 /// Bottom sheet chat interface for mobile devices
 class ChatBottomSheet extends StatefulWidget {
   final List<ChatMessage> messages;
   final bool isTyping;
   final bool isLoading;
+  final bool isLoadingHistory;
   final ScrollController? scrollController;
   final Function(String) onSendMessage;
   final VoidCallback? onClose;
@@ -18,6 +20,7 @@ class ChatBottomSheet extends StatefulWidget {
     required this.messages,
     this.isTyping = false,
     this.isLoading = false,
+    this.isLoadingHistory = false,
     this.scrollController,
     required this.onSendMessage,
     this.onClose,
@@ -86,7 +89,9 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
           // Messages list
           Expanded(
             child: widget.messages.isEmpty && !widget.isTyping
-                ? _buildEmptyState()
+                ? widget.isLoadingHistory
+                    ? _buildLoadingState()
+                    : _buildEmptyState()
                 : Column(
                     children: [
                       // Quick actions when no messages
@@ -149,6 +154,36 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    final theme = Theme.of(context);
+    return Column(
+      children: [
+        // Quick actions
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: QuickActions(
+            onSelect: _handleSubmitted,
+          ),
+        ),
+        // Loading skeleton
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  MessageSkeleton(isUser: true, delay: 0),
+                  MessageSkeleton(isUser: false, delay: 150),
+                  MessageSkeleton(isUser: true, delay: 300),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

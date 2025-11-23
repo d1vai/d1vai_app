@@ -341,8 +341,12 @@ class ChatHistoryEntry {
   });
 
   factory ChatHistoryEntry.fromJson(Map<String, dynamic> json) {
+    // Handle both int and String id types
+    final idValue = json['id'];
+    final id = idValue is int ? idValue : int.parse(idValue.toString());
+
     return ChatHistoryEntry(
-      id: json['id'] as int,
+      id: id,
       projectId: json['project_id'] as String,
       direction: json['direction'] as String,
       messageType: json['message_type'] as String?,

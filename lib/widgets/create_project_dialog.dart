@@ -64,6 +64,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         width: MediaQuery.of(context).size.width * 0.9,
+        height: MediaQuery.of(context).size.height * 0.85, // 限制弹窗高度
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -97,13 +98,15 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
-            // 内容区域
+            // 内容区域 - 可滚动
             Expanded(
-              child: _activeTab == 0
-                  ? _buildNewProjectTab()
-                  : _buildImportRepoTab(),
+              child: SingleChildScrollView(
+                child: _activeTab == 0
+                    ? _buildNewProjectTab()
+                    : _buildImportRepoTab(),
+              ),
             ),
 
             if (_error.isNotEmpty) ...[
@@ -164,6 +167,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
         ? _buildLoadingState()
         : Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min, // 重要：避免占用多余空间
             children: [
               // Emoji Selector
               const Text(
@@ -224,7 +228,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
                   },
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
               // Integration Options
               const Text(
@@ -291,7 +295,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
               // Project Name
               const Text(
@@ -353,7 +357,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
               // Project Description
               const Text(
@@ -368,7 +372,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
               const SizedBox(height: 16),
               TextField(
                 controller: _descriptionController,
-                maxLines: 6,
+                maxLines: 4, // 减少最大行数
                 onChanged: (value) {
                   // Real-time validation
                   final error = _validateDescription(value.trim());
@@ -383,12 +387,12 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
                   errorMaxLines: 2,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Text(
                 'Tip: Include target user, problem, solution approach, and key flows.',
                 style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 12),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
               // Tags Section
               const Text(
@@ -454,7 +458,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
                     );
                   }).toList(),
                 ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
               // Create Button
               SizedBox(

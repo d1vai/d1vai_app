@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
 import '../widgets/chat/message_list.dart';
 import '../widgets/chat/message_input.dart';
+import '../widgets/chat/message_skeleton.dart';
 import '../widgets/chat/quick_actions.dart';
 import '../widgets/snackbar_helper.dart';
 
@@ -29,6 +30,7 @@ class _ChatScreenState extends State<ChatScreen>
 
   bool _isLoading = false;
   bool _isTyping = false;
+  bool _isLoadingHistory = false;
   String? _currentSessionId;
   String? _websocketUrl;
   WebSocket? _webSocket;
@@ -38,7 +40,8 @@ class _ChatScreenState extends State<ChatScreen>
   void initState() {
     super.initState();
     _loadChatHistory();
-    _createNewSession();
+    // 不在 initState 中创建会话，避免空 prompt 错误
+    // _createNewSession();
   }
 
   @override
@@ -51,6 +54,10 @@ class _ChatScreenState extends State<ChatScreen>
 
   /// Load chat history from server
   Future<void> _loadChatHistory() async {
+    setState(() {
+      _isLoadingHistory = true;
+    });
+
     try {
       final history = await _chatService.getChatHistory(
         projectId: widget.projectId,
@@ -74,9 +81,13 @@ class _ChatScreenState extends State<ChatScreen>
       setState(() {
         _messages.clear();
         _messages.addAll(messages);
+        _isLoadingHistory = false;
       });
     } catch (e) {
       if (!mounted) return;
+      setState(() {
+        _isLoadingHistory = false;
+      });
       SnackBarHelper.showError(context, title: 'Error', message: 'Failed to load chat history: $e');
     }
   }
@@ -296,7 +307,9 @@ class _ChatScreenState extends State<ChatScreen>
           // Messages list
           Expanded(
             child: _messages.isEmpty && !_isTyping
-                ? _buildEmptyState()
+                ? _isLoadingHistory
+                    ? _buildLoadingState()
+                    : _buildEmptyState()
                 : MessageList(
                     messages: _messages,
                     isTyping: _isTyping,
@@ -353,6 +366,18 @@ class _ChatScreenState extends State<ChatScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          MessageSkeleton(isUser: true, delay: 0),
+          MessageSkeleton(isUser: false, delay: 150),
+          MessageSkeleton(isUser: true, delay: 300),
+        ],
       ),
     );
   }

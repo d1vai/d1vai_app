@@ -72,6 +72,7 @@ class ChatService {
       final response = await _apiClient.get(
         '/api/projects/$projectId/history?${queryParams.join('&')}',
       );
+      print(response);
 
       final List<dynamic> data = response['data'] ?? response;
       return data.map((json) => ChatHistoryEntry.fromJson(json)).toList();

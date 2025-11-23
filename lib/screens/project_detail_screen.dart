@@ -59,6 +59,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   final List<ChatMessage> _chatMessages = [];
   bool _isChatLoading = false;
   bool _isTyping = false;
+  bool _isLoadingHistory = false;
   String? _currentSessionId;
   String? _websocketUrl;
   StreamSubscription? _webSocketSubscription;
@@ -568,39 +569,30 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
       // First, load chat history
       await _loadChatHistory();
 
-      // Then create a new session for the WebSocket connection
-      final response = await _chatService.executeSession(
-        projectId: widget.projectId,
-        prompt: '',
-        sessionType: 'new',
-      );
-
       if (!mounted) return;
 
-      setState(() {
-        _currentSessionId = response.sessionId;
-        _websocketUrl = response.websocketUrl;
-      });
-
-      _connectWebSocket();
+      // 只加载历史消息，不创建会话（避免空 prompt 错误）
+      // 会话将在用户发送第一条消息时创建
     } catch (e) {
       if (!mounted) return;
-      SnackBarHelper.showError(
-        context,
-        title: 'Error',
-        message: 'Failed to initialize chat: $e',
-      );
+      debugPrint('Failed to initialize chat: $e');
+      // Don't show error to user, just log it
     }
   }
 
   /// 加载聊天历史
   Future<void> _loadChatHistory() async {
+    setState(() {
+      _isLoadingHistory = true;
+    });
+
     try {
       final history = await _chatService.getChatHistory(
         projectId: widget.projectId,
         limit: 50,
         messageType: 'all', // Load all message types
       );
+      print(history);
 
       if (!mounted) return;
 
@@ -616,8 +608,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
       setState(() {
         _chatMessages.clear();
         _chatMessages.addAll(messages);
+        _isLoadingHistory = false;
       });
     } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingHistory = false;
+      });
       debugPrint('Failed to load chat history: $e');
       // Don't show error to user, just log it
     }
@@ -629,20 +626,76 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
       final role = entry.direction == 'user' ? 'user' : 'assistant';
       final contents = <MessageContent>[];
 
+      debugPrint('Converting entry ${entry.id}: messageType=${entry.messageType}, direction=${entry.direction}');
+
       // Parse the payload to extract message content
       if (entry.payload != null) {
         final payload = entry.payload;
 
+        debugPrint('Payload type: ${payload.runtimeType}');
+        debugPrint('Payload keys: ${payload.keys}');
+
+        // Handle assistant messages (have nested message structure)
+        if (entry.messageType == 'assistant') {
+          try {
+            // Extract from nested message.content array
+            final message = payload['message'];
+            debugPrint('Message type: ${message.runtimeType}');
+
+            if (message is Map) {
+              final contentArray = message['content'];
+              debugPrint('Content array type: ${contentArray.runtimeType}');
+
+              if (contentArray is List) {
+                debugPrint('Processing ${contentArray.length} content items');
+                for (int i = 0; i < contentArray.length; i++) {
+                  final contentItem = contentArray[i];
+                  debugPrint('Content item $i type: ${contentItem.runtimeType}');
+
+                  if (contentItem is Map) {
+                    final contentType = contentItem['type'];
+                    debugPrint('Content item $i type: ${contentType.runtimeType} = $contentType');
+
+                    try {
+                      if (contentType == 'thinking' && contentItem['thinking'] != null) {
+                        contents.add(ThinkingMessageContent(text: contentItem['thinking'].toString()));
+                      } else if (contentType == 'text' && contentItem['text'] != null) {
+                        contents.add(TextMessageContent(text: contentItem['text'].toString()));
+                      } else if (contentType == 'tool_use' && contentItem['name'] != null) {
+                        contents.add(ToolMessageContent(
+                          name: contentItem['name'].toString(),
+                          input: contentItem['input'],
+                        ));
+                      } else if (contentType == 'tool_result' && contentItem['content'] != null) {
+                        contents.add(ResultMessageContent(payload: contentItem['content']));
+                      }
+                    } catch (itemError) {
+                      debugPrint('Error processing content item $i: $itemError');
+                    }
+                  }
+                }
+              }
+              // Also try to get text directly from message field
+              if (contents.isEmpty && message['text'] != null) {
+                contents.add(TextMessageContent(text: message['text'].toString()));
+              }
+            }
+          } catch (msgError) {
+            debugPrint('Error processing assistant message: $msgError');
+            // Fallback to raw payload
+            contents.add(TextMessageContent(text: json.encode(payload)));
+          }
+        }
         // Handle prompt messages
-        if (entry.messageType == 'prompt' && payload['prompt'] != null) {
-          contents.add(TextMessageContent(text: payload['prompt'] as String));
+        else if (entry.messageType == 'prompt' && payload['prompt'] != null) {
+          contents.add(TextMessageContent(text: payload['prompt'].toString()));
         }
         // Handle result messages
         else if (entry.messageType == 'result') {
           if (payload['text'] != null) {
-            contents.add(TextMessageContent(text: payload['text'] as String));
+            contents.add(TextMessageContent(text: payload['text'].toString()));
           } else if (payload['content'] != null) {
-            contents.add(TextMessageContent(text: payload['content'] as String));
+            contents.add(TextMessageContent(text: payload['content'].toString()));
           } else if (payload['result'] != null) {
             contents.add(ResultMessageContent(payload: payload['result']));
           }
@@ -650,8 +703,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         // Handle git commit messages
         else if (entry.messageType == 'git_commit') {
           contents.add(GitCommitMessageContent(
-            projectId: payload['projectId'] as String?,
-            message: payload['message'] as String? ?? '',
+            projectId: payload['projectId']?.toString(),
+            message: payload['message']?.toString() ?? '',
             files: (payload['files'] as List<dynamic>?)
                 ?.map((e) => e.toString())
                 .toList(),
@@ -660,26 +713,26 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         // Handle completion messages
         else if (entry.messageType == 'complete') {
           final success = payload['success'] as bool? ?? false;
-          final message = payload['message'] as String? ?? '';
+          final message = payload['message']?.toString() ?? '';
           contents.add(CompletionMessageContent(
             message: message,
             success: success,
-            details: payload['details'] as String?,
+            details: payload['details']?.toString(),
           ));
         }
         // Handle error messages
         else if (entry.messageType == 'error') {
           contents.add(ErrorMessageContent(
-            message: payload['message'] as String? ?? 'Unknown error',
-            code: payload['code'] as String?,
+            message: payload['message']?.toString() ?? 'Unknown error',
+            code: payload['code']?.toString(),
             details: payload['details'],
           ));
         }
         // Fallback for unknown types
         else {
           final text = entry.messageText ??
-              (payload['text'] as String?) ??
-              (payload['content'] as String?) ??
+              (payload['text']?.toString()) ??
+              (payload['content']?.toString()) ??
               json.encode(payload);
           contents.add(TextMessageContent(text: text));
         }
@@ -688,8 +741,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
       else if (entry.messageText != null) {
         contents.add(TextMessageContent(text: entry.messageText!));
       } else {
+        debugPrint('No content found for entry ${entry.id}');
         return null; // Skip entries with no content
       }
+
+      debugPrint('Successfully converted entry ${entry.id} to ${contents.length} content items');
 
       return ChatMessage(
         id: entry.id.toString(),
@@ -697,8 +753,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         createdAt: entry.createdAt,
         contents: contents,
       );
-    } catch (e) {
-      debugPrint('Failed to convert history entry: $e');
+    } catch (e, stackTrace) {
+      debugPrint('Failed to convert history entry ${entry.id}: $e');
+      debugPrint('Stack trace: $stackTrace');
       return null;
     }
   }
@@ -1687,6 +1744,7 @@ ListTile(
                           messages: _chatMessages,
                           isTyping: _isTyping,
                           isLoading: _isChatLoading,
+                          isLoadingHistory: _isLoadingHistory,
                           scrollController: _chatScrollController,
                           onSendMessage: _sendChatMessage,
                           onClose: () {
