@@ -465,7 +465,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                 _performArchive();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
+                backgroundColor: Theme.of(context).colorScheme.tertiary,
               ),
               child: const Text('Archive'),
             ),
@@ -869,12 +869,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     }
 
     if (_error != null) {
+      final theme = Theme.of(context);
       return Scaffold(
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 64, color: Colors.red),
+              Icon(Icons.error_outline, size: 64, color: theme.colorScheme.error),
               const SizedBox(height: 16),
               Text('Error: $_error'),
               const SizedBox(height: 16),
@@ -976,6 +977,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
       return const Center(child: CircularProgressIndicator());
     }
 
+    final theme = Theme.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -993,7 +995,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                         width: 64,
                         height: 64,
                         decoration: BoxDecoration(
-                          color: Colors.deepPurple.shade50,
+                          color: theme.colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -1016,7 +1018,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                             const SizedBox(height: 4),
                             Text(
                               project.projectDescription,
-                              style: TextStyle(color: Colors.grey.shade600),
+                              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
                             ),
                           ],
                         ),
@@ -1031,7 +1033,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                       Text(
                         'Updated ${_formatTimeAgo(project.updatedAt)}',
                         style: TextStyle(
-                          color: Colors.grey.shade600,
+                          color: theme.colorScheme.onSurfaceVariant,
                           fontSize: 12,
                         ),
                       ),
@@ -1063,7 +1065,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
-                            color: Colors.grey.shade600,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -1090,7 +1092,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
-                            color: Colors.grey.shade600,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -1121,7 +1123,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
-                            color: Colors.grey.shade600,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -1140,8 +1142,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
                                     color: project.latestPreviewUrl != null && project.latestPreviewUrl!.isNotEmpty
-                                        ? Colors.deepPurple
-                                        : Colors.grey.shade700,
+                                        ? theme.colorScheme.primary
+                                        : theme.colorScheme.onSurfaceVariant,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -1152,7 +1154,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                                 Icon(
                                   Icons.open_in_new,
                                   size: 14,
-                                  color: Colors.deepPurple,
+                                  color: theme.colorScheme.primary,
                                 ),
                               ],
                             ],
@@ -1217,14 +1219,14 @@ ListTile(
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.deepPurple.shade100,
+                          color: theme.colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           'Activity feed',
                           style: TextStyle(
                             fontSize: 11,
-                            color: Colors.deepPurple.shade700,
+                            color: theme.colorScheme.onPrimaryContainer,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -1246,7 +1248,7 @@ ListTile(
                         'No recent deployments — ship a new build to see activity here.',
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.grey.shade600,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     )
@@ -1256,14 +1258,23 @@ ListTile(
                           deployment.startedAt ??
                           deployment.createdAt ??
                           '';
+                      Color statusColor;
+                      if (deployment.status == 'success') {
+                        statusColor = theme.colorScheme.primary;
+                      } else if (deployment.status == 'pending') {
+                        statusColor = theme.colorScheme.tertiary;
+                      } else {
+                        statusColor = theme.colorScheme.error;
+                      }
+
                       return Container(
                         margin: const EdgeInsets.only(bottom: 8),
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
+                          color: theme.colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: Colors.grey.shade200,
+                            color: theme.colorScheme.outlineVariant,
                           ),
                         ),
                         child: Row(
@@ -1275,11 +1286,7 @@ ListTile(
                                       ? Icons.hourglass_empty
                                       : Icons.error,
                               size: 18,
-                              color: deployment.status == 'success'
-                                  ? Colors.green
-                                  : deployment.status == 'pending'
-                                      ? Colors.orange
-                                      : Colors.red,
+                              color: statusColor,
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -1299,7 +1306,7 @@ ListTile(
                                       _formatTimeAgo(timestamp),
                                       style: TextStyle(
                                         fontSize: 12,
-                                        color: Colors.grey.shade600,
+                                        color: theme.colorScheme.onSurfaceVariant,
                                       ),
                                     ),
                                   ],
@@ -1378,6 +1385,7 @@ ListTile(
 
   /// 构建健康指标项
   Widget _buildHealthMetricItem(String title, String status, String description, IconData icon, bool isEnabled) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1400,7 +1408,7 @@ ListTile(
                     description,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey.shade600,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -1409,16 +1417,16 @@ ListTile(
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: isEnabled ? Colors.green.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.1),
+                color: isEnabled ? theme.colorScheme.primaryContainer : theme.colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: isEnabled ? Colors.green : Colors.grey,
+                  color: isEnabled ? theme.colorScheme.primary : theme.colorScheme.outline,
                 ),
               ),
               child: Text(
                 status,
                 style: TextStyle(
-                  color: isEnabled ? Colors.green : Colors.grey,
+                  color: isEnabled ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
@@ -1473,6 +1481,7 @@ ListTile(
 
   Widget _buildChatTabButton(int index, String label, IconData icon) {
     final isSelected = _currentChatTabIndex == index;
+    final theme = Theme.of(context);
     return ElevatedButton(
       onPressed: () {
         setState(() {
@@ -1480,8 +1489,8 @@ ListTile(
         });
       },
       style: ElevatedButton.styleFrom(
-        backgroundColor: isSelected ? Colors.deepPurple : Colors.grey.shade200,
-        foregroundColor: isSelected ? Colors.white : Colors.black87,
+        backgroundColor: isSelected ? theme.colorScheme.primary : theme.colorScheme.surfaceContainerHighest,
+        foregroundColor: isSelected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurfaceVariant,
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         padding: const EdgeInsets.symmetric(vertical: 10),
@@ -1579,6 +1588,7 @@ ListTile(
 
   /// Code Tab
   Widget _buildChatCodeTab() {
+    final theme = Theme.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -1591,7 +1601,7 @@ ListTile(
           const SizedBox(height: 16),
           Card(
             child: ListTile(
-              leading: Icon(Icons.folder, color: Colors.amber.shade600),
+              leading: Icon(Icons.folder, color: theme.colorScheme.secondary),
               title: const Text('src/'),
               subtitle: const Text('Source files'),
               trailing: const Icon(Icons.arrow_forward_ios, size: 14),
@@ -1603,7 +1613,7 @@ ListTile(
           ),
           Card(
             child: ListTile(
-              leading: Icon(Icons.folder, color: Colors.amber.shade600),
+              leading: Icon(Icons.folder, color: theme.colorScheme.secondary),
               title: const Text('public/'),
               subtitle: const Text('Static assets'),
               trailing: const Icon(Icons.arrow_forward_ios, size: 14),
@@ -1615,7 +1625,7 @@ ListTile(
           ),
           Card(
             child: ListTile(
-              leading: Icon(Icons.description, color: Colors.blue.shade600),
+              leading: Icon(Icons.description, color: theme.colorScheme.primary),
               title: const Text('package.json'),
               subtitle: const Text('Dependencies'),
               trailing: const Icon(Icons.arrow_forward_ios, size: 14),
@@ -1630,13 +1640,13 @@ ListTile(
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.deepPurple.shade50,
+              color: theme.colorScheme.primaryContainer,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.deepPurple.shade200),
+              border: Border.all(color: theme.colorScheme.outlineVariant),
             ),
             child: Row(
               children: [
-                Icon(Icons.lightbulb_outline, color: Colors.deepPurple.shade700),
+                Icon(Icons.lightbulb_outline, color: theme.colorScheme.onPrimaryContainer),
                 const SizedBox(width: 12),
                 const Expanded(
                   child: Text(
@@ -1653,6 +1663,7 @@ ListTile(
 
   /// Environment Variables Tab
   Widget _buildChatEnvTab() {
+    final theme = Theme.of(context);
     if (_isLoadingEnvVars) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -1662,7 +1673,7 @@ ListTile(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.settings, size: 64, color: Colors.grey.shade400),
+            Icon(Icons.settings, size: 64, color: theme.colorScheme.onSurfaceVariant),
             const SizedBox(height: 16),
             const Text(
               'No Environment Variables',
@@ -1671,7 +1682,7 @@ ListTile(
             const SizedBox(height: 8),
             Text(
               'Add environment variables to your project',
-              style: TextStyle(color: Colors.grey.shade600),
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -1690,17 +1701,17 @@ ListTile(
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: Colors.purple.shade100,
+                color: theme.colorScheme.secondaryContainer,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(Icons.key, color: Colors.purple.shade600, size: 20),
+              child: Icon(Icons.key, color: theme.colorScheme.onSecondaryContainer, size: 20),
             ),
             title: Text(envVar.key),
             subtitle: Text(
               (envVar.value == null || envVar.value!.isEmpty)
                   ? '(empty value)'
                   : '************',
-              style: TextStyle(color: Colors.grey.shade600),
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 14),
             onTap: () {
@@ -1746,6 +1757,7 @@ ListTile(
 
   /// 构建数据库标签
   Widget _buildDatabaseTab(BuildContext context) {
+    final theme = Theme.of(context);
     if (_isLoadingDatabase) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -1755,16 +1767,16 @@ ListTile(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.storage, size: 64, color: Colors.grey.shade400),
+            Icon(Icons.storage, size: 64, color: theme.colorScheme.onSurfaceVariant),
             const SizedBox(height: 16),
             Text(
               'No database tables',
-              style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
+              style: TextStyle(fontSize: 18, color: theme.colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 8),
             Text(
               'Database tables will appear here once they are created',
-              style: TextStyle(color: Colors.grey.shade500),
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -1784,13 +1796,13 @@ ListTile(
               height: 40,
               decoration: BoxDecoration(
                 color: table.type == 'view'
-                    ? Colors.orange.shade100
-                    : Colors.blue.shade100,
+                    ? theme.colorScheme.tertiaryContainer
+                    : theme.colorScheme.primaryContainer,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 table.type == 'view' ? Icons.visibility : Icons.table_chart,
-                color: table.type == 'view' ? Colors.orange : Colors.blue,
+                color: table.type == 'view' ? theme.colorScheme.tertiary : theme.colorScheme.primary,
                 size: 20,
               ),
             ),
@@ -1808,7 +1820,7 @@ ListTile(
                 Text(
                   '${table.columns.length} columns • ${table.schema} schema',
                   style: TextStyle(
-                    color: Colors.grey.shade600,
+                    color: theme.colorScheme.onSurfaceVariant,
                     fontSize: 13,
                   ),
                 ),
@@ -1817,7 +1829,7 @@ ListTile(
                   Text(
                     '${table.rowCount} rows',
                     style: TextStyle(
-                      color: Colors.grey.shade600,
+                      color: theme.colorScheme.onSurfaceVariant,
                       fontSize: 12,
                     ),
                   ),
@@ -1852,6 +1864,7 @@ ListTile(
 
   /// 构建 API 标签
   Widget _buildApiTab(BuildContext context) {
+    final theme = Theme.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -1905,7 +1918,7 @@ ListTile(
                         'No environment variables — add one to get started.',
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.grey.shade600,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     )
@@ -1915,9 +1928,9 @@ ListTile(
                         margin: const EdgeInsets.only(bottom: 8),
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
+                          color: theme.colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.grey.shade200),
+                          border: Border.all(color: theme.colorScheme.outlineVariant),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1941,7 +1954,7 @@ ListTile(
                                           envVar.description!,
                                           style: TextStyle(
                                             fontSize: 12,
-                                            color: Colors.grey.shade600,
+                                            color: theme.colorScheme.onSurfaceVariant,
                                           ),
                                         ),
                                     ],
@@ -1983,13 +1996,13 @@ ListTile(
                                         ],
                                       ),
                                     ),
-                                    const PopupMenuItem(
+                                    PopupMenuItem(
                                       value: 'delete',
                                       child: Row(
                                         children: [
-                                          Icon(Icons.delete, size: 18, color: Colors.red),
-                                          SizedBox(width: 8),
-                                          Text('Delete', style: TextStyle(color: Colors.red)),
+                                          Icon(Icons.delete, size: 18, color: theme.colorScheme.error),
+                                          const SizedBox(width: 8),
+                                          Text('Delete', style: TextStyle(color: theme.colorScheme.error)),
                                         ],
                                       ),
                                     ),
@@ -2018,14 +2031,14 @@ ListTile(
                                 Icon(
                                   envVar.isEncrypted ? Icons.lock : Icons.code,
                                   size: 14,
-                                  color: envVar.isEncrypted ? Colors.orange : Colors.grey.shade600,
+                                  color: envVar.isEncrypted ? theme.colorScheme.tertiary : theme.colorScheme.onSurfaceVariant,
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
                                   envVar.isEncrypted ? 'Encrypted' : 'Visible',
                                   style: TextStyle(
                                     fontSize: 11,
-                                    color: envVar.isEncrypted ? Colors.orange : Colors.grey.shade600,
+                                    color: envVar.isEncrypted ? theme.colorScheme.tertiary : theme.colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -2053,7 +2066,7 @@ ListTile(
                   ),
                   const SizedBox(height: 12),
                   ListTile(
-                    leading: const Icon(Icons.key, color: Colors.orange),
+                    leading: Icon(Icons.key, color: theme.colorScheme.tertiary),
                     title: const Text('API Keys'),
                     subtitle: const Text('Manage your API keys'),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -2067,7 +2080,7 @@ ListTile(
                   ),
                   const Divider(),
                   ListTile(
-                    leading: const Icon(Icons.description, color: Colors.purple),
+                    leading: Icon(Icons.description, color: theme.colorScheme.secondary),
                     title: const Text('API Documentation'),
                     subtitle: const Text('View API documentation'),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -2081,7 +2094,7 @@ ListTile(
                   ),
                   const Divider(),
                   ListTile(
-                    leading: const Icon(Icons.download, color: Colors.blue),
+                    leading: Icon(Icons.download, color: theme.colorScheme.primary),
                     title: const Text('Export Variables'),
                     subtitle: const Text('Download all environment variables'),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -2095,7 +2108,7 @@ ListTile(
                   ),
                   const Divider(),
                   ListTile(
-                    leading: const Icon(Icons.upload, color: Colors.green),
+                    leading: Icon(Icons.upload, color: theme.colorScheme.primary),
                     title: const Text('Import Variables'),
                     subtitle: const Text('Bulk import from .env file'),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -2118,6 +2131,7 @@ ListTile(
 
   /// 构建 GitHub 标签
   Widget _buildGithubTab(BuildContext context) {
+    final theme = Theme.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -2132,7 +2146,7 @@ ListTile(
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.smart_toy, color: Colors.deepPurple, size: 32),
+                      Icon(Icons.smart_toy, color: theme.colorScheme.primary, size: 32),
                       const SizedBox(width: 16),
                       Expanded(
                         child: Column(
@@ -2149,7 +2163,7 @@ ListTile(
                             Text(
                               'Connect your GitHub repository',
                               style: TextStyle(
-                                color: Colors.grey.shade600,
+                                color: theme.colorScheme.onSurfaceVariant,
                                 fontSize: 13,
                               ),
                             ),
@@ -2162,13 +2176,13 @@ ListTile(
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
+                      color: theme.colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey.shade200),
+                      border: Border.all(color: theme.colorScheme.outlineVariant),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.account_circle, color: Colors.grey.shade600),
+                        Icon(Icons.account_circle, color: theme.colorScheme.onSurfaceVariant),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -2186,13 +2200,13 @@ ListTile(
                                 'd1vai-bot',
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: Colors.grey.shade700,
+                                  color: theme.colorScheme.onSurface,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        Icon(Icons.info_outline, color: Colors.grey.shade400),
+                        Icon(Icons.info_outline, color: theme.colorScheme.onSurfaceVariant),
                       ],
                     ),
                   ),
@@ -2219,10 +2233,10 @@ ListTile(
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
+                        color: theme.colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.link, color: Colors.black, size: 20),
+                      child: Icon(Icons.link, color: theme.colorScheme.onSurfaceVariant, size: 20),
                     ),
                     title: const Text('Connect Repository'),
                     subtitle: const Text('Connect an existing GitHub repository'),
@@ -2237,10 +2251,10 @@ ListTile(
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: Colors.blue.shade100,
+                        color: theme.colorScheme.primaryContainer,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Icon(Icons.download, color: Colors.blue, size: 20),
+                      child: Icon(Icons.download, color: theme.colorScheme.primary, size: 20),
                     ),
                     title: const Text('Import from GitHub'),
                     subtitle: const Text('Import a repository as a new project'),
@@ -2255,10 +2269,10 @@ ListTile(
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: Colors.orange.shade100,
+                        color: theme.colorScheme.tertiaryContainer,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Icon(Icons.check_circle, color: Colors.orange, size: 20),
+                      child: Icon(Icons.check_circle, color: theme.colorScheme.tertiary, size: 20),
                     ),
                     title: const Text('Check Repository Access'),
                     subtitle: const Text('Verify access to a repository'),
@@ -2293,14 +2307,14 @@ ListTile(
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
+                          color: theme.colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           '0',
                           style: TextStyle(
                             fontSize: 11,
-                            color: Colors.grey.shade700,
+                            color: theme.colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -2312,13 +2326,13 @@ ListTile(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     child: Column(
                       children: [
-                        Icon(Icons.code, size: 48, color: Colors.grey.shade400),
+                        Icon(Icons.code, size: 48, color: theme.colorScheme.onSurfaceVariant),
                         const SizedBox(height: 12),
                         Text(
                           'No repositories connected',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey.shade600,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -2326,7 +2340,7 @@ ListTile(
                           'Connect a GitHub repository to get started',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey.shade500,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -2345,29 +2359,31 @@ ListTile(
   void _showConnectRepositoryDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) {
+        final theme = Theme.of(context);
+        return AlertDialog(
         title: const Text('Connect Repository'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               'To connect a GitHub repository:',
-              style: TextStyle(color: Colors.grey.shade600),
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 16),
-            const ListTile(
-              leading: Icon(Icons.check_circle, color: Colors.green, size: 20),
-              title: Text('1. Add d1vai-bot as a collaborator'),
+            ListTile(
+              leading: Icon(Icons.check_circle, color: theme.colorScheme.primary, size: 20),
+              title: const Text('1. Add d1vai-bot as a collaborator'),
               contentPadding: EdgeInsets.zero,
             ),
-            const ListTile(
-              leading: Icon(Icons.check_circle, color: Colors.green, size: 20),
-              title: Text('2. Grant repository access'),
+            ListTile(
+              leading: Icon(Icons.check_circle, color: theme.colorScheme.primary, size: 20),
+              title: const Text('2. Grant repository access'),
               contentPadding: EdgeInsets.zero,
             ),
-            const ListTile(
-              leading: Icon(Icons.check_circle, color: Colors.green, size: 20),
-              title: Text('3. Accept the invitation'),
+            ListTile(
+              leading: Icon(Icons.check_circle, color: theme.colorScheme.primary, size: 20),
+              title: const Text('3. Accept the invitation'),
               contentPadding: EdgeInsets.zero,
             ),
           ],
@@ -2378,7 +2394,8 @@ ListTile(
             child: const Text('Got it'),
           ),
         ],
-      ),
+      );
+      },
     );
   }
 

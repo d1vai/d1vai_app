@@ -409,24 +409,31 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
               // 底部信息
               Row(
                 children: [
-                  Icon(Icons.schedule, size: 16, color: Colors.grey.shade400),
+                  Icon(
+                    Icons.schedule,
+                    size: 16,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     _formatTimeAgo(project.updatedAt),
-                    style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   if (project.latestPreviewUrl != null) ...[
                     Icon(
                       Icons.visibility,
                       size: 16,
-                      color: Colors.grey.shade400,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       'Preview available',
                       style: TextStyle(
-                        color: Colors.grey.shade500,
+                        color: theme.colorScheme.onSurfaceVariant,
                         fontSize: 12,
                       ),
                     ),
@@ -444,22 +451,23 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
   Widget _buildStatusIndicator(String status) {
     Color color;
     String label;
+    final theme = Theme.of(context);
 
     switch (status) {
       case 'active':
-        color = Colors.green;
+        color = theme.colorScheme.primary;
         label = 'Active';
         break;
       case 'archived':
-        color = Colors.orange;
+        color = theme.colorScheme.tertiary;
         label = 'Archived';
         break;
       case 'draft':
-        color = Colors.grey;
+        color = theme.colorScheme.onSurfaceVariant;
         label = 'Draft';
         break;
       default:
-        color = Colors.grey;
+        color = theme.colorScheme.onSurfaceVariant;
         label = status;
     }
 

@@ -88,9 +88,10 @@ class MessageBubble extends StatelessWidget {
     bool isUser,
     BuildContext context,
   ) {
+    final theme = Theme.of(context);
     final textColor = isUser
-        ? Theme.of(context).colorScheme.onPrimary
-        : Theme.of(context).colorScheme.onSurfaceVariant;
+        ? theme.colorScheme.onPrimary
+        : theme.colorScheme.onSurfaceVariant;
 
     if (content is TextMessageContent) {
       return Padding(
@@ -238,10 +239,10 @@ IconButton(
         margin: const EdgeInsets.symmetric(vertical: 4.0),
         padding: const EdgeInsets.all(8.0),
         decoration: BoxDecoration(
-          color: Colors.green.withValues(alpha: 0.1),
+          color: theme.colorScheme.primaryContainer,
           borderRadius: BorderRadius.circular(8.0),
           border: Border.all(
-            color: Colors.green.withValues(alpha: 0.3),
+            color: theme.colorScheme.outlineVariant,
           ),
         ),
         child: Column(
@@ -249,10 +250,10 @@ IconButton(
           children: [
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.commit,
                   size: 16.0,
-                  color: Colors.green,
+                  color: theme.colorScheme.primary,
                 ),
                 const SizedBox(width: 4.0),
                 Text(
@@ -292,13 +293,13 @@ IconButton(
         padding: const EdgeInsets.all(8.0),
         decoration: BoxDecoration(
           color: content.success
-              ? Colors.green.withValues(alpha: 0.1)
-              : Colors.red.withValues(alpha: 0.1),
+              ? theme.colorScheme.primaryContainer
+              : theme.colorScheme.errorContainer,
           borderRadius: BorderRadius.circular(8.0),
           border: Border.all(
             color: content.success
-                ? Colors.green.withValues(alpha: 0.3)
-                : Colors.red.withValues(alpha: 0.3),
+                ? theme.colorScheme.outlineVariant
+                : theme.colorScheme.error.withValues(alpha: 0.3),
           ),
         ),
         child: Column(
@@ -309,7 +310,7 @@ IconButton(
                 Icon(
                   content.success ? Icons.check_circle : Icons.error,
                   size: 16.0,
-                  color: content.success ? Colors.green : Colors.red,
+                  color: content.success ? theme.colorScheme.primary : theme.colorScheme.error,
                 ),
                 const SizedBox(width: 4.0),
                 Text(
@@ -327,7 +328,7 @@ IconButton(
               Text(
                 content.error!,
                 style: TextStyle(
-                  color: Colors.red,
+                  color: theme.colorScheme.error,
                   fontSize: 12.0,
                 ),
               ),
