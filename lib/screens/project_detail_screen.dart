@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -11,11 +12,16 @@ import '../models/database_table.dart';
 import '../models/analytics.dart';
 import '../models/env_var.dart';
 import '../models/payment.dart';
+import '../models/message.dart';
 import '../services/d1vai_service.dart';
+import '../services/chat_service.dart';
 import '../widgets/login_required_dialog.dart';
 import '../widgets/snackbar_helper.dart';
 import '../widgets/app_preview.dart';
 import '../widgets/table_detail_dialog.dart';
+import '../widgets/chat/message_list.dart';
+import '../widgets/chat/message_input.dart';
+import '../widgets/chat/quick_actions.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   final String projectId;
@@ -44,6 +50,16 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   List<PayProduct> _payProducts = [];
   List<PaymentTransaction> _paymentTransactions = [];
   bool _isLoadingPayment = false;
+
+  // Chat related state
+  final ChatService _chatService = ChatService();
+  final List<ChatMessage> _chatMessages = [];
+  bool _isChatLoading = false;
+  bool _isTyping = false;
+  String? _currentSessionId;
+  String? _websocketUrl;
+  StreamSubscription? _webSocketSubscription;
+  final ScrollController _chatScrollController = ScrollController();
 
   final List<TabItem> _tabs = [
     TabItem('Overview', Icons.dashboard, 'overview'),
@@ -287,6 +303,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   @override
   void dispose() {
     _tabController.dispose();
+    _webSocketSubscription?.cancel();
+    _chatScrollController.dispose();
     super.dispose();
   }
 
@@ -534,6 +552,289 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         );
       },
     );
+  }
+
+  /// 初始化聊天会话
+  void _initializeChat() async {
+    if (_currentSessionId != null) return; // 已经初始化过了
+
+    try {
+      final response = await _chatService.executeSession(
+        projectId: widget.projectId,
+        prompt: '',
+        sessionType: 'new',
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _currentSessionId = response.sessionId;
+        _websocketUrl = response.websocketUrl;
+      });
+
+      _connectWebSocket();
+    } catch (e) {
+      if (!mounted) return;
+      SnackBarHelper.showError(
+        context,
+        title: 'Error',
+        message: 'Failed to initialize chat: $e',
+      );
+    }
+  }
+
+  /// 连接 WebSocket
+  void _connectWebSocket() async {
+    if (_websocketUrl == null) return;
+
+    try {
+      final webSocket = await _chatService.connectWebSocket(
+        websocketUrl: _websocketUrl!,
+      );
+
+      if (!mounted) {
+        webSocket.close();
+        return;
+      }
+
+      _webSocketSubscription = webSocket.listen(
+        (data) {
+          final message = _chatService.parseWebSocketMessage(data);
+          if (message != null) {
+            setState(() {
+              _chatMessages.add(message);
+              _isTyping = false;
+            });
+            _scrollToBottom();
+          }
+        },
+        onError: (error) {
+          if (!mounted) return;
+          setState(() {
+            _isTyping = false;
+          });
+        },
+        onDone: () {
+          if (!mounted) return;
+          setState(() {
+            _isTyping = false;
+          });
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+      SnackBarHelper.showError(
+        context,
+        title: 'Error',
+        message: 'Failed to connect: $e',
+      );
+    }
+  }
+
+  /// 发送聊天消息
+  void _sendChatMessage(String text) async {
+    if (text.trim().isEmpty || _isChatLoading) return;
+
+    setState(() {
+      _isChatLoading = true;
+    });
+
+    final userMessage = ChatMessage(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      role: 'user',
+      createdAt: DateTime.now(),
+      contents: [TextMessageContent(text: text)],
+    );
+
+    setState(() {
+      _chatMessages.add(userMessage);
+      _isTyping = true;
+      _isChatLoading = false;
+    });
+
+    _scrollToBottom();
+
+    try {
+      final response = await _chatService.sendMessageStream(
+        projectId: widget.projectId,
+        sessionId: _currentSessionId!,
+        message: text,
+      );
+
+      await for (final data in response) {
+        final message = _chatService.parseWebSocketMessage(
+          String.fromCharCodes(data),
+        );
+        if (message != null) {
+          setState(() {
+            _chatMessages.add(message);
+            _isTyping = false;
+          });
+          _scrollToBottom();
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isTyping = false;
+      });
+      SnackBarHelper.showError(
+        context,
+        title: 'Error',
+        message: 'Failed to send message: $e',
+      );
+    }
+  }
+
+  /// 滚动到底部
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_chatScrollController.hasClients) {
+        _chatScrollController.animateTo(
+          _chatScrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  /// 向 AI 询问代码相关问题
+  void _askAiAboutCode(String question) {
+    // 如果聊天会话还没有初始化，先初始化
+    if (_currentSessionId == null) {
+      _initializeChat();
+    }
+
+    // 发送消息到聊天
+    _sendChatMessage(question);
+  }
+
+  /// 向 AI 询问环境变量相关问题
+  void _askAiAboutEnv(String key, String? value) {
+    // 如果聊天会话还没有初始化，先初始化
+    if (_currentSessionId == null) {
+      _initializeChat();
+    }
+
+    // 构建关于环境变量的智能问题
+    final question = 'Can you explain what the environment variable "$key" is for and how it should be configured?';
+
+    // 发送消息到聊天
+    _sendChatMessage(question);
+  }
+
+  /// 向 AI 询问数据库表相关问题
+  void _askAiAboutDatabase(DatabaseTable table) {
+    // 如果聊天会话还没有初始化，先初始化
+    if (_currentSessionId == null) {
+      _initializeChat();
+    }
+
+    // 构建关于数据库表的智能问题
+    final question = 'Can you analyze the database table "${table.displayName}" and explain its purpose, structure, and any suggestions for optimization or best practices?';
+
+    // 发送消息到聊天
+    _sendChatMessage(question);
+  }
+
+  /// 向 AI 询问支付产品相关问题
+  void _askAiAboutPaymentProduct(PayProduct product) {
+    // 如果聊天会话还没有初始化，先初始化
+    if (_currentSessionId == null) {
+      _initializeChat();
+    }
+
+    // 构建关于支付产品的智能问题
+    final question = 'Can you analyze the payment product "${product.name}" and provide suggestions on pricing strategy, configuration, or marketing improvements?';
+
+    // 发送消息到聊天
+    _sendChatMessage(question);
+  }
+
+  /// 向 AI 询问部署相关问题
+  void _askAiAboutDeployment(String environment) {
+    // 如果聊天会话还没有初始化，先初始化
+    if (_currentSessionId == null) {
+      _initializeChat();
+    }
+
+    // 构建关于部署的智能问题
+    final question = 'Can you provide insights and recommendations about the $environment deployment, including performance optimization, troubleshooting, and best practices?';
+
+    // 发送消息到聊天
+    _sendChatMessage(question);
+  }
+
+  /// 向 AI 询问分析仪表板相关问题
+  void _askAiAboutAnalyticsDashboard() {
+    // 如果聊天会话还没有初始化，先初始化
+    if (_currentSessionId == null) {
+      _initializeChat();
+    }
+
+    // 构建关于分析仪表板的智能问题
+    final question = 'Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?';
+
+    // 发送消息到聊天
+    _sendChatMessage(question);
+  }
+
+  /// 向 AI 询问自定义事件相关问题
+  void _askAiAboutCustomEvents() {
+    // 如果聊天会话还没有初始化，先初始化
+    if (_currentSessionId == null) {
+      _initializeChat();
+    }
+
+    // 构建关于自定义事件的智能问题
+    final question = 'Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?';
+
+    // 发送消息到聊天
+    _sendChatMessage(question);
+  }
+
+  /// 向 AI 询问指标相关问题
+  void _askAiAboutMetric(String metricName) {
+    // 如果聊天会话还没有初始化，先初始化
+    if (_currentSessionId == null) {
+      _initializeChat();
+    }
+
+    // 构建关于指标的智能问题
+    final question = 'Can you analyze the "$metricName" metric for my project and provide insights on what it means and how to improve it?';
+
+    // 发送消息到聊天
+    _sendChatMessage(question);
+  }
+
+  /// 向 AI 询问交易相关问题
+  void _askAiAboutTransaction(PaymentTransaction transaction) {
+    // 如果聊天会话还没有初始化，先初始化
+    if (_currentSessionId == null) {
+      _initializeChat();
+    }
+
+    // 构建关于交易的智能问题
+    final question = 'Can you analyze this payment transaction (${transaction.formattedAmount}, ${transaction.statusLabel}) and provide insights about payment patterns or recommendations?';
+
+    // 发送消息到聊天
+    _sendChatMessage(question);
+  }
+
+  /// 切换到聊天标签页
+  void _switchToChatTab(int subTabIndex) {
+    setState(() {
+      _currentChatTabIndex = subTabIndex;
+    });
+
+    // 如果切换到 Preview Tab，自动滚动到底部显示最新消息
+    if (subTabIndex == 0) {
+      // 使用 postFrameCallback 确保布局完成后再滚动
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToBottom();
+      });
+    }
   }
 
   /// 执行编辑项目操作
@@ -1196,32 +1497,83 @@ ListTile(
     );
   }
 
-  /// Preview Tab
+  /// Preview Tab (Chat Preview)
   Widget _buildChatPreviewTab() {
-    if (_project?.latestPreviewUrl == null || _project!.latestPreviewUrl!.isEmpty) {
-      return Center(
+    // Initialize chat when first entering this tab
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_currentSessionId == null) {
+        _initializeChat();
+      }
+    });
+
+    return Column(
+      children: [
+        // Quick actions
+        if (_chatMessages.isEmpty)
+          QuickActions(
+            onSelect: _sendChatMessage,
+          ),
+        // Messages list
+        Expanded(
+          child: _chatMessages.isEmpty && !_isTyping
+              ? _buildChatEmptyState()
+              : MessageList(
+                  messages: _chatMessages,
+                  isTyping: _isTyping,
+                  scrollController: _chatScrollController,
+                ),
+        ),
+        // Message input
+        MessageInput(
+          onSend: _sendChatMessage,
+          isEnabled: !_isChatLoading && _currentSessionId != null,
+          hintText: 'Ask about your project...',
+        ),
+      ],
+    );
+  }
+
+  /// 构建聊天空状态
+  Widget _buildChatEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.preview, size: 64, color: Colors.grey.shade400),
-            const SizedBox(height: 16),
-            const Text(
-              'No Preview Available',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            Icon(
+              Icons.smart_toy,
+              size: 80.0,
+              color: Theme.of(context)
+                  .colorScheme
+                  .primary
+                  .withValues(alpha: 0.5),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 24.0),
             Text(
-              'Deploy your project to see a preview',
-              style: TextStyle(color: Colors.grey.shade600),
+              'Chat with AI',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 12.0),
+            Text(
+              'Ask me anything about your project,\ncode, or get help with development',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurfaceVariant
+                        .withValues(alpha: 0.8),
+                  ),
+            ),
+            const SizedBox(height: 24.0),
+            FilledButton.icon(
+              onPressed: _isChatLoading ? null : () => _sendChatMessage('Hello!'),
+              icon: const Icon(Icons.chat_bubble_outline),
+              label: const Text('Start Chat'),
             ),
           ],
         ),
-      );
-    }
-
-    return AppPreview(
-      projectSlug: _project!.latestPreviewUrl!.split('/').last,
-      projectName: _project!.projectName,
+      ),
     );
   }
 
@@ -1244,11 +1596,8 @@ ListTile(
               subtitle: const Text('Source files'),
               trailing: const Icon(Icons.arrow_forward_ios, size: 14),
               onTap: () {
-                SnackBarHelper.showInfo(
-                  context,
-                  title: 'Code Viewer',
-                  message: 'Code viewer coming soon',
-                );
+                _askAiAboutCode('Can you explain the structure and contents of the src/ directory in my project?');
+                _switchToChatTab(0); // Switch to Preview tab
               },
             ),
           ),
@@ -1259,11 +1608,8 @@ ListTile(
               subtitle: const Text('Static assets'),
               trailing: const Icon(Icons.arrow_forward_ios, size: 14),
               onTap: () {
-                SnackBarHelper.showInfo(
-                  context,
-                  title: 'Code Viewer',
-                  message: 'Code viewer coming soon',
-                );
+                _askAiAboutCode('Can you help me understand and optimize the files in the public/ directory?');
+                _switchToChatTab(0); // Switch to Preview tab
               },
             ),
           ),
@@ -1274,29 +1620,27 @@ ListTile(
               subtitle: const Text('Dependencies'),
               trailing: const Icon(Icons.arrow_forward_ios, size: 14),
               onTap: () {
-                SnackBarHelper.showInfo(
-                  context,
-                  title: 'Code Viewer',
-                  message: 'Code viewer coming soon',
-                );
+                _askAiAboutCode('Can you review my package.json and suggest any improvements or additional dependencies?');
+                _switchToChatTab(0); // Switch to Preview tab
               },
             ),
           ),
           const SizedBox(height: 16),
+          // Info card
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.blue.shade50,
+              color: Colors.deepPurple.shade50,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.blue.shade200),
+              border: Border.all(color: Colors.deepPurple.shade200),
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline, color: Colors.blue.shade700),
+                Icon(Icons.lightbulb_outline, color: Colors.deepPurple.shade700),
                 const SizedBox(width: 12),
                 const Expanded(
                   child: Text(
-                    'Advanced code editor and file browser coming soon',
+                    'Click on any file or folder to ask AI for insights, explanations, or suggestions',
                   ),
                 ),
               ],
@@ -1358,8 +1702,13 @@ ListTile(
                   : '************',
               style: TextStyle(color: Colors.grey.shade600),
             ),
-            trailing: Icon(Icons.arrow_forward_ios, size: 14),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 14),
             onTap: () {
+              _askAiAboutEnv(envVar.key, envVar.value);
+              _switchToChatTab(0); // Switch to Preview tab
+            },
+            onLongPress: () {
+              // Keep the old behavior for long press (show value)
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
@@ -1477,6 +1826,19 @@ ListTile(
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
+              _askAiAboutDatabase(table);
+              // 跳转到 Chat Tab
+              _tabController.animateTo(1); // Chat tab is at index 1
+
+              // 使用 Future.delayed 确保页面切换后再设置子标签
+              Future.delayed(const Duration(milliseconds: 100), () {
+                setState(() {
+                  _currentChatTabIndex = 0; // Preview sub-tab
+                });
+              });
+            },
+            onLongPress: () {
+              // Keep the old behavior for long press (show details)
               showDialog(
                 context: context,
                 builder: (context) => TableDetailDialog(table: table),
@@ -2628,88 +2990,100 @@ ListTile(
                     )
                   else
                     ..._payProducts.map((product) {
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.grey.shade200),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    product.name,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  if (product.description != null) ...[
-                                    const SizedBox(height: 4),
+                      return InkWell(
+                        onTap: () {
+                          _askAiAboutPaymentProduct(product);
+                          _tabController.animateTo(1); // Chat tab is at index 1
+                          Future.delayed(const Duration(milliseconds: 100), () {
+                            setState(() {
+                              _currentChatTabIndex = 0; // Preview sub-tab
+                            });
+                          });
+                        },
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
                                     Text(
-                                      product.description!,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey.shade600,
+                                      product.name,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
+                                    if (product.description != null) ...[
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        product.description!,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey.shade600,
+                                        ),
+                                      ),
+                                    ],
                                   ],
+                                ),
+                              ),
+                              Text(
+                                product.formattedPrice,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: product.price > 0
+                                      ? Colors.green.shade700
+                                      : Colors.grey.shade600,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              PopupMenuButton(
+                                icon: const Icon(Icons.more_vert, size: 20),
+                                itemBuilder: (context) => [
+                                  const PopupMenuItem(
+                                    value: 'edit',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.edit, size: 18),
+                                        SizedBox(width: 8),
+                                        Text('Edit'),
+                                      ],
+                                    ),
+                                  ),
+                                  const PopupMenuItem(
+                                    value: 'link',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.link, size: 18),
+                                        SizedBox(width: 8),
+                                        Text('Get Link'),
+                                      ],
+                                    ),
+                                  ),
                                 ],
+                                onSelected: (value) {
+                                  if (value == 'edit') {
+                                    _showEditPayProductDialog(context, product);
+                                  } else if (value == 'link') {
+                                    SnackBarHelper.showInfo(
+                                      context,
+                                      title: 'Payment Link',
+                                      message: 'Getting payment link...',
+                                    );
+                                  }
+                                },
                               ),
-                            ),
-                            Text(
-                              product.formattedPrice,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: product.price > 0
-                                    ? Colors.green.shade700
-                                    : Colors.grey.shade600,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            PopupMenuButton(
-                              icon: const Icon(Icons.more_vert, size: 20),
-                              itemBuilder: (context) => [
-                                const PopupMenuItem(
-                                  value: 'edit',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.edit, size: 18),
-                                      SizedBox(width: 8),
-                                      Text('Edit'),
-                                    ],
-                                  ),
-                                ),
-                                const PopupMenuItem(
-                                  value: 'link',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.link, size: 18),
-                                      SizedBox(width: 8),
-                                      Text('Get Link'),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                              onSelected: (value) {
-                                if (value == 'edit') {
-                                  _showEditPayProductDialog(context, product);
-                                } else if (value == 'link') {
-                                  SnackBarHelper.showInfo(
-                                    context,
-                                    title: 'Payment Link',
-                                    message: 'Getting payment link...',
-                                  );
-                                }
-                              },
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       );
                     }),
@@ -2767,66 +3141,78 @@ ListTile(
                     )
                   else
                     ..._paymentTransactions.take(5).map((transaction) {
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.grey.shade200),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              transaction.statusIcon,
-                              size: 20,
-                              color: transaction.statusColor,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                      return InkWell(
+                        onTap: () {
+                          _askAiAboutTransaction(transaction);
+                          _tabController.animateTo(1); // Chat tab is at index 1
+                          Future.delayed(const Duration(milliseconds: 100), () {
+                            setState(() {
+                              _currentChatTabIndex = 0; // Preview sub-tab
+                            });
+                          });
+                        },
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                transaction.statusIcon,
+                                size: 20,
+                                color: transaction.statusColor,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      transaction.productName ?? 'Unknown Product',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      transaction.customerEmail ?? 'Anonymous',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(
-                                    transaction.productName ?? 'Unknown Product',
+                                    transaction.formattedAmount,
                                     style: const TextStyle(
                                       fontSize: 14,
-                                      fontWeight: FontWeight.w500,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    transaction.customerEmail ?? 'Anonymous',
+                                    transaction.statusLabel,
                                     style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey.shade600,
+                                      fontSize: 11,
+                                      color: transaction.statusColor,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  transaction.formattedAmount,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  transaction.statusLabel,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: transaction.statusColor,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       );
                     }),
@@ -2927,7 +3313,15 @@ ListTile(
                           const Icon(Icons.arrow_forward_ios, size: 14),
                         ],
                       ),
-                      onTap: () {},
+                      onTap: () {
+                        _askAiAboutDeployment('Production');
+                        _tabController.animateTo(1); // Chat tab is at index 1
+                        Future.delayed(const Duration(milliseconds: 100), () {
+                          setState(() {
+                            _currentChatTabIndex = 0; // Preview sub-tab
+                          });
+                        });
+                      },
                     )
                   else
                     ListTile(
@@ -2975,7 +3369,15 @@ ListTile(
                           const Icon(Icons.arrow_forward_ios, size: 14),
                         ],
                       ),
-                      onTap: () {},
+                      onTap: () {
+                        _askAiAboutDeployment('Preview');
+                        _tabController.animateTo(1); // Chat tab is at index 1
+                        Future.delayed(const Duration(milliseconds: 100), () {
+                          setState(() {
+                            _currentChatTabIndex = 0; // Preview sub-tab
+                          });
+                        });
+                      },
                     ),
                   ],
                 ],
@@ -3043,20 +3445,31 @@ ListTile(
                       final deployment = entry.value;
                       final isLast = index == _deployments.length - 1;
 
-                      return Container(
-                        margin: isLast ? const EdgeInsets.only(bottom: 0) : const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: Colors.grey.shade200,
+                      return InkWell(
+                        onTap: () {
+                          _askAiAboutDeployment(deployment.environment);
+                          _tabController.animateTo(1); // Chat tab is at index 1
+                          Future.delayed(const Duration(milliseconds: 100), () {
+                            setState(() {
+                              _currentChatTabIndex = 0; // Preview sub-tab
+                            });
+                          });
+                        },
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          margin: isLast ? const EdgeInsets.only(bottom: 0) : const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: Colors.grey.shade200,
+                            ),
                           ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
                               children: [
                                 Icon(
                                   deployment.status == 'success'
@@ -3136,7 +3549,8 @@ ListTile(
                             ],
                           ],
                         ),
-                      );
+                      ),
+                    );
                     }),
                 ],
               ),
@@ -3230,6 +3644,15 @@ ListTile(
                   analytics.totalUsers.toString(),
                   Icons.people,
                   Colors.blue,
+                  onTap: () {
+                    _askAiAboutMetric('Total Users');
+                    _tabController.animateTo(1); // Chat tab is at index 1
+                    Future.delayed(const Duration(milliseconds: 100), () {
+                      setState(() {
+                        _currentChatTabIndex = 0; // Preview sub-tab
+                      });
+                    });
+                  },
                 ),
               ),
               const SizedBox(width: 12),
@@ -3239,6 +3662,15 @@ ListTile(
                   analytics.activeUsers.toString(),
                   Icons.person,
                   Colors.green,
+                  onTap: () {
+                    _askAiAboutMetric('Active Users');
+                    _tabController.animateTo(1); // Chat tab is at index 1
+                    Future.delayed(const Duration(milliseconds: 100), () {
+                      setState(() {
+                        _currentChatTabIndex = 0; // Preview sub-tab
+                      });
+                    });
+                  },
                 ),
               ),
             ],
@@ -3252,6 +3684,15 @@ ListTile(
                   analytics.totalRequests.toString(),
                   Icons.http,
                   Colors.orange,
+                  onTap: () {
+                    _askAiAboutMetric('Total Requests');
+                    _tabController.animateTo(1); // Chat tab is at index 1
+                    Future.delayed(const Duration(milliseconds: 100), () {
+                      setState(() {
+                        _currentChatTabIndex = 0; // Preview sub-tab
+                      });
+                    });
+                  },
                 ),
               ),
               const SizedBox(width: 12),
@@ -3261,6 +3702,15 @@ ListTile(
                   '${analytics.averageResponseTime.toStringAsFixed(0)}ms',
                   Icons.speed,
                   Colors.purple,
+                  onTap: () {
+                    _askAiAboutMetric('Average Response Time');
+                    _tabController.animateTo(1); // Chat tab is at index 1
+                    Future.delayed(const Duration(milliseconds: 100), () {
+                      setState(() {
+                        _currentChatTabIndex = 0; // Preview sub-tab
+                      });
+                    });
+                  },
                 ),
               ),
             ],
@@ -3274,6 +3724,15 @@ ListTile(
                   '${(analytics.uptime * 100).toStringAsFixed(1)}%',
                   Icons.check_circle,
                   Colors.teal,
+                  onTap: () {
+                    _askAiAboutMetric('Uptime');
+                    _tabController.animateTo(1); // Chat tab is at index 1
+                    Future.delayed(const Duration(milliseconds: 100), () {
+                      setState(() {
+                        _currentChatTabIndex = 0; // Preview sub-tab
+                      });
+                    });
+                  },
                 ),
               ),
               const SizedBox(width: 12),
@@ -3283,6 +3742,15 @@ ListTile(
                   '${((analytics.successfulRequests / analytics.totalRequests) * 100).toStringAsFixed(1)}%',
                   Icons.thumb_up,
                   Colors.indigo,
+                  onTap: () {
+                    _askAiAboutMetric('Success Rate');
+                    _tabController.animateTo(1); // Chat tab is at index 1
+                    Future.delayed(const Duration(milliseconds: 100), () {
+                      setState(() {
+                        _currentChatTabIndex = 0; // Preview sub-tab
+                      });
+                    });
+                  },
                 ),
               ),
             ],
@@ -3307,11 +3775,13 @@ ListTile(
                     subtitle: const Text('See comprehensive analytics'),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
-                      SnackBarHelper.showInfo(
-                        context,
-                        title: 'Detailed Dashboard',
-                        message: 'Full analytics dashboard coming soon',
-                      );
+                      _askAiAboutAnalyticsDashboard();
+                      _tabController.animateTo(1); // Chat tab is at index 1
+                      Future.delayed(const Duration(milliseconds: 100), () {
+                        setState(() {
+                          _currentChatTabIndex = 0; // Preview sub-tab
+                        });
+                      });
                     },
                   ),
                   const Divider(),
@@ -3321,11 +3791,13 @@ ListTile(
                     subtitle: const Text('Add custom tracking'),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
-                      SnackBarHelper.showInfo(
-                        context,
-                        title: 'Custom Events',
-                        message: 'Custom event tracking coming soon',
-                      );
+                      _askAiAboutCustomEvents();
+                      _tabController.animateTo(1); // Chat tab is at index 1
+                      Future.delayed(const Duration(milliseconds: 100), () {
+                        setState(() {
+                          _currentChatTabIndex = 0; // Preview sub-tab
+                        });
+                      });
                     },
                   ),
                 ],
@@ -3338,8 +3810,14 @@ ListTile(
   }
 
   /// 构建指标卡片
-  Widget _buildMetricCard(String title, String value, IconData icon, Color color) {
-    return Container(
+  Widget _buildMetricCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color, {
+    VoidCallback? onTap,
+  }) {
+    final cardWidget = Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -3369,6 +3847,17 @@ ListTile(
         ],
       ),
     );
+
+    // If onTap is provided, wrap with InkWell for touch feedback
+    if (onTap != null) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: cardWidget,
+      );
+    }
+
+    return cardWidget;
   }
 
   /// 构建状态芯片

@@ -19,6 +19,7 @@ class _TableDetailDialogState extends State<TableDetailDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
@@ -46,7 +47,7 @@ class _TableDetailDialogState extends State<TableDetailDialog> {
                       Text(
                         '${widget.table.schema} schema • ${widget.table.type}',
                         style: TextStyle(
-                          color: Colors.grey.shade600,
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                           fontSize: 14,
                         ),
                       ),
@@ -64,7 +65,7 @@ class _TableDetailDialogState extends State<TableDetailDialog> {
             // Tab Bar
             Container(
               decoration: BoxDecoration(
-                color: Colors.grey.shade200,
+                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(

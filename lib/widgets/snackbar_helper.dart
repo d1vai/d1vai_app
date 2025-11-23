@@ -94,10 +94,11 @@ class SnackBarHelper {
     VoidCallback? onActionPressed,
     Duration? duration,
   }) {
+    final theme = Theme.of(context);
     final snackBar = SnackBar(
       elevation: 0,
       behavior: SnackBarBehavior.floating,
-      backgroundColor: _getContentColor(contentType),
+      backgroundColor: _getContentColor(theme, contentType),
       duration: duration ?? const Duration(seconds: 4),
       content: Row(
         children: [
@@ -137,7 +138,7 @@ class SnackBarHelper {
   }
 
   /// 获取内容类型的颜色
-  static Color _getContentColor(ContentType contentType) {
+  static Color _getContentColor(ThemeData theme, ContentType contentType) {
     switch (contentType) {
       case ContentType.success:
         return Colors.green.shade600;
@@ -148,7 +149,7 @@ class SnackBarHelper {
       case ContentType.help:
         return Colors.blue.shade600;
       default:
-        return Colors.grey.shade800;
+        return theme.colorScheme.surface;
     }
   }
 }

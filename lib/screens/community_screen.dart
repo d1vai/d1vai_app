@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 import '../services/d1vai_service.dart';
 import '../models/community_post.dart';
+import '../widgets/avatar_image.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -288,22 +289,15 @@ IconButton(
               // User info row
               Row(
                 children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: Colors.deepPurple.shade100,
-                    backgroundImage: post.author?.picture != null
-                        ? NetworkImage(post.author!.picture!)
-                        : null,
-                    child: (post.author?.picture == null)
-                        ? Text(
-                            _getAuthorDisplayName(post).isNotEmpty
-                                ? _getAuthorDisplayName(post)[0].toUpperCase()
-                                : 'U',
-                            style: const TextStyle(
-                              color: Colors.deepPurple,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          )
+                  AvatarImage(
+                    imageUrl: post.author?.picture?.isNotEmpty == true
+                        ? post.author!.picture!
+                        : 'placeholder',
+                    size: 40,
+                    borderRadius: BorderRadius.circular(20),
+                    fit: BoxFit.cover,
+                    placeholderText: post.author?.picture?.isNotEmpty != true
+                        ? _getAuthorDisplayName(post)
                         : null,
                   ),
                   const SizedBox(width: 12),
@@ -337,7 +331,7 @@ IconButton(
                       ],
                     ),
                   ),
-IconButton(
+                  IconButton(
                     icon: const Icon(Icons.more_horiz, color: Colors.grey),
                     onPressed: () {
                       showModalBottomSheet(
@@ -469,9 +463,12 @@ IconButton(
 
   /// 构建骨架屏加载效果
   Widget _buildShimmer() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
+      baseColor: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+      highlightColor: isDark ? Colors.grey[600]! : Colors.grey[100]!,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: 6,
@@ -489,9 +486,13 @@ IconButton(
                   // 用户信息行
                   Row(
                     children: [
-                      CircleAvatar(
-                        radius: 20,
-                        backgroundColor: Colors.white,
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -501,13 +502,19 @@ IconButton(
                             Container(
                               width: double.infinity,
                               height: 14,
-                              color: Colors.white,
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surfaceContainerHighest,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Container(
                               width: 60,
                               height: 12,
-                              color: Colors.white,
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surfaceContainerHighest,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
                             ),
                           ],
                         ),
@@ -520,7 +527,10 @@ IconButton(
                   Container(
                     width: double.infinity,
                     height: 18,
-                    color: Colors.white,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                   ),
                   const SizedBox(height: 8),
 
@@ -528,13 +538,19 @@ IconButton(
                   Container(
                     width: double.infinity,
                     height: 14,
-                    color: Colors.white,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Container(
                     width: MediaQuery.of(context).size.width * 0.8,
                     height: 14,
-                    color: Colors.white,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                   ),
                   const SizedBox(height: 16),
 
@@ -543,7 +559,7 @@ IconButton(
                     width: double.infinity,
                     height: 200,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: theme.colorScheme.surface,
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
@@ -555,19 +571,28 @@ IconButton(
                       Container(
                         width: 60,
                         height: 20,
-                        color: Colors.white,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surface,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Container(
                         width: 60,
                         height: 20,
-                        color: Colors.white,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surface,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Container(
                         width: 60,
                         height: 20,
-                        color: Colors.white,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surface,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
                       ),
                     ],
                   ),

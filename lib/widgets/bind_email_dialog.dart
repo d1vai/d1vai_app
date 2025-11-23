@@ -164,7 +164,7 @@ class _BindEmailDialogState extends State<BindEmailDialog> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.red,
+        backgroundColor: Theme.of(context).colorScheme.error,
       ),
     );
   }
@@ -173,7 +173,7 @@ class _BindEmailDialogState extends State<BindEmailDialog> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.green,
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
     );
   }
@@ -181,14 +181,10 @@ class _BindEmailDialogState extends State<BindEmailDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isLightMode = theme.brightness == Brightness.light;
 
     return AlertDialog(
       title: Text(
         widget.mode == EmailDialogMode.change ? 'Change Email' : 'Bind Email',
-        style: TextStyle(
-          color: isLightMode ? Colors.black : Colors.white,
-        ),
       ),
       content: Form(
         key: _formKey,
@@ -202,7 +198,7 @@ class _BindEmailDialogState extends State<BindEmailDialog> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: isLightMode ? Colors.grey[700] : Colors.grey[300],
+                color: theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
@@ -237,7 +233,7 @@ class _BindEmailDialogState extends State<BindEmailDialog> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: isLightMode ? Colors.grey[700] : Colors.grey[300],
+                color: theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
@@ -311,7 +307,7 @@ class _BindEmailDialogState extends State<BindEmailDialog> {
           child: Text(
             'Cancel',
             style: TextStyle(
-              color: isLightMode ? Colors.grey[700] : Colors.grey[300],
+              color: theme.colorScheme.onSurface,
             ),
           ),
         ),

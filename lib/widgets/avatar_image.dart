@@ -41,10 +41,10 @@ class AvatarImage extends StatelessWidget {
                     height: size,
                     fit: fit,
                     excludeFromSemantics: true,
-                    placeholderBuilder: (context) => _buildPlaceholder(),
+                    placeholderBuilder: (context) => _buildPlaceholder(context),
                   );
                 }
-                return _buildPlaceholder();
+                return _buildPlaceholder(context);
               },
             )
           : Image.network(
@@ -55,9 +55,9 @@ class AvatarImage extends StatelessWidget {
               excludeFromSemantics: true,
               loadingBuilder: (context, child, loadingProgress) {
                 if (loadingProgress == null) return child;
-                return _buildPlaceholder();
+                return _buildPlaceholder(context);
               },
-              errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+              errorBuilder: (context, error, stackTrace) => _buildPlaceholder(context),
             ),
     );
   }
@@ -103,14 +103,15 @@ class AvatarImage extends StatelessWidget {
     return svg;
   }
 
-  Widget _buildPlaceholder() {
+  Widget _buildPlaceholder(BuildContext context) {
+    final theme = Theme.of(context);
     if (placeholderText != null && placeholderText!.isNotEmpty) {
       final initial = placeholderText![0].toUpperCase();
       return Container(
         width: size,
         height: size,
         decoration: BoxDecoration(
-          color: Colors.deepPurple.shade100,
+          color: theme.colorScheme.primary.withValues(alpha: 0.1),
           borderRadius: borderRadius,
         ),
         child: Center(
@@ -119,7 +120,7 @@ class AvatarImage extends StatelessWidget {
             style: TextStyle(
               fontSize: size * 0.4,
               fontWeight: FontWeight.bold,
-              color: Colors.deepPurple,
+              color: theme.colorScheme.primary,
             ),
           ),
         ),
@@ -130,13 +131,13 @@ class AvatarImage extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: Colors.grey.shade200,
+        color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: borderRadius,
       ),
       child: Icon(
         Icons.person,
         size: size * 0.5,
-        color: Colors.grey.shade400,
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
       ),
     );
   }

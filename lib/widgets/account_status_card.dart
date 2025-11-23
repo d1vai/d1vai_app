@@ -44,7 +44,7 @@ class AccountStatusCard extends StatelessWidget {
               'Your account information and permissions',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey.shade600,
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
             const SizedBox(height: 16),
@@ -53,10 +53,10 @@ class AccountStatusCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.grey.shade50,
+                color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: Colors.grey.shade200,
+                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
                   width: 1,
                 ),
               ),
@@ -153,8 +153,8 @@ class AccountStatusCard extends StatelessWidget {
   }) {
     final badgeLabel = customLabel ?? (status ? 'Yes' : 'No');
     final badgeColor = status
-        ? Theme.of(context).primaryColor
-        : Colors.grey.shade400;
+        ? Theme.of(context).colorScheme.primary
+        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

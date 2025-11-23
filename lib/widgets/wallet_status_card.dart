@@ -66,7 +66,7 @@ class WalletStatusCard extends StatelessWidget {
                             : 'Connect wallets on web to enable blockchain features',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey.shade600,
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
                       ),
                     ],
@@ -101,7 +101,10 @@ class WalletStatusCard extends StatelessWidget {
               name: 'Ethereum',
               symbol: 'ETH',
               address: user.evmWallet,
-              gradientColors: [Colors.grey.shade700, Colors.grey.shade900],
+              gradientColors: [
+                Theme.of(context).colorScheme.surface,
+                Theme.of(context).colorScheme.surfaceContainerHighest,
+              ],
             ),
 
             // 提示信息
@@ -110,10 +113,10 @@ class WalletStatusCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.amber.shade50,
+                  color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: Colors.amber.shade200,
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
                     width: 1,
                   ),
                 ),
@@ -122,7 +125,7 @@ class WalletStatusCard extends StatelessWidget {
                     Icon(
                       Icons.info_outline,
                       size: 18,
-                      color: Colors.amber.shade700,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -130,7 +133,7 @@ class WalletStatusCard extends StatelessWidget {
                         'Visit d1v.ai on web to connect your crypto wallets',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.amber.shade800,
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
                         ),
                       ),
                     ),

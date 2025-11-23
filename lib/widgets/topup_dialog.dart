@@ -86,6 +86,7 @@ class _TopUpDialogState extends State<TopUpDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Dialog(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -97,14 +98,14 @@ class _TopUpDialogState extends State<TopUpDialog> {
               children: [
                 Icon(
                   Icons.add_circle,
-                  color: Colors.deepPurple,
+                  color: theme.colorScheme.primary,
                   size: 28,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     'Top up credits',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -118,14 +119,14 @@ class _TopUpDialogState extends State<TopUpDialog> {
             const SizedBox(height: 16),
             Text(
               'Add funds to your account balance',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.grey.shade600,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
             const SizedBox(height: 24),
             Text(
               'Select Amount',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -137,11 +138,11 @@ class _TopUpDialogState extends State<TopUpDialog> {
                 return ElevatedButton(
                   onPressed: _isLoading ? null : () => _selectQuickAmount(amount),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple.shade50,
-                    foregroundColor: Colors.deepPurple.shade700,
+                    backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                    foregroundColor: theme.colorScheme.primary,
                     elevation: 0,
                     side: BorderSide(
-                      color: Colors.deepPurple.shade200,
+                      color: theme.colorScheme.primary.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Text('\$$amount'),
@@ -151,7 +152,7 @@ class _TopUpDialogState extends State<TopUpDialog> {
             const SizedBox(height: 20),
             Text(
               'Or enter custom amount',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -189,17 +190,17 @@ class _TopUpDialogState extends State<TopUpDialog> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _handleSubmit,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurple,
-                      foregroundColor: Colors.white,
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     child: _isLoading
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.onPrimary),
                             ),
                           )
                         : const Text('Continue to Stripe'),

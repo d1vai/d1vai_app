@@ -38,55 +38,57 @@ class _MainScreenState extends State<MainScreen> {
 
   List<PersistentBottomNavBarItem> _navBarsItems(BuildContext context) {
     final loc = AppLocalizations.of(context);
+    final theme = Theme.of(context);
     return [
       PersistentBottomNavBarItem(
         icon: Icon(PhosphorIcons.house()),
         title: (loc?.translate('dashboard') ?? 'Dashboard'),
-        activeColorPrimary: Colors.deepPurple,
-        inactiveColorPrimary: Colors.grey,
+        activeColorPrimary: theme.colorScheme.primary,
+        inactiveColorPrimary: theme.colorScheme.onSurface.withValues(alpha: 0.6),
       ),
       PersistentBottomNavBarItem(
         icon: Icon(PhosphorIcons.users()),
         title: (loc?.translate('community') ?? 'Community'),
-        activeColorPrimary: Colors.deepPurple,
-        inactiveColorPrimary: Colors.grey,
+        activeColorPrimary: theme.colorScheme.primary,
+        inactiveColorPrimary: theme.colorScheme.onSurface.withValues(alpha: 0.6),
       ),
       PersistentBottomNavBarItem(
         icon: Icon(PhosphorIcons.book()),
         title: (loc?.translate('docs') ?? 'Docs'),
-        activeColorPrimary: Colors.deepPurple,
-        inactiveColorPrimary: Colors.grey,
+        activeColorPrimary: theme.colorScheme.primary,
+        inactiveColorPrimary: theme.colorScheme.onSurface.withValues(alpha: 0.6),
       ),
       PersistentBottomNavBarItem(
         icon: Icon(PhosphorIcons.receipt()),
         title: 'Orders',
-        activeColorPrimary: Colors.deepPurple,
-        inactiveColorPrimary: Colors.grey,
+        activeColorPrimary: theme.colorScheme.primary,
+        inactiveColorPrimary: theme.colorScheme.onSurface.withValues(alpha: 0.6),
       ),
       PersistentBottomNavBarItem(
         icon: Icon(PhosphorIcons.gear()),
         title: (loc?.translate('settings') ?? 'Settings'),
-        activeColorPrimary: Colors.deepPurple,
-        inactiveColorPrimary: Colors.grey,
+        activeColorPrimary: theme.colorScheme.primary,
+        inactiveColorPrimary: theme.colorScheme.onSurface.withValues(alpha: 0.6),
       ),
     ];
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return PersistentTabView(
       context,
       controller: _controller,
       screens: _buildScreens(),
       items: _navBarsItems(context),
       confineToSafeArea: true,
-      backgroundColor: Colors.white,
+      backgroundColor: theme.colorScheme.surface,
       handleAndroidBackButtonPress: true,
       resizeToAvoidBottomInset: true,
       stateManagement: true,
       decoration: NavBarDecoration(
         borderRadius: BorderRadius.circular(10.0),
-        colorBehindNavBar: Colors.white,
+        colorBehindNavBar: theme.colorScheme.surface,
       ),
       navBarStyle: NavBarStyle.style1,
     );

@@ -59,6 +59,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
@@ -86,7 +87,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
             // Tab 导航
             Container(
               decoration: BoxDecoration(
-                color: Colors.grey.shade200,
+                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -109,7 +110,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
               const SizedBox(height: 8),
               Text(
                 _error,
-                style: TextStyle(color: Colors.red.shade700, fontSize: 14),
+                style: TextStyle(color: theme.colorScheme.error, fontSize: 14),
               ),
             ],
           ],
@@ -121,6 +122,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
   /// 构建 Tab 按钮
   Widget _buildTabButton(int index, String label) {
     final isSelected = _activeTab == index;
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -131,12 +133,12 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
+          color: isSelected ? theme.colorScheme.surface : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: theme.shadowColor.withValues(alpha: 0.05),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -148,7 +150,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
           textAlign: TextAlign.center,
           style: TextStyle(
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            color: isSelected ? Colors.deepPurple : Colors.grey.shade700,
+            color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface.withValues(alpha: 0.6),
           ),
         ),
       ),
@@ -157,6 +159,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
 
   /// 构建新建项目标签
   Widget _buildNewProjectTab() {
+    final theme = Theme.of(context);
     return _isLoading
         ? _buildLoadingState()
         : Column(
@@ -170,12 +173,12 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
               const SizedBox(height: 8),
               Text(
                 'Select an emoji that represents your project',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 14),
               ),
               const SizedBox(height: 16),
               Container(
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
+                  border: Border.all(color: theme.colorScheme.outline),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: GridView.builder(
@@ -200,13 +203,13 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
                       child: Container(
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? Colors.deepPurple.shade100
-                              : Colors.grey.shade50,
+                              ? theme.colorScheme.primary.withValues(alpha: 0.1)
+                              : theme.colorScheme.surface,
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
                             color: isSelected
-                                ? Colors.deepPurple
-                                : Colors.grey.shade200,
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.outline,
                             width: isSelected ? 2 : 1,
                           ),
                         ),
@@ -231,14 +234,14 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
               const SizedBox(height: 8),
               Text(
                 'Optional: Enable services for your project',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 14),
               ),
               const SizedBox(height: 16),
               Card(
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
-                  side: BorderSide(color: Colors.grey.shade300),
+                  side: BorderSide(color: theme.colorScheme.outline),
                 ),
                 child: Column(
                   children: [
@@ -248,7 +251,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: Colors.blue.shade100,
+                          color: Colors.blue.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(Icons.storage, color: Colors.blue, size: 20),
@@ -270,7 +273,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: Colors.green.shade100,
+                          color: Colors.green.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(Icons.payment, color: Colors.green, size: 20),
@@ -298,7 +301,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
               const SizedBox(height: 8),
               Text(
                 'Enter a name for your project or generate with AI',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 14),
               ),
               const SizedBox(height: 16),
               Row(
@@ -343,8 +346,8 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
                       ),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: Colors.deepPurple,
-                        foregroundColor: Colors.white,
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
                       ),
                     ),
                   ),
@@ -360,7 +363,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
               const SizedBox(height: 8),
               Text(
                 'Who is the target user? What problem do they have? How does your solution solve it?',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 14),
               ),
               const SizedBox(height: 16),
               TextField(
@@ -383,7 +386,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
               const SizedBox(height: 16),
               Text(
                 'Tip: Include target user, problem, solution approach, and key flows.',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 12),
               ),
               const SizedBox(height: 24),
 
@@ -395,7 +398,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
               const SizedBox(height: 8),
               Text(
                 'Add tags to help categorize your project',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 14),
               ),
               const SizedBox(height: 16),
               // Add Tag Input
@@ -424,10 +427,10 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
                     icon: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.deepPurple,
+                        color: theme.colorScheme.primary,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.add, color: Colors.white),
+                      child: Icon(Icons.add, color: theme.colorScheme.onPrimary),
                     ),
                   ),
                 ],
@@ -441,11 +444,11 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
                   children: _tags.map((tag) {
                     return Chip(
                       label: Text(tag),
-                      deleteIcon: const Icon(Icons.close, size: 18),
+                      deleteIcon: Icon(Icons.close, size: 18, color: theme.colorScheme.onSurface),
                       onDeleted: () => _removeTag(tag),
-                      backgroundColor: Colors.deepPurple.shade50,
+                      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
                       labelStyle: TextStyle(
-                        color: Colors.deepPurple.shade700,
+                        color: theme.colorScheme.primary,
                         fontWeight: FontWeight.w500,
                       ),
                     );
@@ -472,6 +475,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
 
   /// 构建导入仓库标签
   Widget _buildImportRepoTab() {
+    final theme = Theme.of(context);
     return _isLoading
         ? _buildLoadingState()
         : Column(
@@ -484,16 +488,16 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
               const SizedBox(height: 8),
               Text(
                 'Clone and mirror a public GitHub repository into the organization',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 14),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: _urlController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Public Repo URL',
                   hintText: 'https://github.com/owner/repo',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.link),
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.link),
                 ),
               ),
               const SizedBox(height: 12),
@@ -526,8 +530,8 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
                       ? null
                       : _handleImportRepo,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    foregroundColor: Colors.white,
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                   child: const Text('Import to Org'),
@@ -539,6 +543,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
 
   /// 构建加载状态
   Widget _buildLoadingState() {
+    final theme = Theme.of(context);
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -551,7 +556,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
         const SizedBox(height: 8),
         Text(
           'This may take a few seconds',
-          style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+          style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 14),
         ),
       ],
     );

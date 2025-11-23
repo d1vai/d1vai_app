@@ -148,7 +148,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 filled: true,
-                fillColor: Colors.grey.shade100,
+                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
               ),
               onChanged: (value) {
                 // 实时搜索通过 _onSearchChanged 监听器处理
@@ -199,6 +199,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                 }
 
                 if (provider.error != null) {
+                  final theme = Theme.of(context);
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -206,12 +207,14 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                         Icon(
                           Icons.error_outline,
                           size: 48,
-                          color: Colors.red.shade400,
+                          color: theme.colorScheme.error,
                         ),
                         const SizedBox(height: 16),
                         Text(
                           provider.error!,
-                          style: TextStyle(color: Colors.grey.shade600),
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton(
@@ -230,6 +233,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
 
                 if (_filteredProjects.isEmpty) {
                   final hasSearchQuery = _searchController.text.trim().isNotEmpty;
+                  final theme = Theme.of(context);
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -237,14 +241,14 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                         Icon(
                           Icons.folder_open,
                           size: 64,
-                          color: Colors.grey.shade400,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                         const SizedBox(height: 16),
                         Text(
                           hasSearchQuery ? 'No projects match your search' : 'No projects found',
                           style: TextStyle(
                             fontSize: 18,
-                            color: Colors.grey.shade600,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -309,18 +313,20 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     Function(String) onSelected,
   ) {
     final isSelected = selectedValue == value;
+    final theme = Theme.of(context);
     return FilterChip(
       label: Text(label),
       selected: isSelected,
       onSelected: (selected) => onSelected(value),
-      backgroundColor: Colors.grey.shade200,
-      selectedColor: Colors.deepPurple.shade100,
-      checkmarkColor: Colors.deepPurple,
+      backgroundColor: theme.colorScheme.surfaceContainerHighest,
+      selectedColor: theme.colorScheme.primaryContainer,
+      checkmarkColor: theme.colorScheme.primary,
     );
   }
 
   /// 构建项目卡片
   Widget _buildProjectCard(UserProject project, BuildContext context) {
+    final theme = Theme.of(context);
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
@@ -340,7 +346,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: Colors.deepPurple.shade50,
+                      color: theme.colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -368,7 +374,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                         Text(
                           project.projectDescription,
                           style: TextStyle(
-                            color: Colors.grey.shade600,
+                            color: theme.colorScheme.onSurfaceVariant,
                             fontSize: 14,
                           ),
                           maxLines: 2,
@@ -500,9 +506,12 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
 
   /// 构建骨架屏加载效果
   Widget _buildShimmer() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
+      baseColor: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+      highlightColor: isDark ? Colors.grey[600]! : Colors.grey[100]!,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: 8,
@@ -520,7 +529,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: theme.colorScheme.surface,
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
@@ -532,13 +541,19 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                             Container(
                               width: double.infinity,
                               height: 16,
-                              color: Colors.white,
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surface,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
                             ),
                             const SizedBox(height: 8),
                             Container(
                               width: MediaQuery.of(context).size.width * 0.6,
                               height: 14,
-                              color: Colors.white,
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surface,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
                             ),
                           ],
                         ),
@@ -549,13 +564,19 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                   Container(
                     width: double.infinity,
                     height: 12,
-                    color: Colors.white,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Container(
                     width: MediaQuery.of(context).size.width * 0.4,
                     height: 12,
-                    color: Colors.white,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                   ),
                 ],
               ),

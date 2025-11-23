@@ -9,6 +9,7 @@ class LoginRequiredDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
@@ -19,7 +20,7 @@ class LoginRequiredDialog extends StatelessWidget {
             Icon(
               Icons.lock_outline,
               size: 64,
-              color: Theme.of(context).primaryColor,
+              color: theme.colorScheme.primary,
             ),
             const SizedBox(height: 24),
             const Text(
@@ -27,9 +28,12 @@ class LoginRequiredDialog extends StatelessWidget {
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'This feature requires you to be logged in. Please login to continue.',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+              style: TextStyle(
+                fontSize: 16,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),

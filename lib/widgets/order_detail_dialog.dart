@@ -40,6 +40,7 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
   @override
   Widget build(BuildContext context) {
     final order = widget.order;
+    final theme = Theme.of(context);
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -68,7 +69,7 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
                       Text(
                         'Transaction ID: ${order.id}',
                         style: TextStyle(
-                          color: Colors.grey.shade600,
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                           fontSize: 14,
                         ),
                       ),
@@ -112,7 +113,7 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
                       'Amount',
                       order.formattedAmount,
                       icon: Icons.attach_money,
-                      valueColor: Colors.deepPurple,
+                      valueColor: theme.colorScheme.primary,
                     ),
                     const Divider(),
                     _buildInfoRow(
@@ -204,21 +205,21 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
                     },
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      side: BorderSide(color: Colors.grey.shade300),
+                      side: BorderSide(color: theme.colorScheme.outline),
                     ),
                     child: const Text('Close'),
                   ),
                 ),
                 const SizedBox(width: 12),
-Expanded(
+                Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () {
                       _downloadInvoice();
                     },
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: Colors.deepPurple,
-                      foregroundColor: Colors.white,
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
                     ),
                     icon: const Icon(Icons.file_download, size: 20),
                     label: const Text('Invoice'),
@@ -233,6 +234,7 @@ Expanded(
   }
 
   Widget _buildStatusCard(PaymentTransaction order) {
+    final theme = Theme.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -268,7 +270,7 @@ Expanded(
                   'Payment Status: ${order.status}',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey.shade600,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
               ],
@@ -285,6 +287,7 @@ Expanded(
     IconData? icon,
     Color? valueColor,
   }) {
+    final theme = Theme.of(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -292,7 +295,7 @@ Expanded(
           Icon(
             icon,
             size: 20,
-            color: Colors.grey.shade600,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
           ),
           const SizedBox(width: 12),
         ],
@@ -301,7 +304,7 @@ Expanded(
           child: Text(
             label,
             style: TextStyle(
-              color: Colors.grey.shade600,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               fontSize: 14,
             ),
           ),
@@ -313,7 +316,7 @@ Expanded(
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w500,
-              color: valueColor ?? Colors.black87,
+              color: valueColor ?? theme.colorScheme.onSurface,
             ),
           ),
         ),

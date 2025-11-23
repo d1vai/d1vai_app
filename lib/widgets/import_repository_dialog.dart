@@ -92,6 +92,7 @@ class _ImportRepositoryDialogState extends State<ImportRepositoryDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final repoName = widget.repository['name'] ?? '';
     final repoFullName = widget.repository['full_name'] ?? '';
     final language = widget.repository['language'];
@@ -113,9 +114,9 @@ class _ImportRepositoryDialogState extends State<ImportRepositoryDialog> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey.shade300),
+                    border: Border.all(color: theme.colorScheme.outline),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,7 +126,7 @@ class _ImportRepositoryDialogState extends State<ImportRepositoryDialog> {
                           Icon(
                             isPrivate ? Icons.lock : Icons.folder,
                             size: 20,
-                            color: Colors.deepPurple,
+                            color: theme.colorScheme.primary,
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -144,7 +145,7 @@ class _ImportRepositoryDialogState extends State<ImportRepositoryDialog> {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.orange.shade100,
+                                color: Colors.orange.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
@@ -167,14 +168,14 @@ class _ImportRepositoryDialogState extends State<ImportRepositoryDialog> {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.deepPurple.shade50,
+                                color: theme.colorScheme.primary.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
                                 language,
                                 style: TextStyle(
                                   fontSize: 10,
-                                  color: Colors.deepPurple.shade700,
+                                  color: theme.colorScheme.primary,
                                 ),
                               ),
                             ),
@@ -183,14 +184,14 @@ class _ImportRepositoryDialogState extends State<ImportRepositoryDialog> {
                           Icon(
                             Icons.star,
                             size: 14,
-                            color: Colors.grey.shade600,
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                           ),
                           const SizedBox(width: 4),
                           Text(
                             '$stars',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey.shade600,
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                             ),
                           ),
                         ],
@@ -236,7 +237,7 @@ class _ImportRepositoryDialogState extends State<ImportRepositoryDialog> {
                   'This will create a new project from the repository: $repoName',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey.shade600,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
               ],
@@ -252,19 +253,19 @@ class _ImportRepositoryDialogState extends State<ImportRepositoryDialog> {
         ElevatedButton.icon(
           onPressed: _isImporting ? null : _handleImport,
           icon: _isImporting
-              ? const SizedBox(
+              ? SizedBox(
                   width: 16,
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.onPrimary),
                   ),
                 )
               : const Icon(Icons.download),
           label: Text(_isImporting ? 'Importing...' : 'Import'),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.deepPurple,
-            foregroundColor: Colors.white,
+            backgroundColor: theme.colorScheme.primary,
+            foregroundColor: theme.colorScheme.onPrimary,
           ),
         ),
       ],

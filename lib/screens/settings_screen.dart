@@ -6,6 +6,7 @@ import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
 import '../providers/locale_provider.dart';
 import '../providers/theme_provider.dart';
+import '../providers/project_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../services/d1vai_service.dart';
 import '../widgets/login_required_dialog.dart';
@@ -95,6 +96,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   /// 构建 Tab 按钮
   Widget _buildTabButton(int index, String label, IconData icon) {
     final isSelected = _currentTab == index;
+    final theme = Theme.of(context);
     return ElevatedButton(
       onPressed: () {
         setState(() {
@@ -102,8 +104,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         });
       },
       style: ElevatedButton.styleFrom(
-        backgroundColor: isSelected ? Colors.deepPurple : Colors.grey.shade200,
-        foregroundColor: isSelected ? Colors.white : Colors.black87,
+        backgroundColor: isSelected
+            ? theme.colorScheme.primary
+            : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        foregroundColor: isSelected
+            ? theme.colorScheme.onPrimary
+            : theme.colorScheme.onSurface,
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -347,6 +353,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: 'Syncing',
                     message: 'Syncing repositories...',
                   );
+
+                  Provider.of<ProjectProvider>(
+                    context,
+                    listen: false,
+                  ).refresh().then((_) {
+                    if (!mounted) return;
+                    SnackBarHelper.showSuccess(
+                      context,
+                      title: 'Success',
+                      message: 'Repositories synced successfully',
+                    );
+                  }).catchError((error) {
+                    if (!mounted) return;
+                    SnackBarHelper.showError(
+                      context,
+                      title: 'Error',
+                      message: 'Failed to sync repositories: $error',
+                    );
+                  });
                 },
               ),
               const Divider(height: 1),
@@ -356,11 +381,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 subtitle: const Text('Import a public repository'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () {
-                  SnackBarHelper.showInfo(
-                    context,
-                    title: 'Coming Soon',
-                    message: 'Import feature coming soon',
-                  );
+                  _showImportRepositoryDialog();
                 },
               ),
             ],
@@ -372,110 +393,121 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   /// 构建 Invites 标签
   Widget _buildInvitesTab() {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Invite Friends',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Invite friends to join d1v.ai and get rewards',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
-                ),
-                const SizedBox(height: 16),
-                Consumer<AuthProvider>(
-                  builder: (context, authProvider, _) {
-                    final user = authProvider.user;
-                    final inviteCode = user?.inviteCode ?? 'Loading...';
+    final d1vaiService = D1vaiService();
 
-                    return Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: ListTile(
-                        title: Text(
-                          inviteCode,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 2,
+    return FutureBuilder<List<dynamic>>(
+      future: d1vaiService.getMyInvitees(),
+      builder: (context, snapshot) {
+        final friendCount = snapshot.hasData ? snapshot.data!.length : 0;
+        final isLoading = snapshot.connectionState == ConnectionState.waiting;
+        final hasError = snapshot.hasError;
+
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Invite Friends',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Invite friends to join d1v.ai and get rewards',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+                    ),
+                    const SizedBox(height: 16),
+                    Consumer<AuthProvider>(
+                      builder: (context, authProvider, _) {
+                        final user = authProvider.user;
+                        final inviteCode = user?.inviteCode ?? 'Loading...';
+
+                        return Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(4),
                           ),
-                        ),
-                        subtitle: const Text('Your Invite Code'),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.copy),
-                          onPressed: () {
-                            if (inviteCode.isNotEmpty && inviteCode != 'Loading...') {
-                              SnackBarHelper.showSuccess(
-                                context,
-                                title: 'Copied',
-                                message: 'Invite code copied to clipboard',
-                              );
-                            }
-                          },
-                        ),
+                          child: ListTile(
+                            title: Text(
+                              inviteCode,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 2,
+                              ),
+                            ),
+                            subtitle: const Text('Your Invite Code'),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.copy),
+                              onPressed: () {
+                                if (inviteCode.isNotEmpty && inviteCode != 'Loading...') {
+                                  SnackBarHelper.showSuccess(
+                                    context,
+                                    title: 'Copied',
+                                    message: 'Invite code copied to clipboard',
+                                  );
+                                }
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          _shareInviteCode();
+                        },
+                        icon: const Icon(Icons.share),
+                        label: const Text('Share Invite Code'),
                       ),
-                    );
-                  },
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      _shareInviteCode();
-                    },
-                    icon: const Icon(Icons.share),
-                    label: const Text('Share Invite Code'),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Card(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.card_giftcard),
-                title: const Text('My Invites'),
-                subtitle: const Text('View your invitation history'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () {
-                  context.push('/settings/invites');
-                },
+            const SizedBox(height: 16),
+            Card(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.card_giftcard),
+                    title: const Text('My Invites'),
+                    subtitle: const Text('View your invitation history'),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () {
+                      context.push('/settings/invites');
+                    },
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.people),
+                    title: const Text('Friends Referred'),
+                    subtitle: isLoading
+                        ? const Text('Loading...')
+                        : hasError
+                            ? const Text('Failed to load')
+                            : Text('$friendCount friends'),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () {
+                      context.push('/settings/invites');
+                    },
+                  ),
+                ],
               ),
-              const Divider(height: 1),
-              ListTile(
-                leading: const Icon(Icons.people),
-                title: const Text('Friends Referred'),
-                subtitle: const Text('0 friends'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () {
-                  SnackBarHelper.showInfo(
-                    context,
-                    title: 'Coming Soon',
-                    message: 'Referral feature coming soon',
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -638,6 +670,141 @@ Together, let's build the future of AI-powered applications!''';
         );
       }
     }
+  }
+
+  /// 显示导入仓库对话框
+  void _showImportRepositoryDialog() {
+    final ownerController = TextEditingController();
+    final repoController = TextEditingController();
+    final projectNameController = TextEditingController();
+    bool isImporting = false;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Import Public Repository'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Enter the repository information you want to import',
+                style: TextStyle(color: Colors.grey.shade600),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: ownerController,
+                enabled: !isImporting,
+                decoration: const InputDecoration(
+                  labelText: 'Owner',
+                  hintText: 'username or organization',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: repoController,
+                enabled: !isImporting,
+                decoration: const InputDecoration(
+                  labelText: 'Repository',
+                  hintText: 'repository-name',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: projectNameController,
+                enabled: !isImporting,
+                decoration: const InputDecoration(
+                  labelText: 'Project Name (Optional)',
+                  hintText: 'Leave empty to use repository name',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              if (isImporting) ...[
+                const SizedBox(height: 16),
+                const Row(
+                  children: [
+                    SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    SizedBox(width: 12),
+                    Text('Importing...'),
+                  ],
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: isImporting ? null : () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: isImporting
+                  ? null
+                  : () {
+                      final owner = ownerController.text.trim();
+                      final repo = repoController.text.trim();
+
+                      if (owner.isEmpty || repo.isEmpty) {
+                        SnackBarHelper.showError(
+                          context,
+                          title: 'Error',
+                          message: 'Please enter owner and repository name',
+                        );
+                        return;
+                      }
+
+                      final dialogContext = context;
+
+                      setDialogState(() {
+                        isImporting = true;
+                      });
+
+                      D1vaiService().importPublicRepoToOrg({
+                        'owner': owner,
+                        'repo': repo,
+                        if (projectNameController.text.trim().isNotEmpty)
+                          'name': projectNameController.text.trim(),
+                      }).then((_) {
+                        if (!dialogContext.mounted) return;
+                        SnackBarHelper.showSuccess(
+                          dialogContext,
+                          title: 'Success',
+                          message: 'Repository imported successfully',
+                        );
+
+                        Navigator.pop(dialogContext);
+
+                        if (!mounted) return;
+                        Provider.of<ProjectProvider>(context, listen: false).refresh();
+                      }).catchError((error) {
+                        if (!dialogContext.mounted) return;
+                        SnackBarHelper.showError(
+                          dialogContext,
+                          title: 'Error',
+                          message: 'Failed to import repository: $error',
+                        );
+                        setDialogState(() {
+                          isImporting = false;
+                        });
+                      });
+                    },
+              child: isImporting
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Import'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   /// 显示绑定邮箱对话框

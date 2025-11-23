@@ -31,8 +31,10 @@ class _RealtimeAnalyticsScreenState
   AnalyticsSummary? _summary;
   List<RealtimeMetric> _metrics = [];
   List<ChartSeries> _chartSeries = [];
+  List<GeographicData> _geographicData = [];
   bool _isLoading = true;
   bool _isRealTimeEnabled = true;
+  bool _isLoadingGeographic = false;
 
   @override
   void initState() {
@@ -66,6 +68,9 @@ class _RealtimeAnalyticsScreenState
         projectId: widget.projectId,
       );
 
+      // Load geographic data
+      await _loadGeographicData();
+
       if (!mounted) return;
 
       setState(() {
@@ -80,6 +85,35 @@ class _RealtimeAnalyticsScreenState
         _isLoading = false;
       });
       SnackBarHelper.showError(context, title: 'Error', message: 'Failed to load analytics: $e');
+    }
+  }
+
+  /// Load geographic data
+  Future<void> _loadGeographicData() async {
+    setState(() {
+      _isLoadingGeographic = true;
+    });
+
+    try {
+      final data = await _analyticsService.getGeographicData(
+        projectId: widget.projectId,
+        timeRange: _selectedTimeRange,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _geographicData = data;
+        _isLoadingGeographic = false;
+      });
+    } catch (e) {
+      // Silently fail for geographic data as it's not critical
+      debugPrint('Failed to load geographic data: $e');
+      if (!mounted) return;
+      setState(() {
+        _geographicData = [];
+        _isLoadingGeographic = false;
+      });
     }
   }
 
@@ -501,37 +535,164 @@ class _RealtimeAnalyticsScreenState
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-IconButton(
-                  icon: const Icon(Icons.fullscreen),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('World map feature coming soon'),
-                      ),
-                    );
+                IconButton(
+                  icon: _isLoadingGeographic
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.refresh),
+                  onPressed: _isLoadingGeographic ? null : () {
+                    _loadGeographicData();
                   },
+                  tooltip: 'Refresh',
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            Container(
-              height: 300,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              alignment: Alignment.center,
-              child: const Text(
-                'World map visualization will appear here',
-                style: TextStyle(
-                  color: Colors.grey,
+            // Show geographic data list or empty state
+            if (_geographicData.isEmpty)
+              Container(
+                height: 200,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(8),
                 ),
+                alignment: Alignment.center,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.public_outlined,
+                      size: 48,
+                      color: Colors.grey.shade400,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'No geographic data available',
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _geographicData.length,
+                itemBuilder: (context, index) {
+                  final data = _geographicData[index];
+                  final percentage = _geographicData.isNotEmpty
+                      ? (data.value / _geographicData.fold<int>(0, (sum, item) => sum + item.value) * 100)
+                      : 0.0;
+
+                  return _buildGeographicItem(data, percentage);
+                },
               ),
-            ),
           ],
         ),
       ),
     );
+  }
+
+  /// Build geographic data item
+  Widget _buildGeographicItem(GeographicData data, double percentage) {
+    final theme = Theme.of(context);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          // Country flag emoji (simple representation)
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              _getFlagEmoji(data.countryCode),
+              style: const TextStyle(fontSize: 20),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Country info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      data.country,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      '${data.value} visits',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                // Progress bar showing percentage
+                Stack(
+                  children: [
+                    Container(
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                    FractionallySizedBox(
+                      widthFactor: percentage / 100,
+                      child: Container(
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${percentage.toStringAsFixed(1)}% of total',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Get flag emoji from country code
+  String _getFlagEmoji(String countryCode) {
+    if (countryCode.isEmpty) return '🌍';
+
+    // Convert ASCII country code to regional indicator symbols
+    String flag = '';
+    for (int i = 0; i < countryCode.length; i++) {
+      final code = countryCode.codeUnitAt(i);
+      // Convert 'A' (65) to regional indicator '🇦' (0x1F1E6)
+      flag += String.fromCharCode(0x1F1E6 + (code - 65));
+    }
+    return flag;
   }
 
   /// 显示指标详情
@@ -616,9 +777,12 @@ IconButton(
 
   /// 构建骨架屏加载效果
   Widget _buildShimmer() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
+      baseColor: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+      highlightColor: isDark ? Colors.grey[600]! : Colors.grey[100]!,
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -635,7 +799,7 @@ IconButton(
               children: List.generate(4, (index) {
                 return Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   padding: const EdgeInsets.all(16),
@@ -647,7 +811,7 @@ IconButton(
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: Colors.grey[200],
+                          color: theme.colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
@@ -655,13 +819,19 @@ IconButton(
                       Container(
                         width: double.infinity,
                         height: 16,
-                        color: Colors.grey[200],
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Container(
                         width: 60,
                         height: 20,
-                        color: Colors.grey[200],
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
                       ),
                     ],
                   ),
@@ -675,7 +845,7 @@ IconButton(
               width: double.infinity,
               height: 300,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
@@ -686,7 +856,7 @@ IconButton(
               width: double.infinity,
               height: 350,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(12),
               ),
             ),

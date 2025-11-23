@@ -73,7 +73,7 @@ class _SetPasswordDialogState extends State<SetPasswordDialog> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.red,
+        backgroundColor: Theme.of(context).colorScheme.error,
       ),
     );
   }
@@ -82,7 +82,7 @@ class _SetPasswordDialogState extends State<SetPasswordDialog> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.green,
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
     );
   }
@@ -90,15 +90,9 @@ class _SetPasswordDialogState extends State<SetPasswordDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isLightMode = theme.brightness == Brightness.light;
 
     return AlertDialog(
-      title: Text(
-        'Set Password',
-        style: TextStyle(
-          color: isLightMode ? Colors.black : Colors.white,
-        ),
-      ),
+      title: const Text('Set Password'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -108,7 +102,7 @@ class _SetPasswordDialogState extends State<SetPasswordDialog> {
               'Set a password for your account to enable password login.',
               style: TextStyle(
                 fontSize: 14,
-                color: isLightMode ? Colors.grey[700] : Colors.grey[300],
+                color: theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 20),
@@ -119,7 +113,7 @@ class _SetPasswordDialogState extends State<SetPasswordDialog> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: isLightMode ? Colors.grey[700] : Colors.grey[300],
+                color: theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
@@ -156,7 +150,7 @@ class _SetPasswordDialogState extends State<SetPasswordDialog> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: isLightMode ? Colors.grey[700] : Colors.grey[300],
+                color: theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
@@ -196,17 +190,17 @@ class _SetPasswordDialogState extends State<SetPasswordDialog> {
           child: Text(
             'Cancel',
             style: TextStyle(
-              color: isLightMode ? Colors.grey[700] : Colors.grey[300],
+              color: theme.colorScheme.onSurface,
             ),
           ),
         ),
         ElevatedButton(
           onPressed: _setting ? null : _setPassword,
           style: ElevatedButton.styleFrom(
-            backgroundColor: theme.primaryColor,
-            foregroundColor: Colors.white,
-            disabledBackgroundColor: Colors.grey[300],
-            disabledForegroundColor: Colors.grey[600],
+            backgroundColor: theme.colorScheme.primary,
+            foregroundColor: theme.colorScheme.onPrimary,
+            disabledBackgroundColor: theme.colorScheme.surfaceContainerHighest,
+            disabledForegroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.38),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),

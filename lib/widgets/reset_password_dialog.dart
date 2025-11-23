@@ -155,7 +155,7 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.red,
+        backgroundColor: Theme.of(context).colorScheme.error,
       ),
     );
   }
@@ -164,7 +164,7 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.green,
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
     );
   }
@@ -172,15 +172,9 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isLightMode = theme.brightness == Brightness.light;
 
     return AlertDialog(
-      title: Text(
-        'Reset Password',
-        style: TextStyle(
-          color: isLightMode ? Colors.black : Colors.white,
-        ),
-      ),
+      title: const Text('Reset Password'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -192,7 +186,7 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: isLightMode ? Colors.grey[700] : Colors.grey[300],
+                color: theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
@@ -218,7 +212,7 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: isLightMode ? Colors.grey[700] : Colors.grey[300],
+                color: theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
@@ -247,10 +241,10 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
                     onPressed: _sending || _countdown > 0 ? null : _sendCode,
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      backgroundColor: theme.primaryColor,
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor: Colors.grey[300],
-                      disabledForegroundColor: Colors.grey[600],
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      disabledBackgroundColor: theme.colorScheme.surfaceContainerHighest,
+                      disabledForegroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.38),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -261,8 +255,7 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
                             width: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           )
                         : Text(
@@ -281,7 +274,7 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: isLightMode ? Colors.grey[700] : Colors.grey[300],
+                color: theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
@@ -318,7 +311,7 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: isLightMode ? Colors.grey[700] : Colors.grey[300],
+                color: theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
@@ -358,17 +351,17 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
           child: Text(
             'Cancel',
             style: TextStyle(
-              color: isLightMode ? Colors.grey[700] : Colors.grey[300],
+              color: theme.colorScheme.onSurface,
             ),
           ),
         ),
         ElevatedButton(
           onPressed: _resetting ? null : _resetPassword,
           style: ElevatedButton.styleFrom(
-            backgroundColor: theme.primaryColor,
-            foregroundColor: Colors.white,
-            disabledBackgroundColor: Colors.grey[300],
-            disabledForegroundColor: Colors.grey[600],
+            backgroundColor: theme.colorScheme.primary,
+            foregroundColor: theme.colorScheme.onPrimary,
+            disabledBackgroundColor: theme.colorScheme.surfaceContainerHighest,
+            disabledForegroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.38),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),

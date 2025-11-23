@@ -51,26 +51,21 @@ class InviteCodeDisplay extends StatelessWidget {
   /// 构建单个字符方格
   Widget _buildCodeBox(BuildContext context, String char) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       width: boxSize,
       height: boxSize,
       decoration: BoxDecoration(
-        color: isDark
-            ? Colors.grey.shade800.withValues(alpha: 0.3)
-            : Colors.grey.shade50,
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: isDark
-              ? Colors.grey.shade700
-              : Colors.grey.shade300,
+          color: theme.colorScheme.outline,
           width: 1.5,
         ),
         // 内部阴影效果
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: theme.shadowColor.withValues(alpha: 0.03),
             blurRadius: 6,
             offset: const Offset(0, 2),
             spreadRadius: 0,
@@ -85,7 +80,7 @@ class InviteCodeDisplay extends StatelessWidget {
           fontSize: fontSize,
           fontWeight: FontWeight.bold,
           letterSpacing: 0,
-          color: isDark ? Colors.white : Colors.black87,
+          color: theme.colorScheme.onSurface,
           fontFamily: 'monospace',
         ),
       ),

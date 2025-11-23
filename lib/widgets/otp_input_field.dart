@@ -125,6 +125,7 @@ class _OptimizedOtpInputState extends State<OptimizedOtpInput> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: List.generate(widget.count, (index) {
@@ -142,15 +143,15 @@ class _OptimizedOtpInputState extends State<OptimizedOtpInput> {
             decoration: InputDecoration(
               counterText: '',
               filled: true,
-              fillColor: Colors.grey.shade100,
+              fillColor: theme.colorScheme.surfaceContainerHighest,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300),
+                borderSide: BorderSide(color: theme.colorScheme.outline),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(
-                  color: Colors.deepPurple,
+                borderSide: BorderSide(
+                  color: theme.colorScheme.primary,
                   width: 2,
                 ),
               ),
