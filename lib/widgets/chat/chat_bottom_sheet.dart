@@ -158,7 +158,6 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
   }
 
   Widget _buildLoadingState() {
-    final theme = Theme.of(context);
     return Column(
       children: [
         // Quick actions

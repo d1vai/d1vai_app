@@ -18,6 +18,8 @@ import '../services/d1vai_service.dart';
 import '../services/chat_service.dart';
 import '../widgets/login_required_dialog.dart';
 import '../widgets/snackbar_helper.dart';
+import '../widgets/dialog.dart';
+import '../widgets/select.dart';
 import '../widgets/app_preview.dart';
 import '../widgets/table_detail_dialog.dart';
 import '../widgets/chat/message_list.dart';
@@ -407,22 +409,42 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Duplicate Project'),
-          content: Text('Are you sure you want to duplicate "$projectName"?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+        return CustomDialog(
+          open: true,
+          onClose: () => Navigator.pop(context),
+          child: DialogContent(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DialogHeader(
+                  child: DialogTitle(
+                    child: const Text('Duplicate Project'),
+                  ),
+                ),
+                DialogDescription(
+                  child: Text('Are you sure you want to duplicate "$projectName"?'),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _performDuplicate();
+                      },
+                      child: const Text('Duplicate'),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _performDuplicate();
-              },
-              child: const Text('Duplicate'),
-            ),
-          ],
+          ),
         );
       },
     );
@@ -458,25 +480,46 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Archive Project'),
-          content: Text('Are you sure you want to archive "$projectName"?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+        final theme = Theme.of(context);
+        return CustomDialog(
+          open: true,
+          onClose: () => Navigator.pop(context),
+          child: DialogContent(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DialogHeader(
+                  child: DialogTitle(
+                    child: const Text('Archive Project'),
+                  ),
+                ),
+                DialogDescription(
+                  child: Text('Are you sure you want to archive "$projectName"?'),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _performArchive();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.tertiary,
+                      ),
+                      child: const Text('Archive'),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _performArchive();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.tertiary,
-              ),
-              child: const Text('Archive'),
-            ),
-          ],
+          ),
         );
       },
     );
@@ -592,7 +635,6 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         limit: 50,
         messageType: 'all', // Load all message types
       );
-      print(history);
 
       if (!mounted) return;
 
@@ -877,7 +919,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         _connectWebSocket();
       } else {
         // 继续现有会话
-        final response = await _chatService.executeSession(
+        await _chatService.executeSession(
           projectId: widget.projectId,
           prompt: text,
           sessionType: 'continue',
@@ -946,7 +988,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           _isChatLoading = false;
         });
 
-        final response = await _chatService.executeSession(
+        await _chatService.executeSession(
           projectId: widget.projectId,
           prompt: text,
           sessionType: 'continue',
@@ -3007,16 +3049,12 @@ ListTile(
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: DropdownButtonFormField<String>(
-                        initialValue: selectedCurrency,
-                        decoration: const InputDecoration(
-                          labelText: 'Currency',
-                          border: OutlineInputBorder(),
-                        ),
+                      child: Select<String>(
+                        value: selectedCurrency,
                         items: const [
-                          DropdownMenuItem(value: 'USD', child: Text('USD')),
-                          DropdownMenuItem(value: 'EUR', child: Text('EUR')),
-                          DropdownMenuItem(value: 'GBP', child: Text('GBP')),
+                          SelectItem(value: 'USD', child: Text('USD')),
+                          SelectItem(value: 'EUR', child: Text('EUR')),
+                          SelectItem(value: 'GBP', child: Text('GBP')),
                         ],
                         onChanged: (value) {
                           if (value != null) {
@@ -3202,16 +3240,12 @@ ListTile(
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: DropdownButtonFormField<String>(
-                        initialValue: selectedCurrency,
-                        decoration: const InputDecoration(
-                          labelText: 'Currency',
-                          border: OutlineInputBorder(),
-                        ),
+                      child: Select<String>(
+                        value: selectedCurrency,
                         items: const [
-                          DropdownMenuItem(value: 'USD', child: Text('USD')),
-                          DropdownMenuItem(value: 'EUR', child: Text('EUR')),
-                          DropdownMenuItem(value: 'GBP', child: Text('GBP')),
+                          SelectItem(value: 'USD', child: Text('USD')),
+                          SelectItem(value: 'EUR', child: Text('EUR')),
+                          SelectItem(value: 'GBP', child: Text('GBP')),
                         ],
                         onChanged: (value) {
                           if (value != null) {

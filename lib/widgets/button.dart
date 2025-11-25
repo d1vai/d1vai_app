@@ -102,7 +102,21 @@ class Button extends StatelessWidget {
       }
 
       if (text != null) {
-        widgets.add(Text(text!));
+        widgets.add(
+          Flexible(
+            fit: FlexFit.tight,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.center,
+              child: Text(
+                text!,
+                textAlign: TextAlign.center,
+                softWrap: false,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+        );
       }
 
       if (text != null && suffixIcon != null) {
@@ -114,7 +128,7 @@ class Button extends StatelessWidget {
         buttonChild = widgets.first;
       } else {
         buttonChild = Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: MainAxisSize.max,
           mainAxisAlignment: iconAlignment,
           children: widgets,
         );
@@ -371,7 +385,6 @@ class OutlinedButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Button(
-      child: child,
       text: text,
       onPressed: onPressed,
       onLongPress: onLongPress,
@@ -385,6 +398,7 @@ class OutlinedButton extends StatelessWidget {
       padding: padding,
       icon: icon,
       suffixIcon: suffixIcon,
+      child: child,
     );
   }
 }
@@ -421,7 +435,6 @@ class ElevatedButtonWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Button(
-      child: child,
       text: text,
       onPressed: onPressed,
       onLongPress: onLongPress,
@@ -433,6 +446,7 @@ class ElevatedButtonWidget extends StatelessWidget {
       padding: padding,
       icon: icon,
       suffixIcon: suffixIcon,
+      child: child,
     );
   }
 }
@@ -467,7 +481,6 @@ class TextButtonWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Button(
-      child: child,
       text: text,
       onPressed: onPressed,
       onLongPress: onLongPress,
@@ -478,6 +491,7 @@ class TextButtonWidget extends StatelessWidget {
       padding: padding,
       icon: icon,
       suffixIcon: suffixIcon,
+      child: child,
     );
   }
 }
@@ -518,7 +532,6 @@ class IconButtonWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Button(
-      child: icon,
       onPressed: onPressed,
       onLongPress: onLongPress,
       disabled: disabled,
@@ -533,6 +546,7 @@ class IconButtonWidget extends StatelessWidget {
       elevation: elevation,
       width: size ?? 40.0,
       height: size ?? 40.0,
+      child: icon,
     );
   }
 }

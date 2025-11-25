@@ -176,7 +176,10 @@ GoRouter createAppRouter(BuildContext context) {
         pageBuilder: (context, state) => _buildPageWithTransition(
           context,
           state,
-          ChatScreen(projectId: state.pathParameters['id']!),
+          ChatScreen(
+            projectId: state.pathParameters['id']!,
+            autoprompt: state.uri.queryParameters['autoprompt'],
+          ),
         ),
       ),
       GoRoute(

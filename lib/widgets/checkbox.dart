@@ -137,7 +137,7 @@ class _CheckboxState extends State<Checkbox>
         effectiveActiveColor;
     final effectiveInactiveBorderColor = widget.inactiveBorderColor ??
         colorScheme.outline;
-    final effectiveCheckColor = widget.checkColor ?? Colors.white;
+    final effectiveCheckColor = widget.checkColor ?? colorScheme.onPrimary;
 
     final effectiveBorderRadius = widget.borderRadius ??
         BorderRadius.circular(3.0);
@@ -394,7 +394,7 @@ class _CustomCheckboxState extends State<CustomCheckbox>
                     Icon(
                       Icons.check,
                       size: widget.size * 0.7,
-                      color: Colors.white,
+                      color: theme.colorScheme.onPrimary,
                     )
                 : null,
           );

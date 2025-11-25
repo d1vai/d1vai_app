@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 
-/// Dialog Widget - A comprehensive dialog system with overlay, animations, and content support
-class Dialog extends StatefulWidget {
+/// CustomDialog Widget - A comprehensive dialog system with overlay, animations, and content support
+class CustomDialog extends StatefulWidget {
   final Widget? child;
   final Widget? content;
   final bool open;
@@ -24,7 +24,7 @@ class Dialog extends StatefulWidget {
   final double overlayBlur;
   final BorderRadius? borderRadius;
 
-  const Dialog({
+  const CustomDialog({
     super.key,
     this.child,
     this.content,
@@ -49,10 +49,10 @@ class Dialog extends StatefulWidget {
   });
 
   @override
-  State<Dialog> createState() => _DialogState();
+  State<CustomDialog> createState() => _CustomDialogState();
 }
 
-class _DialogState extends State<Dialog>
+class _CustomDialogState extends State<CustomDialog>
     with TickerProviderStateMixin {
   late AnimationController _animationController;
 
@@ -66,7 +66,7 @@ class _DialogState extends State<Dialog>
   }
 
   @override
-  void didUpdateWidget(Dialog oldWidget) {
+  void didUpdateWidget(CustomDialog oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.open != oldWidget.open) {
       if (widget.open) {
@@ -156,7 +156,8 @@ class DialogOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!open) return const SizedBox.shrink();
 
-    final overlayColor = color ?? Colors.black.withValues(alpha: 0.5);
+    final theme = Theme.of(context);
+    final overlayColor = color ?? theme.colorScheme.scrim.withValues(alpha: 0.5);
 
     Widget overlay = GestureDetector(
       onTap: onClose,
@@ -382,7 +383,7 @@ class DialogDescription extends StatelessWidget {
         ) ??
         TextStyle(
           fontSize: 14,
-          color: Colors.grey[600],
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
         );
 
     if (child != null) {

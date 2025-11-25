@@ -7,15 +7,17 @@ import '../widgets/chat/message_list.dart';
 import '../widgets/chat/message_input.dart';
 import '../widgets/chat/message_skeleton.dart';
 import '../widgets/chat/quick_actions.dart';
-import '../widgets/snackbar_helper.dart';
+import '../widgets/alert.dart';
 
 /// Main chat screen for AI conversations
 class ChatScreen extends StatefulWidget {
   final String projectId;
+  final String? autoprompt;
 
   const ChatScreen({
     super.key,
     required this.projectId,
+    this.autoprompt,
   });
 
   @override
@@ -40,8 +42,11 @@ class _ChatScreenState extends State<ChatScreen>
   void initState() {
     super.initState();
     _loadChatHistory();
-    // 不在 initState 中创建会话，避免空 prompt 错误
-    // _createNewSession();
+
+    // 如果有 autoprompt，自动执行会话
+    if (widget.autoprompt != null && widget.autoprompt!.isNotEmpty) {
+      _executeAutoprompt();
+    }
   }
 
   @override
@@ -88,17 +93,28 @@ class _ChatScreenState extends State<ChatScreen>
       setState(() {
         _isLoadingHistory = false;
       });
-      SnackBarHelper.showError(context, title: 'Error', message: 'Failed to load chat history: $e');
+      showDialog(
+        context: context,
+        builder: (context) => Alert(
+          variant: AlertVariant.destructive,
+          child: AlertDescription(text: 'Failed to load chat history: $e'),
+        ),
+      );
     }
   }
 
-  /// Create a new chat session
-  Future<void> _createNewSession() async {
+  /// Execute autoprompt session
+  Future<void> _executeAutoprompt() async {
     try {
+      setState(() {
+        _isLoading = true;
+      });
+
       final response = await _chatService.executeSession(
         projectId: widget.projectId,
-        prompt: '',
+        prompt: widget.autoprompt!,
         sessionType: 'new',
+        optimisticMessage: widget.autoprompt!,
       );
 
       if (!mounted) return;
@@ -106,12 +122,36 @@ class _ChatScreenState extends State<ChatScreen>
       setState(() {
         _currentSessionId = response.sessionId;
         _websocketUrl = response.websocketUrl;
+        _isLoading = false;
       });
 
       _connectWebSocket();
+
+      // 添加用户消息到消息列表
+      final userMessage = ChatMessage(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        role: 'user',
+        createdAt: DateTime.now(),
+        contents: [TextMessageContent(text: widget.autoprompt!)],
+      );
+
+      setState(() {
+        _messages.add(userMessage);
+      });
     } catch (e) {
       if (!mounted) return;
-      SnackBarHelper.showError(context, title: 'Error', message: 'Failed to create session: $e');
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      showDialog(
+        context: context,
+        builder: (context) => Alert(
+          variant: AlertVariant.destructive,
+          child: AlertDescription(text: 'Failed to execute autoprompt: $e'),
+        ),
+      );
     }
   }
 
@@ -142,7 +182,13 @@ class _ChatScreenState extends State<ChatScreen>
         },
         onError: (error) {
           if (!mounted) return;
-          SnackBarHelper.showError(context, title: 'Error', message: 'WebSocket error: $error');
+          showDialog(
+            context: context,
+            builder: (context) => Alert(
+              variant: AlertVariant.destructive,
+              child: AlertDescription(text: 'WebSocket error: $error'),
+            ),
+          );
           setState(() {
             _isTyping = false;
           });
@@ -156,7 +202,13 @@ class _ChatScreenState extends State<ChatScreen>
       );
     } catch (e) {
       if (!mounted) return;
-      SnackBarHelper.showError(context, title: 'Error', message: 'Failed to connect: $e');
+      showDialog(
+        context: context,
+        builder: (context) => Alert(
+          variant: AlertVariant.destructive,
+          child: AlertDescription(text: 'Failed to connect: $e'),
+        ),
+      );
     }
   }
 
@@ -207,7 +259,7 @@ class _ChatScreenState extends State<ChatScreen>
           _connectWebSocket();
         } else {
           // Continue existing session
-          final response = await _chatService.executeSession(
+          await _chatService.executeSession(
             projectId: widget.projectId,
             prompt: text,
             sessionType: 'continue',
@@ -222,7 +274,13 @@ class _ChatScreenState extends State<ChatScreen>
       setState(() {
         _isTyping = false;
       });
-      SnackBarHelper.showError(context, title: 'Error', message: 'Failed to send message: $e');
+      showDialog(
+        context: context,
+        builder: (context) => Alert(
+          variant: AlertVariant.destructive,
+          child: AlertDescription(text: 'Failed to send message: $e'),
+        ),
+      );
     }
   }
 

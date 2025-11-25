@@ -215,33 +215,36 @@ class _PopoverContentState extends State<PopoverContent> {
     _hideOverlay();
 
     _overlayEntry = OverlayEntry(
-      builder: (context) => Positioned.fill(
-        child: IgnorePointer(
-          ignoring: false,
-          child: GestureDetector(
-            onTap: () {
-              final popover = PopoverContext.of(context);
-              popover?.onOpenChange?.call();
-            },
-            child: Container(
-              color: widget.blurBackground
-                  ? Colors.black.withValues(alpha: 0.1)
-                  : Colors.transparent,
-              child: BackdropFilter(
-                filter: ImageFilter.blur(
-                  sigmaX: widget.blurAmount,
-                  sigmaY: widget.blurAmount,
-                ),
-                child: CompositedTransformFollower(
-                  link: _layerLink,
-                  showWhenUnlinked: false,
-                  child: _buildContent(),
+      builder: (context) {
+        final theme = Theme.of(context);
+        return Positioned.fill(
+          child: IgnorePointer(
+            ignoring: false,
+            child: GestureDetector(
+              onTap: () {
+                final popover = PopoverContext.of(context);
+                popover?.onOpenChange?.call();
+              },
+              child: Container(
+                color: widget.blurBackground
+                    ? theme.colorScheme.scrim.withValues(alpha: 0.1)
+                    : Colors.transparent,
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(
+                    sigmaX: widget.blurAmount,
+                    sigmaY: widget.blurAmount,
+                  ),
+                  child: CompositedTransformFollower(
+                    link: _layerLink,
+                    showWhenUnlinked: false,
+                    child: _buildContent(),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
 
     Overlay.of(context).insert(_overlayEntry!);
@@ -293,7 +296,7 @@ class _PopoverContentState extends State<PopoverContent> {
                 borderRadius: effectiveBorderRadius,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: theme.shadowColor.withValues(alpha: 0.1),
                     blurRadius: 10,
                     offset: const Offset(0, 2),
                   ),

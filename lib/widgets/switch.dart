@@ -111,8 +111,10 @@ class _SwitchState extends State<Switch>
         colorScheme.primary;
     final effectiveInactiveColor = widget.inactiveColor ??
         colorScheme.outline.withValues(alpha: 0.5);
-    final effectiveActiveThumbColor = widget.activeThumbColor ?? Colors.white;
-    final effectiveInactiveThumbColor = widget.inactiveThumbColor ?? Colors.white;
+    final effectiveActiveThumbColor = widget.activeThumbColor ??
+        colorScheme.onPrimary;
+    final effectiveInactiveThumbColor = widget.inactiveThumbColor ??
+        colorScheme.onSurface;
     final effectiveBorderColor = widget.borderColor ??
         colorScheme.outline.withValues(alpha: 0.3);
 
@@ -152,7 +154,7 @@ class _SwitchState extends State<Switch>
                             : effectiveInactiveThumbColor,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.2),
+                            color: theme.shadowColor.withValues(alpha: 0.2),
                             blurRadius: 2,
                             offset: const Offset(0, 1),
                           ),
@@ -351,18 +353,18 @@ class _CustomSwitchState extends State<CustomSwitch>
                           Container(
                             width: widget.height - 8,
                             height: widget.height - 8,
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: Colors.white,
+                              color: theme.colorScheme.onPrimary,
                             ),
                           ))
                       : (widget.inactiveThumb ??
                           Container(
                             width: widget.height - 8,
                             height: widget.height - 8,
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: Colors.white,
+                              color: theme.colorScheme.onSurface,
                             ),
                           )),
                 ),

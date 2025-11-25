@@ -8,6 +8,7 @@ import '../providers/project_provider.dart';
 import '../models/user.dart';
 import '../models/project.dart';
 import '../widgets/create_project_dialog.dart';
+import '../widgets/card.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -275,71 +276,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
     IconData icon,
     Color color,
   ) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: theme.shadowColor.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
+    return StatCard(
+      value: value,
+      label: label,
+      icon: icon,
+      valueColor: color,
     );
   }
 
   Widget _buildAnalyticsChart(BuildContext context, Map<String, int> stats) {
-    return Container(
-      height: 220,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Activity',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: LineChart(
+    return CustomCard(
+      child: Container(
+        height: 220,
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Activity',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: LineChart(
               LineChartData(
                 gridData: FlGridData(show: false),
                 titlesData: FlTitlesData(
@@ -405,6 +364,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
+      ),
     );
   }
 
@@ -418,27 +378,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
         : projectProvider.projects.take(5).toList();
 
     if (projects.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(32),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
-        child: Column(
-          children: [
-            Icon(Icons.folder_open, size: 48, color: Colors.grey.shade400),
-            const SizedBox(height: 16),
-            Text(
-              'No projects yet',
-              style: TextStyle(color: Colors.grey.shade600),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Create your first project to get started',
-              style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
-            ),
-          ],
+      return CustomCard(
+        child: Container(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            children: [
+              Icon(Icons.folder_open, size: 48, color: Colors.grey.shade400),
+              const SizedBox(height: 16),
+              Text(
+                'No projects yet',
+                style: TextStyle(color: Colors.grey.shade600),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Create your first project to get started',
+                style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -450,24 +407,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final project = projects[index];
-        return InkWell(
-          onTap: () => context.push('/projects/${project.id}'),
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade200),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.02),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
+        return CustomCard(
+          child: InkWell(
+            onTap: () => context.push('/projects/${project.id}'),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              child: Row(
               children: [
                 Container(
                   width: 48,
@@ -537,6 +482,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
                 ),
               ],
+            ),
             ),
           ),
         );
