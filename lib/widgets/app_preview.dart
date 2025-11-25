@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AppPreview extends StatefulWidget {
   final String? previewUrl;
@@ -39,25 +40,19 @@ class _AppPreviewState extends State<AppPreview> {
     }
   }
 
-  void _openInBrowser() {
+  void _openInBrowser() async {
     final appUrl = widget.previewUrl;
     if (appUrl == null || appUrl.isEmpty) return;
 
-    // In a real implementation, you'd use url_launcher package
-    // For now, we'll show a dialog
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Open in Browser'),
-        content: Text('This would open:\n$appUrl'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
+    final uri = Uri.parse(appUrl);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not open $appUrl')),
+      );
+    }
   }
 
   void _onWebViewCreated(InAppWebViewController controller) {

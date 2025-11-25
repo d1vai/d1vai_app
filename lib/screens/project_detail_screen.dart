@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -17,7 +18,6 @@ import '../services/d1vai_service.dart';
 import '../services/chat_service.dart';
 import '../widgets/login_required_dialog.dart';
 import '../widgets/snackbar_helper.dart';
-import '../widgets/dialog.dart';
 import '../widgets/select.dart';
 import '../widgets/app_preview.dart';
 import '../widgets/table_detail_dialog.dart';
@@ -398,207 +398,6 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     }
   }
 
-  /// 复制项目
-  void _duplicateProject() {
-    final projectName = _project?.projectName ?? 'Current Project';
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return CustomDialog(
-          open: true,
-          onClose: () => Navigator.pop(context),
-          child: DialogContent(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                DialogHeader(
-                  child: DialogTitle(
-                    child: const Text('Duplicate Project'),
-                  ),
-                ),
-                DialogDescription(
-                  child: Text('Are you sure you want to duplicate "$projectName"?'),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel'),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _performDuplicate();
-                      },
-                      child: const Text('Duplicate'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  /// 执行复制操作
-  Future<void> _performDuplicate() async {
-    if (!mounted) return;
-
-    // 显示加载状态
-    SnackBarHelper.showInfo(
-      context,
-      title: 'Duplicating',
-      message: 'Creating a copy of the project...',
-    );
-
-    // 模拟复制操作
-    await Future.delayed(const Duration(seconds: 2));
-
-    if (!mounted) return;
-
-    SnackBarHelper.showSuccess(
-      context,
-      title: 'Success',
-      message: 'Project duplicated successfully',
-    );
-  }
-
-  /// 归档项目
-  void _archiveProject() {
-    final projectName = _project?.projectName ?? 'Current Project';
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        final theme = Theme.of(context);
-        return CustomDialog(
-          open: true,
-          onClose: () => Navigator.pop(context),
-          child: DialogContent(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                DialogHeader(
-                  child: DialogTitle(
-                    child: const Text('Archive Project'),
-                  ),
-                ),
-                DialogDescription(
-                  child: Text('Are you sure you want to archive "$projectName"?'),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel'),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _performArchive();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.colorScheme.tertiary,
-                      ),
-                      child: const Text('Archive'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  /// 执行归档操作
-  Future<void> _performArchive() async {
-    if (!mounted) return;
-
-    // 显示加载状态
-    SnackBarHelper.showInfo(
-      context,
-      title: 'Archiving',
-      message: 'Archiving the project...',
-    );
-
-    // 模拟归档操作
-    await Future.delayed(const Duration(seconds: 2));
-
-    if (!mounted) return;
-
-    SnackBarHelper.showSuccess(
-      context,
-      title: 'Success',
-      message: 'Project archived successfully',
-    );
-  }
-
-  /// 显示编辑项目对话框
-  void _showEditProjectDialog() {
-    final projectNameController = TextEditingController(
-      text: _project?.projectName ?? '',
-    );
-    final projectDescriptionController = TextEditingController(
-      text: _project?.projectDescription ?? '',
-    );
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Edit Project'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: projectNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Project Name',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: projectDescriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 3,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _performEditProject(
-                  projectNameController.text,
-                  projectDescriptionController.text,
-                );
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   /// 初始化聊天会话
   void _initializeChat() async {
@@ -1975,61 +1774,6 @@ ListTile(
 
     return Column(
       children: [
-        // Preview URL Header
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest,
-            border: Border(
-              bottom: BorderSide(color: theme.colorScheme.outlineVariant),
-            ),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.web,
-                size: 20,
-                color: theme.colorScheme.primary,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Preview: ${_getDeploymentLabel(previewUrl)}',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      previewUrl,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                onPressed: _handleRefreshPreview,
-                icon: const Icon(Icons.refresh),
-                tooltip: 'Refresh Preview',
-                iconSize: 20,
-              ),
-              IconButton(
-                onPressed: () => _openUrl(previewUrl),
-                icon: const Icon(Icons.open_in_new),
-                tooltip: 'Open in Browser',
-                iconSize: 20,
-              ),
-            ],
-          ),
-        ),
         // WebView Container
         Expanded(
           child: Container(
@@ -2205,35 +1949,23 @@ ListTile(
 
   /// 构建 WebView 内容
   Widget _buildWebViewContent(String url) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.web,
-            size: 64,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'WebView Component',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'InAppWebView integration coming soon',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton.icon(
-            onPressed: () => _openUrl(url),
-            icon: const Icon(Icons.open_in_new),
-            label: const Text('Open in Browser'),
-          ),
-        ],
+    return InAppWebView(
+      contextMenu: ContextMenu(),
+      initialUrlRequest: URLRequest(
+        url: WebUri(url),
       ),
+      onWebViewCreated: (controller) {
+        // WebView created successfully
+      },
+      onLoadStart: (controller, url) {
+        // Load started
+      },
+      onLoadStop: (controller, url) {
+        // Load completed
+      },
+      onProgressChanged: (controller, progress) {
+        // Progress updated
+      },
     );
   }
 
