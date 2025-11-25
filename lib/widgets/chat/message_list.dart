@@ -270,7 +270,10 @@ class _MessageListState extends State<MessageList> {
           ),
 
         // Beginning of conversation indicator
-        if (!widget.hasMoreHistory && widget.messages.isNotEmpty)
+        // Show only if there are 3 or fewer messages
+        if (!widget.hasMoreHistory &&
+            widget.messages.isNotEmpty &&
+            widget.messages.length <= 3)
           Positioned(
             top: 8,
             left: 0,

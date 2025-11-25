@@ -21,32 +21,10 @@ class MessageMetadata extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isUser = role == 'user';
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Role indicator
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-          decoration: BoxDecoration(
-            color: isUser
-                ? theme.colorScheme.primary.withValues(alpha: 0.1)
-                : theme.colorScheme.secondary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Text(
-            isUser ? 'You' : 'AI',
-            style: TextStyle(
-              fontSize: 10,
-              color: isUser
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.secondary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
         // Status indicator
         if (status != null) ...[
           if (status == 'pending')

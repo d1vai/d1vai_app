@@ -38,8 +38,11 @@ class BashTool extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
             decoration: BoxDecoration(
-              color: Colors.black87,
+              color: theme.colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(4),
+              border: Border.all(
+                color: theme.colorScheme.outline.withValues(alpha: 0.2),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,16 +52,17 @@ class BashTool extends StatelessWidget {
                     Text(
                       '\$ ',
                       style: TextStyle(
-                        color: Colors.green[400],
+                        color: theme.colorScheme.primary,
                         fontSize: 12,
                         fontFamily: 'monospace',
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                     Expanded(
                       child: SelectableText(
                         command,
                         style: TextStyle(
-                          color: Colors.green[400],
+                          color: theme.colorScheme.onSurface,
                           fontSize: 12,
                           fontFamily: 'monospace',
                         ),

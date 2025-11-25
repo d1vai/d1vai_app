@@ -3,38 +3,26 @@ import 'package:flutter/services.dart';
 import '../../models/message.dart';
 import 'expandable_text.dart';
 import 'tools/enhanced_tool_message.dart';
-import 'message_context_menu.dart';
 
 /// Message bubble widget for displaying chat messages
+/// Note: Message actions are available via long press
 class MessageBubble extends StatelessWidget {
   final ChatMessage message;
   final bool isUser;
   final VoidCallback? onTap;
-  final VoidCallback? onReply;
-  final VoidCallback? onForward;
-  final VoidCallback? onDelete;
-  final bool showContextMenu;
 
   const MessageBubble({
     super.key,
     required this.message,
     required this.isUser,
     this.onTap,
-    this.onReply,
-    this.onForward,
-    this.onDelete,
-    this.showContextMenu = true,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      onLongPress: showContextMenu
-          ? () {
-              showMessageActions(context);
-            }
-          : null,
+      // Long press is available for message actions (copy, etc.)
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
         child: Row(
@@ -71,31 +59,6 @@ class MessageBubble extends StatelessWidget {
                     ...message.contents.map((content) {
                       return _buildMessageContent(content, isUser, context);
                     }),
-                    if (showContextMenu) ...[
-                      const SizedBox(height: 4),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: MessageContextMenu(
-                          message: message,
-                          showDelete: isUser,
-                          onActionSelected: (action) {
-                            switch (action) {
-                              case MessageAction.reply:
-                                onReply?.call();
-                                break;
-                              case MessageAction.forward:
-                                onForward?.call();
-                                break;
-                              case MessageAction.delete:
-                                onDelete?.call();
-                                break;
-                              default:
-                                break;
-                            }
-                          },
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),
@@ -108,122 +71,6 @@ class MessageBubble extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  void showMessageActions(BuildContext context) {
-    final RenderBox? renderBox =
-        context.findRenderObject() as RenderBox?;
-    if (renderBox == null) return;
-
-    final Offset offset = renderBox.localToGlobal(
-      Offset(renderBox.size.width - 40, renderBox.size.height / 2),
-    );
-
-    showMenu<MessageAction>(
-      context: context,
-      position: RelativeRect.fromLTRB(
-        offset.dx,
-        offset.dy,
-        offset.dx,
-        offset.dy,
-      ),
-      items: [
-        const PopupMenuItem<MessageAction>(
-          value: MessageAction.copy,
-          child: Row(
-            children: [
-              Icon(Icons.copy, size: 18),
-              SizedBox(width: 12),
-              Text('Copy'),
-            ],
-          ),
-        ),
-        if (!isUser)
-          const PopupMenuItem<MessageAction>(
-            value: MessageAction.reply,
-            child: Row(
-              children: [
-                Icon(Icons.reply, size: 18),
-                SizedBox(width: 12),
-                Text('Reply'),
-              ],
-            ),
-          ),
-        const PopupMenuItem<MessageAction>(
-          value: MessageAction.forward,
-          child: Row(
-            children: [
-              Icon(Icons.forward, size: 18),
-              SizedBox(width: 12),
-              Text('Forward'),
-            ],
-          ),
-        ),
-        if (isUser)
-          const PopupMenuItem<MessageAction>(
-            value: MessageAction.delete,
-            child: Row(
-              children: [
-                Icon(Icons.delete, size: 18, color: Colors.red),
-                SizedBox(width: 12),
-                Text('Delete', style: TextStyle(color: Colors.red)),
-              ],
-            ),
-          ),
-      ],
-    ).then((action) {
-      if (action != null && context.mounted) {
-        _handleAction(context, action);
-      }
-    });
-  }
-
-  void _handleAction(BuildContext context, MessageAction action) {
-    switch (action) {
-      case MessageAction.copy:
-        _copyToClipboard(context);
-        break;
-      case MessageAction.reply:
-        onReply?.call();
-        break;
-      case MessageAction.forward:
-        onForward?.call();
-        break;
-      case MessageAction.delete:
-        onDelete?.call();
-        break;
-    }
-  }
-
-  void _copyToClipboard(BuildContext context) {
-    String text = '';
-    for (var content in message.contents) {
-      if (content is TextMessageContent) {
-        text += content.text;
-      } else if (content is ThinkingMessageContent) {
-        text += content.text;
-      } else if (content is CodeMessageContent) {
-        text += content.code;
-      } else if (content is ErrorMessageContent) {
-        text += content.message;
-      } else if (content is CompletionMessageContent) {
-        text += content.message;
-      } else {
-        text += content.toString();
-      }
-    }
-
-    Clipboard.setData(ClipboardData(text: text));
-
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Message copied'),
-          duration: const Duration(seconds: 2),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
   }
 
   Widget _buildAvatar(BuildContext context) {
@@ -734,6 +581,58 @@ IconButton(
                 ),
               ),
             ],
+          ],
+        ),
+      );
+    } else if (content is RawMessageContent) {
+      // Display raw payload for debugging purposes
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 4.0),
+        padding: const EdgeInsets.all(8.0),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(8.0),
+          border: Border.all(
+            color: theme.colorScheme.outline.withValues(alpha: 0.2),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.code,
+                  size: 16.0,
+                  color: textColor.withValues(alpha: 0.7),
+                ),
+                const SizedBox(width: 4.0),
+                Text(
+                  'Raw Data',
+                  style: TextStyle(
+                    color: textColor,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12.0,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4.0),
+            Container(
+              padding: const EdgeInsets.all(6.0),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: BorderRadius.circular(4.0),
+              ),
+              child: SelectableText(
+                content.payload.toString(),
+                style: TextStyle(
+                  color: textColor.withValues(alpha: 0.9),
+                  fontSize: 11.0,
+                  fontFamily: 'monospace',
+                ),
+              ),
+            ),
           ],
         ),
       );
