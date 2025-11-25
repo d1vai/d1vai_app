@@ -47,3 +47,34 @@ class DeploymentHistory {
     return 'DeploymentHistory(id: $id, environment: $environment, status: $status)';
   }
 }
+
+extension DeploymentHistoryX on DeploymentHistory {
+  /// Human readable status label
+  String get statusLabel {
+    switch (status) {
+      case 'success':
+        return 'Success';
+      case 'pending':
+        return 'Pending';
+      case 'failed':
+        return 'Failed';
+      default:
+        return status;
+    }
+  }
+
+  /// Optional descriptive status message
+  String? get statusMessage {
+    switch (status) {
+      case 'success':
+        return 'Deployment completed successfully';
+      case 'pending':
+        return 'Deployment is in progress';
+      case 'failed':
+        return 'Deployment failed';
+      default:
+        return null;
+    }
+  }
+}
+
