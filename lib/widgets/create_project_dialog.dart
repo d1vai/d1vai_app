@@ -193,11 +193,12 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
                 value: _descriptionController.text,
                 onChanged: (value) {
                   _descriptionController.text = value;
-                  if (value.trim().isNotEmpty && _error.isNotEmpty) {
-                    setState(() {
+                  setState(() {
+                    // Clear error when user starts typing
+                    if (value.trim().isNotEmpty && _error.isNotEmpty) {
                       _error = '';
-                    });
-                  }
+                    }
+                  });
                 },
                 labelText: 'Project Description',
                 hintText: 'Describe your app or website in detail...',

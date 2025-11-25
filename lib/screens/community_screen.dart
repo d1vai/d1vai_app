@@ -5,6 +5,7 @@ import 'package:shimmer/shimmer.dart';
 import '../services/d1vai_service.dart';
 import '../models/community_post.dart';
 import '../widgets/avatar_image.dart';
+import '../widgets/search_field.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -16,6 +17,7 @@ class CommunityScreen extends StatefulWidget {
 class _CommunityScreenState extends State<CommunityScreen> {
   late EasyRefreshController _controller;
   final D1vaiService _d1vaiService = D1vaiService();
+  final TextEditingController _searchController = TextEditingController();
 
   List<CommunityPost> _posts = [];
   bool _isLoading = true;
@@ -24,6 +26,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
   final int _limit = 20;
   bool _hasMore = true;
   String _searchQuery = '';
+  bool _isSearching = false;
 
   @override
   void initState() {
@@ -38,6 +41,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
   @override
   void dispose() {
     _controller.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -120,24 +124,53 @@ class _CommunityScreenState extends State<CommunityScreen> {
     return 'Anonymous';
   }
 
-  Future<void> _handleSearch(String query) async {
+  /// 执行搜索
+  Future<void> _performSearch(String query) async {
     setState(() {
       _searchQuery = query;
     });
     await _loadPosts(refresh: true);
   }
 
-  Future<void> _clearSearch() async {
-    await _handleSearch('');
+  /// 切换搜索状态
+  void _toggleSearch() {
+    setState(() {
+      _isSearching = !_isSearching;
+    });
+    if (!_isSearching) {
+      _searchController.clear();
+      _performSearch('');
+    }
+  }
+
+  /// 清除搜索
+  void _clearSearch() {
+    _searchController.clear();
+    _performSearch('');
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Community'),
+        title: _isSearching
+            ? AppBarSearchField(
+                hintText: 'Search posts...',
+                autofocus: true,
+                onChanged: (value) {
+                  _performSearch(value);
+                },
+                onClear: _clearSearch,
+              )
+            : const Text('Community'),
         actions: [
-IconButton(
+          IconButton(
+            icon: Icon(_isSearching ? Icons.close : Icons.search),
+            onPressed: _toggleSearch,
+          ),
+          IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -149,35 +182,47 @@ IconButton(
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Search bar
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Search posts...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: _clearSearch,
-                      )
-                    : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                filled: true,
-                fillColor: Colors.grey.shade50,
+      body: _isSearching && _searchQuery.isNotEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.search,
+                    size: 64,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Searching for "$_searchQuery"...',
+                    style: theme.textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Press the search icon to start',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
-              onSubmitted: _handleSearch,
+            )
+          : EasyRefresh(
+              controller: _controller,
+              onRefresh: () async {
+                await _loadPosts(refresh: true);
+                if (!mounted) return;
+                _controller.finishRefresh();
+              },
+              onLoad: () async {
+                await _loadPosts();
+                if (!mounted) return;
+                _controller.finishLoad(
+                  _hasMore ? IndicatorResult.success : IndicatorResult.noMore,
+                );
+              },
+              child: _buildBody(),
             ),
-          ),
-          Expanded(
-            child: _buildBody(),
-          ),
-        ],
-      ),
     );
   }
 

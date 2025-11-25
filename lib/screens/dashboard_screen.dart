@@ -373,6 +373,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ProjectProvider projectProvider, {
     bool isSearchResults = false,
   }) {
+    final theme = Theme.of(context);
     final List<UserProject> projects = isSearchResults
         ? _searchResults.take(5).toList()
         : projectProvider.projects.take(5).toList();
@@ -418,7 +419,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: Colors.deepPurple.shade50,
+                    color: theme.colorScheme.primaryContainer,  // ← Theme-aware color
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -445,7 +446,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Text(
                         project.projectDescription,
                         style: TextStyle(
-                          color: Colors.grey.shade600,
+                          color: theme.colorScheme.onSurfaceVariant,  // ← Theme-aware color
                           fontSize: 14,
                         ),
                         maxLines: 1,
@@ -467,7 +468,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           Text(
                             project.status,
                             style: TextStyle(
-                              color: Colors.grey.shade500,
+                              color: theme.colorScheme.onSurfaceVariant,  // ← Theme-aware color
                               fontSize: 12,
                             ),
                           ),

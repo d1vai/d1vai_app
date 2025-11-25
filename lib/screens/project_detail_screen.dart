@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/project_provider.dart';
@@ -22,9 +21,6 @@ import '../widgets/dialog.dart';
 import '../widgets/select.dart';
 import '../widgets/app_preview.dart';
 import '../widgets/table_detail_dialog.dart';
-import '../widgets/chat/message_list.dart';
-import '../widgets/chat/message_input.dart';
-import '../widgets/chat/quick_actions.dart';
 import '../widgets/chat/floating_chat_button.dart';
 import '../widgets/chat/chat_bottom_sheet.dart';
 
@@ -1124,8 +1120,41 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     );
   }
 
+  /// 处理重新部署
+  void _handleRedeploy() {
+    SnackBarHelper.showInfo(
+      context,
+      title: 'Redeploy',
+      message: 'Triggering redeploy...',
+    );
+  }
+
+  /// 处理刷新预览
+  void _handleRefreshPreview() {
+    SnackBarHelper.showInfo(
+      context,
+      title: 'Refresh Preview',
+      message: 'Refreshing preview...',
+    );
+  }
+
+  /// 处理新标签页打开
+  void _handleOpenInNewTab() {
+    if (_project?.latestPreviewUrl != null && _project!.latestPreviewUrl!.isNotEmpty) {
+      _openUrl(_project!.latestPreviewUrl!);
+    } else {
+      SnackBarHelper.showInfo(
+        context,
+        title: 'No Preview URL',
+        message: 'Preview URL is not available',
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     if (_isLoading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -1133,7 +1162,6 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     }
 
     if (_error != null) {
-      final theme = Theme.of(context);
       return Scaffold(
         body: Center(
           child: Column(
@@ -1161,63 +1189,66 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_project!.projectName),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.share),
-            onPressed: () {
-              SnackBarHelper.showInfo(
-                context,
-                title: 'Coming Soon',
-                message: 'Share feature coming soon',
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.more_vert),
-            onPressed: () {
-              _showOptionsMenu(context);
-            },
-          ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          tabs: _tabs
-              .map(
-                (tab) => Tab(
-                  height: 60,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(tab.icon),
-                      const SizedBox(height: 4),
-                      Text(tab.label, style: const TextStyle(fontSize: 12)),
-                    ],
+        titleSpacing: 0,
+        title: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.only(right: 16),
+          child: TabBar(
+            controller: _tabController,
+            isScrollable: true,
+            labelPadding: const EdgeInsets.symmetric(horizontal: 6),
+            indicatorSize: TabBarIndicatorSize.tab,
+            indicator: BoxDecoration(
+              borderRadius: BorderRadius.circular(6),
+              color: theme.colorScheme.primaryContainer,
+            ),
+            tabs: _tabs
+                .map(
+                  (tab) => Tab(
+                    height: 40,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(tab.icon, size: 16),
+                          const SizedBox(width: 4),
+                          Text(
+                            tab.label,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                              color: theme.colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              )
-              .toList(),
-          onTap: (index) {
-            setState(() {});
-            // 当切换到 Database tab 时加载数据
-            if (_tabs[index].value == 'database' && _databaseTables.isEmpty) {
-              _loadDatabaseTables();
-            }
-            // 当切换到 Analytics tab 时加载数据
-            if (_tabs[index].value == 'analytics' && _analyticsSummary == null) {
-              _loadAnalytics();
-            }
-            // 当切换到 API tab 时加载数据
-            if (_tabs[index].value == 'api' && _envVars.isEmpty) {
-              _loadEnvVars();
-            }
-            // 当切换到 Payment tab 时加载数据
-            if (_tabs[index].value == 'payment' && _payMetrics == null) {
-              _loadPaymentData();
-            }
-          },
+                )
+                .toList(),
+            onTap: (index) {
+              setState(() {});
+              // 当切换到 Database tab 时加载数据
+              if (_tabs[index].value == 'database' && _databaseTables.isEmpty) {
+                _loadDatabaseTables();
+              }
+              // 当切换到 Analytics tab 时加载数据
+              if (_tabs[index].value == 'analytics' && _analyticsSummary == null) {
+                _loadAnalytics();
+              }
+              // 当切换到 API tab 时加载数据
+              if (_tabs[index].value == 'api' && _envVars.isEmpty) {
+                _loadEnvVars();
+              }
+              // 当切换到 Payment tab 时加载数据
+              if (_tabs[index].value == 'payment' && _payMetrics == null) {
+                _loadPaymentData();
+              }
+            },
+          ),
         ),
+        automaticallyImplyLeading: true,
       ),
       body: TabBarView(
         controller: _tabController,
@@ -1728,21 +1759,52 @@ ListTile(
           children: [
             // Tab Bar
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
               child: Row(
                 children: [
                   Expanded(
                     child: _buildChatTabButton(0, 'Preview', Icons.preview),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Expanded(
                     child: _buildChatTabButton(1, 'Code', Icons.code),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Expanded(
                     child: _buildChatTabButton(2, 'Env', Icons.settings),
                   ),
                 ],
+              ),
+            ),
+            const Divider(height: 1),
+            // Action Buttons - Scrollable Icons
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    _buildActionIconButton(
+                      Icons.refresh,
+                      _handleRedeploy,
+                      'Redeploy',
+                    ),
+                    const SizedBox(width: 12),
+                    _buildActionIconButton(
+                      Icons.restart_alt,
+                      _handleRefreshPreview,
+                      'Refresh Preview',
+                    ),
+                    const SizedBox(width: 12),
+                    _buildActionIconButton(
+                      Icons.open_in_new,
+                      _handleOpenInNewTab,
+                      'Open in New Tab',
+                    ),
+                  ],
+                ),
               ),
             ),
             const Divider(height: 1),
@@ -1838,21 +1900,52 @@ ListTile(
       children: [
         // Tab Bar
         Container(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
           child: Row(
             children: [
               Expanded(
                 child: _buildChatTabButton(0, 'Preview', Icons.preview),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Expanded(
                 child: _buildChatTabButton(1, 'Code', Icons.code),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Expanded(
                 child: _buildChatTabButton(2, 'Env', Icons.settings),
               ),
             ],
+          ),
+        ),
+        const Divider(height: 1),
+        // Action Buttons - Scrollable Icons
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                _buildActionIconButton(
+                  Icons.refresh,
+                  _handleRedeploy,
+                  'Redeploy',
+                ),
+                const SizedBox(width: 12),
+                _buildActionIconButton(
+                  Icons.restart_alt,
+                  _handleRefreshPreview,
+                  'Refresh Preview',
+                ),
+                const SizedBox(width: 12),
+                _buildActionIconButton(
+                  Icons.open_in_new,
+                  _handleOpenInNewTab,
+                  'Open in New Tab',
+                ),
+              ],
+            ),
           ),
         ),
         const Divider(height: 1),
@@ -1871,89 +1964,105 @@ ListTile(
     );
   }
 
-  /// 移动端预览标签（不包含聊天消息和输入框）
+  /// 移动端预览标签（Webview）
   Widget _buildChatPreviewTabMobile() {
+    final previewUrl = _project?.latestPreviewUrl;
     final theme = Theme.of(context);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Project Preview',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w600,
+    if (previewUrl == null || previewUrl.isEmpty) {
+      return _buildNoPreviewAvailable();
+    }
+
+    return Column(
+      children: [
+        // Preview URL Header
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest,
+            border: Border(
+              bottom: BorderSide(color: theme.colorScheme.outlineVariant),
             ),
           ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: theme.colorScheme.outlineVariant,
+          child: Row(
+            children: [
+              Icon(
+                Icons.web,
+                size: 20,
+                color: theme.colorScheme.primary,
               ),
-            ),
-            child: Column(
-              children: [
-                Icon(
-                  Icons.info_outline,
-                  size: 32,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Chat with AI to interact with your project',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Tap the chat button below to ask questions about your code, request features, or get help with development.',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.lightbulb_outline, color: theme.colorScheme.onPrimaryContainer),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Quick Tip',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.onPrimaryContainer,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Preview: ${_getDeploymentLabel(previewUrl)}',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 4),
+                    Text(
+                      previewUrl,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              IconButton(
+                onPressed: _handleRefreshPreview,
+                icon: const Icon(Icons.refresh),
+                tooltip: 'Refresh Preview',
+                iconSize: 20,
+              ),
+              IconButton(
+                onPressed: () => _openUrl(previewUrl),
+                icon: const Icon(Icons.open_in_new),
+                tooltip: 'Open in Browser',
+                iconSize: 20,
+              ),
+            ],
+          ),
+        ),
+        // WebView Container
+        Expanded(
+          child: Container(
+            color: Colors.grey.shade100,
+            child: _buildWebViewContent(previewUrl),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 构建无预览可用状态
+  Widget _buildNoPreviewAvailable() {
+    final theme = Theme.of(context);
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.preview,
+            size: 64,
+            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No Preview Available',
+            style: theme.textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
           Text(
-            'Try asking:\n'
-            '• "Add a new page to my app"\n'
-            '• "How does this API work?"\n'
-            '• "Help me debug this issue"\n'
-            '• "Optimize my code"',
+            'Deploy your project to see a preview',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
-              height: 1.5,
             ),
           ),
         ],
@@ -1976,96 +2085,154 @@ ListTile(
         backgroundColor: isSelected ? theme.colorScheme.primary : theme.colorScheme.surfaceContainerHighest,
         foregroundColor: isSelected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurfaceVariant,
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        minimumSize: const Size(0, 32),
       ),
-      child: Column(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 20),
-          const SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontSize: 11)),
+          Icon(icon, size: 16),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 10),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  /// Preview Tab (Chat Preview)
+  /// 构建操作按钮（仅图标）
+  Widget _buildActionIconButton(IconData icon, VoidCallback onPressed, String tooltip) {
+    final theme = Theme.of(context);
+    return SizedBox(
+      width: 40,
+      height: 40,
+      child: IconButton(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 20),
+        tooltip: tooltip,
+        style: IconButton.styleFrom(
+          backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+          foregroundColor: theme.colorScheme.primary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Preview Tab (Webview)
   Widget _buildChatPreviewTab() {
-    // Initialize chat when first entering this tab
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_currentSessionId == null) {
-        _initializeChat();
-      }
-    });
+    final previewUrl = _project?.latestPreviewUrl;
+    final theme = Theme.of(context);
+
+    if (previewUrl == null || previewUrl.isEmpty) {
+      return _buildNoPreviewAvailable();
+    }
 
     return Column(
       children: [
-        // Quick actions
-        if (_chatMessages.isEmpty)
-          QuickActions(
-            onSelect: _sendChatMessage,
+        // Preview URL Header
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest,
+            border: Border(
+              bottom: BorderSide(color: theme.colorScheme.outlineVariant),
+            ),
           ),
-        // Messages list
-        Expanded(
-          child: _chatMessages.isEmpty && !_isTyping
-              ? _buildChatEmptyState()
-              : MessageList(
-                  messages: _chatMessages,
-                  isTyping: _isTyping,
-                  scrollController: _chatScrollController,
+          child: Row(
+            children: [
+              Icon(
+                Icons.web,
+                size: 20,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Preview: ${_getDeploymentLabel(previewUrl)}',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      previewUrl,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
+              ),
+              IconButton(
+                onPressed: _handleRefreshPreview,
+                icon: const Icon(Icons.refresh),
+                tooltip: 'Refresh Preview',
+              ),
+              IconButton(
+                onPressed: () => _openUrl(previewUrl),
+                icon: const Icon(Icons.open_in_new),
+                tooltip: 'Open in Browser',
+              ),
+            ],
+          ),
         ),
-        // Message input
-        MessageInput(
-          onSend: _sendChatMessage,
-          isEnabled: !_isChatLoading && _currentSessionId != null,
-          hintText: 'Ask about your project...',
+        // WebView Container
+        Expanded(
+          child: Container(
+            color: Colors.grey.shade100,
+            child: _buildWebViewContent(previewUrl),
+          ),
         ),
       ],
     );
   }
 
-  /// 构建聊天空状态
-  Widget _buildChatEmptyState() {
+  /// 构建 WebView 内容
+  Widget _buildWebViewContent(String url) {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.smart_toy,
-              size: 80.0,
-              color: Theme.of(context)
-                  .colorScheme
-                  .primary
-                  .withValues(alpha: 0.5),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.web,
+            size: 64,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'WebView Component',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'InAppWebView integration coming soon',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(height: 24.0),
-            Text(
-              'Chat with AI',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 12.0),
-            Text(
-              'Ask me anything about your project,\ncode, or get help with development',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurfaceVariant
-                        .withValues(alpha: 0.8),
-                  ),
-            ),
-            const SizedBox(height: 24.0),
-            FilledButton.icon(
-              onPressed: _isChatLoading ? null : () => _sendChatMessage('Hello!'),
-              icon: const Icon(Icons.chat_bubble_outline),
-              label: const Text('Start Chat'),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: () => _openUrl(url),
+            icon: const Icon(Icons.open_in_new),
+            label: const Text('Open in Browser'),
+          ),
+        ],
       ),
     );
   }
@@ -4391,93 +4558,6 @@ ListTile(
           fontWeight: FontWeight.w600,
         ),
       ),
-    );
-  }
-
-  /// 显示选项菜单
-  void _showOptionsMenu(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: Wrap(
-            children: [
-ListTile(
-                leading: const Icon(Icons.edit),
-                title: const Text('Edit Project'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showEditProjectDialog();
-                },
-              ),
-ListTile(
-                leading: const Icon(Icons.copy),
-                title: const Text('Duplicate Project'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _duplicateProject();
-                },
-              ),
-ListTile(
-                leading: Icon(Icons.archive, color: Colors.orange),
-                title: const Text('Archive Project'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _archiveProject();
-                },
-              ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.delete, color: Colors.red),
-                title: const Text(
-                  'Delete Project',
-                  style: TextStyle(color: Colors.red),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showDeleteConfirmDialog(context);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  /// 显示删除确认对话框
-  void _showDeleteConfirmDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Delete Project'),
-          content: const Text(
-            'Are you sure you want to delete this project? This action cannot be undone.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                context.pop();
-                SnackBarHelper.showSuccess(
-                  context,
-                  title: 'Success',
-                  message: 'Project deleted',
-                );
-              },
-              child: const Text('Delete', style: TextStyle(color: Colors.red)),
-            ),
-          ],
-        );
-      },
     );
   }
 }
