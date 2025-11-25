@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -11,6 +10,7 @@ import '../../services/chat_service.dart';
 import '../chat/chat_bottom_sheet.dart';
 import '../chat/floating_chat_button.dart';
 import '../../services/d1vai_service.dart';
+import '../../utils/message_parser.dart';
 import '../snackbar_helper.dart';
 
 /// 项目详情页 - Chat Tab
@@ -139,155 +139,10 @@ class ProjectChatTabState extends State<ProjectChatTab>
     }
   }
 
-  /// 将 ChatHistoryEntry 转换为 ChatMessage
+  /// 将 ChatHistoryEntry 转换为 ChatMessage（使用统一的 MessageParser）
   ChatMessage? _convertHistoryEntryToChatMessage(ChatHistoryEntry entry) {
     try {
-      final role = entry.direction == 'user' ? 'user' : 'assistant';
-      final contents = <MessageContent>[];
-
-      if (entry.payload != null) {
-        final payload = entry.payload;
-
-        if (payload is! Map<String, dynamic>) {
-          contents.add(TextMessageContent(text: payload.toString()));
-          return ChatMessage(
-            id: entry.id.toString(),
-            role: role,
-            createdAt: entry.createdAt,
-            contents: contents,
-          );
-        }
-
-        // Assistant messages
-        if (entry.messageType == 'assistant') {
-          try {
-            final message = payload['message'];
-
-            if (message is! Map<String, dynamic>) {
-              contents.add(TextMessageContent(text: json.encode(payload)));
-              return ChatMessage(
-                id: entry.id.toString(),
-                role: role,
-                createdAt: entry.createdAt,
-                contents: contents,
-              );
-            }
-
-            final contentArray = message['content'];
-
-            if (contentArray is List<dynamic>) {
-              for (final contentItem in contentArray) {
-                if (contentItem is! Map<String, dynamic>) continue;
-                final contentType = contentItem['type'];
-                try {
-                  if (contentType == 'thinking' && contentItem['thinking'] != null) {
-                    contents.add(
-                      ThinkingMessageContent(
-                        text: contentItem['thinking'].toString(),
-                      ),
-                    );
-                  } else if (contentType == 'text' && contentItem['text'] != null) {
-                    contents.add(
-                      TextMessageContent(text: contentItem['text'].toString()),
-                    );
-                  } else if (contentType == 'tool_use' && contentItem['name'] != null) {
-                    contents.add(
-                      ToolMessageContent(
-                        name: contentItem['name'].toString(),
-                        input: contentItem['input'],
-                      ),
-                    );
-                  } else if (contentType == 'tool_result' &&
-                      contentItem['content'] != null) {
-                    contents.add(
-                      ResultMessageContent(
-                        payload: contentItem['content'],
-                      ),
-                    );
-                  }
-                } catch (_) {
-                  // Fallback to skipping this content item
-                }
-              }
-            }
-
-            if (contents.isEmpty && message['text'] != null) {
-              contents.add(
-                TextMessageContent(text: message['text'].toString()),
-              );
-            }
-          } catch (_) {
-            contents.add(TextMessageContent(text: json.encode(payload)));
-          }
-        }
-        // Prompt messages
-        else if (entry.messageType == 'prompt' && payload['prompt'] != null) {
-          contents.add(TextMessageContent(text: payload['prompt'].toString()));
-        }
-        // Result messages
-        else if (entry.messageType == 'result') {
-          if (payload['text'] != null) {
-            contents.add(TextMessageContent(text: payload['text'].toString()));
-          } else if (payload['content'] != null) {
-            contents.add(TextMessageContent(text: payload['content'].toString()));
-          } else if (payload['result'] != null) {
-            contents.add(ResultMessageContent(payload: payload['result']));
-          }
-        }
-        // Git commit messages
-        else if (entry.messageType == 'git_commit') {
-          contents.add(
-            GitCommitMessageContent(
-              projectId: payload['projectId']?.toString(),
-              message: payload['message']?.toString() ?? '',
-              files: (payload['files'] as List<dynamic>?)
-                  ?.map((e) => e.toString())
-                  .toList(),
-            ),
-          );
-        }
-        // Completion messages
-        else if (entry.messageType == 'complete') {
-          final success = payload['success'] as bool? ?? false;
-          final message = payload['message']?.toString() ?? '';
-          contents.add(
-            CompletionMessageContent(
-              message: message,
-              success: success,
-              details: payload['details']?.toString(),
-            ),
-          );
-        }
-        // Error messages
-        else if (entry.messageType == 'error') {
-          contents.add(
-            ErrorMessageContent(
-              message: payload['message']?.toString() ?? 'Unknown error',
-              code: payload['code']?.toString(),
-              details: payload['details'],
-            ),
-          );
-        }
-        // Fallback for unknown types
-        else {
-          final text = entry.messageText ??
-              payload['text']?.toString() ??
-              payload['content']?.toString() ??
-              json.encode(payload);
-          contents.add(TextMessageContent(text: text));
-        }
-      } else if (entry.messageText != null) {
-        contents.add(TextMessageContent(text: entry.messageText!));
-      } else {
-        return null;
-      }
-
-      return ChatMessage(
-        id: entry.id.toString(),
-        role: role,
-        createdAt: entry.createdAt,
-        contents: contents,
-      );
+      return MessageParser.historyEntryToMessage(entry);
     } catch (e, stackTrace) {
       debugPrint('Failed to convert history entry ${entry.id}: $e');
       debugPrint('Stack trace: $stackTrace');
