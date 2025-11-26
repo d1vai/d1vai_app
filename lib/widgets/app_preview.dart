@@ -19,6 +19,7 @@ class AppPreview extends StatefulWidget {
 class _AppPreviewState extends State<AppPreview> {
   InAppWebViewController? _controller;
   bool _hasError = false;
+  bool _isDisposed = false;
 
   @override
   void initState() {
@@ -27,16 +28,25 @@ class _AppPreviewState extends State<AppPreview> {
 
   @override
   void dispose() {
-    _controller?.dispose();
+    _isDisposed = true;
+    _controller = null;
     super.dispose();
   }
 
   Future<void> _refresh() async {
-    if (_controller != null) {
+    if (_controller != null && !_isDisposed) {
       setState(() {
         _hasError = false;
       });
-      await _controller!.reload();
+      try {
+        await _controller!.reload();
+      } catch (e) {
+        if (!_isDisposed) {
+          setState(() {
+            _hasError = true;
+          });
+        }
+      }
     }
   }
 
@@ -56,21 +66,25 @@ class _AppPreviewState extends State<AppPreview> {
   }
 
   void _onWebViewCreated(InAppWebViewController controller) {
-    _controller = controller;
+    if (!_isDisposed) {
+      _controller = controller;
+    }
   }
 
   void _onLoadStart(InAppWebViewController controller, Uri? url) {
-    setState(() {
-      _hasError = false;
-    });
+    if (!_isDisposed) {
+      setState(() {
+        _hasError = false;
+      });
+    }
   }
 
   void _onLoadStop(InAppWebViewController controller, Uri? url) {
-    // Load completed
+    // Load completed - no state update needed
   }
 
   void _onProgressChanged(InAppWebViewController controller, int progress) {
-    // Progress updated
+    // Progress updated - no state update needed
   }
 
   @override

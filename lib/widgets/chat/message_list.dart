@@ -94,6 +94,8 @@ class _MessageListState extends State<MessageList> {
 
   @override
   void dispose() {
+    final controller = widget.scrollController ?? _scrollController;
+    controller.removeListener(_onScroll);
     if (widget.scrollController == null) {
       _scrollController.dispose();
     }
@@ -231,6 +233,7 @@ class _MessageListState extends State<MessageList> {
         // Load more indicator
         if (widget.isLoadingMore)
           Positioned(
+            key: const ValueKey('load_more_indicator'),
             top: 8,
             left: 0,
             right: 0,
@@ -275,6 +278,7 @@ class _MessageListState extends State<MessageList> {
             widget.messages.isNotEmpty &&
             widget.messages.length <= 3)
           Positioned(
+            key: const ValueKey('beginning_of_conversation'),
             top: 8,
             left: 0,
             right: 0,
@@ -300,6 +304,7 @@ class _MessageListState extends State<MessageList> {
         // Scroll to bottom button with unseen count
         if (!_isAtBottom && widget.messages.isNotEmpty)
           Positioned(
+            key: const ValueKey('scroll_to_bottom_button'),
             bottom: 80,
             right: 16,
             child: GestureDetector(

@@ -105,6 +105,7 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                       // Messages
                       Expanded(
                         child: MessageList(
+                          key: const ValueKey('chat_bottom_sheet_message_list'),
                           messages: widget.messages,
                           isTyping: widget.isTyping,
                           scrollController: widget.scrollController,
