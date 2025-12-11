@@ -459,26 +459,39 @@ class _CommunityScreenState extends State<CommunityScreen>
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Row(
                           children: [
-                            Text(
-                              (post.author?.slug?.isNotEmpty == true)
-                                  ? post.author!.slug!
-                                  : (post.author?.email?.isNotEmpty == true)
-                                  ? _getEmailPrefix(post.author!.email)
-                                  : 'Anonymous Builder',
-                              style: TextStyle(
-                                color: textSecondary,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
+                            Flexible(
+                              child: Text(
+                                (post.author?.slug?.isNotEmpty == true)
+                                    ? post.author!.slug!
+                                    : (post.author?.email?.isNotEmpty == true)
+                                    ? _getEmailPrefix(post.author!.email)
+                                    : 'Anonymous Builder',
+                                style: TextStyle(
+                                  color: textSecondary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '·',
+                              style: TextStyle(
+                                color: textSecondary.withValues(alpha: 0.5),
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
                             Text(
                               _formatTime(post.createdAt),
                               style: TextStyle(
                                 color: textSecondary.withValues(alpha: 0.8),
-                                fontSize: 10,
+                                fontSize: 12,
                               ),
                             ),
                           ],
