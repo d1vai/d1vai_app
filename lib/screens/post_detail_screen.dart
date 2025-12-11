@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/community_post.dart';
 import '../services/d1vai_service.dart';
 import '../widgets/avatar_image.dart';
@@ -68,11 +69,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   }
 
   String _getAuthorDisplayName(Author? author) {
-    if (author?.slug != null && author!.slug!.isNotEmpty) {
-      return author!.slug!;
+    final slug = author?.slug;
+    if (slug != null && slug.isNotEmpty) {
+      return slug;
     }
-    if (author?.email != null && author!.email!.isNotEmpty) {
-      final prefix = _getEmailPrefix(author!.email);
+    final email = author?.email;
+    if (email != null && email.isNotEmpty) {
+      final prefix = _getEmailPrefix(email);
       return prefix.isNotEmpty ? prefix : 'Anonymous';
     }
     return 'Anonymous';
@@ -174,7 +177,68 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           _post.content ?? _post.summary ?? '',
           style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
         ),
+        const SizedBox(height: 24),
+
+        // Tags
+        if (_post.tags.isNotEmpty) ...[
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _post.tags.map((tag) {
+              return Chip(
+                label: Text(tag),
+                backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                side: BorderSide.none,
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 24),
+        ],
+
+        // View Project Button
+        if ((_post.embedUrl ?? '').isNotEmpty)
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                _openProjectDemo(context);
+              },
+              icon: const Icon(Icons.open_in_new),
+              label: const Text('View Project'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
+              ),
+            ),
+          ),
       ],
     );
+  }
+
+  /// 打开项目演示链接
+  void _openProjectDemo(BuildContext context) async {
+    if ((_post.embedUrl ?? '').isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Opening ${_post.title}...'),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+      final url = _post.embedUrl!;
+      try {
+        // ignore: deprecated_member_use
+        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Could not open link: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
   }
 }

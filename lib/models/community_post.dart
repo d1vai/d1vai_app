@@ -3,11 +3,7 @@ class Author {
   final String? email;
   final String? picture;
 
-  Author({
-    this.slug,
-    this.email,
-    this.picture,
-  });
+  Author({this.slug, this.email, this.picture});
 
   factory Author.fromJson(Map<String, dynamic> json) {
     return Author(
@@ -18,11 +14,7 @@ class Author {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'slug': slug,
-      'email': email,
-      'picture': picture,
-    };
+    return {'slug': slug, 'email': email, 'picture': picture};
   }
 }
 
@@ -40,6 +32,11 @@ class CommunityPost {
   final bool isLiked;
   final String createdAt;
   final String updatedAt;
+  // New fields
+  final List<String> tags;
+  final String? projectId;
+  final String? status;
+  final int? userId;
 
   CommunityPost({
     required this.id,
@@ -55,6 +52,10 @@ class CommunityPost {
     required this.isLiked,
     required this.createdAt,
     required this.updatedAt,
+    this.tags = const [],
+    this.projectId,
+    this.status,
+    this.userId,
   });
 
   factory CommunityPost.fromJson(Map<String, dynamic> json) {
@@ -64,7 +65,10 @@ class CommunityPost {
     }
 
     // Backward compatibility with flat structure (user_name, user_avatar, user_email)
-    if (author == null && (json['user_name'] != null || json['user_avatar'] != null || json['user_email'] != null)) {
+    if (author == null &&
+        (json['user_name'] != null ||
+            json['user_avatar'] != null ||
+            json['user_email'] != null)) {
       author = Author(
         slug: json['user_id']?.toString(),
         email: json['user_email'],
@@ -86,6 +90,10 @@ class CommunityPost {
       isLiked: json['is_liked'] ?? false,
       createdAt: json['created_at'] ?? '',
       updatedAt: json['updated_at'] ?? '',
+      tags: json['tags'] != null ? List<String>.from(json['tags']) : const [],
+      projectId: json['project_id'],
+      status: json['status'],
+      userId: json['user_id'],
     );
   }
 
@@ -104,6 +112,10 @@ class CommunityPost {
       'is_liked': isLiked,
       'created_at': createdAt,
       'updated_at': updatedAt,
+      'tags': tags,
+      'project_id': projectId,
+      'status': status,
+      'user_id': userId,
     };
   }
 }

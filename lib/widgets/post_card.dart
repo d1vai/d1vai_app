@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:url_launcher/url_launcher.dart';
+
 import 'package:flutter/services.dart';
-import '../models/community.dart';
+import '../models/community_post.dart';
 import 'avatar_image.dart';
 import 'snackbar_helper.dart';
 
@@ -26,37 +26,28 @@ class PostCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 封面图片
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(12),
+            if (post.coverUrl != null && post.coverUrl!.isNotEmpty)
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
+                ),
+                child: CachedNetworkImage(
+                  imageUrl: post.coverUrl!,
+                  height: 180,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    height: 180,
+                    color: Colors.grey.shade200,
+                    child: const Center(child: CircularProgressIndicator()),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    height: 180,
+                    color: Colors.grey.shade200,
+                    child: const Icon(Icons.error),
+                  ),
+                ),
               ),
-              child: post.coverUrl.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: post.coverUrl,
-                      height: 180,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        height: 180,
-                        color: Colors.grey.shade200,
-                        child: const Center(child: CircularProgressIndicator()),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        height: 180,
-                        color: Colors.grey.shade200,
-                        child: const Icon(Icons.error),
-                      ),
-                    )
-                  : Container(
-                      height: 180,
-                      color: Colors.grey.shade200,
-                      child: const Icon(
-                        Icons.image,
-                        size: 48,
-                        color: Colors.grey,
-                      ),
-                    ),
-            ),
 
             // 帖子内容
             Padding(
@@ -66,11 +57,12 @@ class PostCard extends StatelessWidget {
                 children: [
                   // 作者信息
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       AvatarImage(
-                        imageUrl: post.author.picture.isEmpty
-                            ? 'placeholder'
-                            : post.author.picture,
+                        imageUrl: post.author?.picture?.isNotEmpty == true
+                            ? post.author!.picture!
+                            : 'placeholder',
                         size: 40,
                         borderRadius: BorderRadius.circular(20),
                         fit: BoxFit.cover,
@@ -79,9 +71,10 @@ class PostCard extends StatelessWidget {
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              post.author.slug,
+                              post.author?.slug ?? 'Anonymous',
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 14,
@@ -89,7 +82,7 @@ class PostCard extends StatelessWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              _formatPublishedDate(post.publishedAt),
+                              _formatPublishedDate(post.createdAt),
                               style: TextStyle(
                                 color: Colors.grey.shade500,
                                 fontSize: 12,
@@ -123,57 +116,16 @@ class PostCard extends StatelessWidget {
                   const SizedBox(height: 8),
 
                   // 摘要
-                  Text(
-                    post.summary,
-                    style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // 标签
-                  if (post.tags.isNotEmpty)
-                    Wrap(
-                      spacing: 8,
-                      children: post.tags.take(3).map((tag) {
-                        return Chip(
-                          label: Text(
-                            tag,
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                          materialTapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
-                          visualDensity: VisualDensity.compact,
-                        );
-                      }).toList(),
+                  if (post.summary != null && post.summary!.isNotEmpty)
+                    Text(
+                      post.summary!,
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                        fontSize: 14,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
                     ),
-
-                  const SizedBox(height: 12),
-
-                  // 底部操作栏
-                  Row(
-                    children: [
-                      const Spacer(),
-
-                      // 查看链接
-                      if ((post.embedUrl ?? '').isNotEmpty)
-                        TextButton.icon(
-                          onPressed: () {
-                            _openProjectDemo(context);
-                          },
-                          icon: const Icon(Icons.open_in_new, size: 16),
-                          label: const Text('View'),
-                          style: TextButton.styleFrom(
-                            foregroundColor: Theme.of(context).primaryColor,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 4,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
                 ],
               ),
             ),
@@ -184,20 +136,25 @@ class PostCard extends StatelessWidget {
   }
 
   /// 格式化发布日期
-  String _formatPublishedDate(DateTime dateTime) {
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
+  String _formatPublishedDate(String timestamp) {
+    try {
+      final dateTime = DateTime.parse(timestamp);
+      final now = DateTime.now();
+      final difference = now.difference(dateTime);
 
-    if (difference.inMinutes < 1) {
-      return 'Just now';
-    } else if (difference.inMinutes < 60) {
-      return '${difference.inMinutes}m ago';
-    } else if (difference.inHours < 24) {
-      return '${difference.inHours}h ago';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays}d ago';
-    } else {
-      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+      if (difference.inMinutes < 1) {
+        return 'Just now';
+      } else if (difference.inMinutes < 60) {
+        return '${difference.inMinutes}m ago';
+      } else if (difference.inHours < 24) {
+        return '${difference.inHours}h ago';
+      } else if (difference.inDays < 7) {
+        return '${difference.inDays}d ago';
+      } else {
+        return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+      }
+    } catch (e) {
+      return timestamp;
     }
   }
 
@@ -245,7 +202,7 @@ class PostCard extends StatelessWidget {
 
   /// 分享帖子
   void _sharePost(BuildContext context) async {
-    final link = 'https://www.d1v.ai/c/${post.projectId}';
+    final link = 'https://www.d1v.ai/c/${post.slug}';
     await Clipboard.setData(ClipboardData(text: link));
     if (context.mounted) {
       SnackBarHelper.showSuccess(
@@ -272,28 +229,5 @@ class PostCard extends StatelessWidget {
       title: 'Coming Soon',
       message: 'Report functionality coming soon',
     );
-  }
-
-  /// 打开项目演示链接
-  void _openProjectDemo(BuildContext context) async {
-    if ((post.embedUrl ?? '').isNotEmpty) {
-      SnackBarHelper.showInfo(
-        context,
-        title: 'Opening Project',
-        message: 'Opening ${post.title}...',
-      );
-      final url = post.embedUrl!;
-      try {
-        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-      } catch (e) {
-        if (context.mounted) {
-          SnackBarHelper.showError(
-            context,
-            title: 'Error',
-            message: 'Could not open link: $e',
-          );
-        }
-      }
-    }
   }
 }

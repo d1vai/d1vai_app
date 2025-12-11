@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:easy_refresh/easy_refresh.dart';
-import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 import '../services/d1vai_service.dart';
 import '../models/community_post.dart';
-import '../widgets/avatar_image.dart';
 import '../widgets/search_field.dart';
-import '../widgets/snackbar_helper.dart';
 import 'create_post_screen.dart';
 import 'post_detail_screen.dart';
-import '../widgets/card.dart';
-import '../core/theme/app_colors.dart';
+import '../widgets/post_card.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -105,35 +100,6 @@ class _CommunityScreenState extends State<CommunityScreen>
         _error = e.toString();
       });
     }
-  }
-
-  String _formatTime(String timestamp) {
-    try {
-      final dateTime = DateTime.parse(timestamp);
-      final now = DateTime.now();
-      final difference = now.difference(dateTime);
-
-      if (difference.inMinutes < 1) {
-        return 'Just now';
-      } else if (difference.inHours < 1) {
-        return '${difference.inMinutes}m ago';
-      } else if (difference.inDays < 1) {
-        return '${difference.inHours}h ago';
-      } else if (difference.inDays < 7) {
-        return '${difference.inDays}d ago';
-      } else {
-        return DateFormat('MMM d').format(dateTime);
-      }
-    } catch (e) {
-      return timestamp;
-    }
-  }
-
-  String _getEmailPrefix(String? email) {
-    if (email == null || email.isEmpty) return '';
-    final atIndex = email.indexOf('@');
-    if (atIndex == -1) return email;
-    return email.substring(0, atIndex);
   }
 
   /// 执行搜索
@@ -343,220 +309,19 @@ class _CommunityScreenState extends State<CommunityScreen>
                 ),
               );
             },
-            child: _buildPostCard(post),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildPostCard(CommunityPost post) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textSecondary = isDark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
-
-    return CustomCard(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: EdgeInsets.zero,
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => PostDetailScreen(post: post),
+            child: PostCard(
+              post: post,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PostDetailScreen(post: post),
+                  ),
+                );
+              },
             ),
           );
         },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. Image at the top
-            if (post.coverUrl != null && post.coverUrl!.isNotEmpty)
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(12),
-                ),
-                child: SizedBox(
-                  height: 200,
-                  width: double.infinity,
-                  child: Image.network(
-                    post.coverUrl!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: isDark
-                            ? Colors.grey.shade800
-                            : Colors.grey.shade200,
-                        child: Center(
-                          child: Icon(Icons.broken_image, color: textSecondary),
-                        ),
-                      );
-                    },
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Container(
-                        color: isDark
-                            ? Colors.grey.shade800
-                            : Colors.grey.shade200,
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
-                                : null,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 2. Title & Content
-                  if (post.title.isNotEmpty)
-                    Text(
-                      post.title,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  const SizedBox(height: 8),
-                  if (post.summary != null && post.summary!.isNotEmpty) ...[
-                    Text(
-                      post.summary!,
-                      style: TextStyle(color: textSecondary),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ] else if (post.content != null &&
-                      post.content!.isNotEmpty) ...[
-                    Text(
-                      post.content!,
-                      style: TextStyle(color: textSecondary),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-
-                  const SizedBox(height: 16),
-
-                  // 3. Author Info & Actions
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      AvatarImage(
-                        imageUrl: post.author?.picture ?? 'placeholder',
-                        size: 32,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                (post.author?.slug?.isNotEmpty == true)
-                                    ? post.author!.slug!
-                                    : (post.author?.email?.isNotEmpty == true)
-                                    ? _getEmailPrefix(post.author!.email)
-                                    : 'Anonymous Builder',
-                                style: TextStyle(
-                                  color: textSecondary,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              '·',
-                              style: TextStyle(
-                                color: textSecondary.withValues(alpha: 0.5),
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              _formatTime(post.createdAt),
-                              style: TextStyle(
-                                color: textSecondary.withValues(alpha: 0.8),
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.more_horiz, color: textSecondary),
-                        onPressed: () {
-                          showModalBottomSheet(
-                            context: context,
-                            builder: (context) {
-                              return Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  ListTile(
-                                    leading: const Icon(Icons.share),
-                                    title: const Text('Share (copy link)'),
-                                    onTap: () async {
-                                      Navigator.pop(context);
-                                      final link =
-                                          'https://www.d1v.ai/c/${post.slug}';
-                                      await Clipboard.setData(
-                                        ClipboardData(text: link),
-                                      );
-                                      if (context.mounted) {
-                                        SnackBarHelper.showSuccess(
-                                          context,
-                                          title: 'Copied',
-                                          message: 'Share link copied',
-                                        );
-                                      }
-                                    },
-                                  ),
-                                  ListTile(
-                                    leading: const Icon(
-                                      Icons.flag,
-                                      color: AppColors.warning,
-                                    ),
-                                    title: const Text('Report'),
-                                    onTap: () {
-                                      Navigator.pop(context);
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Report feature coming soon',
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
