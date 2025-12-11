@@ -10,6 +10,8 @@ import '../widgets/search_field.dart';
 import '../widgets/snackbar_helper.dart';
 import 'create_post_screen.dart';
 import 'post_detail_screen.dart';
+import '../widgets/card.dart';
+import '../core/theme/app_colors.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -18,10 +20,12 @@ class CommunityScreen extends StatefulWidget {
   State<CommunityScreen> createState() => _CommunityScreenState();
 }
 
-class _CommunityScreenState extends State<CommunityScreen> {
+class _CommunityScreenState extends State<CommunityScreen>
+    with SingleTickerProviderStateMixin {
   late EasyRefreshController _controller;
   final D1vaiService _d1vaiService = D1vaiService();
   final TextEditingController _searchController = TextEditingController();
+  late AnimationController _animationController;
 
   List<CommunityPost> _posts = [];
   bool _isLoading = true;
@@ -39,11 +43,16 @@ class _CommunityScreenState extends State<CommunityScreen> {
       controlFinishRefresh: true,
       controlFinishLoad: true,
     );
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
     _loadPosts();
   }
 
   @override
   void dispose() {
+    _animationController.dispose();
     _controller.dispose();
     _searchController.dispose();
     super.dispose();
@@ -78,6 +87,16 @@ class _CommunityScreenState extends State<CommunityScreen> {
         _isLoading = false;
         _hasMore = posts.length >= _limit;
         _offset += posts.length;
+        if (!refresh && posts.isNotEmpty) {
+          _animationController.forward(
+            from: 0.0,
+          ); // Reset for new page or just forward?
+          // Actually for pagination we might want to just animate new items, but for now let's just forward if it's the first load or refresh.
+          // Simpler: just forward.
+        }
+        if (refresh || _offset == posts.length) {
+          _animationController.forward(from: 0);
+        }
       });
     } catch (e) {
       if (!mounted) return;
@@ -115,17 +134,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
     final atIndex = email.indexOf('@');
     if (atIndex == -1) return email;
     return email.substring(0, atIndex);
-  }
-
-  String _getAuthorDisplayName(CommunityPost post) {
-    if (post.author?.slug != null && post.author!.slug!.isNotEmpty) {
-      return post.author!.slug!;
-    }
-    if (post.author?.email != null && post.author!.email!.isNotEmpty) {
-      final prefix = _getEmailPrefix(post.author!.email);
-      return prefix.isNotEmpty ? prefix : 'Anonymous';
-    }
-    return 'Anonymous';
   }
 
   /// 执行搜索
@@ -310,17 +318,48 @@ class _CommunityScreenState extends State<CommunityScreen> {
         itemCount: _posts.length,
         itemBuilder: (context, index) {
           final post = _posts[index];
-          return _buildPostCard(post);
+
+          return AnimatedBuilder(
+            animation: _animationController,
+            builder: (context, child) {
+              // To avoid long delays on long lists, cap the delay or use modulo
+              final safeIndex = index > 10 ? 10 : index;
+              final start = safeIndex * 0.1;
+              final end = (start + 0.4).clamp(0.0, 1.0);
+
+              final animation = CurvedAnimation(
+                parent: _animationController,
+                curve: Interval(start, end, curve: Curves.easeOut),
+              );
+
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.2),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                ),
+              );
+            },
+            child: _buildPostCard(post),
+          );
         },
       ),
     );
   }
 
   Widget _buildPostCard(CommunityPost post) {
-    return Card(
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textSecondary = isDark
+        ? AppColors.textSecondaryDark
+        : AppColors.textSecondaryLight;
+
+    return CustomCard(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      padding: EdgeInsets.zero,
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -330,166 +369,180 @@ class _CommunityScreenState extends State<CommunityScreen> {
             ),
           );
         },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // User info row
-              Row(
-                children: [
-                  AvatarImage(
-                    imageUrl: post.author?.picture?.isNotEmpty == true
-                        ? post.author!.picture!
-                        : 'placeholder',
-                    size: 40,
-                    borderRadius: BorderRadius.circular(20),
-                    fit: BoxFit.cover,
-                    placeholderText: post.author?.picture?.isNotEmpty != true
-                        ? _getAuthorDisplayName(post)
-                        : null,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _getAuthorDisplayName(post),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        if (post.author?.email != null &&
-                            post.author!.email!.isNotEmpty) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            '@${_getEmailPrefix(post.author!.email)}',
-                            style: TextStyle(
-                              color: Colors.grey.shade600,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                        Text(
-                          _formatTime(post.createdAt),
-                          style: TextStyle(
-                            color: Colors.grey.shade500,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.more_horiz, color: Colors.grey),
-                    onPressed: () {
-                      showModalBottomSheet(
-                        context: context,
-                        builder: (context) {
-                          return Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              ListTile(
-                                leading: const Icon(Icons.share),
-                                title: const Text('Share (copy link)'),
-                                onTap: () async {
-                                  Navigator.pop(context);
-                                  final link =
-                                      'https://www.d1v.ai/c/${post.slug}';
-                                  await Clipboard.setData(
-                                    ClipboardData(text: link),
-                                  );
-                                  if (context.mounted) {
-                                    SnackBarHelper.showSuccess(
-                                      context,
-                                      title: 'Copied',
-                                      message: 'Share link copied',
-                                    );
-                                  }
-                                },
-                              ),
-                              ListTile(
-                                leading: const Icon(
-                                  Icons.flag,
-                                  color: Colors.orange,
-                                ),
-                                title: const Text('Report'),
-                                onTap: () {
-                                  Navigator.pop(context);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Report feature coming soon',
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Cover image (like d1vai frontend)
-              if (post.coverUrl != null) ...[
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. Image at the top
+            if (post.coverUrl != null && post.coverUrl!.isNotEmpty)
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
+                ),
+                child: SizedBox(
+                  height: 200,
+                  width: double.infinity,
                   child: Image.network(
                     post.coverUrl!,
-                    width: double.infinity,
-                    height: 200,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
-                        height: 200,
-                        color: Colors.grey.shade200,
-                        child: const Center(
-                          child: Icon(Icons.broken_image, color: Colors.grey),
+                        color: isDark
+                            ? Colors.grey.shade800
+                            : Colors.grey.shade200,
+                        child: Center(
+                          child: Icon(Icons.broken_image, color: textSecondary),
+                        ),
+                      );
+                    },
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        color: isDark
+                            ? Colors.grey.shade800
+                            : Colors.grey.shade200,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                : null,
+                          ),
                         ),
                       );
                     },
                   ),
                 ),
-                const SizedBox(height: 12),
-              ],
+              ),
 
-              // Post title
-              if (post.title.isNotEmpty) ...[
-                Text(
-                  post.title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 2. Title & Content
+                  if (post.title.isNotEmpty)
+                    Text(
+                      post.title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  const SizedBox(height: 8),
+                  if (post.summary != null && post.summary!.isNotEmpty) ...[
+                    Text(
+                      post.summary!,
+                      style: TextStyle(color: textSecondary),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ] else if (post.content != null &&
+                      post.content!.isNotEmpty) ...[
+                    Text(
+                      post.content!,
+                      style: TextStyle(color: textSecondary),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+
+                  const SizedBox(height: 16),
+
+                  // 3. Author Info & Actions
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      AvatarImage(
+                        imageUrl: post.author?.picture ?? 'placeholder',
+                        size: 32,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              (post.author?.slug?.isNotEmpty == true)
+                                  ? post.author!.slug!
+                                  : (post.author?.email?.isNotEmpty == true)
+                                  ? _getEmailPrefix(post.author!.email)
+                                  : 'Anonymous Builder',
+                              style: TextStyle(
+                                color: textSecondary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Text(
+                              _formatTime(post.createdAt),
+                              style: TextStyle(
+                                color: textSecondary.withValues(alpha: 0.8),
+                                fontSize: 10,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.more_horiz, color: textSecondary),
+                        onPressed: () {
+                          showModalBottomSheet(
+                            context: context,
+                            builder: (context) {
+                              return Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  ListTile(
+                                    leading: const Icon(Icons.share),
+                                    title: const Text('Share (copy link)'),
+                                    onTap: () async {
+                                      Navigator.pop(context);
+                                      final link =
+                                          'https://www.d1v.ai/c/${post.slug}';
+                                      await Clipboard.setData(
+                                        ClipboardData(text: link),
+                                      );
+                                      if (context.mounted) {
+                                        SnackBarHelper.showSuccess(
+                                          context,
+                                          title: 'Copied',
+                                          message: 'Share link copied',
+                                        );
+                                      }
+                                    },
+                                  ),
+                                  ListTile(
+                                    leading: const Icon(
+                                      Icons.flag,
+                                      color: AppColors.warning,
+                                    ),
+                                    title: const Text('Report'),
+                                    onTap: () {
+                                      Navigator.pop(context);
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Report feature coming soon',
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 8),
-              ],
-
-              // Post summary or content
-              if (post.summary != null && post.summary!.isNotEmpty) ...[
-                Text(
-                  post.summary!,
-                  style: TextStyle(color: Colors.grey.shade700),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ] else if (post.content != null && post.content!.isNotEmpty) ...[
-                Text(
-                  post.content!,
-                  style: TextStyle(color: Colors.grey.shade700),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-
-              const SizedBox(height: 16),
-            ],
-          ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
