@@ -75,24 +75,21 @@ class ProjectProvider extends ChangeNotifier {
 
   /// 加载项目数据
   Future<void> loadProjects() async {
-    if (_currentOffset == 0) {
-      _isLoading = true;
-    } else {
-      _isLoadingMore = true;
-    }
+    // API 目前返回的是完整项目列表，不支持分页。
+    // 为避免重复数据，每次调用都视为一次完整刷新。
+    _isLoading = true;
+    _isLoadingMore = false;
     _error = null;
+    _currentOffset = 0;
     notifyListeners();
 
     try {
       // 调用真实 API 获取项目列表
       final List<UserProject> newProjects = await _d1vaiService.getUserProjects();
 
-      if (_currentOffset == 0) {
-        _projects = newProjects;
-      } else {
-        _projects.addAll(newProjects);
-      }
-      _currentOffset += newProjects.length;
+      // 始终用最新结果覆盖本地列表，避免重复追加。
+      _projects = newProjects;
+      _currentOffset = newProjects.length;
       _hasMore = newProjects.length == _limit;
     } catch (e) {
       _error = e.toString();

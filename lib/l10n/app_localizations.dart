@@ -152,9 +152,9 @@ class AppLocalizations {
       'create_project': '新建项目',
 
       // Community
-      'no_posts_yet': '暂无帖子',
-      'be_first_to_share': '成为第一个分享的人！',
-      'failed_to_load_posts': '加载帖子失败',
+      'no_posts_yet': '暂无内容',
+      'be_first_to_share': '抢先发布第一条动态',
+      'failed_to_load_posts': '内容加载失败',
       'retry': '重试',
       'just_now': '刚刚',
 
@@ -228,7 +228,7 @@ class AppLocalizations {
       // Navigation
       'dashboard': '工作台',
       'community': '社群',
-      'docs': '文檔',
+      'docs': '文件',
       'settings': '設定',
       'profile': '個人中心',
       'pricing': '方案價格',
@@ -240,9 +240,9 @@ class AppLocalizations {
       'create_project': '建立專案',
 
       // Community
-      'no_posts_yet': '暫無貼文',
-      'be_first_to_share': '成為第一個分享的人！',
-      'failed_to_load_posts': '載入貼文失敗',
+      'no_posts_yet': '暫無內容',
+      'be_first_to_share': '搶先發佈第一則動態',
+      'failed_to_load_posts': '內容載入失敗',
       'retry': '重試',
       'just_now': '剛剛',
 

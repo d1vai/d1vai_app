@@ -14,8 +14,10 @@ class _UsageStatsState extends State<UsageStats> {
   final UsageService _usageService = UsageService();
   bool _isLoading = true;
 
-  // Real database usage data
+  // Real database usage data (Neon consumption)
   DbUsageResponse? _dbUsage;
+  // DB usage time window in days (default: last 30 days)
+  int _dbDaysRange = 30;
 
   // Real LLM usage data
   List<ProjectMonthlyUsage> _projectUsage = [];
@@ -36,9 +38,14 @@ class _UsageStatsState extends State<UsageStats> {
     });
 
     try {
-      // Load database usage from API
+      // Load database usage from API (Neon consumption)
       try {
-        final dbUsage = await _usageService.getDbUsage();
+        final now = DateTime.now().toUtc();
+        final from = now.subtract(Duration(days: _dbDaysRange));
+        final dbUsage = await _usageService.getDbUsage(
+          fromIso: from.toIso8601String(),
+          toIso: now.toIso8601String(),
+        );
         setState(() {
           _dbUsage = dbUsage;
         });
@@ -67,6 +74,43 @@ class _UsageStatsState extends State<UsageStats> {
     setState(() {
       _isLoading = false;
     });
+  }
+
+  /// Calculate aggregated DB usage across all projects
+  Map<String, double> _getAggregatedDbUsage() {
+    if (_dbUsage == null || _dbUsage!.consumption.isEmpty) {
+      return {
+        'computeHours': 0.0,
+        'activeHours': 0.0,
+        'writtenGb': 0.0,
+        'transferGb': 0.0,
+        'storageGbHours': 0.0,
+      };
+    }
+
+    double totalComputeSeconds = 0.0;
+    double totalActiveSeconds = 0.0;
+    double totalWrittenBytes = 0.0;
+    double totalTransferBytes = 0.0;
+    double totalStorageBytesHour = 0.0;
+
+    for (final period in _dbUsage!.consumption) {
+      totalComputeSeconds += period.computeTimeSeconds;
+      totalActiveSeconds += period.activeTimeSeconds;
+      totalWrittenBytes += period.writtenDataBytes;
+      totalTransferBytes += period.dataTransferBytes;
+      totalStorageBytesHour += period.dataStorageBytesHour;
+    }
+
+    const double gb = 1024.0 * 1024.0 * 1024.0;
+
+    return {
+      'computeHours': totalComputeSeconds / 3600.0,
+      'activeHours': totalActiveSeconds / 3600.0,
+      'writtenGb': totalWrittenBytes / gb,
+      'transferGb': totalTransferBytes / gb,
+      'storageGbHours': totalStorageBytesHour / gb,
+    };
   }
 
   /// Calculate aggregated LLM usage from project data
@@ -150,8 +194,8 @@ class _UsageStatsState extends State<UsageStats> {
   }
 
   Widget _buildDatabaseStatsCard() {
-    // If no DB usage data, show placeholder
-    if (_dbUsage == null) {
+    // If no DB usage data or no consumption entries, show placeholder
+    if (_dbUsage == null || _dbUsage!.consumption.isEmpty) {
       return Card(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -159,26 +203,10 @@ class _UsageStatsState extends State<UsageStats> {
             children: [
               _buildStatRow(
                 icon: Icons.storage,
-                label: 'Storage Used',
+                label: 'Database Usage',
                 value: 'N/A',
                 color: Colors.blue,
-                subtitle: 'loading...',
-              ),
-              const Divider(),
-              _buildStatRow(
-                icon: Icons.search,
-                label: 'Total Queries',
-                value: 'N/A',
-                color: Colors.green,
-                subtitle: 'loading...',
-              ),
-              const Divider(),
-              _buildStatRow(
-                icon: Icons.link,
-                label: 'Active Connections',
-                value: 'N/A',
-                color: Colors.orange,
-                subtitle: 'loading...',
+                subtitle: 'No database usage data available yet',
               ),
             ],
           ),
@@ -186,33 +214,38 @@ class _UsageStatsState extends State<UsageStats> {
       );
     }
 
+    final usage = _getAggregatedDbUsage();
+    final computeHours = usage['computeHours'] ?? 0.0;
+    final writtenGb = usage['writtenGb'] ?? 0.0;
+    final transferGb = usage['transferGb'] ?? 0.0;
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             _buildStatRow(
-              icon: Icons.storage,
-              label: 'Storage Used',
-              value: '${_dbUsage!.storageUsedGb.toStringAsFixed(2)} GB',
+              icon: Icons.timer,
+              label: 'Compute Time',
+              value: "${computeHours.toStringAsFixed(2)} h",
               color: Colors.blue,
-              subtitle: 'of ${_dbUsage!.storageLimitGb.toStringAsFixed(1)} GB limit (${_dbUsage!.storageUsedPercentage.toStringAsFixed(1)}%)',
+              subtitle: 'Total compute time (all projects)',
             ),
             const Divider(),
             _buildStatRow(
-              icon: Icons.search,
-              label: 'Total Queries',
-              value: _dbUsage!.totalQueries.toString(),
+              icon: Icons.storage,
+              label: 'Written Data',
+              value: "${writtenGb.toStringAsFixed(2)} GB",
               color: Colors.green,
-              subtitle: 'this month',
+              subtitle: 'Total written data',
             ),
             const Divider(),
             _buildStatRow(
-              icon: Icons.link,
-              label: 'Active Connections',
-              value: _dbUsage!.activeConnections.toString(),
+              icon: Icons.swap_horiz,
+              label: 'Data Transfer',
+              value: "${transferGb.toStringAsFixed(2)} GB",
               color: Colors.orange,
-              subtitle: 'currently active',
+              subtitle: 'Total data transfer',
             ),
           ],
         ),

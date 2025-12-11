@@ -35,10 +35,13 @@ Page<dynamic> _buildPageWithTransition(
   );
 }
 
-GoRouter createAppRouter(BuildContext context) {
+GoRouter createAppRouter() {
   return GoRouter(
     initialLocation: '/',
     redirect: (BuildContext context, GoRouterState state) {
+      // Use the context provided by GoRouter so that it can read
+      // AuthProvider from the widget tree without depending on
+      // the app-level BuildContext.
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final isAuthenticated = authProvider.isAuthenticated;
       final isLoading = authProvider.isLoading;

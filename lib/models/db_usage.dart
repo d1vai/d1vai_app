@@ -1,83 +1,93 @@
 class DbUsageResponse {
-  final double storageUsedGb;
-  final int totalQueries;
-  final int activeConnections;
-  final double storageLimitGb;
-  final double storageUsedPercentage;
-  final List<DbUsageBreakdown> breakdowns;
+  final List<DbUsagePeriod> consumption;
+  final List<DbUsagePeriod> periods;
+  final List<String> projects;
 
   DbUsageResponse({
-    required this.storageUsedGb,
-    required this.totalQueries,
-    required this.activeConnections,
-    required this.storageLimitGb,
-    required this.storageUsedPercentage,
-    required this.breakdowns,
+    required this.consumption,
+    required this.periods,
+    required this.projects,
   });
 
   factory DbUsageResponse.fromJson(Map<String, dynamic> json) {
-    final storageUsed = (json['storage_used_bytes'] ?? 0) / (1024 * 1024 * 1024);
-    final storageLimit = (json['storage_limit_bytes'] ?? 0) / (1024 * 1024 * 1024);
+    final consumptionJson = json['consumption'] as List<dynamic>? ?? [];
+    final periodsJson = json['periods'] as List<dynamic>? ?? [];
+    final projectsJson = json['projects'] as List<dynamic>? ?? [];
 
     return DbUsageResponse(
-      storageUsedGb: (storageUsed ?? 0.0).toDouble(),
-      totalQueries: json['total_queries']?.toInt() ?? 0,
-      activeConnections: json['active_connections']?.toInt() ?? 0,
-      storageLimitGb: (storageLimit ?? 0.0).toDouble(),
-      storageUsedPercentage: storageLimit > 0 ? (storageUsed / storageLimit) * 100 : 0.0,
-      breakdowns: (json['breakdowns'] as List<dynamic>?)
-              ?.map((b) => DbUsageBreakdown.fromJson(b))
-              .toList() ??
-          [],
+      consumption: consumptionJson
+          .map((e) => DbUsagePeriod.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      periods: periodsJson
+          .map((e) => DbUsagePeriod.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      projects: projectsJson.map((e) => e.toString()).toList(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'storage_used_gb': storageUsedGb,
-      'total_queries': totalQueries,
-      'active_connections': activeConnections,
-      'storage_limit_gb': storageLimitGb,
-      'storage_used_percentage': storageUsedPercentage,
-      'breakdowns': breakdowns.map((b) => b.toJson()).toList(),
+      'consumption': consumption.map((e) => e.toJson()).toList(),
+      'periods': periods.map((e) => e.toJson()).toList(),
+      'projects': projects,
     };
   }
 }
 
-class DbUsageBreakdown {
+class DbUsagePeriod {
   final String projectId;
-  final String projectName;
-  final double storageUsedGb;
-  final int totalQueries;
-  final String? emoji;
+  final String periodStart;
+  final String? periodEnd;
+  final double computeTimeSeconds;
+  final double activeTimeSeconds;
+  final double writtenDataBytes;
+  final double dataTransferBytes;
+  final double dataStorageBytesHour;
+  final double syntheticStorageSizeBytes;
 
-  DbUsageBreakdown({
+  DbUsagePeriod({
     required this.projectId,
-    required this.projectName,
-    required this.storageUsedGb,
-    required this.totalQueries,
-    this.emoji,
+    required this.periodStart,
+    this.periodEnd,
+    required this.computeTimeSeconds,
+    required this.activeTimeSeconds,
+    required this.writtenDataBytes,
+    required this.dataTransferBytes,
+    required this.dataStorageBytesHour,
+    required this.syntheticStorageSizeBytes,
   });
 
-  factory DbUsageBreakdown.fromJson(Map<String, dynamic> json) {
-    final storageUsed = (json['storage_used_bytes'] ?? 0) / (1024 * 1024 * 1024);
-
-    return DbUsageBreakdown(
-      projectId: json['project_id'] ?? '',
-      projectName: json['project_name'] ?? '',
-      storageUsedGb: (storageUsed ?? 0.0).toDouble(),
-      totalQueries: json['total_queries']?.toInt() ?? 0,
-      emoji: json['emoji'],
+  factory DbUsagePeriod.fromJson(Map<String, dynamic> json) {
+    return DbUsagePeriod(
+      projectId: json['project_id']?.toString() ?? '',
+      periodStart: json['period_start']?.toString() ?? '',
+      periodEnd: json['period_end']?.toString(),
+      computeTimeSeconds:
+          (json['compute_time_seconds'] as num?)?.toDouble() ?? 0.0,
+      activeTimeSeconds:
+          (json['active_time_seconds'] as num?)?.toDouble() ?? 0.0,
+      writtenDataBytes:
+          (json['written_data_bytes'] as num?)?.toDouble() ?? 0.0,
+      dataTransferBytes:
+          (json['data_transfer_bytes'] as num?)?.toDouble() ?? 0.0,
+      dataStorageBytesHour:
+          (json['data_storage_bytes_hour'] as num?)?.toDouble() ?? 0.0,
+      syntheticStorageSizeBytes:
+          (json['synthetic_storage_size_bytes'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'project_id': projectId,
-      'project_name': projectName,
-      'storage_used_gb': storageUsedGb,
-      'total_queries': totalQueries,
-      'emoji': emoji,
+      'period_start': periodStart,
+      'period_end': periodEnd,
+      'compute_time_seconds': computeTimeSeconds,
+      'active_time_seconds': activeTimeSeconds,
+      'written_data_bytes': writtenDataBytes,
+      'data_transfer_bytes': dataTransferBytes,
+      'data_storage_bytes_hour': dataStorageBytesHour,
+      'synthetic_storage_size_bytes': syntheticStorageSizeBytes,
     };
   }
 }

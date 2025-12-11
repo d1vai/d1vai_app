@@ -11,17 +11,27 @@ class UsageService {
   /// [months] 月份数，默认 12
   Future<LlmUsageResponse> getLlmUsage([int months = 12]) async {
     return _apiClient.get<LlmUsageResponse>(
-      '/api/llm/usage',
+      '/api/billing/usage',
       fromJsonT: (json) => LlmUsageResponse.fromJson(json),
       queryParams: {'months': months.toString()},
     );
   }
 
-  /// 获取数据库使用量统计
-  Future<DbUsageResponse> getDbUsage() async {
+  /// 获取数据库使用量统计 (Neon consumption API)
+  /// 默认查询最近 30 天，按天聚合
+  Future<DbUsageResponse> getDbUsage({
+    required String fromIso,
+    required String toIso,
+    String granularity = 'daily',
+  }) async {
     return _apiClient.get<DbUsageResponse>(
-      '/api/db/usage',
+      '/api/projects/consumption',
       fromJsonT: (json) => DbUsageResponse.fromJson(json),
+      queryParams: {
+        'from_iso': fromIso,
+        'to_iso': toIso,
+        'granularity': granularity,
+      },
     );
   }
 }

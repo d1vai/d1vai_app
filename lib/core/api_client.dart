@@ -18,12 +18,24 @@ class ApiResponse<T> {
     Map<String, dynamic> json,
     T Function(dynamic)? fromJsonT,
   ) {
+    // Backend has two styles of responses:
+    // 1) Wrapped in { code, msg, data } (legacy BaseResponse)
+    // 2) Raw JSON payload (e.g. /api/billing/usage)
+    if (json.containsKey('code') && json.containsKey('msg')) {
+      return ApiResponse(
+        code: json['code'] ?? -1,
+        msg: json['msg'] ?? 'Unknown error',
+        data: json['data'] != null && fromJsonT != null
+            ? fromJsonT(json['data'])
+            : json['data'],
+      );
+    }
+
+    // Treat raw payloads as successful responses and decode directly.
     return ApiResponse(
-      code: json['code'] ?? -1,
-      msg: json['msg'] ?? 'Unknown error',
-      data: json['data'] != null && fromJsonT != null
-          ? fromJsonT(json['data'])
-          : json['data'],
+      code: 0,
+      msg: 'success',
+      data: fromJsonT != null ? fromJsonT(json) : json as T,
     );
   }
 

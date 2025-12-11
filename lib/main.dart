@@ -10,6 +10,8 @@ import 'providers/theme_provider.dart';
 import 'router/app_router.dart';
 import 'l10n/app_localizations.dart';
 
+final _appRouter = createAppRouter();
+
 void main() {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
@@ -64,7 +66,7 @@ class MyApp extends StatelessWidget {
             ),
             useMaterial3: true,
           ),
-          routerConfig: createAppRouter(context),
+          routerConfig: _appRouter,
         );
       },
     );
