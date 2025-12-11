@@ -18,7 +18,7 @@ class WalletService {
   /// 获取信用卡记录
   Future<List<CreditIssuance>> getCreditIssuances({int limit = 50}) async {
     final response = _apiClient.get<List<dynamic>>(
-      '/api/wallet/credit_issuances',
+      '/api/wallet/credit-issuances',
       queryParams: {'limit': limit.toString()},
     );
 

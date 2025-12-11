@@ -13,6 +13,7 @@ class UsageStats extends StatefulWidget {
 class _UsageStatsState extends State<UsageStats> {
   final UsageService _usageService = UsageService();
   bool _isLoading = true;
+  bool _isLoadingLlm = false;
 
   // Real database usage data (Neon consumption)
   DbUsageResponse? _dbUsage;
@@ -55,12 +56,28 @@ class _UsageStatsState extends State<UsageStats> {
       }
 
       // Load LLM usage from API with selected months
+      await _reloadLlmUsage();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _reloadLlmUsage() async {
+    setState(() {
+      _isLoadingLlm = true;
+    });
+
+    try {
       final llmUsage = await _usageService.getLlmUsage(_selectedMonths);
       setState(() {
         _projectUsage = llmUsage.projects;
       });
     } catch (e) {
-      debugPrint('Failed to load usage stats: $e');
+      debugPrint('Failed to load LLM usage: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -69,11 +86,13 @@ class _UsageStatsState extends State<UsageStats> {
           ),
         );
       }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingLlm = false;
+        });
+      }
     }
-
-    setState(() {
-      _isLoading = false;
-    });
   }
 
   /// Calculate aggregated DB usage across all projects
@@ -162,9 +181,9 @@ class _UsageStatsState extends State<UsageStats> {
           const SizedBox(height: 24),
           _buildSectionHeader('LLM Usage'),
           const SizedBox(height: 12),
-          _buildLLMStatsCard(),
-          const SizedBox(height: 12),
           _buildMonthSelector(),
+          const SizedBox(height: 12),
+          _buildLLMStatsCard(),
           const SizedBox(height: 24),
           _buildSectionHeader('Project Breakdown'),
           const SizedBox(height: 12),
@@ -255,6 +274,24 @@ class _UsageStatsState extends State<UsageStats> {
 
   Widget _buildLLMStatsCard() {
     final usage = _getAggregatedLlmUsage();
+
+    if (_isLoadingLlm) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Card(
       child: Padding(
@@ -380,9 +417,8 @@ class _UsageStatsState extends State<UsageStats> {
                   onTap: () async {
                     setState(() {
                       _selectedMonths = months;
-                      _isLoading = true;
                     });
-                    await _loadUsageStats();
+                    await _reloadLlmUsage();
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
