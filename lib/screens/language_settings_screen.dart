@@ -14,9 +14,7 @@ class LanguageSettingsScreen extends StatelessWidget {
     final locales = LocaleProvider.supportedLocales;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(loc?.translate('language') ?? 'Language'),
-      ),
+      appBar: AppBar(title: Text(loc?.translate('language') ?? 'Language')),
       body: ListView.separated(
         itemCount: locales.length,
         separatorBuilder: (context, index) => const Divider(height: 1),
@@ -28,7 +26,8 @@ class LanguageSettingsScreen extends StatelessWidget {
           final current = localeProvider.locale;
           final isSelected =
               locale.languageCode == current.languageCode &&
-                  (locale.countryCode ?? '') == (current.countryCode ?? '');
+              (locale.scriptCode ?? '') == (current.scriptCode ?? '') &&
+              (locale.countryCode ?? '') == (current.countryCode ?? '');
 
           return ListTile(
             title: Text(name),
@@ -47,4 +46,3 @@ class LanguageSettingsScreen extends StatelessWidget {
     );
   }
 }
-

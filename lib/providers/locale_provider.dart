@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class LocaleProvider extends ChangeNotifier {
   Locale _locale = const Locale('en');
-  
+
   Locale get locale => _locale;
 
   // 语言 key 与 Locale 映射
@@ -11,7 +11,10 @@ class LocaleProvider extends ChangeNotifier {
   static const Map<String, Locale> _localeMap = {
     'en': Locale('en'),
     'zh': Locale('zh'), // 简体中文
-    'zh_Hant': Locale('zh', 'Hant'), // 繁體中文
+    'zh_Hant': Locale.fromSubtags(
+      languageCode: 'zh',
+      scriptCode: 'Hant',
+    ), // 繁體中文
     'ja': Locale('ja'),
     'fr': Locale('fr'),
     'ru': Locale('ru'),
@@ -54,7 +57,7 @@ class LocaleProvider extends ChangeNotifier {
       // 保存默认语言 key
       await prefs.setString('language_code', languageKey);
     }
-    
+
     notifyListeners();
   }
 
@@ -128,12 +131,12 @@ class LocaleProvider extends ChangeNotifier {
     }
 
     return _localeMap.entries
-            .firstWhere(
-              (e) =>
-                  e.value.languageCode == locale.languageCode &&
-                  (e.value.countryCode ?? '') == (locale.countryCode ?? ''),
-              orElse: () => const MapEntry('en', Locale('en')),
-            )
-            .key;
+        .firstWhere(
+          (e) =>
+              e.value.languageCode == locale.languageCode &&
+              (e.value.countryCode ?? '') == (locale.countryCode ?? ''),
+          orElse: () => const MapEntry('en', Locale('en')),
+        )
+        .key;
   }
 }

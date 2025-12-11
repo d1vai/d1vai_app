@@ -43,11 +43,12 @@ class AppLocalizations {
       'login_failed': 'Login failed',
       'code_sent_success': 'Verification code sent successfully',
       'code_sent_to': 'Verification code sent to',
-      'agree_terms': 'By logging in, you agree to our Terms of Service and Privacy Policy',
+      'agree_terms':
+          'By logging in, you agree to our Terms of Service and Privacy Policy',
 
       // Auth - Countdown
       'resend_after': 'Resend after',
-      
+
       // Navigation
       'dashboard': 'Dashboard',
       'community': 'Community',
@@ -55,20 +56,20 @@ class AppLocalizations {
       'settings': 'Settings',
       'profile': 'Profile',
       'pricing': 'Pricing',
-      
+
       // Dashboard
       'welcome': 'Welcome',
       'recent_projects': 'Recent Projects',
       'activity': 'Activity',
       'create_project': 'Create Project',
-      
+
       // Community
       'no_posts_yet': 'No posts yet',
       'be_first_to_share': 'Be the first to share something!',
       'failed_to_load_posts': 'Failed to load posts',
       'retry': 'Retry',
       'just_now': 'Just now',
-      
+
       // Profile
       'edit_profile': 'Edit Profile',
       'save_changes': 'Save Changes',
@@ -79,7 +80,7 @@ class AppLocalizations {
       'basic_information': 'Basic Information',
       'wallet_addresses': 'Wallet Addresses',
       'other': 'Other',
-      
+
       // Settings
       'language': 'Language',
       'appearance': 'Appearance',
@@ -87,7 +88,7 @@ class AppLocalizations {
       'privacy': 'Privacy',
       'about': 'About',
       'contact_support': 'Contact Support',
-      
+
       // Common
       'loading': 'Loading...',
       'error': 'Error',
@@ -135,28 +136,28 @@ class AppLocalizations {
 
       // Auth - Countdown
       'resend_after': '秒后重发',
-      
+
       // Navigation
-      'dashboard': '仪表板',
+      'dashboard': '工作台',
       'community': '社区',
       'docs': '文档',
       'settings': '设置',
-      'profile': '个人资料',
-      'pricing': '定价',
-      
+      'profile': '个人中心',
+      'pricing': '价格方案',
+
       // Dashboard
       'welcome': '欢迎',
-      'recent_projects': '最近项目',
-      'activity': '活动',
-      'create_project': '创建项目',
-      
+      'recent_projects': '近期项目',
+      'activity': '动态',
+      'create_project': '新建项目',
+
       // Community
       'no_posts_yet': '暂无帖子',
       'be_first_to_share': '成为第一个分享的人！',
       'failed_to_load_posts': '加载帖子失败',
       'retry': '重试',
       'just_now': '刚刚',
-      
+
       // Profile
       'edit_profile': '编辑资料',
       'save_changes': '保存更改',
@@ -167,7 +168,7 @@ class AppLocalizations {
       'basic_information': '基本信息',
       'wallet_addresses': '钱包地址',
       'other': '其他',
-      
+
       // Settings
       'language': '语言',
       'appearance': '外观',
@@ -175,7 +176,7 @@ class AppLocalizations {
       'privacy': '隐私',
       'about': '关于',
       'contact_support': '联系支持',
-      
+
       // Common
       'loading': '加载中...',
       'error': '错误',
@@ -225,17 +226,17 @@ class AppLocalizations {
       'resend_after': '秒後重發',
 
       // Navigation
-      'dashboard': '儀表板',
+      'dashboard': '工作台',
       'community': '社群',
-      'docs': '文件',
+      'docs': '文檔',
       'settings': '設定',
-      'profile': '個人資料',
-      'pricing': '定價',
+      'profile': '個人中心',
+      'pricing': '方案價格',
 
       // Dashboard
       'welcome': '歡迎',
-      'recent_projects': '最近的專案',
-      'activity': '活動',
+      'recent_projects': '近期專案',
+      'activity': '動態',
       'create_project': '建立專案',
 
       // Community
@@ -300,18 +301,20 @@ class AppLocalizations {
       'password_required': 'Por favor ingrese la contraseña',
       'verify_code_required': 'Por favor ingrese el código de verificación',
       'email_invalid': 'Por favor ingrese un correo electrónico válido',
-      'verify_code_complete': 'Por favor ingrese el código de verificación completo',
+      'verify_code_complete':
+          'Por favor ingrese el código de verificación completo',
 
       // Auth - Messages
       'login_success': 'Inicio de sesión exitoso',
       'login_failed': 'Error al iniciar sesión',
       'code_sent_success': 'Código enviado exitosamente',
       'code_sent_to': 'Código enviado a',
-      'agree_terms': 'Al iniciar sesión, acepta nuestros Términos de Servicio y Política de Privacidad',
+      'agree_terms':
+          'Al iniciar sesión, acepta nuestros Términos de Servicio y Política de Privacidad',
 
       // Auth - Countdown
       'resend_after': 'Reenviar después de',
-      
+
       // Navigation
       'dashboard': 'Panel',
       'community': 'Comunidad',
@@ -319,20 +322,20 @@ class AppLocalizations {
       'settings': 'Configuración',
       'profile': 'Perfil',
       'pricing': 'Precios',
-      
+
       // Dashboard
       'welcome': 'Bienvenido',
       'recent_projects': 'Proyectos recientes',
       'activity': 'Actividad',
       'create_project': 'Crear proyecto',
-      
+
       // Community
       'no_posts_yet': 'Aún no hay publicaciones',
       'be_first_to_share': '¡Sé el primero en compartir algo!',
       'failed_to_load_posts': 'Error al cargar publicaciones',
       'retry': 'Reintentar',
       'just_now': 'Justo ahora',
-      
+
       // Profile
       'edit_profile': 'Editar perfil',
       'save_changes': 'Guardar cambios',
@@ -343,7 +346,7 @@ class AppLocalizations {
       'basic_information': 'Información básica',
       'wallet_addresses': 'Direcciones de billetera',
       'other': 'Otro',
-      
+
       // Settings
       'language': 'Idioma',
       'appearance': 'Apariencia',
@@ -351,7 +354,7 @@ class AppLocalizations {
       'privacy': 'Privacidad',
       'about': 'Acerca de',
       'contact_support': 'Contactar soporte',
-      
+
       // Common
       'loading': 'Cargando...',
       'error': 'Error',
@@ -395,11 +398,12 @@ class AppLocalizations {
       'login_failed': 'فشل في تسجيل الدخول',
       'code_sent_success': 'تم إرسال الرمز بنجاح',
       'code_sent_to': 'تم الإرسال إلى',
-      'agree_terms': 'بتسجيل الدخول، فإنك توافق على شروط الخدمة وسياسة الخصوصية',
+      'agree_terms':
+          'بتسجيل الدخول، فإنك توافق على شروط الخدمة وسياسة الخصوصية',
 
       // Auth - Countdown
       'resend_after': 'إعادة الإرسال بعد',
-      
+
       // Navigation
       'dashboard': 'لوحة التحكم',
       'community': 'المجتمع',
@@ -407,20 +411,20 @@ class AppLocalizations {
       'settings': 'الإعدادات',
       'profile': 'الملف الشخصي',
       'pricing': 'التسعير',
-      
+
       // Dashboard
       'welcome': 'مرحباً',
       'recent_projects': 'المشاريع الأخيرة',
       'activity': 'النشاط',
       'create_project': 'إنشاء مشروع',
-      
+
       // Community
       'no_posts_yet': 'لا توجد منشورات بعد',
       'be_first_to_share': 'كن أول من يشارك شيئاً!',
       'failed_to_load_posts': 'فشل تحميل المنشورات',
       'retry': 'إعادة المحاولة',
       'just_now': 'الآن',
-      
+
       // Profile
       'edit_profile': 'تعديل الملف الشخصي',
       'save_changes': 'حفظ التغييرات',
@@ -431,7 +435,7 @@ class AppLocalizations {
       'basic_information': 'المعلومات الأساسية',
       'wallet_addresses': 'عناوين المحفظة',
       'other': 'أخرى',
-      
+
       // Settings
       'language': 'اللغة',
       'appearance': 'المظهر',
@@ -439,7 +443,7 @@ class AppLocalizations {
       'privacy': 'الخصوصية',
       'about': 'حول',
       'contact_support': 'اتصل بالدعم',
-      
+
       // Common
       'loading': 'جاري التحميل...',
       'error': 'خطأ',
@@ -571,11 +575,12 @@ class AppLocalizations {
       'login_failed': 'Échec de la connexion',
       'code_sent_success': 'Code envoyé avec succès',
       'code_sent_to': 'Code envoyé à',
-      'agree_terms': 'En vous connectant, vous acceptez nos Conditions de Service et notre Politique de Confidentialité',
+      'agree_terms':
+          'En vous connectant, vous acceptez nos Conditions de Service et notre Politique de Confidentialité',
 
       // Auth - Countdown
       'resend_after': 'Renvoyer après',
-      
+
       // Navigation
       'dashboard': 'Tableau de bord',
       'community': 'Communauté',
@@ -583,20 +588,20 @@ class AppLocalizations {
       'settings': 'Paramètres',
       'profile': 'Profil',
       'pricing': 'Tarification',
-      
+
       // Dashboard
       'welcome': 'Bienvenue',
       'recent_projects': 'Projets récents',
       'activity': 'Activité',
       'create_project': 'Créer un projet',
-      
+
       // Community
       'no_posts_yet': 'Pas encore de publications',
       'be_first_to_share': 'Soyez le premier à partager quelque chose!',
       'failed_to_load_posts': 'Échec du chargement des publications',
       'retry': 'Réessayer',
       'just_now': 'À l\'instant',
-      
+
       // Profile
       'edit_profile': 'Modifier le profil',
       'save_changes': 'Enregistrer les modifications',
@@ -607,7 +612,7 @@ class AppLocalizations {
       'basic_information': 'Informations de base',
       'wallet_addresses': 'Adresses de portefeuille',
       'other': 'Autre',
-      
+
       // Settings
       'language': 'Langue',
       'appearance': 'Apparence',
@@ -615,7 +620,7 @@ class AppLocalizations {
       'privacy': 'Confidentialité',
       'about': 'À propos',
       'contact_support': 'Contacter le support',
-      
+
       // Common
       'loading': 'Chargement...',
       'error': 'Erreur',
@@ -651,7 +656,8 @@ class AppLocalizations {
       'email_required': 'Пожалуйста, введите адрес электронной почты',
       'password_required': 'Пожалуйста, введите пароль',
       'verify_code_required': 'Пожалуйста, введите код подтверждения',
-      'email_invalid': 'Пожалуйста, введите действительный адрес электронной почты',
+      'email_invalid':
+          'Пожалуйста, введите действительный адрес электронной почты',
       'verify_code_complete': 'Пожалуйста, введите полный код подтверждения',
 
       // Auth - Messages
@@ -659,11 +665,12 @@ class AppLocalizations {
       'login_failed': 'Ошибка входа',
       'code_sent_success': 'Код успешно отправлен',
       'code_sent_to': 'Код отправлен на',
-      'agree_terms': 'Входя в систему, вы соглашаетесь с нашими Условиями обслуживания и Политикой конфиденциальности',
+      'agree_terms':
+          'Входя в систему, вы соглашаетесь с нашими Условиями обслуживания и Политикой конфиденциальности',
 
       // Auth - Countdown
       'resend_after': 'Повторить через',
-      
+
       // Navigation
       'dashboard': 'Панель управления',
       'community': 'Сообщество',
@@ -671,20 +678,20 @@ class AppLocalizations {
       'settings': 'Настройки',
       'profile': 'Профиль',
       'pricing': 'Цены',
-      
+
       // Dashboard
       'welcome': 'Добро пожаловать',
       'recent_projects': 'Недавние проекты',
       'activity': 'Активность',
       'create_project': 'Создать проект',
-      
+
       // Community
       'no_posts_yet': 'Пока нет публикаций',
       'be_first_to_share': 'Будьте первым, кто поделится чем-то!',
       'failed_to_load_posts': 'Не удалось загрузить публикации',
       'retry': 'Повторить',
       'just_now': 'Только что',
-      
+
       // Profile
       'edit_profile': 'Редактировать профиль',
       'save_changes': 'Сохранить изменения',
@@ -695,7 +702,7 @@ class AppLocalizations {
       'basic_information': 'Основная информация',
       'wallet_addresses': 'Адреса кошельков',
       'other': 'Другое',
-      
+
       // Settings
       'language': 'Язык',
       'appearance': 'Внешний вид',
@@ -703,7 +710,7 @@ class AppLocalizations {
       'privacy': 'Конфиденциальность',
       'about': 'О программе',
       'contact_support': 'Связаться с поддержкой',
-      
+
       // Common
       'loading': 'Загрузка...',
       'error': 'Ошибка',
@@ -748,7 +755,16 @@ class _AppLocalizationsDelegate
   @override
   bool isSupported(Locale locale) {
     final localeKey = AppLocalizations._localeKeyFromLocale(locale);
-    return ['en', 'zh', 'zh_Hant', 'es', 'ar', 'ja', 'fr', 'ru'].contains(localeKey);
+    return [
+      'en',
+      'zh',
+      'zh_Hant',
+      'es',
+      'ar',
+      'ja',
+      'fr',
+      'ru',
+    ].contains(localeKey);
   }
 
   @override
