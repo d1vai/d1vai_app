@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 enum ButtonVariant {
   defaultVariant,
@@ -9,15 +10,10 @@ enum ButtonVariant {
   link,
 }
 
-enum ButtonSize {
-  defaultSize,
-  sm,
-  lg,
-  icon,
-}
+enum ButtonSize { defaultSize, sm, lg, icon }
 
 /// Button Widget - A flexible button component with multiple variants
-class Button extends StatelessWidget {
+class Button extends StatefulWidget {
   final Widget? child;
   final String? text;
   final ButtonVariant variant;
@@ -42,6 +38,7 @@ class Button extends StatelessWidget {
   final double? width;
   final double? height;
   final TextStyle? textStyle;
+  final bool enableFeedback; // New: Enable haptic feedback
 
   const Button({
     super.key,
@@ -69,10 +66,62 @@ class Button extends StatelessWidget {
     this.width,
     this.height,
     this.textStyle,
+    this.enableFeedback = true,
   }) : assert(
-          child != null || text != null,
-          'Button must have either child or text',
-        );
+         child != null || text != null,
+         'Button must have either child or text',
+       );
+
+  @override
+  State<Button> createState() => _ButtonState();
+}
+
+class _ButtonState extends State<Button> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+      lowerBound: 0.0,
+      upperBound: 0.05, // Scale down by 5%
+    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.95,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleTapDown(TapDownDetails details) {
+    if (!widget.disabled) {
+      _controller.forward();
+      if (widget.enableFeedback) {
+        // Use light impact for button press
+        HapticFeedback.lightImpact();
+      }
+    }
+  }
+
+  void _handleTapUp(TapUpDetails details) {
+    if (!widget.disabled) {
+      _controller.reverse();
+    }
+  }
+
+  void _handleTapCancel() {
+    if (!widget.disabled) {
+      _controller.reverse();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,27 +130,27 @@ class Button extends StatelessWidget {
 
     final effectivePadding = _getPadding();
     final effectiveColors = _getColors(colorScheme);
-    final effectiveBorderRadius = borderRadius ?? 8.0;
-    final effectiveElevation = elevation ?? _getElevation();
+    final effectiveBorderRadius = widget.borderRadius ?? 8.0;
+    final effectiveElevation = widget.elevation ?? _getElevation();
     final effectiveTextStyle =
-        textStyle ?? _getTextStyle(theme, effectiveColors.foreground);
+        widget.textStyle ?? _getTextStyle(theme, effectiveColors.foreground);
 
     Widget buttonChild;
 
-    if (child != null) {
-      buttonChild = child!;
+    if (widget.child != null) {
+      buttonChild = widget.child!;
     } else {
       final widgets = <Widget>[];
 
-      if (icon != null) {
-        widgets.add(icon!);
+      if (widget.icon != null) {
+        widgets.add(widget.icon!);
       }
 
-      if (icon != null && text != null) {
-        widgets.add(SizedBox(width: iconSpacing));
+      if (widget.icon != null && widget.text != null) {
+        widgets.add(SizedBox(width: widget.iconSpacing));
       }
 
-      if (text != null) {
+      if (widget.text != null) {
         widgets.add(
           Flexible(
             fit: FlexFit.tight,
@@ -109,7 +158,7 @@ class Button extends StatelessWidget {
               fit: BoxFit.scaleDown,
               alignment: Alignment.center,
               child: Text(
-                text!,
+                widget.text!,
                 textAlign: TextAlign.center,
                 softWrap: false,
                 overflow: TextOverflow.ellipsis,
@@ -119,153 +168,174 @@ class Button extends StatelessWidget {
         );
       }
 
-      if (text != null && suffixIcon != null) {
-        widgets.add(SizedBox(width: iconSpacing));
-        widgets.add(suffixIcon!);
+      if (widget.text != null && widget.suffixIcon != null) {
+        widgets.add(SizedBox(width: widget.iconSpacing));
+        widgets.add(widget.suffixIcon!);
       }
 
-      if (widgets.length == 1 && icon != null && text == null) {
+      if (widgets.length == 1 && widget.icon != null && widget.text == null) {
         buttonChild = widgets.first;
       } else {
         buttonChild = Row(
           mainAxisSize: MainAxisSize.max,
-          mainAxisAlignment: iconAlignment,
+          mainAxisAlignment: widget.iconAlignment,
           children: widgets,
         );
       }
     }
 
-    return SizedBox(
-      width: width,
-      height: height ?? _getHeight(),
-      child: ElevatedButton(
-        onPressed: disabled ? null : onPressed,
-        onLongPress: disabled ? null : onLongPress,
-        style: ButtonStyle(
-          backgroundColor: WidgetStateProperty.all(
-            disabled
-                ? effectiveColors.disabledBackground
-                : effectiveColors.background,
-          ),
-          foregroundColor: WidgetStateProperty.all(
-            disabled
-                ? effectiveColors.disabledForeground
-                : effectiveColors.foreground,
-          ),
-          overlayColor: WidgetStateProperty.resolveWith<Color>((states) {
-            if (states.contains(WidgetState.pressed)) {
-              return effectiveColors.foreground.withValues(alpha: 0.1);
-            } else if (states.contains(WidgetState.hovered)) {
-              return effectiveColors.foreground.withValues(alpha: 0.08);
-            }
-            return Colors.transparent;
-          }),
-          elevation: WidgetStateProperty.all(effectiveElevation),
-          padding: WidgetStateProperty.all(effectivePadding),
-          shape: WidgetStateProperty.all(
-            RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(effectiveBorderRadius),
-              side: borderColor != null || borderWidth != null
-                  ? BorderSide(
-                      color: disabled
-                          ? effectiveColors.disabledBorder
-                          : effectiveColors.border,
-                      width: borderWidth ?? 1.0,
-                    )
-                  : BorderSide.none,
+    return GestureDetector(
+      onTapDown: _handleTapDown,
+      onTapUp: _handleTapUp,
+      onTapCancel: _handleTapCancel,
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: SizedBox(
+          width: widget.width,
+          height: widget.height ?? _getHeight(),
+          child: ElevatedButton(
+            onPressed: widget.disabled
+                ? null
+                : () {
+                    if (widget.enableFeedback) {
+                      HapticFeedback.selectionClick();
+                    }
+                    widget.onPressed?.call();
+                  },
+            onLongPress: widget.disabled ? null : widget.onLongPress,
+            style: ButtonStyle(
+              backgroundColor: WidgetStateProperty.all(
+                widget.disabled
+                    ? effectiveColors.disabledBackground
+                    : effectiveColors.background,
+              ),
+              foregroundColor: WidgetStateProperty.all(
+                widget.disabled
+                    ? effectiveColors.disabledForeground
+                    : effectiveColors.foreground,
+              ),
+              overlayColor: WidgetStateProperty.resolveWith<Color>((states) {
+                if (states.contains(WidgetState.pressed)) {
+                  return effectiveColors.foreground.withValues(alpha: 0.1);
+                } else if (states.contains(WidgetState.hovered)) {
+                  return effectiveColors.foreground.withValues(alpha: 0.08);
+                }
+                return Colors.transparent;
+              }),
+              elevation: WidgetStateProperty.all(effectiveElevation),
+              padding: WidgetStateProperty.all(effectivePadding),
+              shape: WidgetStateProperty.all(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(effectiveBorderRadius),
+                  side: widget.borderColor != null || widget.borderWidth != null
+                      ? BorderSide(
+                          color: widget.disabled
+                              ? effectiveColors.disabledBorder
+                              : effectiveColors.border,
+                          width: widget.borderWidth ?? 1.0,
+                        )
+                      : BorderSide.none,
+                ),
+              ),
+              textStyle: WidgetStateProperty.all(effectiveTextStyle),
             ),
+            child: buttonChild,
           ),
-          textStyle: WidgetStateProperty.all(effectiveTextStyle),
         ),
-        child: buttonChild,
       ),
     );
   }
 
   ButtonColors _getColors(ColorScheme colorScheme) {
-    switch (variant) {
+    switch (widget.variant) {
       case ButtonVariant.defaultVariant:
         return ButtonColors(
-          background:
-              backgroundColor ?? colorScheme.primary,
-          foreground:
-              foregroundColor ?? colorScheme.onPrimary,
-          border: borderColor ?? Colors.transparent,
+          background: widget.backgroundColor ?? colorScheme.primary,
+          foreground: widget.foregroundColor ?? colorScheme.onPrimary,
+          border: widget.borderColor ?? Colors.transparent,
           disabledBackground:
-              disabledBackgroundColor ?? colorScheme.onSurface.withValues(alpha: 0.12),
+              widget.disabledBackgroundColor ??
+              colorScheme.onSurface.withValues(alpha: 0.12),
           disabledForeground:
-              disabledForegroundColor ?? colorScheme.onSurface.withValues(alpha: 0.38),
+              widget.disabledForegroundColor ??
+              colorScheme.onSurface.withValues(alpha: 0.38),
           disabledBorder:
-              borderColor ?? colorScheme.onSurface.withValues(alpha: 0.12),
+              widget.borderColor ??
+              colorScheme.onSurface.withValues(alpha: 0.12),
         );
       case ButtonVariant.destructive:
         return ButtonColors(
-          background:
-              backgroundColor ?? colorScheme.error,
-          foreground:
-              foregroundColor ?? colorScheme.onError,
-          border: borderColor ?? Colors.transparent,
+          background: widget.backgroundColor ?? colorScheme.error,
+          foreground: widget.foregroundColor ?? colorScheme.onError,
+          border: widget.borderColor ?? Colors.transparent,
           disabledBackground:
-              disabledBackgroundColor ?? colorScheme.onSurface.withValues(alpha: 0.12),
+              widget.disabledBackgroundColor ??
+              colorScheme.onSurface.withValues(alpha: 0.12),
           disabledForeground:
-              disabledForegroundColor ?? colorScheme.onSurface.withValues(alpha: 0.38),
+              widget.disabledForegroundColor ??
+              colorScheme.onSurface.withValues(alpha: 0.38),
           disabledBorder:
-              borderColor ?? colorScheme.onSurface.withValues(alpha: 0.12),
+              widget.borderColor ??
+              colorScheme.onSurface.withValues(alpha: 0.12),
         );
       case ButtonVariant.outline:
         return ButtonColors(
-          background: backgroundColor ?? colorScheme.surface,
-          foreground:
-              foregroundColor ?? colorScheme.onSurface,
-          border: borderColor ?? colorScheme.outline,
+          background: widget.backgroundColor ?? colorScheme.surface,
+          foreground: widget.foregroundColor ?? colorScheme.onSurface,
+          border: widget.borderColor ?? colorScheme.outline,
           disabledBackground:
-              disabledBackgroundColor ?? colorScheme.surface,
+              widget.disabledBackgroundColor ?? colorScheme.surface,
           disabledForeground:
-              disabledForegroundColor ?? colorScheme.onSurface.withValues(alpha: 0.38),
+              widget.disabledForegroundColor ??
+              colorScheme.onSurface.withValues(alpha: 0.38),
           disabledBorder:
-              borderColor ?? colorScheme.onSurface.withValues(alpha: 0.12),
+              widget.borderColor ??
+              colorScheme.onSurface.withValues(alpha: 0.12),
         );
       case ButtonVariant.secondary:
         return ButtonColors(
-          background:
-              backgroundColor ?? colorScheme.secondary,
-          foreground:
-              foregroundColor ?? colorScheme.onSecondary,
-          border: borderColor ?? Colors.transparent,
+          background: widget.backgroundColor ?? colorScheme.secondary,
+          foreground: widget.foregroundColor ?? colorScheme.onSecondary,
+          border: widget.borderColor ?? Colors.transparent,
           disabledBackground:
-              disabledBackgroundColor ?? colorScheme.onSurface.withValues(alpha: 0.12),
+              widget.disabledBackgroundColor ??
+              colorScheme.onSurface.withValues(alpha: 0.12),
           disabledForeground:
-              disabledForegroundColor ?? colorScheme.onSurface.withValues(alpha: 0.38),
+              widget.disabledForegroundColor ??
+              colorScheme.onSurface.withValues(alpha: 0.38),
           disabledBorder:
-              borderColor ?? colorScheme.onSurface.withValues(alpha: 0.12),
+              widget.borderColor ??
+              colorScheme.onSurface.withValues(alpha: 0.12),
         );
       case ButtonVariant.ghost:
         return ButtonColors(
-          background: backgroundColor ?? Colors.transparent,
-          foreground:
-              foregroundColor ?? colorScheme.onSurface,
-          border: borderColor ?? Colors.transparent,
-          disabledBackground: disabledBackgroundColor ?? Colors.transparent,
+          background: widget.backgroundColor ?? Colors.transparent,
+          foreground: widget.foregroundColor ?? colorScheme.onSurface,
+          border: widget.borderColor ?? Colors.transparent,
+          disabledBackground:
+              widget.disabledBackgroundColor ?? Colors.transparent,
           disabledForeground:
-              disabledForegroundColor ?? colorScheme.onSurface.withValues(alpha: 0.38),
-          disabledBorder: borderColor ?? Colors.transparent,
+              widget.disabledForegroundColor ??
+              colorScheme.onSurface.withValues(alpha: 0.38),
+          disabledBorder: widget.borderColor ?? Colors.transparent,
         );
       case ButtonVariant.link:
         return ButtonColors(
-          background: backgroundColor ?? Colors.transparent,
-          foreground:
-              foregroundColor ?? colorScheme.primary,
-          border: borderColor ?? Colors.transparent,
-          disabledBackground: disabledBackgroundColor ?? Colors.transparent,
+          background: widget.backgroundColor ?? Colors.transparent,
+          foreground: widget.foregroundColor ?? colorScheme.primary,
+          border: widget.borderColor ?? Colors.transparent,
+          disabledBackground:
+              widget.disabledBackgroundColor ?? Colors.transparent,
           disabledForeground:
-              disabledForegroundColor ?? colorScheme.onSurface.withValues(alpha: 0.38),
-          disabledBorder: borderColor ?? Colors.transparent,
+              widget.disabledForegroundColor ??
+              colorScheme.onSurface.withValues(alpha: 0.38),
+          disabledBorder: widget.borderColor ?? Colors.transparent,
         );
     }
   }
 
   double _getHeight() {
-    switch (size) {
+    switch (widget.size) {
       case ButtonSize.defaultSize:
         return 40.0;
       case ButtonSize.sm:
@@ -278,47 +348,48 @@ class Button extends StatelessWidget {
   }
 
   EdgeInsetsGeometry _getPadding() {
-    switch (size) {
+    switch (widget.size) {
       case ButtonSize.defaultSize:
-        return padding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8);
+        return widget.padding ??
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 8);
       case ButtonSize.sm:
-        return padding ?? const EdgeInsets.symmetric(horizontal: 12, vertical: 6);
+        return widget.padding ??
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 6);
       case ButtonSize.lg:
-        return padding ?? const EdgeInsets.symmetric(horizontal: 32, vertical: 12);
+        return widget.padding ??
+            const EdgeInsets.symmetric(horizontal: 32, vertical: 12);
       case ButtonSize.icon:
-        return padding ?? EdgeInsets.zero;
+        return widget.padding ?? EdgeInsets.zero;
     }
   }
 
   double _getElevation() {
-    if (variant == ButtonVariant.outline ||
-        variant == ButtonVariant.ghost ||
-        variant == ButtonVariant.link) {
+    if (widget.variant == ButtonVariant.outline ||
+        widget.variant == ButtonVariant.ghost ||
+        widget.variant == ButtonVariant.link) {
       return 0.0;
     }
-    switch (size) {
+    switch (widget.size) {
       case ButtonSize.defaultSize:
-        return elevation ?? 2.0;
+        return widget.elevation ?? 2.0;
       case ButtonSize.sm:
-        return elevation ?? 1.0;
+        return widget.elevation ?? 1.0;
       case ButtonSize.lg:
-        return elevation ?? 4.0;
+        return widget.elevation ?? 4.0;
       case ButtonSize.icon:
-        return elevation ?? 2.0;
+        return widget.elevation ?? 2.0;
     }
   }
 
   TextStyle _getTextStyle(ThemeData theme, Color color) {
-    final baseStyle = theme.textTheme.labelLarge?.copyWith(
+    final baseStyle =
+        theme.textTheme.labelLarge?.copyWith(
           color: color,
           fontWeight: FontWeight.w600,
         ) ??
-        TextStyle(
-          color: color,
-          fontWeight: FontWeight.w600,
-        );
+        TextStyle(color: color, fontWeight: FontWeight.w600);
 
-    switch (size) {
+    switch (widget.size) {
       case ButtonSize.defaultSize:
         return baseStyle;
       case ButtonSize.sm:

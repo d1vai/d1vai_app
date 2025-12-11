@@ -9,6 +9,7 @@ import 'providers/profile_provider.dart';
 import 'providers/theme_provider.dart';
 import 'router/app_router.dart';
 import 'l10n/app_localizations.dart';
+import 'core/theme/app_theme.dart';
 
 final _appRouter = createAppRouter();
 
@@ -55,17 +56,8 @@ class MyApp extends StatelessWidget {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-            useMaterial3: true,
-          ),
-          darkTheme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: Colors.deepPurple,
-              brightness: Brightness.dark,
-            ),
-            useMaterial3: true,
-          ),
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
           routerConfig: _appRouter,
         );
       },

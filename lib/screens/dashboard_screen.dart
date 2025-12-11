@@ -9,6 +9,7 @@ import '../models/user.dart';
 import '../models/project.dart';
 import '../widgets/create_project_dialog.dart';
 import '../widgets/card.dart';
+import '../core/theme/app_colors.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -17,21 +18,32 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen>
+    with SingleTickerProviderStateMixin {
   bool _isLoading = true;
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   List<UserProject> _searchResults = [];
 
+  late AnimationController _animationController;
+
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+
     // 加载项目数据
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
     });
     Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _animationController.forward();
+      }
     });
   }
 
@@ -42,6 +54,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   void dispose() {
+    _animationController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -227,7 +240,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            _buildProjectList(context, projectProvider, isSearchResults: _isSearching && _searchController.text.isNotEmpty),
+            _buildProjectList(
+              context,
+              projectProvider,
+              isSearchResults:
+                  _isSearching && _searchController.text.isNotEmpty,
+            ),
             const SizedBox(height: 80), // Bottom padding for FAB
           ],
         ),
@@ -244,7 +262,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             'Total',
             stats['total'].toString(),
             Icons.folder,
-            Colors.blue,
+            AppColors.info,
           ),
         ),
         const SizedBox(width: 12),
@@ -253,7 +271,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             'Active',
             stats['active'].toString(),
             Icons.play_circle_outline,
-            Colors.green,
+            AppColors.success,
           ),
         ),
         const SizedBox(width: 12),
@@ -262,7 +280,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             'Archived',
             stats['archived'].toString(),
             Icons.archive,
-            Colors.orange,
+            AppColors.warning,
           ),
         ),
       ],
@@ -281,6 +299,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       label: label,
       icon: icon,
       valueColor: color,
+      glass: true,
     );
   }
 
@@ -299,71 +318,71 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 16),
             Expanded(
               child: LineChart(
-              LineChartData(
-                gridData: FlGridData(show: false),
-                titlesData: FlTitlesData(
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  topTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        const titles = [
-                          'Mon',
-                          'Tue',
-                          'Wed',
-                          'Thu',
-                          'Fri',
-                          'Sat',
-                          'Sun',
-                        ];
-                        if (value.toInt() >= 0 &&
-                            value.toInt() < titles.length) {
-                          return Text(
-                            titles[value.toInt()],
-                            style: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 12,
-                            ),
-                          );
-                        }
-                        return const Text('');
-                      },
-                      interval: 1,
+                LineChartData(
+                  gridData: FlGridData(show: false),
+                  titlesData: FlTitlesData(
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    topTitles: AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (value, meta) {
+                          const titles = [
+                            'Mon',
+                            'Tue',
+                            'Wed',
+                            'Thu',
+                            'Fri',
+                            'Sat',
+                            'Sun',
+                          ];
+                          if (value.toInt() >= 0 &&
+                              value.toInt() < titles.length) {
+                            return Text(
+                              titles[value.toInt()],
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                              ),
+                            );
+                          }
+                          return const Text('');
+                        },
+                        interval: 1,
+                      ),
                     ),
                   ),
+                  borderData: FlBorderData(show: false),
+                  minX: 0,
+                  maxX: 6,
+                  minY: 0,
+                  maxY: (stats['total'] ?? 5).toDouble() + 2,
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: _generateActivitySpots(stats['total'] ?? 0),
+                      isCurved: true,
+                      color: AppColors.primaryBrand,
+                      barWidth: 4,
+                      isStrokeCapRound: true,
+                      dotData: FlDotData(show: false),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        color: AppColors.primaryBrand.withValues(alpha: 0.1),
+                      ),
+                    ),
+                  ],
                 ),
-                borderData: FlBorderData(show: false),
-                minX: 0,
-                maxX: 6,
-                minY: 0,
-                maxY: (stats['total'] ?? 5).toDouble() + 2,
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: _generateActivitySpots(stats['total'] ?? 0),
-                    isCurved: true,
-                    color: Colors.deepPurple,
-                    barWidth: 4,
-                    isStrokeCapRound: true,
-                    dotData: FlDotData(show: false),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      color: Colors.deepPurple.withValues(alpha: 0.1),
-                    ),
-                  ),
-                ],
               ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
@@ -408,82 +427,112 @@ class _DashboardScreenState extends State<DashboardScreen> {
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final project = projects[index];
-        return CustomCard(
-          child: InkWell(
-            onTap: () => context.push('/projects/${project.id}'),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer,  // ← Theme-aware color
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    project.emoji ?? '🚀',
-                    style: const TextStyle(fontSize: 36),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        project.projectName,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+        return AnimatedBuilder(
+          animation: _animationController,
+          builder: (context, child) {
+            final intervalStart = index * 0.1;
+            final intervalEnd = (intervalStart + 0.4).clamp(0.0, 1.0);
+
+            final animation = CurvedAnimation(
+              parent: _animationController,
+              curve: Interval(
+                intervalStart,
+                intervalEnd,
+                curve: Curves.easeOut,
+              ),
+            );
+
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, 0.2),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: child,
+              ),
+            );
+          },
+          child: CustomCard(
+            child: InkWell(
+              onTap: () => context.push('/projects/${project.id}'),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        project.projectDescription,
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurfaceVariant,  // ← Theme-aware color
-                          fontSize: 14,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      child: Text(
+                        project.emoji ?? '🚀',
+                        style: const TextStyle(fontSize: 36),
+                        textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 4),
-                      Row(
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(
-                            Icons.circle,
-                            size: 8,
-                            color: project.status == 'active'
-                                ? Colors.green
-                                : project.status == 'archived'
-                                ? Colors.orange
-                                : Colors.grey,
-                          ),
-                          const SizedBox(width: 4),
                           Text(
-                            project.status,
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurfaceVariant,  // ← Theme-aware color
-                              fontSize: 12,
+                            project.projectName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            project.projectDescription,
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurfaceVariant,
+                              fontSize: 14,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.circle,
+                                size: 8,
+                                color: project.status == 'active'
+                                    ? AppColors.success
+                                    : project.status == 'archived'
+                                    ? AppColors.warning
+                                    : AppColors.textSecondaryLight,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                project.status,
+                                style: TextStyle(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _formatTimeAgo(project.updatedAt),
+                      style: TextStyle(
+                        color: Colors.grey.shade400,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  _formatTimeAgo(project.updatedAt),
-                  style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
-                ),
-              ],
-            ),
+              ),
             ),
           ),
         );
@@ -527,7 +576,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   /// 构建错误状态
-  Widget _buildErrorState(BuildContext context, ProjectProvider projectProvider) {
+  Widget _buildErrorState(
+    BuildContext context,
+    ProjectProvider projectProvider,
+  ) {
     return RefreshIndicator(
       onRefresh: () async => await projectProvider.refresh(),
       child: SingleChildScrollView(
@@ -536,24 +588,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.red.shade400,
-            ),
+            Icon(Icons.error_outline, size: 64, color: Colors.red.shade400),
             const SizedBox(height: 16),
             Text(
               'Failed to load projects',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: Colors.red.shade400,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(color: Colors.red.shade400),
             ),
             const SizedBox(height: 16),
             Text(
               projectProvider.error ?? 'Unknown error',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.grey.shade600,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -564,7 +612,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               icon: const Icon(Icons.refresh),
               label: const Text('Retry'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,
+                backgroundColor: AppColors.primaryBrand,
                 foregroundColor: Colors.white,
               ),
             ),

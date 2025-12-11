@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui' as ui;
 
 /// CustomCard Widget - A flexible container for grouping related content
 class CustomCard extends StatelessWidget {
@@ -11,6 +12,7 @@ class CustomCard extends StatelessWidget {
   final EdgeInsetsGeometry? margin;
   final List<BoxShadow>? shadow;
   final Clip? clipBehavior;
+  final bool glass; // New: Glassmorphism support
 
   const CustomCard({
     super.key,
@@ -23,43 +25,74 @@ class CustomCard extends StatelessWidget {
     this.margin,
     this.shadow,
     this.clipBehavior,
+    this.glass = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final effectiveBackgroundColor = backgroundColor ??
-        theme.colorScheme.surface;
-    final effectiveBorderColor = borderColor ??
-        theme.colorScheme.outline.withValues(alpha: 0.12);
-    final effectiveElevation = elevation ?? 1.0;
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Glass defaults
+    final glassColor = isDark
+        ? const Color(0xCC1E293B) // Slate 800 with opacity
+        : const Color(0xCCFFFFFF); // White with opacity
+    final glassBorder = isDark
+        ? const Color(0x1AFFFFFF) // White 10%
+        : const Color(0xFFE2E8F0); // Slate 200
+
+    final effectiveBackgroundColor =
+        backgroundColor ?? (glass ? glassColor : theme.colorScheme.surface);
+
+    final effectiveBorderColor =
+        borderColor ??
+        (glass
+            ? glassBorder
+            : theme.colorScheme.outline.withValues(alpha: 0.12));
+
+    final effectiveElevation = elevation ?? (glass ? 0.0 : 1.0);
     final effectiveBorderRadius = borderRadius ?? 12.0;
+
+    Widget cardContent = Container(
+      decoration: BoxDecoration(
+        color: effectiveBackgroundColor,
+        borderRadius: BorderRadius.circular(effectiveBorderRadius),
+        border: Border.all(color: effectiveBorderColor, width: 1.0),
+        boxShadow:
+            shadow ??
+            (glass
+                ? [] // No shadow for glass by default, or maybe a subtle glow?
+                : [
+                    BoxShadow(
+                      color: theme.shadowColor.withValues(alpha: 0.05),
+                      blurRadius: effectiveElevation * 2,
+                      offset: Offset(0, effectiveElevation),
+                    ),
+                  ]),
+      ),
+      child: child != null
+          ? Padding(padding: padding ?? EdgeInsets.zero, child: child)
+          : null,
+    );
+
+    if (glass) {
+      return Container(
+        margin: margin,
+        clipBehavior: Clip.hardEdge,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(effectiveBorderRadius),
+        ),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: cardContent,
+        ),
+      );
+    }
 
     return Container(
       margin: margin,
       clipBehavior: clipBehavior ?? Clip.none,
-      decoration: BoxDecoration(
-        color: effectiveBackgroundColor,
-        borderRadius: BorderRadius.circular(effectiveBorderRadius),
-        border: Border.all(
-          color: effectiveBorderColor,
-          width: 1.0,
-        ),
-        boxShadow: shadow ??
-            [
-              BoxShadow(
-                color: theme.shadowColor.withValues(alpha: 0.05),
-                blurRadius: effectiveElevation * 2,
-                offset: Offset(0, effectiveElevation),
-              ),
-            ],
-      ),
-      child: child != null
-          ? Padding(
-              padding: padding ?? EdgeInsets.zero,
-              child: child,
-            )
-          : null,
+      child: cardContent,
     );
   }
 }
@@ -101,32 +134,20 @@ class CardTitle extends StatelessWidget {
   final TextStyle? style;
   final EdgeInsetsGeometry? padding;
 
-  const CardTitle({
-    super.key,
-    this.child,
-    this.text,
-    this.style,
-    this.padding,
-  });
+  const CardTitle({super.key, this.child, this.text, this.style, this.padding});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final effectiveStyle = style ??
-        theme.textTheme.titleLarge?.copyWith(
-          fontWeight: FontWeight.bold,
-        ) ??
-        const TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-        );
+    final effectiveStyle =
+        style ??
+        theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold) ??
+        const TextStyle(fontSize: 20, fontWeight: FontWeight.bold);
 
-    final content = child ??
+    final content =
+        child ??
         (text != null
-            ? Text(
-                text!,
-                style: effectiveStyle,
-              )
+            ? Text(text!, style: effectiveStyle)
             : const SizedBox.shrink());
 
     return Padding(
@@ -154,7 +175,8 @@ class CardDescription extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final effectiveStyle = style ??
+    final effectiveStyle =
+        style ??
         theme.textTheme.bodyMedium?.copyWith(
           color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
         ) ??
@@ -163,12 +185,10 @@ class CardDescription extends StatelessWidget {
           color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
         );
 
-    final content = child ??
+    final content =
+        child ??
         (text != null
-            ? Text(
-                text!,
-                style: effectiveStyle,
-              )
+            ? Text(text!, style: effectiveStyle)
             : const SizedBox.shrink());
 
     return Padding(
@@ -183,11 +203,7 @@ class CardContent extends StatelessWidget {
   final Widget? child;
   final EdgeInsetsGeometry? padding;
 
-  const CardContent({
-    super.key,
-    this.child,
-    this.padding,
-  });
+  const CardContent({super.key, this.child, this.padding});
 
   @override
   Widget build(BuildContext context) {
@@ -217,18 +233,17 @@ class CardFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final content = child ??
+    final content =
+        child ??
         (children != null && children!.isNotEmpty
             ? Row(
                 mainAxisAlignment: mainAxisAlignment,
                 crossAxisAlignment: crossAxisAlignment,
-                children: children!
-                    .expand((child) => [
-                          child,
-                          const SizedBox(width: 8),
-                        ])
-                    .toList()
-                  ..removeLast(),
+                children:
+                    children!
+                        .expand((child) => [child, const SizedBox(width: 8)])
+                        .toList()
+                      ..removeLast(),
               )
             : const SizedBox.shrink());
 
@@ -263,28 +278,17 @@ class SimpleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final effectiveBackgroundColor = backgroundColor ??
-        theme.colorScheme.surface;
+    final effectiveBackgroundColor =
+        backgroundColor ?? theme.colorScheme.surface;
 
     Widget cardContent = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (title != null)
-          CardTitle(
-            text: title,
-          ),
-        if (description != null)
-          CardDescription(
-            text: description,
-          ),
-        if (content != null)
-          CardContent(
-            child: content,
-          ),
+        if (title != null) CardTitle(text: title),
+        if (description != null) CardDescription(text: description),
+        if (content != null) CardContent(child: content),
         if (footer != null && footer!.toString().isNotEmpty)
-          CardFooter(
-            child: footer,
-          ),
+          CardFooter(child: footer),
       ],
     );
 
@@ -336,11 +340,7 @@ class InfoCard extends StatelessWidget {
           if (icon != null)
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Icon(
-                icon,
-                color: effectiveIconColor,
-                size: 24,
-              ),
+              child: Icon(icon, color: effectiveIconColor, size: 24),
             ),
           CardTitle(text: title),
           CardDescription(text: message),
@@ -356,6 +356,7 @@ class StatCard extends StatelessWidget {
   final String value;
   final IconData? icon;
   final Color? valueColor;
+  final bool glass;
 
   const StatCard({
     super.key,
@@ -363,6 +364,7 @@ class StatCard extends StatelessWidget {
     required this.value,
     this.icon,
     this.valueColor,
+    this.glass = false,
   });
 
   @override
@@ -371,17 +373,14 @@ class StatCard extends StatelessWidget {
     final effectiveValueColor = valueColor ?? theme.colorScheme.primary;
 
     return CustomCard(
+      glass: glass,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (icon != null)
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Icon(
-                icon,
-                color: theme.colorScheme.primary,
-                size: 28,
-              ),
+              child: Icon(icon, color: theme.colorScheme.primary, size: 28),
             ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -398,7 +397,9 @@ class StatCard extends StatelessWidget {
             child: Text(
               label,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                color: theme.textTheme.bodyMedium?.color?.withValues(
+                  alpha: 0.7,
+                ),
               ),
             ),
           ),
