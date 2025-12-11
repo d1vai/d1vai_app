@@ -3,6 +3,7 @@ import '../core/api_client.dart';
 import '../models/user.dart';
 import '../models/project.dart';
 import '../models/community_post.dart';
+
 import '../models/deployment.dart';
 import 'cache_service.dart';
 
@@ -11,8 +12,8 @@ class D1vaiService {
   final CacheService _cacheService;
 
   D1vaiService({ApiClient? apiClient})
-      : _apiClient = apiClient ?? ApiClient(),
-        _cacheService = CacheService();
+    : _apiClient = apiClient ?? ApiClient(),
+      _cacheService = CacheService();
 
   // ============================================
   // Auth Methods - 认证相关方法
@@ -24,8 +25,8 @@ class D1vaiService {
     // 验证码发送成功后返回 data: null，所以我们检查状态即可
     await _apiClient.postWithQuery<void>(
       '/api/user/verify-code',
-      {'email': email},  // 查询参数
-      {'email': email},  // 请求体（与 web 端一致）
+      {'email': email}, // 查询参数
+      {'email': email}, // 请求体（与 web 端一致）
     );
     // 返回空 map 表示发送成功（与 Web 端逻辑一致）
     return {};
@@ -33,26 +34,18 @@ class D1vaiService {
 
   /// 使用验证码登录
   Future<String?> postUserLogin(String email, String pin) async {
-    return _apiClient.post<String?>(
-      '/api/user/login',
-      {
-        'email': email,
-        'verify_code': pin,
-      },
-      fromJsonT: (json) => json as String?,
-    );
+    return _apiClient.post<String?>('/api/user/login', {
+      'email': email,
+      'verify_code': pin,
+    }, fromJsonT: (json) => json as String?);
   }
 
   /// 使用密码登录
   Future<String?> postUserPasswordLogin(String email, String password) async {
-    return _apiClient.post<String?>(
-      '/api/user/login/password',
-      {
-        'email': email,
-        'password': password,
-      },
-      fromJsonT: (json) => json as String?,
-    );
+    return _apiClient.post<String?>('/api/user/login/password', {
+      'email': email,
+      'password': password,
+    }, fromJsonT: (json) => json as String?);
   }
 
   /// 接受邀请码
@@ -68,15 +61,11 @@ class D1vaiService {
     String message,
     List<int> signature,
   ) async {
-    return _apiClient.post<String?>(
-      '/api/solana/login',
-      {
-        'wallet_address': walletAddress,
-        'message': message,
-        'signature': signature,
-      },
-      fromJsonT: (json) => json as String?,
-    );
+    return _apiClient.post<String?>('/api/solana/login', {
+      'wallet_address': walletAddress,
+      'message': message,
+      'signature': signature,
+    }, fromJsonT: (json) => json as String?);
   }
 
   /// Sui 钱包登录
@@ -85,15 +74,11 @@ class D1vaiService {
     String message,
     String signature,
   ) async {
-    return _apiClient.post<String?>(
-      '/api/sui/login',
-      {
-        'wallet_address': walletAddress,
-        'message': message,
-        'signature': signature,
-      },
-      fromJsonT: (json) => json as String?,
-    );
+    return _apiClient.post<String?>('/api/sui/login', {
+      'wallet_address': walletAddress,
+      'message': message,
+      'signature': signature,
+    }, fromJsonT: (json) => json as String?);
   }
 
   // ============================================
@@ -119,7 +104,9 @@ class D1vaiService {
 
   /// 设置 onboarding 状态
   Future<void> postUserOnboardedSet(bool isOnboarded) async {
-    return _apiClient.post<void>('/api/user/onboarded/set', {'value': isOnboarded});
+    return _apiClient.post<void>('/api/user/onboarded/set', {
+      'value': isOnboarded,
+    });
   }
 
   /// 上传头像
@@ -137,40 +124,40 @@ class D1vaiService {
   }
 
   /// 确认绑定邮箱
-  Future<void> postUserBindEmailConfirm(
-    String email,
-    String code,
-  ) async {
-    return _apiClient.post<void>(
-      '/api/user/bind-email/confirm',
-      {'email': email, 'code': code},
-    );
+  Future<void> postUserBindEmailConfirm(String email, String code) async {
+    return _apiClient.post<void>('/api/user/bind-email/confirm', {
+      'email': email,
+      'code': code,
+    });
   }
 
   /// 发送更改邮箱验证码
   Future<void> postUserChangeEmailSend(String newEmail) async {
-    return _apiClient.post<void>('/api/user/email/change/send', {'new_email': newEmail});
+    return _apiClient.post<void>('/api/user/email/change/send', {
+      'new_email': newEmail,
+    });
   }
 
   /// 确认更改邮箱
-  Future<void> postUserChangeEmailConfirm(
-    String newEmail,
-    String code,
-  ) async {
-    return _apiClient.post<void>(
-      '/api/user/email/change/confirm',
-      {'new_email': newEmail, 'code': code},
-    );
+  Future<void> postUserChangeEmailConfirm(String newEmail, String code) async {
+    return _apiClient.post<void>('/api/user/email/change/confirm', {
+      'new_email': newEmail,
+      'code': code,
+    });
   }
 
   /// 设置密码
   Future<void> postUserPasswordSet(String password) async {
-    return _apiClient.post<void>('/api/user/password/set', {'password': password});
+    return _apiClient.post<void>('/api/user/password/set', {
+      'password': password,
+    });
   }
 
   /// 发送忘记密码验证码
   Future<void> postUserPasswordForgotSend(String email) async {
-    return _apiClient.post<void>('/api/user/password/forgot/send', {'email': email});
+    return _apiClient.post<void>('/api/user/password/forgot/send', {
+      'email': email,
+    });
   }
 
   /// 重置密码
@@ -223,13 +210,12 @@ class D1vaiService {
     const cacheKey = 'user_projects';
 
     // 尝试从缓存获取
-    final cachedData = await _cacheService.get<List<UserProject>>(
-      cacheKey,
-      (json) {
-        final data = json['data'] as List;
-        return data.map((e) => UserProject.fromJson(e)).toList();
-      },
-    );
+    final cachedData = await _cacheService.get<List<UserProject>>(cacheKey, (
+      json,
+    ) {
+      final data = json['data'] as List;
+      return data.map((e) => UserProject.fromJson(e)).toList();
+    });
 
     if (cachedData != null) {
       return cachedData;
@@ -262,7 +248,9 @@ class D1vaiService {
   }
 
   /// 创建新项目
-  Future<CreateProjectResponse> createUserProject(Map<String, dynamic> data) async {
+  Future<CreateProjectResponse> createUserProject(
+    Map<String, dynamic> data,
+  ) async {
     return _apiClient.post<CreateProjectResponse>(
       '/api/projects',
       data,
@@ -277,10 +265,7 @@ class D1vaiService {
   }) async {
     return _apiClient.post<Map<String, dynamic>>(
       '/api/projects/ai/generate-meta',
-      {
-        'prompt': prompt,
-        if (maxDescLen != null) 'max_desc_len': maxDescLen,
-      },
+      {'prompt': prompt, if (maxDescLen != null) 'max_desc_len': maxDescLen},
     );
   }
 
@@ -304,7 +289,10 @@ class D1vaiService {
     String projectId,
     Map<String, dynamic> data,
   ) async {
-    return _apiClient.put<Map<String, dynamic>>('/api/projects/$projectId', data);
+    return _apiClient.put<Map<String, dynamic>>(
+      '/api/projects/$projectId',
+      data,
+    );
   }
 
   /// 转让项目
@@ -319,10 +307,10 @@ class D1vaiService {
   }
 
   /// 获取数据库信息
-  Future<Map<String, dynamic>> getDatabaseByProjectId(
-    String id,
-  ) async {
-    return _apiClient.get<Map<String, dynamic>>('/api/user_project/database/$id');
+  Future<Map<String, dynamic>> getDatabaseByProjectId(String id) async {
+    return _apiClient.get<Map<String, dynamic>>(
+      '/api/user_project/database/$id',
+    );
   }
 
   // ============================================
@@ -341,9 +329,7 @@ class D1vaiService {
   }
 
   /// 取消项目会话
-  Future<Map<String, dynamic>> cancelProjectSession(
-    String sessionId,
-  ) async {
+  Future<Map<String, dynamic>> cancelProjectSession(String sessionId) async {
     return _apiClient.post<Map<String, dynamic>>(
       '/api/projects/sessions/$sessionId/cancel',
       {},
@@ -439,18 +425,18 @@ class D1vaiService {
     int offset = 0,
     String? searchQuery,
   }) async {
-    final cacheKey = 'community_posts_${limit}_$offset${searchQuery != null ? '_q_$searchQuery' : ''}';
+    final cacheKey =
+        'community_posts_${limit}_$offset${searchQuery != null ? '_q_$searchQuery' : ''}';
 
     // 尝试从缓存获取
-    final cachedData = await _cacheService.get<List<CommunityPost>>(
-      cacheKey,
-      (json) {
-        final data = json['data'] as List;
-        return data
-            .map((e) => CommunityPost.fromJson(e as Map<String, dynamic>))
-            .toList();
-      },
-    );
+    final cachedData = await _cacheService.get<List<CommunityPost>>(cacheKey, (
+      json,
+    ) {
+      final data = json['data'] as List;
+      return data
+          .map((e) => CommunityPost.fromJson(e as Map<String, dynamic>))
+          .toList();
+    });
 
     if (cachedData != null) {
       return cachedData;
@@ -498,6 +484,14 @@ class D1vaiService {
   Future<dynamic> postCommunityUnpublish(int postId) async {
     await _cacheService.clearCommunityCache();
     return _apiClient.post('/api/community/posts/$postId/unpublish', {});
+  }
+
+  /// 获取社区帖子详情
+  Future<CommunityPost> getCommunityPostDetails(int postId) async {
+    return _apiClient.get<CommunityPost>(
+      '/api/community/posts/$postId',
+      fromJsonT: (json) => CommunityPost.fromJson(json),
+    );
   }
 
   // ============================================
@@ -581,16 +575,14 @@ class D1vaiService {
     List<String>? primaryKey,
     String? branch,
   }) async {
-    return _apiClient.post<Map<String, dynamic>>(
-      '/api/projects/$projectId/db/tables',
-      {
-        'table_name': tableName,
-        'columns': columns,
-        if (schemaName != null) 'schema_name': schemaName,
-        if (primaryKey != null) 'primary_key': primaryKey,
-        if (branch != null) 'branch': branch,
-      },
-    );
+    return _apiClient
+        .post<Map<String, dynamic>>('/api/projects/$projectId/db/tables', {
+          'table_name': tableName,
+          'columns': columns,
+          if (schemaName != null) 'schema_name': schemaName,
+          if (primaryKey != null) 'primary_key': primaryKey,
+          if (branch != null) 'branch': branch,
+        });
   }
 
   /// 重命名数据库表
@@ -603,10 +595,7 @@ class D1vaiService {
   }) async {
     return _apiClient.post<Map<String, dynamic>>(
       '/api/projects/$projectId/db/tables/$schema/$table/rename',
-      {
-        'new_table_name': newTableName,
-        if (branch != null) 'branch': branch,
-      },
+      {'new_table_name': newTableName, if (branch != null) 'branch': branch},
     );
   }
 
@@ -620,10 +609,7 @@ class D1vaiService {
   }) async {
     return _apiClient.post<Map<String, dynamic>>(
       '/api/projects/$projectId/db/tables/$schema/$table/rows',
-      {
-        'values': values,
-        if (branch != null) 'branch': branch,
-      },
+      {'values': values, if (branch != null) 'branch': branch},
     );
   }
 
@@ -638,11 +624,7 @@ class D1vaiService {
   }) async {
     return _apiClient.patch<Map<String, dynamic>>(
       '/api/projects/$projectId/db/tables/$schema/$table/rows',
-      {
-        'where': where,
-        'values': values,
-        if (branch != null) 'branch': branch,
-      },
+      {'where': where, 'values': values, if (branch != null) 'branch': branch},
     );
   }
 
@@ -656,16 +638,15 @@ class D1vaiService {
   }) async {
     return _apiClient.post<Map<String, dynamic>>(
       '/api/projects/$projectId/db/tables/$schema/$table/rows/delete',
-      {
-        'where': where,
-        if (branch != null) 'branch': branch,
-      },
+      {'where': where, if (branch != null) 'branch': branch},
     );
   }
 
   /// 获取项目数据库分支列表
   Future<List<dynamic>> getProjectDbBranches(String projectId) async {
-    return _apiClient.get<List<dynamic>>('/api/projects/$projectId/db/branches');
+    return _apiClient.get<List<dynamic>>(
+      '/api/projects/$projectId/db/branches',
+    );
   }
 
   // ============================================
@@ -786,10 +767,10 @@ class D1vaiService {
         final prefix = operator == 'eq'
             ? ''
             : operator == 'neq'
-                ? '!'
-                : operator == 'c'
-                    ? '~'
-                    : '!~';
+            ? '!'
+            : operator == 'c'
+            ? '~'
+            : '!~';
         queryParams[key] = '$prefix$value';
       }
     }
@@ -821,10 +802,10 @@ class D1vaiService {
         final prefix = operator == 'eq'
             ? ''
             : operator == 'neq'
-                ? '!'
-                : operator == 'c'
-                    ? '~'
-                    : '!~';
+            ? '!'
+            : operator == 'c'
+            ? '~'
+            : '!~';
         queryParams[key] = '$prefix$value';
       }
     }
@@ -855,10 +836,10 @@ class D1vaiService {
         final prefix = operator == 'eq'
             ? ''
             : operator == 'neq'
-                ? '!'
-                : operator == 'c'
-                    ? '~'
-                    : '!~';
+            ? '!'
+            : operator == 'c'
+            ? '~'
+            : '!~';
         queryParams[key] = '$prefix$value';
       }
     }
@@ -890,10 +871,10 @@ class D1vaiService {
         final prefix = operator == 'eq'
             ? ''
             : operator == 'neq'
-                ? '!'
-                : operator == 'c'
-                    ? '~'
-                    : '!~';
+            ? '!'
+            : operator == 'c'
+            ? '~'
+            : '!~';
         queryParams[key] = '$prefix$value';
       }
     }
@@ -924,10 +905,10 @@ class D1vaiService {
         final prefix = operator == 'eq'
             ? ''
             : operator == 'neq'
-                ? '!'
-                : operator == 'c'
-                    ? '~'
-                    : '!~';
+            ? '!'
+            : operator == 'c'
+            ? '~'
+            : '!~';
         queryParams[key] = '$prefix$value';
       }
     }
@@ -959,10 +940,10 @@ class D1vaiService {
         final prefix = operator == 'eq'
             ? ''
             : operator == 'neq'
-                ? '!'
-                : operator == 'c'
-                    ? '~'
-                    : '!~';
+            ? '!'
+            : operator == 'c'
+            ? '~'
+            : '!~';
         queryParams[key] = '$prefix$value';
       }
     }
@@ -986,7 +967,9 @@ class D1vaiService {
 
   /// 获取 GitHub 机器人用户名
   Future<Map<String, dynamic>> getGitHubBotUsername() async {
-    return _apiClient.get<Map<String, dynamic>>('/api/github-import/bot-username');
+    return _apiClient.get<Map<String, dynamic>>(
+      '/api/github-import/bot-username',
+    );
   }
 
   /// 接受 GitHub 仓库邀请
@@ -1010,16 +993,12 @@ class D1vaiService {
   }
 
   /// 从 GitHub 导入项目
-  Future<dynamic> importProjectFromGithub(
-    Map<String, dynamic> payload,
-  ) async {
+  Future<dynamic> importProjectFromGithub(Map<String, dynamic> payload) async {
     return _apiClient.post('/api/projects/import-from-github', payload);
   }
 
   /// 导入公开仓库到组织
-  Future<dynamic> importPublicRepoToOrg(
-    Map<String, dynamic> payload,
-  ) async {
+  Future<dynamic> importPublicRepoToOrg(Map<String, dynamic> payload) async {
     return _apiClient.post('/api/projects/import-public-to-org', payload);
   }
 
@@ -1037,7 +1016,9 @@ class D1vaiService {
 
   /// 获取支付产品列表
   Future<List<dynamic>> getPayProducts(String projectId) async {
-    return _apiClient.get<List<dynamic>>('/api/projects/$projectId/pay/products');
+    return _apiClient.get<List<dynamic>>(
+      '/api/projects/$projectId/pay/products',
+    );
   }
 
   /// 获取支付产品链接
@@ -1111,10 +1092,7 @@ class D1vaiService {
   }
 
   /// 获取支付收入数据
-  Future<List<dynamic>> getPayRevenue(
-    String projectId, {
-    String? days,
-  }) async {
+  Future<List<dynamic>> getPayRevenue(String projectId, {String? days}) async {
     final queryParams = <String, String>{};
     if (days != null) queryParams['days'] = days;
 
@@ -1165,19 +1143,12 @@ class D1vaiService {
   }
 
   /// 删除环境变量
-  Future<void> deleteEnvVar(
-    String projectId,
-    int varId,
-  ) async {
-    await _apiClient.delete(
-      '/api/projects/$projectId/env-vars/$varId',
-    );
+  Future<void> deleteEnvVar(String projectId, int varId) async {
+    await _apiClient.delete('/api/projects/$projectId/env-vars/$varId');
   }
 
   /// 导出环境变量
-  Future<Map<String, dynamic>> exportEnvVars(
-    String projectId,
-  ) async {
+  Future<Map<String, dynamic>> exportEnvVars(String projectId) async {
     return _apiClient.get<Map<String, dynamic>>(
       '/api/projects/$projectId/env-vars/export',
     );
@@ -1195,9 +1166,7 @@ class D1vaiService {
   }
 
   /// 同步环境变量到 Vercel
-  Future<Map<String, dynamic>> syncEnvToVercel(
-    String projectId,
-  ) async {
+  Future<Map<String, dynamic>> syncEnvToVercel(String projectId) async {
     return _apiClient.post<Map<String, dynamic>>(
       '/api/projects/$projectId/env-vars/sync-vercel',
       {},
@@ -1251,7 +1220,8 @@ class D1vaiService {
       deploymentsList = response['data'] as List;
     } else if (response['items'] != null && response['items'] is List) {
       deploymentsList = response['items'] as List;
-    } else if (response['deployments'] != null && response['deployments'] is List) {
+    } else if (response['deployments'] != null &&
+        response['deployments'] is List) {
       deploymentsList = response['deployments'] as List;
     }
 
@@ -1271,9 +1241,7 @@ class D1vaiService {
   }
 
   /// 部署预览版本
-  Future<Map<String, dynamic>> deployProjectPreview(
-    String projectId,
-  ) async {
+  Future<Map<String, dynamic>> deployProjectPreview(String projectId) async {
     return _apiClient.post<Map<String, dynamic>>(
       '/api/deployment/$projectId/preview',
       {},
@@ -1285,10 +1253,7 @@ class D1vaiService {
   // ============================================
 
   /// 获取用户钱包发行记录
-  Future<List<dynamic>> getWalletIssuances({
-    int? limit,
-    String? before,
-  }) async {
+  Future<List<dynamic>> getWalletIssuances({int? limit, String? before}) async {
     final queryParams = <String, String>{};
     if (limit != null) queryParams['limit'] = limit.toString();
     if (before != null) queryParams['before'] = before;
@@ -1339,9 +1304,7 @@ class D1vaiService {
   }
 
   /// 获取 LLM 使用量
-  Future<Map<String, dynamic>> getLlmUsage(
-    int months,
-  ) async {
+  Future<Map<String, dynamic>> getLlmUsage(int months) async {
     return _apiClient.get<Map<String, dynamic>>(
       '/api/billing/usage?months=$months',
     );
@@ -1352,9 +1315,7 @@ class D1vaiService {
   // ============================================
 
   /// 获取图片上传 token
-  Future<Map<String, dynamic>> getImageKitToken(
-    String fileName,
-  ) async {
+  Future<Map<String, dynamic>> getImageKitToken(String fileName) async {
     return _apiClient.get<Map<String, dynamic>>(
       '/api/upload/imagekit/token?file_name=$fileName',
     );
@@ -1365,9 +1326,7 @@ class D1vaiService {
   // ============================================
 
   /// 检查管理员邀请码
-  Future<Map<String, dynamic>> checkAdminInviteCode(
-    String code,
-  ) async {
+  Future<Map<String, dynamic>> checkAdminInviteCode(String code) async {
     return _apiClient.get<Map<String, dynamic>>(
       '/api/invites/admin-code/check?code=$code',
     );
@@ -1419,9 +1378,7 @@ class D1vaiService {
   // ============================================
 
   /// 激活项目数据库
-  Future<Map<String, dynamic>> activateProjectDatabase(
-    String projectId,
-  ) async {
+  Future<Map<String, dynamic>> activateProjectDatabase(String projectId) async {
     return _apiClient.post<Map<String, dynamic>>(
       '/api/projects/$projectId/integrations/activate-database',
       {},
@@ -1470,9 +1427,7 @@ class D1vaiService {
   }
 
   /// 自动审查迁移批准
-  Future<Map<String, dynamic>> migrationAutoReview(
-    String approvalId,
-  ) async {
+  Future<Map<String, dynamic>> migrationAutoReview(String approvalId) async {
     return _apiClient.post<Map<String, dynamic>>(
       '/api/migrations/approvals/$approvalId/auto-review',
       {},
@@ -1480,9 +1435,7 @@ class D1vaiService {
   }
 
   /// 手动批准迁移
-  Future<Map<String, dynamic>> migrationApprove(
-    String approvalId,
-  ) async {
+  Future<Map<String, dynamic>> migrationApprove(String approvalId) async {
     return _apiClient.post<Map<String, dynamic>>(
       '/api/migrations/approvals/$approvalId/approve',
       {},
@@ -1517,9 +1470,7 @@ class D1vaiService {
   }
 
   /// 获取迁移计划详情
-  Future<Map<String, dynamic>> getMigrationPlanDetail(
-    String planId,
-  ) async {
+  Future<Map<String, dynamic>> getMigrationPlanDetail(String planId) async {
     return _apiClient.get<Map<String, dynamic>>(
       '/api/migrations/plans/$planId/detail',
     );

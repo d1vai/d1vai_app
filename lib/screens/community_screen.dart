@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
@@ -6,6 +7,9 @@ import '../services/d1vai_service.dart';
 import '../models/community_post.dart';
 import '../widgets/avatar_image.dart';
 import '../widgets/search_field.dart';
+import '../widgets/snackbar_helper.dart';
+import 'create_post_screen.dart';
+import 'post_detail_screen.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -172,12 +176,17 @@ class _CommunityScreenState extends State<CommunityScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Create post feature coming soon'),
+            onPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CreatePostScreen(),
                 ),
               );
+
+              if (result == true) {
+                _controller.callRefresh();
+              }
             },
           ),
         ],
@@ -265,10 +274,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
             const SizedBox(height: 16),
             Text(
               _searchQuery.isNotEmpty ? 'No results found' : 'No posts yet',
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey.shade600,
-              ),
+              style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
             ),
             const SizedBox(height: 8),
             Text(
@@ -314,14 +320,13 @@ class _CommunityScreenState extends State<CommunityScreen> {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Post detail feature coming soon'),
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PostDetailScreen(post: post),
             ),
           );
         },
@@ -352,11 +357,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       children: [
                         Text(
                           _getAuthorDisplayName(post),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        if (post.author?.email != null && post.author!.email!.isNotEmpty) ...[
+                        if (post.author?.email != null &&
+                            post.author!.email!.isNotEmpty) ...[
                           const SizedBox(height: 2),
                           Text(
                             '@${_getEmailPrefix(post.author!.email)}',
@@ -387,24 +391,36 @@ class _CommunityScreenState extends State<CommunityScreen> {
                             children: [
                               ListTile(
                                 leading: const Icon(Icons.share),
-                                title: const Text('Share'),
-                                onTap: () {
+                                title: const Text('Share (copy link)'),
+                                onTap: () async {
                                   Navigator.pop(context);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Share feature coming soon'),
-                                    ),
+                                  final link =
+                                      'https://www.d1v.ai/c/${post.slug}';
+                                  await Clipboard.setData(
+                                    ClipboardData(text: link),
                                   );
+                                  if (context.mounted) {
+                                    SnackBarHelper.showSuccess(
+                                      context,
+                                      title: 'Copied',
+                                      message: 'Share link copied',
+                                    );
+                                  }
                                 },
                               ),
                               ListTile(
-                                leading: const Icon(Icons.flag, color: Colors.orange),
+                                leading: const Icon(
+                                  Icons.flag,
+                                  color: Colors.orange,
+                                ),
                                 title: const Text('Report'),
                                 onTap: () {
                                   Navigator.pop(context);
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content: Text('Report feature coming soon'),
+                                      content: Text(
+                                        'Report feature coming soon',
+                                      ),
                                     ),
                                   );
                                 },
@@ -472,33 +488,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
               ],
 
               const SizedBox(height: 16),
-
-              // Interaction row
-              Row(
-                children: [
-                  Icon(
-                    post.isLiked ? Icons.favorite : Icons.favorite_border,
-                    size: 20,
-                    color: post.isLiked ? Colors.red : Colors.grey,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${post.likeCount}',
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-                  const SizedBox(width: 16),
-                  const Icon(
-                    Icons.chat_bubble_outline,
-                    size: 20,
-                    color: Colors.grey,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${post.commentCount}',
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-                ],
-              ),
             ],
           ),
         ),
@@ -548,7 +537,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
                               width: double.infinity,
                               height: 14,
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.surfaceContainerHighest,
+                                color:
+                                    theme.colorScheme.surfaceContainerHighest,
                                 borderRadius: BorderRadius.circular(4),
                               ),
                             ),
@@ -557,7 +547,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
                               width: 60,
                               height: 12,
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.surfaceContainerHighest,
+                                color:
+                                    theme.colorScheme.surfaceContainerHighest,
                                 borderRadius: BorderRadius.circular(4),
                               ),
                             ),

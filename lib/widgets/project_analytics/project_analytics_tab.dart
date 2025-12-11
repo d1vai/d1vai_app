@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../models/analytics.dart';
-import '../../services/d1vai_service.dart';
+import '../../services/analytics_service.dart';
+import '../analytics/realtime_chart.dart';
 
 /// 项目详情页 - Analytics Tab
 class ProjectAnalyticsTab extends StatefulWidget {
@@ -19,9 +20,14 @@ class ProjectAnalyticsTab extends StatefulWidget {
 }
 
 class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
+  final AnalyticsService _analyticsService = AnalyticsService();
+  
   AnalyticsSummary? _summary;
+  List<RealtimeMetric> _metrics = [];
+  List<ChartSeries> _chartSeries = [];
   bool _isLoading = false;
   bool _isInitialized = false;
+  TimeRange _timeRange = TimeRange.last24Hours;
 
   @override
   void didChangeDependencies() {
@@ -38,18 +44,26 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
     });
 
     try {
-      final service = D1vaiService();
-      final now = DateTime.now();
-      final data = await service.getProjectAnalyticsSummary(
-        widget.projectId,
-        startDate: now.subtract(const Duration(days: 30)).toIso8601String(),
-        endDate: now.toIso8601String(),
-      );
+      // Load summary and metrics in parallel
+      final results = await Future.wait([
+        _analyticsService.getAnalyticsSummary(
+          projectId: widget.projectId,
+          timeRange: _timeRange,
+        ),
+        _analyticsService.getRealtimeMetrics(
+          projectId: widget.projectId,
+        ),
+      ]);
 
       if (!mounted) return;
 
+      final summary = results[0] as AnalyticsSummary;
+      final metrics = results[1] as List<RealtimeMetric>;
+
       setState(() {
-        _summary = AnalyticsSummary.fromJson(data);
+        _summary = summary;
+        _metrics = metrics;
+        _chartSeries = _createChartSeries(metrics);
         _isLoading = false;
       });
     } catch (e) {
@@ -57,12 +71,33 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       setState(() {
         _isLoading = false;
       });
+      debugPrint('Error loading analytics: $e');
     }
+  }
+
+  List<ChartSeries> _createChartSeries(List<RealtimeMetric> metrics) {
+    final colors = [
+      Colors.blue,
+      Colors.green,
+      Colors.orange,
+      Colors.purple,
+      Colors.red,
+    ];
+
+    return metrics.asMap().entries.map((entry) {
+      final index = entry.key;
+      final metric = entry.value;
+      return ChartSeries(
+        name: metric.name,
+        data: metric.data,
+        color: colors[index % colors.length],
+      );
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
+    if (_isLoading && _summary == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
@@ -82,6 +117,11 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
               'Analytics data will appear here once your project is live',
               style: TextStyle(color: Colors.grey.shade500),
             ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadAnalytics,
+              child: const Text('Retry'),
+            ),
           ],
         ),
       );
@@ -96,6 +136,22 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
         children: [
           _buildPeriodCard(analytics),
           const SizedBox(height: 16),
+          if (_chartSeries.isNotEmpty) ...[
+            RealtimeChart(
+              title: 'Performance Overview',
+              series: _chartSeries,
+              timeRange: _timeRange,
+              height: 250,
+              showLegend: true,
+              onTimeRangeChanged: (range) {
+                setState(() {
+                  _timeRange = range;
+                });
+                _loadAnalytics();
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
           _buildKeyMetricsRow(analytics),
           const SizedBox(height: 16),
           _buildStatusCard(analytics),
@@ -112,14 +168,14 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            Icon(Icons.calendar_today, color: Colors.deepPurple, size: 24),
+            const Icon(Icons.calendar_today, color: Colors.deepPurple, size: 24),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Period: ${analytics.period}',
+                    'Period: ${_timeRange.label}',
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
 import '../models/community.dart';
 import 'avatar_image.dart';
 import 'snackbar_helper.dart';
@@ -9,16 +10,8 @@ import 'snackbar_helper.dart';
 class PostCard extends StatelessWidget {
   final CommunityPost post;
   final VoidCallback? onTap;
-  final VoidCallback? onFavorite;
-  final VoidCallback? onComment;
 
-  const PostCard({
-    super.key,
-    required this.post,
-    this.onTap,
-    this.onFavorite,
-    this.onComment,
-  });
+  const PostCard({super.key, required this.post, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -161,66 +154,6 @@ class PostCard extends StatelessWidget {
                   // 底部操作栏
                   Row(
                     children: [
-                      // 点赞
-                      InkWell(
-                        onTap: onFavorite,
-                        borderRadius: BorderRadius.circular(20),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.favorite_border,
-                                size: 20,
-                                color: Colors.grey.shade600,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Like',
-                                style: TextStyle(
-                                  color: Colors.grey.shade600,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(width: 16),
-
-                      // 评论
-                      InkWell(
-                        onTap: onComment,
-                        borderRadius: BorderRadius.circular(20),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.chat_bubble_outline,
-                                size: 20,
-                                color: Colors.grey.shade600,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Comment',
-                                style: TextStyle(
-                                  color: Colors.grey.shade600,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
                       const Spacer(),
 
                       // 查看链接
@@ -281,7 +214,7 @@ class PostCard extends StatelessWidget {
             children: [
               ListTile(
                 leading: const Icon(Icons.share),
-                title: const Text('Share'),
+                title: const Text('Share (copy link)'),
                 onTap: () {
                   Navigator.pop(context);
                   _sharePost(context);
@@ -311,12 +244,16 @@ class PostCard extends StatelessWidget {
   }
 
   /// 分享帖子
-  void _sharePost(BuildContext context) {
-    SnackBarHelper.showInfo(
-      context,
-      title: 'Coming Soon',
-      message: 'Share functionality coming soon',
-    );
+  void _sharePost(BuildContext context) async {
+    final link = 'https://www.d1v.ai/c/${post.projectId}';
+    await Clipboard.setData(ClipboardData(text: link));
+    if (context.mounted) {
+      SnackBarHelper.showSuccess(
+        context,
+        title: 'Copied',
+        message: 'Share link copied',
+      );
+    }
   }
 
   /// 保存帖子
@@ -347,10 +284,7 @@ class PostCard extends StatelessWidget {
       );
       final url = post.embedUrl!;
       try {
-        await launchUrl(
-          Uri.parse(url),
-          mode: LaunchMode.externalApplication,
-        );
+        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
       } catch (e) {
         if (context.mounted) {
           SnackBarHelper.showError(

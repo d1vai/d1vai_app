@@ -153,11 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final loc = AppLocalizations.of(context);
     final title = loc?.translate('login_failed') ?? '登录失败';
     if (mounted) {
-      SnackBarHelper.showError(
-        context,
-        title: title,
-        message: message,
-      );
+      SnackBarHelper.showError(context, title: title, message: message);
     }
   }
 
@@ -166,11 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final loc = AppLocalizations.of(context);
     final title = loc?.translate('success') ?? '成功';
     if (mounted) {
-      SnackBarHelper.showSuccess(
-        context,
-        title: title,
-        message: message,
-      );
+      SnackBarHelper.showSuccess(context, title: title, message: message);
     }
   }
 
@@ -325,27 +317,28 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 32),
 
                 // 邮箱输入
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: loc?.translate('email_address') ?? '邮箱地址',
-                    hintText: loc?.translate('enter_email') ?? '请输入您的邮箱',
-                    prefixIcon: const Icon(Icons.email_outlined),
-                    border: const OutlineInputBorder(),
+                if (!_isCodeSent)
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      labelText: loc?.translate('email_address') ?? '邮箱地址',
+                      hintText: loc?.translate('enter_email') ?? '请输入您的邮箱',
+                      prefixIcon: const Icon(Icons.email_outlined),
+                      border: const OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return loc?.translate('email_required') ?? '请输入邮箱地址';
+                      }
+                      if (!RegExp(
+                        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                      ).hasMatch(value)) {
+                        return loc?.translate('email_invalid') ?? '请输入有效的邮箱地址';
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return loc?.translate('email_required') ?? '请输入邮箱地址';
-                    }
-                    if (!RegExp(
-                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                    ).hasMatch(value)) {
-                      return loc?.translate('email_invalid') ?? '请输入有效的邮箱地址';
-                    }
-                    return null;
-                  },
-                ),
                 const SizedBox(height: 24),
 
                 // 根据模式显示不同内容
@@ -372,115 +365,168 @@ class _LoginScreenState extends State<LoginScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // 发送验证码按钮 - 始终显示在顶部
-                      Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: TextButton.icon(
-                                onPressed:
-                                    _isSendingCode ||
-                                        (_countdownSeconds < 60 && _isCodeSent)
-                                    ? null
-                                    : _sendCode,
-                                icon: _isSendingCode
-                                    ? const SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                                Colors.deepPurple,
-                                              ),
-                                        ),
-                                      )
-                                    : const Icon(
-                                        Icons.send_outlined,
-                                        size: 18,
-                                        color: Colors.deepPurple,
-                                      ),
-                                label: Text(
-                                  _isSendingCode
-                                      ? loc?.translate('sending') ?? '发送中...'
-                                      : (_countdownSeconds < 60 && _isCodeSent
-                                            ? _countdownText
-                                            : (_isCodeSent
-                                                  ? loc?.translate('resend_code') ?? '重新发送验证码'
-                                                  : loc?.translate('send_code') ?? '发送验证码')),
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.deepPurple,
-                                  ),
-                                ),
-                                style: TextButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 16,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // 验证码输入框 - 只有发送后才显示
-                      if (_isCodeSent) ...[
-                        Text(
-                          loc?.translate('verify_code') ?? '验证码',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.grey,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        OptimizedOtpInput(
-                          count: 6,
-                          onCompleted: _onOtpCompleted,
-                          onChanged: _onOtpChanged,
-                          autoSubmit: true,
-                        ),
-                        const SizedBox(height: 16),
-
-                        // 发送状态提示
+                      if (!_isCodeSent) ...[
+                        // 发送验证码按钮 - 始终显示在顶部
                         Container(
-                          padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.green.shade50,
+                            border: Border.all(color: Colors.grey.shade300),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.green.shade200),
                           ),
                           child: Row(
                             children: [
-                              Icon(
-                                Icons.check_circle_outline,
-                                size: 18,
-                                color: Colors.green.shade700,
-                              ),
-                              const SizedBox(width: 8),
                               Expanded(
-                                child: Text(
-                                  '${loc?.translate('code_sent_to') ?? '验证码已发送至'} ${_emailController.text.trim()}',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.green.shade700,
+                                child: TextButton.icon(
+                                  onPressed:
+                                      _isSendingCode ||
+                                          (_countdownSeconds < 60 &&
+                                              _isCodeSent)
+                                      ? null
+                                      : _sendCode,
+                                  icon: _isSendingCode
+                                      ? const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                  Colors.deepPurple,
+                                                ),
+                                          ),
+                                        )
+                                      : const Icon(
+                                          Icons.send_outlined,
+                                          size: 18,
+                                          color: Colors.deepPurple,
+                                        ),
+                                  label: Text(
+                                    _isSendingCode
+                                        ? loc?.translate('sending') ?? '发送中...'
+                                        : (_countdownSeconds < 60 && _isCodeSent
+                                              ? _countdownText
+                                              : (_isCodeSent
+                                                    ? loc?.translate(
+                                                            'resend_code',
+                                                          ) ??
+                                                          '重新发送验证码'
+                                                    : loc?.translate(
+                                                            'send_code',
+                                                          ) ??
+                                                          '发送验证码')),
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.deepPurple,
+                                    ),
+                                  ),
+                                  style: TextButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
                                   ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 16),
+                      ] else ...[
+                        // 验证码输入框 - 只有发送后才显示
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              '${loc?.translate('code_sent_to') ?? '验证码已发送至'} ${_emailController.text.trim()}',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey.shade600,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 24),
+                            OptimizedOtpInput(
+                              count: 6,
+                              onCompleted: _onOtpCompleted,
+                              onChanged: _onOtpChanged,
+                              autoSubmit: true,
+                            ),
+                            const SizedBox(height: 32),
+
+                            // 验证按钮
+                            ElevatedButton(
+                              onPressed: _isLoading ? null : _loginWithCode,
+                              style: ElevatedButton.styleFrom(
+                                minimumSize: const Size(double.infinity, 56),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                backgroundColor: Colors.deepPurple,
+                                foregroundColor: Colors.white,
+                              ),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Colors.white,
+                                            ),
+                                      ),
+                                    )
+                                  : Text(
+                                      loc?.translate('verify_and_login') ??
+                                          '验证并登录',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // 重新发送/修改邮箱
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                if (_countdownSeconds > 0)
+                                  Text(
+                                    _countdownText,
+                                    style: TextStyle(
+                                      color: Colors.grey.shade500,
+                                    ),
+                                  )
+                                else
+                                  TextButton(
+                                    onPressed: _sendCode,
+                                    child: Text(
+                                      loc?.translate('resend_code') ?? '重新发送',
+                                    ),
+                                  ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  "|",
+                                  style: TextStyle(color: Colors.grey.shade300),
+                                ),
+                                const SizedBox(width: 8),
+                                TextButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _isCodeSent = false;
+                                      _otpCode = '';
+                                    });
+                                  },
+                                  child: Text(
+                                    loc?.translate('change_email') ?? '修改邮箱',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ],
                     ],
                   ),
