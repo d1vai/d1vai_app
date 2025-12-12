@@ -70,9 +70,14 @@ class ProjectChatTabState extends State<ProjectChatTab>
 
     try {
       final service = D1vaiService();
-      final data = await service.listEnvVars(widget.projectId, showValues: false);
+      final data = await service.listEnvVars(
+        widget.projectId,
+        showValues: false,
+      );
       if (!mounted) return;
-      final vars = data.map((e) => EnvVar.fromJson(e as Map<String, dynamic>)).toList();
+      final vars = data
+          .map((e) => EnvVar.fromJson(e as Map<String, dynamic>))
+          .toList();
       setState(() {
         _envVars = List<EnvVar>.from(vars);
         _isLoadingEnvVars = false;
@@ -335,7 +340,10 @@ class ProjectChatTabState extends State<ProjectChatTab>
       return;
     }
 
-    if (type == 'result' || type == 'complete' || type == 'error' || type == 'cancelled') {
+    if (type == 'result' ||
+        type == 'complete' ||
+        type == 'error' ||
+        type == 'cancelled') {
       // Treat these as terminal signals for the current run; don't render as a chat bubble.
       _autoConnectDisabled = true;
       if (mounted) {
@@ -445,7 +453,9 @@ class ProjectChatTabState extends State<ProjectChatTab>
     });
   }
 
-  Future<void> _restoreSessionFromHistory(List<ChatHistoryEntry> history) async {
+  Future<void> _restoreSessionFromHistory(
+    List<ChatHistoryEntry> history,
+  ) async {
     if (!mounted) return;
 
     // If the latest history entry is a completion, don't auto-connect on enter.
@@ -586,57 +596,52 @@ class ProjectChatTabState extends State<ProjectChatTab>
       children: [
         Column(
           children: [
-            // Tab Bar
+            // Top Bar: Tab buttons on left, action icons on right
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.outlineVariant.withValues(alpha: 0.5),
+                    width: 1,
+                  ),
+                ),
+              ),
               child: Row(
                 children: [
+                  // Left: Tab buttons
                   Expanded(
-                    child: _buildChatTabButton(0, 'Preview', Icons.preview),
+                    child: Row(
+                      children: [
+                        _buildChatTabButton(0, 'Preview', Icons.preview),
+                        const SizedBox(width: 8),
+                        _buildChatTabButton(1, 'Code', Icons.code),
+                        const SizedBox(width: 8),
+                        _buildChatTabButton(2, 'Env', Icons.settings),
+                      ],
+                    ),
                   ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: _buildChatTabButton(1, 'Code', Icons.code),
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: _buildChatTabButton(2, 'Env', Icons.settings),
+                  // Right: Action icons
+                  Row(
+                    children: [
+                      _buildActionIconButton(
+                        icon: Icons.restart_alt,
+                        onPressed: _handleRefreshPreview,
+                        tooltip: 'Refresh Preview',
+                      ),
+                      const SizedBox(width: 8),
+                      _buildActionIconButton(
+                        icon: Icons.open_in_new,
+                        onPressed: _handleOpenInNewTab,
+                        tooltip: 'Open in New Tab',
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            const Divider(height: 1),
-            // Action Buttons - Scrollable Icons
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    _buildActionIconButton(
-                      icon: Icons.refresh,
-                      onPressed: _handleRedeploy,
-                      tooltip: 'Redeploy',
-                    ),
-                    const SizedBox(width: 12),
-                    _buildActionIconButton(
-                      icon: Icons.restart_alt,
-                      onPressed: _handleRefreshPreview,
-                      tooltip: 'Refresh Preview',
-                    ),
-                    const SizedBox(width: 12),
-                    _buildActionIconButton(
-                      icon: Icons.open_in_new,
-                      onPressed: _handleOpenInNewTab,
-                      tooltip: 'Open in New Tab',
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const Divider(height: 1),
             // Tab Content
             Expanded(
               child: IndexedStack(
@@ -664,8 +669,8 @@ class ProjectChatTabState extends State<ProjectChatTab>
             statusLabel: _isChatLoading
                 ? 'Sending...'
                 : _isTyping
-                    ? 'Thinking...'
-                    : 'Ready',
+                ? 'Thinking...'
+                : 'Ready',
             isError: false,
             isDone: false,
             isWorking: _isChatLoading,
@@ -704,6 +709,13 @@ class ProjectChatTabState extends State<ProjectChatTab>
                           isLoadingHistory: _isLoadingHistory,
                           scrollController: _chatScrollController,
                           onSendMessage: _sendChatMessage,
+                          onRedeploy: () {
+                            SnackBarHelper.showInfo(
+                              context,
+                              title: 'Redeploy',
+                              message: 'Triggering redeploy...',
+                            );
+                          },
                           onClose: () {
                             setState(() {
                               _showMobileChat = false;
@@ -724,55 +736,52 @@ class ProjectChatTabState extends State<ProjectChatTab>
   Widget _buildChatTabDesktop(BuildContext context) {
     return Column(
       children: [
+        // Top Bar: Tab buttons on left, action icons on right
         Container(
-          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: Theme.of(
+                  context,
+                ).colorScheme.outlineVariant.withValues(alpha: 0.5),
+                width: 1,
+              ),
+            ),
+          ),
           child: Row(
             children: [
+              // Left: Tab buttons
               Expanded(
-                child: _buildChatTabButton(0, 'Preview', Icons.preview),
+                child: Row(
+                  children: [
+                    _buildChatTabButton(0, 'Preview', Icons.preview),
+                    const SizedBox(width: 8),
+                    _buildChatTabButton(1, 'Code', Icons.code),
+                    const SizedBox(width: 8),
+                    _buildChatTabButton(2, 'Env', Icons.settings),
+                  ],
+                ),
               ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: _buildChatTabButton(1, 'Code', Icons.code),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: _buildChatTabButton(2, 'Env', Icons.settings),
+              // Right: Action icons
+              Row(
+                children: [
+                  _buildActionIconButton(
+                    icon: Icons.restart_alt,
+                    onPressed: _handleRefreshPreview,
+                    tooltip: 'Refresh Preview',
+                  ),
+                  const SizedBox(width: 8),
+                  _buildActionIconButton(
+                    icon: Icons.open_in_new,
+                    onPressed: _handleOpenInNewTab,
+                    tooltip: 'Open in New Tab',
+                  ),
+                ],
               ),
             ],
           ),
         ),
-        const Divider(height: 1),
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                _buildActionIconButton(
-                  icon: Icons.refresh,
-                  onPressed: _handleRedeploy,
-                  tooltip: 'Redeploy',
-                ),
-                const SizedBox(width: 12),
-                _buildActionIconButton(
-                  icon: Icons.restart_alt,
-                  onPressed: _handleRefreshPreview,
-                  tooltip: 'Refresh Preview',
-                ),
-                const SizedBox(width: 12),
-                _buildActionIconButton(
-                  icon: Icons.open_in_new,
-                  onPressed: _handleOpenInNewTab,
-                  tooltip: 'Open in New Tab',
-                ),
-              ],
-            ),
-          ),
-        ),
-        const Divider(height: 1),
         Expanded(
           child: IndexedStack(
             index: _currentChatTabIndex,
@@ -818,10 +827,7 @@ class ProjectChatTabState extends State<ProjectChatTab>
             color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
-          Text(
-            'No Preview Available',
-            style: theme.textTheme.titleMedium,
-          ),
+          Text('No Preview Available', style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
           Text(
             'Deploy your project to see a preview',
@@ -837,38 +843,50 @@ class ProjectChatTabState extends State<ProjectChatTab>
   Widget _buildChatTabButton(int index, String label, IconData icon) {
     final isSelected = _currentChatTabIndex == index;
     final theme = Theme.of(context);
-    return ElevatedButton(
-      onPressed: () {
+    return InkWell(
+      onTap: () {
         setState(() {
           _currentChatTabIndex = index;
         });
       },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: isSelected
-            ? theme.colorScheme.primary
-            : theme.colorScheme.surfaceContainerHighest,
-        foregroundColor: isSelected
-            ? theme.colorScheme.onPrimary
-            : theme.colorScheme.onSurfaceVariant,
-        elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        minimumSize: const Size(0, 32),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16),
-          const SizedBox(width: 4),
-          Flexible(
-            child: Text(
-              label,
-              style: const TextStyle(fontSize: 10),
-              overflow: TextOverflow.ellipsis,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? theme.colorScheme.primary.withValues(alpha: 0.12)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: isSelected
+              ? Border.all(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                  width: 1.5,
+                )
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: isSelected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant,
             ),
-          ),
-        ],
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -879,18 +897,27 @@ class ProjectChatTabState extends State<ProjectChatTab>
     required String tooltip,
   }) {
     final theme = Theme.of(context);
-    return SizedBox(
-      width: 40,
-      height: 40,
-      child: IconButton(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 20),
-        tooltip: tooltip,
-        style: IconButton.styleFrom(
-          backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-          foregroundColor: theme.colorScheme.primary,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Icon(
+              icon,
+              size: 20,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       ),
@@ -918,11 +945,7 @@ class ProjectChatTabState extends State<ProjectChatTab>
           ),
           child: Row(
             children: [
-              Icon(
-                Icons.web,
-                size: 20,
-                color: theme.colorScheme.primary,
-              ),
+              Icon(Icons.web, size: 20, color: theme.colorScheme.primary),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -972,9 +995,7 @@ class ProjectChatTabState extends State<ProjectChatTab>
   Widget _buildWebViewContent(String url) {
     return InAppWebView(
       contextMenu: ContextMenu(),
-      initialUrlRequest: URLRequest(
-        url: WebUri(url),
-      ),
+      initialUrlRequest: URLRequest(url: WebUri(url)),
     );
   }
 
@@ -1021,7 +1042,10 @@ class ProjectChatTabState extends State<ProjectChatTab>
           ),
           Card(
             child: ListTile(
-              leading: Icon(Icons.description, color: theme.colorScheme.primary),
+              leading: Icon(
+                Icons.description,
+                color: theme.colorScheme.primary,
+              ),
               title: const Text('README.md'),
               subtitle: const Text('Project documentation'),
               trailing: const Icon(Icons.arrow_forward_ios, size: 14),
@@ -1057,8 +1081,10 @@ class ProjectChatTabState extends State<ProjectChatTab>
             ),
             child: Row(
               children: [
-                Icon(Icons.lightbulb_outline,
-                    color: theme.colorScheme.onPrimaryContainer),
+                Icon(
+                  Icons.lightbulb_outline,
+                  color: theme.colorScheme.onPrimaryContainer,
+                ),
                 const SizedBox(width: 12),
                 const Expanded(
                   child: Text(
@@ -1090,8 +1116,11 @@ class ProjectChatTabState extends State<ProjectChatTab>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.settings,
-                size: 64, color: theme.colorScheme.onSurfaceVariant),
+            Icon(
+              Icons.settings,
+              size: 64,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
             const SizedBox(height: 16),
             const Text(
               'No Environment Variables',
@@ -1100,8 +1129,7 @@ class ProjectChatTabState extends State<ProjectChatTab>
             const SizedBox(height: 8),
             Text(
               'Add environment variables to your project',
-              style:
-                  TextStyle(color: theme.colorScheme.onSurfaceVariant),
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -1123,8 +1151,11 @@ class ProjectChatTabState extends State<ProjectChatTab>
                 color: theme.colorScheme.secondaryContainer,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(Icons.key,
-                  color: theme.colorScheme.onSecondaryContainer, size: 20),
+              child: Icon(
+                Icons.key,
+                color: theme.colorScheme.onSecondaryContainer,
+                size: 20,
+              ),
             ),
             title: Text(envVar.key),
             subtitle: Text(
@@ -1173,14 +1204,6 @@ class ProjectChatTabState extends State<ProjectChatTab>
           ),
         );
       },
-    );
-  }
-
-  void _handleRedeploy() {
-    SnackBarHelper.showInfo(
-      context,
-      title: 'Redeploy',
-      message: 'Triggering redeploy...',
     );
   }
 

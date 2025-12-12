@@ -14,6 +14,7 @@ class ChatBottomSheet extends StatefulWidget {
   final ScrollController? scrollController;
   final Function(String) onSendMessage;
   final VoidCallback? onClose;
+  final VoidCallback? onRedeploy;
 
   const ChatBottomSheet({
     super.key,
@@ -24,6 +25,7 @@ class ChatBottomSheet extends StatefulWidget {
     this.scrollController,
     required this.onSendMessage,
     this.onClose,
+    this.onRedeploy,
   });
 
   @override
@@ -50,9 +52,7 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
       height: MediaQuery.of(context).size.height * 0.7,
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(16),
-        ),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
       ),
       child: Column(
         children: [
@@ -62,9 +62,7 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
             decoration: BoxDecoration(
               color: theme.colorScheme.surface,
               border: Border(
-                bottom: BorderSide(
-                  color: theme.colorScheme.outlineVariant,
-                ),
+                bottom: BorderSide(color: theme.colorScheme.outlineVariant),
               ),
             ),
             child: Row(
@@ -76,6 +74,52 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                   ),
                 ),
                 const Spacer(),
+                // Redeploy button
+                if (widget.onRedeploy != null)
+                  Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withOpacity(0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: widget.onRedeploy,
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.refresh,
+                                size: 16,
+                                color: theme.colorScheme.primary,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Redeploy',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                // Close button
                 IconButton(
                   icon: const Icon(Icons.close),
                   onPressed: widget.onClose,
@@ -90,17 +134,15 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
           Expanded(
             child: widget.messages.isEmpty && !widget.isTyping
                 ? widget.isLoadingHistory
-                    ? _buildLoadingState()
-                    : _buildEmptyState()
+                      ? _buildLoadingState()
+                      : _buildEmptyState()
                 : Column(
                     children: [
                       // Quick actions when no messages
                       if (widget.messages.isEmpty)
                         Padding(
                           padding: const EdgeInsets.all(16),
-                          child: QuickActions(
-                            onSelect: _handleSubmitted,
-                          ),
+                          child: QuickActions(onSelect: _handleSubmitted),
                         ),
                       // Messages
                       Expanded(
@@ -140,10 +182,7 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
               color: theme.colorScheme.primary.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 24.0),
-            Text(
-              'Chat with AI',
-              style: theme.textTheme.headlineSmall,
-            ),
+            Text('Chat with AI', style: theme.textTheme.headlineSmall),
             const SizedBox(height: 12.0),
             Text(
               'Ask me anything about your project,\ncode, or get help with development',
@@ -164,9 +203,7 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
         // Quick actions
         Padding(
           padding: const EdgeInsets.all(16),
-          child: QuickActions(
-            onSelect: _handleSubmitted,
-          ),
+          child: QuickActions(onSelect: _handleSubmitted),
         ),
         // Loading skeleton
         Expanded(
