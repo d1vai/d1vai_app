@@ -14,6 +14,8 @@ import '../widgets/project_deploy/project_deploy_tab.dart';
 import '../widgets/project_github/project_github_tab.dart';
 import '../widgets/project_overview/project_overview_tab.dart';
 import '../widgets/project_payment/project_payment_tab.dart';
+import '../widgets/d1v_tab_bar_view.dart';
+import '../theme/d1v_theme_colors.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   final String projectId;
@@ -51,8 +53,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     _tabController = TabController(length: _tabs.length, vsync: this);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final user =
-          Provider.of<AuthProvider>(context, listen: false).user;
+      final user = Provider.of<AuthProvider>(context, listen: false).user;
       if (user == null) {
         _showLoginRequiredDialog();
       } else {
@@ -68,8 +69,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     });
 
     try {
-      final projectProvider =
-          Provider.of<ProjectProvider>(context, listen: false);
+      final projectProvider = Provider.of<ProjectProvider>(
+        context,
+        listen: false,
+      );
 
       var project = projectProvider.getProjectById(widget.projectId);
       if (project == null) {
@@ -119,9 +122,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     final theme = Theme.of(context);
 
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (_error != null) {
@@ -130,8 +131,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline,
-                  size: 64, color: theme.colorScheme.error),
+              Icon(
+                Icons.error_outline,
+                size: 64,
+                color: theme.colorScheme.error,
+              ),
               const SizedBox(height: 16),
               Text('Error: $_error'),
               const SizedBox(height: 16),
@@ -147,9 +151,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
 
     final project = _project;
     if (project == null) {
-      return const Scaffold(
-        body: Center(child: Text('Project not found')),
-      );
+      return const Scaffold(body: Center(child: Text('Project not found')));
     }
 
     return Scaffold(
@@ -160,13 +162,20 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           child: TabBar(
             controller: _tabController,
             isScrollable: true,
-            labelPadding:
-                const EdgeInsets.symmetric(horizontal: 6),
+            labelPadding: const EdgeInsets.symmetric(horizontal: 6),
             indicatorSize: TabBarIndicatorSize.tab,
             indicator: BoxDecoration(
               borderRadius: BorderRadius.circular(6),
-              color: theme.colorScheme.primaryContainer,
+              color: D1VColors.getFirePurple(
+                context,
+              ).withValues(alpha: 0.2 * 255),
+              border: Border.all(
+                color: D1VColors.getFirePurple(context),
+                width: 2,
+              ),
             ),
+            labelColor: D1VColors.getFirePurple(context),
+            unselectedLabelColor: D1VColors.getInactive(context),
             tabs: _tabs
                 .map(
                   (tab) => Tab(
@@ -180,11 +189,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                           const SizedBox(width: 4),
                           Text(
                             tab.label,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w500,
-                              color: theme
-                                  .colorScheme.onPrimaryContainer,
                             ),
                           ),
                         ],
@@ -196,7 +203,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           ),
         ),
       ),
-      body: TabBarView(
+      body: D1VTabBarView(
         controller: _tabController,
         children: [
           ProjectOverviewTab(project: project),
@@ -205,24 +212,12 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
             projectId: project.id,
             previewUrl: project.latestPreviewUrl,
           ),
-          ProjectDatabaseTab(
-            projectId: project.id,
-            onAskAi: _handleAskAi,
-          ),
+          ProjectDatabaseTab(projectId: project.id, onAskAi: _handleAskAi),
           ProjectApiTab(projectId: project.id),
           const ProjectGithubTab(),
-          ProjectPaymentTab(
-            projectId: project.id,
-            onAskAi: _handleAskAi,
-          ),
-          ProjectDeployTab(
-            project: project,
-            onAskAi: _handleAskAi,
-          ),
-          ProjectAnalyticsTab(
-            projectId: project.id,
-            onAskAi: _handleAskAi,
-          ),
+          ProjectPaymentTab(projectId: project.id, onAskAi: _handleAskAi),
+          ProjectDeployTab(project: project, onAskAi: _handleAskAi),
+          ProjectAnalyticsTab(projectId: project.id, onAskAi: _handleAskAi),
         ],
       ),
     );

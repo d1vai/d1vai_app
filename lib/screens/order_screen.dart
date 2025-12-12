@@ -4,6 +4,7 @@ import '../widgets/order_history.dart';
 import '../widgets/usage_stats.dart';
 import '../widgets/credit_history.dart';
 import '../screens/pricing_screen.dart';
+import '../widgets/d1v_tab_bar_view.dart';
 
 class OrderScreen extends StatefulWidget {
   const OrderScreen({super.key});
@@ -35,20 +36,17 @@ class _OrderScreenState extends State<OrderScreen>
         title: const Text('Orders'),
         elevation: 0,
         backgroundColor: Colors.transparent,
-        bottom: TabBar(
+        bottom: D1VTabBar(
           controller: _tabController,
-          labelColor: Colors.deepPurple,
-          unselectedLabelColor: Colors.grey,
-          indicatorColor: Colors.deepPurple,
           tabs: const [
-            Tab(text: 'Balance'),
-            Tab(text: 'Orders'),
-            Tab(text: 'Usage'),
-            Tab(text: 'Price'),
+            D1VTab(text: 'Balance'),
+            D1VTab(text: 'Orders'),
+            D1VTab(text: 'Usage'),
+            D1VTab(text: 'Price'),
           ],
         ),
       ),
-      body: TabBarView(
+      body: D1VTabBarView(
         controller: _tabController,
         children: const [
           BalanceCard(),
@@ -90,24 +88,18 @@ class _OrdersTabContentState extends State<OrdersTabContent>
       children: [
         Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
-          child: TabBar(
+          child: D1VTabBar(
             controller: _tabController,
-            labelColor: Colors.deepPurple,
-            unselectedLabelColor: Colors.grey,
-            indicatorColor: Colors.deepPurple,
             tabs: const [
-              Tab(text: 'Purchases'),
-              Tab(text: 'Credit History'),
+              D1VTab(text: 'Purchases'),
+              D1VTab(text: 'Credit History'),
             ],
           ),
         ),
         Expanded(
-          child: TabBarView(
+          child: D1VTabBarView(
             controller: _tabController,
-            children: const [
-              OrderHistory(),
-              CreditHistory(),
-            ],
+            children: const [OrderHistory(), CreditHistory()],
           ),
         ),
       ],
