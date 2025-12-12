@@ -16,6 +16,7 @@ import '../widgets/project_overview/project_overview_tab.dart';
 import '../widgets/project_payment/project_payment_tab.dart';
 import '../widgets/d1v_tab_bar_view.dart';
 import '../theme/d1v_theme_colors.dart';
+import 'dart:ui';
 
 class ProjectDetailScreen extends StatefulWidget {
   final String projectId;
@@ -155,53 +156,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     }
 
     return Scaffold(
-      appBar: AppBar(
-        titleSpacing: 0,
-        title: SizedBox(
-          width: double.infinity,
-          child: TabBar(
-            controller: _tabController,
-            isScrollable: true,
-            labelPadding: const EdgeInsets.symmetric(horizontal: 6),
-            indicatorSize: TabBarIndicatorSize.tab,
-            indicator: BoxDecoration(
-              borderRadius: BorderRadius.circular(6),
-              color: D1VColors.getFirePurple(
-                context,
-              ).withValues(alpha: 0.2 * 255),
-              border: Border.all(
-                color: D1VColors.getFirePurple(context),
-                width: 2,
-              ),
-            ),
-            labelColor: D1VColors.getFirePurple(context),
-            unselectedLabelColor: D1VColors.getInactive(context),
-            tabs: _tabs
-                .map(
-                  (tab) => Tab(
-                    height: 40,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(tab.icon, size: 16),
-                          const SizedBox(width: 4),
-                          Text(
-                            tab.label,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                )
-                .toList(),
-          ),
-        ),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: _buildGlassmorphicAppBar(context),
       ),
       body: D1VTabBarView(
         controller: _tabController,
@@ -219,6 +176,113 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           ProjectDeployTab(project: project, onAskAi: _handleAskAi),
           ProjectAnalyticsTab(projectId: project.id, onAskAi: _handleAskAi),
         ],
+      ),
+    );
+  }
+
+  Widget _buildGlassmorphicAppBar(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final gradient = D1VColors.getPrimaryGradient(context);
+    final activeText = D1VColors.getActiveText(context);
+    final inactiveText = D1VColors.getInactiveText(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        boxShadow: isDark ? null : D1VColors.getGlowShadows(context),
+      ),
+      child: ClipRRect(
+        child: Stack(
+          children: [
+            // 渐变背景
+            Container(decoration: BoxDecoration(gradient: gradient)),
+            // 磨砂玻璃层 (Dark Mode)
+            if (isDark)
+              BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: D1VColors.frostedGlassDark.withValues(
+                      alpha: 0.6 * 255,
+                    ),
+                    border: Border(
+                      bottom: BorderSide(
+                        color: D1VColors.shimmerBorderDark.withValues(
+                          alpha: 0.1 * 255,
+                        ),
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            // AppBar 内容
+            AppBar(
+              titleSpacing: 0,
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              foregroundColor: activeText,
+              title: SizedBox(
+                width: double.infinity,
+                child: TabBar(
+                  controller: _tabController,
+                  isScrollable: true,
+                  labelPadding: const EdgeInsets.symmetric(horizontal: 6),
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  indicator: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    gradient: gradient,
+                    boxShadow: isDark
+                        ? null
+                        : [
+                            BoxShadow(
+                              color: D1VColors.glowLight.withValues(
+                                alpha: 0.4 * 255,
+                              ),
+                              blurRadius: 12,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                    border: isDark
+                        ? Border.all(
+                            color: D1VColors.shimmerBorderDark.withValues(
+                              alpha: 0.3 * 255,
+                            ),
+                            width: 1.5,
+                          )
+                        : null,
+                  ),
+                  labelColor: activeText,
+                  unselectedLabelColor: inactiveText,
+                  tabs: _tabs
+                      .map(
+                        (tab) => Tab(
+                          height: 40,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(tab.icon, size: 16),
+                                const SizedBox(width: 4),
+                                Text(
+                                  tab.label,
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -186,8 +186,9 @@ class _D1VTabBarState extends State<D1VTabBar>
 
   @override
   Widget build(BuildContext context) {
-    final firePurple = D1VColors.getFirePurple(context);
-    final inactive = D1VColors.getInactive(context);
+    final activeText = D1VColors.getActiveText(context);
+    final inactiveText = D1VColors.getInactiveText(context);
+    final gradient = D1VColors.getPrimaryGradient(context);
 
     return AnimatedBuilder(
       animation: _breathingController,
@@ -197,16 +198,17 @@ class _D1VTabBarState extends State<D1VTabBar>
           tabs: widget.tabs,
           isScrollable: widget.isScrollable,
           padding: widget.padding,
-          labelColor: widget.labelColor ?? firePurple,
-          unselectedLabelColor: widget.unselectedLabelColor ?? inactive,
+          labelColor: widget.labelColor ?? activeText,
+          unselectedLabelColor: widget.unselectedLabelColor ?? inactiveText,
           labelStyle: widget.labelStyle,
           unselectedLabelStyle: widget.unselectedLabelStyle,
           labelPadding: widget.labelPadding,
           onTap: widget.onTap,
-          indicator: _BreathingTabIndicator(
-            color: firePurple,
+          indicator: _GradientPillIndicator(
+            gradient: gradient,
             scale: _scaleAnimation.value,
             glowRadius: _glowAnimation.value,
+            context: context,
           ),
           indicatorSize: TabBarIndicatorSize.tab,
         );
@@ -215,22 +217,25 @@ class _D1VTabBarState extends State<D1VTabBar>
   }
 }
 
-/// 呼吸指示器
-class _BreathingTabIndicator extends Decoration {
-  final Color color;
+/// 渐变胶囊指示器
+class _GradientPillIndicator extends Decoration {
+  final LinearGradient gradient;
   final double scale;
   final double glowRadius;
+  final BuildContext context;
 
-  const _BreathingTabIndicator({
-    required this.color,
+  const _GradientPillIndicator({
+    required this.gradient,
+    required this.context,
     this.scale = 1.0,
     this.glowRadius = 12.0,
   });
 
   @override
   BoxPainter createBoxPainter([VoidCallback? onChanged]) {
-    return _BreathingTabIndicatorPainter(
-      color: color,
+    return _GradientPillIndicatorPainter(
+      gradient: gradient,
+      context: context,
       scale: scale,
       glowRadius: glowRadius,
       onChanged: onChanged,
@@ -238,17 +243,19 @@ class _BreathingTabIndicator extends Decoration {
   }
 }
 
-/// 呼吸指示器绘制器
-class _BreathingTabIndicatorPainter extends BoxPainter {
-  final Color color;
+/// 渐变胶囊指示器绘制器
+class _GradientPillIndicatorPainter extends BoxPainter {
+  final LinearGradient gradient;
+  final BuildContext context;
   final double scale;
   final double glowRadius;
 
   @override
   final VoidCallback? onChanged;
 
-  _BreathingTabIndicatorPainter({
-    required this.color,
+  _GradientPillIndicatorPainter({
+    required this.gradient,
+    required this.context,
     required this.scale,
     required this.glowRadius,
     this.onChanged,
@@ -259,11 +266,15 @@ class _BreathingTabIndicatorPainter extends BoxPainter {
     final size = configuration.size;
     if (size == null) return;
 
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    // 胶囊形状（pill shape）
     final rect = Rect.fromLTWH(
-      offset.dx,
-      offset.dy + size.height - 3,
-      size.width,
-      3,
+      offset.dx + 4,
+      offset.dy + size.height - 28,
+      size.width - 8,
+      24,
     );
 
     // 计算缩放后的矩形
@@ -274,28 +285,42 @@ class _BreathingTabIndicatorPainter extends BoxPainter {
       height: rect.height * scale,
     );
 
-    // 发光效果（外层阴影）
-    final glowPaint = Paint()
-      ..color = color.withValues(alpha: 0.3 * 255)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, glowRadius);
+    final pillRadius = Radius.circular(scaledRect.height / 2);
 
-    // 主体颜色
-    final mainPaint = Paint()
-      ..color = color
+    // Light Mode: 发光效果
+    if (!isDark) {
+      final glowPaint = Paint()
+        ..color = D1VColors.glowLight.withValues(alpha: 0.4 * 255)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, glowRadius);
+
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(scaledRect, pillRadius),
+        glowPaint,
+      );
+    }
+
+    // 渐变主体
+    final gradientPaint = Paint()
+      ..shader = gradient.createShader(scaledRect)
       ..style = PaintingStyle.fill;
 
-    // 绘制发光层
-    final radius = 1.5;
     canvas.drawRRect(
-      RRect.fromRectAndRadius(scaledRect, Radius.circular(radius)),
-      glowPaint,
+      RRect.fromRectAndRadius(scaledRect, pillRadius),
+      gradientPaint,
     );
 
-    // 绘制主体
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(scaledRect, Radius.circular(radius)),
-      mainPaint,
-    );
+    // Dark Mode: 微光边框
+    if (isDark) {
+      final borderPaint = Paint()
+        ..color = D1VColors.shimmerBorderDark.withValues(alpha: 0.3 * 255)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5;
+
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(scaledRect, pillRadius),
+        borderPaint,
+      );
+    }
   }
 }
 

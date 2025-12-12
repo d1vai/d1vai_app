@@ -5,6 +5,7 @@ import '../widgets/usage_stats.dart';
 import '../widgets/credit_history.dart';
 import '../screens/pricing_screen.dart';
 import '../widgets/d1v_tab_bar_view.dart';
+import '../widgets/d1v_app_bar.dart';
 
 class OrderScreen extends StatefulWidget {
   const OrderScreen({super.key});
@@ -32,19 +33,15 @@ class _OrderScreenState extends State<OrderScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: D1VAppBar(
         title: const Text('Orders'),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        bottom: D1VTabBar(
-          controller: _tabController,
-          tabs: const [
-            D1VTab(text: 'Balance'),
-            D1VTab(text: 'Orders'),
-            D1VTab(text: 'Usage'),
-            D1VTab(text: 'Price'),
-          ],
-        ),
+        controller: _tabController,
+        tabs: const [
+          D1VTab(text: 'Balance'),
+          D1VTab(text: 'Orders'),
+          D1VTab(text: 'Usage'),
+          D1VTab(text: 'Price'),
+        ],
       ),
       body: D1VTabBarView(
         controller: _tabController,

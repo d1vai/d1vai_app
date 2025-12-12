@@ -1,88 +1,161 @@
 import 'package:flutter/material.dart';
 
-/// D1V 主题色彩系统
-/// 火紫色配色方案，支持 Light/Dark Mode
+/// D1V 主题色彩系统 v2
+/// 优雅的渐变色方案，支持 Light/Dark Mode
+/// Light Mode: 温暖橙黄系 + 光晕效果
+/// Dark Mode: 神秘紫黑系 + 磨砂渐变
 class D1VColors {
   D1VColors._();
 
-  // ==================== Light Mode 火紫色系 ====================
+  // ==================== Light Mode 橙黄色系 ====================
 
-  /// 主题火紫色 (Light)
-  static const firePurpleLight = Color(0xFFE91E63);
+  /// 主渐变起点 - 活力橙色 (Light)
+  static const orangeLight = Color(0xFFFF9500);
 
-  /// 强调紫色 (Light)
-  static const accentPurpleLight = Color(0xFF9C27B0);
+  /// 主渐变终点 - 金色黄 (Light)
+  static const goldenYellowLight = Color(0xFFFFD60A);
 
-  /// 非激活状态 (Light)
-  static const inactiveLight = Color(0xFFBDBDBD);
+  /// 光晕色 (Light)
+  static const glowLight = Color(0xFFFFA726);
 
-  /// 背景色 (Light)
-  static const backgroundLight = Color(0xFFFFFFFF);
+  /// 激活文字 (Light)
+  static const activeTextLight = Color(0xFFBF360C);
 
-  // ==================== Dark Mode 火紫色系 ====================
+  /// 非激活文字 (Light)
+  static const inactiveTextLight = Color(0xFFA1887F);
 
-  /// 主题火紫色 (Dark)
-  static const firePurpleDark = Color(0xFFFF4081);
+  /// 背景渐变起点 (Light)
+  static const backgroundStartLight = Color(0xFFFFFBF0);
 
-  /// 强调紫色 (Dark)
-  static const accentPurpleDark = Color(0xFFCE93D8);
+  /// 背景渐变终点 (Light)
+  static const backgroundEndLight = Color(0xFFFFF4E0);
 
-  /// 非激活状态 (Dark)
-  static const inactiveDark = Color(0xFF616161);
+  // ==================== Dark Mode 紫黑色系 ====================
 
-  /// 背景色 (Dark)
-  static const backgroundDark = Color(0xFF121212);
+  /// 主渐变起点 - 深紫黑 (Dark)
+  static const deepPurpleBlackDark = Color(0xFF1A0033);
+
+  /// 主渐变终点 - 丰富紫 (Dark)
+  static const richPurpleDark = Color(0xFF2D1B4E);
+
+  /// 磨砂玻璃背景 (Dark)
+  static const frostedGlassDark = Color(0xFF1F1129);
+
+  /// 激活文字 (Dark)
+  static const activeTextDark = Color(0xFFE1BEE7);
+
+  /// 非激活文字 (Dark)
+  static const inactiveTextDark = Color(0xFF7E57C2);
+
+  /// 边框微光 (Dark)
+  static const shimmerBorderDark = Color(0xFFFFFFFF);
 
   // ==================== 动态获取方法 ====================
 
-  /// 获取火紫色（根据当前主题）
+  /// 获取主渐变（根据当前主题）
+  static LinearGradient getPrimaryGradient(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.light
+        ? const LinearGradient(
+            colors: [orangeLight, goldenYellowLight],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          )
+        : const LinearGradient(
+            colors: [deepPurpleBlackDark, richPurpleDark],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          );
+  }
+
+  /// 获取背景渐变（根据当前主题）
+  static LinearGradient getBackgroundGradient(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.light
+        ? const LinearGradient(
+            colors: [backgroundStartLight, backgroundEndLight],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          )
+        : const LinearGradient(
+            colors: [deepPurpleBlackDark, Color(0xFF0A0014)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          );
+  }
+
+  /// 获取激活文字颜色（根据当前主题）
+  static Color getActiveText(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.light
+        ? activeTextLight
+        : activeTextDark;
+  }
+
+  /// 获取非激活文字颜色（根据当前主题）
+  static Color getInactiveText(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.light
+        ? inactiveTextLight
+        : inactiveTextDark;
+  }
+
+  /// 获取光晕颜色（Light Mode）
+  static Color getGlowColor(BuildContext context) {
+    return glowLight;
+  }
+
+  /// 获取磨砂玻璃颜色（Dark Mode）
+  static Color getFrostedGlassColor(BuildContext context) {
+    return frostedGlassDark;
+  }
+
+  /// 获取边框颜色（根据当前主题）
+  static Color getBorderColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.light
+        ? orangeLight.withValues(alpha: 0.3 * 255)
+        : shimmerBorderDark.withValues(alpha: 0.1 * 255);
+  }
+
+  // ==================== 光晕配置 ====================
+
+  /// 获取光晕阴影列表（Light Mode）
+  static List<BoxShadow> getGlowShadows(
+    BuildContext context, {
+    double intensity = 1.0,
+  }) {
+    if (Theme.of(context).brightness == Brightness.dark) {
+      return [];
+    }
+
+    return [
+      // 外层大光晕
+      BoxShadow(
+        color: glowLight.withValues(alpha: 0.4 * intensity * 255),
+        blurRadius: 30 * intensity,
+        spreadRadius: 8 * intensity,
+      ),
+      // 内层强光晕
+      BoxShadow(
+        color: orangeLight.withValues(alpha: 0.6 * intensity * 255),
+        blurRadius: 15 * intensity,
+        spreadRadius: 2 * intensity,
+      ),
+    ];
+  }
+
+  // ==================== 兼容旧版本（待弃用）====================
+
+  @Deprecated('Use getPrimaryGradient instead')
   static Color getFirePurple(BuildContext context) {
     return Theme.of(context).brightness == Brightness.light
-        ? firePurpleLight
-        : firePurpleDark;
+        ? orangeLight
+        : richPurpleDark;
   }
 
-  /// 获取强调紫色（根据当前主题）
+  @Deprecated('Use getActiveText instead')
   static Color getAccentPurple(BuildContext context) {
-    return Theme.of(context).brightness == Brightness.light
-        ? accentPurpleLight
-        : accentPurpleDark;
+    return getActiveText(context);
   }
 
-  /// 获取非激活颜色（根据当前主题）
+  @Deprecated('Use getInactiveText instead')
   static Color getInactive(BuildContext context) {
-    return Theme.of(context).brightness == Brightness.light
-        ? inactiveLight
-        : inactiveDark;
-  }
-
-  /// 获取背景色（根据当前主题）
-  static Color getBackground(BuildContext context) {
-    return Theme.of(context).brightness == Brightness.light
-        ? backgroundLight
-        : backgroundDark;
-  }
-
-  // ==================== 渐变色 ====================
-
-  /// 火紫色渐变 (Light)
-  static const firePurpleGradientLight = LinearGradient(
-    colors: [firePurpleLight, accentPurpleLight],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
-
-  /// 火紫色渐变 (Dark)
-  static const firePurpleGradientDark = LinearGradient(
-    colors: [firePurpleDark, accentPurpleDark],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
-
-  /// 获取火紫色渐变（根据当前主题）
-  static LinearGradient getFirePurpleGradient(BuildContext context) {
-    return Theme.of(context).brightness == Brightness.light
-        ? firePurpleGradientLight
-        : firePurpleGradientDark;
+    return getInactiveText(context);
   }
 }
