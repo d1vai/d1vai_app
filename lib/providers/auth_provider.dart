@@ -259,7 +259,7 @@ class AuthProvider extends ChangeNotifier {
 
       // 清除旧头像缓存
       if (_user!.picture.isNotEmpty) {
-        AvatarImage.clearCache(_user!.picture);
+        await AvatarImage.clearCache(_user!.picture);
       }
 
       final updatedUser = await _d1vaiService.putUserProfile({

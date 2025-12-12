@@ -59,6 +59,8 @@ dependencies:
   flutter_native_splash: ^2.4.7
   google_fonts: ^6.3.2
   share_plus: ^10.0.0
+  path_provider: ^2.1.5
+  crypto: ^3.0.7
 
 dev_dependencies:
   flutter_test:

@@ -94,6 +94,9 @@ class SnackBarHelper {
     VoidCallback? onActionPressed,
     Duration? duration,
   }) {
+    // 先清除已有的 SnackBar，避免 Hero tag 冲突
+    ScaffoldMessenger.of(context).clearSnackBars();
+
     final theme = Theme.of(context);
     final snackBar = SnackBar(
       elevation: 0,
@@ -115,10 +118,7 @@ class SnackBarHelper {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  message,
-                  style: const TextStyle(fontSize: 14),
-                ),
+                Text(message, style: const TextStyle(fontSize: 14)),
               ],
             ),
           ),
@@ -133,7 +133,6 @@ class SnackBarHelper {
           : null,
     );
 
-    ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 

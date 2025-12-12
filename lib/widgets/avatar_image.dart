@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../services/svg_cache_service.dart';
 
 /// 通用头像显示组件
 /// 自动检测 SVG 和普通图片格式，并支持缓存
@@ -22,23 +23,25 @@ class AvatarImage extends StatelessWidget {
     this.placeholderText,
   });
 
-  // SVG 内存缓存
-  static final Map<String, String> _svgCache = {};
+  // SVG 缓存服务
+  static final _svgCache = SvgCacheService();
 
   /// 清除指定 URL 的缓存（用户更新头像时调用）
-  static void clearCache(String url) {
+  static Future<void> clearCache(String url) async {
     // 清除 SVG 缓存
-    _svgCache.remove(url);
+    if (url.contains('.svg') || url.contains('/svg')) {
+      await _svgCache.delete(url);
+    }
 
     // 清除 CachedNetworkImage 缓存
     if (!url.contains('.svg') && !url.contains('/svg')) {
-      CachedNetworkImage.evictFromCache(url);
+      await CachedNetworkImage.evictFromCache(url);
     }
   }
 
   /// 清除所有头像缓存
-  static void clearAllCache() {
-    _svgCache.clear();
+  static Future<void> clearAllCache() async {
+    await _svgCache.clear();
   }
 
   @override
@@ -82,14 +85,15 @@ class AvatarImage extends StatelessWidget {
     );
   }
 
-  /// 加载并清理 SVG 数据，带缓存支持
+  /// 加载并清理 SVG 数据，带磁盘缓存支持
   Future<String> _loadAndCleanSvg(String url) async {
-    // 先检查内存缓存
-    if (_svgCache.containsKey(url)) {
-      debugPrint('从缓存加载 SVG: $url');
-      return _svgCache[url]!;
+    // 1. 先检查磁盘缓存
+    final cachedContent = await _svgCache.get(url);
+    if (cachedContent != null) {
+      return cachedContent;
     }
 
+    // 2. 从网络加载
     try {
       debugPrint('从网络加载 SVG: $url');
       final response = await http.get(Uri.parse(url));
@@ -99,8 +103,8 @@ class AvatarImage extends StatelessWidget {
         // 清理 SVG 中不支持的标签和属性
         svgContent = _cleanSvg(svgContent);
 
-        // 存入缓存
-        _svgCache[url] = svgContent;
+        // 3. 存入磁盘缓存
+        await _svgCache.put(url, svgContent);
 
         return svgContent;
       }
