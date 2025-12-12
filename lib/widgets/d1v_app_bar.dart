@@ -125,12 +125,6 @@ class _D1VAppBarState extends State<D1VAppBar>
       child: Container(
         decoration: BoxDecoration(
           color: D1VColors.frostedGlassDark.withValues(alpha: 0.6 * 255),
-          border: Border(
-            bottom: BorderSide(
-              color: D1VColors.shimmerBorderDark.withValues(alpha: 0.1 * 255),
-              width: 1,
-            ),
-          ),
         ),
       ),
     );
@@ -250,14 +244,6 @@ class _D1VSimpleAppBarState extends State<D1VSimpleAppBar>
                       decoration: BoxDecoration(
                         color: D1VColors.frostedGlassDark.withValues(
                           alpha: 0.6 * 255,
-                        ),
-                        border: Border(
-                          bottom: BorderSide(
-                            color: D1VColors.shimmerBorderDark.withValues(
-                              alpha: 0.1 * 255,
-                            ),
-                            width: 1,
-                          ),
                         ),
                       ),
                     ),

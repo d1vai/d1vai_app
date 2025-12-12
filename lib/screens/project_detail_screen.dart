@@ -205,14 +205,6 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                     color: D1VColors.frostedGlassDark.withValues(
                       alpha: 0.6 * 255,
                     ),
-                    border: Border(
-                      bottom: BorderSide(
-                        color: D1VColors.shimmerBorderDark.withValues(
-                          alpha: 0.1 * 255,
-                        ),
-                        width: 1,
-                      ),
-                    ),
                   ),
                 ),
               ),
@@ -230,27 +222,28 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                   labelPadding: const EdgeInsets.symmetric(horizontal: 6),
                   indicatorSize: TabBarIndicatorSize.tab,
                   indicator: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(2),
                     gradient: gradient,
                     boxShadow: isDark
-                        ? null
+                        ? [
+                            BoxShadow(
+                              color: gradient.colors.first.withValues(
+                                alpha: 0.3 * 255,
+                              ),
+                              blurRadius: 8,
+                              spreadRadius: 1,
+                              offset: const Offset(0, -1),
+                            ),
+                          ]
                         : [
                             BoxShadow(
                               color: D1VColors.glowLight.withValues(
-                                alpha: 0.4 * 255,
+                                alpha: 0.5 * 255,
                               ),
-                              blurRadius: 12,
-                              spreadRadius: 2,
+                              blurRadius: 10,
+                              spreadRadius: 1,
                             ),
                           ],
-                    border: isDark
-                        ? Border.all(
-                            color: D1VColors.shimmerBorderDark.withValues(
-                              alpha: 0.3 * 255,
-                            ),
-                            width: 1.5,
-                          )
-                        : null,
                   ),
                   labelColor: activeText,
                   unselectedLabelColor: inactiveText,

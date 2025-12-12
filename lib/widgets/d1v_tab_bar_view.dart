@@ -269,12 +269,15 @@ class _GradientPillIndicatorPainter extends BoxPainter {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    // 胶囊形状（pill shape）
+    // 底部优雅指示条（而非胶囊形）
+    final indicatorHeight = 3.0;
+    final indicatorY = size.height - indicatorHeight - 2; // 距离底部2px
+
     final rect = Rect.fromLTWH(
-      offset.dx + 4,
-      offset.dy + size.height - 28,
-      size.width - 8,
-      24,
+      offset.dx + 8, // 左右留出8px间距
+      offset.dy + indicatorY,
+      size.width - 16,
+      indicatorHeight,
     );
 
     // 计算缩放后的矩形
@@ -285,16 +288,16 @@ class _GradientPillIndicatorPainter extends BoxPainter {
       height: rect.height * scale,
     );
 
-    final pillRadius = Radius.circular(scaledRect.height / 2);
+    final cornerRadius = Radius.circular(1.5);
 
     // Light Mode: 发光效果
     if (!isDark) {
       final glowPaint = Paint()
-        ..color = D1VColors.glowLight.withValues(alpha: 0.4 * 255)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, glowRadius);
+        ..color = D1VColors.glowLight.withValues(alpha: 0.5 * 255)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, glowRadius * 0.8);
 
       canvas.drawRRect(
-        RRect.fromRectAndRadius(scaledRect, pillRadius),
+        RRect.fromRectAndRadius(scaledRect, cornerRadius),
         glowPaint,
       );
     }
@@ -305,20 +308,36 @@ class _GradientPillIndicatorPainter extends BoxPainter {
       ..style = PaintingStyle.fill;
 
     canvas.drawRRect(
-      RRect.fromRectAndRadius(scaledRect, pillRadius),
+      RRect.fromRectAndRadius(scaledRect, cornerRadius),
       gradientPaint,
     );
 
-    // Dark Mode: 微光边框
-    if (isDark) {
-      final borderPaint = Paint()
-        ..color = D1VColors.shimmerBorderDark.withValues(alpha: 0.3 * 255)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5;
+    // Light Mode: 添加深色叠加层增强对比度
+    if (!isDark) {
+      final overlayPaint = Paint()
+        ..color = const Color(0xFF000000).withValues(alpha: 0.15 * 255)
+        ..style = PaintingStyle.fill;
 
       canvas.drawRRect(
-        RRect.fromRectAndRadius(scaledRect, pillRadius),
-        borderPaint,
+        RRect.fromRectAndRadius(scaledRect, cornerRadius),
+        overlayPaint,
+      );
+    } else {
+      // Dark Mode: 微弱的顶部高光
+      final highlightRect = Rect.fromLTWH(
+        scaledRect.left,
+        scaledRect.top,
+        scaledRect.width,
+        0.5, // 仅0.5px的高光线
+      );
+
+      final highlightPaint = Paint()
+        ..color = D1VColors.shimmerBorderDark.withValues(alpha: 0.6 * 255)
+        ..style = PaintingStyle.fill;
+
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(highlightRect, cornerRadius),
+        highlightPaint,
       );
     }
   }

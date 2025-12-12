@@ -18,11 +18,11 @@ class D1VColors {
   /// 光晕色 (Light)
   static const glowLight = Color(0xFFFFA726);
 
-  /// 激活文字 (Light)
-  static const activeTextLight = Color(0xFFBF360C);
+  /// 激活文字 (Light) - 使用深色以提供高对比度
+  static const activeTextLight = Color(0xFF1A1A1A);
 
-  /// 非激活文字 (Light)
-  static const inactiveTextLight = Color(0xFFA1887F);
+  /// 非激活文字 (Light) - 使用半透明深色
+  static const inactiveTextLight = Color(0x99000000); // 60% 黑色
 
   /// 背景渐变起点 (Light)
   static const backgroundStartLight = Color(0xFFFFFBF0);

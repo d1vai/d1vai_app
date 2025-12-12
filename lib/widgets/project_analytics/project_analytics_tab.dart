@@ -23,7 +23,6 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
   final AnalyticsService _analyticsService = AnalyticsService();
   
   AnalyticsSummary? _summary;
-  List<RealtimeMetric> _metrics = [];
   List<ChartSeries> _chartSeries = [];
   bool _isLoading = false;
   bool _isInitialized = false;
@@ -62,7 +61,6 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
 
       setState(() {
         _summary = summary;
-        _metrics = metrics;
         _chartSeries = _createChartSeries(metrics);
         _isLoading = false;
       });

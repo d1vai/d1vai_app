@@ -11,7 +11,6 @@ class ProjectProvider extends ChangeNotifier {
   bool _isLoading = false;
   bool _isLoadingMore = false;
   bool _hasMore = true;
-  int _currentOffset = 0;
   final int _limit = 20;
 
   // 搜索状态
@@ -43,7 +42,6 @@ class ProjectProvider extends ChangeNotifier {
   /// 重置状态
   void _reset() {
     _projects = [];
-    _currentOffset = 0;
     _hasMore = true;
     _error = null;
     notifyListeners();
@@ -80,7 +78,6 @@ class ProjectProvider extends ChangeNotifier {
     _isLoading = true;
     _isLoadingMore = false;
     _error = null;
-    _currentOffset = 0;
     notifyListeners();
 
     try {
@@ -89,7 +86,6 @@ class ProjectProvider extends ChangeNotifier {
 
       // 始终用最新结果覆盖本地列表，避免重复追加。
       _projects = newProjects;
-      _currentOffset = newProjects.length;
       _hasMore = newProjects.length == _limit;
     } catch (e) {
       _error = e.toString();
