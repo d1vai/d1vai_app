@@ -81,6 +81,7 @@ class _UsageStatsState extends State<UsageStats>
       if (mounted) {
         setState(() {
           _projectUsage = llmUsage.projects;
+          _isLoadingLlm = false;
         });
       }
     } catch (e) {
@@ -92,9 +93,6 @@ class _UsageStatsState extends State<UsageStats>
             backgroundColor: Colors.red,
           ),
         );
-      }
-    } finally {
-      if (mounted) {
         setState(() {
           _isLoadingLlm = false;
         });
@@ -407,48 +405,57 @@ class _UsageStatsState extends State<UsageStats>
               ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _availableMonths.map((months) {
-                final isSelected = _selectedMonths == months;
-                return GestureDetector(
-                  onTap: () async {
-                    setState(() {
-                      _selectedMonths = months;
-                    });
-                    await _reloadLlmUsage();
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? Colors.deepPurple
-                          : Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: isSelected
-                            ? Colors.deepPurple
-                            : Colors.grey.shade300,
-                        width: 1,
+            // 改为 Row 单行显示
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: _availableMonths.map((months) {
+                  final isSelected = _selectedMonths == months;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: GestureDetector(
+                      onTap: () async {
+                        if (mounted) {
+                          setState(() {
+                            _selectedMonths = months;
+                          });
+                        }
+                        await _reloadLlmUsage();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? Colors.deepPurple
+                              : Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isSelected
+                                ? Colors.deepPurple
+                                : Colors.grey.shade300,
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          '$months months',
+                          style: TextStyle(
+                            color: isSelected
+                                ? Colors.white
+                                : Colors.grey.shade700,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                            fontSize: 14,
+                          ),
+                        ),
                       ),
                     ),
-                    child: Text(
-                      '$months months',
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.grey.shade700,
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.w500,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
+                  );
+                }).toList(),
+              ),
             ),
           ],
         ),
