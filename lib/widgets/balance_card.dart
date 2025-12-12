@@ -10,7 +10,8 @@ class BalanceCard extends StatefulWidget {
   State<BalanceCard> createState() => _BalanceCardState();
 }
 
-class _BalanceCardState extends State<BalanceCard> {
+class _BalanceCardState extends State<BalanceCard>
+    with AutomaticKeepAliveClientMixin<BalanceCard> {
   final WalletService _walletService = WalletService();
   bool _isLoading = false;
   bool _isProcessingPayment = false;
@@ -218,7 +219,11 @@ class _BalanceCardState extends State<BalanceCard> {
   }
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context); // 必须调用 super.build 来保持状态
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),

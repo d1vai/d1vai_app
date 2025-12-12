@@ -10,7 +10,8 @@ class UsageStats extends StatefulWidget {
   State<UsageStats> createState() => _UsageStatsState();
 }
 
-class _UsageStatsState extends State<UsageStats> {
+class _UsageStatsState extends State<UsageStats>
+    with AutomaticKeepAliveClientMixin<UsageStats> {
   final UsageService _usageService = UsageService();
   bool _isLoading = true;
   bool _isLoadingLlm = false;
@@ -18,7 +19,7 @@ class _UsageStatsState extends State<UsageStats> {
   // Real database usage data (Neon consumption)
   DbUsageResponse? _dbUsage;
   // DB usage time window in days (default: last 30 days)
-  int _dbDaysRange = 30;
+  final int _dbDaysRange = 30;
 
   // Real LLM usage data
   List<ProjectMonthlyUsage> _projectUsage = [];
@@ -47,9 +48,11 @@ class _UsageStatsState extends State<UsageStats> {
           fromIso: from.toIso8601String(),
           toIso: now.toIso8601String(),
         );
-        setState(() {
-          _dbUsage = dbUsage;
-        });
+        if (mounted) {
+          setState(() {
+            _dbUsage = dbUsage;
+          });
+        }
       } catch (e) {
         debugPrint('Failed to load DB usage: $e');
         // Don't show error for DB usage, it's optional
@@ -67,15 +70,19 @@ class _UsageStatsState extends State<UsageStats> {
   }
 
   Future<void> _reloadLlmUsage() async {
-    setState(() {
-      _isLoadingLlm = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoadingLlm = true;
+      });
+    }
 
     try {
       final llmUsage = await _usageService.getLlmUsage(_selectedMonths);
-      setState(() {
-        _projectUsage = llmUsage.projects;
-      });
+      if (mounted) {
+        setState(() {
+          _projectUsage = llmUsage.projects;
+        });
+      }
     } catch (e) {
       debugPrint('Failed to load LLM usage: $e');
       if (mounted) {
@@ -135,11 +142,7 @@ class _UsageStatsState extends State<UsageStats> {
   /// Calculate aggregated LLM usage from project data
   Map<String, dynamic> _getAggregatedLlmUsage() {
     if (_projectUsage.isEmpty) {
-      return {
-        'totalInput': 0,
-        'totalOutput': 0,
-        'totalCost': 0.0,
-      };
+      return {'totalInput': 0, 'totalOutput': 0, 'totalCost': 0.0};
     }
 
     int totalInput = 0;
@@ -160,7 +163,11 @@ class _UsageStatsState extends State<UsageStats> {
   }
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context); // 必须调用 super.build 来保持状态
     if (_isLoading) {
       return const Center(
         child: Padding(
@@ -196,17 +203,13 @@ class _UsageStatsState extends State<UsageStats> {
   Widget _buildSectionHeader(String title) {
     return Row(
       children: [
-        Icon(
-          Icons.analytics,
-          color: Colors.deepPurple,
-          size: 20,
-        ),
+        Icon(Icons.analytics, color: Colors.deepPurple, size: 20),
         const SizedBox(width: 8),
         Text(
           title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
       ],
     );
@@ -344,11 +347,7 @@ class _UsageStatsState extends State<UsageStats> {
               color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 20,
-            ),
+            child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -357,9 +356,9 @@ class _UsageStatsState extends State<UsageStats> {
               children: [
                 Text(
                   label,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
                 ),
                 if (subtitle != null) ...[
                   const SizedBox(height: 2),
@@ -403,9 +402,9 @@ class _UsageStatsState extends State<UsageStats> {
           children: [
             Text(
               'Time Range',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -440,9 +439,7 @@ class _UsageStatsState extends State<UsageStats> {
                     child: Text(
                       '$months months',
                       style: TextStyle(
-                        color: isSelected
-                            ? Colors.white
-                            : Colors.grey.shade700,
+                        color: isSelected ? Colors.white : Colors.grey.shade700,
                         fontWeight: isSelected
                             ? FontWeight.w600
                             : FontWeight.w500,
@@ -467,11 +464,7 @@ class _UsageStatsState extends State<UsageStats> {
           child: Center(
             child: Column(
               children: [
-                Icon(
-                  Icons.inbox,
-                  size: 48,
-                  color: Colors.grey.shade400,
-                ),
+                Icon(Icons.inbox, size: 48, color: Colors.grey.shade400),
                 const SizedBox(height: 16),
                 Text(
                   'No usage data available',
@@ -482,9 +475,9 @@ class _UsageStatsState extends State<UsageStats> {
                 const SizedBox(height: 8),
                 Text(
                   'Your LLM usage will appear here',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey.shade600,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
                 ),
               ],
             ),
@@ -513,9 +506,8 @@ class _UsageStatsState extends State<UsageStats> {
                       children: [
                         Text(
                           project.projectName,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(fontWeight: FontWeight.w600),
                         ),
                         if (project.archived) ...[
                           const SizedBox(height: 4),
@@ -527,9 +519,7 @@ class _UsageStatsState extends State<UsageStats> {
                             decoration: BoxDecoration(
                               color: Colors.red.shade50,
                               borderRadius: BorderRadius.circular(4),
-                              border: Border.all(
-                                color: Colors.red.shade200,
-                              ),
+                              border: Border.all(color: Colors.red.shade200),
                             ),
                             child: Text(
                               'Deleted',
@@ -552,11 +542,11 @@ class _UsageStatsState extends State<UsageStats> {
                             const SizedBox(width: 4),
                             Text(
                               _formatNumber(
-                                project.totalInputTokens + project.totalOutputTokens,
+                                project.totalInputTokens +
+                                    project.totalOutputTokens,
                               ),
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Colors.grey.shade600,
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: Colors.grey.shade600),
                             ),
                             const SizedBox(width: 12),
                             Icon(
@@ -567,9 +557,8 @@ class _UsageStatsState extends State<UsageStats> {
                             const SizedBox(width: 4),
                             Text(
                               _formatNumber(project.totalCacheReadTokens),
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Colors.grey.shade600,
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: Colors.grey.shade600),
                             ),
                           ],
                         ),

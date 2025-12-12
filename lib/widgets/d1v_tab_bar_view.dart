@@ -323,21 +323,21 @@ class _GradientPillIndicatorPainter extends BoxPainter {
         overlayPaint,
       );
     } else {
-      // Dark Mode: 微弱的顶部高光
-      final highlightRect = Rect.fromLTWH(
-        scaledRect.left,
-        scaledRect.top,
-        scaledRect.width,
-        0.5, // 仅0.5px的高光线
-      );
-
-      final highlightPaint = Paint()
-        ..color = D1VColors.shimmerBorderDark.withValues(alpha: 0.6 * 255)
+      // Dark Mode: 使用柔和的紫色渐变叠加层
+      final overlayPaint = Paint()
+        ..shader = LinearGradient(
+          colors: [
+            D1VColors.richPurpleDark.withValues(alpha: 0.5 * 255),
+            D1VColors.activeTextDark.withValues(alpha: 0.3 * 255),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ).createShader(scaledRect)
         ..style = PaintingStyle.fill;
 
       canvas.drawRRect(
-        RRect.fromRectAndRadius(highlightRect, cornerRadius),
-        highlightPaint,
+        RRect.fromRectAndRadius(scaledRect, cornerRadius),
+        overlayPaint,
       );
     }
   }
