@@ -214,61 +214,22 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
               foregroundColor: activeText,
               title: SizedBox(
                 width: double.infinity,
-                child: TabBar(
+                child: D1VTabBar(
                   controller: _tabController,
                   isScrollable: true,
-                  labelPadding: const EdgeInsets.symmetric(horizontal: 6),
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  indicator: BoxDecoration(
-                    borderRadius: BorderRadius.circular(2),
-                    gradient: gradient,
-                    boxShadow: isDark
-                        ? [
-                            BoxShadow(
-                              color: gradient.colors.first.withValues(
-                                alpha: 0.3 * 255,
-                              ),
-                              blurRadius: 8,
-                              spreadRadius: 1,
-                              offset: const Offset(0, -1),
-                            ),
-                          ]
-                        : [
-                            BoxShadow(
-                              color: D1VColors.indicatorStartLight.withValues(
-                                alpha: 0.4 * 255,
-                              ),
-                              blurRadius: 10,
-                              spreadRadius: 1,
-                            ),
-                          ],
-                  ),
-                  dividerColor: Colors.transparent, // 隐藏分隔线
+                  labelPadding: const EdgeInsets.symmetric(horizontal: 12),
                   labelColor: activeText,
                   unselectedLabelColor: inactiveText,
+                  labelStyle: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  unselectedLabelStyle: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
                   tabs: _tabs
-                      .map(
-                        (tab) => Tab(
-                          height: 40,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(tab.icon, size: 16),
-                                const SizedBox(width: 4),
-                                Text(
-                                  tab.label,
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      )
+                      .map((tab) => D1VTab(icon: tab.icon, text: tab.label))
                       .toList(),
                 ),
               ),
