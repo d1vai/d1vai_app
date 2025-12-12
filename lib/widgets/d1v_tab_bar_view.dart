@@ -372,41 +372,7 @@ class D1VTab extends StatefulWidget {
   State<D1VTab> createState() => _D1VTabState();
 }
 
-class _D1VTabState extends State<D1VTab> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 150),
-      vsync: this,
-    );
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.05,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _handleTapDown(TapDownDetails details) {
-    _controller.forward();
-  }
-
-  void _handleTapUp(TapUpDetails details) {
-    _controller.reverse();
-  }
-
-  void _handleTapCancel() {
-    _controller.reverse();
-  }
-
+class _D1VTabState extends State<D1VTab> {
   @override
   Widget build(BuildContext context) {
     Widget content;
@@ -426,14 +392,8 @@ class _D1VTabState extends State<D1VTab> with SingleTickerProviderStateMixin {
           : Text(widget.text);
     }
 
-    return GestureDetector(
-      onTapDown: _handleTapDown,
-      onTapUp: _handleTapUp,
-      onTapCancel: _handleTapCancel,
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: Tab(child: content),
-      ),
-    );
+    // 直接使用 Tab，不包装 GestureDetector
+    // TabBar 自己会处理点击事件
+    return Tab(child: content);
   }
 }
