@@ -35,8 +35,34 @@ Page<dynamic> _buildPageWithTransition(
   );
 }
 
+class _ClearSnackBarsNavigatorObserver extends NavigatorObserver {
+  void _clearSnackBars() {
+    final nav = navigator;
+    if (nav == null) return;
+    final ctx = nav.context;
+    final messenger = ScaffoldMessenger.maybeOf(ctx);
+    messenger?.clearSnackBars();
+  }
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didPush(route, previousRoute);
+    _clearSnackBars();
+  }
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didPop(route, previousRoute);
+    _clearSnackBars();
+  }
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
+    super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
+    _clearSnackBars();
+  }
+}
+
 GoRouter createAppRouter() {
   return GoRouter(
+    observers: [_ClearSnackBarsNavigatorObserver()],
     initialLocation: '/',
     redirect: (BuildContext context, GoRouterState state) {
       // Use the context provided by GoRouter so that it can read

@@ -104,6 +104,7 @@ class SnackBarHelper {
       backgroundColor: _getContentColor(theme, contentType),
       duration: duration ?? const Duration(seconds: 4),
       content: Row(
+        key: UniqueKey(),
         children: [
           Expanded(
             child: Column(

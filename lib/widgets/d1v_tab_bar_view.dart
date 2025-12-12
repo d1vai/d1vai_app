@@ -256,16 +256,13 @@ class _GradientPillIndicatorPainter extends BoxPainter {
   final double scale;
   final double glowRadius;
 
-  @override
-  final VoidCallback? onChanged;
-
   _GradientPillIndicatorPainter({
     required this.gradient,
     required this.context,
     required this.scale,
     required this.glowRadius,
-    this.onChanged,
-  });
+    VoidCallback? onChanged,
+  }) : super(onChanged);
 
   @override
   void paint(Canvas canvas, Offset offset, ImageConfiguration configuration) {
@@ -334,10 +331,8 @@ class _GradientPillIndicatorPainter extends BoxPainter {
         RRect.fromRectAndRadius(highlightRect, Radius.circular(1.0)),
         highlightPaint,
       );
-    }
-    // Dark Mode: 外发光 + 渐变
-    else {
-      // 1. 外发光效果 (12px blur)
+    } else {
+      // Dark Mode: 外发光 + 渐变
       final glowPaint = Paint()
         ..color = D1VColors.getIndicatorGlowColor(context)
         ..maskFilter = MaskFilter.blur(BlurStyle.normal, 12.0);
@@ -359,6 +354,7 @@ class _GradientPillIndicatorPainter extends BoxPainter {
     }
   }
 }
+
 
 /// D1V Tab 项（带微妙缩放效果）
 class D1VTab extends StatefulWidget {

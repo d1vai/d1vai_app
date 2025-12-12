@@ -124,7 +124,9 @@ class _ProjectOverviewTabState extends State<ProjectOverviewTab> {
 
     final canLaunch = await canLaunchUrl(uri);
 
-    if (mounted && canLaunch) {
+    if (!mounted) return;
+
+    if (canLaunch) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
       SnackBarHelper.showError(
