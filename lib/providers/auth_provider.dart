@@ -7,6 +7,7 @@ import '../models/onboarding.dart';
 import '../services/d1vai_service.dart';
 import '../services/storage_service.dart';
 import '../services/cache_service.dart';
+import '../widgets/avatar_image.dart';
 
 class AuthProvider extends ChangeNotifier {
   final D1vaiService _d1vaiService = D1vaiService();
@@ -183,7 +184,8 @@ class AuthProvider extends ChangeNotifier {
     try {
       // 与 web 端保持一致：基于用户信息生成种子，并使用
       // DeveloperAvatarGenerator 生成多风格 AI 头像卡片
-      final baseSeed = _user?.email ?? _user?.sub ?? 'user-${_user?.id ?? 'guest'}';
+      final baseSeed =
+          _user?.email ?? _user?.sub ?? 'user-${_user?.id ?? 'guest'}';
       final random = Random(baseSeed.hashCode);
 
       // 生成 4-6 个头像 URL
@@ -254,6 +256,11 @@ class AuthProvider extends ChangeNotifier {
   Future<void> updateAvatar(String avatarUrl) async {
     try {
       if (_user == null) return;
+
+      // 清除旧头像缓存
+      if (_user!.picture.isNotEmpty) {
+        AvatarImage.clearCache(_user!.picture);
+      }
 
       final updatedUser = await _d1vaiService.putUserProfile({
         'picture': avatarUrl,

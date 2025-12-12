@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 /// 通用头像显示组件
-/// 自动检测 SVG 和普通图片格式
+/// 自动检测 SVG 和普通图片格式，并支持缓存
 class AvatarImage extends StatelessWidget {
   final String imageUrl;
   final double size;
@@ -21,9 +22,29 @@ class AvatarImage extends StatelessWidget {
     this.placeholderText,
   });
 
+  // SVG 内存缓存
+  static final Map<String, String> _svgCache = {};
+
+  /// 清除指定 URL 的缓存（用户更新头像时调用）
+  static void clearCache(String url) {
+    // 清除 SVG 缓存
+    _svgCache.remove(url);
+
+    // 清除 CachedNetworkImage 缓存
+    if (!url.contains('.svg') && !url.contains('/svg')) {
+      CachedNetworkImage.evictFromCache(url);
+    }
+  }
+
+  /// 清除所有头像缓存
+  static void clearAllCache() {
+    _svgCache.clear();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final effectiveBorderRadius = borderRadius ?? BorderRadius.circular(size / 2);
+    final effectiveBorderRadius =
+        borderRadius ?? BorderRadius.circular(size / 2);
 
     // 检查是否为 SVG URL
     final isSvg = imageUrl.contains('.svg') || imageUrl.contains('/svg');
@@ -47,30 +68,39 @@ class AvatarImage extends StatelessWidget {
                 return _buildPlaceholder(context);
               },
             )
-          : Image.network(
-              imageUrl,
+          : CachedNetworkImage(
+              imageUrl: imageUrl,
               width: size,
               height: size,
               fit: fit,
-              excludeFromSemantics: true,
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return _buildPlaceholder(context);
-              },
-              errorBuilder: (context, error, stackTrace) => _buildPlaceholder(context),
+              placeholder: (context, url) => _buildPlaceholder(context),
+              errorWidget: (context, url, error) => _buildPlaceholder(context),
+              // 设置缓存图片尺寸
+              maxWidthDiskCache: (size * 3).toInt(),
+              maxHeightDiskCache: (size * 3).toInt(),
             ),
     );
   }
 
-  /// 加载并清理 SVG 数据，移除不支持的标签
+  /// 加载并清理 SVG 数据，带缓存支持
   Future<String> _loadAndCleanSvg(String url) async {
+    // 先检查内存缓存
+    if (_svgCache.containsKey(url)) {
+      debugPrint('从缓存加载 SVG: $url');
+      return _svgCache[url]!;
+    }
+
     try {
+      debugPrint('从网络加载 SVG: $url');
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         String svgContent = utf8.decode(response.bodyBytes);
 
         // 清理 SVG 中不支持的标签和属性
         svgContent = _cleanSvg(svgContent);
+
+        // 存入缓存
+        _svgCache[url] = svgContent;
 
         return svgContent;
       }
