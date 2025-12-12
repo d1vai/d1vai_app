@@ -2,6 +2,7 @@
 import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'dart:io';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/message.dart';
 import '../core/api_client.dart';
 import '../utils/message_parser.dart';
@@ -144,6 +145,34 @@ class ChatService {
       return webSocket;
     } catch (e) {
       throw ChatException('Failed to connect to WebSocket: $e');
+    }
+  }
+
+  /// Build WebSocket URL for a project session (backend expects `?token=...` query param).
+  ///
+  /// Web uses `/api/projects/ws/session/{session_id}` with `ws/wss` derived from API base URL.
+  Future<String> buildProjectSessionWebSocketUrl({
+    required String sessionId,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      if (token == null || token.trim().isEmpty) {
+        throw ChatException('Not logged in or token expired');
+      }
+
+      final base = Uri.parse(ApiClient.baseUrl);
+      final wsScheme = base.scheme == 'https' ? 'wss' : 'ws';
+      final wsUri = base.replace(
+        scheme: wsScheme,
+        path: '/api/projects/ws/session/$sessionId',
+        queryParameters: {
+          'token': token,
+        },
+      );
+      return wsUri.toString();
+    } catch (e) {
+      throw ChatException('Failed to build WebSocket URL: $e');
     }
   }
 
