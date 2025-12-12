@@ -136,8 +136,9 @@ class D1VColors {
   static Color getShadowColor(BuildContext context) {
     return Colors.black.withValues(
       alpha: Theme.of(context).brightness == Brightness.light
-          ? 0.08 * 255
-          : 0.12 * 255,
+          ? 0.04 *
+                255 // 0.08 → 0.04 更淡
+          : 0.08 * 255, // 0.12 → 0.08 更淡
     );
   }
 
@@ -152,9 +153,9 @@ class D1VColors {
       return [
         BoxShadow(
           color: indicatorStartDark.withValues(
-            alpha: glowIntensity * 0.3 * 255,
+            alpha: glowIntensity * 0.08 * 255, // 0.15 → 0.08 更淡
           ),
-          blurRadius: 20 * glowIntensity,
+          blurRadius: 12 * glowIntensity, // 15 → 12 更柔和
           spreadRadius: 0,
         ),
       ];
@@ -162,9 +163,9 @@ class D1VColors {
       return [
         BoxShadow(
           color: indicatorStartLight.withValues(
-            alpha: glowIntensity * 0.2 * 255,
+            alpha: glowIntensity * 0.05 * 255, // 0.1 → 0.05 更淡
           ),
-          blurRadius: 15 * glowIntensity,
+          blurRadius: 8 * glowIntensity, // 10 → 8 更柔和
           spreadRadius: 0,
         ),
       ];

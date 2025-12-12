@@ -209,6 +209,7 @@ class _D1VTabBarState extends State<D1VTabBar>
           unselectedLabelStyle: widget.unselectedLabelStyle,
           labelPadding: widget.labelPadding,
           onTap: widget.onTap,
+          dividerColor: Colors.transparent, // 隐藏底部分隔线
           indicator: _GradientPillIndicator(
             gradient: D1VColors.getIndicatorGradient(context),
             scale: _scaleAnimation.value,

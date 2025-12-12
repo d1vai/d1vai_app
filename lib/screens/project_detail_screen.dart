@@ -243,6 +243,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                             ),
                           ],
                   ),
+                  dividerColor: Colors.transparent, // 隐藏分隔线
                   labelColor: activeText,
                   unselectedLabelColor: inactiveText,
                   tabs: _tabs
