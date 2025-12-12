@@ -189,7 +189,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
 
     return Container(
       decoration: BoxDecoration(
-        boxShadow: isDark ? null : D1VColors.getGlowShadows(context),
+        boxShadow: isDark ? null : D1VColors.getGlowShadows(context, 1.0),
       ),
       child: ClipRRect(
         child: Stack(
@@ -202,9 +202,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                 filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: D1VColors.frostedGlassDark.withValues(
-                      alpha: 0.6 * 255,
-                    ),
+                    color: D1VColors.deepBlueDark.withValues(alpha: 0.6 * 255),
                   ),
                 ),
               ),
@@ -237,8 +235,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                           ]
                         : [
                             BoxShadow(
-                              color: D1VColors.glowLight.withValues(
-                                alpha: 0.5 * 255,
+                              color: D1VColors.indicatorStartLight.withValues(
+                                alpha: 0.4 * 255,
                               ),
                               blurRadius: 10,
                               spreadRadius: 1,

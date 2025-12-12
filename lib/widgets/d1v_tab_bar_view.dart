@@ -121,7 +121,7 @@ class D1VTabBar extends StatefulWidget implements PreferredSizeWidget {
   /// 是否启用呼吸动画（默认 true）
   final bool enableBreathing;
 
-  /// 呼吸周期（毫秒，默认 2500）
+  /// 呼吸周期（毫秒，默认 3000）
   final int breathingDuration;
 
   const D1VTabBar({
@@ -137,7 +137,7 @@ class D1VTabBar extends StatefulWidget implements PreferredSizeWidget {
     this.labelPadding,
     this.onTap,
     this.enableBreathing = true,
-    this.breathingDuration = 2500,
+    this.breathingDuration = 3000,
   });
 
   @override
@@ -157,20 +157,26 @@ class _D1VTabBarState extends State<D1VTabBar>
   void initState() {
     super.initState();
 
-    // 呼吸动画控制器
+    // 呼吸动画控制器 - 优化时长
     _breathingController = AnimationController(
       duration: Duration(milliseconds: widget.breathingDuration),
       vsync: this,
     );
 
-    // 缩放动画 (0.98 ↔ 1.02)
-    _scaleAnimation = Tween<double>(begin: 0.98, end: 1.02).animate(
-      CurvedAnimation(parent: _breathingController, curve: Curves.easeInOut),
+    // 缩放动画幅度增大 (0.98-1.02 → 0.95-1.05)
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.05).animate(
+      CurvedAnimation(
+        parent: _breathingController,
+        curve: Curves.easeInOutCubic, // 更自然的曲线
+      ),
     );
 
-    // 发光强度动画 (8 ↔ 16)
-    _glowAnimation = Tween<double>(begin: 8.0, end: 16.0).animate(
-      CurvedAnimation(parent: _breathingController, curve: Curves.easeInOut),
+    // 发光强度动画增强 (8-16 → 8-24)
+    _glowAnimation = Tween<double>(begin: 8.0, end: 24.0).animate(
+      CurvedAnimation(
+        parent: _breathingController,
+        curve: Curves.easeInOutCubic,
+      ),
     );
 
     if (widget.enableBreathing) {
@@ -188,7 +194,6 @@ class _D1VTabBarState extends State<D1VTabBar>
   Widget build(BuildContext context) {
     final activeText = D1VColors.getActiveText(context);
     final inactiveText = D1VColors.getInactiveText(context);
-    final gradient = D1VColors.getPrimaryGradient(context);
 
     return AnimatedBuilder(
       animation: _breathingController,
@@ -205,7 +210,7 @@ class _D1VTabBarState extends State<D1VTabBar>
           labelPadding: widget.labelPadding,
           onTap: widget.onTap,
           indicator: _GradientPillIndicator(
-            gradient: gradient,
+            gradient: D1VColors.getIndicatorGradient(context),
             scale: _scaleAnimation.value,
             glowRadius: _glowAnimation.value,
             context: context,
@@ -269,14 +274,14 @@ class _GradientPillIndicatorPainter extends BoxPainter {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    // 底部优雅指示条（而非胶囊形）
-    final indicatorHeight = 3.0;
-    final indicatorY = size.height - indicatorHeight - 2; // 距离底部2px
+    // 优化后的尺寸：4px 高度，距底部 4px，左右内缩 12px
+    final indicatorHeight = 4.0;
+    final indicatorY = size.height - indicatorHeight - 4;
 
     final rect = Rect.fromLTWH(
-      offset.dx + 8, // 左右留出8px间距
+      offset.dx + 12,
       offset.dy + indicatorY,
-      size.width - 16,
+      size.width - 24,
       indicatorHeight,
     );
 
@@ -288,56 +293,67 @@ class _GradientPillIndicatorPainter extends BoxPainter {
       height: rect.height * scale,
     );
 
-    final cornerRadius = Radius.circular(1.5);
+    final cornerRadius = Radius.circular(2.0);
 
-    // Light Mode: 发光效果
+    // Light Mode: 柔和发光 + 渐变 + 白色高光条
     if (!isDark) {
+      // 1. 底部柔和发光
       final glowPaint = Paint()
-        ..color = D1VColors.glowLight.withValues(alpha: 0.5 * 255)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, glowRadius * 0.8);
+        ..color = D1VColors.indicatorStartLight.withValues(alpha: 0.3 * 255)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, glowRadius * 0.5);
 
       canvas.drawRRect(
         RRect.fromRectAndRadius(scaledRect, cornerRadius),
         glowPaint,
       );
-    }
 
-    // 渐变主体
-    final gradientPaint = Paint()
-      ..shader = gradient.createShader(scaledRect)
-      ..style = PaintingStyle.fill;
-
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(scaledRect, cornerRadius),
-      gradientPaint,
-    );
-
-    // Light Mode: 添加深色叠加层增强对比度
-    if (!isDark) {
-      final overlayPaint = Paint()
-        ..color = const Color(0xFF000000).withValues(alpha: 0.15 * 255)
+      // 2. 基础渐变
+      final gradientPaint = Paint()
+        ..shader = gradient.createShader(scaledRect)
         ..style = PaintingStyle.fill;
 
       canvas.drawRRect(
         RRect.fromRectAndRadius(scaledRect, cornerRadius),
-        overlayPaint,
+        gradientPaint,
       );
-    } else {
-      // Dark Mode: 使用柔和的紫色渐变叠加层
-      final overlayPaint = Paint()
-        ..shader = LinearGradient(
-          colors: [
-            D1VColors.richPurpleDark.withValues(alpha: 0.5 * 255),
-            D1VColors.activeTextDark.withValues(alpha: 0.3 * 255),
-          ],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ).createShader(scaledRect)
+
+      // 3. 顶部白色高光条 (1px)
+      final highlightRect = Rect.fromLTWH(
+        scaledRect.left,
+        scaledRect.top,
+        scaledRect.width,
+        1.0,
+      );
+
+      final highlightPaint = Paint()
+        ..color = Colors.white.withValues(alpha: 0.6 * 255)
+        ..style = PaintingStyle.fill;
+
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(highlightRect, Radius.circular(1.0)),
+        highlightPaint,
+      );
+    }
+    // Dark Mode: 外发光 + 渐变
+    else {
+      // 1. 外发光效果 (12px blur)
+      final glowPaint = Paint()
+        ..color = D1VColors.getIndicatorGlowColor(context)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 12.0);
+
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(scaledRect, cornerRadius),
+        glowPaint,
+      );
+
+      // 2. 基础渐变
+      final gradientPaint = Paint()
+        ..shader = gradient.createShader(scaledRect)
         ..style = PaintingStyle.fill;
 
       canvas.drawRRect(
         RRect.fromRectAndRadius(scaledRect, cornerRadius),
-        overlayPaint,
+        gradientPaint,
       );
     }
   }

@@ -1,73 +1,82 @@
 import 'package:flutter/material.dart';
 
-/// D1V 主题色彩系统 v2
-/// 优雅的渐变色方案，支持 Light/Dark Mode
-/// Light Mode: 温暖橙黄系 + 光晕效果
-/// Dark Mode: 神秘紫黑系 + 磨砂渐变
+/// D1V 主题色彩系统 v3 - 顶级优雅设计
+///
+/// Light Mode: 温柔玫瑰金系（优雅浪漫）
+/// Dark Mode: 深邃灰蓝系（专业高级）
 class D1VColors {
   D1VColors._();
 
-  // ==================== Light Mode 橙黄色系 ====================
+  // ==================== Light Mode 玫瑰金系 ====================
 
-  /// 主渐变起点 - 活力橙色 (Light)
-  static const orangeLight = Color(0xFFFF9500);
+  /// AppBar 渐变起点 - 浅玫瑰粉
+  static const rosePinkLight = Color(0xFFFFDEE9);
 
-  /// 主渐变终点 - 金色黄 (Light)
-  static const goldenYellowLight = Color(0xFFFFD60A);
+  /// AppBar 渐变终点 - 柔和粉
+  static const softPinkLight = Color(0xFFFFB7C3);
 
-  /// 光晕色 (Light)
-  static const glowLight = Color(0xFFFFA726);
+  /// 激活文字 - 深玫瑰红（高对比）
+  static const activeTextLight = Color(0xFFC2185B);
 
-  /// 激活文字 (Light) - 使用深色以提供高对比度
-  static const activeTextLight = Color(0xFF1A1A1A);
+  /// 非激活文字 - 中性灰（清晰可辨）
+  static const inactiveTextLight = Color(0xFF757575);
 
-  /// 非激活文字 (Light) - 使用半透明深色
-  static const inactiveTextLight = Color(0x99000000); // 60% 黑色
+  /// 指示器渐变起点 - 玫瑰粉
+  static const indicatorStartLight = Color(0xFFE91E63);
 
-  /// 背景渐变起点 (Light)
-  static const backgroundStartLight = Color(0xFFFFFBF0);
+  /// 指示器渐变终点 - 亮玫瑰
+  static const indicatorEndLight = Color(0xFFEC407A);
 
-  /// 背景渐变终点 (Light)
-  static const backgroundEndLight = Color(0xFFFFF4E0);
+  /// 背景渐变起点 - 纯白
+  static const backgroundStartLight = Color(0xFFFFFFFF);
 
-  // ==================== Dark Mode 紫黑色系 ====================
+  /// 背景渐变终点 - 极淡粉
+  static const backgroundEndLight = Color(0xFFFFF5F7);
 
-  /// 主渐变起点 - 深紫黑 (Dark)
-  static const deepPurpleBlackDark = Color(0xFF1A0033);
+  // ==================== Dark Mode 深灰蓝系 ====================
 
-  /// 主渐变终点 - 丰富紫 (Dark)
-  static const richPurpleDark = Color(0xFF2D1B4E);
+  /// AppBar 渐变起点 - 深灰蓝
+  static const deepBlueDark = Color(0xFF2C2C3E);
 
-  /// 磨砂玻璃背景 (Dark)
-  static const frostedGlassDark = Color(0xFF1F1129);
+  /// AppBar 渐变终点 - 暗紫蓝
+  static const darkPurpleBlueDark = Color(0xFF1F1F2E);
 
-  /// 激活文字 (Dark)
-  static const activeTextDark = Color(0xFFE1BEE7);
+  /// 激活文字 - 亮紫粉（醒目）
+  static const activeTextDark = Color(0xFFF48FB1);
 
-  /// 非激活文字 (Dark)
-  static const inactiveTextDark = Color(0xFF7E57C2);
+  /// 非激活文字 - 中灰（清晰可辨）
+  static const inactiveTextDark = Color(0xFF9E9E9E);
 
-  /// 边框微光 (Dark)
-  static const shimmerBorderDark = Color(0xFFFFFFFF);
+  /// 指示器渐变起点 - 亮粉紫
+  static const indicatorStartDark = Color(0xFFF48FB1);
+
+  /// 指示器渐变终点 - 柔紫
+  static const indicatorEndDark = Color(0xFFCE93D8);
+
+  /// 背景渐变起点 - 深灰
+  static const backgroundStartDark = Color(0xFF1E1E1E);
+
+  /// 背景渐变终点 - 极深灰
+  static const backgroundEndDark = Color(0xFF121212);
 
   // ==================== 动态获取方法 ====================
 
-  /// 获取主渐变（根据当前主题）
+  /// 获取主渐变（AppBar 背景）
   static LinearGradient getPrimaryGradient(BuildContext context) {
     return Theme.of(context).brightness == Brightness.light
         ? const LinearGradient(
-            colors: [orangeLight, goldenYellowLight],
+            colors: [rosePinkLight, softPinkLight],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           )
         : const LinearGradient(
-            colors: [deepPurpleBlackDark, richPurpleDark],
+            colors: [deepBlueDark, darkPurpleBlueDark],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           );
   }
 
-  /// 获取背景渐变（根据当前主题）
+  /// 获取背景渐变
   static LinearGradient getBackgroundGradient(BuildContext context) {
     return Theme.of(context).brightness == Brightness.light
         ? const LinearGradient(
@@ -76,77 +85,97 @@ class D1VColors {
             end: Alignment.bottomCenter,
           )
         : const LinearGradient(
-            colors: [deepPurpleBlackDark, Color(0xFF0A0014)],
+            colors: [backgroundStartDark, backgroundEndDark],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           );
   }
 
-  /// 获取激活文字颜色（根据当前主题）
+  /// 获取指示器渐变
+  static LinearGradient getIndicatorGradient(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.light
+        ? const LinearGradient(
+            colors: [indicatorStartLight, indicatorEndLight],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          )
+        : const LinearGradient(
+            colors: [indicatorStartDark, indicatorEndDark],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          );
+  }
+
+  /// 获取激活文字颜色
   static Color getActiveText(BuildContext context) {
     return Theme.of(context).brightness == Brightness.light
         ? activeTextLight
         : activeTextDark;
   }
 
-  /// 获取非激活文字颜色（根据当前主题）
+  /// 获取非激活文字颜色
   static Color getInactiveText(BuildContext context) {
     return Theme.of(context).brightness == Brightness.light
         ? inactiveTextLight
         : inactiveTextDark;
   }
 
-  /// 获取光晕颜色（Light Mode）
-  static Color getGlowColor(BuildContext context) {
-    return glowLight;
+  /// 获取指示器发光颜色（Dark Mode）
+  static Color getIndicatorGlowColor(BuildContext context) {
+    return indicatorStartDark.withValues(alpha: 0.4 * 255);
   }
 
-  /// 获取磨砂玻璃颜色（Dark Mode）
-  static Color getFrostedGlassColor(BuildContext context) {
-    return frostedGlassDark;
-  }
-
-  /// 获取边框颜色（根据当前主题）
+  /// 获取边框颜色
   static Color getBorderColor(BuildContext context) {
     return Theme.of(context).brightness == Brightness.light
-        ? orangeLight.withValues(alpha: 0.3 * 255)
-        : shimmerBorderDark.withValues(alpha: 0.1 * 255);
+        ? Colors.black.withValues(alpha: 0.06 * 255)
+        : Colors.white.withValues(alpha: 0.1 * 255);
   }
 
-  // ==================== 光晕配置 ====================
+  /// 获取阴影颜色
+  static Color getShadowColor(BuildContext context) {
+    return Colors.black.withValues(
+      alpha: Theme.of(context).brightness == Brightness.light
+          ? 0.08 * 255
+          : 0.12 * 255,
+    );
+  }
 
-  /// 获取光晕阴影列表（Light Mode）
+  /// 获取发光阴影效果（AppBar 呼吸动画）
   static List<BoxShadow> getGlowShadows(
-    BuildContext context, {
-    double intensity = 1.0,
-  }) {
-    if (Theme.of(context).brightness == Brightness.dark) {
-      return [];
-    }
+    BuildContext context,
+    double glowIntensity,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return [
-      // 外层大光晕
-      BoxShadow(
-        color: glowLight.withValues(alpha: 0.4 * intensity * 255),
-        blurRadius: 30 * intensity,
-        spreadRadius: 8 * intensity,
-      ),
-      // 内层强光晕
-      BoxShadow(
-        color: orangeLight.withValues(alpha: 0.6 * intensity * 255),
-        blurRadius: 15 * intensity,
-        spreadRadius: 2 * intensity,
-      ),
-    ];
+    if (isDark) {
+      return [
+        BoxShadow(
+          color: indicatorStartDark.withValues(
+            alpha: glowIntensity * 0.3 * 255,
+          ),
+          blurRadius: 20 * glowIntensity,
+          spreadRadius: 0,
+        ),
+      ];
+    } else {
+      return [
+        BoxShadow(
+          color: indicatorStartLight.withValues(
+            alpha: glowIntensity * 0.2 * 255,
+          ),
+          blurRadius: 15 * glowIntensity,
+          spreadRadius: 0,
+        ),
+      ];
+    }
   }
 
-  // ==================== 兼容旧版本（待弃用）====================
+  // ==================== 兼容旧版本（已弃用）====================
 
   @Deprecated('Use getPrimaryGradient instead')
   static Color getFirePurple(BuildContext context) {
-    return Theme.of(context).brightness == Brightness.light
-        ? orangeLight
-        : richPurpleDark;
+    return getActiveText(context);
   }
 
   @Deprecated('Use getActiveText instead')
@@ -158,4 +187,25 @@ class D1VColors {
   static Color getInactive(BuildContext context) {
     return getInactiveText(context);
   }
+
+  @Deprecated('Use getIndicatorGlowColor instead')
+  static Color getGlowColor(BuildContext context) {
+    return getIndicatorGlowColor(context);
+  }
+
+  @Deprecated('Use backgroundStartDark/backgroundEndDark instead')
+  static Color getFrostedGlassColor(BuildContext context) {
+    return backgroundStartDark;
+  }
+
+  static const shimmerBorderDark = Color(0xFFFFFFFF);
+
+  @Deprecated('Use getIndicatorGradient instead')
+  static Color glowLight = indicatorStartLight;
+
+  @Deprecated('Use deepBlueDark instead')
+  static Color frostedGlassDark = deepBlueDark;
+
+  @Deprecated('Use darkPurpleBlueDark instead')
+  static Color richPurpleDark = darkPurpleBlueDark;
 }

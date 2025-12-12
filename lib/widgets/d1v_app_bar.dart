@@ -88,7 +88,7 @@ class _D1VAppBarState extends State<D1VAppBar>
                 ? null
                 : D1VColors.getGlowShadows(
                     context,
-                    intensity: _glowIntensityAnimation.value,
+                    _glowIntensityAnimation.value,
                   ),
           ),
           child: ClipRRect(
@@ -124,7 +124,7 @@ class _D1VAppBarState extends State<D1VAppBar>
       filter: ImageFilter.blur(sigmaX: blurValue, sigmaY: blurValue),
       child: Container(
         decoration: BoxDecoration(
-          color: D1VColors.frostedGlassDark.withValues(alpha: 0.6 * 255),
+          color: D1VColors.deepBlueDark.withValues(alpha: 0.6 * 255),
         ),
       ),
     );
@@ -220,7 +220,7 @@ class _D1VSimpleAppBarState extends State<D1VSimpleAppBar>
                 ? null
                 : D1VColors.getGlowShadows(
                     context,
-                    intensity: _glowIntensityAnimation.value,
+                    _glowIntensityAnimation.value,
                   ),
           ),
           child: ClipRRect(
@@ -242,7 +242,7 @@ class _D1VSimpleAppBarState extends State<D1VSimpleAppBar>
                     ),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: D1VColors.frostedGlassDark.withValues(
+                        color: D1VColors.deepBlueDark.withValues(
                           alpha: 0.6 * 255,
                         ),
                       ),
