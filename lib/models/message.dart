@@ -31,10 +31,8 @@ class ToolMessageContent extends MessageContent {
   final String name;
   final dynamic input;
 
-  const ToolMessageContent({
-    required this.name,
-    required this.input,
-  }) : super('tool');
+  const ToolMessageContent({required this.name, required this.input})
+    : super('tool');
 }
 
 /// Tool result message
@@ -102,11 +100,8 @@ class ErrorMessageContent extends MessageContent {
   final String? code;
   final dynamic details;
 
-  const ErrorMessageContent({
-    required this.message,
-    this.code,
-    this.details,
-  }) : super('error');
+  const ErrorMessageContent({required this.message, this.code, this.details})
+    : super('error');
 }
 
 /// Completion/success message (for finished tasks, deployments, etc.)
@@ -143,30 +138,20 @@ class ChatMessage {
       final type = contentJson['type'] as String;
       switch (type) {
         case 'text':
-          return TextMessageContent(
-            text: contentJson['text'] as String,
-          );
+          return TextMessageContent(text: contentJson['text'] as String);
         case 'thinking':
-          return ThinkingMessageContent(
-            text: contentJson['text'] as String,
-          );
+          return ThinkingMessageContent(text: contentJson['text'] as String);
         case 'code':
-          return CodeMessageContent(
-            code: contentJson['code'] as String,
-          );
+          return CodeMessageContent(code: contentJson['code'] as String);
         case 'tool':
           return ToolMessageContent(
             name: contentJson['name'] as String,
             input: contentJson['input'],
           );
         case 'result':
-          return ResultMessageContent(
-            payload: contentJson['payload'],
-          );
+          return ResultMessageContent(payload: contentJson['payload']);
         case 'raw':
-          return RawMessageContent(
-            payload: contentJson['payload'],
-          );
+          return RawMessageContent(payload: contentJson['payload']);
         case 'git_commit':
           return GitCommitMessageContent(
             projectId: contentJson['projectId'] as String?,
@@ -203,9 +188,7 @@ class ChatMessage {
             details: contentJson['details'] as String?,
           );
         default:
-          return TextMessageContent(
-            text: 'Unknown message type: $type',
-          );
+          return TextMessageContent(text: 'Unknown message type: $type');
       }
     }).toList();
 
@@ -225,36 +208,17 @@ class ChatMessage {
       'createdAt': createdAt.toIso8601String(),
       'contents': contents.map((content) {
         if (content is TextMessageContent) {
-          return {
-            'type': 'text',
-            'text': content.text,
-          };
+          return {'type': 'text', 'text': content.text};
         } else if (content is ThinkingMessageContent) {
-          return {
-            'type': 'thinking',
-            'text': content.text,
-          };
+          return {'type': 'thinking', 'text': content.text};
         } else if (content is CodeMessageContent) {
-          return {
-            'type': 'code',
-            'code': content.code,
-          };
+          return {'type': 'code', 'code': content.code};
         } else if (content is ToolMessageContent) {
-          return {
-            'type': 'tool',
-            'name': content.name,
-            'input': content.input,
-          };
+          return {'type': 'tool', 'name': content.name, 'input': content.input};
         } else if (content is ResultMessageContent) {
-          return {
-            'type': 'result',
-            'payload': content.payload,
-          };
+          return {'type': 'result', 'payload': content.payload};
         } else if (content is RawMessageContent) {
-          return {
-            'type': 'raw',
-            'payload': content.payload,
-          };
+          return {'type': 'raw', 'payload': content.payload};
         } else if (content is GitCommitMessageContent) {
           return {
             'type': 'git_commit',
@@ -384,6 +348,11 @@ class ChatSession {
   });
 
   factory ChatSession.fromJson(Map<String, dynamic> json) {
+    // 安全处理 created_at 和 updated_at 可能为 null 的情况
+    final createdAtStr = json['created_at'] as String?;
+    final updatedAtStr = json['updated_at'] as String?;
+    final now = DateTime.now();
+
     return ChatSession(
       id: json['id'].toString(),
       projectId: json['project_id'] as String,
@@ -392,8 +361,8 @@ class ChatSession {
       sessionId: json['session_id'] as String,
       model: json['model'] as String?,
       status: json['status'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      createdAt: createdAtStr != null ? DateTime.parse(createdAtStr) : now,
+      updatedAt: updatedAtStr != null ? DateTime.parse(updatedAtStr) : now,
       websocketUrl: json['websocket_url'] as String?,
     );
   }

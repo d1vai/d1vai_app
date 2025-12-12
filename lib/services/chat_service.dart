@@ -1,4 +1,3 @@
-
 import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'dart:io';
@@ -11,8 +10,7 @@ import '../utils/message_parser.dart';
 class ChatService {
   final ApiClient _apiClient;
 
-  ChatService({ApiClient? apiClient})
-      : _apiClient = apiClient ?? ApiClient();
+  ChatService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
 
   /// Execute a chat session with AI
   Future<ExecuteSessionResponse> executeSession({
@@ -77,7 +75,10 @@ class ChatService {
       // Safely extract data with proper type checking
       List<dynamic> data;
       if (response is Map<String, dynamic>) {
-        data = response['data'] as List<dynamic>? ?? response.values.first as List<dynamic>? ?? <dynamic>[];
+        data =
+            response['data'] as List<dynamic>? ??
+            response.values.first as List<dynamic>? ??
+            <dynamic>[];
       } else if (response is List<dynamic>) {
         data = response;
       } else {
@@ -112,10 +113,10 @@ class ChatService {
   /// Get all chat sessions for a project
   /// Note: This endpoint is not available in the backend API
   /// Sessions are now ephemeral and managed by opcode
-  @Deprecated('Sessions are now ephemeral and managed by opcode. Use executeSession instead.')
-  Future<List<ChatSession>> getChatSessions({
-    required String projectId,
-  }) async {
+  @Deprecated(
+    'Sessions are now ephemeral and managed by opcode. Use executeSession instead.',
+  )
+  Future<List<ChatSession>> getChatSessions({required String projectId}) async {
     // Return empty list as sessions are ephemeral
     return [];
   }
@@ -123,7 +124,9 @@ class ChatService {
   /// Send a message to an existing session
   /// Note: This endpoint is not available in the backend API
   /// Messages should be sent through the WebSocket connection instead
-  @Deprecated('Messages should be sent through the WebSocket connection. Use executeSession with sessionType="continue" instead.')
+  @Deprecated(
+    'Messages should be sent through the WebSocket connection. Use executeSession with sessionType="continue" instead.',
+  )
   Future<Stream<Uint8List>> sendMessageStream({
     required String projectId,
     required String sessionId,
@@ -135,9 +138,7 @@ class ChatService {
   }
 
   /// Connect to WebSocket for real-time chat
-  Future<WebSocket> connectWebSocket({
-    required String websocketUrl,
-  }) async {
+  Future<WebSocket> connectWebSocket({required String websocketUrl}) async {
     try {
       final uri = Uri.parse(websocketUrl);
       final webSocket = await WebSocket.connect(uri.toString());
@@ -166,9 +167,7 @@ class ChatService {
       final wsUri = base.replace(
         scheme: wsScheme,
         path: '/api/projects/ws/session/$sessionId',
-        queryParameters: {
-          'token': token,
-        },
+        queryParameters: {'token': token},
       );
       return wsUri.toString();
     } catch (e) {
@@ -189,9 +188,7 @@ class ChatService {
     try {
       final response = await _apiClient.post(
         '/api/projects/$projectId/sessions',
-        {
-          if (model != null) 'model': model,
-        },
+        {if (model != null) 'model': model},
       );
 
       return ChatSession.fromJson(response['session'] ?? response);
@@ -206,9 +203,7 @@ class ChatService {
     required String sessionId,
   }) async {
     try {
-      await _apiClient.delete(
-        '/api/projects/$projectId/sessions/$sessionId',
-      );
+      await _apiClient.delete('/api/projects/$projectId/sessions/$sessionId');
     } catch (e) {
       throw ChatException('Failed to delete chat session: $e');
     }
@@ -228,9 +223,24 @@ class ExecuteSessionResponse {
   });
 
   factory ExecuteSessionResponse.fromJson(Map<String, dynamic> json) {
+    // Handle both direct data and nested response structures
+    final sessionId =
+        json['session_id'] as String? ??
+        (json['session']?['session_id'] as String?);
+    final websocketUrl =
+        json['websocket_url'] as String? ??
+        (json['session']?['websocket_url'] as String?);
+
+    if (sessionId == null) {
+      throw ChatException('Missing session_id in response');
+    }
+    if (websocketUrl == null) {
+      throw ChatException('Missing websocket_url in response');
+    }
+
     return ExecuteSessionResponse(
-      sessionId: json['session_id'] as String,
-      websocketUrl: json['websocket_url'] as String,
+      sessionId: sessionId,
+      websocketUrl: websocketUrl,
       session: ChatSession.fromJson(json['session'] ?? json),
     );
   }
