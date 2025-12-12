@@ -23,16 +23,14 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   int _currentTab = 0;
+  bool _loginDialogShown = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final user = Provider.of<AuthProvider>(context, listen: false).user;
-      if (user == null) {
-        _showLoginRequiredDialog();
-      }
-    });
+    // 不在这里直接根据一次性的 user 快照判断是否登录，
+    // 而是在 build 中结合 AuthProvider 的 isLoading / user 状态做判断，
+    // 避免刚进入页面时 Auth 还在初始化导致误弹登录弹窗。
   }
 
   /// 显示登录提示对话框
@@ -57,7 +55,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
 
+    // 根据 AuthProvider 状态决定是否需要显示登录提示，而不是在 initState 用一次性快照。
+    final auth = Provider.of<AuthProvider>(context);
+    if (!auth.isLoading && auth.user == null && !_loginDialogShown) {
+      _loginDialogShown = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _showLoginRequiredDialog();
+      });
+    }
+    if (auth.user != null && _loginDialogShown) {
+      // 用户已经登录，重置标记，避免下一次进入设置页时不再检查。
+      _loginDialogShown = false;
+    }
+
     return Scaffold(
+
       appBar: AppBar(
         title: Text(loc?.translate('settings') ?? 'Settings'),
         // actions: [
