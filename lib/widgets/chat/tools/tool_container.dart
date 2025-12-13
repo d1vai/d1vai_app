@@ -17,42 +17,20 @@ class ToolContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4.0),
-      padding: EdgeInsets.all(compact ? 8.0 : 12.0),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8.0),
-        border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.2),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2.0),
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Tool: $toolType',
-                style: TextStyle(
-                  color: theme.colorScheme.primary,
-                  fontSize: compact ? 12 : 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withValues(alpha: 0.6),
+              shape: BoxShape.circle,
+            ),
           ),
-          SizedBox(height: compact ? 6 : 8),
-          child,
+          const SizedBox(width: 8),
+          Expanded(child: child),
         ],
       ),
     );

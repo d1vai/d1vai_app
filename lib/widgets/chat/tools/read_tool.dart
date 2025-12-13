@@ -5,10 +5,7 @@ import 'tool_container.dart';
 class ReadTool extends StatelessWidget {
   final dynamic input;
 
-  const ReadTool({
-    super.key,
-    required this.input,
-  });
+  const ReadTool({super.key, required this.input});
 
   @override
   Widget build(BuildContext context) {
@@ -25,19 +22,21 @@ class ReadTool extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            Icons.folder_open_outlined,
-            size: 16,
-            color: theme.colorScheme.primary,
+            Icons.description_outlined,
+            size: 14,
+            color: theme.colorScheme.primary.withValues(alpha: 0.7),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Expanded(
-            child: SelectableText(
+            child: Text(
               filePath,
               style: TextStyle(
-                color: theme.colorScheme.onSurface,
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

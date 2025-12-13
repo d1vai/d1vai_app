@@ -5,10 +5,7 @@ import 'tool_container.dart';
 class BashTool extends StatelessWidget {
   final dynamic input;
 
-  const BashTool({
-    super.key,
-    required this.input,
-  });
+  const BashTool({super.key, required this.input});
 
   @override
   Widget build(BuildContext context) {
@@ -16,127 +13,42 @@ class BashTool extends StatelessWidget {
 
     // Parse input
     String command = '';
-    String? description;
-    int? timeout;
-    bool? runInBackground;
 
     if (input is Map) {
       command = input['command']?.toString() ?? '';
-      description = input['description']?.toString();
-      timeout = input['timeout'] as int?;
-      runInBackground = input['run_in_background'] as bool?;
     }
 
     return ToolContainer(
       toolType: 'Bash',
       compact: true,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          // Command
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(
-                color: theme.colorScheme.outline.withValues(alpha: 0.2),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      '\$ ',
-                      style: TextStyle(
-                        color: theme.colorScheme.primary,
-                        fontSize: 12,
-                        fontFamily: 'monospace',
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Expanded(
-                      child: SelectableText(
-                        command,
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface,
-                          fontSize: 12,
-                          fontFamily: 'monospace',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+          Icon(
+            Icons.terminal,
+            size: 14,
+            color: theme.colorScheme.primary.withValues(alpha: 0.7),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            '\$ ',
+            style: TextStyle(
+              color: theme.colorScheme.primary.withValues(alpha: 0.7),
+              fontSize: 12,
+              fontFamily: 'monospace',
+              fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 8),
-          // Description and options
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (description != null && description.isNotEmpty)
-                Expanded(
-                  child: Text(
-                    description,
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      fontSize: 11,
-                    ),
-                  ),
-                ),
-              if (timeout != null || runInBackground == true) ...[
-                const SizedBox(width: 8),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    if (timeout != null) ...[
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.timer_outlined,
-                            size: 12,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${timeout}ms',
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurfaceVariant,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                    ],
-                    if (runInBackground == true)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.secondaryContainer,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          'background',
-                          style: TextStyle(
-                            color: theme.colorScheme.onSecondaryContainer,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-            ],
+          Expanded(
+            child: Text(
+              command,
+              style: TextStyle(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                fontSize: 12,
+                fontFamily: 'monospace',
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
