@@ -13,6 +13,11 @@ class ChatBottomSheet extends StatefulWidget {
   final bool isLoadingHistory;
   final ScrollController? scrollController;
   final Function(String) onSendMessage;
+  final Map<String, MessageStatus>? messageStatuses;
+  final Function(ChatMessage)? onRetry;
+  final VoidCallback? onLoadMore;
+  final bool hasMoreHistory;
+  final bool isLoadingMore;
   final VoidCallback? onClose;
   final VoidCallback? onRedeploy;
 
@@ -24,6 +29,11 @@ class ChatBottomSheet extends StatefulWidget {
     this.isLoadingHistory = false,
     this.scrollController,
     required this.onSendMessage,
+    this.messageStatuses,
+    this.onRetry,
+    this.onLoadMore,
+    this.hasMoreHistory = false,
+    this.isLoadingMore = false,
     this.onClose,
     this.onRedeploy,
   });
@@ -79,10 +89,10 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                   Container(
                     margin: const EdgeInsets.only(right: 8),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: theme.colorScheme.primary.withOpacity(0.3),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
                         width: 1,
                       ),
                     ),
@@ -151,6 +161,11 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                           messages: widget.messages,
                           isTyping: widget.isTyping,
                           scrollController: widget.scrollController,
+                          messageStatuses: widget.messageStatuses,
+                          onRetry: widget.onRetry,
+                          onLoadMore: widget.onLoadMore,
+                          hasMoreHistory: widget.hasMoreHistory,
+                          isLoadingMore: widget.isLoadingMore,
                         ),
                       ),
                     ],

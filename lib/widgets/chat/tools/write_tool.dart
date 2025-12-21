@@ -4,8 +4,9 @@ import 'tool_container.dart';
 /// Write tool message renderer
 class WriteTool extends StatelessWidget {
   final dynamic input;
+  final String? status;
 
-  const WriteTool({super.key, required this.input});
+  const WriteTool({super.key, required this.input, this.status});
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +20,7 @@ class WriteTool extends StatelessWidget {
 
     return ToolContainer(
       toolType: 'Write',
+      status: status,
       child: Row(
         children: [
           Icon(

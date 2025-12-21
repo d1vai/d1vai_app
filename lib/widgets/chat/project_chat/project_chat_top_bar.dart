@@ -5,6 +5,9 @@ class ProjectChatTopBar extends StatelessWidget {
   final ValueChanged<int> onTabSelected;
   final VoidCallback onRefreshPreview;
   final VoidCallback onOpenInNewTab;
+  final Color? workspaceDotColor;
+  final String? workspaceTooltip;
+  final VoidCallback? onWorkspacePressed;
 
   const ProjectChatTopBar({
     super.key,
@@ -12,6 +15,9 @@ class ProjectChatTopBar extends StatelessWidget {
     required this.onTabSelected,
     required this.onRefreshPreview,
     required this.onOpenInNewTab,
+    this.workspaceDotColor,
+    this.workspaceTooltip,
+    this.onWorkspacePressed,
   });
 
   @override
@@ -58,6 +64,22 @@ class ProjectChatTopBar extends StatelessWidget {
           ),
           Row(
             children: [
+              if (workspaceDotColor != null)
+                Tooltip(
+                  message: workspaceTooltip ?? 'Workspace',
+                  child: _ActionIconButton(
+                    iconWidget: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: workspaceDotColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    onPressed: onWorkspacePressed ?? () {},
+                  ),
+                ),
+              if (workspaceDotColor != null) const SizedBox(width: 8),
               _ActionIconButton(
                 icon: Icons.restart_alt,
                 onPressed: onRefreshPreview,
@@ -138,10 +160,15 @@ class _TabButton extends StatelessWidget {
 }
 
 class _ActionIconButton extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
+  final Widget? iconWidget;
   final VoidCallback onPressed;
 
-  const _ActionIconButton({required this.icon, required this.onPressed});
+  const _ActionIconButton({
+    this.icon,
+    this.iconWidget,
+    required this.onPressed,
+  }) : assert(icon != null || iconWidget != null);
 
   @override
   Widget build(BuildContext context) {
@@ -163,11 +190,12 @@ class _ActionIconButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           child: Padding(
             padding: const EdgeInsets.all(10),
-            child: Icon(
-              icon,
-              size: 20,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+            child: iconWidget ??
+                Icon(
+                  icon,
+                  size: 20,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
           ),
         ),
       ),

@@ -3,14 +3,28 @@ part of '../../project_chat/project_chat_tab.dart';
 abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
     with AutomaticKeepAliveClientMixin {
   final ChatService _chatService = ChatService();
+  final WorkspaceService _workspaceService = WorkspaceService();
   final List<ChatMessage> _chatMessages = [];
   final ScrollController _chatScrollController = ScrollController();
+  final Map<String, MessageStatus> _messageStatuses = {};
 
   bool _isChatLoading = false;
   bool _isTyping = false;
   bool _isLoadingHistory = false;
   String? _currentSessionId;
   bool _historyLoaded = false;
+  bool _isLoadingMoreHistory = false;
+  bool _hasMoreHistory = true;
+  DateTime? _oldestMessageAt;
+
+  // Workspace state (align with web BigChat)
+  WorkspaceStateInfo? _workspaceState;
+  WorkspacePhase _workspacePhase = WorkspacePhase.unknown;
+  String? _workspaceError;
+  Timer? _workspacePollTimer;
+  bool _workspacePollInFlight = false;
+  bool _workspaceWarmupInFlight = false;
+  int _workspacePollErrorStreak = 0;
 
   // WebSocket runtime (similar responsibilities to web's wsManager + useWebSocket)
   String? _activeWsSessionId;
@@ -47,4 +61,9 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   Future<void> _loadEnvVars();
   void _sendChatMessage(String text);
   void _sendFirstMessage(String text);
+
+  // Shared helpers implemented by logic mixin; UI mixin depends on them.
+  Future<void> _refreshWorkspaceStatus({required bool bypassCache});
+  Future<void> _loadMoreHistory();
+  Future<void> _retryMessage(ChatMessage message);
 }

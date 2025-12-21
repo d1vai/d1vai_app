@@ -37,22 +37,27 @@ Page<dynamic> _buildPageWithTransition(
 
 class _ClearSnackBarsNavigatorObserver extends NavigatorObserver {
   void _clearSnackBars() {
-    final nav = navigator;
-    if (nav == null) return;
-    final ctx = nav.context;
-    final messenger = ScaffoldMessenger.maybeOf(ctx);
-    messenger?.clearSnackBars();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final nav = navigator;
+      if (nav == null) return;
+      final ctx = nav.context;
+      final messenger = ScaffoldMessenger.maybeOf(ctx);
+      messenger?.clearSnackBars();
+    });
   }
+
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
     super.didPush(route, previousRoute);
     _clearSnackBars();
   }
+
   @override
   void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
     super.didPop(route, previousRoute);
     _clearSnackBars();
   }
+
   @override
   void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
     super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
@@ -113,36 +118,48 @@ GoRouter createAppRouter() {
       ),
       GoRoute(
         path: '/onboarding',
-        pageBuilder: (context, state) => _buildPageWithTransition(
-          context,
-          state,
-          const OnboardingScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            _buildPageWithTransition(context, state, const OnboardingScreen()),
       ),
       GoRoute(
         path: '/dashboard',
-        pageBuilder: (context, state) =>
-            _buildPageWithTransition(context, state, const MainScreen(initialIndex: 0)),
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const MainScreen(initialIndex: 0),
+        ),
       ),
       GoRoute(
         path: '/community',
-        pageBuilder: (context, state) =>
-            _buildPageWithTransition(context, state, const MainScreen(initialIndex: 1)),
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const MainScreen(initialIndex: 1),
+        ),
       ),
       GoRoute(
         path: '/docs',
-        pageBuilder: (context, state) =>
-            _buildPageWithTransition(context, state, const MainScreen(initialIndex: 2)),
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const MainScreen(initialIndex: 2),
+        ),
       ),
       GoRoute(
         path: '/orders',
-        pageBuilder: (context, state) =>
-            _buildPageWithTransition(context, state, const MainScreen(initialIndex: 3)),
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const MainScreen(initialIndex: 3),
+        ),
       ),
       GoRoute(
         path: '/settings',
-        pageBuilder: (context, state) =>
-            _buildPageWithTransition(context, state, const MainScreen(initialIndex: 4)),
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const MainScreen(initialIndex: 4),
+        ),
       ),
       GoRoute(
         path: '/settings/language',
@@ -154,11 +171,8 @@ GoRouter createAppRouter() {
       ),
       GoRoute(
         path: '/settings/invites',
-        pageBuilder: (context, state) => _buildPageWithTransition(
-          context,
-          state,
-          const InvitesListScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            _buildPageWithTransition(context, state, const InvitesListScreen()),
       ),
       GoRoute(
         path: '/settings/notifications',
@@ -170,11 +184,8 @@ GoRouter createAppRouter() {
       ),
       GoRoute(
         path: '/settings/help',
-        pageBuilder: (context, state) => _buildPageWithTransition(
-          context,
-          state,
-          const HelpSupportScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            _buildPageWithTransition(context, state, const HelpSupportScreen()),
       ),
       GoRoute(
         path: '/settings/github',

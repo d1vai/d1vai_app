@@ -207,8 +207,14 @@ class MessageParser {
             if (message is Map<String, dynamic> &&
                 message['content'] is List) {
               final contents = <MessageContent>[];
+              final blocks = message['content'] as List;
+              final toolUseTotal = blocks
+                  .where((it) =>
+                      it is Map<String, dynamic> && it['type'] == 'tool_use')
+                  .length;
+              var toolUseSeen = 0;
 
-              for (final item in (message['content'] as List)) {
+              for (final item in blocks) {
                 if (item is! Map<String, dynamic>) continue;
                 if (item['type'] == 'text' && item['text'] != null) {
                   contents.add(TextMessageContent(text: item['text'].toString()));
@@ -218,9 +224,12 @@ class MessageParser {
                       ThinkingMessageContent(text: item['thinking'].toString()));
                 } else if (item['type'] == 'tool_use' &&
                     item['name'] != null) {
+                  toolUseSeen += 1;
                   contents.add(ToolMessageContent(
+                    id: item['id']?.toString(),
                     name: item['name'].toString(),
                     input: item['input'],
+                    status: toolUseSeen >= toolUseTotal ? 'processing' : 'done',
                   ));
                 }
               }
@@ -414,7 +423,13 @@ class MessageParser {
     final p = entry.payload;
     final role = entry.direction == 'user' ? 'user' : 'assistant';
 
-    final contents = createMessageContents(entry.messageText, p);
+    // History should never look "in progress" in the UI.
+    final contents = createMessageContents(entry.messageText, p).map((c) {
+      if (c is! ToolMessageContent) return c;
+      final st = (c.status ?? '').toLowerCase();
+      if (st == 'processing') return c.copyWith(status: 'done');
+      return c.copyWith(status: c.status ?? 'done');
+    }).toList();
 
     return ChatMessage(
       id: entry.id.toString(),
@@ -450,8 +465,10 @@ class MessageParser {
               );
             case 'tool':
               return ToolMessageContent(
+                id: contentJson['id']?.toString(),
                 name: contentJson['name']?.toString() ?? 'unknown',
                 input: contentJson['input'],
+                status: contentJson['status']?.toString(),
               );
             case 'result':
               return ResultMessageContent(
@@ -565,8 +582,10 @@ class MessageParser {
             if (data['tool'] is Map<String, dynamic>) {
               final tool = data['tool'] as Map<String, dynamic>;
               contents.add(ToolMessageContent(
+                id: tool['id']?.toString(),
                 name: tool['name']?.toString() ?? 'unknown',
                 input: tool['input'],
+                status: tool['status']?.toString(),
               ));
             }
             break;

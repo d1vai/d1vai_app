@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../models/message.dart';
-import 'bash_tool.dart';
-import 'write_tool.dart';
-import 'read_tool.dart';
-import 'tool_container.dart';
+import 'tool_detail_sheet.dart';
+import 'tool_utils.dart';
 
 /// Enhanced tool message renderer with specialized components for different tool types
 class EnhancedToolMessage extends StatelessWidget {
@@ -13,187 +11,150 @@ class EnhancedToolMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final toolName = content.name.toLowerCase();
+    final theme = Theme.of(context);
+    final name = content.name;
+    final status = coerceToolStatus(content.status, content.input);
+    final summary = toolSummary(name, content.input);
 
-    switch (toolName) {
+    IconData icon;
+    switch (name.toLowerCase()) {
       case 'bash':
-        return BashTool(input: content.input);
-
-      case 'write':
-        return WriteTool(input: content.input);
-
+        icon = Icons.terminal;
+        break;
       case 'read':
-        return ReadTool(input: content.input);
-
+        icon = Icons.description_outlined;
+        break;
+      case 'write':
+        icon = Icons.edit_outlined;
+        break;
       case 'edit':
-        return _EditTool(input: content.input);
-
       case 'multi_edit':
-        return _EditTool(input: content.input, isMulti: true);
-
+      case 'multiedit':
+        icon = Icons.edit_note;
+        break;
       case 'glob':
-        return _SimpleTool(
-          toolName: 'Glob',
-          input: content.input,
-          icon: Icons.search,
-        );
-
+        icon = Icons.search;
+        break;
       case 'grep':
-        return _SimpleTool(
-          toolName: 'Grep',
-          input: content.input,
-          icon: Icons.find_replace,
-        );
-
+        icon = Icons.find_replace;
+        break;
+      case 'websearch':
+      case 'web_search':
+        icon = Icons.travel_explore;
+        break;
+      case 'webfetch':
+      case 'web_fetch':
+        icon = Icons.link;
+        break;
+      case 'todowrite':
+      case 'todo_write':
+        icon = Icons.checklist;
+        break;
+      case 'task':
+        icon = Icons.task_alt;
+        break;
       default:
-        return _GenericToolMessage(
-          toolName: toolName,
-          input: content.input,
-          icon: Icons.build,
-        );
-    }
-  }
-}
-
-/// Edit tool message (shows file path only)
-class _EditTool extends StatelessWidget {
-  final dynamic input;
-  final bool isMulti;
-
-  const _EditTool({required this.input, this.isMulti = false});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    String filePath = '';
-
-    if (input is Map) {
-      filePath =
-          input['file_path']?.toString() ?? input['path']?.toString() ?? '';
+        icon = Icons.build;
+        break;
     }
 
-    return ToolContainer(
-      toolType: isMulti ? 'MultiEdit' : 'Edit',
-      child: Row(
-        children: [
-          Icon(
-            isMulti ? Icons.edit_note : Icons.edit_outlined,
-            size: 14,
-            color: theme.colorScheme.primary.withValues(alpha: 0.7),
+    final statusWidget = _StatusRight(status: status);
+
+    return InkWell(
+      onTap: () {
+        ToolDetailSheet.show(context, content: content);
+      },
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
           ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              filePath,
-              style: TextStyle(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: theme.colorScheme.primary.withValues(alpha: 0.85),
             ),
-          ),
-        ],
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                summary,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            statusWidget,
+          ],
+        ),
       ),
     );
   }
 }
 
-/// Simple tool message for glob, grep, etc.
-class _SimpleTool extends StatelessWidget {
-  final String toolName;
-  final dynamic input;
-  final IconData icon;
+class _StatusRight extends StatelessWidget {
+  final String status;
 
-  const _SimpleTool({
-    required this.toolName,
-    required this.input,
-    required this.icon,
-  });
+  const _StatusRight({required this.status});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final st = status.toLowerCase();
 
-    String displayText = '';
-    if (input is Map) {
-      displayText =
-          input['pattern']?.toString() ??
-          input['query']?.toString() ??
-          input.toString();
+    Color fg;
+    String label;
+    Widget icon;
+
+    if (st == 'processing') {
+      fg = theme.colorScheme.primary;
+      label = 'Running';
+      icon = SizedBox(
+        width: 14,
+        height: 14,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation<Color>(fg),
+        ),
+      );
+    } else if (st == 'error') {
+      fg = theme.colorScheme.error;
+      label = 'Error';
+      icon = Icon(Icons.error_outline, size: 16, color: fg);
+    } else if (st == 'warning') {
+      fg = Colors.amber.shade800;
+      label = 'Warn';
+      icon = Icon(Icons.warning_amber_rounded, size: 16, color: fg);
     } else {
-      displayText = input?.toString() ?? '';
+      fg = theme.colorScheme.onSurfaceVariant;
+      label = 'Done';
+      icon = Icon(Icons.check_circle_outline, size: 16, color: fg);
     }
 
-    return ToolContainer(
-      toolType: toolName,
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            size: 14,
-            color: theme.colorScheme.primary.withValues(alpha: 0.7),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        icon,
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: fg,
+            fontWeight: FontWeight.w600,
           ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              displayText,
-              style: TextStyle(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Generic tool message for unknown tools
-class _GenericToolMessage extends StatelessWidget {
-  final String toolName;
-  final dynamic input;
-  final IconData icon;
-
-  const _GenericToolMessage({
-    required this.toolName,
-    required this.input,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return ToolContainer(
-      toolType: toolName,
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            size: 14,
-            color: theme.colorScheme.primary.withValues(alpha: 0.7),
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              input?.toString() ?? '',
-              style: TextStyle(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

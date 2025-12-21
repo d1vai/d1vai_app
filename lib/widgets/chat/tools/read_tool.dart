@@ -4,8 +4,9 @@ import 'tool_container.dart';
 /// Read tool message renderer
 class ReadTool extends StatelessWidget {
   final dynamic input;
+  final String? status;
 
-  const ReadTool({super.key, required this.input});
+  const ReadTool({super.key, required this.input, this.status});
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +20,7 @@ class ReadTool extends StatelessWidget {
 
     return ToolContainer(
       toolType: 'Read',
+      status: status,
       child: Row(
         children: [
           Icon(

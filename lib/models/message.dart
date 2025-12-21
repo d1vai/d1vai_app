@@ -28,11 +28,32 @@ class CodeMessageContent extends MessageContent {
 
 /// Tool execution message
 class ToolMessageContent extends MessageContent {
+  final String? id;
   final String name;
   final dynamic input;
+  final String? status;
 
-  const ToolMessageContent({required this.name, required this.input})
+  const ToolMessageContent({
+    this.id,
+    required this.name,
+    required this.input,
+    this.status,
+  })
     : super('tool');
+
+  ToolMessageContent copyWith({
+    String? id,
+    String? name,
+    dynamic input,
+    String? status,
+  }) {
+    return ToolMessageContent(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      input: input ?? this.input,
+      status: status ?? this.status,
+    );
+  }
 }
 
 /// Tool result message
@@ -145,8 +166,10 @@ class ChatMessage {
           return CodeMessageContent(code: contentJson['code'] as String);
         case 'tool':
           return ToolMessageContent(
+            id: contentJson['id']?.toString(),
             name: contentJson['name'] as String,
             input: contentJson['input'],
+            status: contentJson['status']?.toString(),
           );
         case 'result':
           return ResultMessageContent(payload: contentJson['payload']);
@@ -214,7 +237,13 @@ class ChatMessage {
         } else if (content is CodeMessageContent) {
           return {'type': 'code', 'code': content.code};
         } else if (content is ToolMessageContent) {
-          return {'type': 'tool', 'name': content.name, 'input': content.input};
+          return {
+            'type': 'tool',
+            'id': content.id,
+            'name': content.name,
+            'input': content.input,
+            'status': content.status,
+          };
         } else if (content is ResultMessageContent) {
           return {'type': 'result', 'payload': content.payload};
         } else if (content is RawMessageContent) {

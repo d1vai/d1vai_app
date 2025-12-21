@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import '../models/message.dart';
 import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
+import '../services/workspace_service.dart';
+import '../utils/message_parser.dart';
 import '../widgets/chat/message_list.dart';
 import '../widgets/chat/message_input.dart';
 import '../widgets/chat/message_skeleton.dart';
@@ -27,67 +30,231 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen>
     with TickerProviderStateMixin {
   final ChatService _chatService = ChatService();
+  final WorkspaceService _workspaceService = WorkspaceService();
   final ScrollController _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
+  final Map<String, MessageStatus> _messageStatuses = {};
 
   bool _isLoading = false;
   bool _isTyping = false;
   bool _isLoadingHistory = false;
+  bool _isLoadingMoreHistory = false;
+  bool _hasMoreHistory = true;
+  DateTime? _oldestMessageAt;
   String? _currentSessionId;
-  String? _websocketUrl;
+
+  // WebSocket runtime (mirrors responsibilities from ProjectChatTab / web ChatSection)
+  String? _activeWsSessionId;
   WebSocket? _webSocket;
   StreamSubscription? _webSocketSubscription;
+  Timer? _reconnectTimer;
+  int _reconnectAttempts = 0;
+  bool _manualWsClose = false;
+  bool _autoConnectDisabled = false;
+  final Set<String> _seenWsKeys = <String>{};
+  Timer? _typingResetTimer;
+
+  bool _autopromptHandled = false;
+
+  WorkspaceStateInfo? _workspaceState;
+  WorkspacePhase _workspacePhase = WorkspacePhase.unknown;
+  String? _workspaceError;
+  Timer? _workspacePollTimer;
+  bool _workspacePollInFlight = false;
+  bool _workspaceWarmupInFlight = false;
+  int _workspacePollErrorStreak = 0;
 
   @override
   void initState() {
     super.initState();
-    _loadChatHistory();
-
-    // 如果有 autoprompt，自动执行会话
-    if (widget.autoprompt != null && widget.autoprompt!.isNotEmpty) {
-      _executeAutoprompt();
-    }
+    unawaited(_bootstrapWorkspace());
+    unawaited(_initialize());
   }
 
   @override
   void dispose() {
+    _typingResetTimer?.cancel();
+    _reconnectTimer?.cancel();
+    _workspacePollTimer?.cancel();
     _webSocketSubscription?.cancel();
-    _webSocket?.close();
+    _manualWsClose = true;
+    _webSocket?.close(1000, 'dispose');
     _scrollController.dispose();
     super.dispose();
   }
 
-  /// Load chat history from server
-  Future<void> _loadChatHistory() async {
+  Future<void> _initialize() async {
+    await _refreshHistory(attemptReconnect: true);
+    await _maybeRunAutoprompt();
+  }
+
+  void _scheduleWorkspacePoll(WorkspacePhase phase) {
+    _workspacePollTimer?.cancel();
+    if (!mounted) return;
+
+    Duration delay;
+    switch (phase) {
+      case WorkspacePhase.ready:
+        delay = const Duration(minutes: 10);
+        break;
+      case WorkspacePhase.starting:
+      case WorkspacePhase.syncing:
+      case WorkspacePhase.unknown:
+        delay = const Duration(seconds: 5);
+        break;
+      case WorkspacePhase.standby:
+      case WorkspacePhase.archived:
+        delay = const Duration(minutes: 1);
+        break;
+      case WorkspacePhase.error:
+        delay = Duration(
+          milliseconds: (5000 * (1 << _workspacePollErrorStreak.clamp(0, 6)))
+              .clamp(5000, 5 * 60 * 1000),
+        );
+        break;
+    }
+
+    _workspacePollTimer = Timer(delay, () {
+      if (!mounted) return;
+      unawaited(_refreshWorkspaceStatus(bypassCache: true));
+    });
+  }
+
+  Future<void> _refreshWorkspaceStatus({required bool bypassCache}) async {
+    if (_workspacePollInFlight) return;
+    _workspacePollInFlight = true;
+    try {
+      final st = await _workspaceService.getWorkspaceStatus(
+        bypassCache: bypassCache,
+      );
+      if (!mounted) return;
+      final phase = normalizeWorkspacePhase(st);
+      setState(() {
+        _workspaceState = st;
+        _workspacePhase = phase;
+        _workspaceError = null;
+      });
+      _workspacePollErrorStreak = 0;
+      _scheduleWorkspacePoll(phase);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _workspacePhase = WorkspacePhase.error;
+        _workspaceError = e.toString();
+      });
+      _workspacePollErrorStreak += 1;
+      _scheduleWorkspacePoll(WorkspacePhase.error);
+    } finally {
+      _workspacePollInFlight = false;
+    }
+  }
+
+  Future<void> _bootstrapWorkspace() async {
+    await _refreshWorkspaceStatus(bypassCache: true);
+    // Best-effort warmup in background to improve first-send UX.
+    if (_workspacePhase != WorkspacePhase.ready) {
+      unawaited(_maybeWarmupWorkspace());
+    }
+  }
+
+  Future<void> _maybeWarmupWorkspace() async {
+    if (_workspaceWarmupInFlight) return;
+    if (_workspacePhase == WorkspacePhase.ready) return;
+    _workspaceWarmupInFlight = true;
+    try {
+      final conn = await _workspaceService.ensureWorkspaceReady();
+      if (!mounted) return;
+      setState(() {
+        _workspaceState = WorkspaceStateInfo(
+          status: conn.rawStatus ?? _workspaceState?.status,
+          ip: conn.ip,
+          port: conn.port,
+        );
+        _workspacePhase = WorkspacePhase.ready;
+        _workspaceError = null;
+      });
+      _workspacePollErrorStreak = 0;
+      _scheduleWorkspacePoll(WorkspacePhase.ready);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _workspacePhase = WorkspacePhase.error;
+        _workspaceError = e.toString();
+      });
+      _workspacePollErrorStreak += 1;
+      _scheduleWorkspacePoll(WorkspacePhase.error);
+    } finally {
+      _workspaceWarmupInFlight = false;
+    }
+  }
+
+  Future<void> _ensureWorkspaceReadyForSend() async {
+    if (_workspacePhase == WorkspacePhase.ready) return;
+    // Quick status check before a potentially long ensure call.
+    await _refreshWorkspaceStatus(bypassCache: false);
+    if (_workspacePhase == WorkspacePhase.ready) return;
+    await _maybeWarmupWorkspace();
+    if (_workspacePhase != WorkspacePhase.ready) {
+      throw Exception(_workspaceError ?? 'Workspace is not ready');
+    }
+  }
+
+  Future<void> _maybeRunAutoprompt() async {
+    final autoprompt = widget.autoprompt?.trim();
+    if (_autopromptHandled) return;
+    if (autoprompt == null || autoprompt.isEmpty) return;
+    _autopromptHandled = true;
+    // Align with web: autoprompt should always start a new session.
+    await _sendMessage(autoprompt, forceNewSession: true);
+  }
+
+  Future<void> _refreshHistory({required bool attemptReconnect}) async {
+    if (_isLoadingHistory) return;
     setState(() {
       _isLoadingHistory = true;
+      _isLoadingMoreHistory = false;
+      _hasMoreHistory = true;
+      _oldestMessageAt = null;
     });
 
+    // Close WS to avoid mixing old runs with refreshed history.
+    await _closeWebSocket(manual: true);
+
     try {
+      const limit = 30;
       final history = await _chatService.getChatHistory(
         projectId: widget.projectId,
+        limit: limit,
+        messageType: 'all',
+        includePayload: true,
       );
-
       if (!mounted) return;
+      history.sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
-      final messages = history.map((entry) {
-        final content = entry.messageType == 'text'
-            ? TextMessageContent(text: entry.messageText ?? '')
-            : ResultMessageContent(payload: entry.payload);
-
-        return ChatMessage(
-          id: entry.id.toString(),
-          role: entry.direction,
-          createdAt: entry.createdAt,
-          contents: [content],
-        );
-      }).toList();
+      final messages = <ChatMessage>[];
+      for (final entry in history) {
+        final m = MessageParser.historyEntryToMessage(entry);
+        // Drop empty text-only messages to match web filtering behavior.
+        final allEmptyText = m.contents.isNotEmpty &&
+            m.contents.every((c) =>
+                c is TextMessageContent && c.text.trim().isEmpty);
+        if (!allEmptyText) messages.add(m);
+      }
 
       setState(() {
-        _messages.clear();
-        _messages.addAll(messages);
+        _messages
+          ..clear()
+          ..addAll(messages);
+        _messageStatuses.clear();
         _isLoadingHistory = false;
+        _hasMoreHistory = history.length >= limit;
+        _oldestMessageAt =
+            history.isNotEmpty ? history.first.createdAt : null;
       });
+
+      if (attemptReconnect) {
+        await _restoreSessionFromHistory(history);
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -103,183 +270,598 @@ class _ChatScreenState extends State<ChatScreen>
     }
   }
 
-  /// Execute autoprompt session
-  Future<void> _executeAutoprompt() async {
+  Future<void> _loadMoreHistory() async {
+    if (_isLoadingHistory || _isLoadingMoreHistory) return;
+    if (!_hasMoreHistory) return;
+
+    final before = _oldestMessageAt;
+    if (before == null) return;
+
+    setState(() {
+      _isLoadingMoreHistory = true;
+    });
+
+    final controller = _scrollController;
+    final hadClients = controller.hasClients;
+    final beforeOffset = hadClients ? controller.offset : 0.0;
+    final beforeMaxExtent =
+        hadClients ? controller.position.maxScrollExtent : 0.0;
+
     try {
-      setState(() {
-        _isLoading = true;
-      });
-
-      final response = await _chatService.executeSession(
+      const limit = 30;
+      final history = await _chatService.getChatHistory(
         projectId: widget.projectId,
-        prompt: widget.autoprompt!,
-        sessionType: 'new',
-        optimisticMessage: widget.autoprompt!,
+        limit: limit,
+        messageType: 'all',
+        includePayload: true,
+        beforeTs: before.toUtc().toIso8601String(),
       );
-
       if (!mounted) return;
+      history.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+      final older = <ChatMessage>[];
+      for (final entry in history) {
+        final m = MessageParser.historyEntryToMessage(entry);
+        final allEmptyText = m.contents.isNotEmpty &&
+            m.contents.every((c) =>
+                c is TextMessageContent && c.text.trim().isEmpty);
+        if (!allEmptyText) older.add(m);
+      }
+
+      final existingIds = _messages.map((m) => m.id).toSet();
+      final deduped = older.where((m) => !existingIds.contains(m.id)).toList();
 
       setState(() {
-        _currentSessionId = response.sessionId;
-        _websocketUrl = response.websocketUrl;
-        _isLoading = false;
+        _messages.insertAll(0, deduped);
+        _isLoadingMoreHistory = false;
+        _hasMoreHistory = history.length >= limit;
+        _oldestMessageAt =
+            history.isNotEmpty ? history.first.createdAt : _oldestMessageAt;
       });
 
-      _connectWebSocket();
-
-      // 添加用户消息到消息列表
-      final userMessage = ChatMessage(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        role: 'user',
-        createdAt: DateTime.now(),
-        contents: [TextMessageContent(text: widget.autoprompt!)],
-      );
-
-      setState(() {
-        _messages.add(userMessage);
-      });
-    } catch (e) {
+      // Preserve viewport position after prepending.
+      if (hadClients && controller.hasClients) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!controller.hasClients) return;
+          final afterMax = controller.position.maxScrollExtent;
+          final delta = afterMax - beforeMaxExtent;
+          if (delta > 0) {
+            controller.jumpTo(beforeOffset + delta);
+          }
+        });
+      }
+    } catch (_) {
       if (!mounted) return;
-
       setState(() {
-        _isLoading = false;
+        _isLoadingMoreHistory = false;
+        _hasMoreHistory = false;
       });
-
-      showDialog(
-        context: context,
-        builder: (context) => Alert(
-          variant: AlertVariant.destructive,
-          child: AlertDescription(text: 'Failed to execute autoprompt: $e'),
-        ),
-      );
     }
   }
 
-  /// Connect to WebSocket for real-time communication
-  void _connectWebSocket() async {
-    if (_websocketUrl == null) return;
+  void _scheduleTypingReset() {
+    _typingResetTimer?.cancel();
+    _typingResetTimer = Timer(const Duration(milliseconds: 1200), () {
+      if (!mounted) return;
+      setState(() {
+        _isTyping = false;
+      });
+    });
+  }
+
+  Future<void> _closeWebSocket({required bool manual}) async {
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+    _reconnectAttempts = 0;
+    _manualWsClose = manual;
 
     try {
-      _webSocket = await _chatService.connectWebSocket(
-        websocketUrl: _websocketUrl!,
-      );
+      await _webSocketSubscription?.cancel();
+    } catch (_) {}
+    _webSocketSubscription = null;
 
-      if (!mounted) {
-        _webSocket?.close();
+    try {
+      await _webSocket?.close(1000, manual ? 'manual_close' : 'close');
+    } catch (_) {}
+    _webSocket = null;
+    _activeWsSessionId = null;
+  }
+
+  Map<String, dynamic>? _decodeWsPayload(dynamic data) {
+    try {
+      if (data is String) {
+        final obj = jsonDecode(data);
+        return obj is Map<String, dynamic> ? obj : null;
+      }
+      if (data is Map<String, dynamic>) return data;
+    } catch (_) {}
+    return null;
+  }
+
+  void _appendAssistantDelta(String delta) {
+    if (delta.isEmpty) return;
+    setState(() {
+      if (_messages.isNotEmpty) {
+        final last = _messages.last;
+        if (last.role != 'user' &&
+            last.contents.isNotEmpty &&
+            last.contents.first is TextMessageContent) {
+          final first = last.contents.first as TextMessageContent;
+          final updated = last.copyWith(
+            contents: [
+              TextMessageContent(text: '${first.text}$delta'),
+              ...last.contents.skip(1),
+            ],
+          );
+          _messages[_messages.length - 1] = updated;
+          return;
+        }
+      }
+      _messages.add(
+        ChatMessage(
+          id: 'asst-${DateTime.now().millisecondsSinceEpoch}',
+          role: 'assistant',
+          createdAt: DateTime.now(),
+          contents: [TextMessageContent(text: delta)],
+        ),
+      );
+    });
+    _scrollToBottom();
+  }
+
+  void _finalizePrevToolDone() {
+    _markLastProcessingToolStatus('done');
+  }
+
+  void _markLastProcessingToolStatus(String nextStatus) {
+    final next = nextStatus.toLowerCase();
+    for (var mi = _messages.length - 1; mi >= 0; mi--) {
+      final msg = _messages[mi];
+      final contents = msg.contents;
+      for (var ci = contents.length - 1; ci >= 0; ci--) {
+        final c = contents[ci];
+        if (c is! ToolMessageContent) continue;
+        final cur = (c.status ?? '').toLowerCase();
+        if (cur != 'processing') continue;
+        final nextContents = List<MessageContent>.from(contents);
+        nextContents[ci] = c.copyWith(status: next);
+        setState(() {
+          _messages[mi] = msg.copyWith(contents: nextContents);
+        });
         return;
       }
+    }
+  }
 
-      _webSocketSubscription = _webSocket!.listen(
-        (data) {
-          final message = _chatService.parseWebSocketMessage(data);
-          if (message != null) {
-            setState(() {
-              _messages.add(message);
-              _isTyping = false;
-            });
-            _scrollToBottom();
-          }
-        },
-        onError: (error) {
-          if (!mounted) return;
-          showDialog(
-            context: context,
-            builder: (context) => Alert(
-              variant: AlertVariant.destructive,
-              child: AlertDescription(text: 'WebSocket error: $error'),
+  void _markLastToolOutcome(String nextStatus) {
+    final next = nextStatus.toLowerCase();
+    for (var mi = _messages.length - 1; mi >= 0; mi--) {
+      final msg = _messages[mi];
+      final contents = msg.contents;
+      for (var ci = contents.length - 1; ci >= 0; ci--) {
+        final c = contents[ci];
+        if (c is! ToolMessageContent) continue;
+        final cur = (c.status ?? '').toLowerCase();
+        final shouldUpdate = next == 'error'
+            ? cur != 'error'
+            : next == 'warning'
+                ? cur != 'warning' && cur != 'error'
+                : cur != 'done' && cur != 'error' && cur != 'warning';
+        if (!shouldUpdate) return;
+        final nextContents = List<MessageContent>.from(contents);
+        nextContents[ci] = c.copyWith(status: next);
+        setState(() {
+          _messages[mi] = msg.copyWith(contents: nextContents);
+        });
+        return;
+      }
+    }
+  }
+
+  bool _userPayloadHasToolResult(Map<String, dynamic> payload) {
+    try {
+      final message = payload['message'];
+      if (message is! Map<String, dynamic>) return false;
+      final content = message['content'];
+      if (content is! List) return false;
+      return content.any(
+        (it) => it is Map<String, dynamic> && it['type'] == 'tool_result',
+      );
+    } catch (_) {
+      return false;
+    }
+  }
+
+  bool _userPayloadIsToolResultError(Map<String, dynamic> payload) {
+    try {
+      final message = payload['message'];
+      if (message is! Map<String, dynamic>) return false;
+      final content = message['content'];
+      if (content is! List) return false;
+      for (final it in content) {
+        if (it is Map<String, dynamic> &&
+            it['type'] == 'tool_result' &&
+            it['is_error'] == true) {
+          return true;
+        }
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  void _handleWsPayload(Map<String, dynamic> payload) {
+    final type = payload['type']?.toString();
+
+    // History frames are ignored; history is loaded via HTTP.
+    if (type == 'history' || type == 'history_complete') return;
+
+    // Proxy status can disable auto-connect.
+    if (type == 'proxy_status') {
+      final st = payload['status']?.toString();
+      if (st == 'remote_connect_failed') {
+        _autoConnectDisabled = true;
+      }
+      return;
+    }
+
+    // Best-effort de-dup (skip for deltas and allow assistant_message to overwrite).
+    try {
+      if (type != 'content_block_delta' &&
+          type != 'message_delta' &&
+          type != 'assistant_message') {
+        String? wsKey;
+        final uuid = payload['uuid'];
+        if (uuid is String && uuid.isNotEmpty) {
+          wsKey = uuid;
+        } else if (payload['message'] is Map<String, dynamic>) {
+          final mid = (payload['message'] as Map<String, dynamic>)['id'];
+          if (mid is String && mid.isNotEmpty) wsKey = mid;
+        } else {
+          final id = payload['id'];
+          if (id is String && id.isNotEmpty) wsKey = id;
+        }
+        if (wsKey != null) {
+          if (_seenWsKeys.contains(wsKey)) return;
+          _seenWsKeys.add(wsKey);
+          if (_seenWsKeys.length > 500) _seenWsKeys.clear();
+        }
+      }
+    } catch (_) {}
+
+    // Any non-history frame is live activity.
+    if (mounted) {
+      setState(() {
+        _isTyping = true;
+      });
+    }
+    _scheduleTypingReset();
+
+    if (type == 'content_block_delta' || type == 'message_delta') {
+      final delta = MessageParser.normalizeOpcodeText(payload);
+      if (delta != null && delta.isNotEmpty) _appendAssistantDelta(delta);
+      return;
+    }
+
+    if (type == 'assistant_message') {
+      // Any newer non-error message means older tool rows should not stay "processing".
+      _finalizePrevToolDone();
+      final contents = MessageParser.createMessageContentsFromPayload(payload);
+      if (contents.isEmpty) return;
+      setState(() {
+        if (_messages.isNotEmpty && _messages.last.role != 'user') {
+          final last = _messages.last;
+          _messages[_messages.length - 1] = last.copyWith(
+            contents: contents,
+            createdAt: DateTime.now(),
+          );
+        } else {
+          _messages.add(
+            ChatMessage(
+              id: 'asst-${DateTime.now().millisecondsSinceEpoch}',
+              role: 'assistant',
+              createdAt: DateTime.now(),
+              contents: contents,
             ),
           );
-          setState(() {
-            _isTyping = false;
-          });
+        }
+      });
+      _scrollToBottom();
+      return;
+    }
+
+    if (type == 'assistant') {
+      // Structured assistant content (may include tool_use); close previous processing tools.
+      _finalizePrevToolDone();
+    }
+
+    if (type == 'tool_result' || type == 'task_update') {
+      if (type == 'task_update') {
+        _finalizePrevToolDone();
+      }
+      if (type == 'tool_result') {
+        final isErr = payload['is_error'] == true;
+        _markLastToolOutcome(isErr ? 'error' : 'done');
+      }
+      final contents = MessageParser.createMessageContentsFromPayload(payload);
+      if (contents.isEmpty) return;
+      setState(() {
+        _messages.add(
+          ChatMessage(
+            id: 'tool-${DateTime.now().millisecondsSinceEpoch}',
+            role: 'assistant',
+            createdAt: DateTime.now(),
+            contents: contents,
+          ),
+        );
+      });
+      _scrollToBottom();
+      return;
+    }
+
+    if (type == 'result' ||
+        type == 'complete' ||
+        type == 'error' ||
+        type == 'cancelled') {
+      if (type == 'error') {
+        _markLastToolOutcome('error');
+      } else if (type == 'cancelled') {
+        _markLastToolOutcome('warning');
+      } else {
+        _finalizePrevToolDone();
+      }
+      _autoConnectDisabled = true;
+      if (mounted) {
+        setState(() {
+          _isTyping = false;
+        });
+      }
+      return;
+    }
+
+    // Some servers emit tool results wrapped as `type=user` with tool_result blocks.
+    if (type == 'user' && _userPayloadHasToolResult(payload)) {
+      _markLastToolOutcome(_userPayloadIsToolResultError(payload) ? 'error' : 'done');
+    }
+
+    final contents = MessageParser.createMessageContentsFromPayload(payload);
+    if (contents.isEmpty) return;
+    setState(() {
+      _messages.add(
+        ChatMessage(
+          id: 'ws-${DateTime.now().millisecondsSinceEpoch}',
+          role: 'assistant',
+          createdAt: DateTime.now(),
+          contents: contents,
+        ),
+      );
+    });
+    _scrollToBottom();
+  }
+
+  void _scheduleReconnect() {
+    if (!mounted) return;
+    if (_manualWsClose || _autoConnectDisabled) return;
+    final sid = _activeWsSessionId;
+    if (sid == null || sid.isEmpty) return;
+
+    // Backend uses 4401/4404 for auth/ownership errors; don't retry those.
+    final code = _webSocket?.closeCode;
+    if (code == 4401 || code == 4404) return;
+
+    if (_reconnectAttempts >= 3) return;
+    final delayMs = (1000 * (1 << _reconnectAttempts)).clamp(1000, 30000);
+    _reconnectAttempts += 1;
+    _reconnectTimer?.cancel();
+    _reconnectTimer = Timer(Duration(milliseconds: delayMs), () {
+      if (!mounted) return;
+      unawaited(_ensureWebSocketOpen(sid));
+    });
+  }
+
+  Future<void> _ensureWebSocketOpen(String sessionId) async {
+    if (!mounted) return;
+
+    if (_webSocket != null &&
+        _activeWsSessionId == sessionId &&
+        _webSocket!.readyState == WebSocket.open) {
+      return;
+    }
+
+    if (_webSocket != null) {
+      await _closeWebSocket(manual: true);
+    }
+
+    _reconnectTimer?.cancel();
+    _manualWsClose = false;
+    _activeWsSessionId = sessionId;
+
+    try {
+      await _webSocketSubscription?.cancel();
+    } catch (_) {}
+    _webSocketSubscription = null;
+
+    try {
+      final wsUrl = await _chatService.buildProjectSessionWebSocketUrl(
+        sessionId: sessionId,
+      );
+      final ws = await WebSocket.connect(wsUrl);
+      if (!mounted) {
+        await ws.close(1000, 'unmounted');
+        return;
+      }
+      _webSocket = ws;
+      _reconnectAttempts = 0;
+
+      _webSocketSubscription = ws.listen(
+        (data) {
+          final obj = _decodeWsPayload(data);
+          if (obj != null) _handleWsPayload(obj);
+        },
+        onError: (_) {
+          if (!mounted) return;
+          _scheduleReconnect();
         },
         onDone: () {
           if (!mounted) return;
-          setState(() {
-            _isTyping = false;
-          });
+          _scheduleReconnect();
         },
+        cancelOnError: true,
       );
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
-      showDialog(
-        context: context,
-        builder: (context) => Alert(
-          variant: AlertVariant.destructive,
-          child: AlertDescription(text: 'Failed to connect: $e'),
-        ),
-      );
+      _scheduleReconnect();
+    }
+  }
+
+  Future<void> _restoreSessionFromHistory(
+    List<ChatHistoryEntry> history,
+  ) async {
+    if (!mounted) return;
+
+    ChatHistoryEntry? latest;
+    for (final e in history) {
+      if (latest == null || e.createdAt.isAfter(latest.createdAt)) {
+        latest = e;
+      }
+    }
+    final latestType = (latest?.payload is Map<String, dynamic>)
+        ? (latest!.payload as Map<String, dynamic>)['type']?.toString()
+        : null;
+    if (latestType == 'complete') {
+      _autoConnectDisabled = true;
+      return;
+    }
+
+    ChatHistoryEntry? newestWithSession;
+    for (final e in history) {
+      if (e.payload is! Map<String, dynamic>) continue;
+      final sid = (e.payload as Map<String, dynamic>)['session_id'];
+      if (sid is! String || sid.isEmpty) continue;
+      if (newestWithSession == null ||
+          e.createdAt.isAfter(newestWithSession.createdAt)) {
+        newestWithSession = e;
+      }
+    }
+    if (newestWithSession == null) return;
+
+    final sid =
+        (newestWithSession.payload as Map<String, dynamic>)['session_id']
+            as String;
+    setState(() {
+      _currentSessionId = sid;
+    });
+
+    final now = DateTime.now();
+    if (now.difference(newestWithSession.createdAt).inMinutes <= 10 &&
+        !_autoConnectDisabled) {
+      await _ensureWebSocketOpen(sid);
     }
   }
 
   /// Send a message
-  Future<void> _sendMessage(String text) async {
+  Future<void> _sendMessage(
+    String text, {
+    bool forceNewSession = false,
+  }) async {
     if (text.trim().isEmpty || _isLoading) return;
+    final prompt = text.trim();
 
     setState(() {
       _isLoading = true;
     });
 
+    final tempId = 'user-${DateTime.now().millisecondsSinceEpoch}';
     final userMessage = ChatMessage(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: tempId,
       role: 'user',
       createdAt: DateTime.now(),
-      contents: [TextMessageContent(text: text)],
+      contents: [TextMessageContent(text: prompt)],
     );
 
     setState(() {
       _messages.add(userMessage);
+      _messageStatuses[tempId] = MessageStatus.pending;
       _isTyping = true;
-      _isLoading = false;
     });
 
     _scrollToBottom();
 
     try {
-      if (_webSocket != null && _webSocket!.readyState == WebSocket.open) {
-        _webSocket!.add(text);
-      } else {
-        // Fallback to HTTP request
-        // Create new session or continue existing one
-        if (_currentSessionId == null) {
-          // Create new session
-          final response = await _chatService.executeSession(
-            projectId: widget.projectId,
-            prompt: text,
-            sessionType: 'new',
-          );
+      await _ensureWorkspaceReadyForSend();
+      final isNew = forceNewSession || _currentSessionId == null;
+      final response = await _chatService.executeSession(
+        projectId: widget.projectId,
+        prompt: prompt,
+        sessionType: isNew ? 'new' : 'continue',
+        sessionId: isNew ? null : _currentSessionId,
+        optimisticMessage: prompt,
+      );
 
-          if (!mounted) return;
+      if (!mounted) return;
+      final sid = response.sessionId;
 
-          setState(() {
-            _currentSessionId = response.sessionId;
-            _websocketUrl = response.websocketUrl;
-          });
+      setState(() {
+        _currentSessionId = sid;
+        _isLoading = false;
+        _messageStatuses[tempId] = MessageStatus.sent;
+        _autoConnectDisabled = false;
+      });
 
-          _connectWebSocket();
-        } else {
-          // Continue existing session
-          await _chatService.executeSession(
-            projectId: widget.projectId,
-            prompt: text,
-            sessionType: 'continue',
-            sessionId: _currentSessionId!,
-          );
-
-          // Response will come through WebSocket
-        }
-      }
+      await _ensureWebSocketOpen(sid);
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _isTyping = false;
+        _isLoading = false;
+        _messageStatuses[tempId] = MessageStatus.failed;
       });
-      showDialog(
-        context: context,
-        builder: (context) => Alert(
-          variant: AlertVariant.destructive,
-          child: AlertDescription(text: 'Failed to send message: $e'),
-        ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to send message: $e')),
+      );
+    }
+  }
+
+  Future<void> _retryMessage(ChatMessage message) async {
+    if (_isLoading) return;
+    final first = message.contents.isNotEmpty ? message.contents.first : null;
+    if (first is! TextMessageContent) return;
+    final prompt = first.text.trim();
+    if (prompt.isEmpty) return;
+
+    setState(() {
+      _isLoading = true;
+      _messageStatuses[message.id] = MessageStatus.pending;
+      _isTyping = true;
+    });
+
+    try {
+      await _ensureWorkspaceReadyForSend();
+      final response = await _chatService.executeSession(
+        projectId: widget.projectId,
+        prompt: prompt,
+        sessionType: 'new',
+        optimisticMessage: prompt,
+      );
+      if (!mounted) return;
+      final sid = response.sessionId;
+      setState(() {
+        _currentSessionId = sid;
+        _isLoading = false;
+        _messageStatuses[message.id] = MessageStatus.sent;
+        _autoConnectDisabled = false;
+      });
+      await _ensureWebSocketOpen(sid);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _isTyping = false;
+        _messageStatuses[message.id] = MessageStatus.failed;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Retry failed: $e')),
       );
     }
   }
@@ -299,6 +881,45 @@ class _ChatScreenState extends State<ChatScreen>
 
   @override
   Widget build(BuildContext context) {
+    Color dotColor;
+    switch (_workspacePhase) {
+      case WorkspacePhase.ready:
+        dotColor = Colors.green;
+        break;
+      case WorkspacePhase.starting:
+        dotColor = Colors.amber;
+        break;
+      case WorkspacePhase.syncing:
+        dotColor = Colors.purple;
+        break;
+      case WorkspacePhase.standby:
+      case WorkspacePhase.archived:
+        dotColor = Colors.grey;
+        break;
+      case WorkspacePhase.error:
+        dotColor = Colors.red;
+        break;
+      case WorkspacePhase.unknown:
+        dotColor = Colors.grey;
+        break;
+    }
+
+    final wsLabelParts = <String>[];
+    final raw = _workspaceState?.status;
+    if (raw != null && raw.trim().isNotEmpty) {
+      wsLabelParts.add('status=$raw');
+    }
+    final ip = _workspaceState?.ip;
+    final port = _workspaceState?.port;
+    if (ip != null && port != null) {
+      wsLabelParts.add('$ip:$port');
+    }
+    if (_workspaceError != null && _workspaceError!.trim().isNotEmpty) {
+      wsLabelParts.add(_workspaceError!);
+    }
+    final wsTooltip =
+        wsLabelParts.isEmpty ? 'Workspace' : wsLabelParts.join(' · ');
+
     return Scaffold(
       appBar: AppBar(
         title: Column(
@@ -318,10 +939,27 @@ class _ChatScreenState extends State<ChatScreen>
           ],
         ),
         actions: [
+          Tooltip(
+            message: wsTooltip,
+            child: IconButton(
+              tooltip: 'Workspace status',
+              onPressed: () {
+                unawaited(_refreshWorkspaceStatus(bypassCache: true));
+              },
+              icon: Container(
+                width: 14,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: dotColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
-              _loadChatHistory();
+              unawaited(_refreshHistory(attemptReconnect: true));
             },
             tooltip: 'Refresh',
           ),
@@ -372,12 +1010,17 @@ class _ChatScreenState extends State<ChatScreen>
                     messages: _messages,
                     isTyping: _isTyping,
                     scrollController: _scrollController,
+                    messageStatuses: _messageStatuses,
+                    onRetry: _retryMessage,
+                    onLoadMore: _loadMoreHistory,
+                    hasMoreHistory: _hasMoreHistory,
+                    isLoadingMore: _isLoadingMoreHistory,
                   ),
           ),
           // Message input
           MessageInput(
             onSend: _sendMessage,
-            isEnabled: !_isLoading && _currentSessionId != null,
+            isEnabled: !_isLoading,
             hintText: 'Type your message...',
           ),
         ],

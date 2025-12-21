@@ -5,6 +5,41 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
     return MediaQuery.of(context).size.width < 768;
   }
 
+  Color _workspaceDotColor() {
+    switch (_workspacePhase) {
+      case WorkspacePhase.ready:
+        return Colors.green;
+      case WorkspacePhase.starting:
+        return Colors.amber;
+      case WorkspacePhase.syncing:
+        return Colors.purple;
+      case WorkspacePhase.standby:
+      case WorkspacePhase.archived:
+        return Colors.grey;
+      case WorkspacePhase.error:
+        return Colors.red;
+      case WorkspacePhase.unknown:
+        return Colors.grey;
+    }
+  }
+
+  String _workspaceTooltip() {
+    final parts = <String>[];
+    final raw = _workspaceState?.status;
+    if (raw != null && raw.trim().isNotEmpty) {
+      parts.add('status=$raw');
+    }
+    final ip = _workspaceState?.ip;
+    final port = _workspaceState?.port;
+    if (ip != null && port != null) {
+      parts.add('$ip:$port');
+    }
+    if (_workspaceError != null && _workspaceError!.trim().isNotEmpty) {
+      parts.add(_workspaceError!);
+    }
+    return parts.isEmpty ? 'Workspace' : parts.join(' · ');
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -32,6 +67,11 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
               },
               onRefreshPreview: _handleRefreshPreview,
               onOpenInNewTab: _handleOpenInNewTab,
+              workspaceDotColor: _workspaceDotColor(),
+              workspaceTooltip: _workspaceTooltip(),
+              onWorkspacePressed: () {
+                unawaited(_refreshWorkspaceStatus(bypassCache: true));
+              },
             ),
             Expanded(
               child: IndexedStack(
@@ -96,6 +136,11 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
                           isTyping: _isTyping,
                           isLoading: _isChatLoading,
                           isLoadingHistory: _isLoadingHistory,
+                          messageStatuses: _messageStatuses,
+                          onRetry: _retryMessage,
+                          onLoadMore: _loadMoreHistory,
+                          hasMoreHistory: _hasMoreHistory,
+                          isLoadingMore: _isLoadingMoreHistory,
                           scrollController: _chatScrollController,
                           onSendMessage: _sendChatMessage,
                           onRedeploy: () {
@@ -123,28 +168,123 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
   }
 
   Widget _buildChatTabDesktop(BuildContext context) {
-    return Column(
+    final theme = Theme.of(context);
+
+    return Stack(
       children: [
-        ProjectChatTopBar(
-          currentIndex: _currentChatTabIndex,
-          onTabSelected: (index) {
-            setState(() {
-              _currentChatTabIndex = index;
-            });
-          },
-          onRefreshPreview: _handleRefreshPreview,
-          onOpenInNewTab: _handleOpenInNewTab,
+        Column(
+          children: [
+            ProjectChatTopBar(
+              currentIndex: _currentChatTabIndex,
+              onTabSelected: (index) {
+                setState(() {
+                  _currentChatTabIndex = index;
+                });
+              },
+              onRefreshPreview: _handleRefreshPreview,
+              onOpenInNewTab: _handleOpenInNewTab,
+              workspaceDotColor: _workspaceDotColor(),
+              workspaceTooltip: _workspaceTooltip(),
+              onWorkspacePressed: () {
+                unawaited(_refreshWorkspaceStatus(bypassCache: true));
+              },
+            ),
+            Expanded(
+              child: IndexedStack(
+                index: _currentChatTabIndex,
+                children: [
+                  _buildChatPreviewTab(),
+                  _buildChatCodeTab(),
+                  _buildChatEnvTab(),
+                ],
+              ),
+            ),
+          ],
         ),
-        Expanded(
-          child: IndexedStack(
-            index: _currentChatTabIndex,
-            children: [
-              _buildChatPreviewTab(),
-              _buildChatCodeTab(),
-              _buildChatEnvTab(),
-            ],
+        Positioned(
+          bottom: 12,
+          right: 12,
+          child: FloatingChatButton(
+            onPressed: () {
+              setState(() {
+                _showMobileChat = true;
+              });
+              _initializeChat();
+            },
+            statusLabel: _isChatLoading
+                ? 'Sending...'
+                : _isTyping
+                    ? 'Thinking...'
+                    : 'Ready',
+            isError: false,
+            isDone: false,
+            isWorking: _isChatLoading,
+            isThinking: _isTyping,
+            isDeploying: false,
           ),
         ),
+        if (_showMobileChat)
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _showMobileChat = false;
+                });
+              },
+              child: Container(
+                color: Colors.black.withValues(alpha: 0.5),
+                child: GestureDetector(
+                  onTap: () {},
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      constraints: const BoxConstraints(maxWidth: 720),
+                      child: DraggableScrollableSheet(
+                        initialChildSize: 0.7,
+                        minChildSize: 0.4,
+                        maxChildSize: 0.95,
+                        builder: (context, scrollController) {
+                          return Container(
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surface,
+                              borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(16),
+                              ),
+                            ),
+                            child: ChatBottomSheet(
+                              messages: _chatMessages,
+                              isTyping: _isTyping,
+                              isLoading: _isChatLoading,
+                              isLoadingHistory: _isLoadingHistory,
+                              messageStatuses: _messageStatuses,
+                              onRetry: _retryMessage,
+                              onLoadMore: _loadMoreHistory,
+                              hasMoreHistory: _hasMoreHistory,
+                              isLoadingMore: _isLoadingMoreHistory,
+                              scrollController: _chatScrollController,
+                              onSendMessage: _sendChatMessage,
+                              onRedeploy: () {
+                                SnackBarHelper.showInfo(
+                                  context,
+                                  title: 'Redeploy',
+                                  message: 'Triggering redeploy...',
+                                );
+                              },
+                              onClose: () {
+                                setState(() {
+                                  _showMobileChat = false;
+                                });
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }

@@ -4,8 +4,9 @@ import 'tool_container.dart';
 /// Bash tool message renderer
 class BashTool extends StatelessWidget {
   final dynamic input;
+  final String? status;
 
-  const BashTool({super.key, required this.input});
+  const BashTool({super.key, required this.input, this.status});
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +22,7 @@ class BashTool extends StatelessWidget {
     return ToolContainer(
       toolType: 'Bash',
       compact: true,
+      status: status,
       child: Row(
         children: [
           Icon(
