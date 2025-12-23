@@ -1,6 +1,5 @@
 // ignore_for_file: unused_field
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import '../../models/message.dart';
 import 'message_bubble.dart';
 import 'message_metadata.dart';
@@ -105,6 +104,19 @@ class _MessageListState extends State<MessageList> {
     super.dispose();
   }
 
+  void _maybeRequestLoadMore(ScrollController controller) {
+    if (widget.onLoadMore == null) return;
+    if (!widget.hasMoreHistory) return;
+    if (widget.isLoadingMore) return;
+    if (_loadMoreRequested) return;
+    if (widget.messages.isEmpty) return;
+    if (!controller.hasClients) return;
+    if (controller.offset > 80) return;
+
+    _loadMoreRequested = true;
+    widget.onLoadMore!();
+  }
+
   void _onScroll() {
     final controller = widget.scrollController ?? _scrollController;
     if (!controller.hasClients) return;
@@ -125,15 +137,8 @@ class _MessageListState extends State<MessageList> {
     }
 
     // Load more history when near top
-    if (widget.onLoadMore != null &&
-        widget.hasMoreHistory &&
-        !widget.isLoadingMore &&
-        (currentScroll <= 80) &&
-        controller.position.userScrollDirection == ScrollDirection.forward &&
-        !_loadMoreRequested &&
-        widget.messages.isNotEmpty) {
-      _loadMoreRequested = true;
-      widget.onLoadMore!();
+    if (currentScroll <= 80) {
+      _maybeRequestLoadMore(controller);
     }
   }
 
@@ -166,66 +171,76 @@ class _MessageListState extends State<MessageList> {
 
     return Stack(
       children: [
-        ListView.builder(
-          controller: widget.scrollController ?? _scrollController,
-          padding: const EdgeInsets.only(bottom: 16.0),
-          itemCount: widget.messages.length,
-          itemBuilder: (context, index) {
-            final message = widget.messages[index];
-            final isUser = message.role == 'user';
-            final isNew = !_isNewMessage(message);
-            final messageStatus =
-                widget.messageStatuses?[message.id] ?? MessageStatus.sent;
-            final userAccessory = (isUser && messageStatus != MessageStatus.sent)
-                ? _UserSendAccessory(
-                    status: messageStatus,
-                    onRetry: messageStatus == MessageStatus.failed &&
-                            widget.onRetry != null
-                        ? () => widget.onRetry!(message)
-                        : null,
-                  )
-                : null;
-
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Message bubble
-                  AnimatedOpacity(
-                    opacity: 1.0,
-                    duration: const Duration(milliseconds: 300),
-                    child: Transform.translate(
-                      offset: isNew
-                          ? const Offset(0, 6)
-                          : Offset.zero,
-                      child: MessageBubble(
-                        message: message,
-                        isUser: isUser,
-                        userAccessory: userAccessory,
-                        onTap: widget.onMessageTap != null
-                            ? () => widget.onMessageTap!(message)
-                            : null,
-                      ),
-                    ),
-                  ),
-                  if (widget.showTimestamps) ...[
-                    const SizedBox(height: 2),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: MessageMetadata(
-                        role: message.role,
-                        createdAt: message.createdAt,
-                        showTimestamp: true,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 2),
-                ],
-              ),
-            );
+        NotificationListener<ScrollNotification>(
+          onNotification: (notification) {
+            final controller = widget.scrollController ?? _scrollController;
+            if (notification is OverscrollNotification &&
+                notification.overscroll < 0) {
+              _maybeRequestLoadMore(controller);
+            }
+            return false;
           },
+          child: ListView.builder(
+            controller: widget.scrollController ?? _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.only(bottom: 16.0),
+            itemCount: widget.messages.length,
+            itemBuilder: (context, index) {
+              final message = widget.messages[index];
+              final isUser = message.role == 'user';
+              final isNew = !_isNewMessage(message);
+              final messageStatus =
+                  widget.messageStatuses?[message.id] ?? MessageStatus.sent;
+              final userAccessory =
+                  (isUser && messageStatus != MessageStatus.sent)
+                      ? _UserSendAccessory(
+                          status: messageStatus,
+                          onRetry: messageStatus == MessageStatus.failed &&
+                                  widget.onRetry != null
+                              ? () => widget.onRetry!(message)
+                              : null,
+                        )
+                      : null;
+
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Message bubble
+                    AnimatedOpacity(
+                      opacity: 1.0,
+                      duration: const Duration(milliseconds: 300),
+                      child: Transform.translate(
+                        offset: isNew ? const Offset(0, 6) : Offset.zero,
+                        child: MessageBubble(
+                          message: message,
+                          isUser: isUser,
+                          userAccessory: userAccessory,
+                          onTap: widget.onMessageTap != null
+                              ? () => widget.onMessageTap!(message)
+                              : null,
+                        ),
+                      ),
+                    ),
+                    if (widget.showTimestamps) ...[
+                      const SizedBox(height: 2),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: MessageMetadata(
+                          role: message.role,
+                          createdAt: message.createdAt,
+                          showTimestamp: true,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 2),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
 
         // Load more indicator
@@ -265,35 +280,6 @@ class _MessageListState extends State<MessageList> {
                       ),
                     ),
                   ],
-                ),
-              ),
-            ),
-          ),
-
-        // Beginning of conversation indicator
-        // Show only if there are 3 or fewer messages
-        if (!widget.hasMoreHistory &&
-            widget.messages.isNotEmpty &&
-            widget.messages.length <= 3)
-          Positioned(
-            key: const ValueKey('beginning_of_conversation'),
-            top: 8,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '🎉 Beginning of conversation',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
                 ),
               ),
             ),

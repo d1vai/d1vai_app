@@ -16,6 +16,7 @@ import '../screens/invites_list_screen.dart';
 import '../screens/notification_settings_screen.dart';
 import '../screens/help_support_screen.dart';
 import '../screens/github_settings_screen.dart';
+import '../screens/settings/api_settings_screen.dart';
 import '../providers/auth_provider.dart';
 
 Page<dynamic> _buildPageWithTransition(
@@ -186,6 +187,14 @@ GoRouter createAppRouter() {
         path: '/settings/help',
         pageBuilder: (context, state) =>
             _buildPageWithTransition(context, state, const HelpSupportScreen()),
+      ),
+      GoRoute(
+        path: '/settings/api',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const ApiSettingsScreen(),
+        ),
       ),
       GoRoute(
         path: '/settings/github',

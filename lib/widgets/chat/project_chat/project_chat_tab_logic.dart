@@ -500,6 +500,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
   void _handleWsPayload(Map<String, dynamic> payload) {
     final type = payload['type']?.toString();
 
+    if (type == 'system' || MessageParser.isSystemPayload(payload)) return;
+
     // Web loads history via HTTP; WS history frames are ignored to avoid duplication.
     if (type == 'history' || type == 'history_complete') {
       return;

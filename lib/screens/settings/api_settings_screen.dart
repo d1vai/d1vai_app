@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/api_client.dart';
 import '../../services/workspace_service.dart';
@@ -97,10 +100,11 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
         message: 'Failed to save API base URL',
       );
     } finally {
-      if (!mounted) return;
-      setState(() {
-        _saving = false;
-      });
+      if (mounted) {
+        setState(() {
+          _saving = false;
+        });
+      }
     }
   }
 
@@ -139,21 +143,59 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
         message: e.toString(),
       );
     } finally {
-      if (!mounted) return;
-      setState(() {
-        _testing = false;
-      });
+      if (mounted) {
+        setState(() {
+          _testing = false;
+        });
+      }
+    }
+  }
+
+  Map<String, dynamic>? _decodeJwtClaims(String token) {
+    final t = token.trim();
+    final parts = t.split('.');
+    if (parts.length < 2) return null;
+    try {
+      final payload = base64Url.normalize(parts[1]);
+      final jsonStr = utf8.decode(base64Url.decode(payload));
+      final decoded = jsonDecode(jsonStr);
+      return decoded is Map<String, dynamic> ? decoded : null;
+    } catch (_) {
+      return null;
     }
   }
 
   Future<void> _copyDiagnostics() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = (prefs.getString('auth_token') ?? '').trim();
+    final tokenSuffix = token.isEmpty
+        ? ''
+        : (token.length <= 6 ? token : token.substring(token.length - 6));
+    final claims = token.isEmpty ? null : _decodeJwtClaims(token);
+
+    String? expIso;
+    final exp = claims?['exp'];
+    if (exp is num) {
+      expIso = DateTime.fromMillisecondsSinceEpoch(
+        exp.toInt() * 1000,
+        isUtc: true,
+      ).toIso8601String();
+    }
+
     final text = [
       'effective_base_url=${ApiClient.baseUrl}',
       'env_base_url=${ApiClient.envBaseUrl}',
       'override_base_url=${ApiClient.runtimeBaseUrl ?? ''}',
+      'auth_token_present=${token.isNotEmpty}',
+      if (token.isNotEmpty) 'auth_token_len=${token.length} suffix=$tokenSuffix',
+      if (claims != null && claims['type'] != null)
+        "jwt_type=${claims['type']}",
+      if (claims != null && claims['sub'] != null) "jwt_sub=${claims['sub']}",
+      if (expIso != null) 'jwt_exp_utc=$expIso',
       if (_status != null)
         'workspace_status=${_status!.status ?? ''} ip=${_status!.ip ?? ''} port=${_status!.port ?? ''}',
     ].join('\n');
+
     await Clipboard.setData(ClipboardData(text: text));
     if (!mounted) return;
     SnackBarHelper.showSuccess(
@@ -354,4 +396,3 @@ class _KeyValueRow extends StatelessWidget {
     );
   }
 }
-

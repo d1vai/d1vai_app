@@ -70,7 +70,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
 
     return Scaffold(
-
       appBar: AppBar(
         title: Text(loc?.translate('settings') ?? 'Settings'),
         // actions: [
@@ -93,9 +92,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Icons.person,
                 ),
                 const SizedBox(width: 8),
-                _buildTabButton(1, 'GitHub', Icons.code),
+                _buildTabButton(
+                  1,
+                  loc?.translate('github') ?? 'GitHub',
+                  Icons.code,
+                ),
                 const SizedBox(width: 8),
-                _buildTabButton(2, 'Invites', Icons.group_add),
+                _buildTabButton(
+                  2,
+                  loc?.translate('invites') ?? 'Invites',
+                  Icons.group_add,
+                ),
               ],
             ),
           ),
@@ -144,13 +151,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   /// 显示主题选择对话框
   void _showThemeDialog() {
+    final loc = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (context) {
         return Consumer<ThemeProvider>(
           builder: (context, themeProvider, child) {
             return AlertDialog(
-              title: const Text('Choose Theme'),
+              title: Text(loc?.translate('choose_theme') ?? 'Choose Theme'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -159,21 +167,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     themeProvider,
                     AppThemeMode.light,
                     Icons.light_mode,
-                    'Light Mode',
+                    loc?.translate('light_mode') ?? 'Light Mode',
                   ),
                   _buildThemeOption(
                     context,
                     themeProvider,
                     AppThemeMode.dark,
                     Icons.dark_mode,
-                    'Dark Mode',
+                    loc?.translate('dark_mode') ?? 'Dark Mode',
                   ),
                   _buildThemeOption(
                     context,
                     themeProvider,
                     AppThemeMode.system,
                     Icons.brightness_auto,
-                    'System',
+                    loc?.translate('system_mode') ?? 'System',
                   ),
                 ],
               ),
@@ -221,12 +229,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         value: mode,
       ),
       onTap: () {
+        final loc = AppLocalizations.of(context);
         Navigator.pop(context);
         themeProvider.setThemeMode(mode);
         SnackBarHelper.showSuccess(
           context,
-          title: 'Theme Updated',
-          message: 'Switched to $title',
+          title: loc?.translate('theme_updated') ?? 'Theme Updated',
+          message:
+              '${loc?.translate('theme_switched') ?? 'Switched to'} $title',
         );
       },
     );
@@ -239,10 +249,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       applicationName: 'd1v.ai',
       applicationVersion: '1.0.0',
       applicationIcon: const Icon(Icons.apps, size: 48),
-      children: [const Text('An AI-powered app development platform.')],
+      children: [
+        Text(
+          AppLocalizations.of(context)?.translate('about_description') ??
+              'An AI-powered app development platform.',
+        ),
+      ],
     );
   }
-
 
   /// 显示绑定邮箱对话框
   void _showBindEmailDialog() {
@@ -251,38 +265,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
     int step = 1; // 1: 输入邮箱, 2: 输入验证码
     final d1vaiService = D1vaiService();
 
+    final loc = AppLocalizations.of(context);
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Bind Email'),
+          title: Text(loc?.translate('bind_email') ?? 'Bind Email'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 step == 1
-                    ? 'Enter your email address to receive a verification code'
-                    : 'Enter the 6-digit verification code sent to your email',
+                    ? (loc?.translate('enter_email_for_code') ??
+                          'Enter your email address to receive a verification code')
+                    : (loc?.translate('enter_code_sent') ??
+                          'Enter the 6-digit verification code sent to your email'),
                 style: TextStyle(color: Colors.grey.shade600),
               ),
               const SizedBox(height: 16),
               if (step == 1) ...[
                 TextField(
                   controller: emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
+                  decoration: InputDecoration(
+                    labelText: loc?.translate('email') ?? 'Email',
                     hintText: 'your@email.com',
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.emailAddress,
                 ),
               ] else ...[
                 TextField(
                   controller: codeController,
-                  decoration: const InputDecoration(
-                    labelText: 'Verification Code',
+                  decoration: InputDecoration(
+                    labelText:
+                        loc?.translate('verify_code') ?? 'Verification Code',
                     hintText: '123456',
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.number,
                   maxLength: 6,
@@ -293,7 +312,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(loc?.translate('cancel') ?? 'Cancel'),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -303,8 +322,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (!context.mounted) return;
                     SnackBarHelper.showError(
                       context,
-                      title: 'Error',
-                      message: 'Please enter an email address',
+                      title: loc?.translate('error') ?? 'Error',
+                      message:
+                          loc?.translate('email_required') ??
+                          'Please enter an email address',
                     );
                     return;
                   }
@@ -317,8 +338,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (!context.mounted) return;
                     SnackBarHelper.showError(
                       context,
-                      title: 'Error',
-                      message: 'Please enter a valid email address',
+                      title: loc?.translate('error') ?? 'Error',
+                      message:
+                          loc?.translate('email_invalid') ??
+                          'Please enter a valid email address',
                     );
                     return;
                   }
@@ -327,8 +350,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (!context.mounted) return;
                     SnackBarHelper.showInfo(
                       context,
-                      title: 'Sending',
-                      message: 'Sending verification code...',
+                      title: loc?.translate('sending') ?? 'Sending',
+                      message:
+                          loc?.translate('sending') ??
+                          'Sending verification code...',
                     );
 
                     await d1vaiService.postUserBindEmailSend(email);
@@ -336,8 +361,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (!context.mounted) return;
                     SnackBarHelper.showSuccess(
                       context,
-                      title: 'Success',
-                      message: 'Verification code sent to your email',
+                      title: loc?.translate('success') ?? 'Success',
+                      message:
+                          loc?.translate('code_sent_success') ??
+                          'Verification code sent to your email',
                     );
                     setDialogState(() {
                       step = 2;
@@ -346,8 +373,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (!context.mounted) return;
                     SnackBarHelper.showError(
                       context,
-                      title: 'Error',
-                      message: 'Failed to send verification code: $error',
+                      title: loc?.translate('error') ?? 'Error',
+                      message:
+                          '${loc?.translate('failed_to_send_code') ?? "Failed to send verification code"}: $error',
                     );
                   }
                 } else {
@@ -356,8 +384,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (!context.mounted) return;
                     SnackBarHelper.showError(
                       context,
-                      title: 'Error',
-                      message: 'Please enter a 6-digit verification code',
+                      title: loc?.translate('error') ?? 'Error',
+                      message:
+                          loc?.translate('verify_code_complete') ??
+                          'Please enter a 6-digit verification code',
                     );
                     return;
                   }
@@ -366,8 +396,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (!context.mounted) return;
                     SnackBarHelper.showInfo(
                       context,
-                      title: 'Verifying',
-                      message: 'Verifying code...',
+                      title: loc?.translate('verifying') ?? 'Verifying',
+                      message:
+                          loc?.translate('verifying') ?? 'Verifying code...',
                     );
 
                     await d1vaiService.postUserBindEmailConfirm(
@@ -378,8 +409,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (!context.mounted) return;
                     SnackBarHelper.showSuccess(
                       context,
-                      title: 'Success',
-                      message: 'Email bound successfully',
+                      title: loc?.translate('success') ?? 'Success',
+                      message:
+                          loc?.translate('email_bound_success') ??
+                          'Email bound successfully',
                     );
                     Navigator.pop(context);
 
@@ -393,13 +426,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (!context.mounted) return;
                     SnackBarHelper.showError(
                       context,
-                      title: 'Error',
-                      message: 'Failed to verify code: $error',
+                      title: loc?.translate('error') ?? 'Error',
+                      message:
+                          '${loc?.translate('failed_to_verify') ?? "Failed to verify code"}: $error',
                     );
                   }
                 }
               },
-              child: Text(step == 1 ? 'Send Code' : 'Verify'),
+              child: Text(
+                step == 1
+                    ? (loc?.translate('send_code') ?? 'Send Code')
+                    : (loc?.translate('confirm') ?? 'Verify'),
+              ),
             ),
           ],
         ),
@@ -409,6 +447,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   /// 显示重置密码对话框
   void _showResetPasswordDialog() {
+    final loc = AppLocalizations.of(context);
     final emailController = TextEditingController();
     final codeController = TextEditingController();
     final passwordController = TextEditingController();
@@ -420,34 +459,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Reset Password'),
+          title: Text(loc?.translate('reset_password') ?? 'Reset Password'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 step == 1
-                    ? 'Enter your email address to receive a verification code'
-                    : 'Enter the verification code and your new password',
+                    ? (loc?.translate('enter_email_for_code') ??
+                          'Enter your email address to receive a verification code')
+                    : (loc?.translate('enter_code_and_new_password') ??
+                          'Enter the verification code and your new password'),
                 style: TextStyle(color: Colors.grey.shade600),
               ),
               const SizedBox(height: 16),
               if (step == 1) ...[
                 TextField(
                   controller: emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
+                  decoration: InputDecoration(
+                    labelText: loc?.translate('email') ?? 'Email',
                     hintText: 'your@email.com',
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.emailAddress,
                 ),
               ] else ...[
                 TextField(
                   controller: codeController,
-                  decoration: const InputDecoration(
-                    labelText: 'Verification Code',
+                  decoration: InputDecoration(
+                    labelText:
+                        loc?.translate('verify_code') ?? 'Verification Code',
                     hintText: '123456',
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.number,
                   maxLength: 6,
@@ -455,20 +497,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 12),
                 TextField(
                   controller: passwordController,
-                  decoration: const InputDecoration(
-                    labelText: 'New Password',
-                    hintText: 'Enter new password',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: loc?.translate('new_password') ?? 'New Password',
+                    hintText:
+                        loc?.translate('enter_new_password') ??
+                        'Enter new password',
+                    border: const OutlineInputBorder(),
                   ),
                   obscureText: true,
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: confirmPasswordController,
-                  decoration: const InputDecoration(
-                    labelText: 'Confirm Password',
-                    hintText: 'Re-enter new password',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText:
+                        loc?.translate('confirm_password') ??
+                        'Confirm Password',
+                    hintText:
+                        loc?.translate('re_enter_new_password') ??
+                        'Re-enter new password',
+                    border: const OutlineInputBorder(),
                   ),
                   obscureText: true,
                 ),
@@ -478,7 +526,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(loc?.translate('cancel') ?? 'Cancel'),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -488,8 +536,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (!context.mounted) return;
                     SnackBarHelper.showError(
                       context,
-                      title: 'Error',
-                      message: 'Please enter an email address',
+                      title: loc?.translate('error') ?? 'Error',
+                      message:
+                          loc?.translate('email_required') ??
+                          'Please enter an email address',
                     );
                     return;
                   }
@@ -502,8 +552,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (!context.mounted) return;
                     SnackBarHelper.showError(
                       context,
-                      title: 'Error',
-                      message: 'Please enter a valid email address',
+                      title: loc?.translate('error') ?? 'Error',
+                      message:
+                          loc?.translate('email_invalid') ??
+                          'Please enter a valid email address',
                     );
                     return;
                   }
@@ -512,8 +564,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (!context.mounted) return;
                     SnackBarHelper.showInfo(
                       context,
-                      title: 'Sending',
-                      message: 'Sending verification code...',
+                      title: loc?.translate('sending') ?? 'Sending',
+                      message:
+                          loc?.translate('sending') ??
+                          'Sending verification code...',
                     );
 
                     await d1vaiService.postUserPasswordForgotSend(email);
@@ -521,8 +575,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (!context.mounted) return;
                     SnackBarHelper.showSuccess(
                       context,
-                      title: 'Success',
-                      message: 'Verification code sent to your email',
+                      title: loc?.translate('success') ?? 'Success',
+                      message:
+                          loc?.translate('code_sent_success') ??
+                          'Verification code sent to your email',
                     );
                     setDialogState(() {
                       step = 2;
@@ -531,8 +587,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (!context.mounted) return;
                     SnackBarHelper.showError(
                       context,
-                      title: 'Error',
-                      message: 'Failed to send verification code: $error',
+                      title: loc?.translate('error') ?? 'Error',
+                      message:
+                          '${loc?.translate('failed_to_send_code') ?? "Failed to send verification code"}: $error',
                     );
                   }
                 } else {
@@ -544,8 +601,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (!context.mounted) return;
                     SnackBarHelper.showError(
                       context,
-                      title: 'Error',
-                      message: 'Please enter a 6-digit verification code',
+                      title: loc?.translate('error') ?? 'Error',
+                      message:
+                          loc?.translate('verify_code_complete') ??
+                          'Please enter a 6-digit verification code',
                     );
                     return;
                   }
@@ -554,8 +613,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (!context.mounted) return;
                     SnackBarHelper.showError(
                       context,
-                      title: 'Error',
-                      message: 'Please enter a new password',
+                      title: loc?.translate('error') ?? 'Error',
+                      message:
+                          loc?.translate('password_required') ??
+                          'Please enter a new password',
                     );
                     return;
                   }
@@ -564,8 +625,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (!context.mounted) return;
                     SnackBarHelper.showError(
                       context,
-                      title: 'Error',
-                      message: 'Passwords do not match',
+                      title: loc?.translate('error') ?? 'Error',
+                      message:
+                          loc?.translate('passwords_do_not_match') ??
+                          'Passwords do not match',
                     );
                     return;
                   }
@@ -574,8 +637,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (!context.mounted) return;
                     SnackBarHelper.showError(
                       context,
-                      title: 'Error',
-                      message: 'Password must be at least 6 characters',
+                      title: loc?.translate('error') ?? 'Error',
+                      message:
+                          loc?.translate('password_length_error') ??
+                          'Password must be at least 6 characters',
                     );
                     return;
                   }
@@ -584,8 +649,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (!context.mounted) return;
                     SnackBarHelper.showInfo(
                       context,
-                      title: 'Resetting',
-                      message: 'Resetting password...',
+                      title: loc?.translate('resetting') ?? 'Resetting',
+                      message:
+                          loc?.translate('resetting') ??
+                          'Resetting password...',
                     );
 
                     await d1vaiService.postUserPasswordReset(
@@ -597,21 +664,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (!context.mounted) return;
                     SnackBarHelper.showSuccess(
                       context,
-                      title: 'Success',
-                      message: 'Password reset successfully',
+                      title: loc?.translate('success') ?? 'Success',
+                      message:
+                          loc?.translate('password_reset_success') ??
+                          'Password reset successfully',
                     );
                     Navigator.pop(context);
                   } catch (error) {
                     if (!context.mounted) return;
                     SnackBarHelper.showError(
                       context,
-                      title: 'Error',
-                      message: 'Failed to reset password: $error',
+                      title: loc?.translate('error') ?? 'Error',
+                      message:
+                          '${loc?.translate('failed_to_reset_password') ?? "Failed to reset password"}: $error',
                     );
                   }
                 }
               },
-              child: Text(step == 1 ? 'Send Code' : 'Reset Password'),
+              child: Text(
+                step == 1
+                    ? (loc?.translate('send_code') ?? 'Send Code')
+                    : (loc?.translate('reset_password') ?? 'Reset Password'),
+              ),
             ),
           ],
         ),

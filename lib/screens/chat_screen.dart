@@ -530,6 +530,8 @@ class _ChatScreenState extends State<ChatScreen>
   void _handleWsPayload(Map<String, dynamic> payload) {
     final type = payload['type']?.toString();
 
+    if (type == 'system' || MessageParser.isSystemPayload(payload)) return;
+
     // History frames are ignored; history is loaded via HTTP.
     if (type == 'history' || type == 'history_complete') return;
 

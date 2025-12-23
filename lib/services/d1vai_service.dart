@@ -248,14 +248,11 @@ class D1vaiService {
   }
 
   /// 创建新项目
-  Future<CreateProjectResponse> createUserProject(
+  Future<Map<String, dynamic>> createUserProject(
     Map<String, dynamic> data,
   ) async {
-    return _apiClient.post<CreateProjectResponse>(
-      '/api/projects',
-      data,
-      fromJsonT: (json) => CreateProjectResponse.fromJson(json),
-    );
+    // Backend response: BaseResponse<{ project, session }>
+    return _apiClient.post<Map<String, dynamic>>('/api/projects', data);
   }
 
   /// AI 生成项目元数据
@@ -283,7 +280,7 @@ class D1vaiService {
       if (enablePay != null) 'enable_pay': enablePay,
       if (enableDatabase != null) 'enable_database': enableDatabase,
       if (enableResend != null) 'enable_resend': enableResend,
-    }, retries: 0, timeout: const Duration(seconds: 120));
+    }, retries: 0, timeout: const Duration(minutes: 4));
   }
 
   /// 更新项目信息

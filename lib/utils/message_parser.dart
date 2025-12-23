@@ -39,6 +39,7 @@ class MessageParser {
     // be rendered as chat bubbles in history or live stream.
     const skip = <String>{
       'complete',
+      'system',
       'history',
       'history_complete',
       'proxy_status',
@@ -47,6 +48,25 @@ class MessageParser {
       'deployment_complete',
     };
     return skip.contains(s);
+  }
+
+  static bool isSystemPayload(dynamic rawPayload) {
+    rawPayload = _coerceJsonPayload(rawPayload);
+    if (rawPayload is! Map<String, dynamic>) return false;
+
+    final payloadType = rawPayload['type']?.toString();
+    if (_normalizeRole(payloadType) == 'system') return true;
+
+    final payloadRole = rawPayload['role']?.toString();
+    if (_normalizeRole(payloadRole) == 'system') return true;
+
+    final message = rawPayload['message'];
+    if (message is Map) {
+      final msgRole = message['role']?.toString();
+      if (_normalizeRole(msgRole) == 'system') return true;
+    }
+
+    return false;
   }
 
   /// Normalize opcode text from various payload formats
@@ -112,6 +132,8 @@ class MessageParser {
     if (rawPayload is! Map<String, dynamic>) {
       return [TextMessageContent(text: rawPayload.toString())];
     }
+
+    if (isSystemPayload(rawPayload)) return [];
 
     final payloadType = rawPayload['type'] as String?;
 
@@ -531,6 +553,8 @@ class MessageParser {
         _normalizeRole(entry.messageType) ??
         _normalizeRole(entry.direction) ??
         (entry.direction == 'user' ? 'user' : 'assistant');
+
+    if (role == 'system') return null;
 
     // History should never look "in progress" in the UI.
     final contents = createMessageContents(entry.messageText, p).map((c) {

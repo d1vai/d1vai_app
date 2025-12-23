@@ -44,11 +44,8 @@ class ApiResponse<T> {
 class ApiClient {
   static const String _envBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    // In debug builds default to local API for dev parity with d1vai web.
-    // Override anytime via `--dart-define=API_BASE_URL=...` or in-app settings.
-    defaultValue: bool.fromEnvironment('dart.vm.product')
-        ? 'https://api.d1v.ai'
-        : 'http://localhost:8999',
+    // Override via `--dart-define=API_BASE_URL=...` or in-app settings.
+    defaultValue: 'https://api.d1v.ai',
   );
 
   static const String _prefsBaseUrlKey = 'api_base_url_override';
@@ -105,10 +102,37 @@ class ApiClient {
   Future<Map<String, String>> _getHeaders() async {
     _sharedPreferences ??= await SharedPreferences.getInstance();
     await _ensureConfigLoaded();
-    final token = _sharedPreferences!.getString('auth_token');
+
+    final tokenRaw = _sharedPreferences!.getString('auth_token');
+    final tokenTrimmed = tokenRaw?.trim();
+    // Some callers might accidentally persist "Bearer <token>" or include whitespace.
+    final token = (tokenTrimmed != null &&
+            tokenTrimmed.toLowerCase().startsWith('bearer '))
+        ? tokenTrimmed.substring('bearer '.length).trim()
+        : tokenTrimmed;
+
+    if (kDebugMode) {
+      final t = (token ?? '').trim();
+      if (t.isEmpty) {
+        debugPrint('🔐 Auth: missing');
+      } else {
+        final suffix = t.length <= 6 ? t : t.substring(t.length - 6);
+        final kind = t.startsWith('eyJ') ? 'jwt' : 'opaque';
+        debugPrint('🔐 Auth: present kind=$kind len=${t.length} suffix=$suffix');
+      }
+    }
+
+    final apiHost = Uri.tryParse(baseUrl)?.host ?? '';
+    final isD1vDomain = apiHost.endsWith('d1v.ai');
+
     return {
+      'Accept': 'application/json',
       'Content-Type': 'application/json',
       if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+      // Align with d1vai web request headers for stricter gateways/WAF.
+      if (isD1vDomain) 'Origin': 'https://www.d1v.ai',
+      if (isD1vDomain) 'Referer': 'https://www.d1v.ai/',
+      'User-Agent': 'd1vai_app',
       'X-D1V-Client': 'd1vai_app',
     };
   }
@@ -556,6 +580,7 @@ class ApiClient {
       if (endpoint != null) {
         debugPrint('📍 API Path: $endpoint');
       }
+      debugPrint('🌍 API Base: $baseUrl');
       debugPrint('🔢 HTTP Status Code: ${response.statusCode}');
 
       // 解析响应体

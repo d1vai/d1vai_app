@@ -3,8 +3,11 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../core/api_client.dart';
 import '../providers/project_provider.dart';
 import '../models/project.dart';
+import '../services/workspace_service.dart';
 import '../services/d1vai_service.dart';
 import 'button.dart';
 import 'input.dart';
@@ -27,6 +30,8 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
   final TextEditingController _urlController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _repoNameController = TextEditingController();
+  final WorkspaceService _workspaceService = WorkspaceService();
+
 
   _CreateProjectFlow _flow = _CreateProjectFlow.chooser;
   bool _isLoading = false;
@@ -467,12 +472,34 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
       return;
     }
 
+    final prefs = await SharedPreferences.getInstance();
+    final token = (prefs.getString('auth_token') ?? '').trim();
+    if (token.isEmpty) {
+      setState(() {
+        _error = 'Not logged in or token missing. Please login again.\n\nTip: Settings → Profile → API → Copy diagnostics.';
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _error = '';
     });
 
     try {
+      // Align with d1vai web: warm up workspace before project creation to avoid
+      // opcode-manager failures on cold/archived workspaces.
+      try {
+        await _workspaceService.ensureWorkspaceReady();
+      } catch (e) {
+        if (!mounted) return;
+        setState(() {
+          _isLoading = false;
+          _error = 'Workspace is not ready: $e\n\nAPI Base: ${ApiClient.baseUrl}';
+        });
+        return;
+      }
+
       final d1vaiService = D1vaiService();
 
       // Match d1vai frontend implementation
@@ -515,9 +542,77 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
         '/projects/$projectId/chat?autoprompt=${Uri.encodeQueryComponent(autoprompt)}',
       );
     } catch (e) {
+      var errText = e.toString();
+      final mayBeOpcodeIssue = errText.contains('opcode-manager') ||
+          errText.contains('internal_server_error') ||
+          errText.contains('HTTP Error: 500');
+
+      if (mayBeOpcodeIssue) {
+        try {
+          if (!mounted) return;
+          SnackBarHelper.showInfo(
+            context,
+            title: 'Retrying',
+            message: 'Create-with-integrations failed, retrying with fallback flow…',
+            duration: const Duration(seconds: 5),
+          );
+
+          await _workspaceService.ensureWorkspaceReady();
+
+          final d1vaiService = D1vaiService();
+          final meta = await d1vaiService.generateProjectMeta(
+            prompt: description,
+            maxDescLen: 120,
+          );
+          final name = meta['project_name']?.toString().trim();
+          final desc = meta['project_description']?.toString() ?? '';
+          if (name == null || name.isEmpty) {
+            throw Exception('Fallback meta missing project_name');
+          }
+
+          final fallback = await d1vaiService.createUserProject({
+            'project_name': name,
+            'project_description': desc,
+            'enable_pay': false,
+            'enable_database': true,
+          });
+
+          if (!mounted) return;
+
+          final project = fallback['project'] as Map<String, dynamic>?;
+          final projectId = project?['id']?.toString();
+          if (projectId == null || projectId.isEmpty) {
+            throw Exception('Fallback create project missing id');
+          }
+
+          final projectProvider = Provider.of<ProjectProvider>(
+            context,
+            listen: false,
+          );
+          await projectProvider.refresh();
+
+          if (!mounted) return;
+
+          final router = GoRouter.of(context);
+          Navigator.pop(context);
+
+          final followup =
+              'Plan mvp version to replace the hello word page functionality and complete it in multiple steps. Finally, you need to check for syntax errors and fix the known issues found.thinkhard';
+          final autoprompt = '$description\n\n$followup';
+
+          router.push(
+            '/projects/$projectId/chat?autoprompt=${Uri.encodeQueryComponent(autoprompt)}',
+          );
+          return;
+        } catch (fallbackErr) {
+          // fallthrough to show combined error below
+          errText = 'primary=$errText; fallback=$fallbackErr';
+        }
+      }
       setState(() {
         _isLoading = false;
-        _error = 'Failed to create project: $e';
+        _error =
+            'Failed to create project: $errText\n\nAPI Base: ${ApiClient.baseUrl}';
       });
     }
   }
