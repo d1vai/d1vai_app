@@ -8,7 +8,6 @@ import 'message_skeleton.dart';
 /// Bottom sheet chat interface for mobile devices
 class ChatBottomSheet extends StatefulWidget {
   final List<ChatMessage> messages;
-  final bool isTyping;
   final bool isLoading;
   final bool isLoadingHistory;
   final ScrollController? scrollController;
@@ -24,7 +23,6 @@ class ChatBottomSheet extends StatefulWidget {
   const ChatBottomSheet({
     super.key,
     required this.messages,
-    this.isTyping = false,
     this.isLoading = false,
     this.isLoadingHistory = false,
     this.scrollController,
@@ -142,7 +140,7 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
 
           // Messages list
           Expanded(
-            child: widget.messages.isEmpty && !widget.isTyping
+            child: widget.messages.isEmpty
                 ? widget.isLoadingHistory
                       ? _buildLoadingState()
                       : _buildEmptyState()
@@ -159,7 +157,6 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                         child: MessageList(
                           key: const ValueKey('chat_bottom_sheet_message_list'),
                           messages: widget.messages,
-                          isTyping: widget.isTyping,
                           scrollController: widget.scrollController,
                           messageStatuses: widget.messageStatuses,
                           onRetry: widget.onRetry,

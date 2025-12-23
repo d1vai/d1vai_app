@@ -26,6 +26,8 @@ class AppLocalizations {
       'login_with_code': 'Login with Code',
       'verify_login': 'Verify Login',
       'sending': 'Sending...',
+      'verifying': 'Verifying...',
+      'resetting': 'Resetting...',
 
       // Auth - Input fields
       'email_address': 'Email Address',
@@ -37,6 +39,12 @@ class AppLocalizations {
       'verify_code_required': 'Please enter verification code',
       'email_invalid': 'Please enter a valid email address',
       'verify_code_complete': 'Please enter complete verification code',
+      'new_password': 'New Password',
+      'confirm_password': 'Confirm Password',
+      'enter_new_password': 'Enter new password',
+      're_enter_new_password': 'Re-enter new password',
+      'passwords_do_not_match': 'Passwords do not match',
+      'password_length_error': 'Password must be at least 6 characters',
 
       // Auth - Messages
       'login_success': 'Login successful',
@@ -45,6 +53,11 @@ class AppLocalizations {
       'code_sent_to': 'Verification code sent to',
       'agree_terms':
           'By logging in, you agree to our Terms of Service and Privacy Policy',
+      'email_bound_success': 'Email bound successfully',
+      'password_reset_success': 'Password reset successfully',
+      'failed_to_verify': 'Failed to verify code',
+      'failed_to_reset_password': 'Failed to reset password',
+      'failed_to_send_code': 'Failed to send verification code',
 
       // Auth - Countdown
       'resend_after': 'Resend after',
@@ -56,6 +69,8 @@ class AppLocalizations {
       'settings': 'Settings',
       'profile': 'Profile',
       'pricing': 'Pricing',
+      'github': 'GitHub',
+      'invites': 'Invites',
 
       // Dashboard
       'welcome': 'Welcome',
@@ -88,6 +103,21 @@ class AppLocalizations {
       'privacy': 'Privacy',
       'about': 'About',
       'contact_support': 'Contact Support',
+      'choose_theme': 'Choose Theme',
+      'light_mode': 'Light Mode',
+      'dark_mode': 'Dark Mode',
+      'system_mode': 'System',
+      'theme_updated': 'Theme Updated',
+      'theme_switched': 'Switched to',
+      'about_description': 'An AI-powered app development platform.',
+      'bind_email': 'Bind Email',
+      'enter_email_for_code':
+          'Enter your email address to receive a verification code',
+      'enter_code_sent':
+          'Enter the 6-digit verification code sent to your email',
+      'reset_password': 'Reset Password',
+      'enter_code_and_new_password':
+          'Enter the verification code and your new password',
 
       // Common
       'loading': 'Loading...',
@@ -115,6 +145,8 @@ class AppLocalizations {
       'login_with_code': '验证码登录',
       'verify_login': '验证登录',
       'sending': '发送中...',
+      'verifying': '验证中...',
+      'resetting': '重置中...',
 
       // Auth - Input fields
       'email_address': '邮箱地址',
@@ -126,6 +158,12 @@ class AppLocalizations {
       'verify_code_required': '请输入验证码',
       'email_invalid': '请输入有效的邮箱地址',
       'verify_code_complete': '请输入完整的验证码',
+      'new_password': '新密码',
+      'confirm_password': '确认密码',
+      'enter_new_password': '请输入新密码',
+      're_enter_new_password': '请再次输入新密码',
+      'passwords_do_not_match': '两次输入的密码不一致',
+      'password_length_error': '密码长度至少为6个字符',
 
       // Auth - Messages
       'login_success': '登录成功',
@@ -133,6 +171,11 @@ class AppLocalizations {
       'code_sent_success': '验证码已发送，请查收邮件',
       'code_sent_to': '验证码已发送至',
       'agree_terms': '登录即表示您同意我们的服务条款和隐私政策',
+      'email_bound_success': '邮箱绑定成功',
+      'password_reset_success': '密码重置成功',
+      'failed_to_verify': '验证失败',
+      'failed_to_reset_password': '重置密码失败',
+      'failed_to_send_code': '发送验证码失败',
 
       // Auth - Countdown
       'resend_after': '秒后重发',
@@ -144,6 +187,8 @@ class AppLocalizations {
       'settings': '设置',
       'profile': '个人中心',
       'pricing': '价格方案',
+      'github': 'GitHub',
+      'invites': '邀请',
 
       // Dashboard
       'welcome': '欢迎',
@@ -176,6 +221,18 @@ class AppLocalizations {
       'privacy': '隐私',
       'about': '关于',
       'contact_support': '联系支持',
+      'choose_theme': '选择主题',
+      'light_mode': '浅色模式',
+      'dark_mode': '深色模式',
+      'system_mode': '跟随系统',
+      'theme_updated': '主题已更新',
+      'theme_switched': '已切换至',
+      'about_description': '一个 AI 驱动的应用开发平台。',
+      'bind_email': '绑定邮箱',
+      'enter_email_for_code': '输入邮箱地址以接收验证码',
+      'enter_code_sent': '输入发送到您邮箱的6位验证码',
+      'reset_password': '重置密码',
+      'enter_code_and_new_password': '输入验证码和新密码',
 
       // Common
       'loading': '加载中...',
@@ -203,6 +260,8 @@ class AppLocalizations {
       'login_with_code': '使用驗證碼登入',
       'verify_login': '驗證登入',
       'sending': '發送中...',
+      'verifying': '驗證中...',
+      'resetting': '重置中...',
 
       // Auth - Input fields
       'email_address': '電子郵件地址',
@@ -214,6 +273,12 @@ class AppLocalizations {
       'verify_code_required': '請輸入驗證碼',
       'email_invalid': '請輸入有效的電子郵件地址',
       'verify_code_complete': '請輸入完整的驗證碼',
+      'new_password': '新密碼',
+      'confirm_password': '確認密碼',
+      'enter_new_password': '請輸入新密碼',
+      're_enter_new_password': '請再次輸入新密碼',
+      'passwords_do_not_match': '兩次輸入的密碼不一致',
+      'password_length_error': '密碼長度至少為6個字元',
 
       // Auth - Messages
       'login_success': '登入成功',
@@ -221,6 +286,11 @@ class AppLocalizations {
       'code_sent_success': '驗證碼已發送，請查收郵件',
       'code_sent_to': '驗證碼已發送至',
       'agree_terms': '登入即表示您同意我們的服務條款和隱私政策',
+      'email_bound_success': '電子郵件綁定成功',
+      'password_reset_success': '密碼重置成功',
+      'failed_to_verify': '驗證失敗',
+      'failed_to_reset_password': '重置密碼失敗',
+      'failed_to_send_code': '發送驗證碼失敗',
 
       // Auth - Countdown
       'resend_after': '秒後重發',
@@ -232,6 +302,8 @@ class AppLocalizations {
       'settings': '設定',
       'profile': '個人中心',
       'pricing': '方案價格',
+      'github': 'GitHub',
+      'invites': '邀請',
 
       // Dashboard
       'welcome': '歡迎',
@@ -264,6 +336,18 @@ class AppLocalizations {
       'privacy': '隱私',
       'about': '關於',
       'contact_support': '聯絡客服',
+      'choose_theme': '選擇主題',
+      'light_mode': '淺色模式',
+      'dark_mode': '深色模式',
+      'system_mode': '跟隨系統',
+      'theme_updated': '主題已更新',
+      'theme_switched': '已切換至',
+      'about_description': '一個 AI 驅動的應用程式開發平台。',
+      'bind_email': '綁定電子郵件',
+      'enter_email_for_code': '輸入電子郵件地址以接收驗證碼',
+      'enter_code_sent': '輸入發送到您電子郵件的6位驗證碼',
+      'reset_password': '重置密碼',
+      'enter_code_and_new_password': '輸入驗證碼和新密碼',
 
       // Common
       'loading': '載入中...',
@@ -291,6 +375,8 @@ class AppLocalizations {
       'login_with_code': 'Iniciar sesión con código',
       'verify_login': 'Verificar inicio de sesión',
       'sending': 'Enviando...',
+      'verifying': 'Verificando...',
+      'resetting': 'Restableciendo...',
 
       // Auth - Input fields
       'email_address': 'Dirección de correo',
@@ -303,6 +389,12 @@ class AppLocalizations {
       'email_invalid': 'Por favor ingrese un correo electrónico válido',
       'verify_code_complete':
           'Por favor ingrese el código de verificación completo',
+      'new_password': 'Nueva contraseña',
+      'confirm_password': 'Confirmar contraseña',
+      'enter_new_password': 'Ingrese la nueva contraseña',
+      're_enter_new_password': 'Reingrese la nueva contraseña',
+      'passwords_do_not_match': 'Las contraseñas no coinciden',
+      'password_length_error': 'La contraseña debe tener al menos 6 caracteres',
 
       // Auth - Messages
       'login_success': 'Inicio de sesión exitoso',
@@ -311,6 +403,11 @@ class AppLocalizations {
       'code_sent_to': 'Código enviado a',
       'agree_terms':
           'Al iniciar sesión, acepta nuestros Términos de Servicio y Política de Privacidad',
+      'email_bound_success': 'Correo electrónico vinculado exitosamente',
+      'password_reset_success': 'Contraseña restablecida exitosamente',
+      'failed_to_verify': 'Error al verificar',
+      'failed_to_reset_password': 'Error al restablecer contraseña',
+      'failed_to_send_code': 'Error al enviar código',
 
       // Auth - Countdown
       'resend_after': 'Reenviar después de',
@@ -322,6 +419,8 @@ class AppLocalizations {
       'settings': 'Configuración',
       'profile': 'Perfil',
       'pricing': 'Precios',
+      'github': 'GitHub',
+      'invites': 'Invitaciones',
 
       // Dashboard
       'welcome': 'Bienvenido',
@@ -354,6 +453,20 @@ class AppLocalizations {
       'privacy': 'Privacidad',
       'about': 'Acerca de',
       'contact_support': 'Contactar soporte',
+      'choose_theme': 'Elegir tema',
+      'light_mode': 'Modo claro',
+      'dark_mode': 'Modo oscuro',
+      'system_mode': 'Sistema',
+      'theme_updated': 'Tema actualizado',
+      'theme_switched': 'Cambiado a',
+      'about_description':
+          'Una plataforma de desarrollo de aplicaciones impulsada por IA.',
+      'bind_email': 'Vincular correo',
+      'enter_email_for_code':
+          'Ingrese su correo para recibir un código de verificación',
+      'enter_code_sent': 'Ingrese el código de 6 dígitos enviado a su correo',
+      'reset_password': 'Restablecer contraseña',
+      'enter_code_and_new_password': 'Ingrese el código y la nueva contraseña',
 
       // Common
       'loading': 'Cargando...',
@@ -381,6 +494,8 @@ class AppLocalizations {
       'login_with_code': 'تسجيل الدخول بالرمز',
       'verify_login': 'التحقق وتسجيل الدخول',
       'sending': 'جاري الإرسال...',
+      'verifying': 'جاري التحقق...',
+      'resetting': 'جاري إعادة التعيين...',
 
       // Auth - Input fields
       'email_address': 'عنوان البريد الإلكتروني',
@@ -392,6 +507,12 @@ class AppLocalizations {
       'verify_code_required': 'يرجى إدخال رمز التحقق',
       'email_invalid': 'يرجى إدخال عنوان بريد إلكتروني صالح',
       'verify_code_complete': 'يرجى إدخال رمز التحقق كاملاً',
+      'new_password': 'كلمة المرور الجديدة',
+      'confirm_password': 'تأكيد كلمة المرور',
+      'enter_new_password': 'أدخل كلمة المرور الجديدة',
+      're_enter_new_password': 'أعد إدخال كلمة المرور الجديدة',
+      'passwords_do_not_match': 'كلمات المرور غير متطابقة',
+      'password_length_error': 'يجب أن تكون كلمة المرور 6 أحرف على الأقل',
 
       // Auth - Messages
       'login_success': 'تم تسجيل الدخول بنجاح',
@@ -400,6 +521,11 @@ class AppLocalizations {
       'code_sent_to': 'تم الإرسال إلى',
       'agree_terms':
           'بتسجيل الدخول، فإنك توافق على شروط الخدمة وسياسة الخصوصية',
+      'email_bound_success': 'تم ربط البريد الإلكتروني بنجاح',
+      'password_reset_success': 'تم إعادة تعيين كلمة المرور بنجاح',
+      'failed_to_verify': 'فشل التحقق',
+      'failed_to_reset_password': 'فشل إعادة تعيين كلمة المرور',
+      'failed_to_send_code': 'فشل إرسال الرمز',
 
       // Auth - Countdown
       'resend_after': 'إعادة الإرسال بعد',
@@ -411,6 +537,8 @@ class AppLocalizations {
       'settings': 'الإعدادات',
       'profile': 'الملف الشخصي',
       'pricing': 'التسعير',
+      'github': 'GitHub',
+      'invites': 'الدعوات',
 
       // Dashboard
       'welcome': 'مرحباً',
@@ -443,6 +571,18 @@ class AppLocalizations {
       'privacy': 'الخصوصية',
       'about': 'حول',
       'contact_support': 'اتصل بالدعم',
+      'choose_theme': 'اختر المظهر',
+      'light_mode': 'الوضع الفاتح',
+      'dark_mode': 'الوضع الداكن',
+      'system_mode': 'النظام',
+      'theme_updated': 'تم تحديث المظهر',
+      'theme_switched': 'تم التبديل إلى',
+      'about_description': 'منصة تطوير تطبيقات تعمل بالذكاء الاصطناعي.',
+      'bind_email': 'ربط البريد الإلكتروني',
+      'enter_email_for_code': 'أدخل بريدك الإلكتروني لاستلام رمز التحقق',
+      'enter_code_sent': 'أدخل الرمز المكون من 6 أرقام المرسل إلى بريدك',
+      'reset_password': 'إعادة تعيين كلمة المرور',
+      'enter_code_and_new_password': 'أدخل الرمز وكلمة المرور الجديدة',
 
       // Common
       'loading': 'جاري التحميل...',
@@ -470,6 +610,8 @@ class AppLocalizations {
       'login_with_code': 'コードでログイン',
       'verify_login': 'ログインを認証',
       'sending': '送信中...',
+      'verifying': '認証中...',
+      'resetting': 'リセット中...',
 
       // Auth - Input fields
       'email_address': 'メールアドレス',
@@ -481,6 +623,12 @@ class AppLocalizations {
       'verify_code_required': '認証コードを入力してください',
       'email_invalid': '有効なメールアドレスを入力してください',
       'verify_code_complete': '完全な認証コードを入力してください',
+      'new_password': '新しいパスワード',
+      'confirm_password': 'パスワードの確認',
+      'enter_new_password': '新しいパスワードを入力してください',
+      're_enter_new_password': '新しいパスワードを再入力してください',
+      'passwords_do_not_match': 'パスワードが一致しません',
+      'password_length_error': 'パスワードは6文字以上である必要があります',
 
       // Auth - Messages
       'login_success': 'ログインしました',
@@ -488,6 +636,11 @@ class AppLocalizations {
       'code_sent_success': 'コードが正常に送信されました',
       'code_sent_to': '送信先:',
       'agree_terms': 'ログインすることで、利用規約とプライバシーに同意したことになります',
+      'email_bound_success': 'メールアドレスのバインドに成功しました',
+      'password_reset_success': 'パスワードのリセットに成功しました',
+      'failed_to_verify': '認証に失敗しました',
+      'failed_to_reset_password': 'パスワードのリセットに失敗しました',
+      'failed_to_send_code': 'コードの送信に失敗しました',
 
       // Auth - Countdown
       'resend_after': '再送信まで',
@@ -499,6 +652,8 @@ class AppLocalizations {
       'settings': '設定',
       'profile': 'プロフィール',
       'pricing': '料金',
+      'github': 'GitHub',
+      'invites': '招待',
 
       // Dashboard
       'welcome': 'ようこそ',
@@ -531,6 +686,18 @@ class AppLocalizations {
       'privacy': 'プライバシー',
       'about': 'このアプリについて',
       'contact_support': 'サポートに連絡',
+      'choose_theme': 'テーマを選択',
+      'light_mode': 'ライトモード',
+      'dark_mode': 'ダークモード',
+      'system_mode': 'システム',
+      'theme_updated': 'テーマが更新されました',
+      'theme_switched': '次へ切り替えました:',
+      'about_description': 'AIを活用したアプリ開発プラットフォーム。',
+      'bind_email': 'メールアドレスをバインド',
+      'enter_email_for_code': '認証コードを受け取るメールアドレスを入力してください',
+      'enter_code_sent': 'メールに送信された6桁の認証コードを入力してください',
+      'reset_password': 'パスワードをリセット',
+      'enter_code_and_new_password': '認証コードと新しいパスワードを入力してください',
 
       // Common
       'loading': '読み込み中...',
@@ -558,6 +725,8 @@ class AppLocalizations {
       'login_with_code': 'Se connecter avec code',
       'verify_login': 'Vérifier la connexion',
       'sending': 'Envoi...',
+      'verifying': 'Vérification...',
+      'resetting': 'Réinitialisation...',
 
       // Auth - Input fields
       'email_address': 'Adresse e-mail',
@@ -569,6 +738,13 @@ class AppLocalizations {
       'verify_code_required': 'Veuillez entrer le code de vérification',
       'email_invalid': 'Veuillez entrer une adresse e-mail valide',
       'verify_code_complete': 'Veuillez entrer le code de vérification complet',
+      'new_password': 'Nouveau mot de passe',
+      'confirm_password': 'Confirmer le mot de passe',
+      'enter_new_password': 'Entrez le nouveau mot de passe',
+      're_enter_new_password': 'Entrez à nouveau le nouveau mot de passe',
+      'passwords_do_not_match': 'Les mots de passe ne correspondent pas',
+      'password_length_error':
+          'Le mot de passe doit comporter au moins 6 caractères',
 
       // Auth - Messages
       'login_success': 'Connexion réussie',
@@ -577,6 +753,12 @@ class AppLocalizations {
       'code_sent_to': 'Code envoyé à',
       'agree_terms':
           'En vous connectant, vous acceptez nos Conditions de Service et notre Politique de Confidentialité',
+      'email_bound_success': 'E-mail lié avec succès',
+      'password_reset_success': 'Mot de passe réinitialisé avec succès',
+      'failed_to_verify': 'Échec de la vérification',
+      'failed_to_reset_password':
+          'Échec de la réinitialisation du mot de passe',
+      'failed_to_send_code': 'Échec de l\'envoi du code',
 
       // Auth - Countdown
       'resend_after': 'Renvoyer après',
@@ -588,6 +770,8 @@ class AppLocalizations {
       'settings': 'Paramètres',
       'profile': 'Profil',
       'pricing': 'Tarification',
+      'github': 'GitHub',
+      'invites': 'Invitations',
 
       // Dashboard
       'welcome': 'Bienvenue',
@@ -620,6 +804,22 @@ class AppLocalizations {
       'privacy': 'Confidentialité',
       'about': 'À propos',
       'contact_support': 'Contacter le support',
+      'choose_theme': 'Choisir le thème',
+      'light_mode': 'Mode clair',
+      'dark_mode': 'Mode sombre',
+      'system_mode': 'Système',
+      'theme_updated': 'Thème mis à jour',
+      'theme_switched': 'Passé à',
+      'about_description':
+          'Une plateforme de développement d\'applications alimentée par l\'IA.',
+      'bind_email': 'Lier l\'e-mail',
+      'enter_email_for_code':
+          'Entrez votre adresse e-mail pour recevoir un code de vérification',
+      'enter_code_sent':
+          'Entrez le code de vérification à 6 chiffres envoyé à votre e-mail',
+      'reset_password': 'Réinitialiser le mot de passe',
+      'enter_code_and_new_password':
+          'Entrez le code de vérification et votre nouveau mot de passe',
 
       // Common
       'loading': 'Chargement...',
@@ -647,6 +847,8 @@ class AppLocalizations {
       'login_with_code': 'Войти с кодом',
       'verify_login': 'Проверить вход',
       'sending': 'Отправка...',
+      'verifying': 'Проверка...',
+      'resetting': 'Сброс...',
 
       // Auth - Input fields
       'email_address': 'Адрес электронной почты',
@@ -659,6 +861,12 @@ class AppLocalizations {
       'email_invalid':
           'Пожалуйста, введите действительный адрес электронной почты',
       'verify_code_complete': 'Пожалуйста, введите полный код подтверждения',
+      'new_password': 'Новый пароль',
+      'confirm_password': 'Подтвердить пароль',
+      'enter_new_password': 'Введите новый пароль',
+      're_enter_new_password': 'Введите новый пароль еще раз',
+      'passwords_do_not_match': 'Пароли не совпадают',
+      'password_length_error': 'Пароль должен содержать не менее 6 символов',
 
       // Auth - Messages
       'login_success': 'Успешный вход',
@@ -667,6 +875,11 @@ class AppLocalizations {
       'code_sent_to': 'Код отправлен на',
       'agree_terms':
           'Входя в систему, вы соглашаетесь с нашими Условиями обслуживания и Политикой конфиденциальности',
+      'email_bound_success': 'Электронная почта успешно привязана',
+      'password_reset_success': 'Пароль успешно сброшен',
+      'failed_to_verify': 'Не удалось проверить',
+      'failed_to_reset_password': 'Не удалось сбросить пароль',
+      'failed_to_send_code': 'Не удалось отправить код',
 
       // Auth - Countdown
       'resend_after': 'Повторить через',
@@ -678,6 +891,8 @@ class AppLocalizations {
       'settings': 'Настройки',
       'profile': 'Профиль',
       'pricing': 'Цены',
+      'github': 'GitHub',
+      'invites': 'Приглашения',
 
       // Dashboard
       'welcome': 'Добро пожаловать',
@@ -710,6 +925,21 @@ class AppLocalizations {
       'privacy': 'Конфиденциальность',
       'about': 'О программе',
       'contact_support': 'Связаться с поддержкой',
+      'choose_theme': 'Выбрать тему',
+      'light_mode': 'Светлая тема',
+      'dark_mode': 'Темная тема',
+      'system_mode': 'Системная',
+      'theme_updated': 'Тема обновлена',
+      'theme_switched': 'Переключено на',
+      'about_description':
+          'Платформа для разработки приложений с использованием ИИ.',
+      'bind_email': 'Привязать почту',
+      'enter_email_for_code':
+          'Введите адрес электронной почты для получения кода подтверждения',
+      'enter_code_sent':
+          'Введите 6-значный код подтверждения, отправленный на вашу почту',
+      'reset_password': 'Сбросить пароль',
+      'enter_code_and_new_password': 'Введите код подтверждения и новый пароль',
 
       // Common
       'loading': 'Загрузка...',

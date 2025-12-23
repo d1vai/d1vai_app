@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../services/github_service.dart';
 import 'snackbar_helper.dart';
 
 class ImportRepositoryDialog extends StatefulWidget {
   final Map<String, dynamic> repository;
 
-  const ImportRepositoryDialog({
-    super.key,
-    required this.repository,
-  });
+  const ImportRepositoryDialog({super.key, required this.repository});
 
   @override
   State<ImportRepositoryDialog> createState() => _ImportRepositoryDialogState();
@@ -31,8 +29,8 @@ class _ImportRepositoryDialogState extends State<ImportRepositoryDialog> {
     _projectNameController = TextEditingController(text: repoName);
     _projectDescriptionController = TextEditingController(
       text: repoDescription.isEmpty
-        ? 'Imported from GitHub: ${widget.repository['full_name'] ?? repoName}'
-        : repoDescription,
+          ? 'Imported from GitHub: ${widget.repository['full_name'] ?? repoName}'
+          : repoDescription,
     );
   }
 
@@ -55,15 +53,33 @@ class _ImportRepositoryDialogState extends State<ImportRepositoryDialog> {
     try {
       final repositoryFullName = widget.repository['full_name'] ?? '';
       final defaultBranch = widget.repository['default_branch'] ?? 'main';
+      final cloneUrl =
+          widget.repository['clone_url'] ?? widget.repository['html_url'];
+      final sshUrl = widget.repository['ssh_url'];
+      final isPrivate = widget.repository['private'] == true;
+      final language = widget.repository['language'];
 
-      await _githubService.importProjectFromGitHub(
+      final result = await _githubService.importProjectFromGitHub(
         repositoryFullName: repositoryFullName,
         projectName: _projectNameController.text.trim(),
         projectDescription: _projectDescriptionController.text.trim(),
-        branch: defaultBranch,
+        defaultBranch: defaultBranch,
+        repositoryUrl: cloneUrl?.toString(),
+        repositorySshUrl: sshUrl?.toString(),
+        isPrivate: isPrivate,
+        primaryLanguage: language?.toString(),
       );
 
       if (!mounted) return;
+
+      final project =
+          (result != null && result['project'] is Map<String, dynamic>)
+          ? (result['project'] as Map<String, dynamic>)
+          : null;
+      final projectId = project?['id']?.toString();
+      if (projectId == null || projectId.isEmpty) {
+        throw Exception('Failed to get project ID');
+      }
 
       SnackBarHelper.showSuccess(
         context,
@@ -71,8 +87,12 @@ class _ImportRepositoryDialogState extends State<ImportRepositoryDialog> {
         message: 'Project imported successfully!',
       );
 
-      // Close dialog and return success
+      final router = GoRouter.of(context);
       Navigator.of(context).pop(true);
+      // Navigate to project chat (align with web import flow).
+      Future.microtask(
+        () => router.push('/projects/$projectId/chat?tab=preview'),
+      );
     } catch (e) {
       if (!mounted) return;
 
@@ -114,7 +134,9 @@ class _ImportRepositoryDialogState extends State<ImportRepositoryDialog> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.5,
+                    ),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: theme.colorScheme.outline),
                   ),
@@ -168,7 +190,9 @@ class _ImportRepositoryDialogState extends State<ImportRepositoryDialog> {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                                color: theme.colorScheme.primary.withValues(
+                                  alpha: 0.1,
+                                ),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
@@ -184,14 +208,18 @@ class _ImportRepositoryDialogState extends State<ImportRepositoryDialog> {
                           Icon(
                             Icons.star,
                             size: 14,
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.6,
+                            ),
                           ),
                           const SizedBox(width: 4),
                           Text(
                             '$stars',
                             style: TextStyle(
                               fontSize: 12,
-                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.6,
+                              ),
                             ),
                           ),
                         ],
@@ -258,7 +286,9 @@ class _ImportRepositoryDialogState extends State<ImportRepositoryDialog> {
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.onPrimary),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      theme.colorScheme.onPrimary,
+                    ),
                   ),
                 )
               : const Icon(Icons.download),

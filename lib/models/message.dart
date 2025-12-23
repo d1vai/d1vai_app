@@ -22,8 +22,30 @@ class ThinkingMessageContent extends MessageContent {
 /// Code message with syntax highlighting
 class CodeMessageContent extends MessageContent {
   final String code;
+  final String? subtype;
 
-  const CodeMessageContent({required this.code}) : super('code');
+  const CodeMessageContent({required this.code, this.subtype}) : super('code');
+}
+
+class ToolOutput {
+  final String text;
+  final bool? isError;
+
+  const ToolOutput({required this.text, this.isError});
+
+  factory ToolOutput.fromJson(Map<String, dynamic> json) {
+    return ToolOutput(
+      text: (json['text'] ?? '').toString(),
+      isError: json['is_error'] == true,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'text': text,
+      if (isError != null) 'is_error': isError,
+    };
+  }
 }
 
 /// Tool execution message
@@ -32,12 +54,14 @@ class ToolMessageContent extends MessageContent {
   final String name;
   final dynamic input;
   final String? status;
+  final ToolOutput? output;
 
   const ToolMessageContent({
     this.id,
     required this.name,
     required this.input,
     this.status,
+    this.output,
   })
     : super('tool');
 
@@ -46,12 +70,14 @@ class ToolMessageContent extends MessageContent {
     String? name,
     dynamic input,
     String? status,
+    ToolOutput? output,
   }) {
     return ToolMessageContent(
       id: id ?? this.id,
       name: name ?? this.name,
       input: input ?? this.input,
       status: status ?? this.status,
+      output: output ?? this.output,
     );
   }
 }
@@ -163,13 +189,19 @@ class ChatMessage {
         case 'thinking':
           return ThinkingMessageContent(text: contentJson['text'] as String);
         case 'code':
-          return CodeMessageContent(code: contentJson['code'] as String);
+          return CodeMessageContent(
+            code: contentJson['code'] as String,
+            subtype: contentJson['subtype'] as String?,
+          );
         case 'tool':
           return ToolMessageContent(
             id: contentJson['id']?.toString(),
             name: contentJson['name'] as String,
             input: contentJson['input'],
             status: contentJson['status']?.toString(),
+            output: contentJson['output'] is Map<String, dynamic>
+                ? ToolOutput.fromJson(contentJson['output'] as Map<String, dynamic>)
+                : null,
           );
         case 'result':
           return ResultMessageContent(payload: contentJson['payload']);
@@ -235,7 +267,11 @@ class ChatMessage {
         } else if (content is ThinkingMessageContent) {
           return {'type': 'thinking', 'text': content.text};
         } else if (content is CodeMessageContent) {
-          return {'type': 'code', 'code': content.code};
+          return {
+            'type': 'code',
+            'code': content.code,
+            if (content.subtype != null) 'subtype': content.subtype,
+          };
         } else if (content is ToolMessageContent) {
           return {
             'type': 'tool',
@@ -243,6 +279,7 @@ class ChatMessage {
             'name': content.name,
             'input': content.input,
             'status': content.status,
+            if (content.output != null) 'output': content.output!.toJson(),
           };
         } else if (content is ResultMessageContent) {
           return {'type': 'result', 'payload': content.payload};

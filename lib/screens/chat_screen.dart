@@ -28,7 +28,7 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen>
-    with TickerProviderStateMixin {
+    {
   final ChatService _chatService = ChatService();
   final WorkspaceService _workspaceService = WorkspaceService();
   final ScrollController _scrollController = ScrollController();
@@ -36,7 +36,6 @@ class _ChatScreenState extends State<ChatScreen>
   final Map<String, MessageStatus> _messageStatuses = {};
 
   bool _isLoading = false;
-  bool _isTyping = false;
   bool _isLoadingHistory = false;
   bool _isLoadingMoreHistory = false;
   bool _hasMoreHistory = true;
@@ -52,7 +51,10 @@ class _ChatScreenState extends State<ChatScreen>
   bool _manualWsClose = false;
   bool _autoConnectDisabled = false;
   final Set<String> _seenWsKeys = <String>{};
-  Timer? _typingResetTimer;
+
+  final StringBuffer _assistantDeltaBuffer = StringBuffer();
+  int _assistantDeltaChars = 0;
+  Timer? _assistantDeltaFlushTimer;
 
   bool _autopromptHandled = false;
 
@@ -73,7 +75,7 @@ class _ChatScreenState extends State<ChatScreen>
 
   @override
   void dispose() {
-    _typingResetTimer?.cancel();
+    _assistantDeltaFlushTimer?.cancel();
     _reconnectTimer?.cancel();
     _workspacePollTimer?.cancel();
     _webSocketSubscription?.cancel();
@@ -234,17 +236,14 @@ class _ChatScreenState extends State<ChatScreen>
       final messages = <ChatMessage>[];
       for (final entry in history) {
         final m = MessageParser.historyEntryToMessage(entry);
-        // Drop empty text-only messages to match web filtering behavior.
-        final allEmptyText = m.contents.isNotEmpty &&
-            m.contents.every((c) =>
-                c is TextMessageContent && c.text.trim().isEmpty);
-        if (!allEmptyText) messages.add(m);
+        if (m != null) messages.add(m);
       }
+      final merged = MessageParser.mergeToolResultsIntoPrevBashTool(messages);
 
       setState(() {
         _messages
           ..clear()
-          ..addAll(messages);
+          ..addAll(merged);
         _messageStatuses.clear();
         _isLoadingHistory = false;
         _hasMoreHistory = history.length >= limit;
@@ -302,14 +301,13 @@ class _ChatScreenState extends State<ChatScreen>
       final older = <ChatMessage>[];
       for (final entry in history) {
         final m = MessageParser.historyEntryToMessage(entry);
-        final allEmptyText = m.contents.isNotEmpty &&
-            m.contents.every((c) =>
-                c is TextMessageContent && c.text.trim().isEmpty);
-        if (!allEmptyText) older.add(m);
+        if (m != null) older.add(m);
       }
+      final olderMerged = MessageParser.mergeToolResultsIntoPrevBashTool(older);
 
       final existingIds = _messages.map((m) => m.id).toSet();
-      final deduped = older.where((m) => !existingIds.contains(m.id)).toList();
+      final deduped =
+          olderMerged.where((m) => !existingIds.contains(m.id)).toList();
 
       setState(() {
         _messages.insertAll(0, deduped);
@@ -337,16 +335,6 @@ class _ChatScreenState extends State<ChatScreen>
         _hasMoreHistory = false;
       });
     }
-  }
-
-  void _scheduleTypingReset() {
-    _typingResetTimer?.cancel();
-    _typingResetTimer = Timer(const Duration(milliseconds: 1200), () {
-      if (!mounted) return;
-      setState(() {
-        _isTyping = false;
-      });
-    });
   }
 
   Future<void> _closeWebSocket({required bool manual}) async {
@@ -378,8 +366,16 @@ class _ChatScreenState extends State<ChatScreen>
     return null;
   }
 
-  void _appendAssistantDelta(String delta) {
-    if (delta.isEmpty) return;
+  void _flushAssistantDelta({bool scroll = true}) {
+    if (_assistantDeltaChars == 0) return;
+    _assistantDeltaFlushTimer?.cancel();
+    _assistantDeltaFlushTimer = null;
+
+    final text = _assistantDeltaBuffer.toString();
+    _assistantDeltaBuffer.clear();
+    _assistantDeltaChars = 0;
+
+    if (text.isEmpty) return;
     setState(() {
       if (_messages.isNotEmpty) {
         final last = _messages.last;
@@ -387,13 +383,12 @@ class _ChatScreenState extends State<ChatScreen>
             last.contents.isNotEmpty &&
             last.contents.first is TextMessageContent) {
           final first = last.contents.first as TextMessageContent;
-          final updated = last.copyWith(
+          _messages[_messages.length - 1] = last.copyWith(
             contents: [
-              TextMessageContent(text: '${first.text}$delta'),
+              TextMessageContent(text: '${first.text}$text'),
               ...last.contents.skip(1),
             ],
           );
-          _messages[_messages.length - 1] = updated;
           return;
         }
       }
@@ -402,11 +397,21 @@ class _ChatScreenState extends State<ChatScreen>
           id: 'asst-${DateTime.now().millisecondsSinceEpoch}',
           role: 'assistant',
           createdAt: DateTime.now(),
-          contents: [TextMessageContent(text: delta)],
+          contents: [TextMessageContent(text: text)],
         ),
       );
     });
-    _scrollToBottom();
+    if (scroll) _scrollToBottom();
+  }
+
+  void _appendAssistantDelta(String delta) {
+    if (delta.isEmpty) return;
+    _assistantDeltaBuffer.write(delta);
+    _assistantDeltaChars += delta.length;
+    _assistantDeltaFlushTimer ??= Timer(
+      const Duration(milliseconds: 60),
+      () => _flushAssistantDelta(scroll: true),
+    );
   }
 
   void _finalizePrevToolDone() {
@@ -458,6 +463,37 @@ class _ChatScreenState extends State<ChatScreen>
     }
   }
 
+  bool _attachToolResultToPrevBashTool(String outputText,
+      {required bool isError}) {
+    if (_messages.isEmpty) return false;
+    final lastIdx = _messages.length - 1;
+    final last = _messages[lastIdx];
+    final contents = last.contents;
+
+    for (var ci = contents.length - 1; ci >= 0; ci--) {
+      final c = contents[ci];
+      if (c is! ToolMessageContent) continue;
+      if (c.name.toLowerCase().trim() != 'bash') continue;
+
+      final prevOut = c.output?.text ?? '';
+      final joined =
+          prevOut.trim().isNotEmpty ? '$prevOut\n\n$outputText' : outputText;
+      final capped = joined.length > 120000
+          ? joined.substring(joined.length - 120000)
+          : joined;
+
+      final nextContents = List<MessageContent>.from(contents);
+      nextContents[ci] = c.copyWith(
+        output: ToolOutput(text: capped, isError: isError),
+      );
+      setState(() {
+        _messages[lastIdx] = last.copyWith(contents: nextContents);
+      });
+      return true;
+    }
+    return false;
+  }
+
   bool _userPayloadHasToolResult(Map<String, dynamic> payload) {
     try {
       final message = payload['message'];
@@ -506,6 +542,11 @@ class _ChatScreenState extends State<ChatScreen>
       return;
     }
 
+    // Web filters these from history; treat them as non-chat side-effect frames.
+    if (type == 'deployment_start' || type == 'deployment_complete') {
+      return;
+    }
+
     // Best-effort de-dup (skip for deltas and allow assistant_message to overwrite).
     try {
       if (type != 'content_block_delta' &&
@@ -530,13 +571,10 @@ class _ChatScreenState extends State<ChatScreen>
       }
     } catch (_) {}
 
-    // Any non-history frame is live activity.
-    if (mounted) {
-      setState(() {
-        _isTyping = true;
-      });
+    // Ensure any buffered deltas are rendered before applying a new non-delta frame.
+    if (type != 'content_block_delta' && type != 'message_delta') {
+      _flushAssistantDelta(scroll: false);
     }
-    _scheduleTypingReset();
 
     if (type == 'content_block_delta' || type == 'message_delta') {
       final delta = MessageParser.normalizeOpcodeText(payload);
@@ -586,6 +624,18 @@ class _ChatScreenState extends State<ChatScreen>
       }
       final contents = MessageParser.createMessageContentsFromPayload(payload);
       if (contents.isEmpty) return;
+      if (type == 'tool_result') {
+        final isErr = payload['is_error'] == true;
+        final outputBlocks = contents.whereType<CodeMessageContent>().where(
+              (c) => (c.subtype ?? '').toLowerCase() == 'tool_result',
+            );
+        final outputText = outputBlocks.map((c) => c.code).join('\n').trim();
+        if (outputText.isNotEmpty &&
+            _attachToolResultToPrevBashTool(outputText, isError: isErr)) {
+          _scrollToBottom();
+          return;
+        }
+      }
       setState(() {
         _messages.add(
           ChatMessage(
@@ -612,17 +662,37 @@ class _ChatScreenState extends State<ChatScreen>
         _finalizePrevToolDone();
       }
       _autoConnectDisabled = true;
-      if (mounted) {
-        setState(() {
-          _isTyping = false;
-        });
-      }
       return;
     }
 
     // Some servers emit tool results wrapped as `type=user` with tool_result blocks.
     if (type == 'user' && _userPayloadHasToolResult(payload)) {
-      _markLastToolOutcome(_userPayloadIsToolResultError(payload) ? 'error' : 'done');
+      final isErr = _userPayloadIsToolResultError(payload);
+      _markLastToolOutcome(isErr ? 'error' : 'done');
+      final contents = MessageParser.createMessageContentsFromPayload(payload);
+      if (contents.isNotEmpty) {
+        final outputBlocks = contents.whereType<CodeMessageContent>().where(
+              (c) => (c.subtype ?? '').toLowerCase() == 'tool_result',
+            );
+        final outputText = outputBlocks.map((c) => c.code).join('\n').trim();
+        if (outputText.isNotEmpty &&
+            _attachToolResultToPrevBashTool(outputText, isError: isErr)) {
+          _scrollToBottom();
+          return;
+        }
+        setState(() {
+          _messages.add(
+            ChatMessage(
+              id: 'ws-${DateTime.now().millisecondsSinceEpoch}',
+              role: 'assistant',
+              createdAt: DateTime.now(),
+              contents: contents,
+            ),
+          );
+        });
+        _scrollToBottom();
+        return;
+      }
     }
 
     final contents = MessageParser.createMessageContentsFromPayload(payload);
@@ -720,15 +790,28 @@ class _ChatScreenState extends State<ChatScreen>
   ) async {
     if (!mounted) return;
 
+    Map<String, dynamic>? payloadMap(dynamic p) {
+      if (p is Map<String, dynamic>) return p;
+      if (p is String) {
+        final s = p.trim();
+        if (!(s.startsWith('{') || s.startsWith('['))) return null;
+        try {
+          final v = jsonDecode(s);
+          if (v is Map) {
+            return v.map((k, val) => MapEntry(k.toString(), val));
+          }
+        } catch (_) {}
+      }
+      return null;
+    }
+
     ChatHistoryEntry? latest;
     for (final e in history) {
       if (latest == null || e.createdAt.isAfter(latest.createdAt)) {
         latest = e;
       }
     }
-    final latestType = (latest?.payload is Map<String, dynamic>)
-        ? (latest!.payload as Map<String, dynamic>)['type']?.toString()
-        : null;
+    final latestType = payloadMap(latest?.payload)?['type']?.toString();
     if (latestType == 'complete') {
       _autoConnectDisabled = true;
       return;
@@ -736,8 +819,9 @@ class _ChatScreenState extends State<ChatScreen>
 
     ChatHistoryEntry? newestWithSession;
     for (final e in history) {
-      if (e.payload is! Map<String, dynamic>) continue;
-      final sid = (e.payload as Map<String, dynamic>)['session_id'];
+      final pm = payloadMap(e.payload);
+      if (pm == null) continue;
+      final sid = pm['session_id'];
       if (sid is! String || sid.isEmpty) continue;
       if (newestWithSession == null ||
           e.createdAt.isAfter(newestWithSession.createdAt)) {
@@ -746,9 +830,8 @@ class _ChatScreenState extends State<ChatScreen>
     }
     if (newestWithSession == null) return;
 
-    final sid =
-        (newestWithSession.payload as Map<String, dynamic>)['session_id']
-            as String;
+    final sid = payloadMap(newestWithSession.payload)?['session_id'] as String?;
+    if (sid == null || sid.isEmpty) return;
     setState(() {
       _currentSessionId = sid;
     });
@@ -783,7 +866,6 @@ class _ChatScreenState extends State<ChatScreen>
     setState(() {
       _messages.add(userMessage);
       _messageStatuses[tempId] = MessageStatus.pending;
-      _isTyping = true;
     });
 
     _scrollToBottom();
@@ -813,7 +895,6 @@ class _ChatScreenState extends State<ChatScreen>
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _isTyping = false;
         _isLoading = false;
         _messageStatuses[tempId] = MessageStatus.failed;
       });
@@ -833,7 +914,6 @@ class _ChatScreenState extends State<ChatScreen>
     setState(() {
       _isLoading = true;
       _messageStatuses[message.id] = MessageStatus.pending;
-      _isTyping = true;
     });
 
     try {
@@ -857,7 +937,6 @@ class _ChatScreenState extends State<ChatScreen>
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _isTyping = false;
         _messageStatuses[message.id] = MessageStatus.failed;
       });
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1002,13 +1081,12 @@ class _ChatScreenState extends State<ChatScreen>
             ),
           // Messages list
           Expanded(
-            child: _messages.isEmpty && !_isTyping
+            child: _messages.isEmpty
                 ? _isLoadingHistory
                     ? _buildLoadingState()
                     : _buildEmptyState()
                 : MessageList(
                     messages: _messages,
-                    isTyping: _isTyping,
                     scrollController: _scrollController,
                     messageStatuses: _messageStatuses,
                     onRetry: _retryMessage,

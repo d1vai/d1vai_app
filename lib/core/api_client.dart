@@ -1,4 +1,3 @@
-
 import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -43,7 +42,28 @@ class ApiResponse<T> {
 }
 
 class ApiClient {
-  static const String baseUrl = 'https://api.d1v.ai';
+  static const String _envBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    // In debug builds default to local API for dev parity with d1vai web.
+    // Override anytime via `--dart-define=API_BASE_URL=...` or in-app settings.
+    defaultValue: bool.fromEnvironment('dart.vm.product')
+        ? 'https://api.d1v.ai'
+        : 'http://localhost:8999',
+  );
+
+  static const String _prefsBaseUrlKey = 'api_base_url_override';
+  static String? _runtimeBaseUrl;
+  static bool _configLoaded = false;
+
+  static String get envBaseUrl => _envBaseUrl;
+  static String? get runtimeBaseUrl => _runtimeBaseUrl;
+
+  /// Effective API base URL (runtime override > build-time env).
+  static String get baseUrl {
+    final raw = (_runtimeBaseUrl ?? _envBaseUrl).trim();
+    if (raw.endsWith('/')) return raw.substring(0, raw.length - 1);
+    return raw;
+  }
   final http.Client client;
 
   // 缓存 SharedPreferences 实例以避免重复调用
@@ -55,14 +75,41 @@ class ApiClient {
 
   Future<void> _init() async {
     _sharedPreferences ??= await SharedPreferences.getInstance();
+    await _ensureConfigLoaded();
+  }
+
+  static Future<void> ensureInitialized() async {
+    await _ensureConfigLoaded();
+  }
+
+  static Future<void> setRuntimeBaseUrlOverride(String? value) async {
+    _sharedPreferences ??= await SharedPreferences.getInstance();
+    final v = (value ?? '').trim();
+    if (v.isEmpty) {
+      await _sharedPreferences!.remove(_prefsBaseUrlKey);
+      _runtimeBaseUrl = null;
+    } else {
+      await _sharedPreferences!.setString(_prefsBaseUrlKey, v);
+      _runtimeBaseUrl = v;
+    }
+    _configLoaded = true;
+  }
+
+  static Future<void> _ensureConfigLoaded() async {
+    if (_configLoaded) return;
+    _sharedPreferences ??= await SharedPreferences.getInstance();
+    _runtimeBaseUrl = _sharedPreferences!.getString(_prefsBaseUrlKey);
+    _configLoaded = true;
   }
 
   Future<Map<String, String>> _getHeaders() async {
     _sharedPreferences ??= await SharedPreferences.getInstance();
+    await _ensureConfigLoaded();
     final token = _sharedPreferences!.getString('auth_token');
     return {
       'Content-Type': 'application/json',
-      if (token != null) 'Authorization': 'Bearer $token',
+      if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+      'X-D1V-Client': 'd1vai_app',
     };
   }
 
@@ -71,16 +118,20 @@ class ApiClient {
     T Function(dynamic)? fromJsonT,
     Map<String, String>? queryParams,
     int retries = 3,
+    Duration? timeout,
   }) async {
     final headers = await _getHeaders();
     final uri = Uri.parse(
       '$baseUrl$endpoint',
     ).replace(queryParameters: queryParams);
 
-    debugPrint('🌐 API Request: GET $endpoint');
+    debugPrint('🌐 API Request: GET $uri');
 
     return executeWithRetry<T>(
-      () => client.get(uri, headers: headers),
+      () {
+        final fut = client.get(uri, headers: headers);
+        return timeout != null ? fut.timeout(timeout) : fut;
+      },
       fromJsonT,
       retries: retries,
       endpoint: endpoint,
@@ -94,21 +145,21 @@ class ApiClient {
     dynamic body, {
     T Function(dynamic)? fromJsonT,
     int retries = 3,
+    Duration? timeout,
   }) async {
     final headers = await _getHeaders();
     final uri = Uri.parse(
       '$baseUrl$endpoint',
     ).replace(queryParameters: queryParams);
 
-    debugPrint('🌐 API Request: POST $endpoint');
+    debugPrint('🌐 API Request: POST $uri');
     debugPrint('📤 Request Body: ${jsonEncode(body)}');
 
     return executeWithRetry<T>(
-      () => client.post(
-        uri,
-        headers: headers,
-        body: jsonEncode(body),
-      ),
+      () {
+        final fut = client.post(uri, headers: headers, body: jsonEncode(body));
+        return timeout != null ? fut.timeout(timeout) : fut;
+      },
       fromJsonT,
       retries: retries,
       endpoint: endpoint,
@@ -121,18 +172,22 @@ class ApiClient {
     dynamic body, {
     T Function(dynamic)? fromJsonT,
     int retries = 3,
+    Duration? timeout,
   }) async {
     final headers = await _getHeaders();
 
-    debugPrint('🌐 API Request: POST $endpoint');
+    debugPrint('🌐 API Request: POST ${Uri.parse('$baseUrl$endpoint')}');
     debugPrint('📤 Request Body: ${jsonEncode(body)}');
 
     return executeWithRetry<T>(
-      () => client.post(
-        Uri.parse('$baseUrl$endpoint'),
-        headers: headers,
-        body: jsonEncode(body),
-      ),
+      () {
+        final fut = client.post(
+          Uri.parse('$baseUrl$endpoint'),
+          headers: headers,
+          body: jsonEncode(body),
+        );
+        return timeout != null ? fut.timeout(timeout) : fut;
+      },
       fromJsonT,
       retries: retries,
       endpoint: endpoint,
@@ -145,18 +200,22 @@ class ApiClient {
     dynamic body, {
     T Function(dynamic)? fromJsonT,
     int retries = 3,
+    Duration? timeout,
   }) async {
     final headers = await _getHeaders();
 
-    debugPrint('🌐 API Request: PUT $endpoint');
+    debugPrint('🌐 API Request: PUT ${Uri.parse('$baseUrl$endpoint')}');
     debugPrint('📤 Request Body: ${jsonEncode(body)}');
 
     return executeWithRetry<T>(
-      () => client.put(
-        Uri.parse('$baseUrl$endpoint'),
-        headers: headers,
-        body: jsonEncode(body),
-      ),
+      () {
+        final fut = client.put(
+          Uri.parse('$baseUrl$endpoint'),
+          headers: headers,
+          body: jsonEncode(body),
+        );
+        return timeout != null ? fut.timeout(timeout) : fut;
+      },
       fromJsonT,
       retries: retries,
       endpoint: endpoint,
@@ -170,18 +229,22 @@ class ApiClient {
     dynamic body, {
     T Function(dynamic)? fromJsonT,
     int retries = 3,
+    Duration? timeout,
   }) async {
     final headers = await _getHeaders();
 
-    debugPrint('🌐 API Request: PATCH $endpoint');
+    debugPrint('🌐 API Request: PATCH ${Uri.parse('$baseUrl$endpoint')}');
     debugPrint('📤 Request Body: ${jsonEncode(body)}');
 
     return executeWithRetry<T>(
-      () => client.patch(
-        Uri.parse('$baseUrl$endpoint'),
-        headers: headers,
-        body: jsonEncode(body),
-      ),
+      () {
+        final fut = client.patch(
+          Uri.parse('$baseUrl$endpoint'),
+          headers: headers,
+          body: jsonEncode(body),
+        );
+        return timeout != null ? fut.timeout(timeout) : fut;
+      },
       fromJsonT,
       retries: retries,
       endpoint: endpoint,
@@ -193,16 +256,20 @@ class ApiClient {
     String endpoint, {
     T Function(dynamic)? fromJsonT,
     int retries = 3,
+    Duration? timeout,
   }) async {
     final headers = await _getHeaders();
 
-    debugPrint('🌐 API Request: DELETE $endpoint');
+    debugPrint('🌐 API Request: DELETE ${Uri.parse('$baseUrl$endpoint')}');
 
     return executeWithRetry<T>(
-      () => client.delete(
-        Uri.parse('$baseUrl$endpoint'),
-        headers: headers,
-      ),
+      () {
+        final fut = client.delete(
+          Uri.parse('$baseUrl$endpoint'),
+          headers: headers,
+        );
+        return timeout != null ? fut.timeout(timeout) : fut;
+      },
       fromJsonT,
       retries: retries,
       endpoint: endpoint,
@@ -233,9 +300,14 @@ class ApiClient {
           maxHeight: 800,
         );
         final compressedSize = finalBytes.length;
-        final ratio = ImageCompressor.getCompressionRatio(originalSize, compressedSize);
+        final ratio = ImageCompressor.getCompressionRatio(
+          originalSize,
+          compressedSize,
+        );
 
-        debugPrint('Image compressed: ${(ratio * 100).toStringAsFixed(1)}% reduction');
+        debugPrint(
+          'Image compressed: ${(ratio * 100).toStringAsFixed(1)}% reduction',
+        );
       } catch (e) {
         debugPrint('Compression failed, using original file: $e');
         finalBytes = fileBytes;
@@ -249,10 +321,7 @@ class ApiClient {
     debugPrint('📁 File Name: $fileName');
     debugPrint('📏 File Size: ${finalBytes.length} bytes');
 
-    final request = http.MultipartRequest(
-      'POST',
-      Uri.parse('$baseUrl/upload'),
-    );
+    final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/upload'));
     request.headers.addAll(headers);
     final contentType = _getContentType(fileName);
 
@@ -281,7 +350,9 @@ class ApiClient {
       debugPrint('🔢 HTTP Status Code: ${httpResponse.statusCode}');
       debugPrint('📥 Response Body: $responseBody');
       debugPrint('═══════════════════════════════════════');
-      throw Exception('Upload failed: ${httpResponse.statusCode} ${httpResponse.body}');
+      throw Exception(
+        'Upload failed: ${httpResponse.statusCode} ${httpResponse.body}',
+      );
     }
   }
 
@@ -308,15 +379,9 @@ class ApiClient {
 
   /// POST request with streaming response
   /// Returns a stream of bytes for streaming responses
-  Future<Stream<Uint8List>> postStream(
-    String endpoint,
-    dynamic body,
-  ) async {
+  Future<Stream<Uint8List>> postStream(String endpoint, dynamic body) async {
     final headers = await _getHeaders();
-    final request = http.Request(
-      'POST',
-      Uri.parse('$baseUrl$endpoint'),
-    );
+    final request = http.Request('POST', Uri.parse('$baseUrl$endpoint'));
     request.headers.addAll(headers);
     request.body = jsonEncode(body);
 
@@ -341,7 +406,8 @@ class ApiClient {
       debugPrint('═══════════════════════════════════════');
 
       throw Exception(
-          'HTTP Error: ${streamedResponse.statusCode} $responseBody');
+        'HTTP Error: ${streamedResponse.statusCode} $responseBody',
+      );
     }
   }
 
@@ -382,7 +448,9 @@ class ApiClient {
           debugPrint('═══════════════════════════════════════');
           throw Exception('Network error after $retries retries: $e');
         }
-        debugPrint('🔄 Network error on attempt ${attempt + 1}/$retries, retrying in ${delay.inMilliseconds}ms: $e');
+        debugPrint(
+          '🔄 Network error on attempt ${attempt + 1}/$retries, retrying in ${delay.inMilliseconds}ms: $e',
+        );
         if (endpoint != null) {
           debugPrint('📍 API Path: $endpoint');
         }
@@ -419,7 +487,9 @@ class ApiClient {
             debugPrint('═══════════════════════════════════════');
             rethrow;
           }
-          debugPrint('🔄 Server error on attempt ${attempt + 1}/$retries, retrying in ${delay.inMilliseconds}ms: $e');
+          debugPrint(
+            '🔄 Server error on attempt ${attempt + 1}/$retries, retrying in ${delay.inMilliseconds}ms: $e',
+          );
           if (endpoint != null) {
             debugPrint('📍 API Path: $endpoint');
           }
@@ -489,14 +559,25 @@ class ApiClient {
       debugPrint('🔢 HTTP Status Code: ${response.statusCode}');
 
       // 解析响应体
+      String responseBodyForException = '';
       try {
         final responseBody = utf8.decode(response.bodyBytes);
+        responseBodyForException = responseBody;
         debugPrint('📥 Response Body: $responseBody');
 
         // 尝试解析为 JSON
         try {
           final json = jsonDecode(responseBody);
           debugPrint('📦 Parsed JSON: ${jsonEncode(json, toEncodable: (obj) => obj)}');
+
+          // Prefer backend error message fields when present.
+          if (json is Map<String, dynamic>) {
+            final msg =
+                json['msg'] ?? json['detail'] ?? json['message'] ?? json['error'];
+            if (msg is String && msg.trim().isNotEmpty) {
+              responseBodyForException = msg.trim();
+            }
+          }
         } catch (e) {
           debugPrint('⚠️  Failed to parse response as JSON');
         }
@@ -509,7 +590,9 @@ class ApiClient {
       }
 
       debugPrint('═══════════════════════════════════════');
-      throw Exception('HTTP Error: ${response.statusCode} ${response.body}');
+      throw Exception(
+        'HTTP Error: ${response.statusCode} ${responseBodyForException.isNotEmpty ? responseBodyForException : response.body}',
+      );
     }
   }
 }

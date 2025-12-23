@@ -97,13 +97,11 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
             },
             statusLabel: _isChatLoading
                 ? 'Sending...'
-                : _isTyping
-                ? 'Thinking...'
                 : 'Ready',
             isError: false,
             isDone: false,
             isWorking: _isChatLoading,
-            isThinking: _isTyping,
+            isThinking: false,
             isDeploying: false,
           ),
         ),
@@ -133,7 +131,6 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
                         ),
                         child: ChatBottomSheet(
                           messages: _chatMessages,
-                          isTyping: _isTyping,
                           isLoading: _isChatLoading,
                           isLoadingHistory: _isLoadingHistory,
                           messageStatuses: _messageStatuses,
@@ -213,13 +210,11 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
             },
             statusLabel: _isChatLoading
                 ? 'Sending...'
-                : _isTyping
-                    ? 'Thinking...'
-                    : 'Ready',
+                : 'Ready',
             isError: false,
             isDone: false,
             isWorking: _isChatLoading,
-            isThinking: _isTyping,
+            isThinking: false,
             isDeploying: false,
           ),
         ),
@@ -253,7 +248,6 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
                             ),
                             child: ChatBottomSheet(
                               messages: _chatMessages,
-                              isTyping: _isTyping,
                               isLoading: _isChatLoading,
                               isLoadingHistory: _isLoadingHistory,
                               messageStatuses: _messageStatuses,
@@ -332,9 +326,12 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
 
   Widget _buildChatCodeTab() {
     return ProjectChatCodeTab(
+      projectId: widget.projectId,
       onAsk: (question) {
         _sendFirstMessage(question);
-        _currentChatTabIndex = 0;
+        setState(() {
+          _currentChatTabIndex = 0;
+        });
       },
     );
   }

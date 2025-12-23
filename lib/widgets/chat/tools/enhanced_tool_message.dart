@@ -16,8 +16,12 @@ class EnhancedToolMessage extends StatelessWidget {
     final status = coerceToolStatus(content.status, content.input);
     final summary = toolSummary(name, content.input);
 
+    final normalized = name.toLowerCase().trim();
+    final title = _toolTitle(normalized, fallback: name);
+    final subtitle = _toolSubtitle(normalized, content.input, summaryFallback: summary);
+
     IconData icon;
-    switch (name.toLowerCase()) {
+    switch (normalized) {
       case 'bash':
         icon = Icons.terminal;
         break;
@@ -69,29 +73,51 @@ class EnhancedToolMessage extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-          ),
         ),
         child: Row(
           children: [
-            Icon(
-              icon,
-              size: 16,
-              color: theme.colorScheme.primary.withValues(alpha: 0.85),
+            Container(
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                size: 16,
+                color: theme.colorScheme.primary.withValues(alpha: 0.9),
+              ),
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(
-                summary,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
-                  fontWeight: FontWeight.w500,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.85),
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
+                      fontWeight: FontWeight.w500,
+                      fontFamily: _subtitleFontFamily(normalized),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(width: 10),
@@ -114,11 +140,13 @@ class _StatusRight extends StatelessWidget {
     final st = status.toLowerCase();
 
     Color fg;
+    Color bg;
     String label;
     Widget icon;
 
     if (st == 'processing') {
       fg = theme.colorScheme.primary;
+      bg = theme.colorScheme.primary.withValues(alpha: 0.12);
       label = 'Running';
       icon = SizedBox(
         width: 14,
@@ -130,31 +158,163 @@ class _StatusRight extends StatelessWidget {
       );
     } else if (st == 'error') {
       fg = theme.colorScheme.error;
+      bg = theme.colorScheme.error.withValues(alpha: 0.12);
       label = 'Error';
       icon = Icon(Icons.error_outline, size: 16, color: fg);
     } else if (st == 'warning') {
-      fg = Colors.amber.shade800;
+      fg = _warningTint(theme);
+      bg = _warningTint(theme).withValues(alpha: theme.brightness == Brightness.dark ? 0.18 : 0.14);
       label = 'Warn';
       icon = Icon(Icons.warning_amber_rounded, size: 16, color: fg);
     } else {
       fg = theme.colorScheme.onSurfaceVariant;
+      bg = theme.colorScheme.surfaceContainerHighest;
       label = 'Done';
       icon = Icon(Icons.check_circle_outline, size: 16, color: fg);
     }
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        icon,
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: fg,
-            fontWeight: FontWeight.w600,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          icon,
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: fg,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
+  }
+}
+
+Color _warningTint(ThemeData theme) {
+  return theme.brightness == Brightness.dark
+      ? Colors.amber.shade300
+      : Colors.amber.shade800;
+}
+
+String _toolTitle(String normalized, {required String fallback}) {
+  switch (normalized) {
+    case 'bash':
+      return 'Bash';
+    case 'read':
+      return 'Read';
+    case 'write':
+      return 'Write';
+    case 'edit':
+      return 'Edit';
+    case 'multi_edit':
+    case 'multiedit':
+      return 'MultiEdit';
+    case 'glob':
+      return 'Glob';
+    case 'grep':
+      return 'Grep';
+    case 'websearch':
+    case 'web_search':
+      return 'WebSearch';
+    case 'webfetch':
+    case 'web_fetch':
+      return 'WebFetch';
+    case 'todowrite':
+    case 'todo_write':
+      return 'TodoWrite';
+    case 'task':
+      return 'Task';
+    default:
+      return fallback.isNotEmpty ? fallback : 'Tool';
+  }
+}
+
+String _toolSubtitle(String normalized, dynamic input, {required String summaryFallback}) {
+  try {
+    if (input is Map) {
+      switch (normalized) {
+        case 'bash': {
+          final cmd = input['command']?.toString().trim() ?? '';
+          return cmd.isNotEmpty ? '\$ ${truncateText(cmd, maxLen: 64)}' : summaryFallback;
+        }
+        case 'read':
+        case 'write':
+        case 'edit': {
+          final p = input['file_path']?.toString().trim() ?? '';
+          final s = shortenToolFilePath(p, maxSegments: 4);
+          return s.isNotEmpty ? s : summaryFallback;
+        }
+        case 'multi_edit':
+        case 'multiedit': {
+          final p = input['file_path']?.toString().trim() ?? '';
+          final edits = input['edits'];
+          final n = edits is List ? edits.length : null;
+          final base = shortenToolFilePath(p, maxSegments: 4);
+          final left = base.isNotEmpty ? base : '(unknown)';
+          return n != null ? '$left · $n edits' : left;
+        }
+        case 'glob':
+        case 'grep': {
+          final pat = input['pattern']?.toString().trim() ?? '';
+          return pat.isNotEmpty ? truncateText(pat, maxLen: 64) : summaryFallback;
+        }
+        case 'websearch':
+        case 'web_search': {
+          final q = input['query']?.toString().trim() ?? '';
+          return q.isNotEmpty ? truncateText(q, maxLen: 64) : summaryFallback;
+        }
+        case 'webfetch':
+        case 'web_fetch': {
+          final url = input['url']?.toString().trim() ?? '';
+          return url.isNotEmpty ? truncateText(url, maxLen: 64) : summaryFallback;
+        }
+        case 'todowrite':
+        case 'todo_write': {
+          final header = todoWriteHeader(input);
+          if (header == null) return summaryFallback;
+          if (header.state == 'done_all') return 'Done · ${header.progressText}';
+          return header.taskText.isNotEmpty
+              ? 'In progress · ${header.progressText} · ${header.taskText}'
+              : 'In progress · ${header.progressText}';
+        }
+        case 'task': {
+          final t = input['task_type']?.toString().trim() ?? '';
+          final desc = input['description']?.toString().trim() ?? '';
+          final bits = <String>[
+            if (t.isNotEmpty) t,
+            if (desc.isNotEmpty) truncateText(desc, maxLen: 56),
+          ];
+          return bits.isNotEmpty ? bits.join(' · ') : summaryFallback;
+        }
+      }
+    }
+  } catch (_) {
+    // fall through
+  }
+  return summaryFallback;
+}
+
+String? _subtitleFontFamily(String normalized) {
+  switch (normalized) {
+    case 'bash':
+    case 'read':
+    case 'write':
+    case 'edit':
+    case 'multi_edit':
+    case 'multiedit':
+    case 'glob':
+    case 'grep':
+    case 'webfetch':
+    case 'web_fetch':
+      return 'monospace';
+    default:
+      return null;
   }
 }

@@ -5,6 +5,50 @@ import '../models/message.dart';
 /// Unified message parser for converting payload data to ChatMessage
 /// Based on d1vai frontend implementation in messages.ts
 class MessageParser {
+  static dynamic _coerceJsonPayload(dynamic raw) {
+    if (raw is! String) return raw;
+    final s = raw.trim();
+    if (s.isEmpty) return raw;
+    if (!(s.startsWith('{') || s.startsWith('['))) return raw;
+    try {
+      return jsonDecode(s);
+    } catch (_) {
+      return raw;
+    }
+  }
+
+  static String? _normalizeRole(String? v) {
+    if (v == null) return null;
+    final s = v.toLowerCase().trim();
+    if (s.isEmpty) return null;
+    if (s == 'user') return 'user';
+    if (s == 'system') return 'system';
+    if (s == 'assistant' || s == 'ai' || s == 'assistant_message' || s == 'bot') {
+      return 'assistant';
+    }
+    if (s == 'warning') return 'warning';
+    if (s == 'error') return 'error';
+    return null;
+  }
+
+  static bool _isNonRenderableType(String? t) {
+    if (t == null) return false;
+    final s = t.toLowerCase().trim();
+    if (s.isEmpty) return false;
+    // Align with web: certain frames are terminal/meta signals and should not
+    // be rendered as chat bubbles in history or live stream.
+    const skip = <String>{
+      'complete',
+      'history',
+      'history_complete',
+      'proxy_status',
+      // Web filters these from history list; handled via side effects.
+      'deployment_start',
+      'deployment_complete',
+    };
+    return skip.contains(s);
+  }
+
   /// Normalize opcode text from various payload formats
   static String? normalizeOpcodeText(dynamic payload) {
     try {
@@ -58,6 +102,7 @@ class MessageParser {
   static List<MessageContent> createMessageContentsFromPayload(
     dynamic rawPayload,
   ) {
+    rawPayload = _coerceJsonPayload(rawPayload);
     // Handle null or non-map payload (e.g., string, number, etc.)
     if (rawPayload == null) {
       return [const TextMessageContent(text: '')];
@@ -274,7 +319,13 @@ class MessageParser {
                   } else {
                     codeStr = toText(item['content']);
                   }
-                  contents.add(CodeMessageContent(code: codeStr.isNotEmpty ? codeStr : 'No result'));
+                  final isErr = item['is_error'] == true;
+                  contents.add(
+                    CodeMessageContent(
+                      code: codeStr.isNotEmpty ? codeStr : 'No result',
+                      subtype: isErr ? 'tool_result_error' : 'tool_result',
+                    ),
+                  );
                 } else if (item['type'] == 'text') {
                   contents.add(TextMessageContent(text: toText(item['text'])));
                 }
@@ -307,12 +358,30 @@ class MessageParser {
           }
 
         case 'tool_result':
-        case 'task_update':
           {
-            // Tool result or task update
             final content = rawPayload['content'] ?? rawPayload['message'];
             if (content is String) {
-              return [CodeMessageContent(code: content)];
+              final isErr = rawPayload['is_error'] == true;
+              return [
+                CodeMessageContent(
+                  code: content,
+                  subtype: isErr ? 'tool_result_error' : 'tool_result',
+                ),
+              ];
+            }
+            break;
+          }
+        case 'task_update':
+          {
+            final content = rawPayload['content'] ?? rawPayload['message'];
+            if (content is String) {
+              final isErr = rawPayload['is_error'] == true;
+              return [
+                CodeMessageContent(
+                  code: content,
+                  subtype: isErr ? 'tool_result_error' : 'tool_result',
+                ),
+              ];
             }
             break;
           }
@@ -377,6 +446,7 @@ class MessageParser {
     String? messageText,
     dynamic rawPayload,
   ) {
+    rawPayload = _coerceJsonPayload(rawPayload);
     // Check payload type first - some special types should use payload even if message_text exists
     if (rawPayload is Map<String, dynamic>) {
       final payloadType = rawPayload['type'] as String?;
@@ -419,9 +489,48 @@ class MessageParser {
   }
 
   /// Convert ChatHistoryEntry to ChatMessage
-  static ChatMessage historyEntryToMessage(ChatHistoryEntry entry) {
-    final p = entry.payload;
-    final role = entry.direction == 'user' ? 'user' : 'assistant';
+  static ChatMessage? historyEntryToMessage(ChatHistoryEntry entry) {
+    var p = _coerceJsonPayload(entry.payload);
+
+    String? payloadType;
+    if (p is Map<String, dynamic>) {
+      payloadType = p['type']?.toString();
+    }
+
+    final effectiveType =
+        entry.messageType?.toString().trim().isNotEmpty == true
+            ? entry.messageType?.toString()
+            : payloadType;
+
+    if (_isNonRenderableType(effectiveType)) return null;
+
+    // Some history rows rely on entry.message_type; mirror web by treating it as payload.type.
+    if (p is Map<String, dynamic> &&
+        (payloadType == null || payloadType.trim().isEmpty) &&
+        entry.messageType != null &&
+        entry.messageType!.trim().isNotEmpty) {
+      p = {...p, 'type': entry.messageType};
+      payloadType = entry.messageType;
+    }
+
+    // Match web behavior: prefer message.role/payload.role/payload.type/message_type,
+    // then fall back to direction.
+    String? msgRole;
+    String? payloadRole;
+    if (p is Map<String, dynamic>) {
+      final m = p['message'];
+      if (m is Map) {
+        msgRole = m['role']?.toString();
+      }
+      payloadRole = p['role']?.toString();
+    }
+
+    String role = _normalizeRole(msgRole) ??
+        _normalizeRole(payloadRole) ??
+        _normalizeRole(payloadType) ??
+        _normalizeRole(entry.messageType) ??
+        _normalizeRole(entry.direction) ??
+        (entry.direction == 'user' ? 'user' : 'assistant');
 
     // History should never look "in progress" in the UI.
     final contents = createMessageContents(entry.messageText, p).map((c) {
@@ -431,12 +540,91 @@ class MessageParser {
       return c.copyWith(status: c.status ?? 'done');
     }).toList();
 
+    if (contents.isEmpty) return null;
+    final allEmptyText = contents.every(
+      (c) => c is TextMessageContent && c.text.trim().isEmpty,
+    );
+    if (allEmptyText) return null;
+
     return ChatMessage(
       id: entry.id.toString(),
       role: role,
       createdAt: entry.createdAt,
       contents: contents,
     );
+  }
+
+  /// Align with d1vai web: merge tool execution results into the previous Bash tool
+  /// message, so the message list doesn't show a standalone "tool result" bubble.
+  static List<ChatMessage> mergeToolResultsIntoPrevBashTool(
+    List<ChatMessage> messages,
+  ) {
+    final out = <ChatMessage>[];
+    for (final msg in messages) {
+      final contents = msg.contents;
+      final toolResultCodes = contents
+          .whereType<CodeMessageContent>()
+          .where((c) =>
+              c.subtype == 'tool_result' || c.subtype == 'tool_result_error')
+          .toList();
+
+      final isToolResultMsg = toolResultCodes.isNotEmpty &&
+          contents.isNotEmpty &&
+          contents.every((c) {
+            if (c is CodeMessageContent) {
+              return c.subtype == 'tool_result' || c.subtype == 'tool_result_error';
+            }
+            if (c is TextMessageContent) return c.text.trim().isEmpty;
+            return false;
+          });
+
+      if (!isToolResultMsg) {
+        out.add(msg);
+        continue;
+      }
+
+      // Find the nearest previous message that contains a Bash tool call.
+      var prevMsgIndex = -1;
+      var bashIdx = -1;
+      for (var mi = out.length - 1; mi >= 0; mi--) {
+        final prevContents = out[mi].contents;
+        for (var i = prevContents.length - 1; i >= 0; i--) {
+          final c = prevContents[i];
+          if (c is ToolMessageContent && c.name.toLowerCase() == 'bash') {
+            prevMsgIndex = mi;
+            bashIdx = i;
+            break;
+          }
+        }
+        if (prevMsgIndex >= 0) break;
+      }
+      if (prevMsgIndex < 0 || bashIdx < 0) {
+        out.add(msg);
+        continue;
+      }
+
+      final outputText = toolResultCodes.map((c) => c.code).join('\n');
+      final prev = out[prevMsgIndex];
+      final prevContents = prev.contents;
+      final prevTool = prevContents[bashIdx] as ToolMessageContent;
+      final prevOutput = prevTool.output?.text ?? '';
+      final joined =
+          prevOutput.isNotEmpty ? '$prevOutput\n\n$outputText' : outputText;
+      final capped =
+          joined.length > 120000 ? joined.substring(joined.length - 120000) : joined;
+      final anyErr = toolResultCodes.any((c) => c.subtype == 'tool_result_error');
+
+      final nextPrevContents = prevContents.toList();
+      nextPrevContents[bashIdx] = prevTool.copyWith(
+        output: ToolOutput(
+          text: capped,
+          isError: anyErr || prevTool.output?.isError == true ? true : null,
+        ),
+      );
+      out[prevMsgIndex] = prev.copyWith(contents: nextPrevContents);
+      // Do not push this tool-result message into the list.
+    }
+    return out;
   }
 
   /// Parse WebSocket message (for real-time chat)
@@ -469,6 +657,9 @@ class MessageParser {
                 name: contentJson['name']?.toString() ?? 'unknown',
                 input: contentJson['input'],
                 status: contentJson['status']?.toString(),
+                output: contentJson['output'] is Map<String, dynamic>
+                    ? ToolOutput.fromJson(contentJson['output'] as Map<String, dynamic>)
+                    : null,
               );
             case 'result':
               return ResultMessageContent(
@@ -510,6 +701,7 @@ class MessageParser {
             case 'code':
               return CodeMessageContent(
                 code: contentJson['code']?.toString() ?? '',
+                subtype: contentJson['subtype']?.toString(),
               );
             case 'completion':
               return CompletionMessageContent(
@@ -642,7 +834,10 @@ class MessageParser {
 
           case 'code':
             if (data['code'] is String) {
-              contents.add(CodeMessageContent(code: data['code'] as String));
+              contents.add(CodeMessageContent(
+                code: data['code'] as String,
+                subtype: data['subtype']?.toString(),
+              ));
             }
             break;
 

@@ -32,14 +32,25 @@ class _ExpandableTextState extends State<ExpandableText> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final shouldShowExpandButton = widget.expandButton &&
-        widget.text.split('\n').length > widget.maxLines;
     final textLines = widget.text.split('\n');
+    final hasMoreLines = textLines.length > widget.maxLines;
+    final isLongSingleBlock = widget.text.length > 280;
+    final shouldShowExpandButton =
+        widget.expandButton && (hasMoreLines || isLongSingleBlock);
+
+    String truncatedText;
+    if (hasMoreLines) {
+      truncatedText = textLines.take(widget.maxLines).join('\n');
+    } else if (isLongSingleBlock) {
+      truncatedText = '${widget.text.substring(0, 280)}…';
+    } else {
+      truncatedText = widget.text;
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (_isExpanded || textLines.length <= widget.maxLines) ...[
+        if (_isExpanded || !shouldShowExpandButton) ...[
           widget.isMarkdown
               ? MarkdownText(
                   text: widget.text,
@@ -53,14 +64,13 @@ class _ExpandableTextState extends State<ExpandableText> {
           // Show truncated text
           if (widget.isMarkdown)
             MarkdownText(
-              text: textLines.take(widget.maxLines).join('\n'),
+              text: truncatedText,
               style: widget.style,
             )
           else
             Text(
-              textLines.take(widget.maxLines).join('\n'),
+              truncatedText,
               style: widget.style,
-              maxLines: widget.maxLines,
               overflow: TextOverflow.ellipsis,
             ),
         ],

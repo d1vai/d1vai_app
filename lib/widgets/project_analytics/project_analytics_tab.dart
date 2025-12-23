@@ -1,18 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'dart:convert';
+import 'dart:io';
 
 import '../../models/analytics.dart';
+import '../../models/message.dart';
+import '../../models/project.dart';
 import '../../services/analytics_service.dart';
+import '../../services/chat_service.dart';
+import '../../services/d1vai_service.dart';
+import '../../utils/message_parser.dart';
+import '../chat/message_list.dart';
+import '../snackbar_helper.dart';
 import '../analytics/realtime_chart.dart';
 
 /// 项目详情页 - Analytics Tab
 class ProjectAnalyticsTab extends StatefulWidget {
-  final String projectId;
+  final UserProject project;
   final void Function(String prompt)? onAskAi;
+  final Future<void> Function()? onRefreshProject;
 
   const ProjectAnalyticsTab({
     super.key,
-    required this.projectId,
+    required this.project,
     this.onAskAi,
+    this.onRefreshProject,
   });
 
   @override
@@ -21,6 +33,7 @@ class ProjectAnalyticsTab extends StatefulWidget {
 
 class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
   final AnalyticsService _analyticsService = AnalyticsService();
+  final ChatService _chatService = ChatService();
   
   AnalyticsSummary? _summary;
   List<ChartSeries> _chartSeries = [];
@@ -28,14 +41,52 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
   bool _isInitialized = false;
   TimeRange _timeRange = TimeRange.last24Hours;
 
+  bool _installing = false;
+  bool _installTyping = false;
+  String? _websiteId;
+  String? _installError;
+  List<ChatMessage> _installMessages = [];
+  WebSocket? _installWs;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_isInitialized) {
       _isInitialized = true;
-      _loadAnalytics();
+      if (_hasAnalyticsEnabled) {
+        _loadAnalytics();
+      }
     }
   }
+
+  @override
+  void didUpdateWidget(covariant ProjectAnalyticsTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final enabledChanged = oldWidget.project.analyticsId != widget.project.analyticsId;
+    if (enabledChanged && _hasAnalyticsEnabled) {
+      _loadAnalytics();
+    }
+    if (oldWidget.project.id != widget.project.id) {
+      _summary = null;
+      _chartSeries = [];
+      _installMessages = [];
+      _websiteId = null;
+      _installError = null;
+      _closeInstallerWebSocket();
+      if (_hasAnalyticsEnabled) {
+        _loadAnalytics();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _closeInstallerWebSocket();
+    super.dispose();
+  }
+
+  bool get _hasAnalyticsEnabled =>
+      widget.project.analyticsId != null && widget.project.analyticsId!.trim().isNotEmpty;
 
   Future<void> _loadAnalytics() async {
     setState(() {
@@ -46,11 +97,11 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       // Load summary and metrics in parallel
       final results = await Future.wait([
         _analyticsService.getAnalyticsSummary(
-          projectId: widget.projectId,
+          projectId: widget.project.id,
           timeRange: _timeRange,
         ),
         _analyticsService.getRealtimeMetrics(
-          projectId: widget.projectId,
+          projectId: widget.project.id,
         ),
       ]);
 
@@ -71,6 +122,252 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       });
       debugPrint('Error loading analytics: $e');
     }
+  }
+
+  String _buildInstallPrompt(String websiteId) {
+    return 'Please help me correctly insert the following website analysis script into my project for statistical access data:\n```html\n<script async src="https://analytics-api.d1v.ai/script.js" data-website-id="{YOUR_WEBSITE_ID}"></script>\n```\nPlease automatically select the appropriate insertion location (such as `_document.tsx`\'s <Head>, `root.html`\'s <head>, `app.vue`\'s template part, etc.) according to the architecture used by the project (such as Next.js, Remix, Vue, Nuxt, React, pure HTML, etc.), and insert it directly in the corresponding file. Please replace `{YOUR_WEBSITE_ID}` with the real ID I provided: $websiteId.';
+  }
+
+  void _closeInstallerWebSocket() {
+    try {
+      _installWs?.close();
+    } catch (_) {}
+    _installWs = null;
+  }
+
+  void _appendAssistantDelta(String delta) {
+    setState(() {
+      if (_installMessages.isNotEmpty && _installMessages.last.role != 'user') {
+        final last = _installMessages.last;
+        final contents = last.contents;
+        if (contents.isNotEmpty && contents.last is TextMessageContent) {
+          final prev = contents.last as TextMessageContent;
+          final nextText = (prev.text + delta);
+          final capped =
+              nextText.length > 120000 ? nextText.substring(nextText.length - 120000) : nextText;
+          final nextContents = contents.toList();
+          nextContents[nextContents.length - 1] = TextMessageContent(text: capped);
+          _installMessages[_installMessages.length - 1] = last.copyWith(
+            contents: nextContents,
+            createdAt: DateTime.now(),
+          );
+          return;
+        }
+      }
+      _installMessages.add(
+        ChatMessage(
+          id: 'asst-${DateTime.now().millisecondsSinceEpoch}',
+          role: 'assistant',
+          createdAt: DateTime.now(),
+          contents: [TextMessageContent(text: delta)],
+        ),
+      );
+    });
+  }
+
+  void _handleWsPayload(Map<String, dynamic> payload) {
+    final type = payload['type']?.toString();
+    if (type == null) return;
+
+    if (type == 'history' || type == 'history_complete') return;
+    if (type == 'proxy_status') return;
+    if (type == 'deployment_start' || type == 'deployment_complete') return;
+
+    if (type == 'content_block_delta' || type == 'message_delta') {
+      final delta = MessageParser.normalizeOpcodeText(payload);
+      if (delta != null && delta.isNotEmpty) {
+        _appendAssistantDelta(delta);
+      }
+      return;
+    }
+
+    if (type == 'assistant_message') {
+      final contents = MessageParser.createMessageContentsFromPayload(payload);
+      if (contents.isEmpty) return;
+      setState(() {
+        if (_installMessages.isNotEmpty && _installMessages.last.role != 'user') {
+          final last = _installMessages.last;
+          _installMessages[_installMessages.length - 1] = last.copyWith(
+            contents: contents,
+            createdAt: DateTime.now(),
+          );
+        } else {
+          _installMessages.add(
+            ChatMessage(
+              id: 'asst-${DateTime.now().millisecondsSinceEpoch}',
+              role: 'assistant',
+              createdAt: DateTime.now(),
+              contents: contents,
+            ),
+          );
+        }
+      });
+      return;
+    }
+
+    final contents = MessageParser.createMessageContentsFromPayload(payload);
+    if (contents.isEmpty) return;
+    setState(() {
+      _installMessages.add(
+        ChatMessage(
+          id: 'ws-${DateTime.now().millisecondsSinceEpoch}',
+          role: 'assistant',
+          createdAt: DateTime.now(),
+          contents: contents,
+        ),
+      );
+      _installMessages = MessageParser.mergeToolResultsIntoPrevBashTool(_installMessages);
+    });
+  }
+
+  Future<void> _enableAndInstallAnalytics() async {
+    if (_installing) return;
+
+    setState(() {
+      _installing = true;
+      _installTyping = false;
+      _installError = null;
+      _installMessages = [];
+      _websiteId = null;
+    });
+
+    try {
+      final service = D1vaiService();
+      final initRes = await service.initProjectAnalytics(widget.project.id);
+      final tracking = await service.getProjectAnalyticsTrackingCode(widget.project.id);
+
+      final data = tracking['data'] is Map<String, dynamic>
+          ? tracking['data'] as Map<String, dynamic>
+          : <String, dynamic>{};
+      final initData = initRes['data'] is Map<String, dynamic>
+          ? initRes['data'] as Map<String, dynamic>
+          : <String, dynamic>{};
+      final websiteId =
+          data['website_id']?.toString() ?? initData['analytics_id']?.toString();
+      if (websiteId == null || websiteId.trim().isEmpty) {
+        throw Exception('Missing website ID after initialization');
+      }
+
+      final prompt = _buildInstallPrompt(websiteId);
+      setState(() {
+        _websiteId = websiteId;
+        _installMessages.add(
+          ChatMessage(
+            id: 'user-${DateTime.now().millisecondsSinceEpoch}',
+            role: 'user',
+            createdAt: DateTime.now(),
+            contents: [TextMessageContent(text: prompt)],
+          ),
+        );
+      });
+
+      final exec = await _chatService.executeSession(
+        projectId: widget.project.id,
+        prompt: prompt,
+        sessionType: 'new',
+      );
+
+      final wsUrl = await _chatService.buildProjectSessionWebSocketUrl(
+        sessionId: exec.sessionId,
+      );
+      final ws = await _chatService.connectWebSocket(websocketUrl: wsUrl);
+      _installWs = ws;
+
+      setState(() {
+        _installTyping = true;
+      });
+
+      ws.listen(
+        (event) async {
+          try {
+            final text = event is String
+                ? event
+                : event is List<int>
+                    ? utf8.decode(event)
+                    : event.toString();
+            final decoded = jsonDecode(text);
+            if (decoded is Map<String, dynamic>) {
+              final type = decoded['type']?.toString();
+              if (type == 'complete') {
+                final code = decoded['code'];
+                final success = decoded['success'];
+                final ok = (code == 0 || code == '0') &&
+                    (success == true || success == 'true');
+
+                if (!mounted) return;
+                setState(() {
+                  _installTyping = false;
+                  _installing = false;
+                });
+                _closeInstallerWebSocket();
+
+                if (ok) {
+                  SnackBarHelper.showSuccess(
+                    context,
+                    title: 'Success',
+                    message: 'Analytics successfully installed and activated.',
+                  );
+                  await widget.onRefreshProject?.call();
+                  if (!mounted) return;
+                  if (_hasAnalyticsEnabled) {
+                    _loadAnalytics();
+                  }
+                } else {
+                  setState(() {
+                    _installError = 'Analytics install did not complete successfully.';
+                  });
+                }
+                return;
+              }
+
+              _handleWsPayload(decoded);
+            }
+          } catch (_) {}
+        },
+        onError: (e) {
+          if (!mounted) return;
+          setState(() {
+            _installTyping = false;
+            _installing = false;
+            _installError = 'WebSocket error: $e';
+          });
+          _closeInstallerWebSocket();
+        },
+        onDone: () {
+          if (!mounted) return;
+          setState(() {
+            _installTyping = false;
+            _installing = false;
+          });
+          _closeInstallerWebSocket();
+        },
+        cancelOnError: true,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _installTyping = false;
+        _installing = false;
+        _installError = e.toString();
+      });
+      SnackBarHelper.showError(
+        context,
+        title: 'Error',
+        message: 'Failed to enable analytics',
+      );
+    }
+  }
+
+  Future<void> _copyWebsiteId() async {
+    final id = _websiteId;
+    if (id == null || id.trim().isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: id));
+    if (!mounted) return;
+    SnackBarHelper.showSuccess(
+      context,
+      title: 'Copied',
+      message: 'Website ID copied',
+    );
   }
 
   List<ChartSeries> _createChartSeries(List<RealtimeMetric> metrics) {
@@ -95,6 +392,34 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_hasAnalyticsEnabled) {
+      if (_installing || _installMessages.isNotEmpty || _installError != null) {
+        return _AnalyticsInstallerView(
+          installing: _installing,
+          isTyping: _installTyping,
+          websiteId: _websiteId,
+          error: _installError,
+          messages: _installMessages,
+          onCopyWebsiteId: _copyWebsiteId,
+          onRetry: _enableAndInstallAnalytics,
+          onReset: () {
+            _closeInstallerWebSocket();
+            setState(() {
+              _installing = false;
+              _installTyping = false;
+              _installError = null;
+              _installMessages = [];
+              _websiteId = null;
+            });
+          },
+        );
+      }
+      return _EnableAnalyticsCard(
+        enabling: _installing,
+        onEnable: _enableAndInstallAnalytics,
+      );
+    }
+
     if (_isLoading && _summary == null) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -107,12 +432,12 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
             Icon(Icons.analytics, size: 64, color: Colors.grey.shade400),
             const SizedBox(height: 16),
             Text(
-              'No analytics data',
+              'No analytics data yet',
               style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
             ),
             const SizedBox(height: 8),
             Text(
-              'Analytics data will appear here once your project is live',
+              'Analytics data will appear once your project is live and receiving traffic',
               style: TextStyle(color: Colors.grey.shade500),
             ),
             const SizedBox(height: 16),
@@ -436,5 +761,340 @@ class _AnalyticsMetricCard extends StatelessWidget {
     }
 
     return card;
+  }
+}
+
+class _EnableAnalyticsCard extends StatelessWidget {
+  final bool enabling;
+  final VoidCallback onEnable;
+
+  const _EnableAnalyticsCard({
+    required this.enabling,
+    required this.onEnable,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.4)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    height: 52,
+                    width: 52,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.10),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.analytics,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Enable Analytics',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Track your website's visitors, page views, and custom events with Umami Analytics",
+                    style: theme.textTheme.bodyMedium?.copyWith(color: muted),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Features included:',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _FeatureRow(
+                    icon: Icons.visibility_outlined,
+                    text: 'Real-time visitor tracking',
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(height: 8),
+                  _FeatureRow(
+                    icon: Icons.mouse_outlined,
+                    text: 'Page views and events',
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(height: 8),
+                  _FeatureRow(
+                    icon: Icons.people_outline,
+                    text: 'Unique visitors analytics',
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(height: 8),
+                  _FeatureRow(
+                    icon: Icons.trending_up,
+                    text: 'Traffic trends over time',
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: enabling ? null : onEnable,
+                      icon: enabling
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.bolt),
+                      label: Text(enabling ? 'Initializing...' : 'Enable Analytics'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AnalyticsInstallerView extends StatelessWidget {
+  final bool installing;
+  final bool isTyping;
+  final String? websiteId;
+  final String? error;
+  final List<ChatMessage> messages;
+  final Future<void> Function() onCopyWebsiteId;
+  final VoidCallback onRetry;
+  final VoidCallback onReset;
+
+  const _AnalyticsInstallerView({
+    required this.installing,
+    required this.isTyping,
+    required this.websiteId,
+    required this.error,
+    required this.messages,
+    required this.onCopyWebsiteId,
+    required this.onRetry,
+    required this.onReset,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.4)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        height: 40,
+                        width: 40,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withValues(alpha: 0.10),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.analytics, color: theme.colorScheme.primary),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              installing ? 'Installing Analytics…' : 'Analytics Installer',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              installing
+                                  ? 'We are initializing Umami and inserting the tracking script via a chat session.'
+                                  : 'Review the session output or retry the install.',
+                              style: theme.textTheme.bodySmall?.copyWith(color: muted),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: onReset,
+                        tooltip: 'Close',
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                  if (websiteId != null && websiteId!.trim().isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Website ID',
+                                  style: theme.textTheme.labelLarge?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  websiteId!,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    fontFamily: 'monospace',
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          OutlinedButton.icon(
+                            onPressed: onCopyWebsiteId,
+                            icon: const Icon(Icons.copy, size: 18),
+                            label: const Text('Copy'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  if (error != null && error!.trim().isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.errorContainer.withValues(alpha: 0.25),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        error!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.error,
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: installing ? null : onReset,
+                          child: const Text('Back'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: installing ? null : onRetry,
+                          child: Text(installing ? 'Running…' : 'Retry Install'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.4)),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: MessageList(
+                  messages: messages,
+                  showTimestamps: false,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeatureRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final Color color;
+
+  const _FeatureRow({
+    required this.icon,
+    required this.text,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

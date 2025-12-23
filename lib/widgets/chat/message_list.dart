@@ -1,8 +1,8 @@
 // ignore_for_file: unused_field
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import '../../models/message.dart';
 import 'message_bubble.dart';
-import 'typing_indicator.dart';
 import 'message_metadata.dart';
 
 /// Message status enum
@@ -15,7 +15,6 @@ enum MessageStatus {
 /// Enhanced scrollable list of chat messages with advanced features
 class MessageList extends StatefulWidget {
   final List<ChatMessage> messages;
-  final bool isTyping;
   final Function(ChatMessage)? onMessageTap;
   final ScrollController? scrollController;
   final Map<String, MessageStatus>? messageStatuses;
@@ -28,7 +27,6 @@ class MessageList extends StatefulWidget {
   const MessageList({
     super.key,
     required this.messages,
-    this.isTyping = false,
     this.onMessageTap,
     this.scrollController,
     this.messageStatuses,
@@ -49,6 +47,7 @@ class _MessageListState extends State<MessageList> {
   String? _lastSeenMessageId;
   bool _isAtBottom = true;
   int _unseenCount = 0;
+  bool _loadMoreRequested = false;
 
   @override
   void initState() {
@@ -73,6 +72,10 @@ class _MessageListState extends State<MessageList> {
   @override
   void didUpdateWidget(MessageList oldWidget) {
     super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.isLoadingMore && !widget.isLoadingMore) {
+      _loadMoreRequested = false;
+    }
 
     // Update seen messages when new messages arrive
     if (widget.messages.length > oldWidget.messages.length) {
@@ -104,6 +107,7 @@ class _MessageListState extends State<MessageList> {
 
   void _onScroll() {
     final controller = widget.scrollController ?? _scrollController;
+    if (!controller.hasClients) return;
     final maxScroll = controller.position.maxScrollExtent;
     final currentScroll = controller.offset;
     final atBottom = currentScroll >= maxScroll - 100;
@@ -124,8 +128,11 @@ class _MessageListState extends State<MessageList> {
     if (widget.onLoadMore != null &&
         widget.hasMoreHistory &&
         !widget.isLoadingMore &&
-        currentScroll <= 50 &&
+        (currentScroll <= 80) &&
+        controller.position.userScrollDirection == ScrollDirection.forward &&
+        !_loadMoreRequested &&
         widget.messages.isNotEmpty) {
+      _loadMoreRequested = true;
       widget.onLoadMore!();
     }
   }
@@ -162,68 +169,59 @@ class _MessageListState extends State<MessageList> {
         ListView.builder(
           controller: widget.scrollController ?? _scrollController,
           padding: const EdgeInsets.only(bottom: 16.0),
-          itemCount: widget.messages.length + (widget.isTyping ? 1 : 0),
+          itemCount: widget.messages.length,
           itemBuilder: (context, index) {
-            // Typing indicator at the end
-            if (index == widget.messages.length) {
-              return widget.isTyping
-                  ? const TypingIndicator(isTyping: true)
-                  : const SizedBox.shrink();
-            }
-
             final message = widget.messages[index];
             final isUser = message.role == 'user';
             final isNew = !_isNewMessage(message);
             final messageStatus =
                 widget.messageStatuses?[message.id] ?? MessageStatus.sent;
+            final userAccessory = (isUser && messageStatus != MessageStatus.sent)
+                ? _UserSendAccessory(
+                    status: messageStatus,
+                    onRetry: messageStatus == MessageStatus.failed &&
+                            widget.onRetry != null
+                        ? () => widget.onRetry!(message)
+                        : null,
+                  )
+                : null;
 
             return AnimatedContainer(
-              duration: Duration(milliseconds: 300),
+              duration: const Duration(milliseconds: 300),
               curve: Curves.easeOut,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Message metadata
-                  Padding(
-                    padding:
-                        EdgeInsets.only(left: isUser ? 0 : 56, right: isUser ? 56 : 0),
-                    child: MessageMetadata(
-                      role: message.role,
-                      createdAt: message.createdAt,
-                      status: messageStatus == MessageStatus.pending
-                          ? 'pending'
-                          : messageStatus == MessageStatus.failed
-                              ? 'failed'
-                              : null,
-                      onRetry:
-                          messageStatus == MessageStatus.failed && widget.onRetry != null
-                              ? () => widget.onRetry!(message)
-                              : null,
-                      showTimestamp: widget.showTimestamps,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
                   // Message bubble
                   AnimatedOpacity(
                     opacity: 1.0,
-                    duration: Duration(milliseconds: 300),
+                    duration: const Duration(milliseconds: 300),
                     child: Transform.translate(
                       offset: isNew
-                          ? Offset(
-                              isUser ? 50 : -50,
-                              0,
-                            )
+                          ? const Offset(0, 6)
                           : Offset.zero,
                       child: MessageBubble(
                         message: message,
                         isUser: isUser,
+                        userAccessory: userAccessory,
                         onTap: widget.onMessageTap != null
                             ? () => widget.onMessageTap!(message)
                             : null,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  if (widget.showTimestamps) ...[
+                    const SizedBox(height: 2),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: MessageMetadata(
+                        role: message.role,
+                        createdAt: message.createdAt,
+                        showTimestamp: true,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 2),
                 ],
               ),
             );
@@ -353,6 +351,73 @@ class _MessageListState extends State<MessageList> {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _UserSendAccessory extends StatelessWidget {
+  final MessageStatus status;
+  final VoidCallback? onRetry;
+
+  const _UserSendAccessory({
+    required this.status,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    if (status == MessageStatus.sent) return const SizedBox.shrink();
+
+    if (status == MessageStatus.pending) {
+      return SizedBox(
+        width: 16,
+        height: 16,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation<Color>(
+            theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+          ),
+        ),
+      );
+    }
+
+    // failed
+    final bg = theme.colorScheme.error.withValues(
+      alpha: theme.brightness == Brightness.dark ? 0.18 : 0.10,
+    );
+    final fg = theme.colorScheme.error;
+    final canRetry = onRetry != null;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: canRetry ? onRetry : null,
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.error_outline, size: 16, color: fg),
+              const SizedBox(width: 6),
+              Text(
+                canRetry ? 'Retry' : 'Failed',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: fg,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

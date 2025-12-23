@@ -30,7 +30,9 @@ class FloatingChatButton extends StatelessWidget {
     Color statusColor;
     if (isDeploying || isWorking || isThinking) {
       statusColor = isDeploying
-          ? Colors.amber.shade500
+          ? (theme.brightness == Brightness.dark
+              ? Colors.amber.shade300
+              : Colors.amber.shade500)
           : isThinking
               ? Colors.blue.shade500
               : theme.colorScheme.primary;

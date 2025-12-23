@@ -18,15 +18,12 @@ class GitHubService {
     required String accessToken,
     required String tokenType,
   }) async {
-    return _apiClient.post<Map<String, dynamic>>(
-      '/api/github/integration',
-      {
-        'platform': 'github',
-        'platform_username': platformUsername,
-        'access_token': accessToken,
-        'token_type': tokenType,
-      },
-    );
+    return _apiClient.post<Map<String, dynamic>>('/api/github/integration', {
+      'platform': 'github',
+      'platform_username': platformUsername,
+      'access_token': accessToken,
+      'token_type': tokenType,
+    });
   }
 
   /// Delete GitHub integration
@@ -44,9 +41,7 @@ class GitHubService {
 
   /// Get GitHub user info
   Future<Map<String, dynamic>?> getGitHubUser() async {
-    return _apiClient.get<Map<String, dynamic>>(
-      '/api/github/user',
-    );
+    return _apiClient.get<Map<String, dynamic>>('/api/github/user');
   }
 
   /// Get user's repositories
@@ -88,16 +83,22 @@ class GitHubService {
     required String repositoryFullName,
     required String projectName,
     required String projectDescription,
-    String branch = 'main',
+    String defaultBranch = 'main',
+    String? repositoryUrl,
+    String? repositorySshUrl,
+    bool isPrivate = false,
+    String? primaryLanguage,
   }) async {
-    return _apiClient.post<Map<String, dynamic>>(
-      '/api/github/projects/import',
-      {
-        'repository_full_name': repositoryFullName,
-        'project_name': projectName,
-        'project_description': projectDescription,
-        'branch': branch,
-      },
-    );
+    return _apiClient
+        .post<Map<String, dynamic>>('/api/projects/import-from-github', {
+          'repository_full_name': repositoryFullName,
+          'project_name': projectName,
+          'project_description': projectDescription,
+          if (repositoryUrl != null) 'repository_url': repositoryUrl,
+          if (repositorySshUrl != null) 'repository_ssh_url': repositorySshUrl,
+          'default_branch': defaultBranch,
+          'is_private': isPrivate,
+          if (primaryLanguage != null) 'primary_language': primaryLanguage,
+        }, timeout: const Duration(minutes: 4));
   }
 }

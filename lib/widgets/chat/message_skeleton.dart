@@ -64,14 +64,9 @@ class _MessageSkeletonState extends State<MessageSkeleton>
           child: Container(
             margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisAlignment:
-                  isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                if (!isUser) ...[
-                  _buildAvatar(theme),
-                  const SizedBox(width: 8.0),
-                ],
                 Flexible(
                   child: Container(
                     padding:
@@ -83,12 +78,8 @@ class _MessageSkeletonState extends State<MessageSkeleton>
                       borderRadius: BorderRadius.only(
                         topLeft: const Radius.circular(16.0),
                         topRight: const Radius.circular(16.0),
-                        bottomLeft: isUser
-                            ? const Radius.circular(16.0)
-                            : const Radius.circular(4.0),
-                        bottomRight: isUser
-                            ? const Radius.circular(4.0)
-                            : const Radius.circular(16.0),
+                        bottomLeft: const Radius.circular(4.0),
+                        bottomRight: const Radius.circular(16.0),
                       ),
                     ),
                     child: Column(
@@ -103,26 +94,11 @@ class _MessageSkeletonState extends State<MessageSkeleton>
                     ),
                   ),
                 ),
-                if (isUser) ...[
-                  const SizedBox(width: 8.0),
-                  _buildAvatar(theme),
-                ],
               ],
             ),
           ),
         );
       },
-    );
-  }
-
-  Widget _buildAvatar(ThemeData theme) {
-    return Container(
-      width: 32,
-      height: 32,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        shape: BoxShape.circle,
-      ),
     );
   }
 

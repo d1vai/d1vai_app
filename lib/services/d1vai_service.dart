@@ -275,13 +275,15 @@ class D1vaiService {
     int? maxDescLen,
     bool? enablePay,
     bool? enableDatabase,
+    bool? enableResend,
   }) async {
     return _apiClient.post('/api/projects/create-with-integrations', {
       'prompt': prompt,
       if (maxDescLen != null) 'max_desc_len': maxDescLen,
       if (enablePay != null) 'enable_pay': enablePay,
       if (enableDatabase != null) 'enable_database': enableDatabase,
-    });
+      if (enableResend != null) 'enable_resend': enableResend,
+    }, retries: 0, timeout: const Duration(seconds: 120));
   }
 
   /// 更新项目信息
@@ -292,17 +294,6 @@ class D1vaiService {
     return _apiClient.put<Map<String, dynamic>>(
       '/api/projects/$projectId',
       data,
-    );
-  }
-
-  /// 转让项目
-  Future<Map<String, dynamic>> transferProject(
-    String projectId,
-    String targetEmail,
-  ) async {
-    return _apiClient.post<Map<String, dynamic>>(
-      '/api/projects/$projectId/transfer',
-      {'target_email': targetEmail},
     );
   }
 
@@ -378,7 +369,7 @@ class D1vaiService {
   // ============================================
 
   /// 获取项目存储结构
-  Future<List<dynamic>> getProjectStorageStructure(
+  Future<Map<String, dynamic>> getProjectStorageStructure(
     String projectId, {
     String? subPath,
     List<String>? exts,
@@ -398,7 +389,7 @@ class D1vaiService {
       }
     }
 
-    return _apiClient.get<List<dynamic>>(
+    return _apiClient.get<Map<String, dynamic>>(
       '/api/projects/storage/$projectId/structure',
       queryParams: queryParams.isEmpty ? null : queryParams,
     );
@@ -994,17 +985,49 @@ class D1vaiService {
 
   /// 从 GitHub 导入项目
   Future<dynamic> importProjectFromGithub(Map<String, dynamic> payload) async {
-    return _apiClient.post('/api/projects/import-from-github', payload);
+    // GitHub collaborator import can take longer due to auto DB migrations + deployment.
+    return _apiClient.post(
+      '/api/projects/import-from-github',
+      payload,
+      timeout: const Duration(minutes: 4),
+    );
   }
 
   /// 导入公开仓库到组织
   Future<dynamic> importPublicRepoToOrg(Map<String, dynamic> payload) async {
-    return _apiClient.post('/api/projects/import-public-to-org', payload);
+    return _apiClient.post(
+      '/api/projects/import-public-to-org',
+      payload,
+      timeout: const Duration(minutes: 4),
+    );
   }
 
   // ============================================
   // Payment/Pay Methods - 支付相关方法
   // ============================================
+
+  // ============================================
+  // GitHub Ops Methods - GitHub 代码操作（对齐 d1vai web CodeViewer 保存逻辑）
+  // ============================================
+
+  /// Sync a file to GitHub and best-effort sync opcode workspace git state.
+  ///
+  /// Aligns with d1vai web: `POST /api/github-ops/{project_id}/sync-file`
+  Future<Map<String, dynamic>> syncFileToGitHub(
+    String projectId, {
+    required String filePath,
+    required String content,
+    String? commitMessage,
+    String? branch,
+  }) async {
+    return _apiClient
+        .post<Map<String, dynamic>>('/api/github-ops/$projectId/sync-file', {
+          'file_path': filePath,
+          'content': content,
+          if (commitMessage != null) 'commit_message': commitMessage,
+          if (branch != null) 'branch': branch,
+        }, timeout: const Duration(minutes: 2));
+  }
 
   /// 激活项目支付
   Future<Map<String, dynamic>> activateProjectPay(String projectId) async {
@@ -1245,6 +1268,108 @@ class D1vaiService {
     return _apiClient.post<Map<String, dynamic>>(
       '/api/deployment/$projectId/preview',
       {},
+    );
+  }
+
+  // ============================================
+  // Project Management Methods - 项目管理
+  // ============================================
+
+  /// 删除项目（对齐 Web: `DELETE /api/projects/{id}`）
+  Future<Map<String, dynamic>> deleteProject(String projectId) async {
+    return _apiClient.delete<Map<String, dynamic>>('/api/projects/$projectId');
+  }
+
+  /// 转移项目所有权（对齐 Web: `POST /api/projects/{id}/transfer`）
+  Future<Map<String, dynamic>> transferProject(
+    String projectId, {
+    required String targetEmail,
+  }) async {
+    return _apiClient.post<Map<String, dynamic>>(
+      '/api/projects/$projectId/transfer',
+      {'target_email': targetEmail},
+    );
+  }
+
+  // ============================================
+  // Community Methods - 社区发布
+  // ============================================
+
+  /// 获取项目对应的社区帖子（对齐 Web: `GET /api/community/projects/{id}/post`）
+  Future<dynamic> getCommunityPostForProject(
+    String projectId,
+  ) async {
+    return _apiClient.get<dynamic>(
+      '/api/community/projects/$projectId/post',
+    );
+  }
+
+  /// 创建或更新社区帖子（对齐 Web: `POST /api/community/posts`）
+  Future<Map<String, dynamic>> upsertCommunityPost({
+    required String projectId,
+    required String title,
+    required String summary,
+    required bool publish,
+  }) async {
+    return _apiClient.post<Map<String, dynamic>>('/api/community/posts', {
+      'project_id': projectId,
+      'title': title,
+      'summary': summary,
+      'publish': publish,
+    });
+  }
+
+  /// 发布社区帖子（对齐 Web: `POST /api/community/posts/{id}/publish`）
+  Future<Map<String, dynamic>> publishCommunityPost(int postId) async {
+    return _apiClient.post<Map<String, dynamic>>(
+      '/api/community/posts/$postId/publish',
+      {},
+    );
+  }
+
+  /// 取消发布社区帖子（对齐 Web: `POST /api/community/posts/{id}/unpublish`）
+  Future<Map<String, dynamic>> unpublishCommunityPost(int postId) async {
+    return _apiClient.post<Map<String, dynamic>>(
+      '/api/community/posts/$postId/unpublish',
+      {},
+    );
+  }
+
+  // ============================================
+  // GitHub Ops Methods - GitHub 操作（用于发布流程）
+  // ============================================
+
+  /// 获取分支提交列表（对齐 Web: `GET /api/github-ops/{projectId}/commits`）
+  Future<List<dynamic>> getGitHubBranchCommits(
+    String projectId, {
+    required String branch,
+    int limit = 50,
+    bool includeStats = false,
+  }) async {
+    return _apiClient.get<List<dynamic>>(
+      '/api/github-ops/$projectId/commits',
+      queryParams: {
+        'branch': branch,
+        'limit': limit.toString(),
+        'include_stats': includeStats ? 'true' : 'false',
+      },
+    );
+  }
+
+  /// 合并分支（对齐 Web: `POST /api/github-ops/{projectId}/merge`）
+  Future<Map<String, dynamic>> mergeGitHubBranches(
+    String projectId, {
+    required String baseBranch,
+    required String headBranch,
+    String? commitMessage,
+  }) async {
+    return _apiClient.post<Map<String, dynamic>>(
+      '/api/github-ops/$projectId/merge',
+      {
+        'base_branch': baseBranch,
+        'head_branch': headBranch,
+        if (commitMessage != null) 'commit_message': commitMessage,
+      },
     );
   }
 

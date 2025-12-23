@@ -12,10 +12,13 @@ class UserProject {
   final List<String> tags;
   final String status;
   final bool? analyticsEnabled;
+  final String? analyticsId;
   final int? projectDatabaseId;
   final int? projectPayId;
   final String? vercelProdDomain;
   final String? latestProdDeploymentUrl;
+  final String? workspaceCurrentBranch;
+  final String? repositoryCurrentBranch;
 
   const UserProject({
     required this.id,
@@ -30,10 +33,13 @@ class UserProject {
     this.tags = const [],
     this.status = 'active',
     this.analyticsEnabled,
+    this.analyticsId,
     this.projectDatabaseId,
     this.projectPayId,
     this.vercelProdDomain,
     this.latestProdDeploymentUrl,
+    this.workspaceCurrentBranch,
+    this.repositoryCurrentBranch,
   });
 
   factory UserProject.fromJson(Map<String, dynamic> json) {
@@ -63,10 +69,13 @@ class UserProject {
       tags: json['tags'] != null ? List<String>.from(json['tags']) : [],
       status: json['status']?.toString() ?? 'active',
       analyticsEnabled: json['analytics_enabled'] is bool ? json['analytics_enabled'] : null,
+      analyticsId: json['analytics_id']?.toString(),
       projectDatabaseId: parseInt(json['project_database_id']),
       projectPayId: parseInt(json['project_pay_id']),
       vercelProdDomain: json['vercel_prod_domain']?.toString(),
       latestProdDeploymentUrl: json['latest_prod_deployment_url']?.toString(),
+      workspaceCurrentBranch: json['workspace_current_branch']?.toString(),
+      repositoryCurrentBranch: json['repository_current_branch']?.toString(),
     );
   }
 
@@ -84,10 +93,13 @@ class UserProject {
       'tags': tags,
       'status': status,
       'analytics_enabled': analyticsEnabled,
+      'analytics_id': analyticsId,
       'project_database_id': projectDatabaseId,
       'project_pay_id': projectPayId,
       'vercel_prod_domain': vercelProdDomain,
       'latest_prod_deployment_url': latestProdDeploymentUrl,
+      'workspace_current_branch': workspaceCurrentBranch,
+      'repository_current_branch': repositoryCurrentBranch,
     };
   }
 
@@ -105,10 +117,13 @@ class UserProject {
     List<String>? tags,
     String? status,
     bool? analyticsEnabled,
+    String? analyticsId,
     int? projectDatabaseId,
     int? projectPayId,
     String? vercelProdDomain,
     String? latestProdDeploymentUrl,
+    String? workspaceCurrentBranch,
+    String? repositoryCurrentBranch,
   }) {
     return UserProject(
       id: id ?? this.id,
@@ -123,10 +138,13 @@ class UserProject {
       tags: tags ?? this.tags,
       status: status ?? this.status,
       analyticsEnabled: analyticsEnabled ?? this.analyticsEnabled,
+      analyticsId: analyticsId ?? this.analyticsId,
       projectDatabaseId: projectDatabaseId ?? this.projectDatabaseId,
       projectPayId: projectPayId ?? this.projectPayId,
       vercelProdDomain: vercelProdDomain ?? this.vercelProdDomain,
       latestProdDeploymentUrl: latestProdDeploymentUrl ?? this.latestProdDeploymentUrl,
+      workspaceCurrentBranch: workspaceCurrentBranch ?? this.workspaceCurrentBranch,
+      repositoryCurrentBranch: repositoryCurrentBranch ?? this.repositoryCurrentBranch,
     );
   }
 

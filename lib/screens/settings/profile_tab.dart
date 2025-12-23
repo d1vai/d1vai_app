@@ -7,6 +7,7 @@ import '../../l10n/app_localizations.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/profile_provider.dart';
+import '../../core/api_client.dart';
 import '../../widgets/avatar_image.dart';
 import '../../widgets/button.dart';
 import '../../widgets/card.dart';
@@ -185,6 +186,25 @@ class SettingsProfileTab extends StatelessWidget {
                     ),
                     onTap: () {
                       context.push('/settings/help');
+                    },
+                  ),
+                  Divider(
+                    height: 1,
+                    color: isDark
+                        ? AppColors.borderDark
+                        : AppColors.borderLight,
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.settings_ethernet, color: AppColors.info),
+                    title: const Text('API'),
+                    subtitle: Text(ApiClient.baseUrl),
+                    trailing: const Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: AppColors.textSecondaryLight,
+                    ),
+                    onTap: () {
+                      context.push('/settings/api');
                     },
                   ),
                   Divider(

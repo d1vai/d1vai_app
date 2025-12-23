@@ -1,6 +1,10 @@
 part of '../../project_chat/project_chat_tab.dart';
 
 mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
+  final StringBuffer _assistantDeltaBuffer = StringBuffer();
+  int _assistantDeltaChars = 0;
+  Timer? _assistantDeltaFlushTimer;
+
   @override
   void initState() {
     super.initState();
@@ -9,7 +13,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
 
   @override
   void dispose() {
-    _typingResetTimer?.cancel();
+    _assistantDeltaFlushTimer?.cancel();
     _reconnectTimer?.cancel();
     _workspacePollTimer?.cancel();
     _webSocketSubscription?.cancel();
@@ -199,11 +203,12 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
           messages.add(message);
         }
       }
+      final merged = MessageParser.mergeToolResultsIntoPrevBashTool(messages);
 
       setState(() {
         _chatMessages
           ..clear()
-          ..addAll(messages);
+          ..addAll(merged);
         _messageStatuses.clear();
         _isLoadingHistory = false;
         _historyLoaded = true;
@@ -256,16 +261,13 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       for (final entry in history) {
         final m = _convertHistoryEntryToChatMessage(entry);
         if (m == null) continue;
-        final allEmptyText = m.contents.isNotEmpty &&
-            m.contents.every(
-              (c) => c is TextMessageContent && c.text.trim().isEmpty,
-            );
-        if (!allEmptyText) older.add(m);
+        older.add(m);
       }
+      final olderMerged = MessageParser.mergeToolResultsIntoPrevBashTool(older);
 
       final existingIds = _chatMessages.map((m) => m.id).toSet();
       final deduped =
-          older.where((m) => !existingIds.contains(m.id)).toList();
+          olderMerged.where((m) => !existingIds.contains(m.id)).toList();
 
       setState(() {
         _chatMessages.insertAll(0, deduped);
@@ -306,16 +308,6 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     }
   }
 
-  void _scheduleTypingReset() {
-    _typingResetTimer?.cancel();
-    _typingResetTimer = Timer(const Duration(milliseconds: 1200), () {
-      if (!mounted) return;
-      setState(() {
-        _isTyping = false;
-      });
-    });
-  }
-
   Future<void> _closeWebSocket({bool manual = true}) async {
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
@@ -345,8 +337,16 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     return null;
   }
 
-  void _appendAssistantDelta(String delta) {
-    if (delta.isEmpty) return;
+  void _flushAssistantDelta({bool scroll = true}) {
+    if (_assistantDeltaChars == 0) return;
+    _assistantDeltaFlushTimer?.cancel();
+    _assistantDeltaFlushTimer = null;
+
+    final text = _assistantDeltaBuffer.toString();
+    _assistantDeltaBuffer.clear();
+    _assistantDeltaChars = 0;
+
+    if (text.isEmpty) return;
     setState(() {
       if (_chatMessages.isNotEmpty) {
         final last = _chatMessages.last;
@@ -354,13 +354,12 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
             last.contents.isNotEmpty &&
             last.contents.first is TextMessageContent) {
           final first = last.contents.first as TextMessageContent;
-          final updated = last.copyWith(
+          _chatMessages[_chatMessages.length - 1] = last.copyWith(
             contents: [
-              TextMessageContent(text: '${first.text}$delta'),
+              TextMessageContent(text: '${first.text}$text'),
               ...last.contents.skip(1),
             ],
           );
-          _chatMessages[_chatMessages.length - 1] = updated;
           return;
         }
       }
@@ -370,11 +369,21 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
           id: 'asst-${DateTime.now().millisecondsSinceEpoch}',
           role: 'assistant',
           createdAt: DateTime.now(),
-          contents: [TextMessageContent(text: delta)],
+          contents: [TextMessageContent(text: text)],
         ),
       );
     });
-    _scrollToBottom();
+    if (scroll) _scrollToBottom();
+  }
+
+  void _appendAssistantDelta(String delta) {
+    if (delta.isEmpty) return;
+    _assistantDeltaBuffer.write(delta);
+    _assistantDeltaChars += delta.length;
+    _assistantDeltaFlushTimer ??= Timer(
+      const Duration(milliseconds: 60),
+      () => _flushAssistantDelta(scroll: true),
+    );
   }
 
   void _finalizePrevToolDone() {
@@ -424,6 +433,35 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         return;
       }
     }
+  }
+
+  bool _attachToolResultToPrevBashTool(String outputText, {required bool isError}) {
+    if (_chatMessages.isEmpty) return false;
+    final lastIdx = _chatMessages.length - 1;
+    final last = _chatMessages[lastIdx];
+    final contents = last.contents;
+
+    for (var ci = contents.length - 1; ci >= 0; ci--) {
+      final c = contents[ci];
+      if (c is! ToolMessageContent) continue;
+      if (c.name.toLowerCase().trim() != 'bash') continue;
+
+      final prevOut = c.output?.text ?? '';
+      final joined = prevOut.trim().isNotEmpty ? '$prevOut\n\n$outputText' : outputText;
+      final capped = joined.length > 120000
+          ? joined.substring(joined.length - 120000)
+          : joined;
+
+      final nextContents = List<MessageContent>.from(contents);
+      nextContents[ci] = c.copyWith(
+        output: ToolOutput(text: capped, isError: isError),
+      );
+      setState(() {
+        _chatMessages[lastIdx] = last.copyWith(contents: nextContents);
+      });
+      return true;
+    }
+    return false;
   }
 
   bool _userPayloadHasToolResult(Map<String, dynamic> payload) {
@@ -483,6 +521,11 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       return;
     }
 
+    // Web filters these from history; treat them as non-chat side-effect frames.
+    if (type == 'deployment_start' || type == 'deployment_complete') {
+      return;
+    }
+
     // Best-effort de-dup (web uses uuid/message.id/id). Skip for deltas and
     // allow `assistant_message` to update/overwrite streamed content.
     try {
@@ -508,13 +551,10 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       }
     } catch (_) {}
 
-    // Any non-history frame is live activity.
-    if (mounted) {
-      setState(() {
-        _isTyping = true;
-      });
+    // Ensure any buffered deltas are rendered before applying a new non-delta frame.
+    if (type != 'content_block_delta' && type != 'message_delta') {
+      _flushAssistantDelta(scroll: false);
     }
-    _scheduleTypingReset();
 
     if (type == 'content_block_delta' || type == 'message_delta') {
       final delta = MessageParser.normalizeOpcodeText(payload);
@@ -565,6 +605,18 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       }
       final contents = MessageParser.createMessageContentsFromPayload(payload);
       if (contents.isEmpty) return;
+      if (type == 'tool_result') {
+        final isErr = payload['is_error'] == true;
+        final outputBlocks = contents.whereType<CodeMessageContent>().where(
+              (c) => (c.subtype ?? '').toLowerCase() == 'tool_result',
+            );
+        final outputText = outputBlocks.map((c) => c.code).join('\n').trim();
+        if (outputText.isNotEmpty &&
+            _attachToolResultToPrevBashTool(outputText, isError: isErr)) {
+          _scrollToBottom();
+          return;
+        }
+      }
       setState(() {
         _chatMessages.add(
           ChatMessage(
@@ -592,18 +644,36 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _finalizePrevToolDone();
       }
       _autoConnectDisabled = true;
-      if (mounted) {
-        setState(() {
-          _isTyping = false;
-        });
-      }
       return;
     }
 
     if (type == 'user' && _userPayloadHasToolResult(payload)) {
-      _markLastToolOutcome(
-        _userPayloadIsToolResultError(payload) ? 'error' : 'done',
-      );
+      final isErr = _userPayloadIsToolResultError(payload);
+      _markLastToolOutcome(isErr ? 'error' : 'done');
+      final contents = MessageParser.createMessageContentsFromPayload(payload);
+      if (contents.isNotEmpty) {
+        final outputBlocks = contents.whereType<CodeMessageContent>().where(
+              (c) => (c.subtype ?? '').toLowerCase() == 'tool_result',
+            );
+        final outputText = outputBlocks.map((c) => c.code).join('\n').trim();
+        if (outputText.isNotEmpty &&
+            _attachToolResultToPrevBashTool(outputText, isError: isErr)) {
+          _scrollToBottom();
+          return;
+        }
+        setState(() {
+          _chatMessages.add(
+            ChatMessage(
+              id: 'ws-${DateTime.now().millisecondsSinceEpoch}',
+              role: 'assistant',
+              createdAt: DateTime.now(),
+              contents: contents,
+            ),
+          );
+        });
+        _scrollToBottom();
+        return;
+      }
     }
 
     // Default: render as a standalone assistant message derived from payload.
@@ -710,6 +780,21 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
   ) async {
     if (!mounted) return;
 
+    Map<String, dynamic>? payloadMap(dynamic p) {
+      if (p is Map<String, dynamic>) return p;
+      if (p is String) {
+        final s = p.trim();
+        if (!(s.startsWith('{') || s.startsWith('['))) return null;
+        try {
+          final v = jsonDecode(s);
+          if (v is Map) {
+            return v.map((k, val) => MapEntry(k.toString(), val));
+          }
+        } catch (_) {}
+      }
+      return null;
+    }
+
     // If the latest history entry is a completion, don't auto-connect on enter.
     ChatHistoryEntry? latest;
     for (final e in history) {
@@ -717,9 +802,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         latest = e;
       }
     }
-    final latestType = (latest?.payload is Map<String, dynamic>)
-        ? (latest!.payload as Map<String, dynamic>)['type']?.toString()
-        : null;
+    final latestType = payloadMap(latest?.payload)?['type']?.toString();
     if (latestType == 'complete') {
       _autoConnectDisabled = true;
       return;
@@ -728,8 +811,9 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     // Find newest entry with a usable session_id (same heuristic as web).
     ChatHistoryEntry? newestWithSession;
     for (final e in history) {
-      if (e.payload is! Map<String, dynamic>) continue;
-      final sid = (e.payload as Map<String, dynamic>)['session_id'];
+      final pm = payloadMap(e.payload);
+      if (pm == null) continue;
+      final sid = pm['session_id'];
       if (sid is! String || sid.isEmpty) continue;
       if (newestWithSession == null ||
           e.createdAt.isAfter(newestWithSession.createdAt)) {
@@ -738,9 +822,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     }
     if (newestWithSession == null) return;
 
-    final sid =
-        (newestWithSession.payload as Map<String, dynamic>)['session_id']
-            as String;
+    final sid = payloadMap(newestWithSession.payload)?['session_id'] as String?;
+    if (sid == null || sid.isEmpty) return;
     setState(() {
       _currentSessionId = sid;
     });
@@ -768,7 +851,6 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
 
     setState(() {
       _chatMessages.add(userMessage);
-      _isTyping = true;
       _isChatLoading = true;
       _messageStatuses[tempId] = MessageStatus.pending;
     });
@@ -800,7 +882,6 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _isTyping = false;
         _isChatLoading = false;
         _messageStatuses[tempId] = MessageStatus.failed;
       });
@@ -822,7 +903,6 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
 
     setState(() {
       _isChatLoading = true;
-      _isTyping = true;
       _messageStatuses[message.id] = MessageStatus.pending;
     });
 
@@ -847,7 +927,6 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       if (!mounted) return;
       setState(() {
         _isChatLoading = false;
-        _isTyping = false;
         _messageStatuses[message.id] = MessageStatus.failed;
       });
       SnackBarHelper.showError(

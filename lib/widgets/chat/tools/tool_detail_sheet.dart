@@ -60,6 +60,15 @@ class ToolDetailSheet {
                         ),
                       ),
                     if (details.primaryLines.isNotEmpty) const SizedBox(height: 12),
+                    if (toolName.toLowerCase().trim() == 'bash' &&
+                        content.output != null &&
+                        content.output!.text.trim().isNotEmpty) ...[
+                      _Section(
+                        title: (content.output?.isError == true) ? 'Output (error)' : 'Output',
+                        child: _CodeBlock(text: content.output!.text),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                     _Section(
                       title: 'Input',
                       child: _CodeBlock(text: prettyJson(content.input)),
@@ -130,13 +139,15 @@ class _StatusChip extends StatelessWidget {
     final bg = switch (st) {
       'processing' => theme.colorScheme.primary.withValues(alpha: 0.12),
       'error' => theme.colorScheme.error.withValues(alpha: 0.12),
-      'warning' => Colors.amber.withValues(alpha: 0.14),
+      'warning' => _warningTint(theme).withValues(
+          alpha: theme.brightness == Brightness.dark ? 0.18 : 0.14,
+        ),
       _ => theme.colorScheme.surfaceContainerHighest,
     };
     final fg = switch (st) {
       'processing' => theme.colorScheme.primary,
       'error' => theme.colorScheme.error,
-      'warning' => Colors.amber.shade800,
+      'warning' => _warningTint(theme),
       _ => theme.colorScheme.onSurfaceVariant,
     };
     final label = switch (st) {
@@ -169,9 +180,6 @@ class _StatusChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: fg.withValues(alpha: 0.25),
-        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -260,7 +268,7 @@ class _TodoList extends StatelessWidget {
                           : Icons.radio_button_unchecked,
                   size: 18,
                   color: t.status == 'done'
-                      ? Colors.green
+                      ? _successTint(theme)
                       : t.status == 'in_progress'
                           ? theme.colorScheme.primary
                           : theme.colorScheme.onSurfaceVariant,
@@ -297,9 +305,6 @@ class _Section extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -332,9 +337,6 @@ class _CodeBlock extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.6),
-        ),
       ),
       child: SelectableText(
         text,
@@ -428,6 +430,18 @@ class _ToolDetails {
 
     return _ToolDetails(primaryLines: lines, todos: null);
   }
+}
+
+Color _warningTint(ThemeData theme) {
+  return theme.brightness == Brightness.dark
+      ? Colors.amber.shade300
+      : Colors.amber.shade800;
+}
+
+Color _successTint(ThemeData theme) {
+  return theme.brightness == Brightness.dark
+      ? Colors.green.shade300
+      : Colors.green.shade700;
 }
 
 class _TodoItem {

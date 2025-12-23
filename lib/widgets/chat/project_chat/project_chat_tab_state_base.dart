@@ -9,7 +9,6 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   final Map<String, MessageStatus> _messageStatuses = {};
 
   bool _isChatLoading = false;
-  bool _isTyping = false;
   bool _isLoadingHistory = false;
   String? _currentSessionId;
   bool _historyLoaded = false;
@@ -45,8 +44,6 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   // Environment variables for Env sub-tab
   List<EnvVar> _envVars = [];
   bool _isLoadingEnvVars = false;
-
-  Timer? _typingResetTimer;
 
   @override
   bool get wantKeepAlive => true;

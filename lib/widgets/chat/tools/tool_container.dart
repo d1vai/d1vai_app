@@ -42,7 +42,9 @@ class ToolContainer extends StatelessWidget {
       leading = Icon(
         Icons.warning_amber_rounded,
         size: 14,
-        color: Colors.amber.shade700,
+        color: theme.brightness == Brightness.dark
+            ? Colors.amber.shade300
+            : Colors.amber.shade700,
       );
     } else {
       leading = Container(

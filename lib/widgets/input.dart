@@ -1,20 +1,13 @@
 import 'package:flutter/material.dart';
 
-enum InputVariant {
-  outlined,
-  filled,
-  underlined,
-}
+enum InputVariant { outlined, filled, underlined }
 
-enum InputSize {
-  small,
-  medium,
-  large,
-}
+enum InputSize { small, medium, large }
 
 /// Input Widget - A flexible text input component
 class Input extends StatelessWidget {
   final String? value;
+  final TextEditingController? controller;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
   final VoidCallback? onTap;
@@ -69,6 +62,7 @@ class Input extends StatelessWidget {
   const Input({
     super.key,
     this.value,
+    this.controller,
     this.onChanged,
     this.onSubmitted,
     this.onTap,
@@ -123,56 +117,77 @@ class Input extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveTextStyle = textStyle ??
+    final effectiveTextStyle =
+        textStyle ??
         _getTextStyle(size, Theme.of(context).textTheme.bodyMedium);
-    final effectiveLabelStyle = labelStyle ??
+    final effectiveLabelStyle =
+        labelStyle ??
         _getTextStyle(size, Theme.of(context).textTheme.bodyMedium);
-    final effectiveHintStyle = hintStyle ??
-        _getTextStyle(size, Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-            ));
-    final effectiveErrorStyle = errorStyle ??
-        _getTextStyle(size, Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.error,
-            ));
+    final effectiveHintStyle =
+        hintStyle ??
+        _getTextStyle(
+          size,
+          Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.6),
+          ),
+        );
+    final effectiveErrorStyle =
+        errorStyle ??
+        _getTextStyle(
+          size,
+          Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.error,
+          ),
+        );
     final effectiveContentPadding = contentPadding ?? _getPadding(size);
     final effectiveBorderRadius = borderRadius ?? _getBorderRadius(size);
     final effectiveFillColor = _getFillColor(fillColor, disabled, context);
-    final effectiveBorderColor = _getBorderColor(borderColor, disabled, context);
+    final effectiveBorderColor = _getBorderColor(
+      borderColor,
+      disabled,
+      context,
+    );
     final effectiveFocusedBorderColor =
         focusedBorderColor ?? Theme.of(context).colorScheme.primary;
     final effectiveErrorBorderColor =
         errorBorderColor ?? Theme.of(context).colorScheme.error;
 
-    final effectiveBorder = border ??
+    final effectiveBorder =
+        border ??
         _buildBorder(
           variant,
           effectiveBorderRadius,
           effectiveBorderColor,
           disabled,
         );
-    final effectiveFocusedBorder = focusedBorder ??
+    final effectiveFocusedBorder =
+        focusedBorder ??
         _buildBorder(
           variant,
           effectiveBorderRadius,
           effectiveFocusedBorderColor,
           disabled,
         );
-    final effectiveEnabledBorder = enabledBorder ??
+    final effectiveEnabledBorder =
+        enabledBorder ??
         _buildBorder(
           variant,
           effectiveBorderRadius,
           effectiveBorderColor,
           disabled,
         );
-    final effectiveDisabledBorder = disabledBorder ??
+    final effectiveDisabledBorder =
+        disabledBorder ??
         _buildBorder(
           variant,
           effectiveBorderRadius,
           Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12),
           disabled,
         );
-    final effectiveErrorBorder = errorBorder ??
+    final effectiveErrorBorder =
+        errorBorder ??
         _buildBorder(
           variant,
           effectiveBorderRadius,
@@ -183,7 +198,8 @@ class Input extends StatelessWidget {
     return Container(
       margin: margin,
       child: TextFormField(
-        initialValue: value,
+        controller: controller,
+        initialValue: controller == null ? value : null,
         onChanged: onChanged,
         onFieldSubmitted: onSubmitted,
         onTap: onTap,
@@ -310,11 +326,17 @@ class Input extends StatelessWidget {
     }
     return fillColor ??
         (variant == InputVariant.filled
-            ? Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
+            ? Theme.of(
+                context,
+              ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
             : Colors.transparent);
   }
 
-  Color _getBorderColor(Color? borderColor, bool disabled, BuildContext context) {
+  Color _getBorderColor(
+    Color? borderColor,
+    bool disabled,
+    BuildContext context,
+  ) {
     if (disabled) {
       return Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12);
     }
@@ -454,14 +476,15 @@ class SearchInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final effectivePadding = contentPadding ??
+    final effectivePadding =
+        contentPadding ??
         EdgeInsets.symmetric(
           horizontal: 16,
           vertical: size == InputSize.small
               ? 8
               : size == InputSize.medium
-                  ? 12
-                  : 16,
+              ? 12
+              : 16,
         );
 
     return Container(
@@ -477,15 +500,17 @@ class SearchInput extends StatelessWidget {
             color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
           ),
           filled: true,
-          fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+          fillColor: theme.colorScheme.surfaceContainerHighest.withValues(
+            alpha: 0.3,
+          ),
           contentPadding: effectivePadding,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(
               size == InputSize.small
                   ? 6
                   : size == InputSize.medium
-                      ? 8
-                      : 10,
+                  ? 8
+                  : 10,
             ),
             borderSide: BorderSide.none,
           ),
@@ -494,8 +519,8 @@ class SearchInput extends StatelessWidget {
               size == InputSize.small
                   ? 6
                   : size == InputSize.medium
-                      ? 8
-                      : 10,
+                  ? 8
+                  : 10,
             ),
             borderSide: BorderSide.none,
           ),
@@ -504,8 +529,8 @@ class SearchInput extends StatelessWidget {
               size == InputSize.small
                   ? 6
                   : size == InputSize.medium
-                      ? 8
-                      : 10,
+                  ? 8
+                  : 10,
             ),
             borderSide: BorderSide(
               color: theme.colorScheme.primary,
@@ -513,13 +538,14 @@ class SearchInput extends StatelessWidget {
             ),
           ),
         ),
-        style: textStyle ??
+        style:
+            textStyle ??
             theme.textTheme.bodyMedium?.copyWith(
               fontSize: size == InputSize.small
                   ? 12
                   : size == InputSize.medium
-                      ? 14
-                      : 16,
+                  ? 14
+                  : 16,
             ),
       ),
     );

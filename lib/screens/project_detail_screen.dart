@@ -163,18 +163,26 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
       body: D1VTabBarView(
         controller: _tabController,
         children: [
-          ProjectOverviewTab(project: project),
+          ProjectOverviewTab(project: project, onRefreshProject: _loadProject),
           ProjectChatTab(
             key: _chatTabKey,
             projectId: project.id,
             previewUrl: project.latestPreviewUrl,
           ),
-          ProjectDatabaseTab(projectId: project.id, onAskAi: _handleAskAi),
+          ProjectDatabaseTab(
+            project: project,
+            onAskAi: _handleAskAi,
+            onRefreshProject: _loadProject,
+          ),
           ProjectApiTab(projectId: project.id),
           const ProjectGithubTab(),
           ProjectPaymentTab(projectId: project.id, onAskAi: _handleAskAi),
           ProjectDeployTab(project: project, onAskAi: _handleAskAi),
-          ProjectAnalyticsTab(projectId: project.id, onAskAi: _handleAskAi),
+          ProjectAnalyticsTab(
+            project: project,
+            onAskAi: _handleAskAi,
+            onRefreshProject: _loadProject,
+          ),
         ],
       ),
     );
