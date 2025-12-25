@@ -10,6 +10,7 @@ import '../models/project.dart';
 import '../widgets/create_project_dialog.dart';
 import '../widgets/card.dart';
 import '../core/theme/app_colors.dart';
+import '../utils/error_utils.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -576,6 +577,8 @@ class _DashboardScreenState extends State<DashboardScreen>
     BuildContext context,
     ProjectProvider projectProvider,
   ) {
+    final errText = projectProvider.error ?? 'Unknown error';
+    final authExpired = isAuthExpiredText(errText);
     return RefreshIndicator(
       onRefresh: () async => await projectProvider.refresh(),
       child: SingleChildScrollView(
@@ -594,23 +597,43 @@ class _DashboardScreenState extends State<DashboardScreen>
             ),
             const SizedBox(height: 16),
             Text(
-              projectProvider.error ?? 'Unknown error',
+              errText,
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () async {
-                await projectProvider.refresh();
-              },
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryBrand,
-                foregroundColor: Colors.white,
-              ),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              alignment: WrapAlignment.center,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    await projectProvider.refresh();
+                  },
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Retry'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryBrand,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+                if (authExpired)
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      await Provider.of<AuthProvider>(
+                        context,
+                        listen: false,
+                      ).logout();
+                      if (!context.mounted) return;
+                      context.go('/login');
+                    },
+                    icon: const Icon(Icons.login),
+                    label: const Text('Re-login'),
+                  ),
+              ],
             ),
           ],
         ),

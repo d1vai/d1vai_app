@@ -7,6 +7,8 @@ import '../providers/project_provider.dart';
 import '../providers/auth_provider.dart';
 import '../models/project.dart';
 import '../widgets/create_project_dialog.dart';
+import '../widgets/snackbar_helper.dart';
+import '../utils/error_utils.dart';
 
 class ProjectsScreen extends StatefulWidget {
   const ProjectsScreen({super.key});
@@ -19,6 +21,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
   final TextEditingController _searchController = TextEditingController();
   Timer? _searchDebounce;
   String _selectedFilter = 'all';
+  String? _lastErrorShown;
 
   @override
   void initState() {
@@ -34,10 +37,12 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
         );
       }
       final status = provider.statusFilter;
-      if (status == null || status.isEmpty) {
-        _selectedFilter = 'all';
-      } else {
-        _selectedFilter = status;
+      final nextSelected =
+          (status == null || status.isEmpty) ? 'all' : status;
+      if (mounted && nextSelected != _selectedFilter) {
+        setState(() {
+          _selectedFilter = nextSelected;
+        });
       }
       provider.loadProjects();
     });
@@ -115,6 +120,12 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
         context.go('/login');
       }
     }
+  }
+
+  Future<void> _logoutAndGoLogin() async {
+    await Provider.of<AuthProvider>(context, listen: false).logout();
+    if (!mounted) return;
+    context.go('/login');
   }
 
   @override
@@ -209,8 +220,29 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                   return _buildShimmer();
                 }
 
-                if (provider.error != null) {
+                if (provider.error != null &&
+                    provider.error != _lastErrorShown) {
+                  _lastErrorShown = provider.error;
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (!mounted) return;
+                    final authExpired = isAuthExpiredText(provider.error!);
+                    SnackBarHelper.showError(
+                      context,
+                      title: 'Sync failed',
+                      message: provider.error!,
+                      actionLabel: authExpired ? 'Re-login' : null,
+                      onActionPressed: authExpired
+                          ? () {
+                              unawaited(_logoutAndGoLogin());
+                            }
+                          : null,
+                    );
+                  });
+                }
+
+                if (provider.error != null && provider.projects.isEmpty) {
                   final theme = Theme.of(context);
+                  final authExpired = isAuthExpiredText(provider.error!);
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -229,9 +261,23 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _refreshData,
-                          child: const Text('Retry'),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          alignment: WrapAlignment.center,
+                          children: [
+                            ElevatedButton(
+                              onPressed: _refreshData,
+                              child: const Text('Retry'),
+                            ),
+                            if (authExpired)
+                              OutlinedButton(
+                                onPressed: () {
+                                  unawaited(_logoutAndGoLogin());
+                                },
+                                child: const Text('Re-login'),
+                              ),
+                          ],
                         ),
                       ],
                     ),

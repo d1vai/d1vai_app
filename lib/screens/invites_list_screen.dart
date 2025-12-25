@@ -3,6 +3,7 @@ import '../services/d1vai_service.dart';
 import '../widgets/snackbar_helper.dart';
 import '../widgets/empty_state_widget.dart';
 import '../widgets/avatar_image.dart';
+import '../utils/error_utils.dart';
 
 class InvitesListScreen extends StatefulWidget {
   const InvitesListScreen({super.key});
@@ -36,15 +37,16 @@ class _InvitesListScreenState extends State<InvitesListScreen> {
         _isLoading = false;
       });
     } catch (e) {
+      final message = humanizeError(e);
       setState(() {
-        _error = e.toString();
+        _error = message;
         _isLoading = false;
       });
       if (mounted) {
         SnackBarHelper.showError(
           context,
           title: 'Error',
-          message: 'Failed to load invited users: $e',
+          message: message,
         );
       }
     }

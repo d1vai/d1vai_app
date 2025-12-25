@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../models/database_table.dart';
 import '../../models/project.dart';
+import '../../providers/auth_provider.dart';
 import '../../services/d1vai_service.dart';
+import '../../utils/error_utils.dart';
 import '../snackbar_helper.dart';
 import '../table_detail_dialog.dart';
 
@@ -94,12 +99,26 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
       setState(() {
         _isLoading = false;
       });
+      final msg = humanizeError(e);
+      final authExpired = isAuthExpiredText(msg);
       SnackBarHelper.showError(
         context,
         title: 'Error',
-        message: 'Failed to load database tables',
+        message: msg,
+        actionLabel: authExpired ? 'Re-login' : null,
+        onActionPressed: authExpired
+            ? () {
+                unawaited(_logoutAndGoLogin());
+              }
+            : null,
       );
     }
+  }
+
+  Future<void> _logoutAndGoLogin() async {
+    await Provider.of<AuthProvider>(context, listen: false).logout();
+    if (!mounted) return;
+    context.go('/login');
   }
 
   Future<void> _enableDatabase() async {
@@ -124,10 +143,18 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
       }
     } catch (e) {
       if (!mounted) return;
+      final msg = humanizeError(e);
+      final authExpired = isAuthExpiredText(msg);
       SnackBarHelper.showError(
         context,
         title: 'Error',
-        message: 'Failed to enable database',
+        message: msg,
+        actionLabel: authExpired ? 'Re-login' : null,
+        onActionPressed: authExpired
+            ? () {
+                unawaited(_logoutAndGoLogin());
+              }
+            : null,
       );
     } finally {
       if (mounted) {

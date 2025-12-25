@@ -7,6 +7,7 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   final List<ChatMessage> _chatMessages = [];
   final ScrollController _chatScrollController = ScrollController();
   final Map<String, MessageStatus> _messageStatuses = {};
+  final D1vaiService _d1vaiService = D1vaiService();
 
   bool _isChatLoading = false;
   bool _isLoadingHistory = false;
@@ -41,6 +42,15 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   // Sub-tab state (Preview / Code / Env)
   int _currentChatTabIndex = 0;
 
+  // Preview runtime
+  String? _previewUrl;
+  int _previewKey = 0;
+
+  // Deployment runtime (for preview redeploy + WS deployment frames)
+  bool _isDeploying = false;
+  String? _deployFramework;
+  Timer? _deployAutoClearTimer;
+
   // Environment variables for Env sub-tab
   List<EnvVar> _envVars = [];
   bool _isLoadingEnvVars = false;
@@ -63,4 +73,6 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   Future<void> _refreshWorkspaceStatus({required bool bypassCache});
   Future<void> _loadMoreHistory();
   Future<void> _retryMessage(ChatMessage message);
+
+  Future<void> triggerPreviewRedeploy();
 }

@@ -8,7 +8,31 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
   @override
   void initState() {
     super.initState();
+    _previewUrl = widget.previewUrl;
     unawaited(_bootstrapWorkspace());
+  }
+
+  @override
+  void didUpdateWidget(covariant ProjectChatTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final nextUrl = widget.previewUrl;
+    if (nextUrl != null &&
+        nextUrl.trim().isNotEmpty &&
+        nextUrl.trim() != (_previewUrl ?? '').trim()) {
+      setState(() {
+        _previewUrl = nextUrl.trim();
+        _previewKey += 1;
+      });
+    }
+    if (oldWidget.projectId != widget.projectId) {
+      _deployAutoClearTimer?.cancel();
+      setState(() {
+        _previewUrl = widget.previewUrl;
+        _previewKey += 1;
+        _isDeploying = false;
+        _deployFramework = null;
+      });
+    }
   }
 
   @override
@@ -16,11 +40,24 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     _assistantDeltaFlushTimer?.cancel();
     _reconnectTimer?.cancel();
     _workspacePollTimer?.cancel();
+    _deployAutoClearTimer?.cancel();
     _webSocketSubscription?.cancel();
     _manualWsClose = true;
     _webSocket?.close(1000, 'dispose');
     _chatScrollController.dispose();
     super.dispose();
+  }
+
+  void _scheduleDeployAutoClear() {
+    _deployAutoClearTimer?.cancel();
+    _deployAutoClearTimer = Timer(const Duration(minutes: 10), () {
+      if (!mounted) return;
+      if (!_isDeploying) return;
+      setState(() {
+        _isDeploying = false;
+        _deployFramework = null;
+      });
+    });
   }
 
   void _scheduleWorkspacePoll(WorkspacePhase phase) {
@@ -213,8 +250,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _isLoadingHistory = false;
         _historyLoaded = true;
         _hasMoreHistory = history.length >= 30;
-        _oldestMessageAt =
-            history.isNotEmpty ? history.first.createdAt : null;
+        _oldestMessageAt = history.isNotEmpty ? history.first.createdAt : null;
       });
 
       // Match web behavior: optionally reconnect to a recent session to stream live output.
@@ -242,8 +278,9 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     final controller = _chatScrollController;
     final hadClients = controller.hasClients;
     final beforeOffset = hadClients ? controller.offset : 0.0;
-    final beforeMaxExtent =
-        hadClients ? controller.position.maxScrollExtent : 0.0;
+    final beforeMaxExtent = hadClients
+        ? controller.position.maxScrollExtent
+        : 0.0;
 
     try {
       const limit = 30;
@@ -266,15 +303,17 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       final olderMerged = MessageParser.mergeToolResultsIntoPrevBashTool(older);
 
       final existingIds = _chatMessages.map((m) => m.id).toSet();
-      final deduped =
-          olderMerged.where((m) => !existingIds.contains(m.id)).toList();
+      final deduped = olderMerged
+          .where((m) => !existingIds.contains(m.id))
+          .toList();
 
       setState(() {
         _chatMessages.insertAll(0, deduped);
         _isLoadingMoreHistory = false;
         _hasMoreHistory = history.length >= limit;
-        _oldestMessageAt =
-            history.isNotEmpty ? history.first.createdAt : _oldestMessageAt;
+        _oldestMessageAt = history.isNotEmpty
+            ? history.first.createdAt
+            : _oldestMessageAt;
       });
 
       // Preserve viewport position after prepending.
@@ -422,8 +461,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         final shouldUpdate = next == 'error'
             ? cur != 'error'
             : next == 'warning'
-                ? cur != 'warning' && cur != 'error'
-                : cur != 'done' && cur != 'error' && cur != 'warning';
+            ? cur != 'warning' && cur != 'error'
+            : cur != 'done' && cur != 'error' && cur != 'warning';
         if (!shouldUpdate) return;
         final nextContents = List<MessageContent>.from(contents);
         nextContents[ci] = c.copyWith(status: next);
@@ -435,7 +474,10 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     }
   }
 
-  bool _attachToolResultToPrevBashTool(String outputText, {required bool isError}) {
+  bool _attachToolResultToPrevBashTool(
+    String outputText, {
+    required bool isError,
+  }) {
     if (_chatMessages.isEmpty) return false;
     final lastIdx = _chatMessages.length - 1;
     final last = _chatMessages[lastIdx];
@@ -447,7 +489,9 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       if (c.name.toLowerCase().trim() != 'bash') continue;
 
       final prevOut = c.output?.text ?? '';
-      final joined = prevOut.trim().isNotEmpty ? '$prevOut\n\n$outputText' : outputText;
+      final joined = prevOut.trim().isNotEmpty
+          ? '$prevOut\n\n$outputText'
+          : outputText;
       final capped = joined.length > 120000
           ? joined.substring(joined.length - 120000)
           : joined;
@@ -525,6 +569,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
 
     // Web filters these from history; treat them as non-chat side-effect frames.
     if (type == 'deployment_start' || type == 'deployment_complete') {
+      _handleDeploymentFrame(type!, payload);
       return;
     }
 
@@ -597,6 +642,10 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       _finalizePrevToolDone();
     }
 
+    if (type == 'deployment_success') {
+      _handleDeploymentFrame(type!, payload);
+    }
+
     if (type == 'tool_result' || type == 'task_update') {
       if (type == 'task_update') {
         _finalizePrevToolDone();
@@ -610,8 +659,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       if (type == 'tool_result') {
         final isErr = payload['is_error'] == true;
         final outputBlocks = contents.whereType<CodeMessageContent>().where(
-              (c) => (c.subtype ?? '').toLowerCase() == 'tool_result',
-            );
+          (c) => (c.subtype ?? '').toLowerCase() == 'tool_result',
+        );
         final outputText = outputBlocks.map((c) => c.code).join('\n').trim();
         if (outputText.isNotEmpty &&
             _attachToolResultToPrevBashTool(outputText, isError: isErr)) {
@@ -655,8 +704,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       final contents = MessageParser.createMessageContentsFromPayload(payload);
       if (contents.isNotEmpty) {
         final outputBlocks = contents.whereType<CodeMessageContent>().where(
-              (c) => (c.subtype ?? '').toLowerCase() == 'tool_result',
-            );
+          (c) => (c.subtype ?? '').toLowerCase() == 'tool_result',
+        );
         final outputText = outputBlocks.map((c) => c.code).join('\n').trim();
         if (outputText.isNotEmpty &&
             _attachToolResultToPrevBashTool(outputText, isError: isErr)) {
@@ -692,6 +741,137 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       );
     });
     _scrollToBottom();
+  }
+
+  void _handleDeploymentFrame(String type, Map<String, dynamic> payload) {
+    final t = type.toLowerCase().trim();
+    if (t == 'deployment_start') {
+      _finalizePrevToolDone();
+      final framework = payload['message'] is Map
+          ? (payload['message'] as Map)['framework']
+          : null;
+      setState(() {
+        _isDeploying = true;
+        _deployFramework = framework?.toString();
+      });
+      _scheduleDeployAutoClear();
+      if (mounted) {
+        SnackBarHelper.showInfo(
+          context,
+          title: 'Deploying',
+          message:
+              _deployFramework != null && _deployFramework!.trim().isNotEmpty
+              ? 'Starting ${_deployFramework!.trim()} deployment...'
+              : 'Starting deployment...',
+          duration: const Duration(seconds: 2),
+        );
+      }
+      return;
+    }
+
+    if (t == 'deployment_complete' || t == 'deployment_success') {
+      _finalizePrevToolDone();
+      String? url;
+      try {
+        final msg = payload['message'];
+        if (msg is Map) {
+          url =
+              msg['custom_url']?.toString() ??
+              msg['vercel_url']?.toString() ??
+              msg['url']?.toString();
+        }
+        url ??=
+            payload['custom_url']?.toString() ??
+            payload['vercel_url']?.toString() ??
+            payload['url']?.toString();
+      } catch (_) {}
+
+      setState(() {
+        _isDeploying = false;
+        _deployFramework = null;
+        if (url != null && url!.trim().isNotEmpty) {
+          _previewUrl = url!.trim();
+        }
+        _previewKey += 1;
+        _currentChatTabIndex = 0;
+      });
+      _deployAutoClearTimer?.cancel();
+
+      // Best-effort refresh project to pick up the bound preview domain.
+      unawaited(_refreshPreviewUrlFromApi());
+      return;
+    }
+  }
+
+  Future<void> _refreshPreviewUrlFromApi() async {
+    try {
+      final project = await _d1vaiService.getUserProjectById(widget.projectId);
+      final next = (project.latestPreviewUrl ?? '').trim();
+      if (!mounted) return;
+      if (next.isEmpty) return;
+      setState(() {
+        _previewUrl = next;
+        _previewKey += 1;
+      });
+    } catch (_) {}
+  }
+
+  @override
+  Future<void> triggerPreviewRedeploy() async {
+    if (_isDeploying) return;
+    setState(() {
+      _isDeploying = true;
+      _deployFramework = null;
+    });
+    _scheduleDeployAutoClear();
+    try {
+      final res = await _d1vaiService.deployProjectPreview(widget.projectId);
+      final url = (res['vercel_url'] ?? res['production_url'] ?? '')
+          .toString()
+          .trim();
+      if (!mounted) return;
+      if (url.isNotEmpty) {
+        setState(() {
+          _previewUrl = url;
+          _previewKey += 1;
+          _currentChatTabIndex = 0;
+        });
+      } else {
+        setState(() {
+          _previewKey += 1;
+          _currentChatTabIndex = 0;
+        });
+      }
+      SnackBarHelper.showSuccess(
+        context,
+        title: 'Redeploy triggered',
+        message: url.isNotEmpty ? url : 'Preview deployment started',
+        actionLabel: url.isNotEmpty ? 'Open' : null,
+        onActionPressed: url.isNotEmpty
+            ? () {
+                final uri = Uri.tryParse(url);
+                if (uri != null)
+                  launchUrl(uri, mode: LaunchMode.externalApplication);
+              }
+            : null,
+      );
+      unawaited(_refreshPreviewUrlFromApi());
+    } catch (e) {
+      if (!mounted) return;
+      SnackBarHelper.showError(
+        context,
+        title: 'Redeploy failed',
+        message: e.toString(),
+      );
+      setState(() {
+        _isDeploying = false;
+        _deployFramework = null;
+      });
+      _deployAutoClearTimer?.cancel();
+    } finally {
+      // Keep `isDeploying` true until we receive `deployment_complete`/`deployment_success`,
+      // or auto-clear after a timeout.
+    }
   }
 
   Future<void> _ensureWebSocketOpen(String sessionId) async {

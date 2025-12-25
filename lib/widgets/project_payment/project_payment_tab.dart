@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../models/payment.dart';
+import '../../providers/auth_provider.dart';
 import '../../services/d1vai_service.dart';
+import '../../utils/error_utils.dart';
 import '../select.dart';
 import '../snackbar_helper.dart';
 
@@ -26,6 +31,7 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
   final List<PaymentTransaction> _paymentTransactions = [];
   bool _isLoading = false;
   bool _isInitialized = false;
+  String? _loadError;
 
   @override
   void didChangeDependencies() {
@@ -39,6 +45,7 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
   Future<void> _loadPaymentData() async {
     setState(() {
       _isLoading = true;
+      _loadError = null;
     });
 
     try {
@@ -72,13 +79,34 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
           ..clear()
           ..addAll(transactions);
         _isLoading = false;
+        _loadError = null;
       });
     } catch (e) {
       if (!mounted) return;
+      final msg = humanizeError(e);
       setState(() {
         _isLoading = false;
+        _loadError = msg;
       });
+      final authExpired = isAuthExpiredText(msg);
+      SnackBarHelper.showError(
+        context,
+        title: 'Load failed',
+        message: msg,
+        actionLabel: authExpired ? 'Re-login' : null,
+        onActionPressed: authExpired
+            ? () {
+                unawaited(_logoutAndGoLogin());
+              }
+            : null,
+      );
     }
+  }
+
+  Future<void> _logoutAndGoLogin() async {
+    await Provider.of<AuthProvider>(context, listen: false).logout();
+    if (!mounted) return;
+    context.go('/login');
   }
 
   @override
@@ -87,17 +115,64 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildOverviewCard(),
-          const SizedBox(height: 16),
-          _buildProductsCard(context),
-          const SizedBox(height: 16),
-          _buildTransactionsCard(),
-        ],
+    final error = _loadError;
+    if (error != null && error.trim().isNotEmpty) {
+      final authExpired = isAuthExpiredText(error);
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, size: 48),
+              const SizedBox(height: 12),
+              Text(
+                error,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                alignment: WrapAlignment.center,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: _loadPaymentData,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                  ),
+                  if (authExpired)
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        unawaited(_logoutAndGoLogin());
+                      },
+                      icon: const Icon(Icons.login),
+                      label: const Text('Re-login'),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadPaymentData,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildOverviewCard(),
+            const SizedBox(height: 16),
+            _buildProductsCard(context),
+            const SizedBox(height: 16),
+            _buildTransactionsCard(),
+          ],
+        ),
       ),
     );
   }

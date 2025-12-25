@@ -10,6 +10,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/project_provider.dart';
 import '../../core/api_client.dart';
 import '../../services/d1vai_service.dart';
+import '../../utils/error_utils.dart';
 import '../app_preview.dart';
 import '../progress_widget.dart';
 import '../snackbar_helper.dart';
@@ -714,7 +715,7 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
           } catch (e) {
             setDialogState(() {
               releaseRunning = false;
-              releaseError = e.toString();
+              releaseError = humanizeError(e);
             });
           }
         }
@@ -799,7 +800,7 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
           } catch (e) {
             if (!dialogContext.mounted) return;
             setDialogState(() {
-              releaseError = e.toString();
+              releaseError = humanizeError(e);
               releaseRunning = false;
             });
           }

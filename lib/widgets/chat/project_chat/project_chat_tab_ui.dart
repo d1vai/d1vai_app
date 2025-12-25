@@ -97,12 +97,14 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
             },
             statusLabel: _isChatLoading
                 ? 'Sending...'
+                : _isDeploying
+                ? 'Deploying...'
                 : 'Ready',
             isError: false,
             isDone: false,
             isWorking: _isChatLoading,
             isThinking: false,
-            isDeploying: false,
+            isDeploying: _isDeploying,
           ),
         ),
         if (_showMobileChat)
@@ -133,6 +135,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
                           messages: _chatMessages,
                           isLoading: _isChatLoading,
                           isLoadingHistory: _isLoadingHistory,
+                          isDeploying: _isDeploying,
                           messageStatuses: _messageStatuses,
                           onRetry: _retryMessage,
                           onLoadMore: _loadMoreHistory,
@@ -140,13 +143,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
                           isLoadingMore: _isLoadingMoreHistory,
                           scrollController: _chatScrollController,
                           onSendMessage: _sendChatMessage,
-                          onRedeploy: () {
-                            SnackBarHelper.showInfo(
-                              context,
-                              title: 'Redeploy',
-                              message: 'Triggering redeploy...',
-                            );
-                          },
+                          onRedeploy: () => unawaited(triggerPreviewRedeploy()),
                           onClose: () {
                             setState(() {
                               _showMobileChat = false;
@@ -210,12 +207,14 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
             },
             statusLabel: _isChatLoading
                 ? 'Sending...'
+                : _isDeploying
+                ? 'Deploying...'
                 : 'Ready',
             isError: false,
             isDone: false,
             isWorking: _isChatLoading,
             isThinking: false,
-            isDeploying: false,
+            isDeploying: _isDeploying,
           ),
         ),
         if (_showMobileChat)
@@ -250,6 +249,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
                               messages: _chatMessages,
                               isLoading: _isChatLoading,
                               isLoadingHistory: _isLoadingHistory,
+                              isDeploying: _isDeploying,
                               messageStatuses: _messageStatuses,
                               onRetry: _retryMessage,
                               onLoadMore: _loadMoreHistory,
@@ -257,13 +257,8 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
                               isLoadingMore: _isLoadingMoreHistory,
                               scrollController: _chatScrollController,
                               onSendMessage: _sendChatMessage,
-                              onRedeploy: () {
-                                SnackBarHelper.showInfo(
-                                  context,
-                                  title: 'Redeploy',
-                                  message: 'Triggering redeploy...',
-                                );
-                              },
+                              onRedeploy: () =>
+                                  unawaited(triggerPreviewRedeploy()),
                               onClose: () {
                                 setState(() {
                                   _showMobileChat = false;
@@ -285,8 +280,8 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
 
   Widget _buildChatPreviewTabMobile() {
     final theme = Theme.of(context);
-    final previewUrl = widget.previewUrl;
-    if (previewUrl == null || previewUrl.isEmpty) {
+    final previewUrl = _previewUrl;
+    if (previewUrl == null || previewUrl.trim().isEmpty) {
       return const NoPreviewAvailableView();
     }
 
@@ -295,7 +290,10 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
         Expanded(
           child: Container(
             color: theme.colorScheme.surfaceContainerHighest,
-            child: ProjectChatWebView(url: previewUrl),
+            child: ProjectChatWebView(
+              key: ValueKey('preview-${previewUrl.trim()}-$_previewKey'),
+              url: previewUrl.trim(),
+            ),
           ),
         ),
       ],
@@ -304,22 +302,25 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
 
   Widget _buildChatPreviewTab() {
     final theme = Theme.of(context);
-    final previewUrl = widget.previewUrl;
-    if (previewUrl == null || previewUrl.isEmpty) {
+    final previewUrl = _previewUrl;
+    if (previewUrl == null || previewUrl.trim().isEmpty) {
       return const NoPreviewAvailableView();
     }
 
     return Column(
       children: [
         ProjectChatPreviewHeader(
-          previewUrl: previewUrl,
+          previewUrl: previewUrl.trim(),
           onRefreshPreview: _handleRefreshPreview,
           onOpenInNewTab: _handleOpenInNewTab,
         ),
         Expanded(
           child: Container(
             color: theme.colorScheme.surfaceContainerHighest,
-            child: ProjectChatWebView(url: previewUrl),
+            child: ProjectChatWebView(
+              key: ValueKey('preview-${previewUrl.trim()}-$_previewKey'),
+              url: previewUrl.trim(),
+            ),
           ),
         ),
       ],
@@ -356,16 +357,15 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
   }
 
   void _handleRefreshPreview() {
-    SnackBarHelper.showInfo(
-      context,
-      title: 'Refresh Preview',
-      message: 'Refreshing preview...',
-    );
+    setState(() {
+      _previewKey += 1;
+      _currentChatTabIndex = 0;
+    });
   }
 
   void _handleOpenInNewTab() {
-    final previewUrl = widget.previewUrl;
-    if (previewUrl == null || previewUrl.isEmpty) {
+    final previewUrl = _previewUrl;
+    if (previewUrl == null || previewUrl.trim().isEmpty) {
       SnackBarHelper.showInfo(
         context,
         title: 'No Preview URL',
@@ -374,7 +374,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
       return;
     }
 
-    final uri = Uri.tryParse(previewUrl);
+    final uri = Uri.tryParse(previewUrl.trim());
     if (uri != null) {
       launchUrl(uri, mode: LaunchMode.externalApplication);
     }

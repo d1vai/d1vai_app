@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../models/env_var.dart';
+import '../../providers/auth_provider.dart';
 import '../../services/d1vai_service.dart';
+import '../../utils/error_utils.dart';
 import '../snackbar_helper.dart';
 
 /// 项目详情页 - API Tab（环境变量 + API 工具）
@@ -21,6 +26,7 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
   final List<EnvVar> _envVars = [];
   bool _isLoadingEnvVars = false;
   bool _isInitialized = false;
+  String? _loadError;
 
   @override
   void didChangeDependencies() {
@@ -34,6 +40,7 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
   Future<void> _loadEnvVars() async {
     setState(() {
       _isLoadingEnvVars = true;
+      _loadError = null;
     });
 
     try {
@@ -50,18 +57,34 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
           ..clear()
           ..addAll(vars);
         _isLoadingEnvVars = false;
+        _loadError = null;
       });
     } catch (e) {
       if (!mounted) return;
+      final msg = humanizeError(e);
       setState(() {
         _isLoadingEnvVars = false;
+        _loadError = msg;
       });
+      final authExpired = isAuthExpiredText(msg);
       SnackBarHelper.showError(
         context,
         title: 'Error',
-        message: 'Failed to load environment variables',
+        message: msg,
+        actionLabel: authExpired ? 'Re-login' : null,
+        onActionPressed: authExpired
+            ? () {
+                unawaited(_logoutAndGoLogin());
+              }
+            : null,
       );
     }
+  }
+
+  Future<void> _logoutAndGoLogin() async {
+    await Provider.of<AuthProvider>(context, listen: false).logout();
+    if (!mounted) return;
+    context.go('/login');
   }
 
   @override
@@ -113,6 +136,40 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
                     ],
                   ),
                   const SizedBox(height: 16),
+                  if (_loadError != null && _loadError!.trim().isNotEmpty) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.errorContainer,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            color: theme.colorScheme.onErrorContainer,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _loadError!,
+                              style: TextStyle(
+                                color: theme.colorScheme.onErrorContainer,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: _isLoadingEnvVars ? null : _loadEnvVars,
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   if (_isLoadingEnvVars)
                     const Center(
                       child: Padding(

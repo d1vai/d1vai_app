@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:shimmer/shimmer.dart';
+import 'dart:async';
 import '../services/d1vai_service.dart';
 import '../models/community_post.dart';
 import '../widgets/search_field.dart';
 import 'create_post_screen.dart';
 import 'post_detail_screen.dart';
 import '../widgets/post_card.dart';
+import '../utils/error_utils.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -21,6 +23,8 @@ class _CommunityScreenState extends State<CommunityScreen>
   final D1vaiService _d1vaiService = D1vaiService();
   final TextEditingController _searchController = TextEditingController();
   late AnimationController _animationController;
+  Timer? _searchDebounce;
+  int _loadRequestId = 0;
 
   List<CommunityPost> _posts = [];
   bool _isLoading = true;
@@ -50,10 +54,12 @@ class _CommunityScreenState extends State<CommunityScreen>
     _animationController.dispose();
     _controller.dispose();
     _searchController.dispose();
+    _searchDebounce?.cancel();
     super.dispose();
   }
 
   Future<void> _loadPosts({bool refresh = false}) async {
+    final requestId = ++_loadRequestId;
     if (refresh) {
       _offset = 0;
       _hasMore = true;
@@ -71,7 +77,7 @@ class _CommunityScreenState extends State<CommunityScreen>
         searchQuery: _searchQuery.isNotEmpty ? _searchQuery : null,
       );
 
-      if (!mounted) return;
+      if (!mounted || requestId != _loadRequestId) return;
 
       setState(() {
         if (refresh) {
@@ -82,22 +88,13 @@ class _CommunityScreenState extends State<CommunityScreen>
         _isLoading = false;
         _hasMore = posts.length >= _limit;
         _offset += posts.length;
-        if (!refresh && posts.isNotEmpty) {
-          _animationController.forward(
-            from: 0.0,
-          ); // Reset for new page or just forward?
-          // Actually for pagination we might want to just animate new items, but for now let's just forward if it's the first load or refresh.
-          // Simpler: just forward.
-        }
-        if (refresh || _offset == posts.length) {
-          _animationController.forward(from: 0);
-        }
+        _animationController.forward(from: 0);
       });
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || requestId != _loadRequestId) return;
       setState(() {
         _isLoading = false;
-        _error = e.toString();
+        _error = humanizeError(e);
       });
     }
   }
@@ -108,6 +105,17 @@ class _CommunityScreenState extends State<CommunityScreen>
       _searchQuery = query;
     });
     await _loadPosts(refresh: true);
+  }
+
+  void _scheduleSearch(String query) {
+    setState(() {
+      _searchQuery = query;
+    });
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      unawaited(_loadPosts(refresh: true));
+    });
   }
 
   /// 切换搜索状态
@@ -129,8 +137,6 @@ class _CommunityScreenState extends State<CommunityScreen>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(
         title: _isSearching
@@ -138,7 +144,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                 hintText: 'Search posts...',
                 autofocus: true,
                 onChanged: (value) {
-                  _performSearch(value);
+                  _scheduleSearch(value);
                 },
                 onClear: _clearSearch,
               )
@@ -165,47 +171,7 @@ class _CommunityScreenState extends State<CommunityScreen>
           ),
         ],
       ),
-      body: _isSearching && _searchQuery.isNotEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.search,
-                    size: 64,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Searching for "$_searchQuery"...',
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Press the search icon to start',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : EasyRefresh(
-              controller: _controller,
-              onRefresh: () async {
-                await _loadPosts(refresh: true);
-                if (!mounted) return;
-                _controller.finishRefresh();
-              },
-              onLoad: () async {
-                await _loadPosts();
-                if (!mounted) return;
-                _controller.finishLoad(
-                  _hasMore ? IndicatorResult.success : IndicatorResult.noMore,
-                );
-              },
-              child: _buildBody(),
-            ),
+      body: _buildBody(),
     );
   }
 
@@ -224,6 +190,15 @@ class _CommunityScreenState extends State<CommunityScreen>
             Text(
               'Failed to load posts',
               style: TextStyle(color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                _error!,
+                style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                textAlign: TextAlign.center,
+              ),
             ),
             const SizedBox(height: 8),
             ElevatedButton(
@@ -268,15 +243,18 @@ class _CommunityScreenState extends State<CommunityScreen>
       footer: const ClassicFooter(),
       onRefresh: () async {
         await _loadPosts(refresh: true);
+        if (!mounted) return;
         _controller.finishRefresh();
       },
       onLoad: () async {
         if (_hasMore) {
           await _loadPosts();
+          if (!mounted) return;
           _controller.finishLoad(
             _hasMore ? IndicatorResult.success : IndicatorResult.noMore,
           );
         } else {
+          if (!mounted) return;
           _controller.finishLoad(IndicatorResult.noMore);
         }
       },

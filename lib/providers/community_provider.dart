@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/community_post.dart';
 import '../services/d1vai_service.dart';
+import '../utils/error_utils.dart';
 
 /// Community Provider - 管理社区页面状态
 class CommunityProvider extends ChangeNotifier {
@@ -41,6 +42,7 @@ class CommunityProvider extends ChangeNotifier {
   /// 设置搜索参数
   void setSearchQuery(String query) {
     _searchQuery = query;
+    notifyListeners();
   }
 
   /// 刷新数据
@@ -80,7 +82,7 @@ class CommunityProvider extends ChangeNotifier {
       _currentOffset += newPosts.length;
       _hasMore = newPosts.length == _limit;
     } catch (e) {
-      _error = e.toString();
+      _error = humanizeError(e);
     } finally {
       _isLoading = false;
       _isLoadingMore = false;

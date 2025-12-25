@@ -61,6 +61,7 @@ dependencies:
   share_plus: ^10.0.0
   path_provider: ^2.1.5
   crypto: ^3.0.7
+  flutter_highlight: ^0.7.0
 
 dev_dependencies:
   flutter_test:

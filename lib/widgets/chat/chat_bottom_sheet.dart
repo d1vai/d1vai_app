@@ -10,6 +10,7 @@ class ChatBottomSheet extends StatefulWidget {
   final List<ChatMessage> messages;
   final bool isLoading;
   final bool isLoadingHistory;
+  final bool isDeploying;
   final ScrollController? scrollController;
   final Function(String) onSendMessage;
   final Map<String, MessageStatus>? messageStatuses;
@@ -25,6 +26,7 @@ class ChatBottomSheet extends StatefulWidget {
     required this.messages,
     this.isLoading = false,
     this.isLoadingHistory = false,
+    this.isDeploying = false,
     this.scrollController,
     required this.onSendMessage,
     this.messageStatuses,
@@ -55,7 +57,9 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final headerDividerColor = theme.colorScheme.outline.withValues(alpha: 0.35);
+    final headerDividerColor = theme.colorScheme.outline.withValues(
+      alpha: 0.35,
+    );
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
@@ -72,7 +76,9 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.25),
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.25,
+                ),
                 borderRadius: BorderRadius.circular(999),
               ),
             ),
@@ -83,9 +89,7 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: theme.colorScheme.surface,
-              border: Border(
-                bottom: BorderSide(color: headerDividerColor),
-              ),
+              border: Border(bottom: BorderSide(color: headerDividerColor)),
             ),
             child: Row(
               children: [
@@ -111,7 +115,7 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                     child: Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        onTap: widget.onRedeploy,
+                        onTap: widget.isDeploying ? null : widget.onRedeploy,
                         borderRadius: BorderRadius.circular(8),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
@@ -121,14 +125,26 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                Icons.refresh,
-                                size: 16,
-                                color: theme.colorScheme.primary,
-                              ),
+                              if (widget.isDeploying)
+                                SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      theme.colorScheme.primary,
+                                    ),
+                                  ),
+                                )
+                              else
+                                Icon(
+                                  Icons.refresh,
+                                  size: 16,
+                                  color: theme.colorScheme.primary,
+                                ),
                               const SizedBox(width: 6),
                               Text(
-                                'Redeploy',
+                                widget.isDeploying ? 'Deploying…' : 'Redeploy',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,

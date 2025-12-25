@@ -5,6 +5,7 @@ import '../models/message.dart';
 import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
 import '../services/workspace_service.dart';
+import '../utils/error_utils.dart';
 import '../utils/message_parser.dart';
 import '../widgets/chat/message_list.dart';
 import '../widgets/chat/message_input.dart';
@@ -142,7 +143,7 @@ class _ChatScreenState extends State<ChatScreen>
       if (!mounted) return;
       setState(() {
         _workspacePhase = WorkspacePhase.error;
-        _workspaceError = e.toString();
+        _workspaceError = humanizeError(e);
       });
       _workspacePollErrorStreak += 1;
       _scheduleWorkspacePoll(WorkspacePhase.error);
@@ -181,7 +182,7 @@ class _ChatScreenState extends State<ChatScreen>
       if (!mounted) return;
       setState(() {
         _workspacePhase = WorkspacePhase.error;
-        _workspaceError = e.toString();
+        _workspaceError = humanizeError(e);
       });
       _workspacePollErrorStreak += 1;
       _scheduleWorkspacePoll(WorkspacePhase.error);
@@ -259,11 +260,12 @@ class _ChatScreenState extends State<ChatScreen>
       setState(() {
         _isLoadingHistory = false;
       });
+      final msg = humanizeError(e);
       showDialog(
         context: context,
         builder: (context) => Alert(
           variant: AlertVariant.destructive,
-          child: AlertDescription(text: 'Failed to load chat history: $e'),
+          child: AlertDescription(text: 'Failed to load chat history: $msg'),
         ),
       );
     }

@@ -276,13 +276,18 @@ class D1vaiService {
     bool? enableDatabase,
     bool? enableResend,
   }) async {
-    return _apiClient.post('/api/projects/create-with-integrations', {
-      'prompt': prompt,
-      if (maxDescLen != null) 'max_desc_len': maxDescLen,
-      if (enablePay != null) 'enable_pay': enablePay,
-      if (enableDatabase != null) 'enable_database': enableDatabase,
-      if (enableResend != null) 'enable_resend': enableResend,
-    }, retries: 0, timeout: const Duration(minutes: 4));
+    return _apiClient.post(
+      '/api/projects/create-with-integrations',
+      {
+        'prompt': prompt,
+        if (maxDescLen != null) 'max_desc_len': maxDescLen,
+        if (enablePay != null) 'enable_pay': enablePay,
+        if (enableDatabase != null) 'enable_database': enableDatabase,
+        if (enableResend != null) 'enable_resend': enableResend,
+      },
+      retries: 0,
+      timeout: const Duration(minutes: 4),
+    );
   }
 
   /// 更新项目信息
@@ -718,19 +723,17 @@ class D1vaiService {
   }
 
   /// 获取 Umami 网站值
-  Future<List<dynamic>> getUmamiWebsiteValues(
+  Future<Map<String, dynamic>> getUmamiWebsiteValues(
     String projectId, {
-    required String type,
     required int startAt,
     required int endAt,
   }) async {
     final queryParams = <String, String>{
-      'type': type,
       'startAt': startAt.toString(),
       'endAt': endAt.toString(),
     };
 
-    return _apiClient.get<List<dynamic>>(
+    return _apiClient.get<Map<String, dynamic>>(
       '/api/analytics/data/$projectId/website/values',
       queryParams: queryParams,
     );
@@ -772,7 +775,7 @@ class D1vaiService {
   }
 
   /// 获取 Umami 页面浏览量
-  Future<List<dynamic>> getUmamiPageviews(
+  Future<Map<String, dynamic>> getUmamiPageviews(
     String projectId,
     Map<String, dynamic> params, {
     List<Map<String, dynamic>>? filters,
@@ -800,7 +803,7 @@ class D1vaiService {
       }
     }
 
-    return _apiClient.get<List<dynamic>>(
+    return _apiClient.get<Map<String, dynamic>>(
       '/api/analytics/data/$projectId/pageviews',
       queryParams: queryParams,
     );
@@ -910,7 +913,7 @@ class D1vaiService {
   }
 
   /// 获取 Umami 会话数据
-  Future<List<dynamic>> getUmamiSessions(
+  Future<Map<String, dynamic>> getUmamiSessions(
     String projectId,
     Map<String, dynamic> params, {
     List<Map<String, dynamic>>? filters,
@@ -938,7 +941,7 @@ class D1vaiService {
       }
     }
 
-    return _apiClient.get<List<dynamic>>(
+    return _apiClient.get<Map<String, dynamic>>(
       '/api/analytics/data/$projectId/sessions',
       queryParams: queryParams,
     );
@@ -1295,12 +1298,8 @@ class D1vaiService {
   // ============================================
 
   /// 获取项目对应的社区帖子（对齐 Web: `GET /api/community/projects/{id}/post`）
-  Future<dynamic> getCommunityPostForProject(
-    String projectId,
-  ) async {
-    return _apiClient.get<dynamic>(
-      '/api/community/projects/$projectId/post',
-    );
+  Future<dynamic> getCommunityPostForProject(String projectId) async {
+    return _apiClient.get<dynamic>('/api/community/projects/$projectId/post');
   }
 
   /// 创建或更新社区帖子（对齐 Web: `POST /api/community/posts`）
@@ -1362,14 +1361,12 @@ class D1vaiService {
     required String headBranch,
     String? commitMessage,
   }) async {
-    return _apiClient.post<Map<String, dynamic>>(
-      '/api/github-ops/$projectId/merge',
-      {
-        'base_branch': baseBranch,
-        'head_branch': headBranch,
-        if (commitMessage != null) 'commit_message': commitMessage,
-      },
-    );
+    return _apiClient
+        .post<Map<String, dynamic>>('/api/github-ops/$projectId/merge', {
+          'base_branch': baseBranch,
+          'head_branch': headBranch,
+          if (commitMessage != null) 'commit_message': commitMessage,
+        });
   }
 
   // ============================================

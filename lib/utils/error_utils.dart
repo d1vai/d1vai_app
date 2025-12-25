@@ -30,3 +30,11 @@ String humanizeError(Object error) {
   return message.isEmpty ? '请求失败，请稍后重试' : message;
 }
 
+bool isAuthExpiredText(String message) {
+  final m = message.trim().toLowerCase();
+  return m.contains('登录已过期') ||
+      m.contains('unauthorized') ||
+      m.contains('http error: 401') ||
+      m.contains('statuscode: 401') ||
+      m.contains(' 401 ');
+}

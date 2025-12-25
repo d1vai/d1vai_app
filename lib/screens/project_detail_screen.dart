@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 
 import '../models/project.dart';
 import '../providers/auth_provider.dart';
 import '../providers/project_provider.dart';
 import '../services/d1vai_service.dart';
+import '../utils/error_utils.dart';
 import '../widgets/login_required_dialog.dart';
 import '../widgets/project_analytics/project_analytics_tab.dart';
 import '../widgets/project_api/project_api_tab.dart';
@@ -86,8 +88,16 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         _isLoading = false;
       });
     } catch (e) {
+      final message = humanizeError(e);
+      if (isAuthExpiredText(message)) {
+        if (!mounted) return;
+        await Provider.of<AuthProvider>(context, listen: false).logout();
+        if (!mounted) return;
+        context.go('/login');
+        return;
+      }
       setState(() {
-        _error = e.toString();
+        _error = message;
         _isLoading = false;
       });
     }
@@ -177,7 +187,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           ProjectApiTab(projectId: project.id),
           const ProjectGithubTab(),
           ProjectPaymentTab(projectId: project.id, onAskAi: _handleAskAi),
-          ProjectDeployTab(project: project, onAskAi: _handleAskAi),
+          ProjectDeployTab(
+            project: project,
+            onAskAi: _handleAskAi,
+            onRefreshProject: _loadProject,
+          ),
           ProjectAnalyticsTab(
             project: project,
             onAskAi: _handleAskAi,
