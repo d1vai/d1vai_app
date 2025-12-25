@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../l10n/app_localizations.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/d1vai_service.dart';
 import '../../widgets/button.dart';
@@ -17,6 +18,7 @@ class SettingsInvitesTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final d1vaiService = D1vaiService();
+    final loc = AppLocalizations.of(context);
 
     return FutureBuilder<List<dynamic>>(
       future: d1vaiService.getMyInvitees(),
@@ -37,21 +39,24 @@ class SettingsInvitesTab extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Invite Friends',
+                      loc?.translate('invite_friends') ?? 'Invite Friends',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Invite friends to join d1v.ai and get rewards',
+                      loc?.translate('invite_description') ??
+                          'Invite friends to join d1v.ai and get rewards',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondaryLight,
-                          ),
+                        color: AppColors.textSecondaryLight,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Consumer<AuthProvider>(
                       builder: (context, authProvider, _) {
                         final user = authProvider.user;
-                        final inviteCode = user?.inviteCode ?? 'Loading...';
+                        final inviteCode =
+                            user?.inviteCode ??
+                            (loc?.translate('loading') ?? 'Loading...');
 
                         return Container(
                           decoration: BoxDecoration(
@@ -67,7 +72,10 @@ class SettingsInvitesTab extends StatelessWidget {
                                 letterSpacing: 2,
                               ),
                             ),
-                            subtitle: const Text('Your Invite Code'),
+                            subtitle: Text(
+                              loc?.translate('your_invite_code') ??
+                                  'Your Invite Code',
+                            ),
                             trailing: IconButton(
                               icon: const Icon(Icons.copy),
                               onPressed: () {
@@ -75,8 +83,9 @@ class SettingsInvitesTab extends StatelessWidget {
                                     inviteCode != 'Loading...') {
                                   SnackBarHelper.showSuccess(
                                     context,
-                                    title: 'Copied',
+                                    title: loc?.translate('copied') ?? 'Copied',
                                     message:
+                                        loc?.translate('invite_code_copied') ??
                                         'Invite code copied to clipboard',
                                   );
                                 }
@@ -94,7 +103,9 @@ class SettingsInvitesTab extends StatelessWidget {
                           _shareInviteCode(context);
                         },
                         icon: const Icon(Icons.share),
-                        text: 'Share Invite Code',
+                        text:
+                            loc?.translate('share_invite_code') ??
+                            'Share Invite Code',
                       ),
                     ),
                   ],
@@ -112,8 +123,11 @@ class SettingsInvitesTab extends StatelessWidget {
                       Icons.card_giftcard,
                       color: AppColors.secondaryBrand,
                     ),
-                    title: const Text('My Invites'),
-                    subtitle: const Text('View your invitation history'),
+                    title: Text(loc?.translate('my_invites') ?? 'My Invites'),
+                    subtitle: Text(
+                      loc?.translate('my_invites_subtitle') ??
+                          'View your invitation history',
+                    ),
                     trailing: const Icon(
                       Icons.arrow_forward_ios,
                       size: 16,
@@ -131,12 +145,19 @@ class SettingsInvitesTab extends StatelessWidget {
                   ),
                   ListTile(
                     leading: const Icon(Icons.people, color: AppColors.success),
-                    title: const Text('Friends Referred'),
+                    title: Text(
+                      loc?.translate('friends_referred') ?? 'Friends Referred',
+                    ),
                     subtitle: isLoading
-                        ? const Text('Loading...')
+                        ? Text(loc?.translate('loading') ?? 'Loading...')
                         : hasError
-                            ? const Text('Failed to load')
-                            : Text('$friendCount friends'),
+                        ? Text(
+                            loc?.translate('failed_to_load') ??
+                                'Failed to load',
+                          )
+                        : Text(
+                            '$friendCount ${loc?.translate('friends_count') ?? 'friends'}',
+                          ),
                     trailing: const Icon(
                       Icons.arrow_forward_ios,
                       size: 16,
@@ -158,12 +179,13 @@ class SettingsInvitesTab extends StatelessWidget {
 
 Future<void> _shareInviteCode(BuildContext context) async {
   final user = Provider.of<AuthProvider>(context, listen: false).user;
+  final loc = AppLocalizations.of(context);
   if (user == null) {
     if (context.mounted) {
       SnackBarHelper.showError(
         context,
-        title: 'Error',
-        message: 'Please login first',
+        title: loc?.translate('error') ?? 'Error',
+        message: loc?.translate('login_first') ?? 'Please login first',
       );
     }
     return;
@@ -174,8 +196,10 @@ Future<void> _shareInviteCode(BuildContext context) async {
     if (context.mounted) {
       SnackBarHelper.showError(
         context,
-        title: 'Error',
-        message: 'Invite code not available',
+        title: loc?.translate('error') ?? 'Error',
+        message:
+            loc?.translate('invite_code_unavailable') ??
+            'Invite code not available',
       );
     }
     return;
@@ -183,7 +207,8 @@ Future<void> _shareInviteCode(BuildContext context) async {
 
   final inviteLink = 'https://d1v.ai/login?invite=$inviteCode';
 
-  final message = '''Join me on d1v.ai! 🚀
+  final message =
+      '''Join me on d1v.ai! 🚀
 
 Use my invite code: $inviteCode
 
@@ -193,20 +218,26 @@ $inviteLink
 Together, let's build the future of AI-powered applications!''';
 
   try {
-    await Share.share(message, subject: 'Join me on d1v.ai');
+    await Share.share(
+      message,
+      subject: loc?.translate('share_message_subject') ?? 'Join me on d1v.ai',
+    );
     if (context.mounted) {
       SnackBarHelper.showSuccess(
         context,
-        title: 'Shared',
-        message: 'Invite code shared successfully',
+        title: loc?.translate('success') ?? 'Success',
+        message:
+            loc?.translate('share_success') ??
+            'Invite code shared successfully',
       );
     }
   } catch (error) {
     if (context.mounted) {
       SnackBarHelper.showError(
         context,
-        title: 'Error',
-        message: 'Failed to share: $error',
+        title: loc?.translate('error') ?? 'Error',
+        message:
+            '${loc?.translate('share_failed') ?? "Failed to share"}: $error',
       );
     }
   }

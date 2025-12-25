@@ -196,6 +196,7 @@ class AccountStatusCard extends StatelessWidget {
     String label,
     String value,
   ) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -210,10 +211,10 @@ class AccountStatusCard extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: Colors.grey.shade100,
+            color: theme.colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(4),
             border: Border.all(
-              color: Colors.grey.shade300,
+              color: theme.colorScheme.outline.withValues(alpha: 0.35),
               width: 1,
             ),
           ),
@@ -222,7 +223,7 @@ class AccountStatusCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: Colors.grey.shade700,
+              color: theme.colorScheme.onSurface,
             ),
           ),
         ),

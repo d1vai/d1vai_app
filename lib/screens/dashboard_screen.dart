@@ -20,7 +20,6 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen>
     with SingleTickerProviderStateMixin {
-  bool _isLoading = true;
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   List<UserProject> _searchResults = [];
@@ -39,17 +38,14 @@ class _DashboardScreenState extends State<DashboardScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
     });
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        _animationController.forward();
-      }
-    });
   }
 
   /// 加载数据
-  void _loadData() {
-    Provider.of<ProjectProvider>(context, listen: false).loadProjects();
+  Future<void> _loadData() async {
+    await Provider.of<ProjectProvider>(context, listen: false).loadProjects();
+    if (mounted) {
+      _animationController.forward(from: 0);
+    }
   }
 
   @override
@@ -111,7 +107,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
         ],
       ),
-      body: (_isLoading || projectProvider.isLoading)
+      body: projectProvider.isInitialLoading
           ? _buildShimmer()
           : _buildContent(user, context, projectProvider),
       floatingActionButton: FloatingActionButton(

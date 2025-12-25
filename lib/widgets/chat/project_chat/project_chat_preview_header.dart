@@ -22,7 +22,9 @@ class ProjectChatPreviewHeader extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
         border: Border(
-          bottom: BorderSide(color: theme.colorScheme.outlineVariant),
+          bottom: BorderSide(
+            color: theme.colorScheme.outline.withValues(alpha: 0.35),
+          ),
         ),
       ),
       child: Row(

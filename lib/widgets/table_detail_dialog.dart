@@ -94,6 +94,7 @@ class _TableDetailDialogState extends State<TableDetailDialog> {
   }
 
   Widget _buildTabButton(int index, String label) {
+    final theme = Theme.of(context);
     final isSelected = _currentTab == index;
     return GestureDetector(
       onTap: () {
@@ -104,7 +105,7 @@ class _TableDetailDialogState extends State<TableDetailDialog> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
+          color: isSelected ? theme.colorScheme.surface : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           boxShadow: isSelected
               ? [
@@ -121,7 +122,9 @@ class _TableDetailDialogState extends State<TableDetailDialog> {
           textAlign: TextAlign.center,
           style: TextStyle(
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            color: isSelected ? Colors.deepPurple : Colors.grey.shade700,
+            color: isSelected
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onSurfaceVariant,
           ),
         ),
       ),
@@ -129,6 +132,7 @@ class _TableDetailDialogState extends State<TableDetailDialog> {
   }
 
   Widget _buildSchemaTab() {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -212,14 +216,14 @@ class _TableDetailDialogState extends State<TableDetailDialog> {
                   1: FlexColumnWidth(1),
                 },
                 border: TableBorder.all(
-                  color: Colors.grey.shade300,
+                  color: theme.colorScheme.outline.withValues(alpha: 0.35),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 children: [
                   // Header
                   TableRow(
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
+                      color: theme.colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(8),
                         topRight: Radius.circular(8),

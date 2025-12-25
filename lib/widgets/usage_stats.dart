@@ -410,6 +410,7 @@ class _UsageStatsState extends State<UsageStats>
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: _availableMonths.map((months) {
+                  final theme = Theme.of(context);
                   final isSelected = _selectedMonths == months;
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
@@ -429,13 +430,13 @@ class _UsageStatsState extends State<UsageStats>
                         ),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? Colors.deepPurple
-                              : Colors.grey.shade100,
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
                             color: isSelected
-                                ? Colors.deepPurple
-                                : Colors.grey.shade300,
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.outline.withValues(alpha: 0.35),
                             width: 1,
                           ),
                         ),
@@ -443,8 +444,8 @@ class _UsageStatsState extends State<UsageStats>
                           '$months months',
                           style: TextStyle(
                             color: isSelected
-                                ? Colors.white
-                                : Colors.grey.shade700,
+                                ? theme.colorScheme.onPrimary
+                                : theme.colorScheme.onSurfaceVariant,
                             fontWeight: isSelected
                                 ? FontWeight.w600
                                 : FontWeight.w500,

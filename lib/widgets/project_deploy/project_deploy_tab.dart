@@ -133,7 +133,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(Icons.cancel, color: Colors.grey, size: 24),

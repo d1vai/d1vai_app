@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
+import 'dart:async';
 import '../providers/project_provider.dart';
 import '../providers/auth_provider.dart';
 import '../models/project.dart';
@@ -16,14 +17,29 @@ class ProjectsScreen extends StatefulWidget {
 
 class _ProjectsScreenState extends State<ProjectsScreen> {
   final TextEditingController _searchController = TextEditingController();
+  Timer? _searchDebounce;
   String _selectedFilter = 'all';
-  List<UserProject> _filteredProjects = [];
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ProjectProvider>(context, listen: false).loadProjects();
+      final provider = Provider.of<ProjectProvider>(context, listen: false);
+      // Restore last state (useful when navigating back from detail pages).
+      if (provider.searchQuery.trim().isNotEmpty &&
+          _searchController.text.trim().isEmpty) {
+        _searchController.text = provider.searchQuery;
+        _searchController.selection = TextSelection.fromPosition(
+          TextPosition(offset: _searchController.text.length),
+        );
+      }
+      final status = provider.statusFilter;
+      if (status == null || status.isEmpty) {
+        _selectedFilter = 'all';
+      } else {
+        _selectedFilter = status;
+      }
+      provider.loadProjects();
     });
     _searchController.addListener(_onSearchChanged);
   }
@@ -32,6 +48,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
   void dispose() {
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
+    _searchDebounce?.cancel();
     super.dispose();
   }
 
@@ -39,13 +56,10 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
   void _onSearchChanged() {
     final provider = Provider.of<ProjectProvider>(context, listen: false);
     final query = _searchController.text.trim();
-
-    if (query.isEmpty) {
-      _filteredProjects = List.from(provider.projects);
-    } else {
-      _filteredProjects = provider.searchProjects(query);
-    }
-    setState(() {});
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 220), () {
+      provider.setSearchQuery(query);
+    });
   }
 
   /// 刷新数据
@@ -62,8 +76,6 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
   void _handleSearch(String query) {
     final provider = Provider.of<ProjectProvider>(context, listen: false);
     provider.setSearchQuery(query);
-    // 实时搜索，不需要重新请求 API
-    setState(() {});
   }
 
   /// 处理过滤
@@ -73,7 +85,6 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     });
     final provider = Provider.of<ProjectProvider>(context, listen: false);
     provider.setStatus(filter == 'all' ? null : filter);
-    provider.refresh();
   }
 
   /// 处理登出
@@ -215,6 +226,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                           style: TextStyle(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
+                          textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton(
@@ -226,13 +238,11 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                   );
                 }
 
-                // 初始化过滤列表
-                if (_filteredProjects.isEmpty && provider.projects.isNotEmpty) {
-                  _filteredProjects = List.from(provider.projects);
-                }
-
-                if (_filteredProjects.isEmpty) {
-                  final hasSearchQuery = _searchController.text.trim().isNotEmpty;
+                final visibleProjects = provider.visibleProjects;
+                if (visibleProjects.isEmpty) {
+                  final hasSearchQuery =
+                      _searchController.text.trim().isNotEmpty ||
+                      provider.searchQuery.trim().isNotEmpty;
                   final theme = Theme.of(context);
                   return Center(
                     child: Column(
@@ -245,7 +255,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          hasSearchQuery ? 'No projects match your search' : 'No projects found',
+                          hasSearchQuery
+                              ? 'No projects match your search'
+                              : 'No projects found',
                           style: TextStyle(
                             fontSize: 18,
                             color: theme.colorScheme.onSurfaceVariant,
@@ -261,9 +273,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                   child: ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount:
-                        _filteredProjects.length + (provider.hasMore ? 1 : 0),
+                        visibleProjects.length + (provider.hasMore ? 1 : 0),
                     itemBuilder: (context, index) {
-                      if (index == _filteredProjects.length) {
+                      if (index == visibleProjects.length) {
                         // 加载更多指示器
                         if (provider.isLoadingMore) {
                           return const Padding(
@@ -283,7 +295,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                         }
                       }
 
-                      final project = _filteredProjects[index];
+                      final project = visibleProjects[index];
                       return _buildProjectCard(project, context);
                     },
                   ),

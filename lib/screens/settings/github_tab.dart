@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../l10n/app_localizations.dart';
 import '../../providers/project_provider.dart';
 import '../../services/d1vai_service.dart';
 import '../../widgets/button.dart';
@@ -15,6 +16,7 @@ class SettingsGithubTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return ListView(
@@ -40,15 +42,16 @@ class SettingsGithubTab extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'GitHub Integration',
+                            loc?.translate('github_integration') ??
+                                'GitHub Integration',
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Connect your GitHub account to import repositories',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: AppColors.textSecondaryLight,
-                                ),
+                            loc?.translate('github_connect_description') ??
+                                'Connect your GitHub account to import repositories',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: AppColors.textSecondaryLight),
                           ),
                         ],
                       ),
@@ -64,7 +67,7 @@ class SettingsGithubTab extends StatelessWidget {
                       context.push('/settings/github');
                     },
                     icon: const Icon(Icons.link),
-                    text: 'Connect GitHub',
+                    text: loc?.translate('connect_github') ?? 'Connect GitHub',
                     backgroundColor: Colors.black,
                     foregroundColor: Colors.white,
                   ),
@@ -81,8 +84,13 @@ class SettingsGithubTab extends StatelessWidget {
             children: [
               ListTile(
                 leading: const Icon(Icons.refresh, color: AppColors.info),
-                title: const Text('Sync Repositories'),
-                subtitle: const Text('Update your repository list'),
+                title: Text(
+                  loc?.translate('sync_repositories') ?? 'Sync Repositories',
+                ),
+                subtitle: Text(
+                  loc?.translate('sync_subtitle') ??
+                      'Update your repository list',
+                ),
                 trailing: const Icon(
                   Icons.arrow_forward_ios,
                   size: 16,
@@ -91,8 +99,10 @@ class SettingsGithubTab extends StatelessWidget {
                 onTap: () {
                   SnackBarHelper.showInfo(
                     context,
-                    title: 'Syncing',
-                    message: 'Syncing repositories...',
+                    title: loc?.translate('syncing') ?? 'Syncing',
+                    message:
+                        loc?.translate('syncing_message') ??
+                        'Syncing repositories...',
                   );
 
                   Provider.of<ProjectProvider>(context, listen: false)
@@ -101,16 +111,19 @@ class SettingsGithubTab extends StatelessWidget {
                         if (!context.mounted) return;
                         SnackBarHelper.showSuccess(
                           context,
-                          title: 'Success',
-                          message: 'Repositories synced successfully',
+                          title: loc?.translate('success') ?? 'Success',
+                          message:
+                              loc?.translate('sync_success') ??
+                              'Repositories synced successfully',
                         );
                       })
                       .catchError((error) {
                         if (!context.mounted) return;
                         SnackBarHelper.showError(
                           context,
-                          title: 'Error',
-                          message: 'Failed to sync repositories: $error',
+                          title: loc?.translate('error') ?? 'Error',
+                          message:
+                              '${loc?.translate('sync_failed') ?? "Failed to sync repositories"}: $error',
                         );
                       });
                 },
@@ -126,8 +139,13 @@ class SettingsGithubTab extends StatelessWidget {
                   Icons.list,
                   color: AppColors.secondaryBrand,
                 ),
-                title: const Text('Import Repository'),
-                subtitle: const Text('Import a public repository'),
+                title: Text(
+                  loc?.translate('import_repository') ?? 'Import Repository',
+                ),
+                subtitle: Text(
+                  loc?.translate('import_subtitle') ??
+                      'Import a public repository',
+                ),
                 trailing: const Icon(
                   Icons.arrow_forward_ios,
                   size: 16,
@@ -149,53 +167,62 @@ void _showImportRepositoryDialog(BuildContext context) {
   final ownerController = TextEditingController();
   final repoController = TextEditingController();
   final projectNameController = TextEditingController();
+  final loc = AppLocalizations.of(context);
   bool isImporting = false;
 
   showDialog(
     context: context,
     builder: (dialogContext) => StatefulBuilder(
       builder: (dialogContext, setDialogState) => AlertDialog(
-        title: const Text('Import Public Repository'),
+        title: Text(
+          loc?.translate('import_dialog_title') ?? 'Import Public Repository',
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Enter the repository information you want to import',
+              loc?.translate('import_dialog_description') ??
+                  'Enter the repository information you want to import',
               style: TextStyle(color: Colors.grey.shade600),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: ownerController,
               enabled: !isImporting,
-              decoration: const InputDecoration(
-                labelText: 'Owner',
-                hintText: 'username or organization',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: loc?.translate('owner_label') ?? 'Owner',
+                hintText:
+                    loc?.translate('owner_hint') ?? 'username or organization',
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: repoController,
               enabled: !isImporting,
-              decoration: const InputDecoration(
-                labelText: 'Repository',
-                hintText: 'repository-name',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: loc?.translate('repo_label') ?? 'Repository',
+                hintText: loc?.translate('repo_hint') ?? 'repository-name',
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: projectNameController,
               enabled: !isImporting,
-              decoration: const InputDecoration(
-                labelText: 'Project Name (Optional)',
-                hintText: 'Leave empty to use repository name',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText:
+                    loc?.translate('project_name_optional') ??
+                    'Project Name (Optional)',
+                hintText:
+                    loc?.translate('project_name_hint') ??
+                    'Leave empty to use repository name',
+                border: const OutlineInputBorder(),
               ),
             ),
             if (isImporting) ...[
               const SizedBox(height: 16),
-              const Row(
+              Row(
                 children: [
                   SizedBox(
                     width: 16,
@@ -203,7 +230,7 @@ void _showImportRepositoryDialog(BuildContext context) {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                   SizedBox(width: 12),
-                  Text('Importing...'),
+                  Text(loc?.translate('importing') ?? 'Importing...'),
                 ],
               ),
             ],
@@ -212,7 +239,7 @@ void _showImportRepositoryDialog(BuildContext context) {
         actions: [
           TextButton(
             onPressed: isImporting ? null : () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: Text(loc?.translate('cancel') ?? 'Cancel'),
           ),
           ElevatedButton(
             onPressed: isImporting
@@ -224,8 +251,10 @@ void _showImportRepositoryDialog(BuildContext context) {
                     if (owner.isEmpty || repo.isEmpty) {
                       SnackBarHelper.showError(
                         dialogContext,
-                        title: 'Error',
-                        message: 'Please enter owner and repository name',
+                        title: loc?.translate('error') ?? 'Error',
+                        message:
+                            loc?.translate('input_error_owner_repo') ??
+                            'Please enter owner and repository name',
                       );
                       return;
                     }
@@ -245,8 +274,10 @@ void _showImportRepositoryDialog(BuildContext context) {
                           if (!dialogContext.mounted) return;
                           SnackBarHelper.showSuccess(
                             dialogContext,
-                            title: 'Success',
-                            message: 'Repository imported successfully',
+                            title: loc?.translate('success') ?? 'Success',
+                            message:
+                                loc?.translate('import_success') ??
+                                'Repository imported successfully',
                           );
 
                           Navigator.pop(dialogContext);
@@ -261,8 +292,9 @@ void _showImportRepositoryDialog(BuildContext context) {
                           if (!dialogContext.mounted) return;
                           SnackBarHelper.showError(
                             dialogContext,
-                            title: 'Error',
-                            message: 'Failed to import repository: $error',
+                            title: loc?.translate('error') ?? 'Error',
+                            message:
+                                '${loc?.translate('import_failed') ?? "Failed to import repository"}: $error',
                           );
                           setDialogState(() {
                             isImporting = false;
@@ -275,7 +307,7 @@ void _showImportRepositoryDialog(BuildContext context) {
                     height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Import'),
+                : Text(loc?.translate('import_action') ?? 'Import'),
           ),
         ],
       ),

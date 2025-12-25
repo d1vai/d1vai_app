@@ -206,22 +206,24 @@ class D1vaiService {
   // ============================================
 
   /// 获取用户项目列表（带缓存）
-  Future<List<UserProject>> getUserProjects() async {
+  Future<List<UserProject>> getUserProjects({bool forceRefresh = false}) async {
     const cacheKey = 'user_projects';
 
-    // 尝试从缓存获取
-    final cachedData = await _cacheService.get<List<UserProject>>(cacheKey, (
-      json,
-    ) {
-      final data = json['data'] as List;
-      return data.map((e) => UserProject.fromJson(e)).toList();
-    });
+    if (!forceRefresh) {
+      // 尝试从缓存获取
+      final cachedData = await _cacheService.get<List<UserProject>>(cacheKey, (
+        json,
+      ) {
+        final data = json['data'] as List;
+        return data.map((e) => UserProject.fromJson(e)).toList();
+      });
 
-    if (cachedData != null) {
-      return cachedData;
+      if (cachedData != null) {
+        return cachedData;
+      }
     }
 
-    // 缓存未命中，从 API 获取
+    // 缓存未命中或强制刷新，从 API 获取
     final data = await _apiClient.get<List<UserProject>>(
       '/api/projects',
       fromJsonT: (json) =>

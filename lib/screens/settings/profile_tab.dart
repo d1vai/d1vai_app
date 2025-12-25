@@ -82,8 +82,10 @@ class SettingsProfileTab extends StatelessWidget {
                       Icons.brightness_6,
                       color: AppColors.primaryBrand,
                     ),
-                    title: const Text('Theme'),
-                    subtitle: const Text('Light or Dark mode'),
+                    title: Text(loc?.translate('theme_title') ?? 'Theme'),
+                    subtitle: Text(
+                      loc?.translate('theme_subtitle') ?? 'Light or Dark mode',
+                    ),
                     trailing: const Icon(
                       Icons.arrow_forward_ios,
                       size: 16,
@@ -121,8 +123,13 @@ class SettingsProfileTab extends StatelessWidget {
                       Icons.notifications,
                       color: AppColors.warning,
                     ),
-                    title: const Text('Notifications'),
-                    subtitle: const Text('Manage notifications'),
+                    title: Text(
+                      loc?.translate('notifications') ?? 'Notifications',
+                    ),
+                    subtitle: Text(
+                      loc?.translate('notifications_subtitle') ??
+                          'Manage notifications',
+                    ),
                     trailing: const Icon(
                       Icons.arrow_forward_ios,
                       size: 16,
@@ -143,8 +150,11 @@ class SettingsProfileTab extends StatelessWidget {
                       Icons.email,
                       color: AppColors.secondaryBrand,
                     ),
-                    title: const Text('Bind Email'),
-                    subtitle: const Text('Bind email to your account'),
+                    title: Text(loc?.translate('bind_email') ?? 'Bind Email'),
+                    subtitle: Text(
+                      loc?.translate('bind_email_subtitle') ??
+                          'Bind email to your account',
+                    ),
                     trailing: const Icon(
                       Icons.arrow_forward_ios,
                       size: 16,
@@ -160,8 +170,13 @@ class SettingsProfileTab extends StatelessWidget {
                   ),
                   ListTile(
                     leading: const Icon(Icons.lock, color: AppColors.error),
-                    title: const Text('Reset Password'),
-                    subtitle: const Text('Reset your login password'),
+                    title: Text(
+                      loc?.translate('reset_password') ?? 'Reset Password',
+                    ),
+                    subtitle: Text(
+                      loc?.translate('reset_password_subtitle') ??
+                          'Reset your login password',
+                    ),
                     trailing: const Icon(
                       Icons.arrow_forward_ios,
                       size: 16,
@@ -177,8 +192,13 @@ class SettingsProfileTab extends StatelessWidget {
                   ),
                   ListTile(
                     leading: const Icon(Icons.help, color: AppColors.success),
-                    title: const Text('Help & Support'),
-                    subtitle: const Text('Get help and support'),
+                    title: Text(
+                      loc?.translate('help_support') ?? 'Help & Support',
+                    ),
+                    subtitle: Text(
+                      loc?.translate('help_support_subtitle') ??
+                          'Get help and support',
+                    ),
                     trailing: const Icon(
                       Icons.arrow_forward_ios,
                       size: 16,
@@ -195,8 +215,11 @@ class SettingsProfileTab extends StatelessWidget {
                         : AppColors.borderLight,
                   ),
                   ListTile(
-                    leading: const Icon(Icons.settings_ethernet, color: AppColors.info),
-                    title: const Text('API'),
+                    leading: const Icon(
+                      Icons.settings_ethernet,
+                      color: AppColors.info,
+                    ),
+                    title: Text(loc?.translate('api_settings') ?? 'API'),
                     subtitle: Text(ApiClient.baseUrl),
                     trailing: const Icon(
                       Icons.arrow_forward_ios,
@@ -218,8 +241,11 @@ class SettingsProfileTab extends StatelessWidget {
                       Icons.info,
                       color: AppColors.textSecondaryLight,
                     ),
-                    title: const Text('About'),
-                    subtitle: const Text('App version and info'),
+                    title: Text(loc?.translate('about_title') ?? 'About'),
+                    subtitle: Text(
+                      loc?.translate('about_subtitle') ??
+                          'App version and info',
+                    ),
                     trailing: const Icon(
                       Icons.arrow_forward_ios,
                       size: 16,

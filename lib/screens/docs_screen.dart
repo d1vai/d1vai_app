@@ -103,6 +103,7 @@ class _DocsScreenState extends State<DocsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Documentation'),
@@ -119,9 +120,9 @@ class _DocsScreenState extends State<DocsScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 filled: true,
-                fillColor: Colors.grey.shade100,
+                fillColor: theme.colorScheme.surfaceContainerHighest,
                 contentPadding: EdgeInsets.zero,
-                prefixIconColor: Colors.grey.shade600,
+                prefixIconColor: theme.colorScheme.onSurfaceVariant,
               ),
               onChanged: (value) {
                 setState(() {});
@@ -135,11 +136,17 @@ class _DocsScreenState extends State<DocsScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.search, size: 64, color: Colors.grey.shade400),
+                  Icon(
+                    Icons.search,
+                    size: 64,
+                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     'No results found',
-                    style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),

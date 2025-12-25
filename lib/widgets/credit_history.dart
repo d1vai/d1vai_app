@@ -257,6 +257,7 @@ class _CreditHistoryState extends State<CreditHistory> {
   }
 
   Widget _buildEmptyState() {
+    final theme = Theme.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -267,13 +268,13 @@ class _CreditHistoryState extends State<CreditHistory> {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
+                color: theme.colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(40),
               ),
               child: Icon(
                 Icons.wallet,
                 size: 40,
-                color: Colors.grey.shade400,
+                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
               ),
             ),
             const SizedBox(height: 24),
@@ -287,8 +288,8 @@ class _CreditHistoryState extends State<CreditHistory> {
             const SizedBox(height: 8),
             Text(
               'Credits can be obtained through top-ups, onboarding bonuses, or admin invites',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.grey.shade600,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
             ),

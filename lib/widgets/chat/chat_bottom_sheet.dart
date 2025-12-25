@@ -55,6 +55,7 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final headerDividerColor = theme.colorScheme.outline.withValues(alpha: 0.35);
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
@@ -64,13 +65,26 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
       ),
       child: Column(
         children: [
+          // Drag handle
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.25),
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
           // Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: theme.colorScheme.surface,
               border: Border(
-                bottom: BorderSide(color: theme.colorScheme.outlineVariant),
+                bottom: BorderSide(color: headerDividerColor),
               ),
             ),
             child: Row(

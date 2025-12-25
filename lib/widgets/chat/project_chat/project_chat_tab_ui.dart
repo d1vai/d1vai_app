@@ -284,6 +284,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
   }
 
   Widget _buildChatPreviewTabMobile() {
+    final theme = Theme.of(context);
     final previewUrl = widget.previewUrl;
     if (previewUrl == null || previewUrl.isEmpty) {
       return const NoPreviewAvailableView();
@@ -293,7 +294,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
       children: [
         Expanded(
           child: Container(
-            color: Colors.grey.shade100,
+            color: theme.colorScheme.surfaceContainerHighest,
             child: ProjectChatWebView(url: previewUrl),
           ),
         ),
@@ -302,6 +303,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
   }
 
   Widget _buildChatPreviewTab() {
+    final theme = Theme.of(context);
     final previewUrl = widget.previewUrl;
     if (previewUrl == null || previewUrl.isEmpty) {
       return const NoPreviewAvailableView();
@@ -316,7 +318,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
         ),
         Expanded(
           child: Container(
-            color: Colors.grey.shade100,
+            color: theme.colorScheme.surfaceContainerHighest,
             child: ProjectChatWebView(url: previewUrl),
           ),
         ),
