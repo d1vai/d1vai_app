@@ -26,6 +26,7 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
   final D1vaiService _service = D1vaiService();
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _editController = TextEditingController();
+  late final VoidCallback _searchListener;
 
   bool _loadingTree = false;
   String? _treeError;
@@ -45,13 +46,16 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
   void initState() {
     super.initState();
     _loadTree();
-    _searchController.addListener(() {
+    _searchListener = () {
+      if (!mounted) return;
       setState(() {});
-    });
+    };
+    _searchController.addListener(_searchListener);
   }
 
   @override
   void dispose() {
+    _searchController.removeListener(_searchListener);
     _searchController.dispose();
     _editController.dispose();
     super.dispose();
@@ -72,11 +76,13 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
     });
     try {
       final raw = await _service.getProjectStorageStructure(widget.projectId);
+      if (!mounted) return;
       final node = _FileNode.fromJson(raw);
       setState(() {
         _root = node;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _treeError = e.toString();
       });

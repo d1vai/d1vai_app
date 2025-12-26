@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 import '../services/svg_cache_service.dart';
 
 /// 通用头像显示组件
@@ -13,6 +14,9 @@ class AvatarImage extends StatelessWidget {
   final BorderRadius? borderRadius;
   final BoxFit fit;
   final String? placeholderText;
+  final bool showBorder;
+  final double borderWidth;
+  final Color? borderColor;
 
   const AvatarImage({
     super.key,
@@ -21,6 +25,9 @@ class AvatarImage extends StatelessWidget {
     this.borderRadius,
     this.fit = BoxFit.cover,
     this.placeholderText,
+    this.showBorder = true,
+    this.borderWidth = 1,
+    this.borderColor,
   });
 
   // SVG 缓存服务
@@ -46,23 +53,42 @@ class AvatarImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final effectiveBorderRadius =
         borderRadius ?? BorderRadius.circular(size / 2);
 
-    // 检查是否为 SVG URL
-    final isSvg = imageUrl.contains('.svg') || imageUrl.contains('/svg');
+    final isValidHttpUrl = _isValidHttpUrl(imageUrl);
 
-    return ClipRRect(
+    // 检查是否为 SVG URL
+    final isSvg = isValidHttpUrl &&
+        (imageUrl.contains('.svg') || imageUrl.contains('/svg'));
+
+    final border = showBorder
+        ? Border.all(
+            color: borderColor ??
+                colorScheme.outlineVariant.withValues(alpha: 0.55),
+            width: borderWidth,
+          )
+        : null;
+
+    return Container(
+      width: size,
+      height: size,
       borderRadius: effectiveBorderRadius,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: effectiveBorderRadius,
+        border: border,
+      ),
       child: isSvg
           ? FutureBuilder<String>(
               future: _loadAndCleanSvg(imageUrl),
               builder: (context, snapshot) {
-                if (snapshot.hasData) {
+                if (snapshot.hasData && snapshot.data!.trim().isNotEmpty) {
                   return SvgPicture.string(
                     snapshot.data!,
-                    width: size,
-                    height: size,
                     fit: fit,
                     excludeFromSemantics: true,
                     placeholderBuilder: (context) => _buildPlaceholder(context),
@@ -71,17 +97,19 @@ class AvatarImage extends StatelessWidget {
                 return _buildPlaceholder(context);
               },
             )
-          : CachedNetworkImage(
-              imageUrl: imageUrl,
-              width: size,
-              height: size,
-              fit: fit,
-              placeholder: (context, url) => _buildPlaceholder(context),
-              errorWidget: (context, url, error) => _buildPlaceholder(context),
-              // 设置缓存图片尺寸
-              maxWidthDiskCache: (size * 3).toInt(),
-              maxHeightDiskCache: (size * 3).toInt(),
-            ),
+          : (isValidHttpUrl
+              ? CachedNetworkImage(
+                  imageUrl: imageUrl,
+                  width: size,
+                  height: size,
+                  fit: fit,
+                  placeholder: (context, url) => _buildPlaceholder(context),
+                  errorWidget: (context, url, error) =>
+                      _buildPlaceholder(context),
+                  maxWidthDiskCache: (size * 3).toInt(),
+                  maxHeightDiskCache: (size * 3).toInt(),
+                )
+              : _buildPlaceholder(context)),
     );
   }
 
@@ -95,7 +123,9 @@ class AvatarImage extends StatelessWidget {
 
     // 2. 从网络加载
     try {
-      debugPrint('从网络加载 SVG: $url');
+      if (kDebugMode) {
+        debugPrint('从网络加载 SVG: $url');
+      }
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         String svgContent = utf8.decode(response.bodyBytes);
@@ -110,7 +140,9 @@ class AvatarImage extends StatelessWidget {
       }
     } catch (e) {
       // 静默处理错误，返回空 SVG
-      debugPrint('SVG 加载失败: $e');
+      if (kDebugMode) {
+        debugPrint('SVG 加载失败: $e');
+      }
     }
 
     // 返回简单的空 SVG
@@ -139,22 +171,28 @@ class AvatarImage extends StatelessWidget {
 
   Widget _buildPlaceholder(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final effectiveBorderRadius =
+        borderRadius ?? BorderRadius.circular(size / 2);
     if (placeholderText != null && placeholderText!.isNotEmpty) {
       final initial = placeholderText![0].toUpperCase();
       return Container(
         width: size,
         height: size,
         decoration: BoxDecoration(
-          color: theme.colorScheme.primary.withValues(alpha: 0.1),
-          borderRadius: borderRadius,
+          color: Color.alphaBlend(
+            colorScheme.primary.withValues(alpha: 0.12),
+            colorScheme.surfaceContainerHighest,
+          ),
+          borderRadius: effectiveBorderRadius,
         ),
         child: Center(
           child: Text(
             initial,
             style: TextStyle(
               fontSize: size * 0.4,
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w800,
+              color: colorScheme.primary,
             ),
           ),
         ),
@@ -165,14 +203,22 @@ class AvatarImage extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: borderRadius,
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: effectiveBorderRadius,
       ),
       child: Icon(
         Icons.person,
         size: size * 0.5,
-        color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
       ),
     );
+  }
+
+  bool _isValidHttpUrl(String url) {
+    final u = url.trim();
+    if (u.isEmpty || u == 'placeholder') return false;
+    final uri = Uri.tryParse(u);
+    if (uri == null) return false;
+    return uri.hasScheme && (uri.scheme == 'http' || uri.scheme == 'https');
   }
 }

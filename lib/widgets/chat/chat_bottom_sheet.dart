@@ -122,18 +122,6 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                   ),
                 ],
                 const Spacer(),
-                if (showStatus) ...[
-                  ProjectChatStatusDot(
-                    color: _statusDotColor(
-                      theme,
-                      statusText,
-                      isError: widget.statusIsError,
-                    ),
-                    size: 10,
-                    tooltip: statusText,
-                  ),
-                  const SizedBox(width: 10),
-                ],
                 // Redeploy button
                 if (widget.onRedeploy != null)
                   Container(
@@ -191,6 +179,33 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                       ),
                     ),
                   ),
+                if (showStatus) ...[
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 160),
+                    switchInCurve: Curves.easeOut,
+                    switchOutCurve: Curves.easeIn,
+                    transitionBuilder: (child, anim) => FadeTransition(
+                      opacity: anim,
+                      child: SizeTransition(
+                        sizeFactor: anim,
+                        axis: Axis.horizontal,
+                        axisAlignment: -1,
+                        child: child,
+                      ),
+                    ),
+                    child: _HeaderStatusPill(
+                      key: ValueKey(statusText),
+                      label: statusText,
+                      color: _statusDotColor(
+                        theme,
+                        statusText,
+                        isError: widget.statusIsError,
+                      ),
+                      isPulsing: _statusIsPulsing(statusText),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                ],
                 // Close button
                 IconButton(
                   icon: const Icon(Icons.close),
@@ -333,6 +348,81 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
   }
 }
 
+bool _statusIsPulsing(String label) {
+  final lower = label.toLowerCase().trim();
+  if (lower.contains('work')) return true;
+  if (lower.contains('think')) return true;
+  if (lower.contains('deploy')) return true;
+  return false;
+}
+
+class _HeaderStatusPill extends StatelessWidget {
+  final String label;
+  final Color color;
+  final bool isPulsing;
+
+  const _HeaderStatusPill({
+    super.key,
+    required this.label,
+    required this.color,
+    required this.isPulsing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final bg = Color.alphaBlend(
+      color.withValues(alpha: 0.10),
+      theme.colorScheme.surface,
+    );
+    final border = Color.alphaBlend(
+      color.withValues(alpha: 0.32),
+      theme.colorScheme.outlineVariant,
+    );
+
+    return Tooltip(
+      message: label,
+      triggerMode: TooltipTriggerMode.longPress,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: border, width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ProjectChatStatusDot(
+              color: color,
+              size: 8,
+              enablePulse: isPulsing,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant.withValues(
+                      alpha: 0.95,
+                    ),
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.2,
+                  ) ??
+                  TextStyle(
+                    fontSize: 11,
+                    color: theme.colorScheme.onSurfaceVariant.withValues(
+                      alpha: 0.95,
+                    ),
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 Color _statusDotColor(ThemeData theme, String label, {required bool isError}) {
   final lower = label.toLowerCase().trim();
   if (isError) {
@@ -347,7 +437,7 @@ Color _statusDotColor(ThemeData theme, String label, {required bool isError}) {
   if (lower.contains('think')) {
     return Colors.purple;
   }
-  if (lower.contains('ready')) {
+  if (lower.contains('done') || lower.contains('ready')) {
     return Colors.green;
   }
   return theme.colorScheme.onSurfaceVariant;

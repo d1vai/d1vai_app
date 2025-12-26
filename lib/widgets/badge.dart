@@ -59,6 +59,7 @@ class Badge extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     // Base styling based on variant
     final variantStyle = _getVariantStyle(colorScheme);
@@ -68,10 +69,30 @@ class Badge extends StatelessWidget {
     final txtColor = textColor ?? variantStyle['textColor'] as Color;
     final brdColor = borderColor ?? variantStyle['borderColor'];
 
-    final effectivePadding = padding ??
-        const EdgeInsets.symmetric(horizontal: 8, vertical: 4);
+    final effectivePadding =
+        padding ?? const EdgeInsets.symmetric(horizontal: 10, vertical: 6);
+    final effectiveRadius =
+        borderRadiusGeometry ??
+        BorderRadius.circular(borderRadius ?? 999);
 
-    Widget badgeContent = Container(
+    final content = child ??
+        (label != null
+            ? Text(
+                label!,
+                style: TextStyle(
+                  fontSize: fontSize ?? 11,
+                  fontWeight: fontWeight ?? FontWeight.w800,
+                  color: txtColor,
+                  letterSpacing: 0.2,
+                ),
+              )
+            : const SizedBox.shrink());
+
+    final badgeBody = AnimatedContainer(
+      duration: animated
+          ? (animationDuration ?? const Duration(milliseconds: 180))
+          : Duration.zero,
+      curve: Curves.easeOut,
       margin: margin,
       padding: effectivePadding,
       decoration: BoxDecoration(
@@ -81,35 +102,41 @@ class Badge extends StatelessWidget {
               color: brdColor ?? Colors.transparent,
               width: 1,
             ),
-        borderRadius: borderRadiusGeometry ??
-            BorderRadius.circular(borderRadius ?? 6),
-        boxShadow: boxShadow,
+        borderRadius: effectiveRadius,
+        boxShadow:
+            boxShadow ??
+            (variant == BadgeVariant.outline
+                ? null
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.06),
+                      blurRadius: 10,
+                      offset: const Offset(0, 6),
+                    ),
+                  ]),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          if (child != null)
-            child!
-          else if (label != null)
-            Text(
-              label!,
-              style: TextStyle(
-                fontSize: fontSize ?? 12,
-                fontWeight: fontWeight ?? FontWeight.w600,
-                color: txtColor,
-              ),
-            ),
+          Flexible(child: content),
           if (deletable && onDelete != null) ...[
             const SizedBox(width: 4),
-            InkWell(
-              onTap: onDelete,
-              borderRadius: BorderRadius.circular(4),
-              child: Padding(
-                padding: const EdgeInsets.all(2),
-                child: Icon(
-                  deleteIcon ?? Icons.close,
-                  size: deleteIconSize ?? 14,
-                  color: txtColor.withValues(alpha: 0.8),
+            SizedBox(
+              width: 22,
+              height: 22,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onDelete,
+                  borderRadius: BorderRadius.circular(999),
+                  child: Center(
+                    child: Icon(
+                      deleteIcon ?? Icons.close_rounded,
+                      size: deleteIconSize ?? 14,
+                      color: txtColor.withValues(alpha: 0.85),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -118,24 +145,15 @@ class Badge extends StatelessWidget {
       ),
     );
 
-    if (animated && (onTap != null || deletable)) {
-      return AnimatedContainer(
-        duration: animationDuration ?? const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius:
-              borderRadiusGeometry ?? BorderRadius.circular(borderRadius ?? 6),
-          child: badgeContent,
-        ),
-      );
-    }
+    if (onTap == null && !(deletable && onDelete != null)) return badgeBody;
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius:
-          borderRadiusGeometry ?? BorderRadius.circular(borderRadius ?? 6),
-      child: badgeContent,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: effectiveRadius,
+        child: badgeBody,
+      ),
     );
   }
 
@@ -143,27 +161,45 @@ class Badge extends StatelessWidget {
     switch (variant) {
       case BadgeVariant.defaultVariant:
         return {
-          'bgColor': colorScheme.primary,
-          'textColor': colorScheme.onPrimary,
-          'borderColor': colorScheme.primary.withValues(alpha: 0.8),
+          'bgColor': Color.alphaBlend(
+            colorScheme.primary.withValues(alpha: 0.12),
+            colorScheme.surface,
+          ),
+          'textColor': colorScheme.primary,
+          'borderColor': Color.alphaBlend(
+            colorScheme.primary.withValues(alpha: 0.22),
+            colorScheme.outlineVariant,
+          ),
         };
       case BadgeVariant.secondary:
         return {
-          'bgColor': colorScheme.secondary,
-          'textColor': colorScheme.onSecondary,
-          'borderColor': colorScheme.secondary.withValues(alpha: 0.8),
+          'bgColor': Color.alphaBlend(
+            colorScheme.secondary.withValues(alpha: 0.12),
+            colorScheme.surface,
+          ),
+          'textColor': colorScheme.secondary,
+          'borderColor': Color.alphaBlend(
+            colorScheme.secondary.withValues(alpha: 0.22),
+            colorScheme.outlineVariant,
+          ),
         };
       case BadgeVariant.destructive:
         return {
-          'bgColor': colorScheme.error,
-          'textColor': colorScheme.onError,
-          'borderColor': colorScheme.error.withValues(alpha: 0.8),
+          'bgColor': Color.alphaBlend(
+            colorScheme.error.withValues(alpha: 0.12),
+            colorScheme.surface,
+          ),
+          'textColor': colorScheme.error,
+          'borderColor': Color.alphaBlend(
+            colorScheme.error.withValues(alpha: 0.22),
+            colorScheme.outlineVariant,
+          ),
         };
       case BadgeVariant.outline:
         return {
           'bgColor': Colors.transparent,
-          'textColor': colorScheme.onSurface,
-          'borderColor': colorScheme.outline,
+          'textColor': colorScheme.onSurfaceVariant,
+          'borderColor': colorScheme.outlineVariant,
         };
     }
   }
@@ -186,6 +222,8 @@ class StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final normalizedStatus = status.toLowerCase();
 
     BadgeVariant variant;
@@ -197,30 +235,30 @@ class StatusBadge extends StatelessWidget {
       case 'completed':
       case 'verified':
         variant = BadgeVariant.defaultVariant;
-        color = Colors.green;
+        color = colorScheme.tertiary;
         break;
       case 'pending':
       case 'processing':
       case 'waiting':
         variant = BadgeVariant.secondary;
-        color = Colors.amber;
+        color = colorScheme.secondary;
         break;
       case 'error':
       case 'failed':
       case 'cancelled':
       case 'rejected':
         variant = BadgeVariant.destructive;
-        color = Colors.red;
+        color = colorScheme.error;
         break;
       case 'new':
       case 'draft':
       case 'inactive':
         variant = BadgeVariant.outline;
-        color = Colors.grey;
+        color = colorScheme.onSurfaceVariant;
         break;
       default:
         variant = BadgeVariant.secondary;
-        color = Colors.blue;
+        color = colorScheme.primary;
     }
 
     return Badge(
@@ -229,9 +267,15 @@ class StatusBadge extends StatelessWidget {
       onTap: onTap,
       deletable: deletable,
       onDelete: onDelete,
-      backgroundColor: color.withValues(alpha: 0.1),
+      backgroundColor: Color.alphaBlend(
+        color.withValues(alpha: 0.12),
+        colorScheme.surface,
+      ),
       textColor: color,
-      borderColor: color.withValues(alpha: 0.3),
+      borderColor: Color.alphaBlend(
+        color.withValues(alpha: 0.22),
+        colorScheme.outlineVariant,
+      ),
     );
   }
 }

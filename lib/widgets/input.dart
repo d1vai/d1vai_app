@@ -117,42 +117,51 @@ class Input extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     final effectiveTextStyle =
         textStyle ??
-        _getTextStyle(size, Theme.of(context).textTheme.bodyMedium);
+        _getTextStyle(size, theme.textTheme.bodyMedium);
     final effectiveLabelStyle =
         labelStyle ??
-        _getTextStyle(size, Theme.of(context).textTheme.bodyMedium);
+        _getTextStyle(
+          size,
+          theme.textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.95),
+            fontWeight: FontWeight.w600,
+          ),
+        );
     final effectiveHintStyle =
         hintStyle ??
         _getTextStyle(
           size,
-          Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Theme.of(
-              context,
-            ).colorScheme.onSurface.withValues(alpha: 0.6),
+          theme.textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.85),
           ),
         );
     final effectiveErrorStyle =
         errorStyle ??
         _getTextStyle(
           size,
-          Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Theme.of(context).colorScheme.error,
-          ),
+          theme.textTheme.bodyMedium?.copyWith(color: colorScheme.error),
         );
     final effectiveContentPadding = contentPadding ?? _getPadding(size);
     final effectiveBorderRadius = borderRadius ?? _getBorderRadius(size);
-    final effectiveFillColor = _getFillColor(fillColor, disabled, context);
+    final effectiveFillColor = _getFillColor(
+      fillColor,
+      disabled,
+      context,
+      isDark: isDark,
+    );
     final effectiveBorderColor = _getBorderColor(
       borderColor,
       disabled,
       context,
     );
-    final effectiveFocusedBorderColor =
-        focusedBorderColor ?? Theme.of(context).colorScheme.primary;
-    final effectiveErrorBorderColor =
-        errorBorderColor ?? Theme.of(context).colorScheme.error;
+    final effectiveFocusedBorderColor = focusedBorderColor ?? colorScheme.primary;
+    final effectiveErrorBorderColor = errorBorderColor ?? colorScheme.error;
 
     final effectiveBorder =
         border ??
@@ -241,6 +250,9 @@ class Input extends StatelessWidget {
           errorBorder: effectiveErrorBorder,
           hintStyle: effectiveHintStyle,
           labelStyle: effectiveLabelStyle,
+          floatingLabelStyle: effectiveLabelStyle.copyWith(
+            color: effectiveFocusedBorderColor,
+          ),
           errorStyle: effectiveErrorStyle,
           hoverColor: hoverColor ?? Colors.transparent,
           focusColor: focusColor ?? Colors.transparent,
@@ -265,11 +277,8 @@ class Input extends StatelessWidget {
           ),
         );
       case InputVariant.filled:
-        return UnderlineInputBorder(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(borderRadius),
-            topRight: Radius.circular(borderRadius),
-          ),
+        return OutlineInputBorder(
+          borderRadius: BorderRadius.circular(borderRadius),
           borderSide: BorderSide(
             color: borderColor,
             width: disabled ? 0.5 : 1.0,
@@ -301,35 +310,42 @@ class Input extends StatelessWidget {
   EdgeInsetsGeometry _getPadding(InputSize size) {
     switch (size) {
       case InputSize.small:
-        return const EdgeInsets.symmetric(horizontal: 12, vertical: 8);
+        return const EdgeInsets.symmetric(horizontal: 12, vertical: 10);
       case InputSize.medium:
-        return const EdgeInsets.symmetric(horizontal: 16, vertical: 12);
+        return const EdgeInsets.symmetric(horizontal: 14, vertical: 12);
       case InputSize.large:
-        return const EdgeInsets.symmetric(horizontal: 20, vertical: 16);
+        return const EdgeInsets.symmetric(horizontal: 16, vertical: 14);
     }
   }
 
   double _getBorderRadius(InputSize size) {
     switch (size) {
       case InputSize.small:
-        return 6.0;
-      case InputSize.medium:
-        return 8.0;
-      case InputSize.large:
         return 10.0;
+      case InputSize.medium:
+        return 12.0;
+      case InputSize.large:
+        return 14.0;
     }
   }
 
-  Color _getFillColor(Color? fillColor, bool disabled, BuildContext context) {
+  Color _getFillColor(
+    Color? fillColor,
+    bool disabled,
+    BuildContext context, {
+    required bool isDark,
+  }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     if (disabled) {
-      return Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.04);
+      return colorScheme.onSurface.withValues(alpha: isDark ? 0.06 : 0.04);
     }
-    return fillColor ??
-        (variant == InputVariant.filled
-            ? Theme.of(
-                context,
-              ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
-            : Colors.transparent);
+    if (fillColor != null) return fillColor;
+    if (variant != InputVariant.filled) return Colors.transparent;
+
+    final base = colorScheme.surfaceContainerHighest;
+    final tint = colorScheme.primary.withValues(alpha: isDark ? 0.10 : 0.06);
+    return Color.alphaBlend(tint, base);
   }
 
   Color _getBorderColor(
@@ -337,10 +353,10 @@ class Input extends StatelessWidget {
     bool disabled,
     BuildContext context,
   ) {
-    if (disabled) {
-      return Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12);
-    }
-    return borderColor ?? Theme.of(context).colorScheme.outline;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    if (disabled) return colorScheme.onSurface.withValues(alpha: 0.12);
+    return borderColor ?? colorScheme.outlineVariant;
   }
 }
 

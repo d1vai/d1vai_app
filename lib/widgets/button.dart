@@ -104,10 +104,6 @@ class _ButtonState extends State<Button> with SingleTickerProviderStateMixin {
   void _handleTapDown(TapDownDetails details) {
     if (!widget.disabled) {
       _controller.forward();
-      if (widget.enableFeedback) {
-        // Use light impact for button press
-        HapticFeedback.lightImpact();
-      }
     }
   }
 
@@ -127,10 +123,11 @@ class _ButtonState extends State<Button> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDisabled = widget.disabled || widget.onPressed == null;
 
     final effectivePadding = _getPadding();
     final effectiveColors = _getColors(colorScheme);
-    final effectiveBorderRadius = widget.borderRadius ?? 8.0;
+    final effectiveBorderRadius = widget.borderRadius ?? _getBorderRadius();
     final effectiveElevation = widget.elevation ?? _getElevation();
     final effectiveTextStyle =
         widget.textStyle ?? _getTextStyle(theme, effectiveColors.foreground);
@@ -185,38 +182,38 @@ class _ButtonState extends State<Button> with SingleTickerProviderStateMixin {
     }
 
     return GestureDetector(
-      onTapDown: _handleTapDown,
-      onTapUp: _handleTapUp,
-      onTapCancel: _handleTapCancel,
+      onTapDown: isDisabled ? null : _handleTapDown,
+      onTapUp: isDisabled ? null : _handleTapUp,
+      onTapCancel: isDisabled ? null : _handleTapCancel,
       child: ScaleTransition(
         scale: _scaleAnimation,
         child: SizedBox(
           width: widget.width,
           height: widget.height ?? _getHeight(),
           child: ElevatedButton(
-            onPressed: widget.disabled
+            onPressed: isDisabled
                 ? null
                 : () {
                     if (widget.enableFeedback) {
                       HapticFeedback.selectionClick();
                     }
-                    widget.onPressed?.call();
+                    widget.onPressed!.call();
                   },
-            onLongPress: widget.disabled ? null : widget.onLongPress,
+            onLongPress: isDisabled ? null : widget.onLongPress,
             style: ButtonStyle(
               backgroundColor: WidgetStateProperty.all(
-                widget.disabled
+                isDisabled
                     ? effectiveColors.disabledBackground
                     : effectiveColors.background,
               ),
               foregroundColor: WidgetStateProperty.all(
-                widget.disabled
+                isDisabled
                     ? effectiveColors.disabledForeground
                     : effectiveColors.foreground,
               ),
               overlayColor: WidgetStateProperty.resolveWith<Color>((states) {
                 if (states.contains(WidgetState.pressed)) {
-                  return effectiveColors.foreground.withValues(alpha: 0.1);
+                  return effectiveColors.foreground.withValues(alpha: 0.12);
                 } else if (states.contains(WidgetState.hovered)) {
                   return effectiveColors.foreground.withValues(alpha: 0.08);
                 }
@@ -227,9 +224,11 @@ class _ButtonState extends State<Button> with SingleTickerProviderStateMixin {
               shape: WidgetStateProperty.all(
                 RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(effectiveBorderRadius),
-                  side: widget.borderColor != null || widget.borderWidth != null
+                  side: widget.variant == ButtonVariant.outline ||
+                          widget.borderColor != null ||
+                          widget.borderWidth != null
                       ? BorderSide(
-                          color: widget.disabled
+                          color: isDisabled
                               ? effectiveColors.disabledBorder
                               : effectiveColors.border,
                           width: widget.borderWidth ?? 1.0,
@@ -238,6 +237,9 @@ class _ButtonState extends State<Button> with SingleTickerProviderStateMixin {
                 ),
               ),
               textStyle: WidgetStateProperty.all(effectiveTextStyle),
+              splashFactory: InkRipple.splashFactory,
+              visualDensity: VisualDensity.standard,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             child: buttonChild,
           ),
@@ -282,7 +284,7 @@ class _ButtonState extends State<Button> with SingleTickerProviderStateMixin {
         return ButtonColors(
           background: widget.backgroundColor ?? colorScheme.surface,
           foreground: widget.foregroundColor ?? colorScheme.onSurface,
-          border: widget.borderColor ?? colorScheme.outline,
+          border: widget.borderColor ?? colorScheme.outlineVariant,
           disabledBackground:
               widget.disabledBackgroundColor ?? colorScheme.surface,
           disabledForeground:
@@ -351,15 +353,27 @@ class _ButtonState extends State<Button> with SingleTickerProviderStateMixin {
     switch (widget.size) {
       case ButtonSize.defaultSize:
         return widget.padding ??
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 8);
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 10);
       case ButtonSize.sm:
         return widget.padding ??
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 6);
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 8);
       case ButtonSize.lg:
         return widget.padding ??
-            const EdgeInsets.symmetric(horizontal: 32, vertical: 12);
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 12);
       case ButtonSize.icon:
         return widget.padding ?? EdgeInsets.zero;
+    }
+  }
+
+  double _getBorderRadius() {
+    switch (widget.size) {
+      case ButtonSize.sm:
+        return 10.0;
+      case ButtonSize.lg:
+        return 14.0;
+      case ButtonSize.defaultSize:
+      case ButtonSize.icon:
+        return 12.0;
     }
   }
 
@@ -371,13 +385,13 @@ class _ButtonState extends State<Button> with SingleTickerProviderStateMixin {
     }
     switch (widget.size) {
       case ButtonSize.defaultSize:
-        return widget.elevation ?? 2.0;
-      case ButtonSize.sm:
         return widget.elevation ?? 1.0;
+      case ButtonSize.sm:
+        return widget.elevation ?? 0.0;
       case ButtonSize.lg:
-        return widget.elevation ?? 4.0;
-      case ButtonSize.icon:
         return widget.elevation ?? 2.0;
+      case ButtonSize.icon:
+        return widget.elevation ?? 1.0;
     }
   }
 

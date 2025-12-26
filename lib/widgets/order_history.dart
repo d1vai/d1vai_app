@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../models/payment.dart';
 import '../services/wallet_service.dart';
 import 'order_detail_dialog.dart';
+import 'snackbar_helper.dart';
+import 'card.dart';
 
 class OrderHistory extends StatefulWidget {
   const OrderHistory({super.key});
@@ -28,6 +30,7 @@ class _OrderHistoryState extends State<OrderHistory> {
 
     try {
       final orders = await _walletService.getTransactions(limit: 50);
+      if (!mounted) return;
 
       // Sort by created date (newest first)
       orders.sort((a, b) {
@@ -47,11 +50,10 @@ class _OrderHistoryState extends State<OrderHistory> {
           _isLoading = false;
         });
         // Show error message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to load transactions: $e'),
-            backgroundColor: Colors.red,
-          ),
+        SnackBarHelper.showError(
+          context,
+          title: 'Failed to load orders',
+          message: e.toString(),
         );
       }
     }
@@ -74,42 +76,63 @@ class _OrderHistoryState extends State<OrderHistory> {
 
     return RefreshIndicator(
       onRefresh: _loadOrders,
-      child: ListView.builder(
+      child: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: _orders.length,
         itemBuilder: (context, index) {
           final order = _orders[index];
           return _buildOrderCard(order);
         },
+        separatorBuilder: (context, index) => const SizedBox(height: 12),
       ),
     );
   }
 
   Widget _buildEmptyState() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.receipt_long,
-              size: 64,
-              color: Colors.grey.shade400,
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+                ),
+              ),
+              child: Icon(
+                Icons.receipt_long,
+                size: 32,
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.85),
+              ),
             ),
             const SizedBox(height: 16),
             Text(
               'No orders yet',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ) ??
+                  const TextStyle(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
             Text(
               'Your purchase history will appear here',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.grey.shade600,
-              ),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.85),
+                    height: 1.25,
+                  ) ??
+                  TextStyle(
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.85),
+                    height: 1.25,
+                  ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -118,96 +141,130 @@ class _OrderHistoryState extends State<OrderHistory> {
   }
 
   Widget _buildOrderCard(PaymentTransaction order) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () {
-          showDialog(
-            context: context,
-            builder: (context) => OrderDetailDialog(order: order),
-          );
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return CustomCard(
+      padding: EdgeInsets.zero,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            showDialog(
+              context: context,
+              builder: (context) => OrderDetailDialog(order: order),
+            );
+          },
+          borderRadius: BorderRadius.circular(14),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            order.productName ?? 'Unknown Product',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                ) ??
+                                const TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Order ID: ${order.id}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.onSurfaceVariant
+                                      .withValues(alpha: 0.8),
+                                  fontFeatures: const [
+                                    FontFeature.tabularFigures(),
+                                  ],
+                                ) ??
+                                TextStyle(
+                                  color: colorScheme.onSurfaceVariant
+                                      .withValues(alpha: 0.8),
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          order.productName ?? 'Unknown Product',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                          order.formattedAmount,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                color: colorScheme.primary,
+                              ) ??
+                              TextStyle(
+                                fontWeight: FontWeight.w900,
+                                color: colorScheme.primary,
+                              ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Order ID: ${order.id}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
+                        const SizedBox(height: 6),
+                        _buildStatusChip(order.status),
                       ],
                     ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        order.formattedAmount,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: Colors.deepPurple,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      _buildStatusChip(order.status),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Divider(),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Icon(
-                    Icons.calendar_today,
-                    size: 16,
-                    color: Colors.grey.shade600,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Created: ${_formatDate(order.createdAt)}',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  const Spacer(),
-                  if (order.paymentMethod != null) ...[
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Divider(
+                  height: 1,
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
                     Icon(
-                      Icons.credit_card,
+                      Icons.calendar_today,
                       size: 16,
-                      color: Colors.grey.shade600,
+                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      order.paymentMethod!.toUpperCase(),
-                      style: Theme.of(context).textTheme.bodySmall,
+                      'Created: ${_formatDate(order.createdAt)}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color:
+                            colorScheme.onSurfaceVariant.withValues(alpha: 0.85),
+                      ),
+                    ),
+                    const Spacer(),
+                    if (order.paymentMethod != null) ...[
+                      Icon(
+                        Icons.credit_card,
+                        size: 16,
+                        color:
+                            colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        order.paymentMethod!.toUpperCase(),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.85,
+                          ),
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(width: 6),
+                    Icon(
+                      Icons.chevron_right,
+                      size: 18,
+                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.55),
                     ),
                   ],
-                  const SizedBox(width: 8),
-                  Icon(
-                    Icons.chevron_right,
-                    size: 16,
-                    color: Colors.grey.shade400,
-                  ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -215,6 +272,9 @@ class _OrderHistoryState extends State<OrderHistory> {
   }
 
   Widget _buildStatusChip(String status) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     Color color;
     IconData icon;
     String label;
@@ -223,36 +283,42 @@ class _OrderHistoryState extends State<OrderHistory> {
       case 'success':
       case 'succeeded':
       case 'paid':
-        color = Colors.green;
-        icon = Icons.check_circle;
+        color = colorScheme.tertiary;
+        icon = Icons.check_circle_outline;
         label = 'Completed';
         break;
       case 'pending':
       case 'processing':
-        color = Colors.orange;
-        icon = Icons.hourglass_empty;
+        color = colorScheme.secondary;
+        icon = Icons.hourglass_empty_rounded;
         label = 'Pending';
         break;
       case 'failed':
       case 'cancelled':
       case 'refunded':
-        color = Colors.red;
-        icon = Icons.cancel;
+        color = colorScheme.error;
+        icon = Icons.cancel_outlined;
         label = 'Failed';
         break;
       default:
-        color = Colors.grey;
-        icon = Icons.info;
+        color = colorScheme.onSurfaceVariant;
+        icon = Icons.info_outline;
         label = status;
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
+        color: Color.alphaBlend(
+          color.withValues(alpha: 0.14),
+          colorScheme.surface,
+        ),
+        borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: color.withValues(alpha: 0.3),
+          color: Color.alphaBlend(
+            color.withValues(alpha: 0.28),
+            colorScheme.outlineVariant,
+          ),
         ),
       ),
       child: Row(
@@ -260,7 +326,7 @@ class _OrderHistoryState extends State<OrderHistory> {
         children: [
           Icon(
             icon,
-            size: 16,
+            size: 14,
             color: color,
           ),
           const SizedBox(width: 6),
@@ -268,8 +334,8 @@ class _OrderHistoryState extends State<OrderHistory> {
             label,
             style: TextStyle(
               color: color,
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              fontSize: 11,
             ),
           ),
         ],

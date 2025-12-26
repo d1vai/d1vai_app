@@ -28,6 +28,9 @@ class _ProgressWidgetState extends State<ProgressWidget>
   late Animation<double> _scaleAnimation;
   bool _showFireworks = false;
   int _tipIndex = 0;
+  Timer? _progressTimer;
+  Timer? _delayedTimer;
+  Timer? _fireworksTimer;
 
   List<String> get tips =>
       widget.tipList != null && widget.tipList!.isNotEmpty
@@ -65,9 +68,11 @@ class _ProgressWidgetState extends State<ProgressWidget>
   }
 
   void _animateProgress(double from, double to, Duration duration) {
-    Timer.periodic(Duration(milliseconds: 16), (timer) {
+    _progressTimer?.cancel();
+    _progressTimer = Timer.periodic(const Duration(milliseconds: 16), (timer) {
       if (!mounted || widget.completed) {
         timer.cancel();
+        if (_progressTimer == timer) _progressTimer = null;
         return;
       }
 
@@ -96,6 +101,7 @@ class _ProgressWidgetState extends State<ProgressWidget>
 
       if (t >= 1.0) {
         timer.cancel();
+        if (_progressTimer == timer) _progressTimer = null;
 
         // Continue to next phase or hold at 89%
         if (to == 30) {
@@ -113,10 +119,14 @@ class _ProgressWidgetState extends State<ProgressWidget>
   }
 
   void _onCompleted() {
+    _delayedTimer?.cancel();
+    _progressTimer?.cancel();
+    _progressTimer = null;
+
     // First animate to 89% if not already there
     if (_progress < 89) {
       _animateProgress(_progress, 89, const Duration(milliseconds: 500));
-      Timer(const Duration(milliseconds: 500), () {
+      _delayedTimer = Timer(const Duration(milliseconds: 500), () {
         if (!mounted) return;
         _animateTo100();
       });
@@ -129,9 +139,11 @@ class _ProgressWidgetState extends State<ProgressWidget>
     final start = _progress;
     const duration = Duration(milliseconds: 450);
 
-    Timer.periodic(Duration(milliseconds: 16), (timer) {
+    _progressTimer?.cancel();
+    _progressTimer = Timer.periodic(const Duration(milliseconds: 16), (timer) {
       if (!mounted) {
         timer.cancel();
+        if (_progressTimer == timer) _progressTimer = null;
         return;
       }
 
@@ -145,12 +157,14 @@ class _ProgressWidgetState extends State<ProgressWidget>
 
       if (t >= 1.0) {
         timer.cancel();
+        if (_progressTimer == timer) _progressTimer = null;
         setState(() {
           _showFireworks = true;
         });
         _animationController.forward();
 
-        Timer(const Duration(seconds: 1), () {
+        _fireworksTimer?.cancel();
+        _fireworksTimer = Timer(const Duration(seconds: 1), () {
           if (!mounted) return;
           setState(() {
             _showFireworks = false;
@@ -163,6 +177,9 @@ class _ProgressWidgetState extends State<ProgressWidget>
 
   @override
   void dispose() {
+    _progressTimer?.cancel();
+    _delayedTimer?.cancel();
+    _fireworksTimer?.cancel();
     _animationController.dispose();
     super.dispose();
   }
@@ -170,21 +187,23 @@ class _ProgressWidgetState extends State<ProgressWidget>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       width: widget.width,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.2),
+          color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.35 : 0.5),
         ),
-        borderRadius: BorderRadius.circular(8),
-        color: theme.colorScheme.surface.withValues(alpha: 0.95),
+        borderRadius: BorderRadius.circular(12),
+        color: colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: theme.shadowColor.withValues(alpha: 0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.06),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -214,7 +233,8 @@ class _ProgressWidgetState extends State<ProgressWidget>
                     tips[_tipIndex],
                     key: ValueKey(_tipIndex),
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
+                      height: 1.2,
                     ),
                   ),
                 ),
@@ -222,7 +242,7 @@ class _ProgressWidgetState extends State<ProgressWidget>
               Text(
                 '${_progress.floor()}%',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
                   fontFeatures: [
                     const FontFeature.tabularFigures(),
                   ],
@@ -233,30 +253,39 @@ class _ProgressWidgetState extends State<ProgressWidget>
           const SizedBox(height: 8),
 
           // Progress bar
-          Container(
-            height: 6,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(3),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(3),
-              child: Stack(
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 100),
-                    width: (widget.width == double.infinity
-                        ? widget.width
-                        : widget.width * (_progress / 100)),
-                    child: DecoratedBox(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final bg = colorScheme.surfaceContainerHighest.withValues(
+                alpha: isDark ? 0.7 : 1.0,
+              );
+              final progress = (_progress / 100).clamp(0.0, 1.0);
+              return Container(
+                height: 8,
+                decoration: BoxDecoration(
+                  color: bg,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(999),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 140),
+                      curve: Curves.easeOut,
+                      width: constraints.maxWidth * progress,
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primary,
+                        gradient: LinearGradient(
+                          colors: [
+                            colorScheme.primary,
+                            colorScheme.secondary,
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           ),
 
           // Fireworks animation on completion
@@ -272,35 +301,32 @@ class _ProgressWidgetState extends State<ProgressWidget>
                     width: 100,
                     child: Stack(
                       children: List.generate(10, (index) {
-                        final angle = (index / 10) * 3.14159 * 2;
-                        final radius = 12 + (index % 3) * 6;
-                        final x = 50 + (angle == 0 ? 0 : 0) + (angle > 0 && angle < 3.14159 ? radius : -radius * 0.5);
-                        final y = 15 + (angle < 3.14159 ? -radius * 0.3 : radius * 0.5);
+                        final angle = (index / 10) * math.pi * 2;
+                        final radius = 10 + (index % 3) * 4;
+                        final x = 50 + math.cos(angle) * radius;
+                        final y = 15 + math.sin(angle) * (radius * 0.7);
 
-                        final colors = [
-                          Colors.red.shade500,
-                          Colors.yellow.shade400,
-                          Colors.green.shade500,
-                          Colors.blue.shade500,
-                          Colors.pink.shade500,
-                          Colors.purple.shade500,
+                        final colors = <Color>[
+                          colorScheme.primary,
+                          colorScheme.secondary,
+                          colorScheme.tertiary,
+                          Colors.amber.shade600,
                         ];
 
                         return Positioned(
                           left: x.toDouble(),
                           top: y.toDouble(),
-                          child: AnimatedContainer(
-                            duration: Duration(milliseconds: 800),
+                          child: Container(
                             decoration: BoxDecoration(
                               color: colors[index % colors.length],
                               shape: BoxShape.circle,
                             ),
                             width: 6,
                             height: 6,
-                            child: const Icon(
-                              Icons.star,
+                            child: Icon(
+                              Icons.star_rounded,
                               size: 4,
-                              color: Colors.white,
+                              color: colorScheme.surface,
                             ),
                           ),
                         );

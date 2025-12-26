@@ -31,27 +31,39 @@ class CustomCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    // Glass defaults
-    final glassColor = isDark
-        ? const Color(0xCC1E293B) // Slate 800 with opacity
-        : const Color(0xCCFFFFFF); // White with opacity
-    final glassBorder = isDark
-        ? const Color(0x1AFFFFFF) // White 10%
-        : const Color(0xFFE2E8F0); // Slate 200
-
-    final effectiveBackgroundColor =
-        backgroundColor ?? (glass ? glassColor : theme.colorScheme.surface);
-
-    final effectiveBorderColor =
-        borderColor ??
-        (glass
-            ? glassBorder
-            : theme.colorScheme.outline.withValues(alpha: 0.12));
-
+    final effectiveBorderRadius = borderRadius ?? 14.0;
     final effectiveElevation = elevation ?? (glass ? 0.0 : 1.0);
-    final effectiveBorderRadius = borderRadius ?? 12.0;
+
+    final defaultSurface = glass
+        ? Color.alphaBlend(
+            colorScheme.primary.withValues(alpha: isDark ? 0.12 : 0.07),
+            colorScheme.surface,
+          ).withValues(alpha: isDark ? 0.74 : 0.92)
+        : colorScheme.surface;
+
+    final effectiveBackgroundColor = backgroundColor ?? defaultSurface;
+
+    final defaultBorder = glass
+        ? colorScheme.outlineVariant.withValues(alpha: isDark ? 0.35 : 0.5)
+        : colorScheme.outlineVariant.withValues(alpha: isDark ? 0.28 : 0.42);
+    final effectiveBorderColor = borderColor ?? defaultBorder;
+
+    final defaultShadowColor = isDark
+        ? Colors.black.withValues(alpha: 0.25)
+        : theme.shadowColor.withValues(alpha: 0.08);
+    final defaultShadows =
+        effectiveElevation <= 0
+            ? const <BoxShadow>[]
+            : <BoxShadow>[
+                BoxShadow(
+                  color: defaultShadowColor,
+                  blurRadius: 10 + (effectiveElevation * 6),
+                  offset: Offset(0, 2 + effectiveElevation),
+                ),
+              ];
 
     Widget cardContent = Container(
       decoration: BoxDecoration(
@@ -59,16 +71,7 @@ class CustomCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(effectiveBorderRadius),
         border: Border.all(color: effectiveBorderColor, width: 1.0),
         boxShadow:
-            shadow ??
-            (glass
-                ? [] // No shadow for glass by default, or maybe a subtle glow?
-                : [
-                    BoxShadow(
-                      color: theme.shadowColor.withValues(alpha: 0.05),
-                      blurRadius: effectiveElevation * 2,
-                      offset: Offset(0, effectiveElevation),
-                    ),
-                  ]),
+            shadow ?? (glass ? const <BoxShadow>[] : defaultShadows),
       ),
       child: child != null
           ? Padding(padding: padding ?? EdgeInsets.zero, child: child)
@@ -76,14 +79,15 @@ class CustomCard extends StatelessWidget {
     );
 
     if (glass) {
+      final effectiveClip = clipBehavior ?? Clip.antiAlias;
       return Container(
         margin: margin,
-        clipBehavior: Clip.hardEdge,
+        clipBehavior: effectiveClip,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(effectiveBorderRadius),
         ),
         child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          filter: ui.ImageFilter.blur(sigmaX: 14, sigmaY: 14),
           child: cardContent,
         ),
       );

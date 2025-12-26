@@ -99,7 +99,7 @@ class _D1VAppBarState extends State<D1VAppBar>
 
                 // 磨砂玻璃层 (Dark Mode)
                 if (isDark && widget.enableGlassmorphism)
-                  _buildGlassmorphicLayer(_blurAnimation.value),
+                  _buildGlassmorphicLayer(context, _blurAnimation.value),
 
                 // AppBar 内容
                 _buildAppBarContent(context),
@@ -119,12 +119,21 @@ class _D1VAppBarState extends State<D1VAppBar>
     );
   }
 
-  Widget _buildGlassmorphicLayer(double blurValue) {
+  Widget _buildGlassmorphicLayer(BuildContext context, double blurValue) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final tint = Color.alphaBlend(
+      colorScheme.primary.withValues(alpha: isDark ? 0.14 : 0.08),
+      colorScheme.surface,
+    );
+    final overlayColor = tint.withValues(alpha: isDark ? 0.72 : 0.88);
+
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: blurValue, sigmaY: blurValue),
       child: Container(
         decoration: BoxDecoration(
-          color: D1VColors.deepBlueDark.withValues(alpha: 0.6 * 255),
+          color: overlayColor,
         ),
       ),
     );
@@ -242,9 +251,13 @@ class _D1VSimpleAppBarState extends State<D1VSimpleAppBar>
                     ),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: D1VColors.deepBlueDark.withValues(
-                          alpha: 0.6 * 255,
-                        ),
+                        color: Color.alphaBlend(
+                          Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withValues(alpha: 0.14),
+                          Theme.of(context).colorScheme.surface,
+                        ).withValues(alpha: 0.72),
                       ),
                     ),
                   ),
