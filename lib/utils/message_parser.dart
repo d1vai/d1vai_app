@@ -790,48 +790,81 @@ class MessageParser {
           });
 
       if (isToolResultMsg) {
-        // Drop result blocks that can be attached to a tool call (even if the
-        // tool call appears later due to unstable history ordering).
-        final remaining = <CodeMessageContent>[];
-        final noIdBlocks = <CodeMessageContent>[];
+        String inferName(String text) {
+          final s = text.trimLeft();
+          if (s.startsWith('\$ ') || s.contains('\n\$ ')) return 'bash';
+          if (s.startsWith('{') || s.startsWith('[')) return 'bash';
+          if (s.contains('Traceback (most recent call last)')) return 'bash';
+          return 'bash';
+        }
+
+        final orphan = <({String text, bool isError, String? toolUseId})>[];
 
         for (final code in toolResultCodes) {
           final toolUseId = _extractToolUseIdFromSubtype(code.subtype);
           if (toolUseId != null && attachableIds.contains(toolUseId)) {
+            // Will be merged into the corresponding tool call message.
             continue;
           }
-          final isErr = (code.subtype ?? '').toLowerCase().contains('error');
-          final normalized = CodeMessageContent(
-            code: code.code,
-            subtype: isErr ? 'tool_result_error' : 'tool_result',
-          );
-          remaining.add(normalized);
-          if (toolUseId == null) noIdBlocks.add(normalized);
+
+          final isErr = (code.subtype ?? '')
+              .toLowerCase()
+              .trim()
+              .startsWith('tool_result_error');
+
+          // If the result has no id, best-effort attach to a previous tool call.
+          if (toolUseId == null) {
+            final ok = _attachToolOutputToPrevTool(
+              out,
+              toolUseId: null,
+              outputText: code.code,
+              isError: isErr,
+            );
+            if (ok) continue;
+          }
+
+          orphan.add((text: code.code, isError: isErr, toolUseId: toolUseId));
         }
 
-        // Best-effort: attach no-id result blocks to previous tool call.
-        final unattached = <CodeMessageContent>[];
-        for (final code in noIdBlocks) {
-          final isErr =
-              (code.subtype ?? '').toLowerCase().trim() == 'tool_result_error';
-          final ok = _attachToolOutputToPrevTool(
-            out,
-            toolUseId: null,
-            outputText: code.code,
-            isError: isErr,
-          );
-          if (!ok) unattached.add(code);
+        if (orphan.isEmpty) continue;
+
+        final joined = orphan
+            .map((o) => o.text.trimRight())
+            .where((t) => t.isNotEmpty)
+            .join('\n\n');
+        if (joined.trim().isEmpty) continue;
+
+        final anyError = orphan.any((o) => o.isError);
+        String? firstId;
+        for (final o in orphan) {
+          final id = o.toolUseId?.trim();
+          if (id != null && id.isNotEmpty) {
+            firstId = id;
+            break;
+          }
         }
 
-        // Keep remaining id-scoped blocks (that we cannot attach) plus any
-        // no-id blocks that couldn't be attached.
-        final keep = <CodeMessageContent>[
-          ...remaining.where((c) => !noIdBlocks.contains(c)),
-          ...unattached,
-        ];
+        final toolName = inferName(joined);
+        final input = <String, dynamic>{
+          'orphan_tool_result': true,
+          if (firstId != null && firstId.trim().isNotEmpty)
+            'tool_use_id': firstId,
+        };
 
-        if (keep.isEmpty) continue;
-        out.add(msg.copyWith(contents: keep));
+        out.add(
+          msg.copyWith(
+            role: 'assistant',
+            contents: [
+              ToolMessageContent(
+                id: firstId,
+                name: toolName,
+                input: input,
+                status: anyError ? 'error' : 'done',
+                output: ToolOutput(text: joined, isError: anyError ? true : null),
+              ),
+            ],
+          ),
+        );
         continue;
       }
 

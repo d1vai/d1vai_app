@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../models/message.dart';
+import '../code_highlight_block.dart';
 import 'tool_utils.dart';
 
 class ToolDetailSheet {
@@ -66,13 +67,23 @@ class ToolDetailSheet {
                         title: (content.output?.isError == true)
                             ? 'Output (error)'
                             : 'Output',
-                        child: _CodeBlock(text: content.output!.text),
+                        child: _CodeBlock(
+                          text: content.output!.text,
+                          terminalStyle: true,
+                          language: null,
+                          maxVisibleLines: 20,
+                        ),
                       ),
                       const SizedBox(height: 12),
                     ],
                     _Section(
                       title: 'Input',
-                      child: _CodeBlock(text: prettyJson(content.input)),
+                      child: _CodeBlock(
+                        text: prettyJson(content.input),
+                        terminalStyle: false,
+                        language: 'json',
+                        maxVisibleLines: 14,
+                      ),
                     ),
                   ],
                 ),
@@ -326,26 +337,24 @@ class _Section extends StatelessWidget {
 
 class _CodeBlock extends StatelessWidget {
   final String text;
+  final bool terminalStyle;
+  final String? language;
+  final int maxVisibleLines;
 
-  const _CodeBlock({required this.text});
+  const _CodeBlock({
+    required this.text,
+    required this.terminalStyle,
+    required this.language,
+    required this.maxVisibleLines,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: SelectableText(
-        text,
-        style: theme.textTheme.bodySmall?.copyWith(
-          fontFamily: 'monospace',
-          height: 1.25,
-        ),
-      ),
+    return CodeHighlightBlock(
+      text: text,
+      language: language,
+      terminalStyle: terminalStyle,
+      maxVisibleLines: maxVisibleLines,
     );
   }
 }

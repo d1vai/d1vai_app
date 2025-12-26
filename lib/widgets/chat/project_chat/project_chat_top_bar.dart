@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'status_dot.dart';
 
 class ProjectChatTopBar extends StatelessWidget {
   final int currentIndex;
@@ -65,19 +66,12 @@ class ProjectChatTopBar extends StatelessWidget {
           Row(
             children: [
               if (workspaceDotColor != null)
-                Tooltip(
-                  message: workspaceTooltip ?? 'Workspace',
-                  child: _ActionIconButton(
-                    iconWidget: Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: workspaceDotColor,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    onPressed: onWorkspacePressed ?? () {},
+                _ActionIconButton(
+                  iconWidget: ProjectChatStatusDot(
+                    color: workspaceDotColor!,
+                    tooltip: workspaceTooltip ?? 'Workspace',
                   ),
+                  onPressed: onWorkspacePressed ?? () {},
                 ),
               if (workspaceDotColor != null) const SizedBox(width: 8),
               _ActionIconButton(

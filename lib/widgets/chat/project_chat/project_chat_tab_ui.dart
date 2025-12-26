@@ -27,7 +27,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
     final parts = <String>[];
     final raw = _workspaceState?.status;
     if (raw != null && raw.trim().isNotEmpty) {
-      parts.add('status=$raw');
+      parts.add(raw.trim());
     }
     final ip = _workspaceState?.ip;
     final port = _workspaceState?.port;
@@ -37,7 +37,9 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
     if (_workspaceError != null && _workspaceError!.trim().isNotEmpty) {
       parts.add(_workspaceError!);
     }
-    return parts.isEmpty ? 'Workspace' : parts.join(' · ');
+    return raw != null && raw.trim().isNotEmpty
+        ? raw.trim()
+        : (parts.isEmpty ? 'Workspace' : parts.join(' · '));
   }
 
   String _statusLabel() {

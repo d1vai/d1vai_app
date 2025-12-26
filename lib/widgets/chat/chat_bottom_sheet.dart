@@ -4,6 +4,7 @@ import 'message_list.dart';
 import 'message_input.dart';
 import 'quick_actions.dart';
 import 'message_skeleton.dart';
+import 'project_chat/status_dot.dart';
 
 /// Bottom sheet chat interface for mobile devices
 class ChatBottomSheet extends StatefulWidget {
@@ -122,11 +123,16 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                 ],
                 const Spacer(),
                 if (showStatus) ...[
-                  _StatusPill(
-                    label: statusText,
-                    isError: widget.statusIsError,
+                  ProjectChatStatusDot(
+                    color: _statusDotColor(
+                      theme,
+                      statusText,
+                      isError: widget.statusIsError,
+                    ),
+                    size: 10,
+                    tooltip: statusText,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                 ],
                 // Redeploy button
                 if (widget.onRedeploy != null)
@@ -327,61 +333,22 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
   }
 }
 
-class _StatusPill extends StatelessWidget {
-  final String label;
-  final bool isError;
-
-  const _StatusPill({required this.label, required this.isError});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final lower = label.toLowerCase().trim();
-
-    Color dot;
-    if (isError) {
-      dot = theme.colorScheme.error;
-    } else if (lower.contains('deploy')) {
-      dot = theme.colorScheme.primary;
-    } else if (lower.contains('work')) {
-      dot = Colors.amber;
-    } else if (lower.contains('think')) {
-      dot = Colors.purple;
-    } else if (lower.contains('ready')) {
-      dot = Colors.green;
-    } else {
-      dot = theme.colorScheme.onSurfaceVariant;
-    }
-
-    final bg = theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6);
-    final border = theme.colorScheme.outlineVariant.withValues(alpha: 0.7);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: border),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 7,
-            height: 7,
-            decoration: BoxDecoration(color: dot, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            'status=$label',
-            style: theme.textTheme.labelSmall?.copyWith(
-              fontFamily: 'monospace',
-              fontWeight: FontWeight.w700,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
+Color _statusDotColor(ThemeData theme, String label, {required bool isError}) {
+  final lower = label.toLowerCase().trim();
+  if (isError) {
+    return theme.colorScheme.error;
   }
+  if (lower.contains('deploy')) {
+    return theme.colorScheme.primary;
+  }
+  if (lower.contains('work')) {
+    return Colors.amber;
+  }
+  if (lower.contains('think')) {
+    return Colors.purple;
+  }
+  if (lower.contains('ready')) {
+    return Colors.green;
+  }
+  return theme.colorScheme.onSurfaceVariant;
 }

@@ -6,6 +6,7 @@ import 'package:flutter_highlight/themes/atom-one-light.dart';
 
 import '../../../services/d1vai_service.dart';
 import '../../snackbar_helper.dart';
+import '../file_type_visual.dart';
 
 class ProjectChatCodeTab extends StatefulWidget {
   final String projectId;
@@ -619,18 +620,7 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
   }
 
   IconData _iconForFile(String name) {
-    final lower = name.toLowerCase();
-    if (lower.endsWith('.ts') || lower.endsWith('.tsx')) return Icons.code;
-    if (lower.endsWith('.js') || lower.endsWith('.jsx')) return Icons.code;
-    if (lower.endsWith('.json')) return Icons.data_object;
-    if (lower.endsWith('.md')) return Icons.description;
-    if (lower.endsWith('.css') || lower.endsWith('.scss')) return Icons.palette;
-    if (lower.endsWith('.html')) return Icons.language;
-    if (lower.endsWith('.py')) return Icons.code;
-    if (lower.endsWith('.rs')) return Icons.code;
-    if (lower.endsWith('.sql')) return Icons.storage;
-    if (lower.endsWith('.yml') || lower.endsWith('.yaml')) return Icons.tune;
-    return Icons.insert_drive_file;
+    return fileTypeVisual(Theme.of(context), name).icon;
   }
 }
 

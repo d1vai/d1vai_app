@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../models/message.dart';
+import 'code_highlight_block.dart';
 import 'expandable_text.dart';
+import 'file_type_visual.dart';
 import 'markdown_text.dart';
 import 'tools/enhanced_tool_message.dart';
 import 'tools/tool_utils.dart';
@@ -352,16 +354,22 @@ class _CodeCard extends StatelessWidget {
             copyLabel: 'Copy code',
           ),
           const SizedBox(height: 8),
-          _ExpandableSelectableBlock(
-            text: code,
-            collapsedLines: 6,
-            style: theme.textTheme.bodySmall?.copyWith(
-              fontFamily: 'monospace',
-              height: 1.25,
-              fontSize: 12.5,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
-            ),
-          ),
+          isToolResult
+              ? CodeHighlightBlock(
+                  text: code,
+                  terminalStyle: true,
+                  maxVisibleLines: 12,
+                )
+              : _ExpandableSelectableBlock(
+                  text: code,
+                  collapsedLines: 6,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontFamily: 'monospace',
+                    height: 1.25,
+                    fontSize: 12.5,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
+                  ),
+                ),
         ],
       ),
     );
@@ -406,32 +414,44 @@ class _GitCommitCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     for (final f in files)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.insert_drive_file_outlined,
-                              size: 14,
-                              color: f.toLowerCase().endsWith('.sql')
-                                  ? _warningTint(theme)
-                                  : theme.colorScheme.onSurfaceVariant,
-                            ),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: SelectableText(
-                                f,
-                                maxLines: 2,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  fontFamily: 'monospace',
-                                  fontSize: 11.5,
-                                  height: 1.2,
-                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
+                      Builder(
+                        builder: (context) {
+                          final visual = fileTypeVisual(theme, f);
+                          final iconColor =
+                              (visual.color ?? theme.colorScheme.onSurfaceVariant)
+                                  .withValues(alpha: 0.85);
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 2),
+                                  child: Icon(
+                                    visual.icon,
+                                    size: 16,
+                                    color: iconColor,
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: SelectableText(
+                                    f,
+                                    maxLines: 2,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      fontFamily: 'monospace',
+                                      fontSize: 11.5,
+                                      height: 1.2,
+                                      color: theme.colorScheme.onSurface
+                                          .withValues(alpha: 0.9),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
                   ],
                 ),
