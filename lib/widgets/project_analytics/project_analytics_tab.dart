@@ -287,7 +287,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
           contents: contents,
         ),
       );
-      _installMessages = MessageParser.mergeToolResultsIntoPrevBashTool(
+      _installMessages = MessageParser.mergeToolResultsIntoPrevToolCalls(
         _installMessages,
       );
     });

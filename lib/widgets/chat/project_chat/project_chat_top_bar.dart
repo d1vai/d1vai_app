@@ -41,21 +41,21 @@ class ProjectChatTopBar extends StatelessWidget {
               children: [
                 _TabButton(
                   isSelected: currentIndex == 0,
-                  label: 'Preview',
+                  label: null,
                   icon: Icons.preview,
                   onTap: () => onTabSelected(0),
                 ),
                 const SizedBox(width: 8),
                 _TabButton(
                   isSelected: currentIndex == 1,
-                  label: 'Code',
+                  label: null,
                   icon: Icons.code,
                   onTap: () => onTabSelected(1),
                 ),
                 const SizedBox(width: 8),
                 _TabButton(
                   isSelected: currentIndex == 2,
-                  label: 'Env',
+                  label: null,
                   icon: Icons.settings,
                   onTap: () => onTabSelected(2),
                 ),
@@ -99,7 +99,7 @@ class ProjectChatTopBar extends StatelessWidget {
 
 class _TabButton extends StatelessWidget {
   final bool isSelected;
-  final String label;
+  final String? label;
   final IconData icon;
   final VoidCallback onTap;
 
@@ -113,12 +113,15 @@ class _TabButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hasLabel = label != null && label!.trim().isNotEmpty;
 
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: hasLabel
+            ? const EdgeInsets.symmetric(horizontal: 12, vertical: 8)
+            : const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: isSelected
               ? theme.colorScheme.primary.withValues(alpha: 0.12)
@@ -141,17 +144,19 @@ class _TabButton extends StatelessWidget {
                   ? theme.colorScheme.primary
                   : theme.colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurfaceVariant,
+            if (hasLabel) ...[
+              const SizedBox(width: 6),
+              Text(
+                label!,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurfaceVariant,
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),

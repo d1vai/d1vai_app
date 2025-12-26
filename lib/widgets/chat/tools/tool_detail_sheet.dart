@@ -60,11 +60,12 @@ class ToolDetailSheet {
                         ),
                       ),
                     if (details.primaryLines.isNotEmpty) const SizedBox(height: 12),
-                    if (toolName.toLowerCase().trim() == 'bash' &&
-                        content.output != null &&
+                    if (content.output != null &&
                         content.output!.text.trim().isNotEmpty) ...[
                       _Section(
-                        title: (content.output?.isError == true) ? 'Output (error)' : 'Output',
+                        title: (content.output?.isError == true)
+                            ? 'Output (error)'
+                            : 'Output',
                         child: _CodeBlock(text: content.output!.text),
                       ),
                       const SizedBox(height: 12),

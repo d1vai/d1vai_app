@@ -239,7 +239,46 @@ class _ChatScreenState extends State<ChatScreen>
         final m = MessageParser.historyEntryToMessage(entry);
         if (m != null) messages.add(m);
       }
-      final merged = MessageParser.mergeToolResultsIntoPrevBashTool(messages);
+      final merged = MessageParser.mergeToolResultsIntoPrevToolCalls(messages);
+
+      Map<String, dynamic>? payloadMap(dynamic p) {
+        if (p is Map<String, dynamic>) return p;
+        if (p is String) {
+          final s = p.trim();
+          if (!(s.startsWith('{') || s.startsWith('['))) return null;
+          try {
+            final v = jsonDecode(s);
+            if (v is Map) {
+              return v.map((k, val) => MapEntry(k.toString(), val));
+            }
+          } catch (_) {}
+        }
+        return null;
+      }
+
+      ChatHistoryEntry? latest;
+      for (final e in history) {
+        if (latest == null || e.createdAt.isAfter(latest.createdAt)) {
+          latest = e;
+        }
+      }
+      final latestType = payloadMap(latest?.payload)?['type']?.toString();
+      final nextAutoConnectDisabled =
+          latestType == 'complete' ? true : _autoConnectDisabled;
+
+      ChatHistoryEntry? newestWithSession;
+      for (final e in history) {
+        final pm = payloadMap(e.payload);
+        if (pm == null) continue;
+        final sid = pm['session_id'];
+        if (sid is! String || sid.isEmpty) continue;
+        if (newestWithSession == null ||
+            e.createdAt.isAfter(newestWithSession.createdAt)) {
+          newestWithSession = e;
+        }
+      }
+      final nextSessionId =
+          payloadMap(newestWithSession?.payload)?['session_id'] as String?;
 
       setState(() {
         _messages
@@ -250,10 +289,21 @@ class _ChatScreenState extends State<ChatScreen>
         _hasMoreHistory = history.length >= limit;
         _oldestMessageAt =
             history.isNotEmpty ? history.first.createdAt : null;
+        _autoConnectDisabled = nextAutoConnectDisabled;
+        _currentSessionId =
+            (nextSessionId != null && nextSessionId.isNotEmpty)
+                ? nextSessionId
+                : _currentSessionId;
       });
 
-      if (attemptReconnect) {
-        await _restoreSessionFromHistory(history);
+      if (attemptReconnect &&
+          !nextAutoConnectDisabled &&
+          nextSessionId != null &&
+          nextSessionId.isNotEmpty &&
+          newestWithSession != null &&
+          DateTime.now().difference(newestWithSession.createdAt).inMinutes <=
+              10) {
+        await _ensureWebSocketOpen(nextSessionId);
       }
     } catch (e) {
       if (!mounted) return;
@@ -283,10 +333,6 @@ class _ChatScreenState extends State<ChatScreen>
     });
 
     final controller = _scrollController;
-    final hadClients = controller.hasClients;
-    final beforeOffset = hadClients ? controller.offset : 0.0;
-    final beforeMaxExtent =
-        hadClients ? controller.position.maxScrollExtent : 0.0;
 
     try {
       const limit = 30;
@@ -305,31 +351,23 @@ class _ChatScreenState extends State<ChatScreen>
         final m = MessageParser.historyEntryToMessage(entry);
         if (m != null) older.add(m);
       }
-      final olderMerged = MessageParser.mergeToolResultsIntoPrevBashTool(older);
 
       final existingIds = _messages.map((m) => m.id).toSet();
       final deduped =
-          olderMerged.where((m) => !existingIds.contains(m.id)).toList();
+          older.where((m) => !existingIds.contains(m.id)).toList();
+      final merged = MessageParser.mergeToolResultsIntoPrevToolCalls(
+        [...deduped, ..._messages],
+      );
 
       setState(() {
-        _messages.insertAll(0, deduped);
+        _messages
+          ..clear()
+          ..addAll(merged);
         _isLoadingMoreHistory = false;
         _hasMoreHistory = history.length >= limit;
         _oldestMessageAt =
             history.isNotEmpty ? history.first.createdAt : _oldestMessageAt;
       });
-
-      // Preserve viewport position after prepending.
-      if (hadClients && controller.hasClients) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!controller.hasClients) return;
-          final afterMax = controller.position.maxScrollExtent;
-          final delta = afterMax - beforeMaxExtent;
-          if (delta > 0) {
-            controller.jumpTo(beforeOffset + delta);
-          }
-        });
-      }
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -465,37 +503,6 @@ class _ChatScreenState extends State<ChatScreen>
     }
   }
 
-  bool _attachToolResultToPrevBashTool(String outputText,
-      {required bool isError}) {
-    if (_messages.isEmpty) return false;
-    final lastIdx = _messages.length - 1;
-    final last = _messages[lastIdx];
-    final contents = last.contents;
-
-    for (var ci = contents.length - 1; ci >= 0; ci--) {
-      final c = contents[ci];
-      if (c is! ToolMessageContent) continue;
-      if (c.name.toLowerCase().trim() != 'bash') continue;
-
-      final prevOut = c.output?.text ?? '';
-      final joined =
-          prevOut.trim().isNotEmpty ? '$prevOut\n\n$outputText' : outputText;
-      final capped = joined.length > 120000
-          ? joined.substring(joined.length - 120000)
-          : joined;
-
-      final nextContents = List<MessageContent>.from(contents);
-      nextContents[ci] = c.copyWith(
-        output: ToolOutput(text: capped, isError: isError),
-      );
-      setState(() {
-        _messages[lastIdx] = last.copyWith(contents: nextContents);
-      });
-      return true;
-    }
-    return false;
-  }
-
   bool _userPayloadHasToolResult(Map<String, dynamic> payload) {
     try {
       final message = payload['message'];
@@ -628,27 +635,20 @@ class _ChatScreenState extends State<ChatScreen>
       }
       final contents = MessageParser.createMessageContentsFromPayload(payload);
       if (contents.isEmpty) return;
-      if (type == 'tool_result') {
-        final isErr = payload['is_error'] == true;
-        final outputBlocks = contents.whereType<CodeMessageContent>().where(
-              (c) => (c.subtype ?? '').toLowerCase() == 'tool_result',
-            );
-        final outputText = outputBlocks.map((c) => c.code).join('\n').trim();
-        if (outputText.isNotEmpty &&
-            _attachToolResultToPrevBashTool(outputText, isError: isErr)) {
-          _scrollToBottom();
-          return;
-        }
-      }
+      final toolMsg = ChatMessage(
+        id: 'tool-${DateTime.now().millisecondsSinceEpoch}',
+        role: 'assistant',
+        createdAt: DateTime.now(),
+        contents: contents,
+      );
       setState(() {
-        _messages.add(
-          ChatMessage(
-            id: 'tool-${DateTime.now().millisecondsSinceEpoch}',
-            role: 'assistant',
-            createdAt: DateTime.now(),
-            contents: contents,
-          ),
-        );
+        final next = MessageParser.mergeToolResultsIntoPrevToolCalls([
+          ..._messages,
+          toolMsg,
+        ]);
+        _messages
+          ..clear()
+          ..addAll(next);
       });
       _scrollToBottom();
       return;
@@ -675,24 +675,20 @@ class _ChatScreenState extends State<ChatScreen>
       _markLastToolOutcome(isErr ? 'error' : 'done');
       final contents = MessageParser.createMessageContentsFromPayload(payload);
       if (contents.isNotEmpty) {
-        final outputBlocks = contents.whereType<CodeMessageContent>().where(
-              (c) => (c.subtype ?? '').toLowerCase() == 'tool_result',
-            );
-        final outputText = outputBlocks.map((c) => c.code).join('\n').trim();
-        if (outputText.isNotEmpty &&
-            _attachToolResultToPrevBashTool(outputText, isError: isErr)) {
-          _scrollToBottom();
-          return;
-        }
+        final toolMsg = ChatMessage(
+          id: 'ws-${DateTime.now().millisecondsSinceEpoch}',
+          role: 'assistant',
+          createdAt: DateTime.now(),
+          contents: contents,
+        );
         setState(() {
-          _messages.add(
-            ChatMessage(
-              id: 'ws-${DateTime.now().millisecondsSinceEpoch}',
-              role: 'assistant',
-              createdAt: DateTime.now(),
-              contents: contents,
-            ),
-          );
+          final next = MessageParser.mergeToolResultsIntoPrevToolCalls([
+            ..._messages,
+            toolMsg,
+          ]);
+          _messages
+            ..clear()
+            ..addAll(next);
         });
         _scrollToBottom();
         return;
@@ -789,68 +785,10 @@ class _ChatScreenState extends State<ChatScreen>
     }
   }
 
-  Future<void> _restoreSessionFromHistory(
-    List<ChatHistoryEntry> history,
-  ) async {
-    if (!mounted) return;
-
-    Map<String, dynamic>? payloadMap(dynamic p) {
-      if (p is Map<String, dynamic>) return p;
-      if (p is String) {
-        final s = p.trim();
-        if (!(s.startsWith('{') || s.startsWith('['))) return null;
-        try {
-          final v = jsonDecode(s);
-          if (v is Map) {
-            return v.map((k, val) => MapEntry(k.toString(), val));
-          }
-        } catch (_) {}
-      }
-      return null;
-    }
-
-    ChatHistoryEntry? latest;
-    for (final e in history) {
-      if (latest == null || e.createdAt.isAfter(latest.createdAt)) {
-        latest = e;
-      }
-    }
-    final latestType = payloadMap(latest?.payload)?['type']?.toString();
-    if (latestType == 'complete') {
-      _autoConnectDisabled = true;
-      return;
-    }
-
-    ChatHistoryEntry? newestWithSession;
-    for (final e in history) {
-      final pm = payloadMap(e.payload);
-      if (pm == null) continue;
-      final sid = pm['session_id'];
-      if (sid is! String || sid.isEmpty) continue;
-      if (newestWithSession == null ||
-          e.createdAt.isAfter(newestWithSession.createdAt)) {
-        newestWithSession = e;
-      }
-    }
-    if (newestWithSession == null) return;
-
-    final sid = payloadMap(newestWithSession.payload)?['session_id'] as String?;
-    if (sid == null || sid.isEmpty) return;
-    setState(() {
-      _currentSessionId = sid;
-    });
-
-    final now = DateTime.now();
-    if (now.difference(newestWithSession.createdAt).inMinutes <= 10 &&
-        !_autoConnectDisabled) {
-      await _ensureWebSocketOpen(sid);
-    }
-  }
-
   /// Send a message
   Future<void> _sendMessage(
     String text, {
-    bool forceNewSession = false,
+      bool forceNewSession = false,
   }) async {
     if (text.trim().isEmpty || _isLoading) return;
     final prompt = text.trim();
@@ -954,7 +892,7 @@ class _ChatScreenState extends State<ChatScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
+          0,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
@@ -964,6 +902,9 @@ class _ChatScreenState extends State<ChatScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final heroTag = 'project-chat-messages-${widget.projectId}';
+
     Color dotColor;
     switch (_workspacePhase) {
       case WorkspacePhase.ready:
@@ -1080,19 +1021,26 @@ class _ChatScreenState extends State<ChatScreen>
         children: [
           // Messages list
           Expanded(
-            child: _messages.isEmpty
-                ? _isLoadingHistory
-                    ? _buildLoadingState()
-                    : _buildEmptyState()
-                : MessageList(
-                    messages: _messages,
-                    scrollController: _scrollController,
-                    messageStatuses: _messageStatuses,
-                    onRetry: _retryMessage,
-                    onLoadMore: _loadMoreHistory,
-                    hasMoreHistory: _hasMoreHistory,
-                    isLoadingMore: _isLoadingMoreHistory,
-                  ),
+            child: Hero(
+              tag: heroTag,
+              transitionOnUserGestures: true,
+              child: Material(
+                color: theme.colorScheme.surface,
+                child: _messages.isEmpty
+                    ? _isLoadingHistory
+                        ? _buildLoadingState()
+                        : _buildEmptyState()
+                    : MessageList(
+                        messages: _messages,
+                        scrollController: _scrollController,
+                        messageStatuses: _messageStatuses,
+                        onRetry: _retryMessage,
+                        onLoadMore: _loadMoreHistory,
+                        hasMoreHistory: _hasMoreHistory,
+                        isLoadingMore: _isLoadingMoreHistory,
+                      ),
+              ),
+            ),
           ),
           // Message input
           MessageInput(

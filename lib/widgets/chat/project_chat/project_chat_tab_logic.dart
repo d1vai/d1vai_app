@@ -297,7 +297,46 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
           messages.add(message);
         }
       }
-      final merged = MessageParser.mergeToolResultsIntoPrevBashTool(messages);
+      final merged = MessageParser.mergeToolResultsIntoPrevToolCalls(messages);
+
+      Map<String, dynamic>? payloadMap(dynamic p) {
+        if (p is Map<String, dynamic>) return p;
+        if (p is String) {
+          final s = p.trim();
+          if (!(s.startsWith('{') || s.startsWith('['))) return null;
+          try {
+            final v = jsonDecode(s);
+            if (v is Map) {
+              return v.map((k, val) => MapEntry(k.toString(), val));
+            }
+          } catch (_) {}
+        }
+        return null;
+      }
+
+      ChatHistoryEntry? latest;
+      for (final e in history) {
+        if (latest == null || e.createdAt.isAfter(latest.createdAt)) {
+          latest = e;
+        }
+      }
+      final latestType = payloadMap(latest?.payload)?['type']?.toString();
+      final nextAutoConnectDisabled =
+          latestType == 'complete' ? true : _autoConnectDisabled;
+
+      ChatHistoryEntry? newestWithSession;
+      for (final e in history) {
+        final pm = payloadMap(e.payload);
+        if (pm == null) continue;
+        final sid = pm['session_id'];
+        if (sid is! String || sid.isEmpty) continue;
+        if (newestWithSession == null ||
+            e.createdAt.isAfter(newestWithSession.createdAt)) {
+          newestWithSession = e;
+        }
+      }
+      final nextSessionId =
+          payloadMap(newestWithSession?.payload)?['session_id'] as String?;
 
       setState(() {
         _chatMessages
@@ -308,10 +347,22 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _historyLoaded = true;
         _hasMoreHistory = history.length >= 30;
         _oldestMessageAt = history.isNotEmpty ? history.first.createdAt : null;
+        _autoConnectDisabled = nextAutoConnectDisabled;
+        _currentSessionId =
+            (nextSessionId != null && nextSessionId.isNotEmpty)
+                ? nextSessionId
+                : _currentSessionId;
       });
 
       // Match web behavior: optionally reconnect to a recent session to stream live output.
-      await _restoreSessionFromHistory(history);
+      if (!nextAutoConnectDisabled &&
+          nextSessionId != null &&
+          nextSessionId.isNotEmpty &&
+          newestWithSession != null &&
+          DateTime.now().difference(newestWithSession.createdAt).inMinutes <=
+              10) {
+        await _ensureWebSocketOpen(nextSessionId);
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -333,11 +384,6 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     });
 
     final controller = _chatScrollController;
-    final hadClients = controller.hasClients;
-    final beforeOffset = hadClients ? controller.offset : 0.0;
-    final beforeMaxExtent = hadClients
-        ? controller.position.maxScrollExtent
-        : 0.0;
 
     try {
       const limit = 30;
@@ -357,33 +403,24 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         if (m == null) continue;
         older.add(m);
       }
-      final olderMerged = MessageParser.mergeToolResultsIntoPrevBashTool(older);
 
       final existingIds = _chatMessages.map((m) => m.id).toSet();
-      final deduped = olderMerged
-          .where((m) => !existingIds.contains(m.id))
-          .toList();
+      final deduped =
+          older.where((m) => !existingIds.contains(m.id)).toList();
+      final merged = MessageParser.mergeToolResultsIntoPrevToolCalls(
+        [...deduped, ..._chatMessages],
+      );
 
       setState(() {
-        _chatMessages.insertAll(0, deduped);
+        _chatMessages
+          ..clear()
+          ..addAll(merged);
         _isLoadingMoreHistory = false;
         _hasMoreHistory = history.length >= limit;
         _oldestMessageAt = history.isNotEmpty
             ? history.first.createdAt
             : _oldestMessageAt;
       });
-
-      // Preserve viewport position after prepending.
-      if (hadClients && controller.hasClients) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!controller.hasClients) return;
-          final afterMax = controller.position.maxScrollExtent;
-          final delta = afterMax - beforeMaxExtent;
-          if (delta > 0) {
-            controller.jumpTo(beforeOffset + delta);
-          }
-        });
-      }
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -538,40 +575,6 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         return;
       }
     }
-  }
-
-  bool _attachToolResultToPrevBashTool(
-    String outputText, {
-    required bool isError,
-  }) {
-    if (_chatMessages.isEmpty) return false;
-    final lastIdx = _chatMessages.length - 1;
-    final last = _chatMessages[lastIdx];
-    final contents = last.contents;
-
-    for (var ci = contents.length - 1; ci >= 0; ci--) {
-      final c = contents[ci];
-      if (c is! ToolMessageContent) continue;
-      if (c.name.toLowerCase().trim() != 'bash') continue;
-
-      final prevOut = c.output?.text ?? '';
-      final joined = prevOut.trim().isNotEmpty
-          ? '$prevOut\n\n$outputText'
-          : outputText;
-      final capped = joined.length > 120000
-          ? joined.substring(joined.length - 120000)
-          : joined;
-
-      final nextContents = List<MessageContent>.from(contents);
-      nextContents[ci] = c.copyWith(
-        output: ToolOutput(text: capped, isError: isError),
-      );
-      setState(() {
-        _chatMessages[lastIdx] = last.copyWith(contents: nextContents);
-      });
-      return true;
-    }
-    return false;
   }
 
   bool _userPayloadHasToolResult(Map<String, dynamic> payload) {
@@ -742,27 +745,20 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       _setSessionThinking(false);
       final contents = MessageParser.createMessageContentsFromPayload(payload);
       if (contents.isEmpty) return;
-      if (type == 'tool_result') {
-        final isErr = payload['is_error'] == true;
-        final outputBlocks = contents.whereType<CodeMessageContent>().where(
-          (c) => (c.subtype ?? '').toLowerCase() == 'tool_result',
-        );
-        final outputText = outputBlocks.map((c) => c.code).join('\n').trim();
-        if (outputText.isNotEmpty &&
-            _attachToolResultToPrevBashTool(outputText, isError: isErr)) {
-          _scrollToBottom();
-          return;
-        }
-      }
+      final toolMsg = ChatMessage(
+        id: 'tool-${DateTime.now().millisecondsSinceEpoch}',
+        role: 'assistant',
+        createdAt: DateTime.now(),
+        contents: contents,
+      );
       setState(() {
-        _chatMessages.add(
-          ChatMessage(
-            id: 'tool-${DateTime.now().millisecondsSinceEpoch}',
-            role: 'assistant',
-            createdAt: DateTime.now(),
-            contents: contents,
-          ),
-        );
+        final next = MessageParser.mergeToolResultsIntoPrevToolCalls([
+          ..._chatMessages,
+          toolMsg,
+        ]);
+        _chatMessages
+          ..clear()
+          ..addAll(next);
       });
       _scrollToBottom();
       return;
@@ -794,24 +790,20 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       _markLastToolOutcome(isErr ? 'error' : 'done');
       final contents = MessageParser.createMessageContentsFromPayload(payload);
       if (contents.isNotEmpty) {
-        final outputBlocks = contents.whereType<CodeMessageContent>().where(
-          (c) => (c.subtype ?? '').toLowerCase() == 'tool_result',
+        final toolMsg = ChatMessage(
+          id: 'ws-${DateTime.now().millisecondsSinceEpoch}',
+          role: 'assistant',
+          createdAt: DateTime.now(),
+          contents: contents,
         );
-        final outputText = outputBlocks.map((c) => c.code).join('\n').trim();
-        if (outputText.isNotEmpty &&
-            _attachToolResultToPrevBashTool(outputText, isError: isErr)) {
-          _scrollToBottom();
-          return;
-        }
         setState(() {
-          _chatMessages.add(
-            ChatMessage(
-              id: 'ws-${DateTime.now().millisecondsSinceEpoch}',
-              role: 'assistant',
-              createdAt: DateTime.now(),
-              contents: contents,
-            ),
-          );
+          final next = MessageParser.mergeToolResultsIntoPrevToolCalls([
+            ..._chatMessages,
+            toolMsg,
+          ]);
+          _chatMessages
+            ..clear()
+            ..addAll(next);
         });
         _scrollToBottom();
         return;
@@ -945,6 +937,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
                   launchUrl(uri, mode: LaunchMode.externalApplication);
               }
             : null,
+        duration: const Duration(seconds: 3),
+        position: SnackBarPosition.top,
       );
       unawaited(_refreshPreviewUrlFromApi());
       // Align with web: treat a successful trigger response as "done" for the UI button.
@@ -1091,67 +1085,6 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     await _ensureWebSocketOpen(sid.trim());
   }
 
-  Future<void> _restoreSessionFromHistory(
-    List<ChatHistoryEntry> history,
-  ) async {
-    if (!mounted) return;
-
-    Map<String, dynamic>? payloadMap(dynamic p) {
-      if (p is Map<String, dynamic>) return p;
-      if (p is String) {
-        final s = p.trim();
-        if (!(s.startsWith('{') || s.startsWith('['))) return null;
-        try {
-          final v = jsonDecode(s);
-          if (v is Map) {
-            return v.map((k, val) => MapEntry(k.toString(), val));
-          }
-        } catch (_) {}
-      }
-      return null;
-    }
-
-    // If the latest history entry is a completion, don't auto-connect on enter.
-    ChatHistoryEntry? latest;
-    for (final e in history) {
-      if (latest == null || e.createdAt.isAfter(latest.createdAt)) {
-        latest = e;
-      }
-    }
-    final latestType = payloadMap(latest?.payload)?['type']?.toString();
-    if (latestType == 'complete') {
-      _autoConnectDisabled = true;
-      return;
-    }
-
-    // Find newest entry with a usable session_id (same heuristic as web).
-    ChatHistoryEntry? newestWithSession;
-    for (final e in history) {
-      final pm = payloadMap(e.payload);
-      if (pm == null) continue;
-      final sid = pm['session_id'];
-      if (sid is! String || sid.isEmpty) continue;
-      if (newestWithSession == null ||
-          e.createdAt.isAfter(newestWithSession.createdAt)) {
-        newestWithSession = e;
-      }
-    }
-    if (newestWithSession == null) return;
-
-    final sid = payloadMap(newestWithSession.payload)?['session_id'] as String?;
-    if (sid == null || sid.isEmpty) return;
-    setState(() {
-      _currentSessionId = sid;
-    });
-
-    // Only auto-connect for a recent session to avoid reviving stale sessions.
-    final now = DateTime.now();
-    if (now.difference(newestWithSession.createdAt).inMinutes <= 10 &&
-        !_autoConnectDisabled) {
-      await _ensureWebSocketOpen(sid);
-    }
-  }
-
   /// 发送普通聊天消息
   @override
   void _sendChatMessage(String text) async {
@@ -1267,7 +1200,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_chatScrollController.hasClients) {
         _chatScrollController.animateTo(
-          _chatScrollController.position.maxScrollExtent,
+          0,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );

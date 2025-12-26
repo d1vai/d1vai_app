@@ -138,6 +138,96 @@ class MessageParser {
     final payloadType = rawPayload['type'] as String?;
 
     try {
+      // Some servers wrap chat blocks in `payload.message` with a separate
+      // `payload.type` like `session_message`. Mirror web behavior by parsing
+      // based on message.role/content even when payload.type is unknown.
+      final wrapped = rawPayload['message'];
+      if (wrapped is Map<String, dynamic> && wrapped['content'] is List) {
+        final wrappedRole = _normalizeRole(wrapped['role']?.toString());
+        if (wrappedRole == 'assistant') {
+          final blocks = wrapped['content'] as List;
+          final contents = <MessageContent>[];
+          final toolUseTotal = blocks
+              .where(
+                (it) => it is Map<String, dynamic> && it['type'] == 'tool_use',
+              )
+              .length;
+          var toolUseSeen = 0;
+
+          for (final item in blocks) {
+            if (item is! Map<String, dynamic>) continue;
+            if (item['type'] == 'text' && item['text'] != null) {
+              contents.add(TextMessageContent(text: item['text'].toString()));
+            } else if (item['type'] == 'thinking' &&
+                item['thinking'] != null) {
+              contents.add(
+                ThinkingMessageContent(text: item['thinking'].toString()),
+              );
+            } else if (item['type'] == 'tool_use' && item['name'] != null) {
+              toolUseSeen += 1;
+              contents.add(
+                ToolMessageContent(
+                  id: item['id']?.toString(),
+                  name: item['name'].toString(),
+                  input: item['input'],
+                  status: toolUseSeen >= toolUseTotal ? 'processing' : 'done',
+                ),
+              );
+            }
+          }
+
+          if (contents.isNotEmpty) return contents;
+        }
+
+        if (wrappedRole == 'user') {
+          final blocks = wrapped['content'] as List;
+          final contents = <MessageContent>[];
+
+          String toText(dynamic val) {
+            if (val is String) return val;
+            if (val is Map<String, dynamic>) {
+              if (val['text'] is String) return val['text'] as String;
+              try {
+                return json.encode(val);
+              } catch (e) {
+                return val.toString();
+              }
+            }
+            return val?.toString() ?? '';
+          }
+
+          for (final item in blocks) {
+            if (item is! Map<String, dynamic>) continue;
+            if (item['type'] == 'tool_result') {
+              String codeStr;
+              if (item['content'] is List) {
+                codeStr =
+                    (item['content'] as List).map((p) => toText(p)).join('\n');
+              } else {
+                codeStr = toText(item['content']);
+              }
+              final isErr = item['is_error'] == true;
+              final toolUseId = item['tool_use_id']?.toString().trim();
+              final baseSubtype =
+                  isErr ? 'tool_result_error' : 'tool_result';
+              final subtype = (toolUseId != null && toolUseId.isNotEmpty)
+                  ? '$baseSubtype:$toolUseId'
+                  : baseSubtype;
+              contents.add(
+                CodeMessageContent(
+                  code: codeStr.isNotEmpty ? codeStr : 'No result',
+                  subtype: subtype,
+                ),
+              );
+            } else if (item['type'] == 'text') {
+              contents.add(TextMessageContent(text: toText(item['text'])));
+            }
+          }
+
+          if (contents.isNotEmpty) return contents;
+        }
+      }
+
       // Special handling: user prompt message (no type field)
       if (payloadType == null &&
           rawPayload['prompt'] != null &&
@@ -342,10 +432,15 @@ class MessageParser {
                     codeStr = toText(item['content']);
                   }
                   final isErr = item['is_error'] == true;
+                  final toolUseId = item['tool_use_id']?.toString().trim();
+                  final baseSubtype = isErr ? 'tool_result_error' : 'tool_result';
+                  final subtype = (toolUseId != null && toolUseId.isNotEmpty)
+                      ? '$baseSubtype:$toolUseId'
+                      : baseSubtype;
                   contents.add(
                     CodeMessageContent(
                       code: codeStr.isNotEmpty ? codeStr : 'No result',
-                      subtype: isErr ? 'tool_result_error' : 'tool_result',
+                      subtype: subtype,
                     ),
                   );
                 } else if (item['type'] == 'text') {
@@ -382,16 +477,40 @@ class MessageParser {
         case 'tool_result':
           {
             final content = rawPayload['content'] ?? rawPayload['message'];
-            if (content is String) {
-              final isErr = rawPayload['is_error'] == true;
-              return [
-                CodeMessageContent(
-                  code: content,
-                  subtype: isErr ? 'tool_result_error' : 'tool_result',
-                ),
-              ];
+            final isErr = rawPayload['is_error'] == true;
+            final toolUseId = rawPayload['tool_use_id']?.toString().trim();
+            final baseSubtype = isErr ? 'tool_result_error' : 'tool_result';
+            final subtype = (toolUseId != null && toolUseId.isNotEmpty)
+                ? '$baseSubtype:$toolUseId'
+                : baseSubtype;
+
+            String toText(dynamic val) {
+              if (val is String) return val;
+              if (val is Map<String, dynamic>) {
+                if (val['text'] is String) return val['text'] as String;
+                try {
+                  return json.encode(val);
+                } catch (_) {
+                  return val.toString();
+                }
+              }
+              return val?.toString() ?? '';
             }
-            break;
+
+            String codeStr;
+            if (content is List) {
+              codeStr = content.map((p) => toText(p)).join('\n');
+            } else {
+              codeStr = toText(content);
+            }
+
+            if (codeStr.trim().isEmpty) break;
+            return [
+              CodeMessageContent(
+                code: codeStr,
+                subtype: subtype,
+              ),
+            ];
           }
         case 'task_update':
           {
@@ -499,6 +618,22 @@ class MessageParser {
       if (payloadType != null && payloadPriorityTypes.contains(payloadType)) {
         return createMessageContentsFromPayload(rawPayload);
       }
+
+      // Some payloads (e.g. `session_message`) omit a recognized payload.type but
+      // still carry tool_use/tool_result blocks inside `payload.message.content`.
+      // Prefer parsing those blocks so tool outputs can be merged into tool calls.
+      final wrapped = rawPayload['message'];
+      if (wrapped is Map<String, dynamic> && wrapped['content'] is List) {
+        final blocks = wrapped['content'] as List;
+        final hasToolBlocks = blocks.any(
+          (it) =>
+              it is Map<String, dynamic> &&
+              (it['type'] == 'tool_use' || it['type'] == 'tool_result'),
+        );
+        if (hasToolBlocks) {
+          return createMessageContentsFromPayload(rawPayload);
+        }
+      }
     }
 
     // If message_text exists and is not empty, use it
@@ -583,72 +718,252 @@ class MessageParser {
   static List<ChatMessage> mergeToolResultsIntoPrevBashTool(
     List<ChatMessage> messages,
   ) {
+    // Backward-compat wrapper (now supports all tools, not only bash).
+    return mergeToolResultsIntoPrevToolCalls(messages);
+  }
+
+  static bool _isToolResultSubtype(String? subtype) {
+    final s = (subtype ?? '').toLowerCase().trim();
+    return s == 'tool_result' ||
+        s == 'tool_result_error' ||
+        s.startsWith('tool_result:') ||
+        s.startsWith('tool_result_error:');
+  }
+
+  static String? _extractToolUseIdFromSubtype(String? subtype) {
+    final s = (subtype ?? '').trim();
+    final idx = s.indexOf(':');
+    if (idx < 0) return null;
+    final id = s.substring(idx + 1).trim();
+    return id.isEmpty ? null : id;
+  }
+
+  static List<ChatMessage> mergeToolResultsIntoPrevToolCalls(
+    List<ChatMessage> messages,
+  ) {
     final out = <ChatMessage>[];
+
+    // Index tool result blocks by tool_use_id (order-preserving).
+    final resultsById = <String, List<({String text, bool isError})>>{};
+    for (final msg in messages) {
+      for (final c in msg.contents.whereType<CodeMessageContent>()) {
+        if (!_isToolResultSubtype(c.subtype)) continue;
+        final id = _extractToolUseIdFromSubtype(c.subtype);
+        if (id == null) continue;
+        final isErr = (c.subtype ?? '')
+            .toLowerCase()
+            .trim()
+            .startsWith('tool_result_error');
+        (resultsById[id] ??= []).add((text: c.code, isError: isErr));
+      }
+    }
+
+    // Identify which tool_use_id actually exists in tool call messages.
+    final toolIdsPresent = <String>{};
+    for (final msg in messages) {
+      for (final tool in msg.contents.whereType<ToolMessageContent>()) {
+        final id = tool.id?.trim();
+        if (id != null && id.isNotEmpty) toolIdsPresent.add(id);
+      }
+    }
+    final attachableIds = resultsById.keys
+        .where((id) => toolIdsPresent.contains(id))
+        .toSet();
+
+    // Attach each tool_use_id at most once.
+    final attachedIds = <String>{};
+
     for (final msg in messages) {
       final contents = msg.contents;
+
       final toolResultCodes = contents
           .whereType<CodeMessageContent>()
-          .where((c) =>
-              c.subtype == 'tool_result' || c.subtype == 'tool_result_error')
+          .where((c) => _isToolResultSubtype(c.subtype))
           .toList();
 
       final isToolResultMsg = toolResultCodes.isNotEmpty &&
           contents.isNotEmpty &&
           contents.every((c) {
-            if (c is CodeMessageContent) {
-              return c.subtype == 'tool_result' || c.subtype == 'tool_result_error';
-            }
+            if (c is CodeMessageContent) return _isToolResultSubtype(c.subtype);
             if (c is TextMessageContent) return c.text.trim().isEmpty;
             return false;
           });
 
-      if (!isToolResultMsg) {
-        out.add(msg);
+      if (isToolResultMsg) {
+        // Drop result blocks that can be attached to a tool call (even if the
+        // tool call appears later due to unstable history ordering).
+        final remaining = <CodeMessageContent>[];
+        final noIdBlocks = <CodeMessageContent>[];
+
+        for (final code in toolResultCodes) {
+          final toolUseId = _extractToolUseIdFromSubtype(code.subtype);
+          if (toolUseId != null && attachableIds.contains(toolUseId)) {
+            continue;
+          }
+          final isErr = (code.subtype ?? '').toLowerCase().contains('error');
+          final normalized = CodeMessageContent(
+            code: code.code,
+            subtype: isErr ? 'tool_result_error' : 'tool_result',
+          );
+          remaining.add(normalized);
+          if (toolUseId == null) noIdBlocks.add(normalized);
+        }
+
+        // Best-effort: attach no-id result blocks to previous tool call.
+        final unattached = <CodeMessageContent>[];
+        for (final code in noIdBlocks) {
+          final isErr =
+              (code.subtype ?? '').toLowerCase().trim() == 'tool_result_error';
+          final ok = _attachToolOutputToPrevTool(
+            out,
+            toolUseId: null,
+            outputText: code.code,
+            isError: isErr,
+          );
+          if (!ok) unattached.add(code);
+        }
+
+        // Keep remaining id-scoped blocks (that we cannot attach) plus any
+        // no-id blocks that couldn't be attached.
+        final keep = <CodeMessageContent>[
+          ...remaining.where((c) => !noIdBlocks.contains(c)),
+          ...unattached,
+        ];
+
+        if (keep.isEmpty) continue;
+        out.add(msg.copyWith(contents: keep));
         continue;
       }
 
-      // Find the nearest previous message that contains a Bash tool call.
-      var prevMsgIndex = -1;
-      var bashIdx = -1;
+      // Attach indexed tool outputs onto tool call blocks.
+      var mutated = false;
+      final nextContents = <MessageContent>[];
+
+      for (final c in contents) {
+        if (c is! ToolMessageContent) {
+          nextContents.add(c);
+          continue;
+        }
+
+        final toolId = c.id?.trim();
+        if (toolId == null ||
+            toolId.isEmpty ||
+            !attachableIds.contains(toolId) ||
+            attachedIds.contains(toolId)) {
+          nextContents.add(c);
+          continue;
+        }
+
+        final results = resultsById[toolId];
+        if (results == null || results.isEmpty) {
+          nextContents.add(c);
+          continue;
+        }
+
+        final prevOut = c.output?.text ?? '';
+        var joined = prevOut;
+        var sawError = c.output?.isError == true;
+
+        for (final r in results) {
+          final text = r.text.trimRight();
+          if (text.isEmpty) continue;
+          joined = joined.trim().isNotEmpty ? '$joined\n\n$text' : text;
+          if (r.isError) sawError = true;
+        }
+
+        if (joined.trim().isEmpty) {
+          nextContents.add(c);
+          continue;
+        }
+
+        final capped = joined.length > 120000
+            ? joined.substring(joined.length - 120000)
+            : joined;
+
+        mutated = true;
+        attachedIds.add(toolId);
+        nextContents.add(
+          c.copyWith(
+            status: sawError ? 'error' : 'done',
+            output: ToolOutput(text: capped, isError: sawError ? true : null),
+          ),
+        );
+      }
+
+      out.add(mutated ? msg.copyWith(contents: nextContents) : msg);
+    }
+
+    return out;
+  }
+
+  static bool _attachToolOutputToPrevTool(
+    List<ChatMessage> out, {
+    required String? toolUseId,
+    required String outputText,
+    required bool isError,
+  }) {
+    final text = outputText.trimRight();
+    if (text.isEmpty) return true;
+
+    int targetMsgIndex = -1;
+    int targetToolIndex = -1;
+
+    // Prefer matching by tool_use_id when available.
+    if (toolUseId != null && toolUseId.isNotEmpty) {
       for (var mi = out.length - 1; mi >= 0; mi--) {
         final prevContents = out[mi].contents;
-        for (var i = prevContents.length - 1; i >= 0; i--) {
-          final c = prevContents[i];
-          if (c is ToolMessageContent && c.name.toLowerCase() == 'bash') {
-            prevMsgIndex = mi;
-            bashIdx = i;
+        for (var ci = prevContents.length - 1; ci >= 0; ci--) {
+          final c = prevContents[ci];
+          if (c is! ToolMessageContent) continue;
+          if ((c.id ?? '').trim() == toolUseId) {
+            targetMsgIndex = mi;
+            targetToolIndex = ci;
             break;
           }
         }
-        if (prevMsgIndex >= 0) break;
+        if (targetMsgIndex >= 0) break;
       }
-      if (prevMsgIndex < 0 || bashIdx < 0) {
-        out.add(msg);
-        continue;
-      }
-
-      final outputText = toolResultCodes.map((c) => c.code).join('\n');
-      final prev = out[prevMsgIndex];
-      final prevContents = prev.contents;
-      final prevTool = prevContents[bashIdx] as ToolMessageContent;
-      final prevOutput = prevTool.output?.text ?? '';
-      final joined =
-          prevOutput.isNotEmpty ? '$prevOutput\n\n$outputText' : outputText;
-      final capped =
-          joined.length > 120000 ? joined.substring(joined.length - 120000) : joined;
-      final anyErr = toolResultCodes.any((c) => c.subtype == 'tool_result_error');
-
-      final nextPrevContents = prevContents.toList();
-      nextPrevContents[bashIdx] = prevTool.copyWith(
-        output: ToolOutput(
-          text: capped,
-          isError: anyErr || prevTool.output?.isError == true ? true : null,
-        ),
-      );
-      out[prevMsgIndex] = prev.copyWith(contents: nextPrevContents);
-      // Do not push this tool-result message into the list.
     }
-    return out;
+
+    // Fallback: attach to the nearest previous tool call.
+    if (targetMsgIndex < 0 || targetToolIndex < 0) {
+      for (var mi = out.length - 1; mi >= 0; mi--) {
+        final prevContents = out[mi].contents;
+        for (var ci = prevContents.length - 1; ci >= 0; ci--) {
+          final c = prevContents[ci];
+          if (c is! ToolMessageContent) continue;
+          targetMsgIndex = mi;
+          targetToolIndex = ci;
+          break;
+        }
+        if (targetMsgIndex >= 0) break;
+      }
+    }
+
+    if (targetMsgIndex < 0 || targetToolIndex < 0) return false;
+
+    final prevMsg = out[targetMsgIndex];
+    final prevContents = prevMsg.contents.toList();
+    final prevTool = prevContents[targetToolIndex] as ToolMessageContent;
+
+    final prevOut = prevTool.output?.text ?? '';
+    final joined =
+        prevOut.trim().isNotEmpty ? '$prevOut\n\n$text' : text;
+    final capped =
+        joined.length > 120000 ? joined.substring(joined.length - 120000) : joined;
+
+    final nextStatus = isError ? 'error' : 'done';
+
+    prevContents[targetToolIndex] = prevTool.copyWith(
+      status: nextStatus,
+      output: ToolOutput(
+        text: capped,
+        isError: isError || prevTool.output?.isError == true ? true : null,
+      ),
+    );
+
+    out[targetMsgIndex] = prevMsg.copyWith(contents: prevContents);
+    return true;
   }
 
   /// Parse WebSocket message (for real-time chat)

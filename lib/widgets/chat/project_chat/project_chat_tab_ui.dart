@@ -162,6 +162,9 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
                           isLoading: _isChatLoading,
                           isLoadingHistory: _isLoadingHistory,
                           isDeploying: _isDeploying,
+                          heroTag: 'project-chat-messages-${widget.projectId}',
+                          statusLabel: _statusLabel(),
+                          statusIsError: _sessionError,
                           messageStatuses: _messageStatuses,
                           onRetry: _retryMessage,
                           onLoadMore: _loadMoreHistory,
@@ -170,6 +173,11 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
                           scrollController: _chatScrollController,
                           onSendMessage: _sendChatMessage,
                           onRedeploy: () => unawaited(triggerPreviewRedeploy()),
+                          onOpenFullScreen: () {
+                            GoRouter.of(context).push(
+                              '/projects/${widget.projectId}/chat',
+                            );
+                          },
                           onClose: () {
                             setState(() {
                               _showMobileChat = false;
@@ -279,6 +287,10 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
                               isLoading: _isChatLoading,
                               isLoadingHistory: _isLoadingHistory,
                               isDeploying: _isDeploying,
+                              heroTag:
+                                  'project-chat-messages-${widget.projectId}',
+                              statusLabel: _statusLabel(),
+                              statusIsError: _sessionError,
                               messageStatuses: _messageStatuses,
                               onRetry: _retryMessage,
                               onLoadMore: _loadMoreHistory,
@@ -288,6 +300,11 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
                               onSendMessage: _sendChatMessage,
                               onRedeploy: () =>
                                   unawaited(triggerPreviewRedeploy()),
+                              onOpenFullScreen: () {
+                                GoRouter.of(context).push(
+                                  '/projects/${widget.projectId}/chat',
+                                );
+                              },
                               onClose: () {
                                 setState(() {
                                   _showMobileChat = false;

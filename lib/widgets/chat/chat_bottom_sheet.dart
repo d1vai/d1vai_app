@@ -20,6 +20,10 @@ class ChatBottomSheet extends StatefulWidget {
   final bool isLoadingMore;
   final VoidCallback? onClose;
   final VoidCallback? onRedeploy;
+  final VoidCallback? onOpenFullScreen;
+  final String? heroTag;
+  final String? statusLabel;
+  final bool statusIsError;
 
   const ChatBottomSheet({
     super.key,
@@ -36,6 +40,10 @@ class ChatBottomSheet extends StatefulWidget {
     this.isLoadingMore = false,
     this.onClose,
     this.onRedeploy,
+    this.onOpenFullScreen,
+    this.heroTag,
+    this.statusLabel,
+    this.statusIsError = false,
   });
 
   @override
@@ -60,6 +68,9 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
     final headerDividerColor = theme.colorScheme.outline.withValues(
       alpha: 0.35,
     );
+
+    final statusText = widget.statusLabel?.trim() ?? '';
+    final showStatus = statusText.isNotEmpty;
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
@@ -99,7 +110,24 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
+                if (widget.onOpenFullScreen != null) ...[
+                  const SizedBox(width: 6),
+                  IconButton(
+                    icon: const Icon(Icons.open_in_full),
+                    onPressed: widget.onOpenFullScreen,
+                    iconSize: 18,
+                    tooltip: 'Full screen',
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ],
                 const Spacer(),
+                if (showStatus) ...[
+                  _StatusPill(
+                    label: statusText,
+                    isError: widget.statusIsError,
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 // Redeploy button
                 if (widget.onRedeploy != null)
                   Container(
@@ -170,27 +198,23 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
 
           // Messages list
           Expanded(
-            child: widget.messages.isEmpty
-                ? widget.isLoadingHistory
-                      ? _buildLoadingState()
-                      : _buildEmptyState()
-                : Column(
-                    children: [
-                      // Messages
-                      Expanded(
-                        child: MessageList(
-                          key: const ValueKey('chat_bottom_sheet_message_list'),
-                          messages: widget.messages,
-                          scrollController: widget.scrollController,
-                          messageStatuses: widget.messageStatuses,
-                          onRetry: widget.onRetry,
-                          onLoadMore: widget.onLoadMore,
-                          hasMoreHistory: widget.hasMoreHistory,
-                          isLoadingMore: widget.isLoadingMore,
-                        ),
-                      ),
-                    ],
-                  ),
+            child: _wrapHero(
+              context,
+              child: widget.messages.isEmpty
+                  ? widget.isLoadingHistory
+                        ? _buildLoadingState()
+                        : _buildEmptyState()
+                  : MessageList(
+                      key: const ValueKey('chat_bottom_sheet_message_list'),
+                      messages: widget.messages,
+                      scrollController: widget.scrollController,
+                      messageStatuses: widget.messageStatuses,
+                      onRetry: widget.onRetry,
+                      onLoadMore: widget.onLoadMore,
+                      hasMoreHistory: widget.hasMoreHistory,
+                      isLoadingMore: widget.isLoadingMore,
+                    ),
+            ),
           ),
 
           // Input field
@@ -200,6 +224,23 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
             hintText: 'Ask about your project...',
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _wrapHero(BuildContext context, {required Widget child}) {
+    final tag = widget.heroTag;
+    if (tag == null || tag.trim().isEmpty) return child;
+    final theme = Theme.of(context);
+    return Hero(
+      tag: tag,
+      transitionOnUserGestures: true,
+      child: Material(
+        color: theme.colorScheme.surface,
+        child: ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+          child: child,
+        ),
       ),
     );
   }
@@ -259,7 +300,12 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
         // Quick actions
         Padding(
           padding: const EdgeInsets.all(16),
-          child: QuickActions(onSelect: _handleSubmitted),
+          child: QuickActions(
+            onSelect: _handleSubmitted,
+            dense: true,
+            showTitle: false,
+            padding: EdgeInsets.zero,
+          ),
         ),
         // Loading skeleton
         Expanded(
@@ -277,6 +323,65 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  final String label;
+  final bool isError;
+
+  const _StatusPill({required this.label, required this.isError});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final lower = label.toLowerCase().trim();
+
+    Color dot;
+    if (isError) {
+      dot = theme.colorScheme.error;
+    } else if (lower.contains('deploy')) {
+      dot = theme.colorScheme.primary;
+    } else if (lower.contains('work')) {
+      dot = Colors.amber;
+    } else if (lower.contains('think')) {
+      dot = Colors.purple;
+    } else if (lower.contains('ready')) {
+      dot = Colors.green;
+    } else {
+      dot = theme.colorScheme.onSurfaceVariant;
+    }
+
+    final bg = theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6);
+    final border = theme.colorScheme.outlineVariant.withValues(alpha: 0.7);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(color: dot, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'status=$label',
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontFamily: 'monospace',
+              fontWeight: FontWeight.w700,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

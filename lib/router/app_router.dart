@@ -36,6 +36,31 @@ Page<dynamic> _buildPageWithTransition(
   );
 }
 
+Page<dynamic> _buildChatExpandPage(
+  BuildContext context,
+  GoRouterState state,
+  Widget child,
+) {
+  return CustomTransitionPage(
+    key: state.pageKey,
+    child: child,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
+      return FadeTransition(
+        opacity: curved,
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.985, end: 1.0).animate(curved),
+          child: child,
+        ),
+      );
+    },
+  );
+}
+
 class _ClearSnackBarsNavigatorObserver extends NavigatorObserver {
   void _clearSnackBars() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -245,7 +270,7 @@ GoRouter createAppRouter() {
       ),
       GoRoute(
         path: '/projects/:id/chat',
-        pageBuilder: (context, state) => _buildPageWithTransition(
+        pageBuilder: (context, state) => _buildChatExpandPage(
           context,
           state,
           ChatScreen(

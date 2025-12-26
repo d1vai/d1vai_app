@@ -61,11 +61,6 @@ class _MessageListState extends State<MessageList> {
     _lastSeenMessageId = widget.messages.isNotEmpty
         ? widget.messages.last.id
         : null;
-
-    // Initial scroll to bottom
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToBottom(animated: false);
-    });
   }
 
   @override
@@ -111,7 +106,10 @@ class _MessageListState extends State<MessageList> {
     if (_loadMoreRequested) return;
     if (widget.messages.isEmpty) return;
     if (!controller.hasClients) return;
-    if (controller.offset > 80) return;
+    final maxScroll = controller.position.maxScrollExtent;
+    if (maxScroll <= 0) return;
+    // With reverse list, "near top" means close to maxScrollExtent.
+    if (controller.offset < maxScroll - 80) return;
 
     _loadMoreRequested = true;
     widget.onLoadMore!();
@@ -122,7 +120,8 @@ class _MessageListState extends State<MessageList> {
     if (!controller.hasClients) return;
     final maxScroll = controller.position.maxScrollExtent;
     final currentScroll = controller.offset;
-    final atBottom = currentScroll >= maxScroll - 100;
+    // With reverse list, bottom is offset ~= 0.
+    final atBottom = currentScroll <= 100;
 
     if (atBottom != _isAtBottom) {
       setState(() {
@@ -137,7 +136,7 @@ class _MessageListState extends State<MessageList> {
     }
 
     // Load more history when near top
-    if (currentScroll <= 80) {
+    if (maxScroll > 0 && currentScroll >= maxScroll - 80) {
       _maybeRequestLoadMore(controller);
     }
   }
@@ -148,13 +147,13 @@ class _MessageListState extends State<MessageList> {
       if (controller.hasClients) {
         if (animated) {
           controller.animateTo(
-            controller.position.maxScrollExtent,
+            0,
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOut,
           );
         } else {
           controller.jumpTo(
-            controller.position.maxScrollExtent,
+            0,
           );
         }
       }
@@ -174,19 +173,19 @@ class _MessageListState extends State<MessageList> {
         NotificationListener<ScrollNotification>(
           onNotification: (notification) {
             final controller = widget.scrollController ?? _scrollController;
-            if (notification is OverscrollNotification &&
-                notification.overscroll < 0) {
+            if (notification is OverscrollNotification) {
               _maybeRequestLoadMore(controller);
             }
             return false;
           },
           child: ListView.builder(
             controller: widget.scrollController ?? _scrollController,
+            reverse: true,
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.only(bottom: 16.0),
             itemCount: widget.messages.length,
             itemBuilder: (context, index) {
-              final message = widget.messages[index];
+              final message = widget.messages[widget.messages.length - 1 - index];
               final isUser = message.role == 'user';
               final isNew = !_isNewMessage(message);
               final messageStatus =
