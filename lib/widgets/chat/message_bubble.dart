@@ -385,6 +385,16 @@ class _GitCommitCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final files = content.files ?? const <String>[];
+    const fileTextStyle = TextStyle(
+      fontFamily: 'monospace',
+      fontSize: 11.5,
+      height: 1.2,
+    );
+    final firstLineHeight =
+        (fileTextStyle.fontSize ?? 11.5) * (fileTextStyle.height ?? 1.2);
+    final outline = theme.colorScheme.outlineVariant.withValues(alpha: 0.7);
+    final isDark = theme.brightness == Brightness.dark;
+    final cardBg = theme.colorScheme.surface.withValues(alpha: isDark ? 0.35 : 0.6);
 
     return _MessageCard(
       backgroundColor:
@@ -406,55 +416,82 @@ class _GitCommitCard extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 6),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 180),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    for (final f in files)
-                      Builder(
-                        builder: (context) {
-                          final visual = fileTypeVisual(theme, f);
-                          final iconColor =
-                              (visual.color ?? theme.colorScheme.onSurfaceVariant)
-                                  .withValues(alpha: 0.85);
-
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 4),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 2),
-                                  child: Icon(
-                                    visual.icon,
-                                    size: 16,
-                                    color: iconColor,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: SelectableText(
-                                    f,
-                                    maxLines: 2,
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      fontFamily: 'monospace',
-                                      fontSize: 11.5,
-                                      height: 1.2,
-                                      color: theme.colorScheme.onSurface
-                                          .withValues(alpha: 0.9),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: outline),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        width: 3,
+                        color: theme.colorScheme.primary.withValues(alpha: 0.35),
                       ),
-                  ],
-                ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 160),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            for (final f in files)
+                              Builder(
+                                builder: (context) {
+                                  final visual = fileTypeVisual(theme, f);
+                                  final iconColor = (visual.color ??
+                                          theme.colorScheme.onSurfaceVariant)
+                                      .withValues(alpha: 0.85);
+
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 2,
+                                    ),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        SizedBox(
+                                          width: 18,
+                                          height: firstLineHeight,
+                                          child: Center(
+                                            child: Icon(
+                                              visual.icon,
+                                              size: 14,
+                                              color: iconColor,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: SelectableText(
+                                            f,
+                                            maxLines: 2,
+                                            style: fileTextStyle.copyWith(
+                                              color: theme.colorScheme.onSurface
+                                                  .withValues(alpha: 0.9),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

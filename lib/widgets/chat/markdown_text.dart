@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'code_highlight_block.dart';
 
 /// Lightweight Markdown renderer optimized for chat.
 ///
@@ -318,71 +319,61 @@ class _MarkdownTextState extends State<MarkdownText> {
           break;
         }
         case _BlockKind.code: {
-          final bg = theme.colorScheme.surface.withValues(
-            alpha: theme.brightness == Brightness.dark ? 0.9 : 0.95,
-          );
-          final mono = baseStyle.copyWith(
-            fontFamily: 'monospace',
-            fontSize: (baseStyle.fontSize ?? 13) - 0.5,
-            height: 1.25,
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.92),
-          );
           final lang = b.lang.trim();
           widgets.add(
-            Container(
-              margin: const EdgeInsets.only(bottom: 6),
-              padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
-              decoration: BoxDecoration(
-                color: bg,
-                borderRadius: BorderRadius.circular(10),
-              ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      if (lang.isNotEmpty)
-                        Text(
-                          lang,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant.withValues(
-                              alpha: 0.85,
-                            ),
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                      const Spacer(),
-                      InkWell(
-                        onTap: () async {
-                          await Clipboard.setData(
-                            ClipboardData(text: b.code),
-                          );
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Copied code'),
-                                duration: Duration(seconds: 2),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 2, right: 2, bottom: 6),
+                    child: Row(
+                      children: [
+                        if (lang.isNotEmpty)
+                          Text(
+                            lang,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color:
+                                  theme.colorScheme.onSurfaceVariant.withValues(
+                                alpha: 0.85,
                               ),
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                        const Spacer(),
+                        InkWell(
+                          onTap: () async {
+                            await Clipboard.setData(
+                              ClipboardData(text: b.code),
                             );
-                          }
-                        },
-                        borderRadius: BorderRadius.circular(8),
-                        child: Padding(
-                          padding: const EdgeInsets.all(4),
-                          child: Icon(
-                            Icons.copy,
-                            size: 14,
-                            color: theme.colorScheme.onSurfaceVariant,
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Copied code'),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: Icon(
+                              Icons.copy,
+                              size: 14,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  SelectableText(
-                    b.code,
-                    style: mono,
+                  CodeHighlightBlock(
+                    text: b.code,
+                    language: lang.isNotEmpty ? lang : null,
+                    maxVisibleLines: 18,
                   ),
                 ],
               ),
