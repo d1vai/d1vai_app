@@ -49,6 +49,20 @@ class AppLocalizations {
       // Auth - Messages
       'login_success': 'Login successful',
       'login_failed': 'Login failed',
+      'login_required_title': 'Login required',
+      'login_required_button': 'Login',
+      'login_required_dashboard_message':
+          'You need to log in to view your projects.',
+      'login_required_orders_message':
+          'You need to log in to view orders and billing.',
+      'login_required_settings_message':
+          'You need to log in to manage your account settings.',
+      'login_required_github_message':
+          'You need to log in to manage GitHub integration.',
+      'login_required_invites_message':
+          'You need to log in to view invites and rewards.',
+      'session_expired_title': 'Session expired',
+      'session_expired_message': 'Your login has expired. Please log in again.',
       'code_sent_success': 'Verification code sent successfully',
       'code_sent_to': 'Verification code sent to',
       'agree_terms':
@@ -226,6 +240,15 @@ class AppLocalizations {
       // Auth - Messages
       'login_success': '登录成功',
       'login_failed': '登录失败',
+      'login_required_title': '需要登录',
+      'login_required_button': '去登录',
+      'login_required_dashboard_message': '你需要先登录才能查看项目列表',
+      'login_required_orders_message': '你需要先登录才能查看订单与计费信息',
+      'login_required_settings_message': '你需要先登录才能管理账号设置',
+      'login_required_github_message': '你需要先登录才能配置 GitHub 集成',
+      'login_required_invites_message': '你需要先登录才能查看邀请与奖励',
+      'session_expired_title': '登录已过期',
+      'session_expired_message': '登录已过期，请重新登录',
       'code_sent_success': '验证码已发送，请查收邮件',
       'code_sent_to': '验证码已发送至',
       'agree_terms': '登录即表示您同意我们的服务条款和隐私政策',
@@ -397,6 +420,15 @@ class AppLocalizations {
       // Auth - Messages
       'login_success': '登入成功',
       'login_failed': '登入失敗',
+      'login_required_title': '需要登入',
+      'login_required_button': '前往登入',
+      'login_required_dashboard_message': '你需要先登入才能查看專案列表',
+      'login_required_orders_message': '你需要先登入才能查看訂單與計費資訊',
+      'login_required_settings_message': '你需要先登入才能管理帳號設定',
+      'login_required_github_message': '你需要先登入才能設定 GitHub 整合',
+      'login_required_invites_message': '你需要先登入才能查看邀請與獎勵',
+      'session_expired_title': '登入已過期',
+      'session_expired_message': '登入已過期，請重新登入',
       'code_sent_success': '驗證碼已發送，請查收郵件',
       'code_sent_to': '驗證碼已發送至',
       'agree_terms': '登入即表示您同意我們的服務條款和隱私政策',
@@ -569,6 +601,21 @@ class AppLocalizations {
       // Auth - Messages
       'login_success': 'Inicio de sesión exitoso',
       'login_failed': 'Error al iniciar sesión',
+      'login_required_title': 'Inicio de sesión requerido',
+      'login_required_button': 'Iniciar sesión',
+      'login_required_dashboard_message':
+          'Necesitas iniciar sesión para ver tus proyectos.',
+      'login_required_orders_message':
+          'Necesitas iniciar sesión para ver pedidos y facturación.',
+      'login_required_settings_message':
+          'Necesitas iniciar sesión para administrar la configuración de tu cuenta.',
+      'login_required_github_message':
+          'Necesitas iniciar sesión para administrar la integración con GitHub.',
+      'login_required_invites_message':
+          'Necesitas iniciar sesión para ver invitaciones y recompensas.',
+      'session_expired_title': 'Sesión caducada',
+      'session_expired_message':
+          'Tu sesión ha caducado. Inicia sesión de nuevo.',
       'code_sent_success': 'Código enviado exitosamente',
       'code_sent_to': 'Código enviado a',
       'agree_terms':
@@ -747,6 +794,21 @@ class AppLocalizations {
       // Auth - Messages
       'login_success': 'تم تسجيل الدخول بنجاح',
       'login_failed': 'فشل في تسجيل الدخول',
+      'login_required_title': 'تسجيل الدخول مطلوب',
+      'login_required_button': 'تسجيل الدخول',
+      'login_required_dashboard_message':
+          'تحتاج إلى تسجيل الدخول لعرض مشاريعك.',
+      'login_required_orders_message':
+          'تحتاج إلى تسجيل الدخول لعرض الطلبات والفوترة.',
+      'login_required_settings_message':
+          'تحتاج إلى تسجيل الدخول لإدارة إعدادات حسابك.',
+      'login_required_github_message':
+          'تحتاج إلى تسجيل الدخول لإدارة تكامل GitHub.',
+      'login_required_invites_message':
+          'تحتاج إلى تسجيل الدخول لعرض الدعوات والمكافآت.',
+      'session_expired_title': 'انتهت الجلسة',
+      'session_expired_message':
+          'انتهت صلاحية تسجيل الدخول. يرجى تسجيل الدخول مرة أخرى.',
       'code_sent_success': 'تم إرسال الرمز بنجاح',
       'code_sent_to': 'تم الإرسال إلى',
       'agree_terms':
@@ -921,6 +983,21 @@ class AppLocalizations {
       // Auth - Messages
       'login_success': 'ログインしました',
       'login_failed': 'ログインに失敗しました',
+      'login_required_title': 'ログインが必要です',
+      'login_required_button': 'ログイン',
+      'login_required_dashboard_message':
+          'プロジェクトを表示するにはログインしてください。',
+      'login_required_orders_message':
+          '注文と請求情報を表示するにはログインしてください。',
+      'login_required_settings_message':
+          'アカウント設定を管理するにはログインしてください。',
+      'login_required_github_message':
+          'GitHub 連携を管理するにはログインしてください。',
+      'login_required_invites_message':
+          '招待と報酬を表示するにはログインしてください。',
+      'session_expired_title': 'セッションの有効期限切れ',
+      'session_expired_message':
+          'ログインの有効期限が切れました。再度ログインしてください。',
       'code_sent_success': 'コードが正常に送信されました',
       'code_sent_to': '送信先:',
       'agree_terms': 'ログインすることで、利用規約とプライバシーに同意したことになります',
@@ -1093,6 +1170,21 @@ class AppLocalizations {
       // Auth - Messages
       'login_success': 'Connexion réussie',
       'login_failed': 'Échec de la connexion',
+      'login_required_title': 'Connexion requise',
+      'login_required_button': 'Se connecter',
+      'login_required_dashboard_message':
+          'Vous devez vous connecter pour voir vos projets.',
+      'login_required_orders_message':
+          'Vous devez vous connecter pour voir les commandes et la facturation.',
+      'login_required_settings_message':
+          'Vous devez vous connecter pour gérer les paramètres de votre compte.',
+      'login_required_github_message':
+          'Vous devez vous connecter pour gérer l’intégration GitHub.',
+      'login_required_invites_message':
+          'Vous devez vous connecter pour voir les invitations et les récompenses.',
+      'session_expired_title': 'Session expirée',
+      'session_expired_message':
+          'Votre session a expiré. Veuillez vous reconnecter.',
       'code_sent_success': 'Code envoyé avec succès',
       'code_sent_to': 'Code envoyé à',
       'agree_terms':
@@ -1276,6 +1368,21 @@ class AppLocalizations {
       // Auth - Messages
       'login_success': 'Успешный вход',
       'login_failed': 'Ошибка входа',
+      'login_required_title': 'Требуется вход',
+      'login_required_button': 'Войти',
+      'login_required_dashboard_message':
+          'Чтобы просматривать проекты, необходимо войти в систему.',
+      'login_required_orders_message':
+          'Чтобы просматривать заказы и биллинг, необходимо войти в систему.',
+      'login_required_settings_message':
+          'Чтобы управлять настройками аккаунта, необходимо войти в систему.',
+      'login_required_github_message':
+          'Чтобы управлять интеграцией GitHub, необходимо войти в систему.',
+      'login_required_invites_message':
+          'Чтобы просматривать приглашения и награды, необходимо войти в систему.',
+      'session_expired_title': 'Сессия истекла',
+      'session_expired_message':
+          'Срок действия входа истек. Пожалуйста, войдите снова.',
       'code_sent_success': 'Код успешно отправлен',
       'code_sent_to': 'Код отправлен на',
       'agree_terms':

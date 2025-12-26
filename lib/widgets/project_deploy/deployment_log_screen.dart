@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../services/d1vai_service.dart';
 import '../../utils/error_utils.dart';
+import 'deployment_log_viewer.dart';
 import '../snackbar_helper.dart';
 
 class DeploymentLogScreen extends StatefulWidget {
@@ -81,10 +82,6 @@ class _DeploymentLogScreenState extends State<DeploymentLogScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final mono = theme.textTheme.bodySmall?.copyWith(
-      fontFamily: 'monospace',
-      height: 1.35,
-    );
 
     return Scaffold(
       appBar: AppBar(
@@ -145,33 +142,9 @@ class _DeploymentLogScreenState extends State<DeploymentLogScreen> {
                 ),
               ),
             )
-          : Column(
-              children: [
-                if (_fromCache != null)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        _fromCache! ? 'Cached log' : 'Live log',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                  ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: SelectableText(
-                      _log.trim().isEmpty
-                          ? 'No logs available for this deployment.'
-                          : _log,
-                      style: mono,
-                    ),
-                  ),
-                ),
-              ],
+          : Padding(
+              padding: const EdgeInsets.all(16),
+              child: DeploymentLogViewer(log: _log, fromCache: _fromCache),
             ),
     );
   }

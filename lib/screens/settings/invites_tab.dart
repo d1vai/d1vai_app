@@ -10,6 +10,7 @@ import '../../services/d1vai_service.dart';
 import '../../widgets/button.dart';
 import '../../widgets/card.dart';
 import '../../widgets/snackbar_helper.dart';
+import '../../widgets/login_required_view.dart';
 
 /// Invites tab for the settings screen.
 class SettingsInvitesTab extends StatelessWidget {
@@ -19,6 +20,15 @@ class SettingsInvitesTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final d1vaiService = D1vaiService();
     final loc = AppLocalizations.of(context);
+    final user = Provider.of<AuthProvider>(context).user;
+    if (user == null) {
+      return LoginRequiredView(
+        message:
+            loc?.translate('login_required_invites_message') ??
+            'Please login first.',
+        onAction: () => context.go('/login'),
+      );
+    }
 
     return FutureBuilder<List<dynamic>>(
       future: d1vaiService.getMyInvitees(),
@@ -51,49 +61,39 @@ class SettingsInvitesTab extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Consumer<AuthProvider>(
-                      builder: (context, authProvider, _) {
-                        final user = authProvider.user;
-                        final inviteCode =
-                            user?.inviteCode ??
-                            (loc?.translate('loading') ?? 'Loading...');
-
-                        return Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(color: AppColors.borderLight),
-                            borderRadius: BorderRadius.circular(4),
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppColors.borderLight),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: ListTile(
+                        title: Text(
+                          user.inviteCode,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 2,
                           ),
-                          child: ListTile(
-                            title: Text(
-                              inviteCode,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 2,
-                              ),
-                            ),
-                            subtitle: Text(
-                              loc?.translate('your_invite_code') ??
-                                  'Your Invite Code',
-                            ),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.copy),
-                              onPressed: () {
-                                if (inviteCode.isNotEmpty &&
-                                    inviteCode != 'Loading...') {
-                                  SnackBarHelper.showSuccess(
-                                    context,
-                                    title: loc?.translate('copied') ?? 'Copied',
-                                    message:
-                                        loc?.translate('invite_code_copied') ??
-                                        'Invite code copied to clipboard',
-                                  );
-                                }
-                              },
-                            ),
-                          ),
-                        );
-                      },
+                        ),
+                        subtitle: Text(
+                          loc?.translate('your_invite_code') ??
+                              'Your Invite Code',
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.copy),
+                          onPressed: () {
+                            if (user.inviteCode.isNotEmpty) {
+                              SnackBarHelper.showSuccess(
+                                context,
+                                title: loc?.translate('copied') ?? 'Copied',
+                                message:
+                                    loc?.translate('invite_code_copied') ??
+                                    'Invite code copied to clipboard',
+                              );
+                            }
+                          },
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 16),
                     SizedBox(
@@ -151,13 +151,13 @@ class SettingsInvitesTab extends StatelessWidget {
                     subtitle: isLoading
                         ? Text(loc?.translate('loading') ?? 'Loading...')
                         : hasError
-                        ? Text(
-                            loc?.translate('failed_to_load') ??
-                                'Failed to load',
-                          )
-                        : Text(
-                            '$friendCount ${loc?.translate('friends_count') ?? 'friends'}',
-                          ),
+                            ? Text(
+                                loc?.translate('failed_to_load') ??
+                                    'Failed to load',
+                              )
+                            : Text(
+                                '$friendCount ${loc?.translate('friends_count') ?? 'friends'}',
+                              ),
                     trailing: const Icon(
                       Icons.arrow_forward_ios,
                       size: 16,

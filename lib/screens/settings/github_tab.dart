@@ -4,11 +4,13 @@ import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../l10n/app_localizations.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/project_provider.dart';
 import '../../services/d1vai_service.dart';
 import '../../widgets/button.dart';
 import '../../widgets/card.dart';
 import '../../widgets/snackbar_helper.dart';
+import '../../widgets/login_required_view.dart';
 
 /// GitHub integration tab for the settings screen.
 class SettingsGithubTab extends StatelessWidget {
@@ -18,6 +20,16 @@ class SettingsGithubTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final user = Provider.of<AuthProvider>(context).user;
+
+    if (user == null) {
+      return LoginRequiredView(
+        message:
+            loc?.translate('login_required_github_message') ??
+            'Please login first.',
+        onAction: () => context.go('/login'),
+      );
+    }
 
     return ListView(
       padding: const EdgeInsets.all(16),

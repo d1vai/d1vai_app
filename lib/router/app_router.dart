@@ -82,6 +82,20 @@ GoRouter createAppRouter() {
       final isLoginPage = state.matchedLocation == '/login';
       final isSplashPage = state.matchedLocation == '/';
       final isOnboardingPage = state.matchedLocation == '/onboarding';
+      final isMainTab = state.matchedLocation == '/dashboard' ||
+          state.matchedLocation == '/community' ||
+          state.matchedLocation == '/docs' ||
+          state.matchedLocation == '/orders' ||
+          state.matchedLocation == '/settings';
+
+      final isPublicStandalone =
+          state.matchedLocation == '/pricing' ||
+          state.matchedLocation.startsWith('/apps/');
+
+      final isPublicSettings =
+          state.matchedLocation == '/settings/language' ||
+          state.matchedLocation == '/settings/api' ||
+          state.matchedLocation == '/settings/help';
 
       // 如果正在加载，保持在当前页面
       if (isLoading && !isSplashPage) {
@@ -89,7 +103,12 @@ GoRouter createAppRouter() {
       }
 
       // 如果未登录且不在登录页，重定向到登录页
-      if (!isAuthenticated && !isLoginPage && !isSplashPage) {
+      if (!isAuthenticated &&
+          !isLoginPage &&
+          !isSplashPage &&
+          !isMainTab &&
+          !isPublicStandalone &&
+          !isPublicSettings) {
         return '/login';
       }
 
@@ -115,7 +134,11 @@ GoRouter createAppRouter() {
       GoRoute(
         path: '/login',
         pageBuilder: (context, state) =>
-            _buildPageWithTransition(context, state, const LoginScreen()),
+            _buildPageWithTransition(
+              context,
+              state,
+              LoginScreen(sessionExpired: state.uri.queryParameters['expired'] == '1'),
+            ),
       ),
       GoRoute(
         path: '/onboarding',

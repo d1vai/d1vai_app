@@ -26,6 +26,10 @@ String humanizeError(Object error) {
     return '登录已过期，请重新登录';
   }
 
+  if (lower.contains('unauthenticated') || lower.contains('please login')) {
+    return '请先登录';
+  }
+
   // Keep backend message when available, otherwise return trimmed raw.
   return message.isEmpty ? '请求失败，请稍后重试' : message;
 }

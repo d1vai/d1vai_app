@@ -1078,11 +1078,6 @@ class _ChatScreenState extends State<ChatScreen>
       ),
       body: Column(
         children: [
-          // Quick actions
-          if (_messages.isEmpty)
-            QuickActions(
-              onSelect: _sendMessage,
-            ),
           // Messages list
           Expanded(
             child: _messages.isEmpty
@@ -1111,45 +1106,51 @@ class _ChatScreenState extends State<ChatScreen>
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.smart_toy,
-              size: 80.0,
-              color: Theme.of(context)
-                  .colorScheme
-                  .primary
-                  .withValues(alpha: 0.5),
-            ),
-            const SizedBox(height: 24.0),
-            Text(
-              'Start a conversation',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 12.0),
-            Text(
-              'Ask me anything about your project,\ncode, or get help with development',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurfaceVariant
-                        .withValues(alpha: 0.8),
+    final theme = Theme.of(context);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxH = (constraints.maxHeight * 0.48).clamp(0.0, 420.0);
+        return Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxH, maxWidth: 520),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.smart_toy,
+                  size: 44.0,
+                  color: theme.colorScheme.primary.withValues(alpha: 0.55),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Ask AI',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
                   ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Ask about this project or paste code.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant.withValues(
+                      alpha: 0.9,
+                    ),
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                QuickActions(
+                  onSelect: _sendMessage,
+                  dense: true,
+                  showTitle: false,
+                  padding: EdgeInsets.zero,
+                ),
+              ],
             ),
-            const SizedBox(height: 24.0),
-            FilledButton.icon(
-              onPressed: _isLoading ? null : () => _sendMessage('Hello!'),
-              icon: const Icon(Icons.chat_bubble_outline),
-              label: const Text('Start Chat'),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

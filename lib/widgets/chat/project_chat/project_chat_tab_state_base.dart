@@ -1,5 +1,7 @@
 part of '../../project_chat/project_chat_tab.dart';
 
+enum WsConnectionState { idle, connecting, connected, failed }
+
 abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
     with AutomaticKeepAliveClientMixin {
   final ChatService _chatService = ChatService();
@@ -16,6 +18,12 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   bool _isLoadingMoreHistory = false;
   bool _hasMoreHistory = true;
   DateTime? _oldestMessageAt;
+
+  // Session UI phase (align with web's mobileStatusLabel)
+  bool _sessionThinking = false;
+  bool _sessionDone = false;
+  bool _sessionError = false;
+  Timer? _thinkingClearTimer;
 
   // Workspace state (align with web BigChat)
   WorkspaceStateInfo? _workspaceState;
@@ -35,6 +43,8 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   bool _manualWsClose = false;
   bool _autoConnectDisabled = false;
   final Set<String> _seenWsKeys = <String>{};
+  WsConnectionState _wsConnState = WsConnectionState.idle;
+  String? _wsConnError;
 
   // Mobile chat bottom sheet state
   bool _showMobileChat = false;
@@ -75,4 +85,5 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   Future<void> _retryMessage(ChatMessage message);
 
   Future<void> triggerPreviewRedeploy();
+  Future<void> reconnectWebSocket();
 }

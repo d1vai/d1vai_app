@@ -176,12 +176,6 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                       : _buildEmptyState()
                 : Column(
                     children: [
-                      // Quick actions when no messages
-                      if (widget.messages.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: QuickActions(onSelect: _handleSubmitted),
-                        ),
                       // Messages
                       Expanded(
                         child: MessageList(
@@ -212,30 +206,50 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
 
   Widget _buildEmptyState() {
     final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.smart_toy,
-              size: 80.0,
-              color: theme.colorScheme.primary.withValues(alpha: 0.5),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxH = (constraints.maxHeight * 0.48).clamp(0.0, 420.0);
+        return Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxH, maxWidth: 520),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.smart_toy,
+                  size: 44.0,
+                  color: theme.colorScheme.primary.withValues(alpha: 0.55),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Ask AI',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Ask about this project or paste code.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant.withValues(
+                      alpha: 0.9,
+                    ),
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                QuickActions(
+                  onSelect: _handleSubmitted,
+                  dense: true,
+                  showTitle: false,
+                  padding: EdgeInsets.zero,
+                ),
+              ],
             ),
-            const SizedBox(height: 24.0),
-            Text('Chat with AI', style: theme.textTheme.headlineSmall),
-            const SizedBox(height: 12.0),
-            Text(
-              'Ask me anything about your project,\ncode, or get help with development',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

@@ -31,15 +31,15 @@ class FloatingChatButton extends StatelessWidget {
     if (isDeploying || isWorking || isThinking) {
       statusColor = isDeploying
           ? (theme.brightness == Brightness.dark
-              ? Colors.amber.shade300
-              : Colors.amber.shade500)
+                ? Colors.amber.shade300
+                : Colors.amber.shade500)
           : isThinking
-              ? Colors.blue.shade500
-              : theme.colorScheme.primary;
+          ? Colors.blue.shade500
+          : theme.colorScheme.primary;
     } else if (isError) {
       statusColor = theme.colorScheme.error;
     } else if (isDone) {
-      return const SizedBox.shrink(); // Don't show button when done
+      statusColor = Colors.green;
     } else {
       statusColor = theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5);
     }
@@ -110,10 +110,7 @@ class FloatingChatButton extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(5),
-                  border: Border.all(
-                    color: statusColor,
-                    width: 1,
-                  ),
+                  border: Border.all(color: statusColor, width: 1),
                 ),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 1500),

@@ -11,6 +11,7 @@ import '../../core/api_client.dart';
 import '../../widgets/avatar_image.dart';
 import '../../widgets/button.dart';
 import '../../widgets/card.dart';
+import '../../widgets/login_required_view.dart';
 
 /// Profile tab for the settings screen.
 class SettingsProfileTab extends StatelessWidget {
@@ -36,42 +37,48 @@ class SettingsProfileTab extends StatelessWidget {
         final user = authProvider.user;
         final isDark = Theme.of(context).brightness == Brightness.dark;
 
-        if (user == null) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            CustomCard(
-              padding: EdgeInsets.zero,
-              child: ListTile(
-                leading: AvatarImage(
-                  // Ensure avatar updates when picture changes.
-                  key: ValueKey(user.picture),
-                  imageUrl: user.picture.isEmpty ? 'placeholder' : user.picture,
-                  size: 40,
-                  borderRadius: BorderRadius.circular(20),
-                  fit: BoxFit.cover,
+            if (user == null)
+              LoginRequiredView(
+                variant: LoginRequiredVariant.compactCard,
+                message:
+                    loc?.translate('login_required_settings_message') ??
+                    'Please login first.',
+                onAction: () => context.go('/login'),
+              )
+            else
+              CustomCard(
+                padding: EdgeInsets.zero,
+                child: ListTile(
+                  leading: AvatarImage(
+                    // Ensure avatar updates when picture changes.
+                    key: ValueKey(user.picture),
+                    imageUrl:
+                        user.picture.isEmpty ? 'placeholder' : user.picture,
+                    size: 40,
+                    borderRadius: BorderRadius.circular(20),
+                    fit: BoxFit.cover,
+                  ),
+                  title: Text(
+                    user.companyName.isNotEmpty ? user.companyName : 'User',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    user.email ?? '',
+                    style: const TextStyle(color: AppColors.textSecondaryLight),
+                  ),
+                  trailing: const Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: AppColors.textSecondaryLight,
+                  ),
+                  onTap: () {
+                    context.push('/profile');
+                  },
                 ),
-                title: Text(
-                  user.companyName.isNotEmpty ? user.companyName : 'User',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Text(
-                  user.email ?? '',
-                  style: const TextStyle(color: AppColors.textSecondaryLight),
-                ),
-                trailing: const Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                  color: AppColors.textSecondaryLight,
-                ),
-                onTap: () {
-                  context.push('/profile');
-                },
               ),
-            ),
             const SizedBox(height: 16),
             CustomCard(
               padding: EdgeInsets.zero,
@@ -160,7 +167,7 @@ class SettingsProfileTab extends StatelessWidget {
                       size: 16,
                       color: AppColors.textSecondaryLight,
                     ),
-                    onTap: onShowBindEmailDialog,
+                    onTap: user == null ? () => context.go('/login') : onShowBindEmailDialog,
                   ),
                   Divider(
                     height: 1,
@@ -182,7 +189,7 @@ class SettingsProfileTab extends StatelessWidget {
                       size: 16,
                       color: AppColors.textSecondaryLight,
                     ),
-                    onTap: onShowResetPasswordDialog,
+                    onTap: user == null ? () => context.go('/login') : onShowResetPasswordDialog,
                   ),
                   Divider(
                     height: 1,

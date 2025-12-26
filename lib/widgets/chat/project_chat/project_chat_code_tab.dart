@@ -1197,6 +1197,7 @@ class _FileViewerPageState extends State<_FileViewerPage> {
                             dirty: _hasUnsavedChanges,
                           )
                         : _CodeBlock(
+                            filePath: widget.filePath,
                             text: content.content,
                             isBinary: content.isBinary,
                             sizeBytes: content.size,
@@ -1216,7 +1217,7 @@ class _CodeBlock extends StatelessWidget {
   final int sizeBytes;
 
   const _CodeBlock({
-    required this.filePath,
+    this.filePath,
     required this.text,
     required this.isBinary,
     required this.sizeBytes,

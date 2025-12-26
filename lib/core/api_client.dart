@@ -1,10 +1,12 @@
 import 'package:flutter/foundation.dart';
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http_parser/http_parser.dart';
 import '../utils/image_compressor.dart';
+import 'auth_expiry_bus.dart';
 
 class ApiResponse<T> {
   final int code;
@@ -68,6 +70,15 @@ class ApiClient {
 
   ApiClient({http.Client? client}) : client = client ?? http.Client() {
     _init();
+  }
+
+  bool _isPublicEndpoint(String? endpoint) {
+    if (endpoint == null) return false;
+    return endpoint.startsWith('/api/user/login') ||
+        endpoint == '/api/user/verify-code' ||
+        endpoint.startsWith('/api/user/password/') ||
+        endpoint.startsWith('/api/solana/login') ||
+        endpoint.startsWith('/api/sui/login');
   }
 
   Future<void> _init() async {
@@ -145,6 +156,7 @@ class ApiClient {
     Duration? timeout,
   }) async {
     final headers = await _getHeaders();
+    final hasAuthToken = headers.containsKey('Authorization');
     final uri = Uri.parse(
       '$baseUrl$endpoint',
     ).replace(queryParameters: queryParams);
@@ -159,6 +171,7 @@ class ApiClient {
       fromJsonT,
       retries: retries,
       endpoint: endpoint,
+      hasAuthToken: hasAuthToken,
       requestBody: null,
     );
   }
@@ -172,6 +185,7 @@ class ApiClient {
     Duration? timeout,
   }) async {
     final headers = await _getHeaders();
+    final hasAuthToken = headers.containsKey('Authorization');
     final uri = Uri.parse(
       '$baseUrl$endpoint',
     ).replace(queryParameters: queryParams);
@@ -187,6 +201,7 @@ class ApiClient {
       fromJsonT,
       retries: retries,
       endpoint: endpoint,
+      hasAuthToken: hasAuthToken,
       requestBody: body,
     );
   }
@@ -199,6 +214,7 @@ class ApiClient {
     Duration? timeout,
   }) async {
     final headers = await _getHeaders();
+    final hasAuthToken = headers.containsKey('Authorization');
 
     debugPrint('🌐 API Request: POST ${Uri.parse('$baseUrl$endpoint')}');
     debugPrint('📤 Request Body: ${jsonEncode(body)}');
@@ -215,6 +231,7 @@ class ApiClient {
       fromJsonT,
       retries: retries,
       endpoint: endpoint,
+      hasAuthToken: hasAuthToken,
       requestBody: body,
     );
   }
@@ -227,6 +244,7 @@ class ApiClient {
     Duration? timeout,
   }) async {
     final headers = await _getHeaders();
+    final hasAuthToken = headers.containsKey('Authorization');
 
     debugPrint('🌐 API Request: PUT ${Uri.parse('$baseUrl$endpoint')}');
     debugPrint('📤 Request Body: ${jsonEncode(body)}');
@@ -243,6 +261,7 @@ class ApiClient {
       fromJsonT,
       retries: retries,
       endpoint: endpoint,
+      hasAuthToken: hasAuthToken,
       requestBody: body,
     );
   }
@@ -256,6 +275,7 @@ class ApiClient {
     Duration? timeout,
   }) async {
     final headers = await _getHeaders();
+    final hasAuthToken = headers.containsKey('Authorization');
 
     debugPrint('🌐 API Request: PATCH ${Uri.parse('$baseUrl$endpoint')}');
     debugPrint('📤 Request Body: ${jsonEncode(body)}');
@@ -272,6 +292,7 @@ class ApiClient {
       fromJsonT,
       retries: retries,
       endpoint: endpoint,
+      hasAuthToken: hasAuthToken,
       requestBody: body,
     );
   }
@@ -283,6 +304,7 @@ class ApiClient {
     Duration? timeout,
   }) async {
     final headers = await _getHeaders();
+    final hasAuthToken = headers.containsKey('Authorization');
 
     debugPrint('🌐 API Request: DELETE ${Uri.parse('$baseUrl$endpoint')}');
 
@@ -297,6 +319,7 @@ class ApiClient {
       fromJsonT,
       retries: retries,
       endpoint: endpoint,
+      hasAuthToken: hasAuthToken,
       requestBody: null,
     );
   }
@@ -339,6 +362,7 @@ class ApiClient {
     }
 
     final headers = await _getHeaders();
+    final hasAuthToken = headers.containsKey('Authorization');
     headers.remove('Content-Type');
 
     debugPrint('🌐 API Request: POST /upload');
@@ -366,6 +390,11 @@ class ApiClient {
       final Map<String, dynamic> json = jsonDecode(httpResponse.body);
       return json['data'] ?? '';
     } else {
+      if (httpResponse.statusCode == 401 &&
+          hasAuthToken &&
+          !_isPublicEndpoint('/upload')) {
+        AuthExpiryBus.trigger(endpoint: '/upload');
+      }
       // 打印上传错误
       debugPrint('═══════════════════════════════════════');
       debugPrint('API Upload Error Detected');
@@ -405,6 +434,7 @@ class ApiClient {
   /// Returns a stream of bytes for streaming responses
   Future<Stream<Uint8List>> postStream(String endpoint, dynamic body) async {
     final headers = await _getHeaders();
+    final hasAuthToken = headers.containsKey('Authorization');
     final request = http.Request('POST', Uri.parse('$baseUrl$endpoint'));
     request.headers.addAll(headers);
     request.body = jsonEncode(body);
@@ -419,6 +449,11 @@ class ApiClient {
       return streamedResponse.stream.map((bytes) => Uint8List.fromList(bytes));
     } else {
       final responseBody = await streamedResponse.stream.bytesToString();
+      if (streamedResponse.statusCode == 401 &&
+          hasAuthToken &&
+          !_isPublicEndpoint(endpoint)) {
+        AuthExpiryBus.trigger(endpoint: endpoint);
+      }
 
       // 打印流式请求错误
       debugPrint('═══════════════════════════════════════');
@@ -444,6 +479,7 @@ class ApiClient {
     int retries = 3,
     Duration initialDelay = const Duration(seconds: 1),
     String? endpoint,
+    bool hasAuthToken = false,
     dynamic requestBody,
   }) async {
     int attempt = 0;
@@ -451,11 +487,15 @@ class ApiClient {
 
     while (attempt <= retries) {
       try {
+        if (AuthExpiryBus.isTriggered && !_isPublicEndpoint(endpoint)) {
+          throw AuthExpiredException();
+        }
         final response = await requestBuilder();
         return _handleResponse<T>(
           response,
           fromJsonT,
           endpoint: endpoint,
+          hasAuthToken: hasAuthToken,
           requestBody: requestBody,
         );
       } on SocketException catch (e) {
@@ -545,6 +585,7 @@ class ApiClient {
     http.Response response,
     T Function(dynamic)? fromJsonT, {
     String? endpoint,
+    bool hasAuthToken = false,
     dynamic requestBody,
   }) {
     if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -556,6 +597,12 @@ class ApiClient {
       if (apiResponse.isSuccess) {
         return apiResponse.data as T;
       } else {
+        if (apiResponse.code == 401 &&
+            hasAuthToken &&
+            !_isPublicEndpoint(endpoint)) {
+          AuthExpiryBus.trigger(endpoint: endpoint);
+          throw AuthExpiredException(apiResponse.msg);
+        }
         // 打印业务逻辑错误
         debugPrint('═══════════════════════════════════════');
         debugPrint('API Business Error Detected');
@@ -602,12 +649,39 @@ class ApiClient {
             if (msg is String && msg.trim().isNotEmpty) {
               responseBodyForException = msg.trim();
             }
+            if (json['code'] == 401 && !_isPublicEndpoint(endpoint)) {
+              if (!hasAuthToken) {
+                throw Exception('Unauthenticated');
+              }
+              AuthExpiryBus.trigger(endpoint: endpoint);
+              // Token removal is best-effort; redirect flow also clears it.
+              unawaited(
+                _sharedPreferences?.remove('auth_token') ?? Future.value(false),
+              );
+              throw AuthExpiredException(responseBodyForException);
+            }
           }
         } catch (e) {
           debugPrint('⚠️  Failed to parse response as JSON');
         }
       } catch (e) {
         debugPrint('⚠️  Failed to decode response body');
+      }
+
+      if (response.statusCode == 401 && !_isPublicEndpoint(endpoint)) {
+        if (!hasAuthToken) {
+          throw Exception('Unauthenticated');
+        }
+        AuthExpiryBus.trigger(endpoint: endpoint);
+        // Token removal is best-effort; redirect flow also clears it.
+        unawaited(
+          _sharedPreferences?.remove('auth_token') ?? Future.value(false),
+        );
+        throw AuthExpiredException(
+          responseBodyForException.isNotEmpty
+              ? responseBodyForException
+              : 'Bad credentials',
+        );
       }
 
       if (requestBody != null) {

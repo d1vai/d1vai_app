@@ -8,6 +8,7 @@ import '../services/d1vai_service.dart';
 import '../services/storage_service.dart';
 import '../services/cache_service.dart';
 import '../widgets/avatar_image.dart';
+import '../core/auth_expiry_bus.dart';
 
 class AuthProvider extends ChangeNotifier {
   final D1vaiService _d1vaiService = D1vaiService();
@@ -72,6 +73,7 @@ class AuthProvider extends ChangeNotifier {
       }
 
       await _storageService.saveAuthToken(token);
+      AuthExpiryBus.reset();
 
       _user = await _d1vaiService.getUserProfile();
       _user = _user?.copyWith(bearerToken: token);
@@ -101,6 +103,7 @@ class AuthProvider extends ChangeNotifier {
       }
 
       await _storageService.saveAuthToken(token);
+      AuthExpiryBus.reset();
 
       _user = await _d1vaiService.getUserProfile();
       _user = _user?.copyWith(bearerToken: token);
@@ -321,6 +324,12 @@ class AuthProvider extends ChangeNotifier {
   /// 登出
   Future<void> logout() async {
     try {
+      // Make logout effective immediately for routing.
+      _user = null;
+      _onboardingData = null;
+      _isLoading = false;
+      notifyListeners();
+
       // 清除认证相关数据
       await _storageService.clearAuthToken();
       await _storageService.clearOnboardingData();

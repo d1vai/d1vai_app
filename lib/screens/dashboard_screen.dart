@@ -11,6 +11,8 @@ import '../widgets/create_project_dialog.dart';
 import '../widgets/card.dart';
 import '../core/theme/app_colors.dart';
 import '../utils/error_utils.dart';
+import '../widgets/login_required_view.dart';
+import '../l10n/app_localizations.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -24,6 +26,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   List<UserProject> _searchResults = [];
+  bool _didAutoLoadAfterLogin = false;
 
   late AnimationController _animationController;
 
@@ -37,8 +40,16 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     // 加载项目数据
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadData();
+      _maybeLoadData();
     });
+  }
+
+  void _maybeLoadData() {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    if (auth.isAuthenticated) {
+      _didAutoLoadAfterLogin = true;
+      _loadData();
+    }
   }
 
   /// 加载数据
@@ -76,6 +87,18 @@ class _DashboardScreenState extends State<DashboardScreen>
     final user = Provider.of<AuthProvider>(context).user;
     final projectProvider = Provider.of<ProjectProvider>(context);
 
+    if (user != null &&
+        !_didAutoLoadAfterLogin &&
+        !projectProvider.isLoading &&
+        projectProvider.projects.isEmpty &&
+        projectProvider.error == null) {
+      _didAutoLoadAfterLogin = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _loadData();
+      });
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: _isSearching
@@ -111,15 +134,17 @@ class _DashboardScreenState extends State<DashboardScreen>
       body: projectProvider.isInitialLoading
           ? _buildShimmer()
           : _buildContent(user, context, projectProvider),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) => const CreateProjectDialog(),
-          );
-        },
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: user == null
+          ? null
+          : FloatingActionButton(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => const CreateProjectDialog(),
+                );
+              },
+              child: const Icon(Icons.add),
+            ),
     );
   }
 
@@ -191,6 +216,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     BuildContext context,
     ProjectProvider projectProvider,
   ) {
+    final loc = AppLocalizations.of(context);
     final stats = projectProvider.getProjectStats();
 
     // 如果有错误，显示错误提示
@@ -198,55 +224,66 @@ class _DashboardScreenState extends State<DashboardScreen>
       return _buildErrorState(context, projectProvider);
     }
 
-    return RefreshIndicator(
-      onRefresh: () async => await projectProvider.refresh(),
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Welcome, ${user?.email ?? "User"}!',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 20),
+    final content = SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Welcome, ${user?.email ?? "User"}!',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 20),
 
-            // 项目统计卡片
-            _buildStatsCards(stats, context),
-            const SizedBox(height: 24),
+          // 项目统计卡片
+          _buildStatsCards(stats, context),
+          const SizedBox(height: 24),
 
-            // 活动图表
-            _buildAnalyticsChart(context, stats),
-            const SizedBox(height: 24),
+          // 活动图表
+          _buildAnalyticsChart(context, stats),
+          const SizedBox(height: 24),
 
-            // 最近项目
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  _isSearching && _searchController.text.isNotEmpty
-                      ? 'Search Results (${_searchResults.length})'
-                      : 'Recent Projects',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                TextButton(
-                  onPressed: () => context.push('/projects'),
-                  child: const Text('View All'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
+          // 最近项目
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                _isSearching && _searchController.text.isNotEmpty
+                    ? 'Search Results (${_searchResults.length})'
+                    : 'Recent Projects',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              TextButton(
+                onPressed: user == null ? () => context.go('/login') : () => context.push('/projects'),
+                child: const Text('View All'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (user == null)
+            LoginRequiredView(
+              variant: LoginRequiredVariant.full,
+              message:
+                  loc?.translate('login_required_dashboard_message') ??
+                  'Please login first.',
+              onAction: () => context.go('/login'),
+            )
+          else
             _buildProjectList(
               context,
               projectProvider,
-              isSearchResults:
-                  _isSearching && _searchController.text.isNotEmpty,
+              isSearchResults: _isSearching && _searchController.text.isNotEmpty,
             ),
-            const SizedBox(height: 80), // Bottom padding for FAB
-          ],
-        ),
+          const SizedBox(height: 80), // Bottom padding for FAB
+        ],
       ),
+    );
+
+    if (user == null) return content;
+    return RefreshIndicator(
+      onRefresh: () async => await projectProvider.refresh(),
+      child: content,
     );
   }
 

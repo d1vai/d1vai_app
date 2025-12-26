@@ -41,11 +41,68 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     _reconnectTimer?.cancel();
     _workspacePollTimer?.cancel();
     _deployAutoClearTimer?.cancel();
+    _thinkingClearTimer?.cancel();
     _webSocketSubscription?.cancel();
     _manualWsClose = true;
     _webSocket?.close(1000, 'dispose');
     _chatScrollController.dispose();
     super.dispose();
+  }
+
+  void _setSessionThinking(bool v) {
+    if (_sessionThinking == v) return;
+    if (!mounted) {
+      _sessionThinking = v;
+      return;
+    }
+    setState(() {
+      _sessionThinking = v;
+    });
+  }
+
+  void _markSessionStarted() {
+    _thinkingClearTimer?.cancel();
+    if (!mounted) {
+      _sessionDone = false;
+      _sessionError = false;
+      _sessionThinking = false;
+      return;
+    }
+    setState(() {
+      _sessionDone = false;
+      _sessionError = false;
+      _sessionThinking = false;
+    });
+  }
+
+  void _markSessionDone() {
+    _thinkingClearTimer?.cancel();
+    if (!mounted) {
+      _sessionDone = true;
+      _sessionError = false;
+      _sessionThinking = false;
+      return;
+    }
+    setState(() {
+      _sessionDone = true;
+      _sessionError = false;
+      _sessionThinking = false;
+    });
+  }
+
+  void _markSessionError() {
+    _thinkingClearTimer?.cancel();
+    if (!mounted) {
+      _sessionDone = false;
+      _sessionError = true;
+      _sessionThinking = false;
+      return;
+    }
+    setState(() {
+      _sessionDone = false;
+      _sessionError = true;
+      _sessionThinking = false;
+    });
   }
 
   void _scheduleDeployAutoClear() {
@@ -352,6 +409,15 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     _reconnectTimer = null;
     _reconnectAttempts = 0;
     _manualWsClose = manual;
+    if (mounted) {
+      setState(() {
+        _wsConnState = WsConnectionState.idle;
+        _wsConnError = null;
+      });
+    } else {
+      _wsConnState = WsConnectionState.idle;
+      _wsConnError = null;
+    }
 
     try {
       await _webSocketSubscription?.cancel();
@@ -556,6 +622,11 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       final st = payload['status']?.toString();
       if (st == 'remote_connect_failed') {
         _autoConnectDisabled = true;
+        _markSessionError();
+        setState(() {
+          _wsConnState = WsConnectionState.failed;
+          _wsConnError = 'remote_connect_failed';
+        });
         if (mounted) {
           SnackBarHelper.showError(
             context,
@@ -606,6 +677,17 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     if (type == 'content_block_delta' || type == 'message_delta') {
       final delta = MessageParser.normalizeOpcodeText(payload);
       if (delta != null && delta.isNotEmpty) {
+        if (_sessionError) {
+          setState(() {
+            _sessionError = false;
+          });
+        }
+        _setSessionThinking(true);
+        _thinkingClearTimer?.cancel();
+        _thinkingClearTimer = Timer(
+          const Duration(milliseconds: 1200),
+          () => _setSessionThinking(false),
+        );
         _appendAssistantDelta(delta);
       }
       return;
@@ -614,6 +696,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     if (type == 'assistant_message') {
       // Final aggregated assistant message: replace last assistant if any.
       _finalizePrevToolDone();
+      _setSessionThinking(false);
       final contents = MessageParser.createMessageContentsFromPayload(payload);
       if (contents.isEmpty) return;
       setState(() {
@@ -640,6 +723,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
 
     if (type == 'assistant') {
       _finalizePrevToolDone();
+      _setSessionThinking(false);
     }
 
     if (type == 'deployment_success') {
@@ -653,7 +737,9 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       if (type == 'tool_result') {
         final isErr = payload['is_error'] == true;
         _markLastToolOutcome(isErr ? 'error' : 'done');
+        if (isErr) _markSessionError();
       }
+      _setSessionThinking(false);
       final contents = MessageParser.createMessageContentsFromPayload(payload);
       if (contents.isEmpty) return;
       if (type == 'tool_result') {
@@ -687,10 +773,15 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         type == 'error' ||
         type == 'cancelled') {
       // Treat these as terminal signals for the current run; don't render as a chat bubble.
-      if (type == 'error') {
+      if (type == 'complete') {
+        _finalizePrevToolDone();
+        _markSessionDone();
+      } else if (type == 'error') {
         _markLastToolOutcome('error');
+        _markSessionError();
       } else if (type == 'cancelled') {
         _markLastToolOutcome('warning');
+        _markSessionError();
       } else {
         _finalizePrevToolDone();
       }
@@ -856,6 +947,13 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
             : null,
       );
       unawaited(_refreshPreviewUrlFromApi());
+      // Align with web: treat a successful trigger response as "done" for the UI button.
+      // If WS deployment frames arrive later, they will update `_isDeploying` again.
+      setState(() {
+        _isDeploying = false;
+        _deployFramework = null;
+      });
+      _deployAutoClearTimer?.cancel();
     } catch (e) {
       if (!mounted) return;
       SnackBarHelper.showError(
@@ -869,8 +967,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       });
       _deployAutoClearTimer?.cancel();
     } finally {
-      // Keep `isDeploying` true until we receive `deployment_complete`/`deployment_success`,
-      // or auto-clear after a timeout.
+      // no-op
     }
   }
 
@@ -892,6 +989,10 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     _reconnectTimer?.cancel();
     _manualWsClose = false;
     _activeWsSessionId = sessionId;
+    setState(() {
+      _wsConnState = WsConnectionState.connecting;
+      _wsConnError = null;
+    });
 
     try {
       await _webSocketSubscription?.cancel();
@@ -909,6 +1010,10 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       }
       _webSocket = ws;
       _reconnectAttempts = 0;
+      setState(() {
+        _wsConnState = WsConnectionState.connected;
+        _wsConnError = null;
+      });
 
       _webSocketSubscription = ws.listen(
         (data) {
@@ -917,16 +1022,28 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         },
         onError: (_) {
           if (!mounted) return;
+          setState(() {
+            _wsConnState = WsConnectionState.failed;
+            _wsConnError = 'socket_error';
+          });
           _scheduleReconnect();
         },
         onDone: () {
           if (!mounted) return;
+          setState(() {
+            _wsConnState = WsConnectionState.failed;
+            _wsConnError = _webSocket?.closeReason ?? 'socket_closed';
+          });
           _scheduleReconnect();
         },
         cancelOnError: true,
       );
     } catch (e) {
       if (!mounted) return;
+      setState(() {
+        _wsConnState = WsConnectionState.failed;
+        _wsConnError = e.toString();
+      });
       SnackBarHelper.showError(
         context,
         title: 'WebSocket',
@@ -955,6 +1072,23 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       if (!mounted) return;
       _ensureWebSocketOpen(sid);
     });
+  }
+
+  @override
+  Future<void> reconnectWebSocket() async {
+    final sid = _currentSessionId ?? _activeWsSessionId;
+    if (sid == null || sid.trim().isEmpty) {
+      if (!mounted) return;
+      SnackBarHelper.showInfo(
+        context,
+        title: 'WebSocket',
+        message: 'No active session to reconnect.',
+      );
+      return;
+    }
+    _autoConnectDisabled = false;
+    _manualWsClose = false;
+    await _ensureWebSocketOpen(sid.trim());
   }
 
   Future<void> _restoreSessionFromHistory(
@@ -1022,6 +1156,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
   @override
   void _sendChatMessage(String text) async {
     if (text.trim().isEmpty || _isChatLoading) return;
+    _markSessionStarted();
 
     final tempId = 'user-${DateTime.now().millisecondsSinceEpoch}';
     final userMessage = ChatMessage(
@@ -1067,6 +1202,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _isChatLoading = false;
         _messageStatuses[tempId] = MessageStatus.failed;
       });
+      _markSessionError();
       SnackBarHelper.showError(
         context,
         title: 'Error',
@@ -1087,6 +1223,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       _isChatLoading = true;
       _messageStatuses[message.id] = MessageStatus.pending;
     });
+    _markSessionStarted();
 
     try {
       await _ensureWorkspaceReadyForSend();
@@ -1111,6 +1248,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _isChatLoading = false;
         _messageStatuses[message.id] = MessageStatus.failed;
       });
+      _markSessionError();
       SnackBarHelper.showError(
         context,
         title: 'Retry',

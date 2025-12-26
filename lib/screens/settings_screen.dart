@@ -6,7 +6,6 @@ import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../services/d1vai_service.dart';
-import '../widgets/login_required_dialog.dart';
 import '../widgets/snackbar_helper.dart';
 import '../widgets/button.dart';
 import '../core/theme/app_colors.dart';
@@ -23,7 +22,6 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   int _currentTab = 0;
-  bool _loginDialogShown = false;
 
   @override
   void initState() {
@@ -33,41 +31,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     // 避免刚进入页面时 Auth 还在初始化导致误弹登录弹窗。
   }
 
-  /// 显示登录提示对话框
-  void _showLoginRequiredDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false, // 防止点击外部关闭
-      builder: (context) => LoginRequiredDialog(
-        onLogin: () {
-          // 跳转到登录页面
-          context.go('/login');
-        },
-        onCancel: () {
-          // 返回上一页
-          context.pop();
-        },
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
-
-    // 根据 AuthProvider 状态决定是否需要显示登录提示，而不是在 initState 用一次性快照。
-    final auth = Provider.of<AuthProvider>(context);
-    if (!auth.isLoading && auth.user == null && !_loginDialogShown) {
-      _loginDialogShown = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        _showLoginRequiredDialog();
-      });
-    }
-    if (auth.user != null && _loginDialogShown) {
-      // 用户已经登录，重置标记，避免下一次进入设置页时不再检查。
-      _loginDialogShown = false;
-    }
 
     return Scaffold(
       appBar: AppBar(

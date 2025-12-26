@@ -40,6 +40,29 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
     return parts.isEmpty ? 'Workspace' : parts.join(' · ');
   }
 
+  String _statusLabel() {
+    // Align with d1vai mobileStatusLabel.
+    final working =
+        _isChatLoading ||
+        _wsConnState == WsConnectionState.connecting ||
+        (_wsConnState == WsConnectionState.connected &&
+            !_autoConnectDisabled &&
+            !_sessionDone &&
+            !_sessionError &&
+            (_activeWsSessionId ?? '').trim().isNotEmpty);
+    return _isDeploying
+        ? 'Deploying'
+        : _sessionError
+        ? 'Error'
+        : _sessionDone
+        ? 'Done'
+        : working
+        ? 'Working'
+        : _sessionThinking
+        ? 'Thinking'
+        : 'Ready';
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -95,15 +118,18 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
               });
               _initializeChat();
             },
-            statusLabel: _isChatLoading
-                ? 'Sending...'
-                : _isDeploying
-                ? 'Deploying...'
-                : 'Ready',
-            isError: false,
-            isDone: false,
-            isWorking: _isChatLoading,
-            isThinking: false,
+            statusLabel: _statusLabel(),
+            isError: _sessionError,
+            isDone: _sessionDone,
+            isWorking:
+                _isChatLoading ||
+                _wsConnState == WsConnectionState.connecting ||
+                (_wsConnState == WsConnectionState.connected &&
+                    !_autoConnectDisabled &&
+                    !_sessionDone &&
+                    !_sessionError &&
+                    (_activeWsSessionId ?? '').trim().isNotEmpty),
+            isThinking: _sessionThinking,
             isDeploying: _isDeploying,
           ),
         ),
@@ -205,15 +231,18 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
               });
               _initializeChat();
             },
-            statusLabel: _isChatLoading
-                ? 'Sending...'
-                : _isDeploying
-                ? 'Deploying...'
-                : 'Ready',
-            isError: false,
-            isDone: false,
-            isWorking: _isChatLoading,
-            isThinking: false,
+            statusLabel: _statusLabel(),
+            isError: _sessionError,
+            isDone: _sessionDone,
+            isWorking:
+                _isChatLoading ||
+                _wsConnState == WsConnectionState.connecting ||
+                (_wsConnState == WsConnectionState.connected &&
+                    !_autoConnectDisabled &&
+                    !_sessionDone &&
+                    !_sessionError &&
+                    (_activeWsSessionId ?? '').trim().isNotEmpty),
+            isThinking: _sessionThinking,
             isDeploying: _isDeploying,
           ),
         ),
