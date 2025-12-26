@@ -383,8 +383,6 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       _isLoadingMoreHistory = true;
     });
 
-    final controller = _chatScrollController;
-
     try {
       const limit = 30;
       final history = await _chatService.getChatHistory(
@@ -449,11 +447,9 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     if (mounted) {
       setState(() {
         _wsConnState = WsConnectionState.idle;
-        _wsConnError = null;
       });
     } else {
       _wsConnState = WsConnectionState.idle;
-      _wsConnError = null;
     }
 
     try {
@@ -628,7 +624,6 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _markSessionError();
         setState(() {
           _wsConnState = WsConnectionState.failed;
-          _wsConnError = 'remote_connect_failed';
         });
         if (mounted) {
           SnackBarHelper.showError(
@@ -869,11 +864,12 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
             payload['url']?.toString();
       } catch (_) {}
 
+      final nextUrl = url?.trim() ?? '';
       setState(() {
         _isDeploying = false;
         _deployFramework = null;
-        if (url != null && url!.trim().isNotEmpty) {
-          _previewUrl = url!.trim();
+        if (nextUrl.isNotEmpty) {
+          _previewUrl = nextUrl;
         }
         _previewKey += 1;
         _currentChatTabIndex = 0;
@@ -933,8 +929,9 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         onActionPressed: url.isNotEmpty
             ? () {
                 final uri = Uri.tryParse(url);
-                if (uri != null)
+                if (uri != null) {
                   launchUrl(uri, mode: LaunchMode.externalApplication);
+                }
               }
             : null,
         duration: const Duration(seconds: 3),
@@ -985,7 +982,6 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     _activeWsSessionId = sessionId;
     setState(() {
       _wsConnState = WsConnectionState.connecting;
-      _wsConnError = null;
     });
 
     try {
@@ -1006,7 +1002,6 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       _reconnectAttempts = 0;
       setState(() {
         _wsConnState = WsConnectionState.connected;
-        _wsConnError = null;
       });
 
       _webSocketSubscription = ws.listen(
@@ -1018,7 +1013,6 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
           if (!mounted) return;
           setState(() {
             _wsConnState = WsConnectionState.failed;
-            _wsConnError = 'socket_error';
           });
           _scheduleReconnect();
         },
@@ -1026,7 +1020,6 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
           if (!mounted) return;
           setState(() {
             _wsConnState = WsConnectionState.failed;
-            _wsConnError = _webSocket?.closeReason ?? 'socket_closed';
           });
           _scheduleReconnect();
         },
@@ -1036,7 +1029,6 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       if (!mounted) return;
       setState(() {
         _wsConnState = WsConnectionState.failed;
-        _wsConnError = e.toString();
       });
       SnackBarHelper.showError(
         context,

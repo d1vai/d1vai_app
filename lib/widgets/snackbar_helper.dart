@@ -116,7 +116,7 @@ class SnackBarHelper {
   }) {
     _clearTopToast();
 
-    final overlay = Overlay.of(context, rootOverlay: true);
+    final overlay = Overlay.maybeOf(context, rootOverlay: true);
     if (overlay == null) return;
 
     final theme = Theme.of(context);

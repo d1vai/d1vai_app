@@ -838,8 +838,9 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
     final refs = _normalizeMetricList(_topReferrers).take(5).toList();
 
     String itemLabel(dynamic it) {
-      if (it is Map)
+      if (it is Map) {
         return (it['x'] ?? it['name'] ?? it['label'] ?? '—').toString();
+      }
       return it.toString();
     }
 

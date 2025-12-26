@@ -692,8 +692,8 @@ class _ProjectDeployTabState extends State<ProjectDeployTab> {
   }
 
   Future<void> _showDeploymentActions(DeploymentHistory deployment) async {
-    final url = deployment.primaryUrl;
-    final canOpenUrl = url != null && url.trim().isNotEmpty;
+    final url = (deployment.primaryUrl ?? '').trim();
+    final canOpenUrl = url.isNotEmpty;
     final canViewLogs =
         deployment.vercelDeploymentId != null &&
         deployment.vercelDeploymentId!.trim().isNotEmpty;
@@ -739,7 +739,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab> {
                   children: [
                     ElevatedButton.icon(
                       onPressed: canOpenUrl
-                          ? () => _openUrl(url!.trim())
+                          ? () => _openUrl(url)
                           : null,
                       icon: const Icon(Icons.open_in_new),
                       label: const Text('Open'),

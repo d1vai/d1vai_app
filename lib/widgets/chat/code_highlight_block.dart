@@ -37,8 +37,8 @@ class CodeHighlightBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final lang = language ?? _inferLanguage(text);
-    final enableHighlight = lang != null && text.length <= 200000;
+    final highlightLanguage = language ?? _inferLanguage(text);
+    final enableHighlight = highlightLanguage != null && text.length <= 200000;
 
     final baseTextStyle = TextStyle(
       fontFamily: 'monospace',
@@ -82,7 +82,7 @@ class CodeHighlightBlock extends StatelessWidget {
       inner = SelectionArea(
         child: HighlightView(
           text,
-          language: lang!,
+          language: highlightLanguage,
           theme: highlightTheme,
           padding: EdgeInsets.zero,
           textStyle: baseTextStyle,
@@ -117,4 +117,3 @@ class CodeHighlightBlock extends StatelessWidget {
     );
   }
 }
-

@@ -1237,7 +1237,7 @@ class _CodeBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final lang = _languageForPath(filePath);
+    final highlightLanguage = _languageForPath(filePath);
     final isDark = theme.brightness == Brightness.dark;
     final codeTextStyle = const TextStyle(
       fontFamily: 'monospace',
@@ -1246,7 +1246,8 @@ class _CodeBlock extends StatelessWidget {
     );
 
     // Avoid heavy highlighting on very large files (keeps scrolling smooth).
-    final enableHighlight = !isBinary && lang != null && text.length <= 200000;
+    final enableHighlight =
+        !isBinary && highlightLanguage != null && text.length <= 200000;
     final highlightTheme = Map<String, TextStyle>.from(
       isDark ? atomOneDarkTheme : atomOneLightTheme,
     );
@@ -1285,7 +1286,7 @@ class _CodeBlock extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               child: HighlightView(
                 text,
-                language: lang!,
+                language: highlightLanguage,
                 theme: highlightTheme,
                 padding: EdgeInsets.zero,
                 textStyle: codeTextStyle,

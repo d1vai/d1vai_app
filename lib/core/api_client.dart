@@ -655,9 +655,10 @@ class ApiClient {
               }
               AuthExpiryBus.trigger(endpoint: endpoint);
               // Token removal is best-effort; redirect flow also clears it.
-              unawaited(
-                _sharedPreferences?.remove('auth_token') ?? Future.value(false),
-              );
+              final prefs = _sharedPreferences;
+              if (prefs != null) {
+                unawaited(prefs.remove('auth_token').then((_) {}));
+              }
               throw AuthExpiredException(responseBodyForException);
             }
           }
@@ -674,9 +675,10 @@ class ApiClient {
         }
         AuthExpiryBus.trigger(endpoint: endpoint);
         // Token removal is best-effort; redirect flow also clears it.
-        unawaited(
-          _sharedPreferences?.remove('auth_token') ?? Future.value(false),
-        );
+        final prefs = _sharedPreferences;
+        if (prefs != null) {
+          unawaited(prefs.remove('auth_token').then((_) {}));
+        }
         throw AuthExpiredException(
           responseBodyForException.isNotEmpty
               ? responseBodyForException

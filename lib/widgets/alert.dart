@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum AlertVariant { defaultVariant, destructive }
+enum AlertVariant { defaultVariant, destructive, success, warning }
 
 /// Alert Widget - Display important messages to users with different variants
 class Alert extends StatelessWidget {
@@ -13,6 +13,7 @@ class Alert extends StatelessWidget {
   final Color? backgroundColor;
   final Color? borderColor;
   final double? borderWidth;
+  final bool showDefaultIcon;
 
   const Alert({
     super.key,
@@ -25,6 +26,7 @@ class Alert extends StatelessWidget {
     this.backgroundColor,
     this.borderColor,
     this.borderWidth,
+    this.showDefaultIcon = true,
   });
 
   @override
@@ -32,39 +34,29 @@ class Alert extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    Color effectiveBackgroundColor;
-    Color effectiveBorderColor;
-    IconData defaultIcon;
+    final resolved = _resolveStyle(colorScheme, variant);
 
-    switch (variant) {
-      case AlertVariant.defaultVariant:
-        effectiveBackgroundColor = backgroundColor ??
-            colorScheme.surface.withValues(alpha: 0.8);
-        effectiveBorderColor = borderColor ??
-            colorScheme.outline.withValues(alpha: 0.3);
-        defaultIcon = Icons.info_outline;
-        break;
-      case AlertVariant.destructive:
-        effectiveBackgroundColor = backgroundColor ??
-            colorScheme.errorContainer.withValues(alpha: 0.3);
-        effectiveBorderColor = borderColor ??
-            colorScheme.error.withValues(alpha: 0.5);
-        defaultIcon = Icons.error_outline;
-        break;
-    }
-
-    final effectiveBorderRadius = borderRadius ?? BorderRadius.circular(8.0);
+    final effectiveBorderRadius = borderRadius ?? BorderRadius.circular(12.0);
     final effectivePadding =
-        padding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 12);
+        padding ?? const EdgeInsets.symmetric(horizontal: 14, vertical: 12);
     final effectiveBorderWidth = borderWidth ?? 1.0;
+
+    final Widget? leading = icon ??
+        (showDefaultIcon && resolved.defaultIcon != null
+            ? Icon(
+                resolved.defaultIcon,
+                color: resolved.iconColor,
+                size: 18,
+              )
+            : null);
 
     return Container(
       margin: margin,
       padding: effectivePadding,
       decoration: BoxDecoration(
-        color: effectiveBackgroundColor,
+        color: backgroundColor ?? resolved.backgroundColor,
         border: Border.all(
-          color: effectiveBorderColor,
+          color: borderColor ?? resolved.borderColor,
           width: effectiveBorderWidth,
         ),
         borderRadius: effectiveBorderRadius,
@@ -72,18 +64,15 @@ class Alert extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (icon != null || defaultIcon != Icons.info_outline) ...[
-            Icon(
-              icon != null ? null : defaultIcon,
-              color: _getIconColor(theme, variant),
-              size: 20,
-            ),
-            if (icon != null)
-              Container(
-                margin: const EdgeInsets.only(right: 12),
-                child: icon,
+          if (leading != null) ...[
+            Padding(
+              padding: const EdgeInsets.only(top: 1),
+              child: IconTheme.merge(
+                data: IconThemeData(color: resolved.iconColor, size: 18),
+                child: leading,
               ),
-            const SizedBox(width: 12),
+            ),
+            const SizedBox(width: 10),
           ],
           Expanded(
             child: child ?? const SizedBox.shrink(),
@@ -93,14 +82,79 @@ class Alert extends StatelessWidget {
     );
   }
 
-  Color _getIconColor(ThemeData theme, AlertVariant variant) {
+  _AlertResolvedStyle _resolveStyle(
+    ColorScheme colorScheme,
+    AlertVariant variant,
+  ) {
     switch (variant) {
       case AlertVariant.defaultVariant:
-        return theme.colorScheme.primary;
+        return _AlertResolvedStyle(
+          backgroundColor: Color.alphaBlend(
+            colorScheme.primary.withValues(alpha: 0.08),
+            colorScheme.surface,
+          ),
+          borderColor: Color.alphaBlend(
+            colorScheme.primary.withValues(alpha: 0.22),
+            colorScheme.outlineVariant,
+          ),
+          iconColor: colorScheme.primary,
+          defaultIcon: null,
+        );
       case AlertVariant.destructive:
-        return theme.colorScheme.error;
+        return _AlertResolvedStyle(
+          backgroundColor: Color.alphaBlend(
+            colorScheme.error.withValues(alpha: 0.10),
+            colorScheme.surface,
+          ),
+          borderColor: Color.alphaBlend(
+            colorScheme.error.withValues(alpha: 0.30),
+            colorScheme.outlineVariant,
+          ),
+          iconColor: colorScheme.error,
+          defaultIcon: Icons.error_outline,
+        );
+      case AlertVariant.success:
+        return _AlertResolvedStyle(
+          backgroundColor: Color.alphaBlend(
+            colorScheme.tertiary.withValues(alpha: 0.10),
+            colorScheme.surface,
+          ),
+          borderColor: Color.alphaBlend(
+            colorScheme.tertiary.withValues(alpha: 0.30),
+            colorScheme.outlineVariant,
+          ),
+          iconColor: colorScheme.tertiary,
+          defaultIcon: Icons.check_circle_outline,
+        );
+      case AlertVariant.warning:
+        return _AlertResolvedStyle(
+          backgroundColor: Color.alphaBlend(
+            colorScheme.secondary.withValues(alpha: 0.10),
+            colorScheme.surface,
+          ),
+          borderColor: Color.alphaBlend(
+            colorScheme.secondary.withValues(alpha: 0.30),
+            colorScheme.outlineVariant,
+          ),
+          iconColor: colorScheme.secondary,
+          defaultIcon: Icons.warning_amber_rounded,
+        );
     }
   }
+}
+
+class _AlertResolvedStyle {
+  final Color backgroundColor;
+  final Color borderColor;
+  final Color iconColor;
+  final IconData? defaultIcon;
+
+  const _AlertResolvedStyle({
+    required this.backgroundColor,
+    required this.borderColor,
+    required this.iconColor,
+    required this.defaultIcon,
+  });
 }
 
 /// AlertDescription - Description content for Alert
@@ -198,7 +252,7 @@ class SuccessAlert extends StatelessWidget {
     return SimpleAlert(
       message: message,
       title: title,
-      variant: AlertVariant.destructive, // Using destructive as error
+      variant: AlertVariant.success,
     );
   }
 }
@@ -241,6 +295,27 @@ class InfoAlert extends StatelessWidget {
       message: message,
       title: title,
       variant: AlertVariant.defaultVariant,
+    );
+  }
+}
+
+/// Warning Alert - For warning messages
+class WarningAlert extends StatelessWidget {
+  final String message;
+  final String? title;
+
+  const WarningAlert({
+    super.key,
+    required this.message,
+    this.title,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SimpleAlert(
+      message: message,
+      title: title ?? 'Warning',
+      variant: AlertVariant.warning,
     );
   }
 }

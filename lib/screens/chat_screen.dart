@@ -332,8 +332,6 @@ class _ChatScreenState extends State<ChatScreen>
       _isLoadingMoreHistory = true;
     });
 
-    final controller = _scrollController;
-
     try {
       const limit = 30;
       final history = await _chatService.getChatHistory(

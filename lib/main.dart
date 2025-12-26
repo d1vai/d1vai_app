@@ -83,6 +83,7 @@ class _AuthExpiryGateState extends State<_AuthExpiryGate> {
   void initState() {
     super.initState();
     _sub = AuthExpiryBus.stream.listen((event) {
+      if (!mounted) return;
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       authProvider.logout();
       _appRouter.go('/login?expired=1');

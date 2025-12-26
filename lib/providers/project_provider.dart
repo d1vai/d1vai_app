@@ -48,14 +48,6 @@ class ProjectProvider extends ChangeNotifier {
     _visibleLimit = _pageSize;
   }
 
-  /// 重置状态
-  void _reset() {
-    _projects = [];
-    _resetPaging();
-    _error = null;
-    notifyListeners();
-  }
-
   /// 设置搜索参数
   void setSearchQuery(String query) {
     _searchQuery = query;

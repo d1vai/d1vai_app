@@ -44,7 +44,6 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   bool _autoConnectDisabled = false;
   final Set<String> _seenWsKeys = <String>{};
   WsConnectionState _wsConnState = WsConnectionState.idle;
-  String? _wsConnError;
 
   // Mobile chat bottom sheet state
   bool _showMobileChat = false;
