@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui' as ui;
 import '../models/community_post.dart';
+import '../utils/community_post_display.dart';
 import 'avatar_image.dart';
 import 'snackbar_helper.dart';
 import 'card.dart';
@@ -249,20 +250,23 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        AvatarImage(
-                                          imageUrl:
-                                              post
-                                                      .author
-                                                      ?.picture
-                                                      ?.isNotEmpty ==
-                                                  true
-                                              ? post.author!.picture!
-                                              : 'placeholder',
-                                          size: 20,
-                                          borderRadius: BorderRadius.circular(
-                                            10,
+                                        Hero(
+                                          tag: communityPostAuthorHeroTag(post),
+                                          child: AvatarImage(
+                                            imageUrl:
+                                                post
+                                                        .author
+                                                        ?.picture
+                                                        ?.isNotEmpty ==
+                                                    true
+                                                ? post.author!.picture!
+                                                : 'placeholder',
+                                            size: 20,
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                            fit: BoxFit.cover,
                                           ),
-                                          fit: BoxFit.cover,
                                         ),
                                         const SizedBox(width: 6),
                                         ConstrainedBox(

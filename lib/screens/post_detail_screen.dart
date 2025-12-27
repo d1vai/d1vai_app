@@ -4,6 +4,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/community_post.dart';
 import '../services/d1vai_service.dart';
 import '../widgets/avatar_image.dart';
+import '../widgets/card.dart';
+import '../widgets/chat/markdown_text.dart';
+import '../widgets/phone_frame_web_preview.dart';
+import '../utils/community_post_display.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final CommunityPost post;
@@ -84,16 +88,22 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final titleText = displayCommunityPostTitle(_post.title);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Post Details')),
+      appBar: AppBar(title: const Text('Post')),
       body: RefreshIndicator(
         onRefresh: _refreshPostDetails,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
-            _buildPostHeader(theme),
-            const SizedBox(height: 16),
+            _buildPostHeader(theme, titleText),
+            const SizedBox(height: 14),
+            PhoneFrameWebPreview(
+              url: _post.embedUrl,
+              webViewHeight: 520,
+            ),
+            const SizedBox(height: 14),
             _buildPostContent(theme),
           ],
         ),
@@ -101,134 +111,224 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     );
   }
 
-  Widget _buildPostHeader(ThemeData theme) {
-    return Row(
-      children: [
-        AvatarImage(
-          imageUrl: _post.author?.picture?.isNotEmpty == true
-              ? _post.author!.picture!
-              : 'placeholder',
-          size: 48,
-          borderRadius: BorderRadius.circular(24),
-          fit: BoxFit.cover,
-          placeholderText: _post.author?.picture?.isNotEmpty != true
-              ? _getAuthorDisplayName(_post.author)
-              : null,
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildPostHeader(ThemeData theme, String titleText) {
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    return CustomCard(
+      glass: true,
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (titleText.isNotEmpty)
+            Text(
+              titleText,
+              style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    height: 1.05,
+                  ) ??
+                  const TextStyle(fontWeight: FontWeight.w900),
+            ),
+          if (titleText.isNotEmpty) const SizedBox(height: 12),
+          Row(
             children: [
-              Text(
-                _getAuthorDisplayName(_post.author),
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+              Hero(
+                tag: communityPostAuthorHeroTag(_post),
+                child: AvatarImage(
+                  imageUrl: _post.author?.picture?.isNotEmpty == true
+                      ? _post.author!.picture!
+                      : 'placeholder',
+                  size: 40,
+                  borderRadius: BorderRadius.circular(20),
+                  fit: BoxFit.cover,
+                  placeholderText: _post.author?.picture?.isNotEmpty != true
+                      ? _getAuthorDisplayName(_post.author)
+                      : null,
                 ),
               ),
-              if (_post.author?.email != null &&
-                  _post.author!.email!.isNotEmpty)
-                Text(
-                  '@${_getEmailPrefix(_post.author!.email)}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _getAuthorDisplayName(_post.author),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ) ??
+                          const TextStyle(fontWeight: FontWeight.w800),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (_post.author?.email != null &&
+                        _post.author!.email!.isNotEmpty)
+                      Text(
+                        '@${_getEmailPrefix(_post.author!.email)}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ) ??
+                            TextStyle(color: colorScheme.onSurfaceVariant),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Color.alphaBlend(
+                    colorScheme.primary.withValues(alpha: isDark ? 0.18 : 0.10),
+                    colorScheme.surfaceContainerHighest,
+                  ),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: colorScheme.outlineVariant.withValues(alpha: 0.55),
                   ),
                 ),
+                child: Text(
+                  _formatTime(_post.createdAt),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w700,
+                      ) ??
+                      TextStyle(
+                        color: colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+              ),
             ],
           ),
-        ),
-        Text(
-          _formatTime(_post.createdAt),
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildPostContent(ThemeData theme) {
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    final raw = (_post.content ?? _post.summary ?? '').trim();
+    final content = raw.isEmpty ? '' : raw;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (_post.title.isNotEmpty)
-          Text(
-            _post.title,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+        CustomCard(
+          glass: true,
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (content.isNotEmpty)
+                MarkdownText(
+                  text: content,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurface,
+                        fontSize: 14,
+                        height: 1.35,
+                      ) ??
+                      TextStyle(
+                        color: colorScheme.onSurface,
+                        fontSize: 14,
+                        height: 1.35,
+                      ),
+                )
+              else
+                Text(
+                  'No description yet.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ) ??
+                      TextStyle(color: colorScheme.onSurfaceVariant),
+                ),
+              if (_post.tags.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _post.tags.map((tag) {
+                    final bg = Color.alphaBlend(
+                      colorScheme.primary.withValues(
+                        alpha: isDark ? 0.18 : 0.10,
+                      ),
+                      colorScheme.surface,
+                    );
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: bg,
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: colorScheme.outlineVariant.withValues(
+                            alpha: 0.55,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        tag,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: colorScheme.onSurface,
+                            ) ??
+                            TextStyle(
+                              fontWeight: FontWeight.w800,
+                              color: colorScheme.onSurface,
+                            ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+              if ((_post.embedUrl ?? '').trim().isNotEmpty) ...[
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _openProjectDemo(context),
+                    icon: const Icon(Icons.open_in_new),
+                    label: const Text('View Project'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: colorScheme.onPrimary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
-        const SizedBox(height: 12),
-        if (_post.coverUrl != null) ...[
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.network(
-              _post.coverUrl!,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return const SizedBox.shrink();
-              },
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
-        Text(
-          _post.content ?? _post.summary ?? '',
-          style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
         ),
-        const SizedBox(height: 24),
-
-        // Tags
-        if (_post.tags.isNotEmpty) ...[
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _post.tags.map((tag) {
-              return Chip(
-                label: Text(tag),
-                backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                side: BorderSide.none,
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 24),
-        ],
-
-        // View Project Button
-        if ((_post.embedUrl ?? '').isNotEmpty)
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                _openProjectDemo(context);
-              },
-              icon: const Icon(Icons.open_in_new),
-              label: const Text('View Project'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: theme.colorScheme.onPrimary,
-              ),
-            ),
-          ),
       ],
     );
   }
 
   /// 打开项目演示链接
   void _openProjectDemo(BuildContext context) async {
-    if ((_post.embedUrl ?? '').isNotEmpty) {
+    final url = (_post.embedUrl ?? '').trim();
+    if (url.isNotEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Opening ${_post.title}...'),
+          content: Text('Opening ${displayCommunityPostTitle(_post.title)}...'),
           duration: const Duration(seconds: 1),
         ),
       );
-      final url = _post.embedUrl!;
       try {
-        // ignore: deprecated_member_use
-        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+        final uri = Uri.tryParse(url);
+        if (uri == null) return;
+        final ok = await canLaunchUrl(uri);
+        if (!ok) return;
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
