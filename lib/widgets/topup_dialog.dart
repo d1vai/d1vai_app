@@ -75,18 +75,8 @@ class _TopUpDialogState extends State<TopUpDialog> {
     return amount >= 25 && amount <= 20000;
   }
 
-  String _formatUsd(double amount) {
-    final normalized = (amount * 100).roundToDouble() / 100.0;
-    final isInt = normalized == normalized.roundToDouble();
-    return isInt ? normalized.toStringAsFixed(0) : normalized.toStringAsFixed(2);
-  }
-
   String _ctaLabel() {
-    final amount = _parseAmount();
-    final amt = (amount != null && amount.isFinite && amount > 0)
-        ? _formatUsd(amount)
-        : null;
-    return amt == null ? 'Continue to Stripe' : 'Continue to Stripe • \$$amt';
+    return 'Continue';
   }
 
   Future<void> _handleSubmit() async {
