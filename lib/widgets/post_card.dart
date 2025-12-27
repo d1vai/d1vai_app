@@ -19,10 +19,13 @@ class PostCard extends StatefulWidget {
   State<PostCard> createState() => _PostCardState();
 }
 
-class _PostCardState extends State<PostCard>
-    with TickerProviderStateMixin {
+class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
   late final AnimationController _pressController;
   late final AnimationController _shineController;
+
+  String _displayTitle(String raw) {
+    return raw.replaceAll('_', ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
+  }
 
   @override
   void initState() {
@@ -52,15 +55,20 @@ class _PostCardState extends State<PostCard>
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    final scale = Tween<double>(begin: 1, end: 0.992).animate(
-      CurvedAnimation(parent: _pressController, curve: Curves.easeOut),
-    );
+    final scale = Tween<double>(
+      begin: 1,
+      end: 0.992,
+    ).animate(CurvedAnimation(parent: _pressController, curve: Curves.easeOut));
 
     final coverUrl = post.coverUrl?.trim() ?? '';
     final hasCover = coverUrl.isNotEmpty;
-    final height = hasCover ? 230.0 : 180.0;
+    final height = hasCover ? 220.0 : 170.0;
     final glassBg = Colors.black.withValues(alpha: isDark ? 0.35 : 0.26);
     final glassBorder = Colors.white.withValues(alpha: isDark ? 0.14 : 0.18);
+    final titleText = _displayTitle(post.title);
+    final summaryText = (post.summary ?? '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
 
     final card = CustomCard(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -155,7 +163,9 @@ class _PostCardState extends State<PostCard>
                           final t = Curves.easeOutCubic.transform(
                             _shineController.value,
                           );
-                          final a = isDark ? (0.16 * (1 - t)) : (0.12 * (1 - t));
+                          final a = isDark
+                              ? (0.16 * (1 - t))
+                              : (0.12 * (1 - t));
                           return Opacity(
                             opacity: a.clamp(0.0, 1.0),
                             child: Transform.translate(
@@ -182,71 +192,100 @@ class _PostCardState extends State<PostCard>
                     ),
                   ),
                   Positioned(
-                    left: 12,
-                    right: 12,
-                    bottom: 12,
+                    left: 10,
+                    right: 10,
+                    bottom: 10,
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                       child: BackdropFilter(
-                        filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                        filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                         child: Container(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
                           decoration: BoxDecoration(
                             color: glassBg,
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: glassBorder),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  AvatarImage(
-                                    imageUrl:
-                                        post.author?.picture?.isNotEmpty == true
-                                            ? post.author!.picture!
-                                            : 'placeholder',
-                                    size: 32,
-                                    borderRadius: BorderRadius.circular(16),
-                                    fit: BoxFit.cover,
+                                  Expanded(
+                                    child: Text(
+                                      titleText,
+                                      style:
+                                          theme.textTheme.titleMedium?.copyWith(
+                                            fontWeight: FontWeight.w900,
+                                            height: 1.08,
+                                            color: Colors.white,
+                                          ) ??
+                                          const TextStyle(
+                                            fontWeight: FontWeight.w900,
+                                            color: Colors.white,
+                                          ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
                                   const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          post.author?.slug ?? 'Anonymous',
-                                          style: theme.textTheme.labelLarge
-                                                  ?.copyWith(
-                                                fontWeight: FontWeight.w800,
-                                                color: Colors.white,
-                                              ) ??
-                                              const TextStyle(
-                                                fontWeight: FontWeight.w800,
-                                                color: Colors.white,
-                                              ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(
+                                        alpha: isDark ? 0.10 : 0.12,
+                                      ),
+                                      borderRadius: BorderRadius.circular(999),
+                                      border: Border.all(
+                                        color: Colors.white.withValues(
+                                          alpha: isDark ? 0.12 : 0.16,
                                         ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          _formatPublishedDate(post.createdAt),
-                                          style: theme.textTheme.labelSmall
-                                                  ?.copyWith(
-                                                color: Colors.white.withValues(
-                                                  alpha: 0.82,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        AvatarImage(
+                                          imageUrl:
+                                              post
+                                                      .author
+                                                      ?.picture
+                                                      ?.isNotEmpty ==
+                                                  true
+                                              ? post.author!.picture!
+                                              : 'placeholder',
+                                          size: 20,
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                          fit: BoxFit.cover,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        ConstrainedBox(
+                                          constraints: const BoxConstraints(
+                                            maxWidth: 120,
+                                          ),
+                                          child: Text(
+                                            post.author?.slug ?? 'Anonymous',
+                                            style:
+                                                theme.textTheme.labelMedium
+                                                    ?.copyWith(
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                      color: Colors.white,
+                                                      height: 1.0,
+                                                    ) ??
+                                                const TextStyle(
+                                                  fontWeight: FontWeight.w800,
+                                                  color: Colors.white,
                                                 ),
-                                                fontFeatures: const [
-                                                  FontFeature.tabularFigures(),
-                                                ],
-                                              ) ??
-                                              TextStyle(
-                                                color: Colors.white.withValues(
-                                                  alpha: 0.82,
-                                                ),
-                                              ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -254,7 +293,9 @@ class _PostCardState extends State<PostCard>
                                   IconButton(
                                     icon: Icon(
                                       Icons.more_horiz,
-                                      color: Colors.white.withValues(alpha: 0.9),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.9,
+                                      ),
                                     ),
                                     onPressed: () => _showMoreOptions(context),
                                     tooltip: 'More',
@@ -262,42 +303,53 @@ class _PostCardState extends State<PostCard>
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 10),
-                              Text(
-                                post.title,
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.w900,
-                                      height: 1.12,
-                                      color: Colors.white,
-                                    ) ??
-                                    const TextStyle(
-                                      fontWeight: FontWeight.w900,
-                                      color: Colors.white,
-                                    ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              if (post.summary != null &&
-                                  post.summary!.trim().isNotEmpty) ...[
-                                const SizedBox(height: 6),
-                                Text(
-                                  post.summary!.trim(),
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.86,
-                                        ),
-                                        height: 1.25,
-                                      ) ??
-                                      TextStyle(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.86,
-                                        ),
-                                        height: 1.25,
+                              const SizedBox(height: 6),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  if (summaryText.isNotEmpty)
+                                    Expanded(
+                                      child: Text(
+                                        summaryText,
+                                        style:
+                                            theme.textTheme.bodySmall?.copyWith(
+                                              color: Colors.white.withValues(
+                                                alpha: 0.86,
+                                              ),
+                                              height: 1.2,
+                                            ) ??
+                                            TextStyle(
+                                              color: Colors.white.withValues(
+                                                alpha: 0.86,
+                                              ),
+                                              height: 1.2,
+                                            ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
+                                    )
+                                  else
+                                    const Spacer(),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    _formatPublishedDate(post.createdAt),
+                                    style:
+                                        theme.textTheme.labelSmall?.copyWith(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.76,
+                                          ),
+                                          fontFeatures: const [
+                                            FontFeature.tabularFigures(),
+                                          ],
+                                        ) ??
+                                        TextStyle(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.76,
+                                          ),
+                                        ),
+                                  ),
+                                ],
+                              ),
                             ],
                           ),
                         ),
