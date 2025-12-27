@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../models/message.dart';
 import '../code_highlight_block.dart';
 import 'tool_utils.dart';
@@ -17,7 +18,7 @@ class ToolDetailSheet {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: Colors.transparent,
       showDragHandle: true,
       builder: (context) {
         return DraggableScrollableSheet(
@@ -29,63 +30,116 @@ class ToolDetailSheet {
             return SafeArea(
               top: false,
               child: Container(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                child: ListView(
-                  controller: scrollController,
-                  children: [
-                    _Header(
-                      toolName: toolName,
-                      status: status,
-                      summary: summary,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
+                  border: Border.all(
+                    color: theme.colorScheme.outlineVariant.withValues(
+                      alpha: theme.brightness == Brightness.dark ? 0.55 : 0.65,
                     ),
-                    const SizedBox(height: 12),
-                    if (details.primaryLines.isNotEmpty)
-                      _Section(
-                        title: 'Details',
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            for (final line in details.primaryLines)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 6),
-                                child: _KeyValueLine(
-                                  label: line.label,
-                                  value: line.value,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: theme.colorScheme.shadow.withValues(
+                        alpha: theme.brightness == Brightness.dark ? 0.35 : 0.12,
+                      ),
+                      blurRadius: 18,
+                      offset: const Offset(0, -8),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
+                  child: ListView(
+                    controller: scrollController,
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    children: [
+                      _Header(
+                        toolName: toolName,
+                        status: status,
+                        summary: summary,
+                      ),
+                      const SizedBox(height: 12),
+                      if (details.primaryLines.isNotEmpty)
+                        _Section(
+                          title: 'Details',
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              for (final line in details.primaryLines)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 6),
+                                  child: _KeyValueLine(
+                                    label: line.label,
+                                    value: line.value,
+                                  ),
                                 ),
-                              ),
-                            if (details.todos != null) ...[
-                              const SizedBox(height: 8),
-                              _TodoList(todos: details.todos!),
+                              if (details.todos != null) ...[
+                                const SizedBox(height: 8),
+                                _TodoList(todos: details.todos!),
+                              ],
                             ],
-                          ],
+                          ),
+                        ),
+                      if (details.primaryLines.isNotEmpty)
+                        const SizedBox(height: 12),
+                      _Section(
+                        title: 'Input',
+                        subtitle: 'Parameters',
+                        trailing: _CopyButton(
+                          label: 'Copy input',
+                          onPressed: () async {
+                            await Clipboard.setData(
+                              ClipboardData(text: prettyJson(content.input)),
+                            );
+                            if (!context.mounted) return;
+                            _toast(context, 'Input copied');
+                          },
+                        ),
+                        child: _CodeBlock(
+                          text: prettyJson(content.input),
+                          terminalStyle: false,
+                          language: 'json',
+                          maxVisibleLines: 14,
                         ),
                       ),
-                    if (details.primaryLines.isNotEmpty) const SizedBox(height: 12),
-                    if (content.output != null &&
-                        content.output!.text.trim().isNotEmpty) ...[
+                      const SizedBox(height: 12),
                       _Section(
                         title: (content.output?.isError == true)
                             ? 'Output (error)'
                             : 'Output',
-                        child: _CodeBlock(
-                          text: content.output!.text,
-                          terminalStyle: true,
-                          language: null,
-                          maxVisibleLines: 20,
-                        ),
+                        subtitle: (status == 'processing')
+                            ? 'Running…'
+                            : 'Result',
+                        trailing: (content.output?.text.trim().isNotEmpty ??
+                                false)
+                            ? _CopyButton(
+                                label: 'Copy output',
+                                onPressed: () async {
+                                  await Clipboard.setData(
+                                    ClipboardData(text: content.output!.text),
+                                  );
+                                  if (!context.mounted) return;
+                                  _toast(context, 'Output copied');
+                                },
+                              )
+                            : null,
+                        child: (content.output != null &&
+                                content.output!.text.trim().isNotEmpty)
+                            ? _CodeBlock(
+                                text: content.output!.text,
+                                terminalStyle: true,
+                                language: null,
+                                maxVisibleLines: 20,
+                              )
+                            : _EmptyOutput(status: status),
                       ),
-                      const SizedBox(height: 12),
                     ],
-                    _Section(
-                      title: 'Input',
-                      child: _CodeBlock(
-                        text: prettyJson(content.input),
-                        terminalStyle: false,
-                        language: 'json',
-                        maxVisibleLines: 14,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             );
@@ -116,6 +170,8 @@ class _Header extends StatelessWidget {
       children: [
         Row(
           children: [
+            _ToolIcon(status: status),
+            const SizedBox(width: 10),
             Expanded(
               child: Text(
                 toolName.isEmpty ? 'Tool' : toolName,
@@ -135,6 +191,49 @@ class _Header extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ToolIcon extends StatelessWidget {
+  final String status;
+
+  const _ToolIcon({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final st = status.toLowerCase();
+
+    final Color accent = switch (st) {
+      'processing' => theme.colorScheme.primary,
+      'error' => theme.colorScheme.error,
+      'warning' => _warningTint(theme),
+      _ => theme.colorScheme.tertiary,
+    };
+
+    final bg = Color.alphaBlend(
+      accent.withValues(alpha: theme.brightness == Brightness.dark ? 0.24 : 0.16),
+      theme.colorScheme.surface,
+    );
+
+    return Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: accent.withValues(
+            alpha: theme.brightness == Brightness.dark ? 0.28 : 0.22,
+          ),
+        ),
+      ),
+      child: Icon(
+        Icons.build_rounded,
+        size: 18,
+        color: accent.withValues(alpha: 0.95),
+      ),
     );
   }
 }
@@ -305,27 +404,64 @@ class _TodoList extends StatelessWidget {
 
 class _Section extends StatelessWidget {
   final String title;
+  final String? subtitle;
   final Widget child;
+  final Widget? trailing;
 
-  const _Section({required this.title, required this.child});
+  const _Section({
+    required this.title,
+    required this.child,
+    this.subtitle,
+    this.trailing,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final border = theme.colorScheme.outlineVariant.withValues(
+      alpha: theme.brightness == Brightness.dark ? 0.55 : 0.65,
+    );
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: theme.brightness == Brightness.dark ? 0.55 : 0.72,
+        ),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: theme.textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                    if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.85,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (trailing != null) trailing!,
+            ],
           ),
           const SizedBox(height: 10),
           child,
@@ -333,6 +469,117 @@ class _Section extends StatelessWidget {
       ),
     );
   }
+}
+
+class _CopyButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onPressed;
+
+  const _CopyButton({required this.label, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.copy_rounded,
+              size: 16,
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyOutput extends StatelessWidget {
+  final String status;
+
+  const _EmptyOutput({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final st = status.toLowerCase();
+    final isRunning = st == 'processing';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withValues(
+          alpha: theme.brightness == Brightness.dark ? 0.55 : 0.8,
+        ),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.7),
+        ),
+      ),
+      child: Row(
+        children: [
+          if (isRunning)
+            SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  theme.colorScheme.primary,
+                ),
+              ),
+            )
+          else
+            Icon(
+              Icons.info_outline,
+              size: 16,
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
+            ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              isRunning ? 'Waiting for output…' : 'No output',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
+                height: 1.2,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+void _toast(BuildContext context, String text) {
+  final theme = Theme.of(context);
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        text,
+        style: TextStyle(color: theme.colorScheme.onInverseSurface),
+      ),
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: theme.colorScheme.inverseSurface,
+      duration: const Duration(seconds: 2),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    ),
+  );
 }
 
 class _CodeBlock extends StatelessWidget {

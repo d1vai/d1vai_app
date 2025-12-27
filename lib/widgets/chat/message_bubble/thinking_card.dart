@@ -15,6 +15,12 @@ class ChatThinkingCard extends StatelessWidget {
     return ChatMessageCard(
       backgroundColor:
           theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+      borderColor: Color.alphaBlend(
+        theme.colorScheme.primary.withValues(
+          alpha: theme.brightness == Brightness.dark ? 0.22 : 0.16,
+        ),
+        theme.colorScheme.outlineVariant.withValues(alpha: 0.7),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -54,4 +60,3 @@ class ChatThinkingCard extends StatelessWidget {
     );
   }
 }
-

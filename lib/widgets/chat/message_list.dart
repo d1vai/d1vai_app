@@ -47,6 +47,9 @@ class _MessageListState extends State<MessageList> {
   bool _isAtBottom = true;
   int _unseenCount = 0;
   bool _loadMoreRequested = false;
+  double? _loadMoreStartMaxScroll;
+  double? _loadMoreStartPixels;
+  int? _loadMoreStartCount;
 
   @override
   void initState() {
@@ -69,6 +72,28 @@ class _MessageListState extends State<MessageList> {
 
     if (oldWidget.isLoadingMore && !widget.isLoadingMore) {
       _loadMoreRequested = false;
+      final controller = widget.scrollController ?? _scrollController;
+      final startMax = _loadMoreStartMaxScroll;
+      final startPixels = _loadMoreStartPixels;
+      final startCount = _loadMoreStartCount;
+      _loadMoreStartMaxScroll = null;
+      _loadMoreStartPixels = null;
+      _loadMoreStartCount = null;
+
+      if (startMax != null &&
+          startPixels != null &&
+          startCount != null &&
+          widget.messages.length > startCount) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          if (!controller.hasClients) return;
+          final newMax = controller.position.maxScrollExtent;
+          final delta = newMax - startMax;
+          if (delta.abs() < 1) return;
+          final target = (startPixels + delta).clamp(0.0, newMax);
+          controller.jumpTo(target);
+        });
+      }
     }
 
     // Update seen messages when new messages arrive
@@ -106,19 +131,19 @@ class _MessageListState extends State<MessageList> {
     if (_loadMoreRequested) return;
     if (widget.messages.isEmpty) return;
     if (!controller.hasClients) return;
-    final maxScroll = controller.position.maxScrollExtent;
-    if (maxScroll <= 0) return;
-    // With reverse list, "near top" means close to maxScrollExtent.
-    if (controller.offset < maxScroll - 80) return;
 
     _loadMoreRequested = true;
+    final maxScroll = controller.position.maxScrollExtent;
+    final pixels = controller.position.pixels.clamp(0.0, maxScroll);
+    _loadMoreStartMaxScroll = maxScroll;
+    _loadMoreStartPixels = pixels;
+    _loadMoreStartCount = widget.messages.length;
     widget.onLoadMore!();
   }
 
   void _onScroll() {
     final controller = widget.scrollController ?? _scrollController;
     if (!controller.hasClients) return;
-    final maxScroll = controller.position.maxScrollExtent;
     final currentScroll = controller.offset;
     // With reverse list, bottom is offset ~= 0.
     final atBottom = currentScroll <= 100;
@@ -133,11 +158,6 @@ class _MessageListState extends State<MessageList> {
         _lastSeenMessageId = widget.messages.last.id;
         _unseenCount = 0;
       }
-    }
-
-    // Load more history when near top
-    if (maxScroll > 0 && currentScroll >= maxScroll - 80) {
-      _maybeRequestLoadMore(controller);
     }
   }
 
@@ -173,8 +193,23 @@ class _MessageListState extends State<MessageList> {
         NotificationListener<ScrollNotification>(
           onNotification: (notification) {
             final controller = widget.scrollController ?? _scrollController;
-            if (notification is OverscrollNotification) {
-              _maybeRequestLoadMore(controller);
+            if (widget.onLoadMore != null &&
+                widget.hasMoreHistory &&
+                !widget.isLoadingMore) {
+              if (notification is OverscrollNotification) {
+                // With `reverse: true`, pulling up at the very top produces
+                // positive overscroll (pixels > maxScrollExtent).
+                if (notification.overscroll > 0) {
+                  _maybeRequestLoadMore(controller);
+                }
+              } else if (notification is ScrollUpdateNotification &&
+                  notification.dragDetails != null) {
+                final maxScroll = notification.metrics.maxScrollExtent;
+                final pixels = notification.metrics.pixels;
+                if (maxScroll > 0 && pixels >= maxScroll - 80) {
+                  _maybeRequestLoadMore(controller);
+                }
+              }
             }
             return false;
           },
@@ -183,8 +218,14 @@ class _MessageListState extends State<MessageList> {
             reverse: true,
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.only(bottom: 16.0),
-            itemCount: widget.messages.length,
+            itemCount: widget.messages.isEmpty ? 0 : (widget.messages.length + 1),
             itemBuilder: (context, index) {
+              if (index == widget.messages.length) {
+                return _HistoryHeader(
+                  hasMore: widget.hasMoreHistory,
+                  loading: widget.isLoadingMore,
+                );
+              }
               final message = widget.messages[widget.messages.length - 1 - index];
               final isUser = message.role == 'user';
               final isNew = !_isNewMessage(message);
@@ -224,7 +265,7 @@ class _MessageListState extends State<MessageList> {
                       ),
                     ),
                     if (widget.showTimestamps) ...[
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 1),
                       Align(
                         alignment: Alignment.centerLeft,
                         child: MessageMetadata(
@@ -234,55 +275,13 @@ class _MessageListState extends State<MessageList> {
                         ),
                       ),
                     ],
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 0),
                   ],
                 ),
               );
             },
           ),
         ),
-
-        // Load more indicator
-        if (widget.isLoadingMore)
-          Positioned(
-            key: const ValueKey('load_more_indicator'),
-            top: 8,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: 12,
-                      height: 12,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          theme.colorScheme.primary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Loading more...',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
 
         // Scroll to bottom button with unseen count
         if (!_isAtBottom && widget.messages.isNotEmpty)
@@ -336,6 +335,104 @@ class _MessageListState extends State<MessageList> {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _HistoryHeader extends StatelessWidget {
+  final bool hasMore;
+  final bool loading;
+
+  const _HistoryHeader({required this.hasMore, required this.loading});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final border = theme.colorScheme.outlineVariant.withValues(
+      alpha: theme.brightness == Brightness.dark ? 0.55 : 0.65,
+    );
+    final bg = theme.colorScheme.surfaceContainerHighest.withValues(
+      alpha: theme.brightness == Brightness.dark ? 0.55 : 0.72,
+    );
+
+    Widget child;
+    if (loading) {
+      child = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 14,
+            height: 14,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                theme.colorScheme.primary,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'Loading older messages…',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      );
+    } else if (hasMore) {
+      child = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.keyboard_arrow_up_rounded,
+            size: 18,
+            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            'Swipe up to load older',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      );
+    } else {
+      child = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.history_toggle_off_rounded,
+            size: 16,
+            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            'Start of conversation',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: border),
+          ),
+          child: child,
+        ),
+      ),
     );
   }
 }

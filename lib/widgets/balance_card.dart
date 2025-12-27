@@ -62,26 +62,17 @@ class _BalanceCardState extends State<BalanceCard>
   Future<void> _handleTopUpSuccess() async {
     setState(() {
       _isProcessingPayment = true;
+      _showSuccessBanner = false;
     });
 
-    // Simulate payment processing and balance update
+    // Payment happens in Stripe; balance updates asynchronously after webhook.
+    // Do a best-effort refresh after a short delay, then stop the local spinner.
     await Future.delayed(const Duration(seconds: 2));
-
-    // Add the top-up amount to balance (simulate)
+    if (!mounted) return;
+    await _loadBalance();
+    if (!mounted) return;
     setState(() {
-      _totalBalance += 50.00; // Simulate adding $50
-      _nonExpiringBalance += 50.00;
       _isProcessingPayment = false;
-      _showSuccessBanner = true;
-    });
-
-    // Auto hide success banner after 4 seconds
-    Future.delayed(const Duration(seconds: 4), () {
-      if (mounted) {
-        setState(() {
-          _showSuccessBanner = false;
-        });
-      }
     });
   }
 
@@ -312,7 +303,7 @@ class _BalanceCardState extends State<BalanceCard>
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Processing payment... updating balance shortly',
+                            'Top-up initiated… balance updates after payment',
                             style: TextStyle(
                               color: Colors.blue.shade700,
                               fontSize: 13,

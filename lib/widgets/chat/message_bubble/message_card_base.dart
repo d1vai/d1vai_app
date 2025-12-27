@@ -3,21 +3,28 @@ import 'package:flutter/material.dart';
 class ChatMessageCard extends StatelessWidget {
   final Widget child;
   final Color backgroundColor;
+  final Color? borderColor;
+  final double borderWidth;
 
   const ChatMessageCard({
     super.key,
     required this.child,
     required this.backgroundColor,
+    this.borderColor,
+    this.borderWidth = 1,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 3.0),
+      margin: const EdgeInsets.symmetric(vertical: 2.0),
       padding: const EdgeInsets.all(8.0),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(10.0),
+        border: borderColor != null
+            ? Border.all(color: borderColor!, width: borderWidth)
+            : null,
       ),
       child: child,
     );
@@ -180,4 +187,3 @@ Color chatWarningTint(ThemeData theme) {
       ? Colors.amber.shade300
       : Colors.amber.shade800;
 }
-

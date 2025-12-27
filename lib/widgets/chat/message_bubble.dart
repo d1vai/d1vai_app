@@ -42,7 +42,7 @@ class MessageBubble extends StatelessWidget {
       onTap: onTap,
       // Long press is available for message actions (copy, etc.)
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 3.0, horizontal: 8.0),
+        margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.start,

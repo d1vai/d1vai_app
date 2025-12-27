@@ -245,8 +245,9 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
       );
 
       final commit = result['commit'];
-      final commitSha =
-          commit is Map<String, dynamic> ? commit['sha']?.toString() : null;
+      final commitSha = commit is Map<String, dynamic>
+          ? commit['sha']?.toString()
+          : null;
       final shortSha = (commitSha != null && commitSha.length >= 7)
           ? commitSha.substring(0, 7)
           : null;
@@ -255,7 +256,9 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
       SnackBarHelper.showSuccess(
         context,
         title: 'Saved',
-        message: shortSha == null ? 'Saved successfully' : 'Saved (commit: $shortSha)',
+        message: shortSha == null
+            ? 'Saved successfully'
+            : 'Saved (commit: $shortSha)',
       );
 
       setState(() {
@@ -342,7 +345,8 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
     final theme = Theme.of(context);
     final mobile = _isMobile(context);
     final q = _searchController.text.trim();
-    final hasSelection = _selectedFilePath != null && _selectedFilePath!.isNotEmpty;
+    final hasSelection =
+        _selectedFilePath != null && _selectedFilePath!.isNotEmpty;
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -395,8 +399,9 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
               const SizedBox(width: 6),
               if (_isEditing) ...[
                 IconButton(
-                  onPressed:
-                      _isSaving || !_hasUnsavedChanges ? null : _saveEdits,
+                  onPressed: _isSaving || !_hasUnsavedChanges
+                      ? null
+                      : _saveEdits,
                   icon: _isSaving
                       ? const SizedBox(
                           width: 18,

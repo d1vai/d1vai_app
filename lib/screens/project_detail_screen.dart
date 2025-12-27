@@ -78,15 +78,31 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
       );
 
       var project = projectProvider.getProjectById(widget.projectId);
-      if (project == null) {
-        final service = D1vaiService();
-        project = await service.getUserProjectById(widget.projectId);
+      final hasBranch =
+          (project?.workspaceCurrentBranch ??
+                  project?.repositoryCurrentBranch ??
+                  '')
+              .trim()
+              .isNotEmpty;
+
+      // Fast-path: show cached list item immediately to avoid blank UI.
+      if (project != null) {
+        setState(() {
+          _project = project;
+          _isLoading = false;
+        });
       }
 
-      setState(() {
-        _project = project;
-        _isLoading = false;
-      });
+      // Always refresh if branch is missing (overview relies on it, matches web).
+      if (project == null || !hasBranch) {
+        final service = D1vaiService();
+        final fresh = await service.getUserProjectById(widget.projectId);
+        if (!mounted) return;
+        setState(() {
+          _project = fresh;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
       final message = humanizeError(e);
       if (isAuthExpiredText(message)) {

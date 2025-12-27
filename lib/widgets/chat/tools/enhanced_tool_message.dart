@@ -18,7 +18,8 @@ class EnhancedToolMessage extends StatelessWidget {
 
     final normalized = name.toLowerCase().trim();
     final title = _toolTitle(normalized, fallback: name);
-    final subtitle = _toolSubtitle(normalized, content.input, summaryFallback: summary);
+    final subtitle =
+        _toolSubtitle(normalized, content.input, summaryFallback: summary);
 
     IconData icon;
     switch (normalized) {
@@ -73,8 +74,15 @@ class EnhancedToolMessage extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
+          color: theme.colorScheme.surfaceContainerHighest.withValues(
+            alpha: theme.brightness == Brightness.dark ? 0.48 : 0.62,
+          ),
           borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: theme.colorScheme.outlineVariant.withValues(
+              alpha: theme.brightness == Brightness.dark ? 0.55 : 0.65,
+            ),
+          ),
         ),
         child: Row(
           children: [
@@ -93,31 +101,40 @@ class EnhancedToolMessage extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.85),
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.2,
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: title,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.2,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
-                      fontWeight: FontWeight.w500,
-                      fontFamily: _subtitleFontFamily(normalized),
+                    TextSpan(
+                      text: '  ·  ',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.75,
+                        ),
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                ],
+                    TextSpan(
+                      text: subtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.95,
+                        ),
+                        fontWeight: FontWeight.w600,
+                        fontFamily: _subtitleFontFamily(normalized),
+                      ),
+                    ),
+                  ],
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             const SizedBox(width: 10),
@@ -141,13 +158,13 @@ class _StatusRight extends StatelessWidget {
 
     Color fg;
     Color bg;
-    String label;
     Widget icon;
+    final bool showLabel;
+    String label = '';
 
     if (st == 'processing') {
       fg = theme.colorScheme.primary;
       bg = theme.colorScheme.primary.withValues(alpha: 0.12);
-      label = 'Running';
       icon = SizedBox(
         width: 14,
         height: 14,
@@ -156,43 +173,54 @@ class _StatusRight extends StatelessWidget {
           valueColor: AlwaysStoppedAnimation<Color>(fg),
         ),
       );
+      showLabel = true;
+      label = 'Running';
     } else if (st == 'error') {
       fg = theme.colorScheme.error;
       bg = theme.colorScheme.error.withValues(alpha: 0.12);
-      label = 'Error';
       icon = Icon(Icons.error_outline, size: 16, color: fg);
+      showLabel = true;
+      label = 'Error';
     } else if (st == 'warning') {
       fg = _warningTint(theme);
-      bg = _warningTint(theme).withValues(alpha: theme.brightness == Brightness.dark ? 0.18 : 0.14);
-      label = 'Warn';
+      bg = _warningTint(theme).withValues(
+        alpha: theme.brightness == Brightness.dark ? 0.18 : 0.14,
+      );
       icon = Icon(Icons.warning_amber_rounded, size: 16, color: fg);
+      showLabel = true;
+      label = 'Warn';
     } else {
       fg = theme.colorScheme.onSurfaceVariant;
       bg = theme.colorScheme.surfaceContainerHighest;
-      label = 'Done';
       icon = Icon(Icons.check_circle_outline, size: 16, color: fg);
+      showLabel = false;
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: EdgeInsets.symmetric(
+        horizontal: showLabel ? 10 : 8,
+        vertical: 6,
+      ),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          icon,
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: fg,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
+      child: showLabel
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                icon,
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: fg,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            )
+          : icon,
     );
   }
 }
