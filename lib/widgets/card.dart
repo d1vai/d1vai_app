@@ -54,24 +54,22 @@ class CustomCard extends StatelessWidget {
     final defaultShadowColor = isDark
         ? Colors.black.withValues(alpha: 0.25)
         : theme.shadowColor.withValues(alpha: 0.08);
-    final defaultShadows =
-        effectiveElevation <= 0
-            ? const <BoxShadow>[]
-            : <BoxShadow>[
-                BoxShadow(
-                  color: defaultShadowColor,
-                  blurRadius: 10 + (effectiveElevation * 6),
-                  offset: Offset(0, 2 + effectiveElevation),
-                ),
-              ];
+    final defaultShadows = effectiveElevation <= 0
+        ? const <BoxShadow>[]
+        : <BoxShadow>[
+            BoxShadow(
+              color: defaultShadowColor,
+              blurRadius: 10 + (effectiveElevation * 6),
+              offset: Offset(0, 2 + effectiveElevation),
+            ),
+          ];
 
     Widget cardContent = Container(
       decoration: BoxDecoration(
         color: effectiveBackgroundColor,
         borderRadius: BorderRadius.circular(effectiveBorderRadius),
         border: Border.all(color: effectiveBorderColor, width: 1.0),
-        boxShadow:
-            shadow ?? (glass ? const <BoxShadow>[] : defaultShadows),
+        boxShadow: shadow ?? (glass ? const <BoxShadow>[] : defaultShadows),
       ),
       child: child != null
           ? Padding(padding: padding ?? EdgeInsets.zero, child: child)
@@ -96,6 +94,11 @@ class CustomCard extends StatelessWidget {
     return Container(
       margin: margin,
       clipBehavior: clipBehavior ?? Clip.none,
+      decoration: (clipBehavior ?? Clip.none) == Clip.none
+          ? null
+          : BoxDecoration(
+              borderRadius: BorderRadius.circular(effectiveBorderRadius),
+            ),
       child: cardContent,
     );
   }

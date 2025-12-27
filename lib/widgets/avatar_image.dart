@@ -8,7 +8,7 @@ import '../services/svg_cache_service.dart';
 
 /// 通用头像显示组件
 /// 自动检测 SVG 和普通图片格式，并支持缓存
-class AvatarImage extends StatelessWidget {
+class AvatarImage extends StatefulWidget {
   final String imageUrl;
   final double size;
   final BorderRadius? borderRadius;
@@ -52,43 +52,68 @@ class AvatarImage extends StatelessWidget {
   }
 
   @override
+  State<AvatarImage> createState() => _AvatarImageState();
+}
+
+class _AvatarImageState extends State<AvatarImage> {
+  Future<String>? _svgFuture;
+  bool _isSvg = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _recomputeSvgState();
+  }
+
+  @override
+  void didUpdateWidget(covariant AvatarImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.imageUrl != widget.imageUrl) {
+      _recomputeSvgState();
+    }
+  }
+
+  void _recomputeSvgState() {
+    final isValidHttpUrl = _isValidHttpUrl(widget.imageUrl);
+    _isSvg = isValidHttpUrl &&
+        (widget.imageUrl.contains('.svg') || widget.imageUrl.contains('/svg'));
+    _svgFuture = _isSvg ? _loadAndCleanSvg(widget.imageUrl) : null;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final effectiveBorderRadius =
-        borderRadius ?? BorderRadius.circular(size / 2);
+        widget.borderRadius ?? BorderRadius.circular(widget.size / 2);
 
-    final isValidHttpUrl = _isValidHttpUrl(imageUrl);
+    final isValidHttpUrl = _isValidHttpUrl(widget.imageUrl);
 
-    // 检查是否为 SVG URL
-    final isSvg = isValidHttpUrl &&
-        (imageUrl.contains('.svg') || imageUrl.contains('/svg'));
-
-    final border = showBorder
+    final border = widget.showBorder
         ? Border.all(
-            color: borderColor ??
+            color: widget.borderColor ??
                 colorScheme.outlineVariant.withValues(alpha: 0.55),
-            width: borderWidth,
+            width: widget.borderWidth,
           )
         : null;
 
     return Container(
-      width: size,
-      height: size,
+      width: widget.size,
+      height: widget.size,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest,
         borderRadius: effectiveBorderRadius,
         border: border,
       ),
-      child: isSvg
+      child: _isSvg
           ? FutureBuilder<String>(
-              future: _loadAndCleanSvg(imageUrl),
+              future: _svgFuture,
               builder: (context, snapshot) {
                 if (snapshot.hasData && snapshot.data!.trim().isNotEmpty) {
                   return SvgPicture.string(
                     snapshot.data!,
-                    fit: fit,
+                    fit: widget.fit,
                     excludeFromSemantics: true,
                     placeholderBuilder: (context) => _buildPlaceholder(context),
                   );
@@ -98,15 +123,13 @@ class AvatarImage extends StatelessWidget {
             )
           : (isValidHttpUrl
               ? CachedNetworkImage(
-                  imageUrl: imageUrl,
-                  width: size,
-                  height: size,
-                  fit: fit,
+                  imageUrl: widget.imageUrl,
+                  width: widget.size,
+                  height: widget.size,
+                  fit: widget.fit,
                   placeholder: (context, url) => _buildPlaceholder(context),
                   errorWidget: (context, url, error) =>
                       _buildPlaceholder(context),
-                  maxWidthDiskCache: (size * 3).toInt(),
-                  maxHeightDiskCache: (size * 3).toInt(),
                 )
               : _buildPlaceholder(context)),
     );
@@ -115,7 +138,7 @@ class AvatarImage extends StatelessWidget {
   /// 加载并清理 SVG 数据，带磁盘缓存支持
   Future<String> _loadAndCleanSvg(String url) async {
     // 1. 先检查磁盘缓存
-    final cachedContent = await _svgCache.get(url);
+    final cachedContent = await AvatarImage._svgCache.get(url);
     if (cachedContent != null) {
       return cachedContent;
     }
@@ -133,7 +156,7 @@ class AvatarImage extends StatelessWidget {
         svgContent = _cleanSvg(svgContent);
 
         // 3. 存入磁盘缓存
-        await _svgCache.put(url, svgContent);
+        await AvatarImage._svgCache.put(url, svgContent);
 
         return svgContent;
       }
@@ -145,7 +168,7 @@ class AvatarImage extends StatelessWidget {
     }
 
     // 返回简单的空 SVG
-    return '<svg xmlns="http://www.w3.org/2000/svg" width="$size" height="$size"></svg>';
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="${widget.size}" height="${widget.size}"></svg>';
   }
 
   /// 清理 SVG 内容，移除可能导致警告的标签
@@ -172,12 +195,12 @@ class AvatarImage extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final effectiveBorderRadius =
-        borderRadius ?? BorderRadius.circular(size / 2);
-    if (placeholderText != null && placeholderText!.isNotEmpty) {
-      final initial = placeholderText![0].toUpperCase();
+        widget.borderRadius ?? BorderRadius.circular(widget.size / 2);
+    if (widget.placeholderText != null && widget.placeholderText!.isNotEmpty) {
+      final initial = widget.placeholderText![0].toUpperCase();
       return Container(
-        width: size,
-        height: size,
+        width: widget.size,
+        height: widget.size,
         decoration: BoxDecoration(
           color: Color.alphaBlend(
             colorScheme.primary.withValues(alpha: 0.12),
@@ -189,7 +212,7 @@ class AvatarImage extends StatelessWidget {
           child: Text(
             initial,
             style: TextStyle(
-              fontSize: size * 0.4,
+              fontSize: widget.size * 0.4,
               fontWeight: FontWeight.w800,
               color: colorScheme.primary,
             ),
@@ -199,15 +222,15 @@ class AvatarImage extends StatelessWidget {
     }
 
     return Container(
-      width: size,
-      height: size,
+      width: widget.size,
+      height: widget.size,
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest,
         borderRadius: effectiveBorderRadius,
       ),
       child: Icon(
         Icons.person,
-        size: size * 0.5,
+        size: widget.size * 0.5,
         color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
       ),
     );

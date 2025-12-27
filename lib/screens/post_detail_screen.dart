@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:ui' as ui;
 import '../models/community_post.dart';
 import '../services/d1vai_service.dart';
 import '../widgets/avatar_image.dart';
-import '../widgets/card.dart';
 import '../widgets/chat/markdown_text.dart';
 import '../widgets/phone_frame_web_preview.dart';
 import '../utils/community_post_display.dart';
@@ -20,14 +22,72 @@ class PostDetailScreen extends StatefulWidget {
 
 class _PostDetailScreenState extends State<PostDetailScreen> {
   final _d1vaiService = D1vaiService();
+  final ScrollController _scrollController = ScrollController();
 
   late CommunityPost _post;
+  bool _showFrost = false;
+  bool _isSnapping = false;
+  ScrollDirection _lastUserScrollDirection = ScrollDirection.idle;
+
+  static const double _tagStripHeight = 40.0;
+  static const double _tagStripGap = 10.0;
+  static const double _cardInnerPadding = 14.0;
+
+  double _collapsedHeight = 140.0;
+  double _expandedHeight = 200.0;
 
   @override
   void initState() {
     super.initState();
     _post = widget.post;
     _refreshPostDetails();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() {
+        _showFrost = true;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _maybeSnapAppBar() async {
+    if (_isSnapping) return;
+    if (!_scrollController.hasClients) return;
+
+    final collapseRange = (_expandedHeight - _collapsedHeight).clamp(
+      0.0,
+      double.infinity,
+    );
+
+    if (collapseRange <= 0) return;
+
+    final offset = _scrollController.offset;
+    if (offset <= 0 || offset >= collapseRange) return;
+
+    final target =
+        switch (_lastUserScrollDirection) {
+          ScrollDirection.forward => 0.0,
+          ScrollDirection.reverse => collapseRange,
+          _ => offset < (collapseRange * 0.5) ? 0.0 : collapseRange,
+        };
+
+    if ((offset - target).abs() < 1.0) return;
+
+    _isSnapping = true;
+    try {
+      await _scrollController.animateTo(
+        target,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+      );
+    } finally {
+      _isSnapping = false;
+    }
   }
 
   Future<void> _refreshPostDetails() async {
@@ -85,230 +145,577 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     return 'Anonymous';
   }
 
+  double _measureTextHeight({
+    required String text,
+    required TextStyle style,
+    required double maxWidth,
+    required int maxLines,
+  }) {
+    if (text.trim().isEmpty) return 0;
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: Directionality.of(context),
+      maxLines: maxLines,
+      ellipsis: '…',
+    )..layout(maxWidth: maxWidth);
+    return painter.height;
+  }
+
+  double _estimateCardHeight(
+    ThemeData theme, {
+    required String titleText,
+    required String summaryText,
+    required String contentText,
+    required bool expanded,
+  }) {
+    final safeTitle = titleText.isEmpty ? 'Post' : titleText;
+    final previewText = (contentText.isNotEmpty ? contentText : summaryText);
+    final titleStyle =
+        theme.textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.w900,
+          color: Colors.white,
+          fontSize: expanded ? 20 : 16,
+          height: 1.05,
+        ) ??
+        TextStyle(
+          fontWeight: FontWeight.w900,
+          color: Colors.white,
+          fontSize: expanded ? 20 : 16,
+          height: 1.05,
+        );
+    final summaryStyle =
+        theme.textTheme.bodyMedium?.copyWith(
+          color: Colors.white.withValues(alpha: 0.90),
+          fontSize: 13,
+          height: 1.25,
+        ) ??
+        TextStyle(
+          color: Colors.white.withValues(alpha: 0.90),
+          fontSize: 13,
+          height: 1.25,
+        );
+
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final cardHorizontal = 16.0;
+    final outerWidth = (screenWidth - (cardHorizontal * 2)).clamp(
+      240.0,
+      double.infinity,
+    );
+    final innerWidth = (outerWidth - (_cardInnerPadding * 2)).clamp(
+      200.0,
+      double.infinity,
+    );
+    final titleMaxWidth = (innerWidth - 96.0).clamp(160.0, double.infinity);
+
+    final titleHeight = _measureTextHeight(
+      text: safeTitle,
+      style: titleStyle,
+      maxWidth: titleMaxWidth,
+      maxLines: expanded ? 2 : 1,
+    );
+    final authorRowHeight = expanded ? 34.0 : 28.0;
+    final summaryHeight =
+        previewText.trim().isEmpty
+            ? 0.0
+            : _measureTextHeight(
+              text: previewText,
+              style: summaryStyle,
+              maxWidth: innerWidth,
+              maxLines: expanded ? 6 : 2,
+            );
+
+    return (_cardInnerPadding +
+            titleHeight +
+            10 +
+            authorRowHeight +
+            (summaryHeight > 0 ? (10 + summaryHeight) : 0) +
+            _cardInnerPadding +
+            8)
+        .toDouble();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final titleText = displayCommunityPostTitle(_post.title);
+    final summaryText =
+        (_post.summary ?? _post.content ?? '')
+            .replaceAll(RegExp(r'\s+'), ' ')
+            .trim();
+    final contentText = (_post.content ?? _post.summary ?? '').trim();
+    final topPadding = MediaQuery.paddingOf(context).top;
+    final hasTags = _post.tags.isNotEmpty;
+
+    final collapsedCardHeight = _estimateCardHeight(
+      theme,
+      titleText: titleText,
+      summaryText: summaryText,
+      contentText: contentText,
+      expanded: false,
+    );
+    final expandedCardHeight = _estimateCardHeight(
+      theme,
+      titleText: titleText,
+      summaryText: summaryText,
+      contentText: contentText,
+      expanded: true,
+    );
+
+    final cardTopCollapsed = topPadding + 2;
+    final cardTopExpanded = topPadding + 10;
+    final collapsedHeight = (cardTopCollapsed + collapsedCardHeight + 10)
+        .toDouble();
+    final expandedHeight =
+        (cardTopExpanded +
+                expandedCardHeight +
+                (hasTags ? (_tagStripGap + _tagStripHeight + 8) : 0) +
+                12)
+            .toDouble();
+
+    _collapsedHeight = collapsedHeight;
+    _expandedHeight = expandedHeight;
+
+    final previewTotalHeightRaw =
+        MediaQuery.sizeOf(context).height - collapsedHeight;
+    final previewTotalHeight =
+        (previewTotalHeightRaw < 280.0 ? 280.0 : previewTotalHeightRaw)
+            .toDouble();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Post')),
       body: RefreshIndicator(
         onRefresh: _refreshPostDetails,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-          children: [
-            _buildPostHeader(theme, titleText),
-            const SizedBox(height: 14),
-            PhoneFrameWebPreview(
-              url: _post.embedUrl,
-              webViewHeight: 520,
-            ),
-            const SizedBox(height: 14),
-            _buildPostContent(theme),
-          ],
+        child: NotificationListener<ScrollNotification>(
+          onNotification: (n) {
+            if (n is UserScrollNotification) {
+              _lastUserScrollDirection = n.direction;
+            } else if (n is ScrollEndNotification) {
+              _maybeSnapAppBar();
+            }
+            return false;
+          },
+          child: CustomScrollView(
+            controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              _buildFrostedAppBar(
+                theme,
+                titleText: titleText,
+                summaryText: summaryText,
+                contentText: contentText,
+                collapsedHeight: collapsedHeight,
+                expandedHeight: expandedHeight,
+                collapsedCardHeight: collapsedCardHeight,
+                expandedCardHeight: expandedCardHeight,
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                  child: PhoneFrameWebPreview(
+                    url: _post.embedUrl,
+                    height: previewTotalHeight,
+                    padding: const EdgeInsets.all(14),
+                    allowParentVerticalScroll: true,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildPostHeader(ThemeData theme, String titleText) {
-    final colorScheme = theme.colorScheme;
+  Widget _buildTagsStrip(ThemeData theme) {
     final isDark = theme.brightness == Brightness.dark;
+    final tags = _post.tags.take(12).toList(growable: false);
 
-    return CustomCard(
-      glass: true,
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (titleText.isNotEmpty)
-            Text(
-              titleText,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    height: 1.05,
-                  ) ??
-                  const TextStyle(fontWeight: FontWeight.w900),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(
+          sigmaX: _showFrost ? 14 : 0,
+          sigmaY: _showFrost ? 14 : 0,
+        ),
+        child: Container(
+          height: _tagStripHeight,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.12)
+                : Colors.white.withValues(alpha: 0.10),
+            border: Border.all(
+              color:
+                  isDark
+                      ? Colors.white.withValues(alpha: 0.14)
+                      : Colors.white.withValues(alpha: 0.20),
             ),
-          if (titleText.isNotEmpty) const SizedBox(height: 12),
-          Row(
-            children: [
-              Hero(
-                tag: communityPostAuthorHeroTag(_post),
-                child: AvatarImage(
-                  imageUrl: _post.author?.picture?.isNotEmpty == true
-                      ? _post.author!.picture!
-                      : 'placeholder',
-                  size: 40,
-                  borderRadius: BorderRadius.circular(20),
-                  fit: BoxFit.cover,
-                  placeholderText: _post.author?.picture?.isNotEmpty != true
-                      ? _getAuthorDisplayName(_post.author)
-                      : null,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _getAuthorDisplayName(_post.author),
-                      style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ) ??
-                          const TextStyle(fontWeight: FontWeight.w800),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (_post.author?.email != null &&
-                        _post.author!.email!.isNotEmpty)
-                      Text(
-                        '@${_getEmailPrefix(_post.author!.email)}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ) ??
-                            TextStyle(color: colorScheme.onSurfaceVariant),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            itemCount: tags.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final tag = tags[index];
+              return Container(
+                height: 28,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: Color.alphaBlend(
-                    colorScheme.primary.withValues(alpha: isDark ? 0.18 : 0.10),
-                    colorScheme.surfaceContainerHighest,
-                  ),
+                  color: Colors.white.withValues(alpha: isDark ? 0.10 : 0.14),
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(
-                    color: colorScheme.outlineVariant.withValues(alpha: 0.55),
+                    color: Colors.white.withValues(
+                      alpha: isDark ? 0.10 : 0.16,
+                    ),
                   ),
                 ),
                 child: Text(
-                  _formatTime(_post.createdAt),
-                  style: theme.textTheme.labelSmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w700,
+                  tag,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        height: 1.0,
+                        fontSize: 12,
                       ) ??
-                      TextStyle(
-                        color: colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w700,
+                      const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        height: 1.0,
+                        fontSize: 12,
                       ),
                 ),
-              ),
-            ],
+              );
+            },
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildPostContent(ThemeData theme) {
-    final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
+  SliverAppBar _buildFrostedAppBar(
+    ThemeData theme, {
+    required String titleText,
+    required String summaryText,
+    required String contentText,
+    required double collapsedHeight,
+    required double expandedHeight,
+    required double collapsedCardHeight,
+    required double expandedCardHeight,
+  }) {
+    final coverUrl = _post.coverUrl?.trim() ?? '';
+    final hasCover = coverUrl.isNotEmpty;
+    final topPadding = MediaQuery.paddingOf(context).top;
 
-    final raw = (_post.content ?? _post.summary ?? '').trim();
-    final content = raw.isEmpty ? '' : raw;
+    return SliverAppBar(
+      pinned: true,
+      floating: false,
+      snap: false,
+      stretch: true,
+      elevation: 0,
+      automaticallyImplyLeading: false,
+      backgroundColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      collapsedHeight: collapsedHeight,
+      expandedHeight: expandedHeight,
+      flexibleSpace: LayoutBuilder(
+        builder: (context, constraints) {
+          final settings =
+              context.dependOnInheritedWidgetOfExactType<
+                FlexibleSpaceBarSettings
+              >();
+          final currentExtent = settings?.currentExtent ?? constraints.maxHeight;
+          final minExtent = settings?.minExtent ?? collapsedHeight;
+          final maxExtent = settings?.maxExtent ?? expandedHeight;
+          final t =
+              ((currentExtent - minExtent) / (maxExtent - minExtent)).clamp(
+                0.0,
+                1.0,
+              );
+
+          final cardTop = ui.lerpDouble(topPadding + 2, topPadding + 10, t)!;
+          final cardHeight =
+              ui.lerpDouble(collapsedCardHeight, expandedCardHeight, t)!;
+          final cardHorizontal = ui.lerpDouble(12, 16, t)!;
+          final titleFont = ui.lerpDouble(16, 20, t)!;
+          final titleLines = t < 0.35 ? 1 : 2;
+          final avatarSize = ui.lerpDouble(28, 34, t)!;
+          final overlayOpacity = ui.lerpDouble(0.18, 0.34, t)!;
+          final isDark = theme.brightness == Brightness.dark;
+          final glassBg =
+              isDark
+                  ? Colors.black.withValues(alpha: ui.lerpDouble(0.12, 0.18, t)!)
+                  : Colors.white.withValues(
+                    alpha: ui.lerpDouble(0.08, 0.12, t)!,
+                  );
+          final glassBorder =
+              isDark
+                  ? Colors.white.withValues(alpha: 0.14)
+                  : Colors.white.withValues(alpha: 0.20);
+
+          Widget background = DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  theme.colorScheme.primary.withValues(alpha: 0.24),
+                  theme.colorScheme.surfaceContainerHighest,
+                ],
+              ),
+            ),
+          );
+
+          if (hasCover) {
+            background = Hero(
+              tag: communityPostCoverHeroTag(_post),
+              child: CachedNetworkImage(
+                imageUrl: coverUrl,
+                fit: BoxFit.cover,
+                alignment: Alignment(0, ui.lerpDouble(-0.10, 0.15, t)!),
+                fadeInDuration: const Duration(milliseconds: 120),
+                fadeOutDuration: const Duration(milliseconds: 120),
+              ),
+            );
+          }
+
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              Positioned.fill(child: background),
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: overlayOpacity),
+                        Colors.black.withValues(alpha: overlayOpacity + 0.10),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: cardHorizontal,
+                right: cardHorizontal,
+                top: cardTop,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(18),
+                  child: BackdropFilter(
+                    filter: ui.ImageFilter.blur(
+                      sigmaX: _showFrost ? 16 : 0,
+                      sigmaY: _showFrost ? 16 : 0,
+                    ),
+                    child: Container(
+                      height: cardHeight,
+                      padding: const EdgeInsets.all(_cardInnerPadding),
+                      decoration: BoxDecoration(
+                        color: glassBg,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: glassBorder),
+                      ),
+                      child: SingleChildScrollView(
+                        physics: const NeverScrollableScrollPhysics(),
+                        child: _buildAppBarCardContent(
+                          theme,
+                          t: t,
+                          titleText: titleText,
+                          titleFontSize: titleFont,
+                          titleMaxLines: titleLines,
+                          summaryText: summaryText,
+                          contentText: contentText,
+                          avatarSize: avatarSize,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              if (_post.tags.isNotEmpty)
+                Positioned(
+                  left: cardHorizontal,
+                  right: cardHorizontal,
+                  top: cardTop + cardHeight + (_tagStripGap * t),
+                  child: IgnorePointer(
+                    ignoring: t < 0.35,
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      heightFactor: t,
+                      child: Opacity(
+                        opacity: Curves.easeOutCubic.transform(
+                          ((t - 0.25) / 0.75).clamp(0.0, 1.0),
+                        ),
+                        child: _buildTagsStrip(theme),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildAppBarCardContent(
+    ThemeData theme, {
+    required double t,
+    required String titleText,
+    required double titleFontSize,
+    required int titleMaxLines,
+    required String summaryText,
+    required String contentText,
+    required double avatarSize,
+  }) {
+    final isDark = theme.brightness == Brightness.dark;
+    final authorPrefix = _getEmailPrefix(_post.author?.email ?? '');
+
+    final showCta = (_post.embedUrl ?? '').trim().isNotEmpty;
+
+    final previewText = contentText.isNotEmpty ? contentText : summaryText;
+    final summaryLines = t < 0.25 ? 2 : (t < 0.60 ? 3 : 6);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CustomCard(
-          glass: true,
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (content.isNotEmpty)
-                MarkdownText(
-                  text: content,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurface,
-                        fontSize: 14,
-                        height: 1.35,
-                      ) ??
-                      TextStyle(
-                        color: colorScheme.onSurface,
-                        fontSize: 14,
-                        height: 1.35,
-                      ),
-                )
-              else
-                Text(
-                  'No description yet.',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ) ??
-                      TextStyle(color: colorScheme.onSurfaceVariant),
-                ),
-              if (_post.tags.isNotEmpty) ...[
-                const SizedBox(height: 14),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _post.tags.map((tag) {
-                    final bg = Color.alphaBlend(
-                      colorScheme.primary.withValues(
-                        alpha: isDark ? 0.18 : 0.10,
-                      ),
-                      colorScheme.surface,
-                    );
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: bg,
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(
-                          color: colorScheme.outlineVariant.withValues(
-                            alpha: 0.55,
-                          ),
-                        ),
-                      ),
-                      child: Text(
-                        tag,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: colorScheme.onSurface,
-                            ) ??
-                            TextStyle(
-                              fontWeight: FontWeight.w800,
-                              color: colorScheme.onSurface,
-                            ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ],
-              if ((_post.embedUrl ?? '').trim().isNotEmpty) ...[
-                const SizedBox(height: 14),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () => _openProjectDemo(context),
-                    icon: const Icon(Icons.open_in_new),
-                    label: const Text('View Project'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      backgroundColor: colorScheme.primary,
-                      foregroundColor: colorScheme.onPrimary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
+        Row(
+          children: [
+            _GlassIconButton(
+              icon: Icons.arrow_back,
+              onPressed: () => Navigator.maybePop(context),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                titleText.isEmpty ? 'Post' : titleText,
+                maxLines: titleMaxLines,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      fontSize: titleFontSize,
+                      height: 1.05,
+                    ) ??
+                    TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      fontSize: titleFontSize,
+                      height: 1.05,
                     ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            if (showCta)
+              _GlassIconButton(
+                icon: Icons.open_in_new,
+                onPressed: () => _openProjectDemo(context),
+              ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Hero(
+              tag: communityPostAuthorHeroTag(_post),
+              child: RepaintBoundary(
+                child: AvatarImage(
+                  imageUrl:
+                      _post.author?.picture?.isNotEmpty == true
+                          ? _post.author!.picture!
+                          : 'placeholder',
+                  size: avatarSize,
+                  borderRadius: BorderRadius.circular(avatarSize / 2),
+                  fit: BoxFit.cover,
+                  showBorder: false,
+                  placeholderText:
+                      _post.author?.picture?.isNotEmpty != true
+                          ? _getAuthorDisplayName(_post.author)
+                          : null,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _getAuthorDisplayName(_post.author),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          height: 1.0,
+                        ) ??
+                        const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          height: 1.0,
+                        ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _formatTime(_post.createdAt),
+                    style: theme.textTheme.labelSmall?.copyWith(
+                          color: Colors.white.withValues(alpha: 0.78),
+                          fontWeight: FontWeight.w700,
+                        ) ??
+                        TextStyle(
+                          color: Colors.white.withValues(alpha: 0.78),
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+            if (authorPrefix.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: isDark ? 0.10 : 0.14),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: isDark ? 0.10 : 0.16),
                   ),
                 ),
-              ],
-            ],
-          ),
+                child: Text(
+                  '@$authorPrefix',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.86),
+                        fontWeight: FontWeight.w800,
+                      ) ??
+                      TextStyle(
+                        color: Colors.white.withValues(alpha: 0.86),
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+              ),
+          ],
         ),
+        if (previewText.trim().isNotEmpty) ...[
+          const SizedBox(height: 10),
+          MarkdownText(
+            text: previewText,
+            maxLines: summaryLines,
+            style: theme.textTheme.bodyMedium?.copyWith(
+                  color: Colors.white.withValues(alpha: 0.90),
+                  fontSize: 13,
+                  height: 1.25,
+                ) ??
+                TextStyle(
+                  color: Colors.white.withValues(alpha: 0.90),
+                  fontSize: 13,
+                  height: 1.25,
+                ),
+          ),
+        ],
       ],
     );
   }
@@ -340,5 +747,41 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         }
       }
     }
+  }
+}
+
+class _GlassIconButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  const _GlassIconButton({required this.icon, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final bg = isDark
+        ? Colors.white.withValues(alpha: 0.10)
+        : Colors.white.withValues(alpha: 0.16);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: isDark ? 0.10 : 0.18),
+            ),
+          ),
+          child: Icon(icon, color: Colors.white, size: 20),
+        ),
+      ),
+    );
   }
 }

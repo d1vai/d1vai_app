@@ -99,30 +99,32 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
                 children: [
                   Positioned.fill(
                     child: hasCover
-                        ? CachedNetworkImage(
-                            imageUrl: coverUrl,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
-                              color: colorScheme.surfaceContainerHighest,
-                              child: Center(
-                                child: SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      colorScheme.primary,
+                        ? Hero(
+                            tag: communityPostCoverHeroTag(post),
+                            child: CachedNetworkImage(
+                              imageUrl: coverUrl,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Container(
+                                color: colorScheme.surfaceContainerHighest,
+                                child: Center(
+                                  child: SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        colorScheme.primary,
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                            errorWidget: (context, url, error) => Container(
-                              color: colorScheme.surfaceContainerHighest,
-                              child: Icon(
-                                Icons.broken_image_outlined,
-                                color: colorScheme.onSurfaceVariant.withValues(
-                                  alpha: 0.8,
+                              errorWidget: (context, url, error) => Container(
+                                color: colorScheme.surfaceContainerHighest,
+                                child: Icon(
+                                  Icons.broken_image_outlined,
+                                  color: colorScheme.onSurfaceVariant
+                                      .withValues(alpha: 0.8),
                                 ),
                               ),
                             ),
@@ -266,6 +268,7 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
                                               10,
                                             ),
                                             fit: BoxFit.cover,
+                                            showBorder: false,
                                           ),
                                         ),
                                         const SizedBox(width: 6),

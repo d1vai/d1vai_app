@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 class PhoneFrameWebPreview extends StatefulWidget {
   final String? url;
+  final double? height;
   final double webViewHeight;
   final EdgeInsetsGeometry padding;
   final EdgeInsetsGeometry margin;
+  final bool showStatusBar;
+  final double statusBarHeight;
+  final double frameBorderRadius;
+  final double screenBorderRadius;
+  final double pageScale;
+  final bool allowParentVerticalScroll;
 
   final ValueChanged<bool>? onLoadingChanged;
   final ValueChanged<double>? onProgressChanged;
@@ -14,9 +23,16 @@ class PhoneFrameWebPreview extends StatefulWidget {
   const PhoneFrameWebPreview({
     super.key,
     required this.url,
+    this.height,
     this.webViewHeight = 400,
     this.padding = const EdgeInsets.all(16),
     this.margin = EdgeInsets.zero,
+    this.showStatusBar = true,
+    this.statusBarHeight = 28,
+    this.frameBorderRadius = 24,
+    this.screenBorderRadius = 12,
+    this.pageScale = 1.0,
+    this.allowParentVerticalScroll = false,
     this.onLoadingChanged,
     this.onProgressChanged,
     this.onErrorChanged,
@@ -114,6 +130,7 @@ class PhoneFrameWebPreviewState extends State<PhoneFrameWebPreview>
     if (!mounted) return;
     _setLoading(false);
     _setProgress(1);
+    _applyPageScale();
   }
 
   void _onProgressChanged(InAppWebViewController controller, int progress) {
@@ -121,18 +138,62 @@ class PhoneFrameWebPreviewState extends State<PhoneFrameWebPreview>
     _setProgress((progress / 100).clamp(0.0, 1.0));
   }
 
+  Future<void> _applyPageScale() async {
+    final controller = _controller;
+    if (controller == null) return;
+    final scale = widget.pageScale;
+    if (scale == 1.0) return;
+    final clamped = scale.clamp(0.5, 2.0);
+    try {
+      await controller.evaluateJavascript(
+        source:
+            "try{document.documentElement.style.zoom='${clamped.toStringAsFixed(2)}';"
+            "document.body.style.zoom='${clamped.toStringAsFixed(2)}';}catch(e){}",
+      );
+    } catch (_) {
+      // ignore
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
+    final frameRadius = widget.frameBorderRadius;
+    final screenRadius = widget.screenBorderRadius;
+    final hasStatusBar = widget.showStatusBar;
+
+    final available =
+        widget.height != null
+            ? (widget.height! - widget.padding.vertical)
+            : null;
+    final effectiveWebViewHeight =
+        available != null
+            ? (available - (hasStatusBar ? widget.statusBarHeight : 0))
+                .clamp(160.0, 99999.0)
+            : widget.webViewHeight;
+
+    final gestureRecognizers =
+        widget.allowParentVerticalScroll
+            ? <Factory<OneSequenceGestureRecognizer>>{
+              Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
+              Factory<LongPressGestureRecognizer>(
+                () => LongPressGestureRecognizer(),
+              ),
+              Factory<HorizontalDragGestureRecognizer>(
+                () => HorizontalDragGestureRecognizer(),
+              ),
+              Factory<ScaleGestureRecognizer>(() => ScaleGestureRecognizer()),
+            }
+            : null;
 
     return Container(
       margin: widget.margin,
       padding: widget.padding,
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF09090B) : const Color(0xFF0B1020),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(frameRadius),
         border: Border.all(
           color: Color.alphaBlend(
             colorScheme.primary.withValues(alpha: isDark ? 0.18 : 0.14),
@@ -148,7 +209,7 @@ class PhoneFrameWebPreviewState extends State<PhoneFrameWebPreview>
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(frameRadius),
         child: Stack(
           children: [
             if (_isLoading && _hasUrl)
@@ -181,56 +242,57 @@ class PhoneFrameWebPreviewState extends State<PhoneFrameWebPreview>
             Column(
               children: [
                 // Phone Status Bar
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 6,
-                    horizontal: 12,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '9:41',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.92),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.2,
-                        ),
-                      ),
-                      Row(
+                if (hasStatusBar)
+                  SizedBox(
+                    height: widget.statusBarHeight,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Icon(
-                            Icons.signal_cellular_4_bar,
-                            color: Colors.white.withValues(alpha: 0.92),
-                            size: 14,
+                          Text(
+                            '9:41',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.92),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.2,
+                            ),
                           ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.wifi,
-                            color: Colors.white.withValues(alpha: 0.92),
-                            size: 14,
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.battery_full,
-                            color: Colors.white.withValues(alpha: 0.92),
-                            size: 14,
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.signal_cellular_4_bar,
+                                color: Colors.white.withValues(alpha: 0.92),
+                                size: 14,
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                Icons.wifi,
+                                color: Colors.white.withValues(alpha: 0.92),
+                                size: 14,
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                Icons.battery_full,
+                                color: Colors.white.withValues(alpha: 0.92),
+                                size: 14,
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
 
                 // WebView Container
                 Stack(
                   children: [
                     Container(
-                      height: widget.webViewHeight,
+                      height: effectiveWebViewHeight,
                       decoration: BoxDecoration(
                         color: colorScheme.surface,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(screenRadius),
                       ),
                       child: _hasUrl
                           ? (_hasError
@@ -239,18 +301,19 @@ class PhoneFrameWebPreviewState extends State<PhoneFrameWebPreview>
                                   duration: const Duration(milliseconds: 220),
                                   switchInCurve: Curves.easeOutCubic,
                                   switchOutCurve: Curves.easeIn,
-                                  child: InAppWebView(
-                                    key: ValueKey(widget.url),
-                                    contextMenu: ContextMenu(),
-                                    initialUrlRequest: URLRequest(
-                                      url: WebUri(widget.url!.trim()),
-                                    ),
-                                    onWebViewCreated: _onWebViewCreated,
-                                    onLoadStart: _onLoadStart,
-                                    onLoadStop: _onLoadStop,
-                                    onProgressChanged: _onProgressChanged,
-                                  ),
-                                ))
+                                        child: InAppWebView(
+                                          key: ValueKey(widget.url),
+                                          contextMenu: ContextMenu(),
+                                          initialUrlRequest: URLRequest(
+                                            url: WebUri(widget.url!.trim()),
+                                          ),
+                                          gestureRecognizers: gestureRecognizers,
+                                          onWebViewCreated: _onWebViewCreated,
+                                          onLoadStart: _onLoadStart,
+                                          onLoadStop: _onLoadStop,
+                                          onProgressChanged: _onProgressChanged,
+                                        ),
+                                      ))
                           : _buildNoPreviewState(context),
                     ),
                     if (_hasUrl)
