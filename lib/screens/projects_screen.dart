@@ -9,6 +9,7 @@ import '../models/project.dart';
 import '../widgets/create_project_dialog.dart';
 import '../widgets/snackbar_helper.dart';
 import '../utils/error_utils.dart';
+import 'projects/widgets/project_card_tile.dart';
 
 class ProjectsScreen extends StatefulWidget {
   const ProjectsScreen({super.key});
@@ -384,166 +385,10 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
 
   /// 构建项目卡片
   Widget _buildProjectCard(UserProject project, BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: () => context.push('/projects/${project.id}'),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  // 项目图标
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      project.emoji ?? '🚀',
-                      style: const TextStyle(fontSize: 24),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-
-                  // 项目信息
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          project.projectName,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          project.projectDescription,
-                          style: TextStyle(
-                            color: theme.colorScheme.onSurfaceVariant,
-                            fontSize: 14,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // 状态指示器
-                  _buildStatusIndicator(project.status),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-
-              // 标签
-              if (project.tags.isNotEmpty)
-                Wrap(
-                  spacing: 8,
-                  children: project.tags.take(3).map((tag) {
-                    return Chip(
-                      label: Text(tag, style: const TextStyle(fontSize: 12)),
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      visualDensity: VisualDensity.compact,
-                    );
-                  }).toList(),
-                ),
-
-              const SizedBox(height: 12),
-
-              // 底部信息
-              Row(
-                children: [
-                  Icon(
-                    Icons.schedule,
-                    size: 16,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    _formatTimeAgo(project.updatedAt),
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      fontSize: 12,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  if (project.latestPreviewUrl != null) ...[
-                    Icon(
-                      Icons.visibility,
-                      size: 16,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Preview available',
-                      style: TextStyle(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// 构建状态指示器
-  Widget _buildStatusIndicator(String status) {
-    Color color;
-    String label;
-    final theme = Theme.of(context);
-
-    switch (status) {
-      case 'active':
-        color = theme.colorScheme.primary;
-        label = 'Active';
-        break;
-      case 'archived':
-        color = theme.colorScheme.tertiary;
-        label = 'Archived';
-        break;
-      case 'draft':
-        color = theme.colorScheme.onSurfaceVariant;
-        label = 'Draft';
-        break;
-      default:
-        color = theme.colorScheme.onSurfaceVariant;
-        label = status;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: color,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
+    return ProjectCardTile(
+      project: project,
+      updatedText: _formatTimeAgo(project.updatedAt),
+      onTap: () => context.push('/projects/${project.id}'),
     );
   }
 

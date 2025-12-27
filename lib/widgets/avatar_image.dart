@@ -75,7 +75,6 @@ class AvatarImage extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      borderRadius: effectiveBorderRadius,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest,

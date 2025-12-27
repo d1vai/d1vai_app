@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../providers/auth_provider.dart';
 import 'ai_avatar_selector_dialog.dart';
 import 'avatar_image.dart';
+import 'button.dart' as d1v;
 import 'snackbar_helper.dart';
 
 /// Onboarding 向导组件 - 管理完整的 Onboarding 流程
@@ -17,9 +19,12 @@ class OnboardingWizard extends StatefulWidget {
   State<OnboardingWizard> createState() => _OnboardingWizardState();
 }
 
-class _OnboardingWizardState extends State<OnboardingWizard> {
+class _OnboardingWizardState extends State<OnboardingWizard>
+    with TickerProviderStateMixin {
   final PageController _pageController = PageController();
   int _currentStep = 0;
+  late final AnimationController _enterController;
+  late final AnimationController _breathController;
 
   // Onboarding 步骤相关
   String _inviteCode = '';
@@ -48,8 +53,23 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _enterController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 520),
+    )..forward();
+    _breathController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
+    )..repeat(reverse: true);
+  }
+
+  @override
   void dispose() {
     _pageController.dispose();
+    _enterController.dispose();
+    _breathController.dispose();
     super.dispose();
   }
 
@@ -63,6 +83,7 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
       setState(() {
         _currentStep++;
       });
+      HapticFeedback.selectionClick();
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -79,6 +100,7 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
       setState(() {
         _currentStep--;
       });
+      HapticFeedback.selectionClick();
       _pageController.previousPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -305,28 +327,61 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
   }
 
   /// 构建步骤指示器
-  Widget _buildStepIndicator() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(4, (index) {
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          width: index == _currentStep ? 24 : 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: index <= _currentStep
-                ? Colors.deepPurple
-                : Colors.grey.shade300,
-            borderRadius: BorderRadius.circular(4),
-          ),
+  Widget _buildStepIndicator(ThemeData theme) {
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    return AnimatedBuilder(
+      animation: _breathController,
+      builder: (context, child) {
+        final t = _breathController.value;
+        final accent = Color.lerp(colorScheme.primary, colorScheme.secondary, 0.3)!;
+        final glow = accent.withValues(alpha: isDark ? (0.10 + 0.10 * t) : (0.08 + 0.08 * t));
+        final inactive = colorScheme.outlineVariant.withValues(alpha: 0.55);
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(4, (index) {
+            final isCurrent = index == _currentStep;
+            final isDone = index < _currentStep;
+
+            final double width = isCurrent ? (28.0 + 4.0 * t) : 8.0;
+            final double height = 8.0;
+            final bg = isDone
+                ? colorScheme.tertiary.withValues(alpha: 0.85)
+                : isCurrent
+                    ? accent
+                    : inactive;
+
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 240),
+              curve: Curves.easeOutCubic,
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: width,
+              height: height,
+              decoration: BoxDecoration(
+                color: bg,
+                borderRadius: BorderRadius.circular(999),
+                boxShadow: isCurrent
+                    ? [
+                        BoxShadow(
+                          color: glow,
+                          blurRadius: 18,
+                          offset: const Offset(0, 10),
+                        ),
+                      ]
+                    : null,
+              ),
+            );
+          }),
         );
-      }),
+      },
     );
   }
 
   /// 构建步骤标题
-  Widget _buildStepTitle() {
+  Widget _buildStepTitle(ThemeData theme) {
+    final colorScheme = theme.colorScheme;
     final titles = [
       'Welcome to d1v.ai 🎉',
       'Tell us about your organization',
@@ -340,90 +395,161 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
       'You are almost ready to start building.',
     ];
 
-    return Column(
-      children: [
-        Text(
-          titles[_currentStep],
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          subtitles[_currentStep],
-          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-          textAlign: TextAlign.center,
-        ),
-      ],
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 240),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeIn,
+      transitionBuilder: (child, anim) {
+        return FadeTransition(
+          opacity: anim,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 0.04),
+              end: Offset.zero,
+            ).animate(anim),
+            child: child,
+          ),
+        );
+      },
+      child: Column(
+        key: ValueKey(_currentStep),
+        children: [
+          Text(
+            titles[_currentStep],
+            style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ) ??
+                const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            subtitles[_currentStep],
+            style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
+                  height: 1.25,
+                ) ??
+                TextStyle(
+                  fontSize: 14,
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
+                  height: 1.25,
+                ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        constraints: const BoxConstraints(maxWidth: 500),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 步骤指示器
-            _buildStepIndicator(),
-            const SizedBox(height: 24),
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
-            // 步骤标题
-            _buildStepTitle(),
-            const SizedBox(height: 24),
+    final maxH = MediaQuery.sizeOf(context).height * 0.76;
+    final bg = Color.alphaBlend(
+      colorScheme.primary.withValues(alpha: isDark ? 0.10 : 0.06),
+      colorScheme.surface,
+    );
+    final border = colorScheme.outlineVariant.withValues(alpha: isDark ? 0.35 : 0.55);
 
-            // 步骤内容
-            Expanded(
-              child: PageView(
-                controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  _buildInviteStep(),
-                  _buildCompanyStep(),
-                  _buildAvatarStep(),
-                  _buildCompleteStep(),
-                ],
-              ),
-            ),
+    final enter = CurvedAnimation(parent: _enterController, curve: Curves.easeOutCubic);
+    final scale = Tween<double>(begin: 0.98, end: 1).animate(enter);
 
-            const SizedBox(height: 16),
-
-            // 操作按钮
-            Row(
-              children: [
-                if (_currentStep > 0) ...[
-                  TextButton(
-                    onPressed: _isLoading ? null : _handlePrevious,
-                    child: const Text('上一步'),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                const Spacer(),
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _handleNext,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 12,
+    final primaryButton = AnimatedBuilder(
+      animation: _breathController,
+      builder: (context, child) {
+        final t = _isLoading ? 0.0 : _breathController.value;
+        final glow = colorScheme.primary.withValues(alpha: 0.10 + 0.10 * t);
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: _isLoading
+                ? null
+                : [
+                    BoxShadow(
+                      color: glow,
+                      blurRadius: 22,
+                      offset: const Offset(0, 12),
                     ),
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(
-                          _currentStep == 3 ? '完成' : '下一步',
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
+                  ],
+          ),
+          child: child,
+        );
+      },
+      child: d1v.Button(
+        text: _currentStep == 3 ? '完成' : '下一步',
+        onPressed: _isLoading ? null : _handleNext,
+        height: 48,
+        borderRadius: 14,
+      ),
+    );
+
+    final secondaryButton = _currentStep > 0
+        ? d1v.Button(
+            variant: d1v.ButtonVariant.outline,
+            text: '上一步',
+            onPressed: _isLoading ? null : _handlePrevious,
+            height: 48,
+            borderRadius: 14,
+          )
+        : null;
+
+    return FadeTransition(
+      opacity: enter,
+      child: ScaleTransition(
+        scale: scale,
+        child: Dialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            constraints: BoxConstraints(maxWidth: 520, maxHeight: maxH),
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: border),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.28 : 0.14),
+                  blurRadius: 28,
+                  offset: const Offset(0, 16),
                 ),
               ],
             ),
-          ],
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                _buildStepIndicator(theme),
+                const SizedBox(height: 18),
+                _buildStepTitle(theme),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      _buildInviteStep(),
+                      _buildCompanyStep(),
+                      _buildAvatarStep(),
+                      _buildCompleteStep(),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    if (secondaryButton != null) ...[
+                      Expanded(child: secondaryButton),
+                      const SizedBox(width: 10),
+                    ],
+                    Expanded(child: primaryButton),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -431,16 +557,31 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
 
   /// 构建邀请码步骤
   Widget _buildInviteStep() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Column(
       children: [
         const Spacer(),
-        const Icon(Icons.card_giftcard, size: 80, color: Colors.deepPurple),
+        AnimatedBuilder(
+          animation: _breathController,
+          builder: (context, child) {
+            final t = _breathController.value;
+            final c = Color.lerp(
+              colorScheme.primary,
+              colorScheme.secondary,
+              0.25 + 0.25 * t,
+            )!;
+            return Icon(Icons.card_giftcard, size: 72, color: c);
+          },
+        ),
         const SizedBox(height: 24),
         TextField(
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: '邀请码',
             hintText: '请输入您的邀请码',
-            border: OutlineInputBorder(),
+            border: const OutlineInputBorder(),
+            filled: true,
+            fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
           ),
           onChanged: (value) {
             _inviteCode = value;
@@ -449,7 +590,14 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
         const SizedBox(height: 16),
         Text(
           '提示：邀请码已发送到您的邮箱，请查收',
-          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
+              ) ??
+              TextStyle(
+                fontSize: 12,
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
+              ),
+          textAlign: TextAlign.center,
         ),
         const Spacer(),
       ],
@@ -458,16 +606,20 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
 
   /// 构建公司信息步骤
   Widget _buildCompanyStep() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // 公司名称
           TextField(
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: '公司名称 *',
               hintText: '请输入您的公司名称',
-              border: OutlineInputBorder(),
+              border: const OutlineInputBorder(),
+              filled: true,
+              fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
             ),
             onChanged: (value) {
               _companyName = value;
@@ -477,10 +629,12 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
 
           // 公司网站
           TextField(
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: '公司网站',
               hintText: 'https://example.com',
-              border: OutlineInputBorder(),
+              border: const OutlineInputBorder(),
+              filled: true,
+              fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
             ),
             onChanged: (value) {
               _companyWebsite = value;
@@ -490,9 +644,11 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
 
           // 所属行业
           DropdownButtonFormField<String>(
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: '所属行业',
-              border: OutlineInputBorder(),
+              border: const OutlineInputBorder(),
+              filled: true,
+              fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
             ),
             items: _industries
                 .map(
@@ -508,6 +664,16 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
               }
             },
           ),
+          const SizedBox(height: 10),
+          Text(
+            '这将帮助我们提供更适合你的模板与建议。',
+            style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.85),
+                ) ??
+                TextStyle(
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.85),
+                ),
+          ),
         ],
       ),
     );
@@ -515,6 +681,8 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
 
   /// 构建头像选择步骤
   Widget _buildAvatarStep() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -534,21 +702,28 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     Text(
                       'Profile picture',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ) ??
+                          const TextStyle(fontWeight: FontWeight.w800),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
                       'Recommended: square image, PNG/JPG/WEBP, up to 5MB.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.black54,
-                      ),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant.withValues(
+                              alpha: 0.9,
+                            ),
+                          ) ??
+                          TextStyle(
+                            fontSize: 12,
+                            color: colorScheme.onSurfaceVariant.withValues(
+                              alpha: 0.9,
+                            ),
+                          ),
                     ),
                   ],
                 ),
@@ -564,19 +739,35 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'AI Avatar Cards',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ) ??
+                        const TextStyle(fontWeight: FontWeight.w800),
                   ),
-                  TextButton(
-                    onPressed:
-                        _isGeneratingAvatars ? null : _generateAiAvatars,
-                    child: _isGeneratingAvatars
-                        ? const Text('Generating…')
-                        : const Text('AI Random'),
+                  AnimatedBuilder(
+                    animation: _breathController,
+                    builder: (context, child) {
+                      final t = _isGeneratingAvatars ? 0.0 : _breathController.value;
+                      final fg = Color.lerp(
+                        colorScheme.primary,
+                        colorScheme.secondary,
+                        0.2 + 0.35 * t,
+                      )!;
+                      return TextButton(
+                        onPressed: _isGeneratingAvatars ? null : _generateAiAvatars,
+                        style: TextButton.styleFrom(foregroundColor: fg),
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 160),
+                          child: Text(
+                            _isGeneratingAvatars ? 'Generating…' : 'AI Random',
+                            key: ValueKey(_isGeneratingAvatars),
+                            style: const TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -603,8 +794,10 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: isSelected
-                                ? Colors.deepPurple
-                                : Colors.grey.shade300,
+                                ? colorScheme.primary
+                                : colorScheme.outlineVariant.withValues(
+                                    alpha: 0.7,
+                                  ),
                             width: isSelected ? 3 : 1,
                           ),
                         ),
@@ -622,8 +815,13 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
+                    border: Border.all(
+                      color: colorScheme.outlineVariant.withValues(alpha: 0.7),
+                    ),
                     borderRadius: BorderRadius.circular(12),
+                    color: colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.35,
+                    ),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -631,12 +829,23 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
                       Icon(
                         Icons.auto_awesome,
                         size: 40,
-                        color: Colors.grey.shade400,
+                        color: colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.65,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Tap "AI Random" to draw your AI avatar cards.',
-                        style: TextStyle(color: Colors.grey),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant.withValues(
+                                alpha: 0.9,
+                              ),
+                            ) ??
+                            TextStyle(
+                              color: colorScheme.onSurfaceVariant.withValues(
+                                alpha: 0.9,
+                              ),
+                            ),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -647,13 +856,13 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
           const SizedBox(height: 24),
 
           // 上传头像按钮
-          OutlinedButton.icon(
+          d1v.Button(
+            variant: d1v.ButtonVariant.outline,
+            icon: Icon(Icons.upload, color: colorScheme.onSurface),
+            text: '选择文件',
             onPressed: _pickImageFromGallery,
-            icon: const Icon(Icons.upload),
-            label: const Text('Choose File'),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-            ),
+            height: 48,
+            borderRadius: 14,
           ),
         ],
       ),
@@ -662,19 +871,43 @@ class _OnboardingWizardState extends State<OnboardingWizard> {
 
   /// 构建完成步骤
   Widget _buildCompleteStep() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Column(
       children: [
         const Spacer(),
-        const Icon(Icons.check_circle, size: 100, color: Colors.green),
+        AnimatedBuilder(
+          animation: _breathController,
+          builder: (context, child) {
+            final t = _breathController.value;
+            return Transform.scale(
+              scale: 0.98 + 0.03 * t,
+              child: Icon(
+                Icons.check_circle_rounded,
+                size: 96,
+                color: colorScheme.tertiary,
+              ),
+            );
+          },
+        ),
         const SizedBox(height: 24),
-        const Text(
+        Text(
           '设置完成！',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w900,
+              ) ??
+              const TextStyle(fontWeight: FontWeight.w900, fontSize: 22),
         ),
         const SizedBox(height: 8),
         Text(
           '欢迎加入 d1vai，您即将进入应用',
-          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+          style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
+              ) ??
+              TextStyle(
+                fontSize: 14,
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
+              ),
           textAlign: TextAlign.center,
         ),
         const Spacer(),

@@ -5,134 +5,269 @@ import 'package:flutter/services.dart';
 import '../models/community_post.dart';
 import 'avatar_image.dart';
 import 'snackbar_helper.dart';
+import 'card.dart';
 
 /// 社区帖子卡片组件
-class PostCard extends StatelessWidget {
+class PostCard extends StatefulWidget {
   final CommunityPost post;
   final VoidCallback? onTap;
 
   const PostCard({super.key, required this.post, this.onTap});
 
   @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 封面图片
-            if (post.coverUrl != null && post.coverUrl!.isNotEmpty)
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(12),
-                ),
-                child: CachedNetworkImage(
-                  imageUrl: post.coverUrl!,
-                  height: 180,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    height: 180,
-                    color: Colors.grey.shade200,
-                    child: const Center(child: CircularProgressIndicator()),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    height: 180,
-                    color: Colors.grey.shade200,
-                    child: const Icon(Icons.error),
-                  ),
-                ),
-              ),
+  State<PostCard> createState() => _PostCardState();
+}
 
-            // 帖子内容
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 作者信息
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+class _PostCardState extends State<PostCard>
+    with TickerProviderStateMixin {
+  late final AnimationController _pressController;
+  late final AnimationController _shineController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pressController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 90),
+      reverseDuration: const Duration(milliseconds: 140),
+    );
+    _shineController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pressController.dispose();
+    _shineController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final post = widget.post;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    final scale = Tween<double>(begin: 1, end: 0.992).animate(
+      CurvedAnimation(parent: _pressController, curve: Curves.easeOut),
+    );
+
+    final coverUrl = post.coverUrl?.trim() ?? '';
+    final hasCover = coverUrl.isNotEmpty;
+
+    final card = CustomCard(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.zero,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            widget.onTap?.call();
+          },
+          onTapDown: (_) {
+            _pressController.forward();
+            if (!_shineController.isAnimating) {
+              _shineController.forward(from: 0);
+            }
+          },
+          onTapCancel: () => _pressController.reverse(),
+          onTapUp: (_) => _pressController.reverse(),
+          borderRadius: BorderRadius.circular(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (hasCover)
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(14),
+                  ),
+                  child: Stack(
                     children: [
-                      AvatarImage(
-                        imageUrl: post.author?.picture?.isNotEmpty == true
-                            ? post.author!.picture!
-                            : 'placeholder',
-                        size: 40,
-                        borderRadius: BorderRadius.circular(20),
+                      CachedNetworkImage(
+                        imageUrl: coverUrl,
+                        height: 180,
+                        width: double.infinity,
                         fit: BoxFit.cover,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              post.author?.slug ?? 'Anonymous',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
+                        placeholder: (context, url) => Container(
+                          height: 180,
+                          color: colorScheme.surfaceContainerHighest,
+                          child: Center(
+                            child: SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  colorScheme.primary,
+                                ),
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              _formatPublishedDate(post.createdAt),
-                              style: TextStyle(
-                                color: Colors.grey.shade500,
-                                fontSize: 12,
-                              ),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          height: 180,
+                          color: colorScheme.surfaceContainerHighest,
+                          child: Icon(
+                            Icons.broken_image_outlined,
+                            color: colorScheme.onSurfaceVariant.withValues(
+                              alpha: 0.8,
                             ),
-                          ],
+                          ),
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.more_horiz),
-                        onPressed: () {
-                          _showMoreOptions(context);
-                        },
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.transparent,
+                                  Colors.black.withValues(alpha: 0.22),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: AnimatedBuilder(
+                            animation: _shineController,
+                            builder: (context, _) {
+                              final t = Curves.easeOutCubic.transform(
+                                _shineController.value,
+                              );
+                              final a = isDark ? (0.14 * (1 - t)) : (0.10 * (1 - t));
+                              return Opacity(
+                                opacity: a.clamp(0.0, 1.0),
+                                child: Transform.translate(
+                                  offset: Offset((t - 0.5) * 260, 0),
+                                  child: Transform.rotate(
+                                    angle: -0.35,
+                                    child: Container(
+                                      width: 160,
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            Colors.transparent,
+                                            Colors.white.withValues(alpha: 0.55),
+                                            Colors.transparent,
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                       ),
                     ],
                   ),
+                ),
 
-                  const SizedBox(height: 12),
-
-                  // 标题
-                  Text(
-                    post.title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        AvatarImage(
+                          imageUrl: post.author?.picture?.isNotEmpty == true
+                              ? post.author!.picture!
+                              : 'placeholder',
+                          size: 40,
+                          borderRadius: BorderRadius.circular(20),
+                          fit: BoxFit.cover,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                post.author?.slug ?? 'Anonymous',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                    ) ??
+                                    const TextStyle(fontWeight: FontWeight.w800),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _formatPublishedDate(post.createdAt),
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                      color: colorScheme.onSurfaceVariant
+                                          .withValues(alpha: 0.8),
+                                      fontFeatures: const [
+                                        FontFeature.tabularFigures(),
+                                      ],
+                                    ) ??
+                                    TextStyle(
+                                      color: colorScheme.onSurfaceVariant
+                                          .withValues(alpha: 0.8),
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.more_horiz),
+                          onPressed: () => _showMoreOptions(context),
+                          tooltip: 'More',
+                        ),
+                      ],
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // 摘要
-                  if (post.summary != null && post.summary!.isNotEmpty)
+                    const SizedBox(height: 12),
                     Text(
-                      post.summary!,
-                      style: TextStyle(
-                        color: Colors.grey.shade700,
-                        fontSize: 14,
-                      ),
-                      maxLines: 3,
+                      post.title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            height: 1.1,
+                          ) ??
+                          const TextStyle(fontWeight: FontWeight.w900),
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                ],
+                    if (post.summary != null && post.summary!.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        post.summary!,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant.withValues(
+                                alpha: 0.9,
+                              ),
+                              height: 1.25,
+                            ) ??
+                            TextStyle(
+                              color: colorScheme.onSurfaceVariant.withValues(
+                                alpha: 0.9,
+                              ),
+                              height: 1.25,
+                            ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
+
+    return ScaleTransition(scale: scale, child: card);
   }
 
   /// 格式化发布日期
@@ -160,6 +295,7 @@ class PostCard extends StatelessWidget {
 
   /// 显示更多选项菜单
   void _showMoreOptions(BuildContext context) {
+    HapticFeedback.selectionClick();
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -202,7 +338,7 @@ class PostCard extends StatelessWidget {
 
   /// 分享帖子
   void _sharePost(BuildContext context) async {
-    final link = 'https://www.d1v.ai/c/${post.slug}';
+    final link = 'https://www.d1v.ai/c/${widget.post.slug}';
     await Clipboard.setData(ClipboardData(text: link));
     if (context.mounted) {
       SnackBarHelper.showSuccess(

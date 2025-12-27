@@ -11,6 +11,9 @@ import '../../services/d1vai_service.dart';
 import '../../utils/error_utils.dart';
 import 'deployment_log_screen.dart';
 import '../snackbar_helper.dart';
+import '../card.dart';
+import '../chat/project_chat/status_dot.dart';
+import '../skeleton.dart';
 
 /// 项目详情页 - Deploy Tab
 class ProjectDeployTab extends StatefulWidget {
@@ -31,13 +34,15 @@ class ProjectDeployTab extends StatefulWidget {
 
 enum _DeploymentEnvFilter { all, dev, prod }
 
-class _ProjectDeployTabState extends State<ProjectDeployTab> {
+class _ProjectDeployTabState extends State<ProjectDeployTab>
+    with SingleTickerProviderStateMixin {
   final List<DeploymentHistory> _deployments = [];
   bool _isLoading = false;
   bool _isInitialized = false;
   bool _deployingPreview = false;
   bool _deployingProduction = false;
   _DeploymentEnvFilter _envFilter = _DeploymentEnvFilter.all;
+  late final AnimationController _ambientController;
 
   @override
   void didChangeDependencies() {
@@ -54,6 +59,21 @@ class _ProjectDeployTabState extends State<ProjectDeployTab> {
     if (oldWidget.project.id != widget.project.id) {
       _loadDeployments();
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _ambientController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _ambientController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadDeployments() async {
@@ -462,75 +482,135 @@ class _ProjectDeployTabState extends State<ProjectDeployTab> {
   }
 
   Widget _buildDeploymentHistoryCard() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Text(
-                  'Deployment History',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    final countPill = AnimatedBuilder(
+      animation: _ambientController,
+      builder: (context, child) {
+        final t = _ambientController.value;
+        final bg = Color.alphaBlend(
+          colorScheme.primary.withValues(alpha: 0.10 + 0.06 * t),
+          colorScheme.surface,
+        );
+        final border = Color.alphaBlend(
+          colorScheme.primary.withValues(alpha: 0.18 + 0.10 * t),
+          colorScheme.outlineVariant,
+        );
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: border),
+          ),
+          child: Text(
+            '${_deployments.length}',
+            style: theme.textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: colorScheme.primary,
+                ) ??
+                TextStyle(
+                  fontWeight: FontWeight.w900,
+                  color: colorScheme.primary,
                 ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.deepPurple.shade100,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '${_deployments.length}',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.deepPurple.shade700,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
+          ),
+        );
+      },
+    );
+
+    final body = AnimatedSwitcher(
+      duration: const Duration(milliseconds: 200),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeIn,
+      transitionBuilder: (child, anim) {
+        return FadeTransition(
+          opacity: anim,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 0.02),
+              end: Offset.zero,
+            ).animate(anim),
+            child: child,
+          ),
+        );
+      },
+      child: _isLoading
+          ? Column(
+              key: const ValueKey('deploy-history-loading'),
+              children: const [
+                SkeletonListTile(hasLeading: false, hasThreeLines: true),
+                SizedBox(height: 6),
+                SkeletonListTile(hasLeading: false, hasThreeLines: true),
               ],
-            ),
-            const SizedBox(height: 16),
-            if (_isLoading)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: CircularProgressIndicator(),
+            )
+          : _deployments.isEmpty
+              ? Padding(
+                  key: const ValueKey('deploy-history-empty'),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    'No deployments yet — deploy your project to see history here.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.85,
+                          ),
+                        ) ??
+                        TextStyle(
+                          color: colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.85,
+                          ),
+                        ),
+                  ),
+                )
+              : Column(
+                  key: const ValueKey('deploy-history-list'),
+                  children: [
+                    for (final entry in _deployments.asMap().entries)
+                      _StaggeredIn(
+                        index: entry.key,
+                        count: _deployments.length,
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                            bottom: entry.key == _deployments.length - 1
+                                ? 0
+                                : 12,
+                          ),
+                          child: _buildDeploymentHistoryRow(entry.value),
+                        ),
+                      ),
+                  ],
                 ),
-              )
-            else if (_deployments.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text(
-                  'No deployments yet — deploy your project to see history here.',
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-                ),
-              )
-            else
-              ..._deployments.asMap().entries.map((entry) {
-                final index = entry.key;
-                final deployment = entry.value;
-                final isLast = index == _deployments.length - 1;
-                return _buildDeploymentHistoryRow(
-                  deployment,
-                  bottomMargin: isLast ? 0 : 12,
-                );
-              }),
-          ],
-        ),
+    );
+
+    return CustomCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Deployment History',
+                style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ) ??
+                    const TextStyle(fontWeight: FontWeight.w800),
+              ),
+              const Spacer(),
+              countPill,
+            ],
+          ),
+          const SizedBox(height: 14),
+          body,
+        ],
       ),
     );
   }
 
-  Widget _buildDeploymentHistoryRow(
-    DeploymentHistory deployment, {
-    required double bottomMargin,
-  }) {
+  Widget _buildDeploymentHistoryRow(DeploymentHistory deployment) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     final when = _formatTimeAgo(
       deployment.completedAt ??
           deployment.startedAt ??
@@ -544,37 +624,67 @@ class _ProjectDeployTabState extends State<ProjectDeployTab> {
     if (sha != null && sha.isNotEmpty) subtitleParts.add(sha.substring(0, 7));
     final subtitle = subtitleParts.isEmpty ? null : subtitleParts.join(' • ');
 
-    final statusColor = deployment.status == 'success'
-        ? Colors.green
-        : (deployment.status == 'pending' ||
-              deployment.status == 'building' ||
-              deployment.status == 'deploying')
-        ? Colors.orange
-        : Colors.red;
+    final statusLower = deployment.status.toLowerCase();
+    final isRunning =
+        statusLower == 'pending' ||
+        statusLower == 'building' ||
+        statusLower == 'deploying';
+    final isSuccess = statusLower == 'success';
 
-    final statusIcon = deployment.status == 'success'
-        ? Icons.check_circle
-        : (deployment.status == 'pending' ||
-              deployment.status == 'building' ||
-              deployment.status == 'deploying')
-        ? Icons.hourglass_empty
-        : Icons.error;
+    final statusColor = isSuccess
+        ? colorScheme.tertiary
+        : isRunning
+            ? colorScheme.secondary
+            : colorScheme.error;
+
+    final statusIcon = isSuccess
+        ? Icons.check_circle_outline
+        : isRunning
+            ? Icons.autorenew_rounded
+            : Icons.error_outline;
 
     return InkWell(
       onTap: () => _showDeploymentActions(deployment),
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        margin: EdgeInsets.only(bottom: bottomMargin),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.shade200),
+          color: Color.alphaBlend(
+            statusColor.withValues(alpha: 0.06),
+            colorScheme.surface,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Color.alphaBlend(
+              statusColor.withValues(alpha: 0.18),
+              colorScheme.outlineVariant,
+            ),
+          ),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(statusIcon, size: 18, color: statusColor),
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                if (isRunning)
+                  ProjectChatStatusDot(
+                    color: statusColor,
+                    size: 10,
+                    enablePulse: true,
+                  )
+                else
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: statusColor,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                Icon(statusIcon, size: 18, color: statusColor),
+              ],
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -585,10 +695,10 @@ class _ProjectDeployTabState extends State<ProjectDeployTab> {
                       Expanded(
                         child: Text(
                           '${deployment.environmentLabel} • ${deployment.statusLabel}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w800,
+                              ) ??
+                              const TextStyle(fontWeight: FontWeight.w800),
                         ),
                       ),
                       if (deployment.deployedBy != null &&
@@ -597,7 +707,9 @@ class _ProjectDeployTabState extends State<ProjectDeployTab> {
                           deployment.deployedBy!.trim(),
                           style: TextStyle(
                             fontSize: 11,
-                            color: Colors.grey.shade600,
+                            color: colorScheme.onSurfaceVariant.withValues(
+                              alpha: 0.85,
+                            ),
                           ),
                         ),
                     ],
@@ -608,7 +720,9 @@ class _ProjectDeployTabState extends State<ProjectDeployTab> {
                       subtitle,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey.shade600,
+                        color: colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.85,
+                        ),
                       ),
                     ),
                   ],
@@ -621,7 +735,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab> {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey.shade800,
+                        color: colorScheme.onSurface.withValues(alpha: 0.92),
                       ),
                     ),
                   ] else if (deployment.statusMessage != null) ...[
@@ -632,7 +746,9 @@ class _ProjectDeployTabState extends State<ProjectDeployTab> {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey.shade700,
+                        color: colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.9,
+                        ),
                       ),
                     ),
                   ],
@@ -657,7 +773,9 @@ class _ProjectDeployTabState extends State<ProjectDeployTab> {
                         deployment.id,
                         style: TextStyle(
                           fontSize: 10,
-                          color: Colors.grey.shade500,
+                          color: colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.65,
+                          ),
                         ),
                       ),
                     ],
@@ -790,6 +908,38 @@ class _ProjectDeployTabState extends State<ProjectDeployTab> {
         message: 'Could not open $url',
       );
     }
+  }
+}
+
+class _StaggeredIn extends StatelessWidget {
+  final int index;
+  final int count;
+  final Widget child;
+
+  const _StaggeredIn({
+    required this.index,
+    required this.count,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final start = (index / (count + 6)).clamp(0.0, 1.0);
+    final end = (start + 0.45).clamp(0.0, 1.0);
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 520),
+      curve: Interval(start, end, curve: Curves.easeOutCubic),
+      builder: (context, t, _) {
+        return Opacity(
+          opacity: t,
+          child: Transform.translate(
+            offset: Offset(0, (1 - t) * 10),
+            child: child,
+          ),
+        );
+      },
+    );
   }
 }
 

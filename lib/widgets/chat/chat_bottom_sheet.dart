@@ -74,7 +74,6 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
     final showStatus = statusText.isNotEmpty;
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.7,
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
