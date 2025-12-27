@@ -195,8 +195,9 @@ class _TopUpDialogState extends State<TopUpDialog> {
                     ),
                   ),
                   IconButton(
-                    onPressed:
-                        _isLoading ? null : () => Navigator.of(context).pop(),
+                    onPressed: _isLoading
+                        ? null
+                        : () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.close),
                   ),
                 ],
@@ -235,12 +236,13 @@ class _TopUpDialogState extends State<TopUpDialog> {
                         setState(() {
                           _error = null;
                           final n = double.tryParse(value.trim());
-                          final asInt =
-                              (n != null && n.isFinite) ? n.toInt() : null;
+                          final asInt = (n != null && n.isFinite)
+                              ? n.toInt()
+                              : null;
                           _selectedQuickAmount =
                               asInt != null && _quickAmounts.contains(asInt)
-                                  ? asInt
-                                  : null;
+                              ? asInt
+                              : null;
                         });
                       },
                     ),
@@ -261,8 +263,9 @@ class _TopUpDialogState extends State<TopUpDialog> {
                   return ChoiceChip(
                     label: Text('\$$amount'),
                     selected: isSelected,
-                    onSelected:
-                        _isLoading ? null : (_) => _selectQuickAmount(amount),
+                    onSelected: _isLoading
+                        ? null
+                        : (_) => _selectQuickAmount(amount),
                     labelStyle: TextStyle(
                       fontWeight: FontWeight.w700,
                       color: isSelected
@@ -270,8 +273,9 @@ class _TopUpDialogState extends State<TopUpDialog> {
                           : theme.colorScheme.primary,
                     ),
                     selectedColor: theme.colorScheme.primary,
-                    backgroundColor:
-                        theme.colorScheme.primary.withValues(alpha: 0.10),
+                    backgroundColor: theme.colorScheme.primary.withValues(
+                      alpha: 0.10,
+                    ),
                     side: BorderSide(
                       color: theme.colorScheme.primary.withValues(
                         alpha: isSelected ? 0.0 : 0.25,
@@ -315,7 +319,9 @@ class _TopUpDialogState extends State<TopUpDialog> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _isLoading || !canSubmit ? null : _handleSubmit,
+                      onPressed: _isLoading || !canSubmit
+                          ? null
+                          : _handleSubmit,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: theme.colorScheme.primary,
                         foregroundColor: theme.colorScheme.onPrimary,
