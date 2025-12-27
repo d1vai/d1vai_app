@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../services/d1vai_service.dart';
 import '../widgets/snackbar_helper.dart';
+import '../providers/auth_provider.dart';
+import '../widgets/login_required_view.dart';
+import '../l10n/app_localizations.dart';
 
 class CreatePostScreen extends StatefulWidget {
   const CreatePostScreen({super.key});
@@ -67,13 +71,15 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = AppLocalizations.of(context);
+    final authed = context.watch<AuthProvider>().isAuthenticated;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create Post'),
         actions: [
           TextButton(
-            onPressed: _isLoading ? null : _submitPost,
+            onPressed: (!authed || _isLoading) ? null : _submitPost,
             child: _isLoading 
                 ? const SizedBox(
                     width: 20, 
@@ -84,47 +90,53 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           ),
         ],
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            TextFormField(
-              controller: _titleController,
-              decoration: const InputDecoration(
-                hintText: 'Title',
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
+      body: !authed
+          ? LoginRequiredView(
+              message:
+                  loc?.translate('login_required_create_post_message') ??
+                  'Please login first to create a post.',
+            )
+          : Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  TextFormField(
+                    controller: _titleController,
+                    decoration: const InputDecoration(
+                      hintText: 'Title',
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    style: theme.textTheme.headlineSmall,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter a title';
+                      }
+                      return null;
+                    },
+                    textInputAction: TextInputAction.next,
+                  ),
+                  const Divider(),
+                  TextFormField(
+                    controller: _contentController,
+                    decoration: const InputDecoration(
+                      hintText: 'What\'s on your mind?',
+                      border: InputBorder.none,
+                    ),
+                    style: theme.textTheme.bodyLarge,
+                    maxLines: null,
+                    minLines: 10,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter some content';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
               ),
-              style: theme.textTheme.headlineSmall,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Please enter a title';
-                }
-                return null;
-              },
-              textInputAction: TextInputAction.next,
             ),
-            const Divider(),
-            TextFormField(
-              controller: _contentController,
-              decoration: const InputDecoration(
-                hintText: 'What\'s on your mind?',
-                border: InputBorder.none,
-              ),
-              style: theme.textTheme.bodyLarge,
-              maxLines: null,
-              minLines: 10,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Please enter some content';
-                }
-                return null;
-              },
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

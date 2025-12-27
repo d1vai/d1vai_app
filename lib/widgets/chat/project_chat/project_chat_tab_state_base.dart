@@ -59,6 +59,7 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   bool _isDeploying = false;
   String? _deployFramework;
   Timer? _deployAutoClearTimer;
+  DateTime? _lastDeployCompletedAt;
 
   // Environment variables for Env sub-tab
   List<EnvVar> _envVars = [];

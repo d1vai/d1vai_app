@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../core/locale_bus.dart';
 
 class LocaleProvider extends ChangeNotifier {
   Locale _locale = const Locale('en');
@@ -36,6 +37,7 @@ class LocaleProvider extends ChangeNotifier {
       _languageKeyFromLocale(locale);
 
   LocaleProvider() {
+    LocaleBus.set(_locale);
     _loadLocale();
   }
 
@@ -58,6 +60,7 @@ class LocaleProvider extends ChangeNotifier {
       await prefs.setString('language_code', languageKey);
     }
 
+    LocaleBus.set(_locale);
     notifyListeners();
   }
 
@@ -69,6 +72,7 @@ class LocaleProvider extends ChangeNotifier {
     }
 
     _locale = _localeMap[languageKey]!;
+    LocaleBus.set(_locale);
     notifyListeners();
 
     // 保存到本地存储

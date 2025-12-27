@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/wallet_service.dart';
 import 'snackbar_helper.dart';
+import '../utils/error_utils.dart';
+import '../l10n/app_localizations.dart';
 
 class TopUpDialog extends StatefulWidget {
   final VoidCallback? onSuccess;
@@ -80,6 +82,7 @@ class _TopUpDialogState extends State<TopUpDialog> {
   }
 
   Future<void> _handleSubmit() async {
+    final loc = AppLocalizations.of(context);
     final amountText = _amountController.text.trim();
 
     if (amountText.isEmpty) {
@@ -151,9 +154,19 @@ class _TopUpDialogState extends State<TopUpDialog> {
       widget.onSuccess?.call();
     } catch (e) {
       debugPrint('Top-up failed: $e');
+      final msg = humanizeError(e);
+      if (mounted) {
+        SnackBarHelper.showError(
+          context,
+          title: loc?.translate('error') ?? 'Error',
+          message: msg,
+          duration: const Duration(seconds: 3),
+          position: SnackBarPosition.top,
+        );
+      }
       setState(() {
         _isLoading = false;
-        _error = 'Failed to process payment: $e';
+        _error = msg;
       });
     }
   }

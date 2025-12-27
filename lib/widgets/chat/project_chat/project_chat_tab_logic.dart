@@ -105,9 +105,9 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     });
   }
 
-  void _scheduleDeployAutoClear() {
+  void _scheduleDeployAutoClear([Duration duration = const Duration(minutes: 3)]) {
     _deployAutoClearTimer?.cancel();
-    _deployAutoClearTimer = Timer(const Duration(minutes: 10), () {
+    _deployAutoClearTimer = Timer(duration, () {
       if (!mounted) return;
       if (!_isDeploying) return;
       setState(() {
@@ -824,6 +824,13 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
   void _handleDeploymentFrame(String type, Map<String, dynamic> payload) {
     final t = type.toLowerCase().trim();
     if (t == 'deployment_start') {
+      // Some deployments can emit frames out-of-order (late start after we've
+      // already received a "complete" event). Ignore those to avoid getting
+      // stuck in a Deploying state.
+      final doneAt = _lastDeployCompletedAt;
+      if (doneAt != null && DateTime.now().difference(doneAt).inSeconds < 12) {
+        return;
+      }
       _finalizePrevToolDone();
       final framework = payload['message'] is Map
           ? (payload['message'] as Map)['framework']
@@ -832,7 +839,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _isDeploying = true;
         _deployFramework = framework?.toString();
       });
-      _scheduleDeployAutoClear();
+      _scheduleDeployAutoClear(const Duration(minutes: 3));
       if (mounted) {
         SnackBarHelper.showInfo(
           context,
@@ -868,6 +875,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       setState(() {
         _isDeploying = false;
         _deployFramework = null;
+        _lastDeployCompletedAt = DateTime.now();
         if (nextUrl.isNotEmpty) {
           _previewUrl = nextUrl;
         }
@@ -902,7 +910,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       _isDeploying = true;
       _deployFramework = null;
     });
-    _scheduleDeployAutoClear();
+    _scheduleDeployAutoClear(const Duration(minutes: 2));
     try {
       final res = await _d1vaiService.deployProjectPreview(widget.projectId);
       final url = (res['vercel_url'] ?? res['production_url'] ?? '')
@@ -943,6 +951,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       setState(() {
         _isDeploying = false;
         _deployFramework = null;
+        _lastDeployCompletedAt = DateTime.now();
       });
       _deployAutoClearTimer?.cancel();
     } catch (e) {
@@ -955,6 +964,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       setState(() {
         _isDeploying = false;
         _deployFramework = null;
+        _lastDeployCompletedAt = DateTime.now();
       });
       _deployAutoClearTimer?.cancel();
     } finally {

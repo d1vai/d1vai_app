@@ -7,8 +7,16 @@ import 'button.dart';
 class LoginRequiredDialog extends StatelessWidget {
   final VoidCallback? onLogin;
   final VoidCallback? onCancel;
+  final String? title;
+  final String? message;
 
-  const LoginRequiredDialog({super.key, this.onLogin, this.onCancel});
+  const LoginRequiredDialog({
+    super.key,
+    this.onLogin,
+    this.onCancel,
+    this.title,
+    this.message,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -16,10 +24,11 @@ class LoginRequiredDialog extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final loc = AppLocalizations.of(context);
 
-    final title = loc?.translate('login_required_title') ?? 'Login required';
-    final message =
-        loc?.translate('login_required_orders_message') ??
-        'This feature requires you to be logged in. Please login to continue.';
+    final t = title ?? (loc?.translate('login_required_title') ?? 'Login required');
+    final m =
+        message ??
+        (loc?.translate('login_required_orders_message') ??
+            'This feature requires you to be logged in. Please login to continue.');
 
     void handleCancel() {
       (onCancel ?? () => Navigator.of(context).pop()).call();
@@ -61,7 +70,7 @@ class LoginRequiredDialog extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              title,
+              t,
               style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w800,
                   ) ??
@@ -70,7 +79,7 @@ class LoginRequiredDialog extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              message,
+              m,
               style: theme.textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
                     height: 1.25,

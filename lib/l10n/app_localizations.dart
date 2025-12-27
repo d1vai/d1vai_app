@@ -55,12 +55,17 @@ class AppLocalizations {
           'You need to log in to view your projects.',
       'login_required_orders_message':
           'You need to log in to view orders and billing.',
+      'login_required_create_post_message':
+          'You need to log in to create a post.',
       'login_required_settings_message':
           'You need to log in to manage your account settings.',
       'login_required_github_message':
           'You need to log in to manage GitHub integration.',
       'login_required_invites_message':
           'You need to log in to view invites and rewards.',
+      'error_network': 'Network error. Please check your connection and try again.',
+      'error_timeout': 'Request timed out. Please try again.',
+      'error_request_failed': 'Request failed. Please try again later.',
       'session_expired_title': 'Session expired',
       'session_expired_message': 'Your login has expired. Please log in again.',
       'code_sent_success': 'Verification code sent successfully',
@@ -244,9 +249,13 @@ class AppLocalizations {
       'login_required_button': '去登录',
       'login_required_dashboard_message': '你需要先登录才能查看项目列表',
       'login_required_orders_message': '你需要先登录才能查看订单与计费信息',
+      'login_required_create_post_message': '你需要先登录才能发布帖子',
       'login_required_settings_message': '你需要先登录才能管理账号设置',
       'login_required_github_message': '你需要先登录才能配置 GitHub 集成',
       'login_required_invites_message': '你需要先登录才能查看邀请与奖励',
+      'error_network': '网络连接失败，请检查网络后重试',
+      'error_timeout': '请求超时，请稍后重试',
+      'error_request_failed': '请求失败，请稍后重试',
       'session_expired_title': '登录已过期',
       'session_expired_message': '登录已过期，请重新登录',
       'code_sent_success': '验证码已发送，请查收邮件',
@@ -424,9 +433,13 @@ class AppLocalizations {
       'login_required_button': '前往登入',
       'login_required_dashboard_message': '你需要先登入才能查看專案列表',
       'login_required_orders_message': '你需要先登入才能查看訂單與計費資訊',
+      'login_required_create_post_message': '你需要先登入才能發佈貼文',
       'login_required_settings_message': '你需要先登入才能管理帳號設定',
       'login_required_github_message': '你需要先登入才能設定 GitHub 整合',
       'login_required_invites_message': '你需要先登入才能查看邀請與獎勵',
+      'error_network': '網路連線失敗，請檢查網路後重試',
+      'error_timeout': '請求逾時，請稍後重試',
+      'error_request_failed': '請求失敗，請稍後重試',
       'session_expired_title': '登入已過期',
       'session_expired_message': '登入已過期，請重新登入',
       'code_sent_success': '驗證碼已發送，請查收郵件',
@@ -607,12 +620,18 @@ class AppLocalizations {
           'Necesitas iniciar sesión para ver tus proyectos.',
       'login_required_orders_message':
           'Necesitas iniciar sesión para ver pedidos y facturación.',
+      'login_required_create_post_message':
+          'Necesitas iniciar sesión para crear una publicación.',
       'login_required_settings_message':
           'Necesitas iniciar sesión para administrar la configuración de tu cuenta.',
       'login_required_github_message':
           'Necesitas iniciar sesión para administrar la integración con GitHub.',
       'login_required_invites_message':
           'Necesitas iniciar sesión para ver invitaciones y recompensas.',
+      'error_network':
+          'Error de red. Comprueba tu conexión e inténtalo de nuevo.',
+      'error_timeout': 'Tiempo de espera agotado. Inténtalo de nuevo.',
+      'error_request_failed': 'La solicitud falló. Inténtalo más tarde.',
       'session_expired_title': 'Sesión caducada',
       'session_expired_message':
           'Tu sesión ha caducado. Inicia sesión de nuevo.',
@@ -800,12 +819,17 @@ class AppLocalizations {
           'تحتاج إلى تسجيل الدخول لعرض مشاريعك.',
       'login_required_orders_message':
           'تحتاج إلى تسجيل الدخول لعرض الطلبات والفوترة.',
+      'login_required_create_post_message':
+          'تحتاج إلى تسجيل الدخول لإنشاء منشور.',
       'login_required_settings_message':
           'تحتاج إلى تسجيل الدخول لإدارة إعدادات حسابك.',
       'login_required_github_message':
           'تحتاج إلى تسجيل الدخول لإدارة تكامل GitHub.',
       'login_required_invites_message':
           'تحتاج إلى تسجيل الدخول لعرض الدعوات والمكافآت.',
+      'error_network': 'خطأ في الشبكة. تحقق من اتصالك وحاول مرة أخرى.',
+      'error_timeout': 'انتهت مهلة الطلب. حاول مرة أخرى.',
+      'error_request_failed': 'فشل الطلب. حاول مرة أخرى لاحقاً.',
       'session_expired_title': 'انتهت الجلسة',
       'session_expired_message':
           'انتهت صلاحية تسجيل الدخول. يرجى تسجيل الدخول مرة أخرى.',
@@ -989,12 +1013,19 @@ class AppLocalizations {
           'プロジェクトを表示するにはログインしてください。',
       'login_required_orders_message':
           '注文と請求情報を表示するにはログインしてください。',
+      'login_required_create_post_message':
+          '投稿を作成するにはログインしてください。',
       'login_required_settings_message':
           'アカウント設定を管理するにはログインしてください。',
       'login_required_github_message':
           'GitHub 連携を管理するにはログインしてください。',
       'login_required_invites_message':
           '招待と報酬を表示するにはログインしてください。',
+      'error_network':
+          'ネットワークエラーです。接続を確認して再試行してください。',
+      'error_timeout': 'タイムアウトしました。もう一度お試しください。',
+      'error_request_failed':
+          'リクエストに失敗しました。しばらくしてから再試行してください。',
       'session_expired_title': 'セッションの有効期限切れ',
       'session_expired_message':
           'ログインの有効期限が切れました。再度ログインしてください。',
@@ -1176,12 +1207,19 @@ class AppLocalizations {
           'Vous devez vous connecter pour voir vos projets.',
       'login_required_orders_message':
           'Vous devez vous connecter pour voir les commandes et la facturation.',
+      'login_required_create_post_message':
+          'Vous devez vous connecter pour créer une publication.',
       'login_required_settings_message':
           'Vous devez vous connecter pour gérer les paramètres de votre compte.',
       'login_required_github_message':
           'Vous devez vous connecter pour gérer l’intégration GitHub.',
       'login_required_invites_message':
           'Vous devez vous connecter pour voir les invitations et les récompenses.',
+      'error_network':
+          'Erreur réseau. Vérifiez votre connexion et réessayez.',
+      'error_timeout': 'Délai d’attente dépassé. Veuillez réessayer.',
+      'error_request_failed':
+          'La requête a échoué. Veuillez réessayer plus tard.',
       'session_expired_title': 'Session expirée',
       'session_expired_message':
           'Votre session a expiré. Veuillez vous reconnecter.',
@@ -1374,12 +1412,19 @@ class AppLocalizations {
           'Чтобы просматривать проекты, необходимо войти в систему.',
       'login_required_orders_message':
           'Чтобы просматривать заказы и биллинг, необходимо войти в систему.',
+      'login_required_create_post_message':
+          'Чтобы создать публикацию, необходимо войти в систему.',
       'login_required_settings_message':
           'Чтобы управлять настройками аккаунта, необходимо войти в систему.',
       'login_required_github_message':
           'Чтобы управлять интеграцией GitHub, необходимо войти в систему.',
       'login_required_invites_message':
           'Чтобы просматривать приглашения и награды, необходимо войти в систему.',
+      'error_network':
+          'Ошибка сети. Проверьте подключение и попробуйте снова.',
+      'error_timeout': 'Время ожидания истекло. Попробуйте снова.',
+      'error_request_failed':
+          'Запрос не удался. Пожалуйста, попробуйте позже.',
       'session_expired_title': 'Сессия истекла',
       'session_expired_message':
           'Срок действия входа истек. Пожалуйста, войдите снова.',

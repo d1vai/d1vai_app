@@ -1,3 +1,6 @@
+import '../core/locale_bus.dart';
+import '../l10n/app_localizations.dart';
+
 String humanizeError(Object error) {
   var message = error.toString().trim();
 
@@ -11,34 +14,37 @@ String humanizeError(Object error) {
 
   // Network-ish failures (http package wraps SocketException).
   final lower = message.toLowerCase();
+  final loc = AppLocalizations(LocaleBus.locale);
+
   if (lower.contains('socketexception') ||
       lower.contains('failed host lookup') ||
       lower.contains('connection refused') ||
       lower.contains('network is unreachable')) {
-    return '网络连接失败，请检查网络后重试';
+    return loc.translate('error_network');
   }
 
   if (lower.contains('timed out') || lower.contains('timeout')) {
-    return '请求超时，请稍后重试';
+    return loc.translate('error_timeout');
   }
 
   if (lower.contains('http error: 401') || lower.contains('statuscode: 401')) {
-    return '登录已过期，请重新登录';
+    return loc.translate('session_expired_message');
   }
 
   if (lower.contains('unauthenticated') || lower.contains('please login')) {
-    return '请先登录';
+    return loc.translate('login_first');
   }
 
   // Keep backend message when available, otherwise return trimmed raw.
-  return message.isEmpty ? '请求失败，请稍后重试' : message;
+  return message.isEmpty ? loc.translate('error_request_failed') : message;
 }
 
 bool isAuthExpiredText(String message) {
   final m = message.trim().toLowerCase();
-  return m.contains('登录已过期') ||
-      m.contains('unauthorized') ||
+  return m.contains('unauthorized') ||
       m.contains('http error: 401') ||
       m.contains('statuscode: 401') ||
+      m.contains('session expired') ||
+      m.contains('bad credentials') ||
       m.contains(' 401 ');
 }

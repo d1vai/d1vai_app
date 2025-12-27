@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:provider/provider.dart';
 import 'dart:async';
 import '../services/d1vai_service.dart';
 import '../models/community_post.dart';
@@ -9,6 +10,9 @@ import 'create_post_screen.dart';
 import 'post_detail_screen.dart';
 import '../widgets/post_card.dart';
 import '../utils/error_utils.dart';
+import '../providers/auth_provider.dart';
+import '../widgets/login_required_dialog.dart';
+import '../l10n/app_localizations.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -137,6 +141,7 @@ class _CommunityScreenState extends State<CommunityScreen>
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
         title: _isSearching
@@ -157,6 +162,18 @@ class _CommunityScreenState extends State<CommunityScreen>
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () async {
+              final auth = Provider.of<AuthProvider>(context, listen: false);
+              if (!auth.isAuthenticated) {
+                await showDialog<void>(
+                  context: context,
+                  builder: (context) => LoginRequiredDialog(
+                    message:
+                        loc?.translate('login_required_create_post_message') ??
+                        'Please login first to create a post.',
+                  ),
+                );
+                return;
+              }
               final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
