@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/project.dart';
+import 'project_overview_card_shell.dart';
 
 class ProjectOverviewLinksCard extends StatelessWidget {
   final UserProject project;
@@ -16,14 +17,23 @@ class ProjectOverviewLinksCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    final theme = Theme.of(context);
+    return ProjectOverviewCardShell(
       child: Column(
         children: [
           ListTile(
-            leading: const Icon(Icons.language),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 2,
+            ),
+            leading: Icon(Icons.language, color: theme.colorScheme.primary),
             title: const Text('Preview URL'),
             subtitle: Text(project.latestPreviewUrl ?? 'Not available'),
-            trailing: const Icon(Icons.open_in_new),
+            trailing: Icon(
+              Icons.open_in_new,
+              size: 18,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
             onTap: () {
               final url = project.latestPreviewUrl;
               if (url != null && url.isNotEmpty) {
@@ -31,12 +41,22 @@ class ProjectOverviewLinksCard extends StatelessWidget {
               }
             },
           ),
-          const Divider(height: 1),
+          Divider(
+            height: 1,
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.55),
+          ),
           ListTile(
-            leading: const Icon(Icons.code),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 2,
+            ),
+            leading: Icon(Icons.code, color: theme.colorScheme.primary),
             title: const Text('GitHub Repository'),
             subtitle: Text('proj_${project.projectPort}'),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            trailing: Icon(
+              Icons.chevron_right_rounded,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
             onTap: () {
               onOpenGitHubRepo('proj_${project.projectPort}');
             },
@@ -46,4 +66,3 @@ class ProjectOverviewLinksCard extends StatelessWidget {
     );
   }
 }
-

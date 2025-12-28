@@ -7,6 +7,7 @@ import '../../../providers/project_provider.dart';
 import '../../../services/d1vai_service.dart';
 import '../../progress_widget.dart';
 import '../../snackbar_helper.dart';
+import 'project_overview_card_shell.dart';
 
 class ProjectOverviewDangerZoneCard extends StatelessWidget {
   final UserProject project;
@@ -270,126 +271,128 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: theme.colorScheme.error.withValues(alpha: 0.35),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.warning_amber_rounded,
-                  color: theme.colorScheme.error,
+    return ProjectOverviewCardShell(
+      accentColor: colorScheme.error,
+      borderColor: colorScheme.error.withValues(alpha: isDark ? 0.30 : 0.22),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: colorScheme.error),
+              const SizedBox(width: 8),
+              Text(
+                'Danger zone',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: colorScheme.error,
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  'Danger zone',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.error,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Color.alphaBlend(
+                colorScheme.tertiary.withValues(alpha: isDark ? 0.14 : 0.08),
+                colorScheme.surface,
+              ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: colorScheme.outlineVariant.withValues(
+                  alpha: isDark ? 0.32 : 0.34,
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.swap_horiz, color: colorScheme.tertiary),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Transfer project',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Transfer ownership to another user. You will lose access.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => _showTransferDialog(context),
+                  icon: const Icon(Icons.arrow_right_alt),
+                  label: const Text('Transfer'),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.tertiaryContainer.withValues(alpha: 0.25),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: theme.colorScheme.outlineVariant),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Color.alphaBlend(
+                colorScheme.error.withValues(alpha: isDark ? 0.12 : 0.06),
+                colorScheme.surface,
               ),
-              child: Row(
-                children: [
-                  const Icon(Icons.swap_horiz),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Transfer project',
-                          style: TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Transfer ownership to another user. You will lose access.',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: () => _showTransferDialog(context),
-                    icon: const Icon(Icons.arrow_right_alt),
-                    label: const Text('Transfer'),
-                  ),
-                ],
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: colorScheme.error.withValues(alpha: isDark ? 0.26 : 0.20),
               ),
             ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.errorContainer.withValues(alpha: 0.22),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: theme.colorScheme.error.withValues(alpha: 0.5),
+            child: Row(
+              children: [
+                Icon(Icons.delete_outline, color: colorScheme.error),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Delete project',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: colorScheme.error,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Permanently delete this project and its resources.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.delete_outline, color: theme.colorScheme.error),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Delete project',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: theme.colorScheme.error,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Permanently delete this project and its resources.',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
+                ElevatedButton.icon(
+                  onPressed: () => _showDeleteDialog(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colorScheme.error,
+                    foregroundColor: colorScheme.onError,
                   ),
-                  ElevatedButton.icon(
-                    onPressed: () => _showDeleteDialog(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.error,
-                      foregroundColor: theme.colorScheme.onError,
-                    ),
-                    icon: const Icon(Icons.delete),
-                    label: const Text('Delete'),
-                  ),
-                ],
-              ),
+                  icon: const Icon(Icons.delete),
+                  label: const Text('Delete'),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
-

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../models/project.dart';
 import 'project_overview_utils.dart';
+import 'project_overview_card_shell.dart';
 
 class ProjectOverviewHealthMetricsCard extends StatelessWidget {
   final UserProject project;
@@ -11,90 +12,87 @@ class ProjectOverviewHealthMetricsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Health metrics',
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.2,
-              ),
+    return ProjectOverviewCardShell(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Health metrics',
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.2,
             ),
-            const SizedBox(height: 16),
-            _HealthMetricItem(
-              title: 'Branch',
-              status:
-                  (project.workspaceCurrentBranch ??
-                      project.repositoryCurrentBranch ??
-                      '—'),
-              description: 'Active workspace/repository branch',
-              icon: Icons.alt_route,
-              isEnabled:
-                  (project.workspaceCurrentBranch ??
-                          project.repositoryCurrentBranch)
-                      ?.trim()
-                      .isNotEmpty ==
-                  true,
-              badgeMonospace: true,
+          ),
+          const SizedBox(height: 16),
+          _HealthMetricItem(
+            title: 'Branch',
+            status:
+                (project.workspaceCurrentBranch ??
+                    project.repositoryCurrentBranch ??
+                    '—'),
+            description: 'Active workspace/repository branch',
+            icon: Icons.alt_route,
+            isEnabled:
+                (project.workspaceCurrentBranch ??
+                        project.repositoryCurrentBranch)
+                    ?.trim()
+                    .isNotEmpty ==
+                true,
+            badgeMonospace: true,
+          ),
+          const Divider(height: 32),
+          _HealthMetricItem(
+            title: 'Production domain',
+            status: getDeploymentLabel(
+              project.latestProdDeploymentUrl?.trim().isNotEmpty == true
+                  ? project.latestProdDeploymentUrl
+                  : project.vercelProdDomain,
             ),
-            const Divider(height: 32),
-            _HealthMetricItem(
-              title: 'Production domain',
-              status: getDeploymentLabel(
-                project.latestProdDeploymentUrl?.trim().isNotEmpty == true
-                    ? project.latestProdDeploymentUrl
-                    : project.vercelProdDomain,
-              ),
-              description: project.latestProdDeploymentUrl != null &&
-                      project.latestProdDeploymentUrl!.isNotEmpty
-                  ? 'Primary public endpoint'
-                  : 'No domain configured',
-              icon: Icons.language,
-              isEnabled: project.latestProdDeploymentUrl != null &&
-                  project.latestProdDeploymentUrl!.isNotEmpty,
-            ),
-            const Divider(height: 32),
-            _HealthMetricItem(
-              title: 'Analytics status',
-              status: (project.analyticsId != null &&
-                          project.analyticsId!.trim().isNotEmpty) ||
-                      project.analyticsEnabled == true
-                  ? 'Enabled'
-                  : 'Disabled',
-              description: 'Traffic instrumentation',
-              icon: Icons.analytics,
-              isEnabled: (project.analyticsId != null &&
-                      project.analyticsId!.trim().isNotEmpty) ||
-                  project.analyticsEnabled == true,
-            ),
-            const Divider(height: 32),
-            _HealthMetricItem(
-              title: 'Database',
-              status:
-                  (project.projectDatabaseId != null &&
-                          project.projectDatabaseId! > 0)
-                      ? 'Enabled'
-                      : 'Disabled',
-              description: 'Neon integration',
-              icon: Icons.storage,
-              isEnabled:
-                  project.projectDatabaseId != null &&
-                  project.projectDatabaseId! > 0,
-            ),
-            const Divider(height: 32),
-            _HealthMetricItem(
-              title: 'Payments',
-              status: project.projectPayId != null ? 'Enabled' : 'Disabled',
-              description: 'User-scoped Pay API',
-              icon: Icons.payment,
-              isEnabled: project.projectPayId != null,
-            ),
-          ],
-        ),
+            description: project.latestProdDeploymentUrl != null &&
+                    project.latestProdDeploymentUrl!.isNotEmpty
+                ? 'Primary public endpoint'
+                : 'No domain configured',
+            icon: Icons.language,
+            isEnabled: project.latestProdDeploymentUrl != null &&
+                project.latestProdDeploymentUrl!.isNotEmpty,
+          ),
+          const Divider(height: 32),
+          _HealthMetricItem(
+            title: 'Analytics status',
+            status: (project.analyticsId != null &&
+                        project.analyticsId!.trim().isNotEmpty) ||
+                    project.analyticsEnabled == true
+                ? 'Enabled'
+                : 'Disabled',
+            description: 'Traffic instrumentation',
+            icon: Icons.analytics,
+            isEnabled: (project.analyticsId != null &&
+                    project.analyticsId!.trim().isNotEmpty) ||
+                project.analyticsEnabled == true,
+          ),
+          const Divider(height: 32),
+          _HealthMetricItem(
+            title: 'Database',
+            status:
+                (project.projectDatabaseId != null &&
+                        project.projectDatabaseId! > 0)
+                    ? 'Enabled'
+                    : 'Disabled',
+            description: 'Neon integration',
+            icon: Icons.storage,
+            isEnabled:
+                project.projectDatabaseId != null && project.projectDatabaseId! > 0,
+          ),
+          const Divider(height: 32),
+          _HealthMetricItem(
+            title: 'Payments',
+            status: project.projectPayId != null ? 'Enabled' : 'Disabled',
+            description: 'User-scoped Pay API',
+            icon: Icons.payment,
+            isEnabled: project.projectPayId != null,
+          ),
+        ],
       ),
     );
   }

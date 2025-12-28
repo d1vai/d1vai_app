@@ -340,9 +340,9 @@ class _ProjectCardTileState extends State<ProjectCardTile>
                         gradient: LinearGradient(
                           colors: [
                             Colors.transparent,
-                            accent.withValues(alpha: isDark ? 0.65 : 0.22),
+                            accent.withValues(alpha: isDark ? 0.65 : 0.08),
                             colorScheme.secondary.withValues(
-                              alpha: isDark ? 0.30 : 0.10,
+                              alpha: isDark ? 0.30 : 0.04,
                             ),
                             Colors.transparent,
                           ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../models/project.dart';
 import 'project_overview_utils.dart';
+import 'project_overview_card_shell.dart';
 
 class ProjectOverviewHeaderCard extends StatelessWidget {
   final UserProject project;
@@ -13,74 +14,96 @@ class ProjectOverviewHeaderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Hero(
-                  tag: _heroTag(project.id),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(12),
+    return ProjectOverviewCardShell(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Hero(
+                tag: _heroTag(project.id),
+                child: Material(
+                  color: Colors.transparent,
+                  child: Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      color: Color.alphaBlend(
+                        colorScheme.primary.withValues(
+                          alpha: isDark ? 0.18 : 0.10,
+                        ),
+                        colorScheme.surface,
                       ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        project.emoji ?? '🚀',
-                        style: const TextStyle(fontSize: 32),
+                      border: Border.all(
+                        color: colorScheme.primary.withValues(
+                          alpha: isDark ? 0.22 : 0.16,
+                        ),
                       ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      project.emoji ?? '🚀',
+                      style: const TextStyle(fontSize: 32),
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        project.projectName,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      project.projectName,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        height: 1.08,
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        project.projectDescription,
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurfaceVariant,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      project.projectDescription,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.92,
                         ),
+                        height: 1.2,
                       ),
-                    ],
-                  ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                ProjectStatusChip(status: project.status),
-                const SizedBox(width: 8),
-                Text(
-                  'Updated ${formatTimeAgo(project.updatedAt)}',
-                  style: TextStyle(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontSize: 12,
-                  ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              ProjectStatusChip(status: project.status),
+              const SizedBox(width: 10),
+              Icon(
+                Icons.schedule_rounded,
+                size: 16,
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.85),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Updated ${formatTimeAgo(project.updatedAt)}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.90),
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -113,9 +136,15 @@ class ProjectStatusChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: s.color.withValues(alpha: 0.12),
+        color: s.color.withValues(
+          alpha: colorScheme.brightness == Brightness.dark ? 0.14 : 0.08,
+        ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: s.color.withValues(alpha: 0.55)),
+        border: Border.all(
+          color: s.color.withValues(
+            alpha: colorScheme.brightness == Brightness.dark ? 0.55 : 0.40,
+          ),
+        ),
       ),
       child: Text(
         s.label,
