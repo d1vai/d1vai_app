@@ -55,19 +55,31 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final user = Provider.of<AuthProvider>(context, listen: false).user;
-      if (user == null) {
+    final user = Provider.of<AuthProvider>(context, listen: false).user;
+    if (user == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
         _showLoginRequiredDialog();
-      } else {
-        _loadProject();
-      }
+      });
+      return;
+    }
+
+    // Populate immediately (enables Hero on first frame), then refresh async.
+    final projectProvider = Provider.of<ProjectProvider>(context, listen: false);
+    final cached = projectProvider.getProjectById(widget.projectId);
+    if (cached != null) {
+      _project = cached;
+      _isLoading = false;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadProject();
     });
   }
 
   Future<void> _loadProject() async {
+    final shouldShowBlocking = _project == null;
     setState(() {
-      _isLoading = true;
+      _isLoading = shouldShowBlocking;
       _error = null;
     });
 

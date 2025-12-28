@@ -8,63 +8,66 @@ import '../providers/auth_provider.dart';
 import '../models/project.dart';
 import '../widgets/create_project_dialog.dart';
 import '../widgets/snackbar_helper.dart';
+import '../widgets/search_field.dart';
 import '../utils/error_utils.dart';
 import 'projects/widgets/project_card_tile.dart';
 
 class ProjectsScreen extends StatefulWidget {
-  const ProjectsScreen({super.key});
+  final bool openCreateOnStart;
+  final String? initialSearchQuery;
+
+  const ProjectsScreen({
+    super.key,
+    this.openCreateOnStart = false,
+    this.initialSearchQuery,
+  });
 
   @override
   State<ProjectsScreen> createState() => _ProjectsScreenState();
 }
 
 class _ProjectsScreenState extends State<ProjectsScreen> {
-  final TextEditingController _searchController = TextEditingController();
   Timer? _searchDebounce;
-  String _selectedFilter = 'all';
   String? _lastErrorShown;
+  bool _didOpenCreate = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = Provider.of<ProjectProvider>(context, listen: false);
-      // Restore last state (useful when navigating back from detail pages).
-      if (provider.searchQuery.trim().isNotEmpty &&
-          _searchController.text.trim().isEmpty) {
-        _searchController.text = provider.searchQuery;
-        _searchController.selection = TextSelection.fromPosition(
-          TextPosition(offset: _searchController.text.length),
-        );
+      final initialQuery = widget.initialSearchQuery?.trim() ?? '';
+      if (initialQuery.isNotEmpty && provider.searchQuery.trim().isEmpty) {
+        provider.setSearchQuery(initialQuery);
       }
-      final status = provider.statusFilter;
-      final nextSelected =
-          (status == null || status.isEmpty) ? 'all' : status;
-      if (mounted && nextSelected != _selectedFilter) {
-        setState(() {
-          _selectedFilter = nextSelected;
+
+      provider.loadProjects();
+
+      if (widget.openCreateOnStart && !_didOpenCreate) {
+        _didOpenCreate = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          showDialog(
+            context: context,
+            builder: (context) => const CreateProjectDialog(),
+          );
         });
       }
-      provider.loadProjects();
     });
-    _searchController.addListener(_onSearchChanged);
   }
 
   @override
   void dispose() {
-    _searchController.removeListener(_onSearchChanged);
-    _searchController.dispose();
     _searchDebounce?.cancel();
     super.dispose();
   }
 
-  /// 搜索内容变化处理
-  void _onSearchChanged() {
+  void _onSearchChanged(String query) {
     final provider = Provider.of<ProjectProvider>(context, listen: false);
-    final query = _searchController.text.trim();
+    final q = query.trim();
     _searchDebounce?.cancel();
     _searchDebounce = Timer(const Duration(milliseconds: 220), () {
-      provider.setSearchQuery(query);
+      provider.setSearchQuery(q);
     });
   }
 
@@ -81,46 +84,8 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
   /// 处理搜索
   void _handleSearch(String query) {
     final provider = Provider.of<ProjectProvider>(context, listen: false);
-    provider.setSearchQuery(query);
-  }
-
-  /// 处理过滤
-  void _handleFilter(String filter) {
-    setState(() {
-      _selectedFilter = filter;
-    });
-    final provider = Provider.of<ProjectProvider>(context, listen: false);
-    provider.setStatus(filter == 'all' ? null : filter);
-  }
-
-  /// 处理登出
-  Future<void> _handleLogout() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('确认登出'),
-        content: const Text('您确定要登出吗？'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('确认登出', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && mounted) {
-      // 清除缓存
-      await Provider.of<AuthProvider>(context, listen: false).logout();
-      // 跳转到登录页面（替换当前页面，不保留返回栈）
-      if (mounted) {
-        context.go('/login');
-      }
-    }
+    provider.setSearchQuery(query.trim());
+    FocusScope.of(context).unfocus();
   }
 
   Future<void> _logoutAndGoLogin() async {
@@ -131,85 +96,25 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<ProjectProvider>(context);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Projects'),
-        actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _refreshData),
-          PopupMenuButton(
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'logout',
-                child: Row(
-                  children: [
-                    Icon(Icons.logout, color: Colors.red, size: 20),
-                    SizedBox(width: 8),
-                    Text('登出'),
-                  ],
-                ),
-              ),
-            ],
-            onSelected: (value) {
-              if (value == 'logout') {
-                _handleLogout();
-              }
-            },
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Projects')),
       body: Column(
         children: [
           // 搜索栏
           Padding(
             padding: const EdgeInsets.all(16),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search projects...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-              ),
-              onChanged: (value) {
-                // 实时搜索通过 _onSearchChanged 监听器处理
-              },
+            child: SearchField(
+              hintText: 'Search projects...',
+              initialValue: provider.searchQuery,
+              onChanged: _onSearchChanged,
               onSubmitted: _handleSearch,
-            ),
-          ),
-
-          // 过滤器标签
-          Container(
-            height: 48,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                _buildFilterChip('All', 'all', _selectedFilter, _handleFilter),
-                const SizedBox(width: 8),
-                _buildFilterChip(
-                  'Active',
-                  'active',
-                  _selectedFilter,
-                  _handleFilter,
-                ),
-                const SizedBox(width: 8),
-                _buildFilterChip(
-                  'Archived',
-                  'archived',
-                  _selectedFilter,
-                  _handleFilter,
-                ),
-                const SizedBox(width: 8),
-                _buildFilterChip(
-                  'Draft',
-                  'draft',
-                  _selectedFilter,
-                  _handleFilter,
-                ),
-              ],
+              onClear: () {
+                Provider.of<ProjectProvider>(
+                  context,
+                  listen: false,
+                ).setSearchQuery('');
+              },
             ),
           ),
 
@@ -287,9 +192,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
 
                 final visibleProjects = provider.visibleProjects;
                 if (visibleProjects.isEmpty) {
-                  final hasSearchQuery =
-                      _searchController.text.trim().isNotEmpty ||
-                      provider.searchQuery.trim().isNotEmpty;
+                  final hasSearchQuery = provider.searchQuery.trim().isNotEmpty;
                   final theme = Theme.of(context);
                   return Center(
                     child: Column(
@@ -310,6 +213,20 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
+                        if (!hasSearchQuery) ...[
+                          const SizedBox(height: 12),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) =>
+                                    const CreateProjectDialog(),
+                              );
+                            },
+                            icon: const Icon(Icons.add),
+                            label: const Text('Create Project'),
+                          ),
+                        ],
                       ],
                     ),
                   );
@@ -361,25 +278,6 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
         },
         child: const Icon(Icons.add),
       ),
-    );
-  }
-
-  /// 构建过滤标签
-  Widget _buildFilterChip(
-    String label,
-    String value,
-    String selectedValue,
-    Function(String) onSelected,
-  ) {
-    final isSelected = selectedValue == value;
-    final theme = Theme.of(context);
-    return FilterChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (selected) => onSelected(value),
-      backgroundColor: theme.colorScheme.surfaceContainerHighest,
-      selectedColor: theme.colorScheme.primaryContainer,
-      checkmarkColor: theme.colorScheme.primary,
     );
   }
 

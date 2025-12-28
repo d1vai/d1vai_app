@@ -25,6 +25,8 @@ class _ProjectCardTileState extends State<ProjectCardTile>
   late final AnimationController _pressController;
   late final AnimationController _shineController;
 
+  String _heroTag(String projectId) => 'project-emoji-$projectId';
+
   @override
   void initState() {
     super.initState();
@@ -152,36 +154,58 @@ class _ProjectCardTileState extends State<ProjectCardTile>
                                 ),
                               ),
                             ),
-                            child: Stack(
-                              children: [
-                                Center(
-                                  child: Text(
-                                    project.emoji ?? '🚀',
-                                    style: const TextStyle(fontSize: 26),
-                                  ),
-                                ),
-                                if (hasPreview)
-                                  Positioned(
-                                    right: 6,
-                                    bottom: 6,
-                                    child: Container(
-                                      width: 10,
-                                      height: 10,
-                                      decoration: BoxDecoration(
-                                        color: colorScheme.secondary,
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: colorScheme.secondary
-                                                .withValues(alpha: 0.35),
-                                            blurRadius: 10,
-                                            offset: const Offset(0, 6),
-                                          ),
-                                        ],
+                            child: Hero(
+                              tag: _heroTag(project.id),
+                              flightShuttleBuilder:
+                                  (
+                                    flightContext,
+                                    animation,
+                                    flightDirection,
+                                    fromHeroContext,
+                                    toHeroContext,
+                                  ) {
+                                    return FadeTransition(
+                                      opacity: CurvedAnimation(
+                                        parent: animation,
+                                        curve: Curves.easeOutCubic,
+                                      ),
+                                      child: toHeroContext.widget,
+                                    );
+                                  },
+                              child: Material(
+                                color: Colors.transparent,
+                                child: Stack(
+                                  children: [
+                                    Center(
+                                      child: Text(
+                                        project.emoji ?? '🚀',
+                                        style: const TextStyle(fontSize: 26),
                                       ),
                                     ),
-                                  ),
-                              ],
+                                    if (hasPreview)
+                                      Positioned(
+                                        right: 6,
+                                        bottom: 6,
+                                        child: Container(
+                                          width: 10,
+                                          height: 10,
+                                          decoration: BoxDecoration(
+                                            color: colorScheme.secondary,
+                                            shape: BoxShape.circle,
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: colorScheme.secondary
+                                                    .withValues(alpha: 0.35),
+                                                blurRadius: 10,
+                                                offset: const Offset(0, 6),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -316,8 +340,10 @@ class _ProjectCardTileState extends State<ProjectCardTile>
                         gradient: LinearGradient(
                           colors: [
                             Colors.transparent,
-                            accent.withValues(alpha: 0.65),
-                            colorScheme.secondary.withValues(alpha: 0.30),
+                            accent.withValues(alpha: isDark ? 0.65 : 0.22),
+                            colorScheme.secondary.withValues(
+                              alpha: isDark ? 0.30 : 0.10,
+                            ),
                             Colors.transparent,
                           ],
                         ),
@@ -454,4 +480,3 @@ class _TagPill extends StatelessWidget {
     );
   }
 }
-

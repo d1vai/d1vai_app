@@ -13,6 +13,7 @@ import '../core/theme/app_colors.dart';
 import '../utils/error_utils.dart';
 import '../widgets/login_required_view.dart';
 import '../l10n/app_localizations.dart';
+import 'projects/widgets/project_card_tile.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -255,7 +256,17 @@ class _DashboardScreenState extends State<DashboardScreen>
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               TextButton(
-                onPressed: user == null ? () => context.go('/login') : () => context.push('/projects'),
+                onPressed: user == null
+                    ? () => context.go('/login')
+                    : () {
+                        final q = _isSearching
+                            ? _searchController.text.trim()
+                            : '';
+                        final location = q.isEmpty
+                            ? '/projects'
+                            : '/projects?q=${Uri.encodeQueryComponent(q)}';
+                        context.push(location);
+                      },
                 child: const Text('View All'),
               ),
             ],
@@ -426,7 +437,6 @@ class _DashboardScreenState extends State<DashboardScreen>
     ProjectProvider projectProvider, {
     bool isSearchResults = false,
   }) {
-    final theme = Theme.of(context);
     final List<UserProject> projects = isSearchResults
         ? _searchResults.take(5).toList()
         : projectProvider.projects.take(5).toList();
@@ -447,6 +457,17 @@ class _DashboardScreenState extends State<DashboardScreen>
               Text(
                 'Create your first project to get started',
                 style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => const CreateProjectDialog(),
+                  );
+                },
+                icon: const Icon(Icons.add),
+                label: const Text('Create Project'),
               ),
             ],
           ),
@@ -487,87 +508,10 @@ class _DashboardScreenState extends State<DashboardScreen>
               ),
             );
           },
-          child: CustomCard(
-            child: InkWell(
-              onTap: () => context.push('/projects/${project.id}'),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        project.emoji ?? '🚀',
-                        style: const TextStyle(fontSize: 36),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            project.projectName,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            project.projectDescription,
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurfaceVariant,
-                              fontSize: 14,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.circle,
-                                size: 8,
-                                color: project.status == 'active'
-                                    ? AppColors.success
-                                    : project.status == 'archived'
-                                    ? AppColors.warning
-                                    : AppColors.textSecondaryLight,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                project.status,
-                                style: TextStyle(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      _formatTimeAgo(project.updatedAt),
-                      style: TextStyle(
-                        color: Colors.grey.shade400,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          child: ProjectCardTile(
+            project: project,
+            updatedText: _formatTimeAgo(project.updatedAt),
+            onTap: () => context.push('/projects/${project.id}'),
           ),
         );
       },

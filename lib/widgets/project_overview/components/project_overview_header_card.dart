@@ -8,6 +8,8 @@ class ProjectOverviewHeaderCard extends StatelessWidget {
 
   const ProjectOverviewHeaderCard({super.key, required this.project});
 
+  String _heroTag(String projectId) => 'project-emoji-$projectId';
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -20,17 +22,23 @@ class ProjectOverviewHeaderCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    project.emoji ?? '🚀',
-                    style: const TextStyle(fontSize: 32),
+                Hero(
+                  tag: _heroTag(project.id),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        project.emoji ?? '🚀',
+                        style: const TextStyle(fontSize: 32),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -120,4 +128,3 @@ class ProjectStatusChip extends StatelessWidget {
     );
   }
 }
-

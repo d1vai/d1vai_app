@@ -16,6 +16,7 @@ import '../screens/invites_list_screen.dart';
 import '../screens/notification_settings_screen.dart';
 import '../screens/help_support_screen.dart';
 import '../screens/github_settings_screen.dart';
+import '../screens/projects_screen.dart';
 import '../screens/settings/api_settings_screen.dart';
 import '../providers/auth_provider.dart';
 
@@ -253,12 +254,19 @@ GoRouter createAppRouter() {
         ),
       ),
       GoRoute(
-        path: '/projects/new',
+        path: '/projects',
         pageBuilder: (context, state) => _buildPageWithTransition(
           context,
           state,
-          const Scaffold(body: Center(child: Text('New Project Screen'))),
+          ProjectsScreen(
+            openCreateOnStart: state.uri.queryParameters['create'] == '1',
+            initialSearchQuery: state.uri.queryParameters['q'],
+          ),
         ),
+      ),
+      GoRoute(
+        path: '/projects/new',
+        redirect: (context, state) => '/projects?create=1',
       ),
       GoRoute(
         path: '/projects/:id',
