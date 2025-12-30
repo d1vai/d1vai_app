@@ -96,7 +96,7 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   // Outbox actions (implemented by logic mixin; UI passes these into widgets).
   void _outboxClear();
   void _outboxDelete(OutboxItem item);
-  void _outboxEdit(OutboxItem item);
+  void _outboxUpdate(OutboxItem item, String nextPrompt);
 
   Future<void> triggerPreviewRedeploy();
   Future<void> reconnectWebSocket();

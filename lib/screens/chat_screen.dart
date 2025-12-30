@@ -216,17 +216,24 @@ class _ChatScreenState extends State<ChatScreen>
     unawaited(_drainOutbox());
   }
 
-  void _outboxEdit(OutboxItem item) {
+  void _outboxUpdate(OutboxItem item, String nextPrompt) {
+    final next = nextPrompt.trim();
     _abortOutboxDrain();
     setState(() {
-      _outboxItems.removeWhere((x) => x.id == item.id);
+      final idx = _outboxItems.indexWhere((x) => x.id == item.id);
+      if (idx == -1) return;
+      if (next.isEmpty) {
+        _outboxItems.removeAt(idx);
+      } else {
+        _outboxItems[idx] = _outboxItems[idx].copyWith(
+          prompt: next,
+          status: OutboxItemStatus.queued,
+          error: null,
+        );
+      }
     });
     _signalOutbox();
-    _inputController.text = item.prompt;
-    _inputController.selection = TextSelection.fromPosition(
-      TextPosition(offset: _inputController.text.length),
-    );
-    _inputFocusNode.requestFocus();
+    unawaited(_drainOutbox());
   }
 
   void _outboxClear() {
@@ -1490,7 +1497,7 @@ class _ChatScreenState extends State<ChatScreen>
                 mode: _outboxMode,
                 onClear: _outboxClear,
                 onDelete: _outboxDelete,
-                onEdit: _outboxEdit,
+                onUpdate: _outboxUpdate,
               );
             },
           ),
@@ -1502,6 +1509,7 @@ class _ChatScreenState extends State<ChatScreen>
             controller: _inputController,
             focusNode: _inputFocusNode,
             queueCount: _outboxItems.length,
+            showSendPulse: _outboxMode == OutboxMode.dispatching,
           ),
         ],
       ),

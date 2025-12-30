@@ -20,7 +20,7 @@ class ChatBottomSheet extends StatefulWidget {
   final OutboxMode outboxMode;
   final VoidCallback? onOutboxClear;
   final void Function(OutboxItem item)? onOutboxDelete;
-  final void Function(OutboxItem item)? onOutboxEdit;
+  final void Function(OutboxItem item, String nextPrompt)? onOutboxUpdate;
   final Map<String, MessageStatus>? messageStatuses;
   final Function(ChatMessage)? onRetry;
   final VoidCallback? onLoadMore;
@@ -45,7 +45,7 @@ class ChatBottomSheet extends StatefulWidget {
     this.outboxMode = OutboxMode.idle,
     this.onOutboxClear,
     this.onOutboxDelete,
-    this.onOutboxEdit,
+    this.onOutboxUpdate,
     this.messageStatuses,
     this.onRetry,
     this.onLoadMore,
@@ -90,14 +90,7 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
       mode: widget.outboxMode,
       onClear: widget.onOutboxClear ?? () {},
       onDelete: widget.onOutboxDelete ?? (_) {},
-      onEdit: (item) {
-        widget.onOutboxEdit?.call(item);
-        _inputController.text = item.prompt;
-        _inputController.selection = TextSelection.fromPosition(
-          TextPosition(offset: _inputController.text.length),
-        );
-        _inputFocusNode.requestFocus();
-      },
+      onUpdate: widget.onOutboxUpdate ?? (_, __) {},
     );
   }
 
@@ -291,6 +284,7 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
             controller: _inputController,
             focusNode: _inputFocusNode,
             queueCount: widget.outboxItems.length,
+            showSendPulse: widget.outboxMode == OutboxMode.dispatching,
           ),
         ],
       ),

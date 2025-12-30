@@ -126,16 +126,38 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     unawaited(_drainOutbox());
   }
 
-  void _outboxEdit(OutboxItem item) {
+  void _outboxUpdate(OutboxItem item, String nextPrompt) {
+    final next = nextPrompt.trim();
     _abortOutboxDrain();
     if (!mounted) {
-      _outboxItems.removeWhere((x) => x.id == item.id);
+      final idx = _outboxItems.indexWhere((x) => x.id == item.id);
+      if (idx == -1) return;
+      if (next.isEmpty) {
+        _outboxItems.removeAt(idx);
+      } else {
+        _outboxItems[idx] = _outboxItems[idx].copyWith(
+          prompt: next,
+          status: OutboxItemStatus.queued,
+          error: null,
+        );
+      }
       return;
     }
     setState(() {
-      _outboxItems.removeWhere((x) => x.id == item.id);
+      final idx = _outboxItems.indexWhere((x) => x.id == item.id);
+      if (idx == -1) return;
+      if (next.isEmpty) {
+        _outboxItems.removeAt(idx);
+      } else {
+        _outboxItems[idx] = _outboxItems[idx].copyWith(
+          prompt: next,
+          status: OutboxItemStatus.queued,
+          error: null,
+        );
+      }
     });
     _signalOutbox();
+    unawaited(_drainOutbox());
   }
 
   void _outboxClear() {

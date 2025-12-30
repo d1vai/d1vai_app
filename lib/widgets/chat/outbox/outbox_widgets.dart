@@ -408,12 +408,88 @@ Future<void> showOutboxSheet(
   required OutboxMode mode,
   required VoidCallback onClear,
   required void Function(OutboxItem item) onDelete,
-  required void Function(OutboxItem item) onEdit,
+  required void Function(OutboxItem item, String nextPrompt) onUpdate,
 }) async {
-  final theme = Theme.of(context);
-  final fgMuted = theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.75);
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    backgroundColor: Theme.of(context).colorScheme.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (context) {
+      return _OutboxSheet(
+        items: items,
+        mode: mode,
+        onClear: onClear,
+        onDelete: onDelete,
+        onUpdate: onUpdate,
+      );
+    },
+  );
+}
 
-  String hint() {
+class _OutboxSheet extends StatefulWidget {
+  final List<OutboxItem> items;
+  final OutboxMode mode;
+  final VoidCallback onClear;
+  final void Function(OutboxItem item) onDelete;
+  final void Function(OutboxItem item, String nextPrompt) onUpdate;
+
+  const _OutboxSheet({
+    required this.items,
+    required this.mode,
+    required this.onClear,
+    required this.onDelete,
+    required this.onUpdate,
+  });
+
+  @override
+  State<_OutboxSheet> createState() => _OutboxSheetState();
+}
+
+class _OutboxSheetState extends State<_OutboxSheet> {
+  String? _editingId;
+  final TextEditingController _controller = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _startEdit(OutboxItem item) {
+    setState(() {
+      _editingId = item.id;
+      _controller.text = item.prompt;
+      _controller.selection = TextSelection.fromPosition(
+        TextPosition(offset: _controller.text.length),
+      );
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _focusNode.requestFocus();
+    });
+  }
+
+  void _cancelEdit() {
+    setState(() {
+      _editingId = null;
+      _controller.clear();
+    });
+  }
+
+  void _saveEdit(OutboxItem item) {
+    final next = _controller.text.trim();
+    widget.onUpdate(item, next);
+    _cancelEdit();
+  }
+
+  String _hint() {
+    final mode = widget.mode;
     if (mode == OutboxMode.waitingWorkspace) return 'Waiting for workspace…';
     if (mode == OutboxMode.waitingTask) return 'Waiting for previous task…';
     if (mode == OutboxMode.dispatching) return 'Sending…';
@@ -421,21 +497,21 @@ Future<void> showOutboxSheet(
     return '';
   }
 
-  await showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    backgroundColor: theme.colorScheme.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (context) {
-      return DraggableScrollableSheet(
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final fgMuted = theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.75);
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: DraggableScrollableSheet(
         expand: false,
         initialChildSize: 0.62,
         minChildSize: 0.35,
         maxChildSize: 0.95,
         builder: (context, scrollController) {
+          final items = widget.items;
           return Column(
             children: [
               const SizedBox(height: 10),
@@ -459,19 +535,19 @@ Future<void> showOutboxSheet(
                     ),
                     const Spacer(),
                     TextButton(
-                      onPressed: onClear,
+                      onPressed: widget.onClear,
                       child: const Text('Clear'),
                     ),
                   ],
                 ),
               ),
-              if (hint().isNotEmpty)
+              if (_hint().isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      hint(),
+                      _hint(),
                       style: theme.textTheme.bodySmall?.copyWith(color: fgMuted),
                     ),
                   ),
@@ -490,7 +566,149 @@ Future<void> showOutboxSheet(
                         itemBuilder: (context, idx) {
                           final item = items[idx];
                           final isRunning = item.status == OutboxItemStatus.running;
-                          final canDismiss = !isRunning;
+                          final canEdit = !isRunning;
+                          final isEditing = _editingId == item.id;
+
+                          Widget trailingIcons() {
+                            final iconFg = theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.75);
+                            final iconBg = theme.colorScheme.surfaceContainerHighest.withValues(
+                              alpha: theme.brightness == Brightness.dark ? 0.55 : 0.85,
+                            );
+
+                            Widget iconBtn({
+                              required IconData icon,
+                              required String tooltip,
+                              required VoidCallback? onTap,
+                              Color? color,
+                            }) {
+                              return Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: onTap,
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: iconBg,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: theme.colorScheme.outlineVariant.withValues(alpha: 0.55),
+                                      ),
+                                    ),
+                                    child: Icon(
+                                      icon,
+                                      size: 18,
+                                      color: color ?? iconFg,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+
+                            if (isRunning) {
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: OutboxBubbles(
+                                  color: theme.colorScheme.primary,
+                                  dotSize: 4.5,
+                                ),
+                              );
+                            }
+
+                            if (isEditing) {
+                              final canSave = _controller.text.trim().isNotEmpty;
+                              return Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  iconBtn(
+                                    icon: Icons.close,
+                                    tooltip: 'Cancel',
+                                    onTap: _cancelEdit,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  iconBtn(
+                                    icon: Icons.check,
+                                    tooltip: 'Save',
+                                    onTap: canSave ? () => _saveEdit(item) : null,
+                                    color: canSave
+                                        ? theme.colorScheme.primary
+                                        : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.35),
+                                  ),
+                                ],
+                              );
+                            }
+
+                            return Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                iconBtn(
+                                  icon: Icons.edit,
+                                  tooltip: 'Edit',
+                                  onTap: canEdit ? () => _startEdit(item) : null,
+                                ),
+                                const SizedBox(width: 8),
+                                iconBtn(
+                                  icon: Icons.delete_outline,
+                                  tooltip: 'Delete',
+                                  onTap: canEdit ? () => widget.onDelete(item) : null,
+                                  color: theme.colorScheme.error.withValues(alpha: 0.9),
+                                ),
+                              ],
+                            );
+                          }
+
+                          Widget content() {
+                            if (!isEditing) {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item.prompt,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  if (item.error != null && item.error!.trim().isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 4),
+                                      child: Text(
+                                        item.error!.trim(),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: theme.textTheme.bodySmall?.copyWith(
+                                          color: theme.colorScheme.error,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              );
+                            }
+
+                            return TextField(
+                              controller: _controller,
+                              focusNode: _focusNode,
+                              minLines: 1,
+                              maxLines: 3,
+                              textCapitalization: TextCapitalization.sentences,
+                              decoration: InputDecoration(
+                                hintText: 'Edit message…',
+                                isDense: true,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                              ),
+                              onSubmitted: (_) {
+                                if (_controller.text.trim().isEmpty) return;
+                                _saveEdit(item);
+                              },
+                            );
+                          }
+
+                          final canDismiss = !isRunning && !isEditing;
                           return Dismissible(
                             key: ValueKey(item.id),
                             direction: canDismiss
@@ -499,12 +717,11 @@ Future<void> showOutboxSheet(
                             confirmDismiss: (direction) async {
                               if (!canDismiss) return false;
                               if (direction == DismissDirection.startToEnd) {
-                                onEdit(item);
-                                Navigator.pop(context);
+                                _startEdit(item);
                                 return false;
                               }
                               if (direction == DismissDirection.endToStart) {
-                                onDelete(item);
+                                widget.onDelete(item);
                                 return true;
                               }
                               return false;
@@ -546,83 +763,39 @@ Future<void> showOutboxSheet(
                                 ],
                               ),
                             ),
-                            child: ListTile(
-                              title: Text(
-                                item.prompt,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              subtitle: item.error != null && item.error!.trim().isNotEmpty
-                                  ? Text(
-                                      item.error!.trim(),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(color: theme.colorScheme.error),
-                                    )
-                                  : null,
-                              trailing: isRunning
-                                  ? OutboxBubbles(color: theme.colorScheme.primary, dotSize: 4.5)
-                                  : null,
-                              onLongPress: () async {
-                                await showModalBottomSheet<void>(
-                                  context: context,
-                                  useSafeArea: true,
-                                  backgroundColor: theme.colorScheme.surface,
-                                  shape: const RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.vertical(
-                                      top: Radius.circular(18),
-                                    ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              child: Card(
+                                elevation: 0,
+                                color: theme.colorScheme.surface,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  side: BorderSide(
+                                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.55),
                                   ),
-                                  builder: (context) {
-                                    return SafeArea(
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          ListTile(
-                                            leading: const Icon(Icons.edit),
-                                            title: const Text('Edit'),
-                                            enabled: !isRunning,
-                                            onTap: isRunning
-                                                ? null
-                                                : () {
-                                                    onEdit(item);
-                                                    Navigator.pop(context);
-                                                    Navigator.pop(context);
-                                                  },
-                                          ),
-                                          ListTile(
-                                            leading: const Icon(Icons.delete),
-                                            title: const Text('Delete'),
-                                            enabled: !isRunning,
-                                            onTap: isRunning
-                                                ? null
-                                                : () {
-                                                    onDelete(item);
-                                                    Navigator.pop(context);
-                                                  },
-                                          ),
-                                          const SizedBox(height: 6),
-                                          ListTile(
-                                            leading: const Icon(Icons.close),
-                                            title: const Text('Cancel'),
-                                            onTap: () => Navigator.pop(context),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                );
-                              },
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(child: content()),
+                                      const SizedBox(width: 10),
+                                      trailingIcons(),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ),
                           );
                         },
                       ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
             ],
           );
         },
-      );
-    },
-  );
+      ),
+    );
+  }
 }
