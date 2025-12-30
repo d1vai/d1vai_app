@@ -36,6 +36,7 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
 
   // WebSocket runtime (similar responsibilities to web's wsManager + useWebSocket)
   String? _activeWsSessionId;
+  String? _activeWsUrlOverride;
   WebSocket? _webSocket;
   StreamSubscription? _webSocketSubscription;
   Timer? _reconnectTimer;

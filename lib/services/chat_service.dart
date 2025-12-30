@@ -149,17 +149,71 @@ class ChatService {
     }
   }
 
+  /// Return the latest running session for a project (if any).
+  ///
+  /// Backend returns `null` when no active running session exists or when the
+  /// latest persisted message is terminal (complete/result/error/cancelled).
+  Future<Map<String, dynamic>?> getActiveProjectSession({
+    required String projectId,
+  }) async {
+    try {
+      final response = await _apiClient.get<dynamic>(
+        '/api/projects/$projectId/sessions/active',
+        retries: 0,
+      );
+      if (response == null) return null;
+      if (response is Map<String, dynamic>) return response;
+      if (response is Map) {
+        return response.map((k, v) => MapEntry(k.toString(), v));
+      }
+      debugPrint(
+        'Unexpected active session response type: ${response.runtimeType}',
+      );
+      return null;
+    } catch (e) {
+      debugPrint('Failed to get active project session: $e');
+      return null;
+    }
+  }
+
   /// Build WebSocket URL for a project session (backend expects `?token=...` query param).
   ///
   /// Web uses `/api/projects/ws/session/{session_id}` with `ws/wss` derived from API base URL.
   Future<String> buildProjectSessionWebSocketUrl({
     required String sessionId,
+    String? websocketUrlOverride,
   }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token');
       if (token == null || token.trim().isEmpty) {
         throw ChatException('Not logged in or token expired');
+      }
+      final trimmedOverride = websocketUrlOverride?.trim();
+      if (trimmedOverride != null && trimmedOverride.isNotEmpty) {
+        final overrideUri = Uri.parse(trimmedOverride);
+        Uri resolved;
+        if (overrideUri.scheme.isEmpty) {
+          // Allow path-only overrides (e.g. "/api/projects/ws/session/<sid>").
+          final base = Uri.parse(ApiClient.baseUrl);
+          final wsScheme = base.scheme == 'https' ? 'wss' : 'ws';
+          resolved = base.replace(
+            scheme: wsScheme,
+            path: overrideUri.path,
+            queryParameters: overrideUri.queryParameters,
+          );
+        } else if (overrideUri.scheme == 'http' || overrideUri.scheme == 'https') {
+          resolved = overrideUri.replace(
+            scheme: overrideUri.scheme == 'https' ? 'wss' : 'ws',
+          );
+        } else {
+          resolved = overrideUri;
+        }
+
+        final hasToken = resolved.queryParameters.containsKey('token');
+        final qp = Map<String, String>.from(resolved.queryParameters);
+        if (!hasToken) qp['token'] = token.trim();
+        return resolved.replace(queryParameters: qp).toString();
       }
 
       final base = Uri.parse(ApiClient.baseUrl);

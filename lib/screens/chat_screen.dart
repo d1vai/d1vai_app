@@ -36,6 +36,10 @@ class _ChatScreenState extends State<ChatScreen>
   final List<ChatMessage> _messages = [];
   final Map<String, MessageStatus> _messageStatuses = {};
 
+  // Session UI phase (align with ProjectChatTab mobile status label)
+  bool _sessionDone = false;
+  bool _sessionError = false;
+
   bool _isLoading = false;
   bool _isLoadingHistory = false;
   bool _isLoadingMoreHistory = false;
@@ -45,6 +49,7 @@ class _ChatScreenState extends State<ChatScreen>
 
   // WebSocket runtime (mirrors responsibilities from ProjectChatTab / web ChatSection)
   String? _activeWsSessionId;
+  String? _activeWsUrlOverride;
   WebSocket? _webSocket;
   StreamSubscription? _webSocketSubscription;
   Timer? _reconnectTimer;
@@ -52,6 +57,7 @@ class _ChatScreenState extends State<ChatScreen>
   bool _manualWsClose = false;
   bool _autoConnectDisabled = false;
   final Set<String> _seenWsKeys = <String>{};
+  _WsConnectionState _wsConnState = _WsConnectionState.idle;
 
   final StringBuffer _assistantDeltaBuffer = StringBuffer();
   int _assistantDeltaChars = 0;
@@ -213,6 +219,12 @@ class _ChatScreenState extends State<ChatScreen>
 
   Future<void> _refreshHistory({required bool attemptReconnect}) async {
     if (_isLoadingHistory) return;
+    final disableAutoConnect = _autoConnectDisabled;
+    String? lastType;
+    DateTime? lastAt;
+    var historyOk = false;
+    var nextAutoConnectDisabled = _autoConnectDisabled;
+    const staleWindow = Duration(minutes: 15);
     setState(() {
       _isLoadingHistory = true;
       _isLoadingMoreHistory = false;
@@ -232,6 +244,7 @@ class _ChatScreenState extends State<ChatScreen>
         includePayload: true,
       );
       if (!mounted) return;
+      historyOk = true;
       history.sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
       final messages = <ChatMessage>[];
@@ -262,9 +275,24 @@ class _ChatScreenState extends State<ChatScreen>
           latest = e;
         }
       }
-      final latestType = payloadMap(latest?.payload)?['type']?.toString();
-      final nextAutoConnectDisabled =
-          latestType == 'complete' ? true : _autoConnectDisabled;
+      String? normalizeType(ChatHistoryEntry? e) {
+        if (e == null) return null;
+        final pm = payloadMap(e.payload);
+        final raw = (pm?['type'] ?? e.messageType)?.toString();
+        final t = raw?.trim().toLowerCase();
+        return t != null && t.isNotEmpty ? t : null;
+      }
+
+      final terminalTypes = <String>{'complete', 'result', 'error', 'cancelled'};
+      final latestType = normalizeType(latest);
+      nextAutoConnectDisabled =
+          latestType != null && terminalTypes.contains(latestType)
+              ? true
+              : _autoConnectDisabled;
+      final nextSessionDone = latestType == 'complete' ||
+          latestType == 'result' ||
+          latestType == 'cancelled';
+      final nextSessionError = latestType == 'error';
 
       ChatHistoryEntry? newestWithSession;
       for (final e in history) {
@@ -290,11 +318,30 @@ class _ChatScreenState extends State<ChatScreen>
         _oldestMessageAt =
             history.isNotEmpty ? history.first.createdAt : null;
         _autoConnectDisabled = nextAutoConnectDisabled;
+        _sessionDone = nextSessionDone;
+        _sessionError = nextSessionError;
         _currentSessionId =
             (nextSessionId != null && nextSessionId.isNotEmpty)
                 ? nextSessionId
                 : _currentSessionId;
       });
+
+      ChatHistoryEntry? newestNonIgnorable;
+      for (final e in history) {
+        final t = normalizeType(e);
+        if (t == null) continue;
+        if (t == 'history_complete' ||
+            t == 'deployment_start' ||
+            t == 'deployment_complete') {
+          continue;
+        }
+        if (newestNonIgnorable == null ||
+            e.createdAt.isAfter(newestNonIgnorable.createdAt)) {
+          newestNonIgnorable = e;
+        }
+      }
+      lastType = normalizeType(newestNonIgnorable);
+      lastAt = newestNonIgnorable?.createdAt;
 
       if (attemptReconnect &&
           !nextAutoConnectDisabled &&
@@ -318,6 +365,40 @@ class _ChatScreenState extends State<ChatScreen>
           child: AlertDescription(text: 'Failed to load chat history: $msg'),
         ),
       );
+    } finally {
+      final canAttemptReconnect = attemptReconnect &&
+          mounted &&
+          !(disableAutoConnect || nextAutoConnectDisabled);
+      final last = lastAt;
+      final isStale =
+          last != null && DateTime.now().difference(last) > staleWindow;
+      if (canAttemptReconnect && !isStale) {
+        try {
+          final active = await _chatService.getActiveProjectSession(
+            projectId: widget.projectId,
+          );
+
+          if (mounted) {
+            final sid = active?['session_id']?.toString().trim();
+            final status = active?['status']?.toString().trim();
+            final wsUrl = active?['websocket_url']?.toString();
+
+            final shouldReconnect = (sid != null && sid.isNotEmpty) &&
+                status == 'running' &&
+                !(historyOk &&
+                    lastType != null &&
+                    <String>{'complete', 'result', 'error', 'cancelled'}
+                        .contains(lastType));
+
+            if (shouldReconnect) {
+              _currentSessionId = sid;
+              await _ensureWebSocketOpen(sid, websocketUrlOverride: wsUrl);
+            }
+          }
+        } catch (_) {
+          // best-effort
+        }
+      }
     }
   }
 
@@ -391,6 +472,12 @@ class _ChatScreenState extends State<ChatScreen>
     } catch (_) {}
     _webSocket = null;
     _activeWsSessionId = null;
+    _activeWsUrlOverride = null;
+    if (mounted) {
+      setState(() {
+        _wsConnState = _WsConnectionState.idle;
+      });
+    }
   }
 
   Map<String, dynamic>? _decodeWsPayload(dynamic data) {
@@ -658,12 +745,21 @@ class _ChatScreenState extends State<ChatScreen>
         type == 'cancelled') {
       if (type == 'error') {
         _markLastToolOutcome('error');
+        _sessionError = true;
+        _sessionDone = false;
       } else if (type == 'cancelled') {
         _markLastToolOutcome('warning');
+        _sessionDone = true;
+        _sessionError = false;
       } else {
         _finalizePrevToolDone();
+        _sessionDone = true;
+        _sessionError = false;
       }
       _autoConnectDisabled = true;
+      if (mounted) {
+        setState(() {});
+      }
       return;
     }
 
@@ -724,18 +820,30 @@ class _ChatScreenState extends State<ChatScreen>
     _reconnectTimer?.cancel();
     _reconnectTimer = Timer(Duration(milliseconds: delayMs), () {
       if (!mounted) return;
-      unawaited(_ensureWebSocketOpen(sid));
+      unawaited(
+        _ensureWebSocketOpen(sid, websocketUrlOverride: _activeWsUrlOverride),
+      );
     });
   }
 
-  Future<void> _ensureWebSocketOpen(String sessionId) async {
+  Future<void> _ensureWebSocketOpen(
+    String sessionId, {
+    String? websocketUrlOverride,
+  }) async {
     if (!mounted) return;
+
+    final trimmedOverride = websocketUrlOverride?.trim();
 
     if (_webSocket != null &&
         _activeWsSessionId == sessionId &&
         _webSocket!.readyState == WebSocket.open) {
+      if (trimmedOverride != null && trimmedOverride.isNotEmpty) {
+        _activeWsUrlOverride = trimmedOverride;
+      }
       return;
     }
+
+    final prevSessionId = _activeWsSessionId;
 
     if (_webSocket != null) {
       await _closeWebSocket(manual: true);
@@ -744,6 +852,14 @@ class _ChatScreenState extends State<ChatScreen>
     _reconnectTimer?.cancel();
     _manualWsClose = false;
     _activeWsSessionId = sessionId;
+    if (trimmedOverride != null && trimmedOverride.isNotEmpty) {
+      _activeWsUrlOverride = trimmedOverride;
+    } else if (prevSessionId != sessionId) {
+      _activeWsUrlOverride = null;
+    }
+    setState(() {
+      _wsConnState = _WsConnectionState.connecting;
+    });
 
     try {
       await _webSocketSubscription?.cancel();
@@ -753,6 +869,7 @@ class _ChatScreenState extends State<ChatScreen>
     try {
       final wsUrl = await _chatService.buildProjectSessionWebSocketUrl(
         sessionId: sessionId,
+        websocketUrlOverride: _activeWsUrlOverride,
       );
       final ws = await WebSocket.connect(wsUrl);
       if (!mounted) {
@@ -761,6 +878,9 @@ class _ChatScreenState extends State<ChatScreen>
       }
       _webSocket = ws;
       _reconnectAttempts = 0;
+      setState(() {
+        _wsConnState = _WsConnectionState.connected;
+      });
 
       _webSocketSubscription = ws.listen(
         (data) {
@@ -769,18 +889,45 @@ class _ChatScreenState extends State<ChatScreen>
         },
         onError: (_) {
           if (!mounted) return;
+          setState(() {
+            _wsConnState = _WsConnectionState.failed;
+          });
           _scheduleReconnect();
         },
         onDone: () {
           if (!mounted) return;
+          setState(() {
+            _wsConnState = _WsConnectionState.failed;
+          });
           _scheduleReconnect();
         },
         cancelOnError: true,
       );
     } catch (_) {
       if (!mounted) return;
+      setState(() {
+        _wsConnState = _WsConnectionState.failed;
+      });
       _scheduleReconnect();
     }
+  }
+
+  String _taskLabel() {
+    final working =
+        _isLoading ||
+        _wsConnState == _WsConnectionState.connecting ||
+        (_wsConnState == _WsConnectionState.connected &&
+            !_autoConnectDisabled &&
+            !_sessionDone &&
+            !_sessionError &&
+            (_activeWsSessionId ?? '').trim().isNotEmpty);
+    return _sessionError
+        ? 'Error'
+        : _sessionDone
+        ? 'Done'
+        : working
+        ? 'Working'
+        : 'Ready';
   }
 
   /// Send a message
@@ -793,6 +940,9 @@ class _ChatScreenState extends State<ChatScreen>
 
     setState(() {
       _isLoading = true;
+      _sessionDone = false;
+      _sessionError = false;
+      _autoConnectDisabled = false;
     });
 
     final tempId = 'user-${DateTime.now().millisecondsSinceEpoch}';
@@ -854,6 +1004,9 @@ class _ChatScreenState extends State<ChatScreen>
     setState(() {
       _isLoading = true;
       _messageStatuses[message.id] = MessageStatus.pending;
+      _sessionDone = false;
+      _sessionError = false;
+      _autoConnectDisabled = false;
     });
 
     try {
@@ -948,9 +1101,22 @@ class _ChatScreenState extends State<ChatScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Chat with AI'),
-            if (_currentSessionId != null)
-              Text(
-                'Session: ${_currentSessionId!.substring(0, 8)}',
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 160),
+              switchInCurve: Curves.easeOut,
+              switchOutCurve: Curves.easeIn,
+              transitionBuilder: (child, anim) => FadeTransition(
+                opacity: anim,
+                child: SizeTransition(
+                  sizeFactor: anim,
+                  axis: Axis.vertical,
+                  axisAlignment: -1,
+                  child: child,
+                ),
+              ),
+              child: Text(
+                'Task: ${_taskLabel()}',
+                key: ValueKey(_taskLabel()),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context)
                           .colorScheme
@@ -958,6 +1124,7 @@ class _ChatScreenState extends State<ChatScreen>
                           .withValues(alpha: 0.8),
                     ),
               ),
+            ),
           ],
         ),
         actions: [
@@ -1112,3 +1279,5 @@ class _ChatScreenState extends State<ChatScreen>
     );
   }
 }
+
+enum _WsConnectionState { idle, connecting, connected, failed }

@@ -271,6 +271,13 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
 
   /// 加载聊天历史
   Future<void> _loadChatHistory() async {
+    final disableAutoConnect = _autoConnectDisabled;
+    String? lastType;
+    DateTime? lastAt;
+    var historyOk = false;
+    var nextAutoConnectDisabled = _autoConnectDisabled;
+    const staleWindow = Duration(minutes: 15);
+
     setState(() {
       _isLoadingHistory = true;
       _isLoadingMoreHistory = false;
@@ -287,6 +294,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       );
 
       if (!mounted) return;
+      historyOk = true;
 
       history.sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
@@ -320,9 +328,20 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
           latest = e;
         }
       }
-      final latestType = payloadMap(latest?.payload)?['type']?.toString();
-      final nextAutoConnectDisabled =
-          latestType == 'complete' ? true : _autoConnectDisabled;
+      String? normalizeType(ChatHistoryEntry? e) {
+        if (e == null) return null;
+        final pm = payloadMap(e.payload);
+        final raw = (pm?['type'] ?? e.messageType)?.toString();
+        final t = raw?.trim().toLowerCase();
+        return t != null && t.isNotEmpty ? t : null;
+      }
+
+      final terminalTypes = <String>{'complete', 'result', 'error', 'cancelled'};
+      final latestType = normalizeType(latest);
+      nextAutoConnectDisabled =
+          latestType != null && terminalTypes.contains(latestType)
+              ? true
+              : _autoConnectDisabled;
 
       ChatHistoryEntry? newestWithSession;
       for (final e in history) {
@@ -354,6 +373,24 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
                 : _currentSessionId;
       });
 
+      // Find latest meaningful type timestamp (for stale guarding)
+      ChatHistoryEntry? newestNonIgnorable;
+      for (final e in history) {
+        final t = normalizeType(e);
+        if (t == null) continue;
+        if (t == 'history_complete' ||
+            t == 'deployment_start' ||
+            t == 'deployment_complete') {
+          continue;
+        }
+        if (newestNonIgnorable == null ||
+            e.createdAt.isAfter(newestNonIgnorable.createdAt)) {
+          newestNonIgnorable = e;
+        }
+      }
+      lastType = normalizeType(newestNonIgnorable);
+      lastAt = newestNonIgnorable?.createdAt;
+
       // Match web behavior: optionally reconnect to a recent session to stream live output.
       if (!nextAutoConnectDisabled &&
           nextSessionId != null &&
@@ -369,6 +406,39 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _isLoadingHistory = false;
       });
       debugPrint('Failed to load chat history: $e');
+    } finally {
+      final canAttemptReconnect =
+          mounted && !(disableAutoConnect || nextAutoConnectDisabled);
+      final last = lastAt;
+      final isStale =
+          last != null && DateTime.now().difference(last) > staleWindow;
+      if (canAttemptReconnect && !isStale) {
+        // Prefer backend-provided active session on refresh (more reliable than parsing history).
+        try {
+          final active = await _chatService.getActiveProjectSession(
+            projectId: widget.projectId,
+          );
+          if (mounted) {
+            final sid = active?['session_id']?.toString().trim();
+            final status = active?['status']?.toString().trim();
+            final wsUrl = active?['websocket_url']?.toString();
+
+            final shouldReconnect = (sid != null && sid.isNotEmpty) &&
+                status == 'running' &&
+                !(historyOk &&
+                    lastType != null &&
+                    <String>{'complete', 'result', 'error', 'cancelled'}
+                        .contains(lastType));
+
+            if (shouldReconnect) {
+              _currentSessionId = sid;
+              await _ensureWebSocketOpen(sid, websocketUrlOverride: wsUrl);
+            }
+          }
+        } catch (_) {
+          // best-effort
+        }
+      }
     }
   }
 
@@ -462,6 +532,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     } catch (_) {}
     _webSocket = null;
     _activeWsSessionId = null;
+    _activeWsUrlOverride = null;
   }
 
   Map<String, dynamic>? _decodeWsPayload(dynamic data) {
@@ -972,15 +1043,25 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     }
   }
 
-  Future<void> _ensureWebSocketOpen(String sessionId) async {
+  Future<void> _ensureWebSocketOpen(
+    String sessionId, {
+    String? websocketUrlOverride,
+  }) async {
     if (!mounted) return;
+
+    final trimmedOverride = websocketUrlOverride?.trim();
 
     // If already connected to this session, keep it.
     if (_webSocket != null &&
         _activeWsSessionId == sessionId &&
         _webSocket!.readyState == WebSocket.open) {
+      if (trimmedOverride != null && trimmedOverride.isNotEmpty) {
+        _activeWsUrlOverride = trimmedOverride;
+      }
       return;
     }
+
+    final prevSessionId = _activeWsSessionId;
 
     // Close any previous connection without triggering reconnect loops.
     if (_webSocket != null) {
@@ -990,6 +1071,11 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     _reconnectTimer?.cancel();
     _manualWsClose = false;
     _activeWsSessionId = sessionId;
+    if (trimmedOverride != null && trimmedOverride.isNotEmpty) {
+      _activeWsUrlOverride = trimmedOverride;
+    } else if (prevSessionId != sessionId) {
+      _activeWsUrlOverride = null;
+    }
     setState(() {
       _wsConnState = WsConnectionState.connecting;
     });
@@ -1002,6 +1088,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     try {
       final wsUrl = await _chatService.buildProjectSessionWebSocketUrl(
         sessionId: sessionId,
+        websocketUrlOverride: _activeWsUrlOverride,
       );
       final ws = await WebSocket.connect(wsUrl);
       if (!mounted) {
@@ -1066,7 +1153,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     _reconnectTimer?.cancel();
     _reconnectTimer = Timer(Duration(milliseconds: delayMs), () {
       if (!mounted) return;
-      _ensureWebSocketOpen(sid);
+      _ensureWebSocketOpen(sid, websocketUrlOverride: _activeWsUrlOverride);
     });
   }
 
