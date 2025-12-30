@@ -5,6 +5,246 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
   int _assistantDeltaChars = 0;
   Timer? _assistantDeltaFlushTimer;
 
+  void _signalOutbox() {
+    try {
+      _outboxSignals.add(null);
+    } catch (_) {}
+  }
+
+  void _abortOutboxDrain() {
+    _outboxAbortToken += 1;
+    _outboxDrainInFlight = false;
+    _signalOutbox();
+  }
+
+  bool _isTaskIdleForQueue() {
+    if (_isDeploying) return false;
+    if (_isChatLoading) return false;
+    if (_sessionThinking) return false;
+    if (_wsConnState == WsConnectionState.connecting) return false;
+    final activeSid = (_activeWsSessionId ?? '').trim();
+    final hasActiveStreaming =
+        _wsConnState == WsConnectionState.connected &&
+        !_autoConnectDisabled &&
+        !_sessionDone &&
+        !_sessionError &&
+        activeSid.isNotEmpty;
+    if (hasActiveStreaming) return false;
+    return true;
+  }
+
+  Future<void> _sleepAbortable(Duration d, int token) async {
+    final deadline = DateTime.now().add(d);
+    while (DateTime.now().isBefore(deadline)) {
+      if (_outboxAbortToken != token) throw Exception('aborted');
+      final remaining = deadline.difference(DateTime.now());
+      final step = remaining.inMilliseconds.clamp(0, 120);
+      await Future.any<void>([
+        Future<void>.delayed(Duration(milliseconds: step)),
+        _outboxSignals.stream.first,
+      ]);
+    }
+  }
+
+  Future<void> _waitForWorkspaceReady(int token) async {
+    if (_workspacePhase == WorkspacePhase.ready) return;
+    _setOutboxMode(OutboxMode.waitingWorkspace);
+    while (_workspacePhase != WorkspacePhase.ready) {
+      if (_outboxAbortToken != token) throw Exception('aborted');
+      try {
+        await _ensureWorkspaceReadyForSend();
+      } catch (_) {
+        // fall through and wait for next signal/backoff
+      }
+      if (_workspacePhase == WorkspacePhase.ready) return;
+      await Future.any<void>([
+        Future<void>.delayed(const Duration(milliseconds: 700)),
+        _outboxSignals.stream.first,
+      ]);
+    }
+  }
+
+  Future<bool> _waitForTaskIdle(int token) async {
+    if (_isTaskIdleForQueue()) return false;
+    _setOutboxMode(OutboxMode.waitingTask);
+    while (!_isTaskIdleForQueue()) {
+      if (_outboxAbortToken != token) throw Exception('aborted');
+      await Future.any<void>([
+        Future<void>.delayed(const Duration(milliseconds: 250)),
+        _outboxSignals.stream.first,
+      ]);
+    }
+    return true;
+  }
+
+  void _setOutboxMode(OutboxMode next) {
+    if (_outboxMode == next) return;
+    if (!mounted) {
+      _outboxMode = next;
+      return;
+    }
+    setState(() {
+      _outboxMode = next;
+    });
+  }
+
+  void _outboxEnqueue(String prompt) {
+    final p = prompt.trim();
+    if (p.isEmpty) return;
+    final needsCooldown = !_isTaskIdleForQueue();
+    final item = OutboxItem(
+      id: 'q-${DateTime.now().millisecondsSinceEpoch}-${_outboxItems.length}',
+      prompt: p,
+      enqueuedAt: DateTime.now(),
+      needsCooldownAfterIdle: needsCooldown,
+      status: OutboxItemStatus.queued,
+    );
+    if (!mounted) {
+      _outboxItems.add(item);
+      _setOutboxMode(OutboxMode.idle);
+      _signalOutbox();
+      unawaited(_drainOutbox());
+      return;
+    }
+    setState(() {
+      _outboxItems.add(item);
+    });
+    _signalOutbox();
+    unawaited(_drainOutbox());
+  }
+
+  void _outboxDelete(OutboxItem item) {
+    _abortOutboxDrain();
+    if (!mounted) {
+      _outboxItems.removeWhere((x) => x.id == item.id);
+      return;
+    }
+    setState(() {
+      _outboxItems.removeWhere((x) => x.id == item.id);
+    });
+    _signalOutbox();
+    unawaited(_drainOutbox());
+  }
+
+  void _outboxEdit(OutboxItem item) {
+    _abortOutboxDrain();
+    if (!mounted) {
+      _outboxItems.removeWhere((x) => x.id == item.id);
+      return;
+    }
+    setState(() {
+      _outboxItems.removeWhere((x) => x.id == item.id);
+    });
+    _signalOutbox();
+  }
+
+  void _outboxClear() {
+    _abortOutboxDrain();
+    if (!mounted) {
+      _outboxItems.clear();
+      _outboxMode = OutboxMode.idle;
+      return;
+    }
+    setState(() {
+      _outboxItems.clear();
+      _outboxMode = OutboxMode.idle;
+    });
+    _signalOutbox();
+    unawaited(_maybePowerSaveCloseWebSocket());
+  }
+
+  bool _outboxHasFailed() =>
+      _outboxItems.any((x) => x.status == OutboxItemStatus.failed);
+
+  Future<void> _drainOutbox() async {
+    if (_outboxDrainInFlight) return;
+    if (_outboxItems.isEmpty) {
+      _setOutboxMode(OutboxMode.idle);
+      unawaited(_maybePowerSaveCloseWebSocket());
+      return;
+    }
+    if (_outboxHasFailed()) {
+      _setOutboxMode(OutboxMode.pausedError);
+      return;
+    }
+
+    _outboxDrainInFlight = true;
+    final token = _outboxAbortToken;
+    try {
+      final nextIndex =
+          _outboxItems.indexWhere((x) => x.status == OutboxItemStatus.queued);
+      if (nextIndex == -1) return;
+      final next = _outboxItems[nextIndex];
+
+      await _waitForWorkspaceReady(token);
+      final waited = await _waitForTaskIdle(token);
+      if (waited || next.needsCooldownAfterIdle) {
+        await _sleepAbortable(const Duration(milliseconds: 1500), token);
+      }
+      if (_outboxAbortToken != token) return;
+
+      final idx = _outboxItems.indexWhere((x) => x.id == next.id);
+      if (idx == -1) return;
+      if (_outboxItems[idx].status != OutboxItemStatus.queued) return;
+
+      _setOutboxMode(OutboxMode.dispatching);
+      setState(() {
+        _outboxItems[idx] = _outboxItems[idx].copyWith(
+          status: OutboxItemStatus.running,
+          error: null,
+        );
+      });
+
+      try {
+        await _dispatchPrompt(next.prompt);
+        if (!mounted) return;
+        setState(() {
+          _outboxItems.removeWhere((x) => x.id == next.id);
+        });
+      } catch (e) {
+        if (!mounted) return;
+        final msg = e.toString();
+        setState(() {
+          final i = _outboxItems.indexWhere((x) => x.id == next.id);
+          if (i != -1) {
+            _outboxItems[i] = _outboxItems[i].copyWith(
+              status: OutboxItemStatus.failed,
+              error: msg,
+            );
+          }
+          _outboxMode = OutboxMode.pausedError;
+        });
+      }
+    } finally {
+      _outboxDrainInFlight = false;
+      if (_outboxAbortToken == token) {
+        if (_outboxHasFailed()) {
+          _setOutboxMode(OutboxMode.pausedError);
+        } else if (_outboxItems.isEmpty) {
+          _setOutboxMode(OutboxMode.idle);
+        } else {
+          _setOutboxMode(OutboxMode.idle);
+          unawaited(_drainOutbox());
+        }
+      }
+      _signalOutbox();
+    }
+  }
+
+  Future<void> _maybePowerSaveCloseWebSocket() async {
+    if (_outboxItems.isNotEmpty) return;
+    final activeSid = (_activeWsSessionId ?? '').trim();
+    final hasActiveStreaming =
+        _wsConnState == WsConnectionState.connected &&
+        !_autoConnectDisabled &&
+        !_sessionDone &&
+        !_sessionError &&
+        activeSid.isNotEmpty;
+    if (hasActiveStreaming) return;
+    if (_wsConnState != WsConnectionState.connected) return;
+    await _closeWebSocket(manual: true);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -43,6 +283,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     _deployAutoClearTimer?.cancel();
     _thinkingClearTimer?.cancel();
     _webSocketSubscription?.cancel();
+    _outboxSignals.close();
     _manualWsClose = true;
     _webSocket?.close(1000, 'dispose');
     _chatScrollController.dispose();
@@ -164,6 +405,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _workspacePhase = phase;
         _workspaceError = null;
       });
+      _signalOutbox();
+      unawaited(_drainOutbox());
       _workspacePollErrorStreak = 0;
       _scheduleWorkspacePoll(phase);
     } catch (e) {
@@ -172,6 +415,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _workspacePhase = WorkspacePhase.error;
         _workspaceError = e.toString();
       });
+      _signalOutbox();
       _workspacePollErrorStreak += 1;
       _scheduleWorkspacePoll(WorkspacePhase.error);
     } finally {
@@ -203,6 +447,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _workspacePhase = WorkspacePhase.ready;
         _workspaceError = null;
       });
+      _signalOutbox();
+      unawaited(_drainOutbox());
       _workspacePollErrorStreak = 0;
       _scheduleWorkspacePoll(WorkspacePhase.ready);
     } catch (e) {
@@ -211,6 +457,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _workspacePhase = WorkspacePhase.error;
         _workspaceError = e.toString();
       });
+      _signalOutbox();
       _workspacePollErrorStreak += 1;
       _scheduleWorkspacePoll(WorkspacePhase.error);
     } finally {
@@ -848,6 +1095,9 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _finalizePrevToolDone();
       }
       _autoConnectDisabled = true;
+      _signalOutbox();
+      unawaited(_drainOutbox());
+      unawaited(_maybePowerSaveCloseWebSocket());
       return;
     }
 
@@ -1177,7 +1427,32 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
   /// 发送普通聊天消息
   @override
   void _sendChatMessage(String text) async {
-    if (text.trim().isEmpty || _isChatLoading) return;
+    final prompt = text.trim();
+    if (prompt.isEmpty) return;
+    // If we are busy (workspace waking / previous task running / already has queue),
+    // enqueue instead of rendering immediately.
+    final shouldQueue =
+        _outboxItems.isNotEmpty ||
+        _workspacePhase != WorkspacePhase.ready ||
+        !_isTaskIdleForQueue() ||
+        _outboxMode == OutboxMode.dispatching;
+    if (shouldQueue) {
+      _outboxEnqueue(prompt);
+      return;
+    }
+    try {
+      await _dispatchPrompt(prompt);
+    } catch (e) {
+      SnackBarHelper.showError(
+        context,
+        title: 'Error',
+        message: 'Failed to send message: $e',
+      );
+    }
+  }
+
+  Future<void> _dispatchPrompt(String prompt) async {
+    if (!mounted) return;
     _markSessionStarted();
 
     final tempId = 'user-${DateTime.now().millisecondsSinceEpoch}';
@@ -1185,7 +1460,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       id: tempId,
       role: 'user',
       createdAt: DateTime.now(),
-      contents: [TextMessageContent(text: text)],
+      contents: [TextMessageContent(text: prompt)],
     );
 
     setState(() {
@@ -1201,10 +1476,10 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       final isNew = _currentSessionId == null;
       final response = await _chatService.executeSession(
         projectId: widget.projectId,
-        prompt: text,
+        prompt: prompt,
         sessionType: isNew ? 'new' : 'continue',
         sessionId: isNew ? null : _currentSessionId,
-        optimisticMessage: text,
+        optimisticMessage: prompt,
       );
       if (!mounted) return;
 
@@ -1212,10 +1487,12 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       setState(() {
         _currentSessionId = sid;
         _isChatLoading = false;
-        // This is an active run now; allow reconnect if needed.
         _autoConnectDisabled = false;
         _messageStatuses[tempId] = MessageStatus.sent;
       });
+
+      _signalOutbox();
+      unawaited(_drainOutbox());
 
       await _ensureWebSocketOpen(sid);
     } catch (e) {
@@ -1225,11 +1502,9 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _messageStatuses[tempId] = MessageStatus.failed;
       });
       _markSessionError();
-      SnackBarHelper.showError(
-        context,
-        title: 'Error',
-        message: 'Failed to send message: $e',
-      );
+      _signalOutbox();
+      unawaited(_drainOutbox());
+      rethrow;
     }
   }
 

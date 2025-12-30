@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/env_var.dart';
 import '../../models/message.dart';
+import '../../models/outbox.dart';
 import '../../services/chat_service.dart';
 import '../../services/d1vai_service.dart';
 import '../../services/workspace_service.dart';

@@ -1,16 +1,26 @@
 import 'package:flutter/material.dart';
 
+import 'outbox/outbox_widgets.dart';
+
 /// Message input field for sending chat messages
 class MessageInput extends StatefulWidget {
   final Function(String) onSend;
   final bool isEnabled;
   final String? hintText;
+  final TextEditingController? controller;
+  final FocusNode? focusNode;
+  final int queueCount;
+  final bool showSendPulse;
 
   const MessageInput({
     super.key,
     required this.onSend,
     this.isEnabled = true,
     this.hintText,
+    this.controller,
+    this.focusNode,
+    this.queueCount = 0,
+    this.showSendPulse = false,
   });
 
   @override
@@ -18,27 +28,58 @@ class MessageInput extends StatefulWidget {
 }
 
 class _MessageInputState extends State<MessageInput> {
-  final TextEditingController _controller = TextEditingController();
-  final FocusNode _focusNode = FocusNode();
+  TextEditingController? _ownedController;
+  FocusNode? _ownedFocusNode;
   bool _isComposing = false;
   bool _isFocused = false;
 
+  TextEditingController get _controller =>
+      widget.controller ?? (_ownedController ??= TextEditingController());
+
+  FocusNode get _focusNode => widget.focusNode ?? (_ownedFocusNode ??= FocusNode());
+
+  void _syncComposingFromController() {
+    final next = _controller.text.trim().isNotEmpty;
+    if (next == _isComposing) return;
+    if (!mounted) return;
+    setState(() {
+      _isComposing = next;
+    });
+  }
+
   @override
   void dispose() {
-    _controller.dispose();
-    _focusNode.dispose();
+    try {
+      _controller.removeListener(_syncComposingFromController);
+    } catch (_) {}
+    _ownedController?.dispose();
+    _ownedFocusNode?.dispose();
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
+    _controller.addListener(_syncComposingFromController);
     _focusNode.addListener(() {
       if (!mounted) return;
       setState(() {
         _isFocused = _focusNode.hasFocus;
       });
     });
+    _syncComposingFromController();
+  }
+
+  @override
+  void didUpdateWidget(covariant MessageInput oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      try {
+        oldWidget.controller?.removeListener(_syncComposingFromController);
+      } catch (_) {}
+      widget.controller?.addListener(_syncComposingFromController);
+      _syncComposingFromController();
+    }
   }
 
   void _handleSubmitted(String text) {
@@ -56,6 +97,7 @@ class _MessageInputState extends State<MessageInput> {
     final theme = Theme.of(context);
     final enabled = widget.isEnabled;
     final canSend = enabled && _isComposing;
+    final queueCount = widget.queueCount;
     final borderColor = _isFocused
         ? theme.colorScheme.primary.withValues(alpha: 0.70)
         : theme.colorScheme.outlineVariant.withValues(alpha: 0.70);
@@ -140,14 +182,41 @@ class _MessageInputState extends State<MessageInput> {
                   child: SizedBox(
                     width: 44,
                     height: 44,
-                    child: Icon(
-                      Icons.arrow_upward_rounded,
-                      size: 20,
-                      color: canSend
-                          ? theme.colorScheme.onPrimary
-                          : theme.colorScheme.onSurfaceVariant.withValues(
-                              alpha: 0.65,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Center(
+                          child: widget.showSendPulse && canSend
+                              ? OutboxSendPulse(
+                                  child: Icon(
+                                    Icons.arrow_upward_rounded,
+                                    size: 20,
+                                    color: theme.colorScheme.onPrimary,
+                                  ),
+                                )
+                              : Icon(
+                                  Icons.arrow_upward_rounded,
+                                  size: 20,
+                                  color: canSend
+                                      ? theme.colorScheme.onPrimary
+                                      : theme.colorScheme.onSurfaceVariant.withValues(
+                                          alpha: 0.65,
+                                        ),
+                                ),
+                        ),
+                        Positioned(
+                          right: -4,
+                          top: -4,
+                          child: OutboxCountBadge(
+                            count: queueCount,
+                            size: 18,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
                             ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

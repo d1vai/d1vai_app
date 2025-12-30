@@ -164,6 +164,11 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
                           isLoading: _isChatLoading,
                           isLoadingHistory: _isLoadingHistory,
                           isDeploying: _isDeploying,
+                          outboxItems: _outboxItems,
+                          outboxMode: _outboxMode,
+                          onOutboxClear: _outboxClear,
+                          onOutboxDelete: _outboxDelete,
+                          onOutboxEdit: _outboxEdit,
                           heroTag: 'project-chat-messages-${widget.projectId}',
                           statusLabel: _statusLabel(),
                           statusIsError: _sessionError,
@@ -176,9 +181,9 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
                           onSendMessage: _sendChatMessage,
                           onRedeploy: () => unawaited(triggerPreviewRedeploy()),
                           onOpenFullScreen: () {
-                            GoRouter.of(context).push(
-                              '/projects/${widget.projectId}/chat',
-                            );
+                            GoRouter.of(
+                              context,
+                            ).push('/projects/${widget.projectId}/chat');
                           },
                           onClose: () {
                             setState(() {
@@ -289,6 +294,11 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
                               isLoading: _isChatLoading,
                               isLoadingHistory: _isLoadingHistory,
                               isDeploying: _isDeploying,
+                              outboxItems: _outboxItems,
+                              outboxMode: _outboxMode,
+                              onOutboxClear: _outboxClear,
+                              onOutboxDelete: _outboxDelete,
+                              onOutboxEdit: _outboxEdit,
                               heroTag:
                                   'project-chat-messages-${widget.projectId}',
                               statusLabel: _statusLabel(),
@@ -303,9 +313,9 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
                               onRedeploy: () =>
                                   unawaited(triggerPreviewRedeploy()),
                               onOpenFullScreen: () {
-                                GoRouter.of(context).push(
-                                  '/projects/${widget.projectId}/chat',
-                                );
+                                GoRouter.of(
+                                  context,
+                                ).push('/projects/${widget.projectId}/chat');
                               },
                               onClose: () {
                                 setState(() {

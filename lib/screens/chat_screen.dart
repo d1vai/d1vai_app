@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import '../models/message.dart';
+import '../models/outbox.dart';
 import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
 import '../services/workspace_service.dart';
@@ -9,6 +10,7 @@ import '../utils/error_utils.dart';
 import '../utils/message_parser.dart';
 import '../widgets/chat/message_list.dart';
 import '../widgets/chat/message_input.dart';
+import '../widgets/chat/outbox/outbox_widgets.dart';
 import '../widgets/chat/message_skeleton.dart';
 import '../widgets/chat/quick_actions.dart';
 import '../widgets/chat/status_pill.dart';
@@ -36,6 +38,8 @@ class _ChatScreenState extends State<ChatScreen>
   final ScrollController _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
   final Map<String, MessageStatus> _messageStatuses = {};
+  final TextEditingController _inputController = TextEditingController();
+  final FocusNode _inputFocusNode = FocusNode();
 
   // Session UI phase (align with ProjectChatTab mobile status label)
   bool _sessionDone = false;
@@ -47,6 +51,15 @@ class _ChatScreenState extends State<ChatScreen>
   bool _hasMoreHistory = true;
   DateTime? _oldestMessageAt;
   String? _currentSessionId;
+
+  // Outbox queue (mobile-friendly message queue)
+  final List<OutboxItem> _outboxItems = <OutboxItem>[];
+  OutboxMode _outboxMode = OutboxMode.idle;
+  bool _outboxDrainInFlight = false;
+  int _outboxAbortToken = 0;
+  final StreamController<void> _outboxSignals =
+      StreamController<void>.broadcast(sync: true);
+  bool _outboxCollapsed = false;
 
   // WebSocket runtime (mirrors responsibilities from ProjectChatTab / web ChatSection)
   String? _activeWsSessionId;
@@ -87,10 +100,229 @@ class _ChatScreenState extends State<ChatScreen>
     _reconnectTimer?.cancel();
     _workspacePollTimer?.cancel();
     _webSocketSubscription?.cancel();
+    _outboxSignals.close();
+    _inputController.dispose();
+    _inputFocusNode.dispose();
     _manualWsClose = true;
     _webSocket?.close(1000, 'dispose');
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _signalOutbox() {
+    try {
+      _outboxSignals.add(null);
+    } catch (_) {}
+  }
+
+  void _abortOutboxDrain() {
+    _outboxAbortToken += 1;
+    _outboxDrainInFlight = false;
+    _signalOutbox();
+  }
+
+  void _setOutboxMode(OutboxMode next) {
+    if (_outboxMode == next) return;
+    if (!mounted) {
+      _outboxMode = next;
+      return;
+    }
+    setState(() {
+      _outboxMode = next;
+    });
+  }
+
+  bool _hasActiveStreaming() {
+    final activeSid = (_activeWsSessionId ?? '').trim();
+    return _wsConnState == _WsConnectionState.connected &&
+        !_autoConnectDisabled &&
+        !_sessionDone &&
+        !_sessionError &&
+        activeSid.isNotEmpty;
+  }
+
+  bool _isTaskIdleForQueue() {
+    final working = _isLoading || _wsConnState == _WsConnectionState.connecting || _hasActiveStreaming();
+    return !working;
+  }
+
+  Future<void> _sleepAbortable(Duration d, int token) async {
+    final deadline = DateTime.now().add(d);
+    while (DateTime.now().isBefore(deadline)) {
+      if (_outboxAbortToken != token) throw Exception('aborted');
+      final remaining = deadline.difference(DateTime.now());
+      final step = remaining.inMilliseconds.clamp(0, 120);
+      await Future.any<void>([
+        Future<void>.delayed(Duration(milliseconds: step)),
+        _outboxSignals.stream.first,
+      ]);
+    }
+  }
+
+  Future<void> _waitForWorkspaceReady(int token) async {
+    if (_workspacePhase == WorkspacePhase.ready) return;
+    _setOutboxMode(OutboxMode.waitingWorkspace);
+    while (_workspacePhase != WorkspacePhase.ready) {
+      if (_outboxAbortToken != token) throw Exception('aborted');
+      try {
+        await _ensureWorkspaceReadyForSend();
+      } catch (_) {}
+      if (_workspacePhase == WorkspacePhase.ready) return;
+      await Future.any<void>([
+        Future<void>.delayed(const Duration(milliseconds: 700)),
+        _outboxSignals.stream.first,
+      ]);
+    }
+  }
+
+  Future<bool> _waitForTaskIdle(int token) async {
+    if (_isTaskIdleForQueue()) return false;
+    _setOutboxMode(OutboxMode.waitingTask);
+    while (!_isTaskIdleForQueue()) {
+      if (_outboxAbortToken != token) throw Exception('aborted');
+      await Future.any<void>([
+        Future<void>.delayed(const Duration(milliseconds: 250)),
+        _outboxSignals.stream.first,
+      ]);
+    }
+    return true;
+  }
+
+  void _outboxEnqueue(String prompt) {
+    final p = prompt.trim();
+    if (p.isEmpty) return;
+    final needsCooldown = !_isTaskIdleForQueue();
+    setState(() {
+      _outboxItems.add(
+        OutboxItem(
+          id: 'q-${DateTime.now().millisecondsSinceEpoch}-${_outboxItems.length}',
+          prompt: p,
+          enqueuedAt: DateTime.now(),
+          needsCooldownAfterIdle: needsCooldown,
+          status: OutboxItemStatus.queued,
+        ),
+      );
+    });
+    _signalOutbox();
+    unawaited(_drainOutbox());
+  }
+
+  void _outboxDelete(OutboxItem item) {
+    _abortOutboxDrain();
+    setState(() {
+      _outboxItems.removeWhere((x) => x.id == item.id);
+    });
+    _signalOutbox();
+    unawaited(_drainOutbox());
+  }
+
+  void _outboxEdit(OutboxItem item) {
+    _abortOutboxDrain();
+    setState(() {
+      _outboxItems.removeWhere((x) => x.id == item.id);
+    });
+    _signalOutbox();
+    _inputController.text = item.prompt;
+    _inputController.selection = TextSelection.fromPosition(
+      TextPosition(offset: _inputController.text.length),
+    );
+    _inputFocusNode.requestFocus();
+  }
+
+  void _outboxClear() {
+    _abortOutboxDrain();
+    setState(() {
+      _outboxItems.clear();
+      _outboxMode = OutboxMode.idle;
+    });
+    _signalOutbox();
+    unawaited(_maybePowerSaveCloseWebSocket());
+  }
+
+  bool _outboxHasFailed() =>
+      _outboxItems.any((x) => x.status == OutboxItemStatus.failed);
+
+  Future<void> _maybePowerSaveCloseWebSocket() async {
+    if (_outboxItems.isNotEmpty) return;
+    if (_hasActiveStreaming()) return;
+    if (_wsConnState != _WsConnectionState.connected) return;
+    await _closeWebSocket(manual: true);
+  }
+
+  Future<void> _drainOutbox() async {
+    if (_outboxDrainInFlight) return;
+    if (_outboxItems.isEmpty) {
+      _setOutboxMode(OutboxMode.idle);
+      unawaited(_maybePowerSaveCloseWebSocket());
+      return;
+    }
+    if (_outboxHasFailed()) {
+      _setOutboxMode(OutboxMode.pausedError);
+      return;
+    }
+
+    _outboxDrainInFlight = true;
+    final token = _outboxAbortToken;
+    try {
+      final nextIndex = _outboxItems.indexWhere(
+        (x) => x.status == OutboxItemStatus.queued,
+      );
+      if (nextIndex == -1) return;
+      final next = _outboxItems[nextIndex];
+
+      await _waitForWorkspaceReady(token);
+      final waited = await _waitForTaskIdle(token);
+      if (waited || next.needsCooldownAfterIdle) {
+        await _sleepAbortable(const Duration(milliseconds: 1500), token);
+      }
+      if (_outboxAbortToken != token) return;
+      if (!mounted) return;
+
+      final idx = _outboxItems.indexWhere((x) => x.id == next.id);
+      if (idx == -1) return;
+      if (_outboxItems[idx].status != OutboxItemStatus.queued) return;
+
+      _setOutboxMode(OutboxMode.dispatching);
+      setState(() {
+        _outboxItems[idx] = _outboxItems[idx].copyWith(
+          status: OutboxItemStatus.running,
+          error: null,
+        );
+      });
+
+      try {
+        await _dispatchPrompt(next.prompt);
+        if (!mounted) return;
+        setState(() {
+          _outboxItems.removeWhere((x) => x.id == next.id);
+        });
+      } catch (e) {
+        if (!mounted) return;
+        setState(() {
+          final i = _outboxItems.indexWhere((x) => x.id == next.id);
+          if (i != -1) {
+            _outboxItems[i] = _outboxItems[i].copyWith(
+              status: OutboxItemStatus.failed,
+              error: e.toString(),
+            );
+          }
+          _outboxMode = OutboxMode.pausedError;
+        });
+      }
+    } finally {
+      _outboxDrainInFlight = false;
+      if (_outboxAbortToken == token) {
+        if (_outboxHasFailed()) {
+          _setOutboxMode(OutboxMode.pausedError);
+        } else if (_outboxItems.isEmpty) {
+          _setOutboxMode(OutboxMode.idle);
+        } else {
+          _setOutboxMode(OutboxMode.idle);
+          unawaited(_drainOutbox());
+        }
+      }
+      _signalOutbox();
+    }
   }
 
   Future<void> _initialize() async {
@@ -144,6 +376,8 @@ class _ChatScreenState extends State<ChatScreen>
         _workspacePhase = phase;
         _workspaceError = null;
       });
+      _signalOutbox();
+      unawaited(_drainOutbox());
       _workspacePollErrorStreak = 0;
       _scheduleWorkspacePoll(phase);
     } catch (e) {
@@ -152,6 +386,7 @@ class _ChatScreenState extends State<ChatScreen>
         _workspacePhase = WorkspacePhase.error;
         _workspaceError = humanizeError(e);
       });
+      _signalOutbox();
       _workspacePollErrorStreak += 1;
       _scheduleWorkspacePoll(WorkspacePhase.error);
     } finally {
@@ -183,6 +418,8 @@ class _ChatScreenState extends State<ChatScreen>
         _workspacePhase = WorkspacePhase.ready;
         _workspaceError = null;
       });
+      _signalOutbox();
+      unawaited(_drainOutbox());
       _workspacePollErrorStreak = 0;
       _scheduleWorkspacePoll(WorkspacePhase.ready);
     } catch (e) {
@@ -191,6 +428,7 @@ class _ChatScreenState extends State<ChatScreen>
         _workspacePhase = WorkspacePhase.error;
         _workspaceError = humanizeError(e);
       });
+      _signalOutbox();
       _workspacePollErrorStreak += 1;
       _scheduleWorkspacePoll(WorkspacePhase.error);
     } finally {
@@ -761,6 +999,9 @@ class _ChatScreenState extends State<ChatScreen>
       if (mounted) {
         setState(() {});
       }
+      _signalOutbox();
+      unawaited(_drainOutbox());
+      unawaited(_maybePowerSaveCloseWebSocket());
       return;
     }
 
@@ -936,9 +1177,28 @@ class _ChatScreenState extends State<ChatScreen>
     String text, {
       bool forceNewSession = false,
   }) async {
-    if (text.trim().isEmpty || _isLoading) return;
     final prompt = text.trim();
+    if (prompt.isEmpty) return;
 
+    final shouldQueue =
+        !forceNewSession &&
+        (_outboxItems.isNotEmpty ||
+            _workspacePhase != WorkspacePhase.ready ||
+            !_isTaskIdleForQueue() ||
+            _outboxMode == OutboxMode.dispatching);
+    if (shouldQueue) {
+      _outboxEnqueue(prompt);
+      return;
+    }
+
+    await _dispatchPrompt(prompt, forceNewSession: forceNewSession);
+  }
+
+  Future<void> _dispatchPrompt(
+    String prompt, {
+    bool forceNewSession = false,
+  }) async {
+    if (_isLoading) return;
     setState(() {
       _isLoading = true;
       _sessionDone = false;
@@ -983,6 +1243,8 @@ class _ChatScreenState extends State<ChatScreen>
       });
 
       await _ensureWebSocketOpen(sid);
+      _signalOutbox();
+      unawaited(_drainOutbox());
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -992,6 +1254,8 @@ class _ChatScreenState extends State<ChatScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to send message: $e')),
       );
+      _signalOutbox();
+      unawaited(_drainOutbox());
     }
   }
 
@@ -1101,7 +1365,10 @@ class _ChatScreenState extends State<ChatScreen>
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Chat with AI'),
+            Text(
+              'Chat with AI',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 160),
               switchInCurve: Curves.easeOut,
@@ -1206,11 +1473,35 @@ class _ChatScreenState extends State<ChatScreen>
               ),
             ),
           ),
+          OutboxBar(
+            count: _outboxItems.length,
+            mode: _outboxMode,
+            collapsed: _outboxCollapsed,
+            onToggleCollapsed: () {
+              setState(() {
+                _outboxCollapsed = !_outboxCollapsed;
+              });
+            },
+            onOpen: () {
+              if (_outboxItems.isEmpty) return;
+              showOutboxSheet(
+                context,
+                items: _outboxItems,
+                mode: _outboxMode,
+                onClear: _outboxClear,
+                onDelete: _outboxDelete,
+                onEdit: _outboxEdit,
+              );
+            },
+          ),
           // Message input
           MessageInput(
             onSend: _sendMessage,
             isEnabled: !_isLoading,
             hintText: 'Type your message...',
+            controller: _inputController,
+            focusNode: _inputFocusNode,
+            queueCount: _outboxItems.length,
           ),
         ],
       ),

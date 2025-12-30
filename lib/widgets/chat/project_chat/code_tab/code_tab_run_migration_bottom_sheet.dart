@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../services/d1vai_service.dart';
 import '../../../snackbar_helper.dart';
@@ -21,13 +22,14 @@ Future<void> showRunSqlMigrationBottomSheet(
     return;
   }
 
+  final hostContext = context;
   await showModalBottomSheet<void>(
-    context: context,
+    context: hostContext,
     isScrollControlled: true,
     useSafeArea: true,
     backgroundColor: Colors.transparent,
-    builder: (context) {
-      final theme = Theme.of(context);
+    builder: (sheetContext) {
+      final theme = Theme.of(sheetContext);
       return FractionallySizedBox(
         heightFactor: 0.92,
         child: Container(
@@ -40,6 +42,13 @@ Future<void> showRunSqlMigrationBottomSheet(
             projectId: projectId,
             sql: sql,
             sourcePath: sourcePath,
+            onSendToChat: (prompt) {
+              final encoded = Uri.encodeQueryComponent(prompt);
+              Navigator.of(sheetContext).pop();
+              GoRouter.of(hostContext).push(
+                '/projects/$projectId/chat?autoprompt=$encoded',
+              );
+            },
           ),
         ),
       );
@@ -51,11 +60,13 @@ class _RunSqlMigrationSheet extends StatefulWidget {
   final String projectId;
   final String sql;
   final String sourcePath;
+  final void Function(String prompt)? onSendToChat;
 
   const _RunSqlMigrationSheet({
     required this.projectId,
     required this.sql,
     required this.sourcePath,
+    this.onSendToChat,
   });
 
   @override
@@ -102,6 +113,16 @@ class _RunSqlMigrationSheetState extends State<_RunSqlMigrationSheet> {
       case _MigrationStep.execute:
         return 'Executing changes…';
     }
+  }
+
+  bool get _hasAttempted {
+    return _running ||
+        _completed ||
+        _step != null ||
+        _finished.isNotEmpty ||
+        _planId != null ||
+        _approvalId != null ||
+        _autoReviewStatus != null;
   }
 
   Future<void> _run() async {
@@ -229,7 +250,10 @@ class _RunSqlMigrationSheetState extends State<_RunSqlMigrationSheet> {
     });
     try {
       await _service.migrationApprove(approvalId);
-      await _service.migrationExecute(planId: planId, approvalToken: approvalToken);
+      await _service.migrationExecute(
+        planId: planId,
+        approvalToken: approvalToken,
+      );
       setState(() {
         _finished.add(_MigrationStep.execute);
         _completed = true;
@@ -261,11 +285,72 @@ class _RunSqlMigrationSheetState extends State<_RunSqlMigrationSheet> {
     }
   }
 
+  void _sendReasonsToChat() {
+    final rawReasons = _autoReviewStatus?['reasons'];
+    final reasons =
+        (rawReasons is List) ? rawReasons.map((e) => e.toString()).toList() : <String>[];
+    final file = widget.sourcePath.trim().isNotEmpty
+        ? widget.sourcePath.trim()
+        : 'migration.sql';
+
+    final prompt = [
+      'Please optimize the SQL migration $file to be safer and non-destructive.',
+      'Auto-review rejected it for the following reasons:',
+      ...reasons.map((r) => '- $r'),
+      '',
+      'Rewrite a safer migration that:',
+      '- avoids mass DELETE/UPDATE without a restrictive WHERE and sensible batching;',
+      '- uses CREATE INDEX CONCURRENTLY (or an equivalent online strategy) where applicable;',
+      '- maintains transactional safety and minimizes locks;',
+      '- aims for zero-downtime if schema changes are needed.',
+      '',
+      'Return only the improved SQL and a brief rationale.',
+    ].join('\n');
+
+    final cb = widget.onSendToChat;
+    if (cb == null) {
+      SnackBarHelper.showError(
+        context,
+        title: 'Send to chat',
+        message: 'Chat is not available from this screen.',
+        duration: const Duration(seconds: 2),
+      );
+      return;
+    }
+    cb(prompt);
+  }
+
+  ButtonStyle _primaryActionStyle({
+    required Color background,
+    required Color foreground,
+  }) {
+    final theme = Theme.of(context);
+    final borderAlpha = theme.brightness == Brightness.dark ? 0.55 : 0.35;
+    return ElevatedButton.styleFrom(
+      elevation: 0,
+      backgroundColor: background,
+      foregroundColor: foreground,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: background.withValues(alpha: borderAlpha)),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final status = (_autoReviewStatus?['status'] ?? '').toString();
     final rejected = !_running && !_completed && status == 'rejected';
+    final showRetry = _hasAttempted && !_running && !_completed;
+    final primaryLabel = _completed ? 'Done' : (showRetry ? 'Retry' : 'Run');
+    final primaryBg = _completed
+        ? (theme.brightness == Brightness.dark
+              ? Colors.green.shade500
+              : Colors.green.shade700)
+        : theme.colorScheme.primary;
+    final primaryFg = _completed ? Colors.white : theme.colorScheme.onPrimary;
 
     return Column(
       children: [
@@ -385,6 +470,7 @@ class _RunSqlMigrationSheetState extends State<_RunSqlMigrationSheet> {
                         ? (_autoReviewStatus!['reasons'] as List).map((e) => e.toString()).toList()
                         : const <String>[],
                     onRunAnyway: _runAnyway,
+                    onSendToChat: _sendReasonsToChat,
                   ),
                 ],
               ],
@@ -392,30 +478,71 @@ class _RunSqlMigrationSheetState extends State<_RunSqlMigrationSheet> {
           ),
         ),
         Divider(height: 1, color: theme.colorScheme.outlineVariant),
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: _running ? null : () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
+        SafeArea(
+          top: false,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              12,
+              12,
+              12,
+              12 + MediaQuery.of(context).padding.bottom + 6,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed:
+                        _running ? null : () => Navigator.of(context).pop(),
+                    child: Text(_completed ? 'Close' : 'Cancel'),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: _running ? null : _run,
-                  child: _running
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Run'),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _running
+                        ? null
+                        : _completed
+                        ? () => Navigator.of(context).pop()
+                        : _run,
+                    style: _primaryActionStyle(
+                      background: primaryBg,
+                      foreground: primaryFg,
+                    ),
+                    child: _running
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              SizedBox(
+                                width: 18,
+                                height: 18,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                              SizedBox(width: 10),
+                              Text('Running'),
+                            ],
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _completed
+                                    ? Icons.check_circle
+                                    : showRetry
+                                    ? Icons.refresh
+                                    : Icons.play_arrow,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(primaryLabel),
+                            ],
+                          ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ],
@@ -580,11 +707,13 @@ class _RejectedBox extends StatelessWidget {
   final dynamic riskScore;
   final List<String> reasons;
   final VoidCallback onRunAnyway;
+  final VoidCallback onSendToChat;
 
   const _RejectedBox({
     required this.riskScore,
     required this.reasons,
     required this.onRunAnyway,
+    required this.onSendToChat,
   });
 
   @override
@@ -644,13 +773,39 @@ class _RejectedBox extends StatelessWidget {
               ),
           ],
           const SizedBox(height: 10),
-          ElevatedButton(
-            onPressed: onRunAnyway,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.error,
-              foregroundColor: theme.colorScheme.onError,
-            ),
-            child: const Text('Run it anyway'),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: onRunAnyway,
+                  style: ElevatedButton.styleFrom(
+                    elevation: 0,
+                    backgroundColor: theme.colorScheme.error,
+                    foregroundColor: theme.colorScheme.onError,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(
+                        color: theme.colorScheme.error.withValues(
+                          alpha: theme.brightness == Brightness.dark ? 0.55 : 0.35,
+                        ),
+                      ),
+                    ),
+                  ),
+                  child: const Text('Run it anyway'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: onSendToChat,
+                  child: const Text('Send to chat'),
+                ),
+              ),
+            ],
           ),
         ],
       ),

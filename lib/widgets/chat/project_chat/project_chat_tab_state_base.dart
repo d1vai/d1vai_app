@@ -49,6 +49,14 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   // Mobile chat bottom sheet state
   bool _showMobileChat = false;
 
+  // Outbox queue (mobile-friendly message queue)
+  final List<OutboxItem> _outboxItems = <OutboxItem>[];
+  OutboxMode _outboxMode = OutboxMode.idle;
+  bool _outboxDrainInFlight = false;
+  int _outboxAbortToken = 0;
+  final StreamController<void> _outboxSignals =
+      StreamController<void>.broadcast(sync: true);
+
   // Sub-tab state (Preview / Code / Env)
   int _currentChatTabIndex = 0;
 
@@ -84,6 +92,11 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   Future<void> _refreshWorkspaceStatus({required bool bypassCache});
   Future<void> _loadMoreHistory();
   Future<void> _retryMessage(ChatMessage message);
+
+  // Outbox actions (implemented by logic mixin; UI passes these into widgets).
+  void _outboxClear();
+  void _outboxDelete(OutboxItem item);
+  void _outboxEdit(OutboxItem item);
 
   Future<void> triggerPreviewRedeploy();
   Future<void> reconnectWebSocket();

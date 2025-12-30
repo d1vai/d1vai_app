@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../models/message.dart';
+import '../../models/outbox.dart';
 import 'message_list.dart';
 import 'message_input.dart';
 import 'quick_actions.dart';
 import 'message_skeleton.dart';
 import 'status_pill.dart';
+import 'outbox/outbox_widgets.dart';
 
 /// Bottom sheet chat interface for mobile devices
 class ChatBottomSheet extends StatefulWidget {
@@ -14,6 +16,11 @@ class ChatBottomSheet extends StatefulWidget {
   final bool isDeploying;
   final ScrollController? scrollController;
   final Function(String) onSendMessage;
+  final List<OutboxItem> outboxItems;
+  final OutboxMode outboxMode;
+  final VoidCallback? onOutboxClear;
+  final void Function(OutboxItem item)? onOutboxDelete;
+  final void Function(OutboxItem item)? onOutboxEdit;
   final Map<String, MessageStatus>? messageStatuses;
   final Function(ChatMessage)? onRetry;
   final VoidCallback? onLoadMore;
@@ -34,6 +41,11 @@ class ChatBottomSheet extends StatefulWidget {
     this.isDeploying = false,
     this.scrollController,
     required this.onSendMessage,
+    this.outboxItems = const <OutboxItem>[],
+    this.outboxMode = OutboxMode.idle,
+    this.onOutboxClear,
+    this.onOutboxDelete,
+    this.onOutboxEdit,
     this.messageStatuses,
     this.onRetry,
     this.onLoadMore,
@@ -52,8 +64,14 @@ class ChatBottomSheet extends StatefulWidget {
 }
 
 class _ChatBottomSheetState extends State<ChatBottomSheet> {
+  final TextEditingController _inputController = TextEditingController();
+  final FocusNode _inputFocusNode = FocusNode();
+  bool _outboxCollapsed = false;
+
   @override
   void dispose() {
+    _inputController.dispose();
+    _inputFocusNode.dispose();
     super.dispose();
   }
 
@@ -61,6 +79,26 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
     if (text.trim().isEmpty) return;
 
     widget.onSendMessage(text);
+  }
+
+  void _openOutbox() {
+    final items = widget.outboxItems;
+    if (items.isEmpty) return;
+    showOutboxSheet(
+      context,
+      items: items,
+      mode: widget.outboxMode,
+      onClear: widget.onOutboxClear ?? () {},
+      onDelete: widget.onOutboxDelete ?? (_) {},
+      onEdit: (item) {
+        widget.onOutboxEdit?.call(item);
+        _inputController.text = item.prompt;
+        _inputController.selection = TextSelection.fromPosition(
+          TextPosition(offset: _inputController.text.length),
+        );
+        _inputFocusNode.requestFocus();
+      },
+    );
   }
 
   @override
@@ -232,11 +270,27 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
             ),
           ),
 
+          // Outbox bar (queue)
+          OutboxBar(
+            count: widget.outboxItems.length,
+            mode: widget.outboxMode,
+            collapsed: _outboxCollapsed,
+            onToggleCollapsed: () {
+              setState(() {
+                _outboxCollapsed = !_outboxCollapsed;
+              });
+            },
+            onOpen: _openOutbox,
+          ),
+
           // Input field
           MessageInput(
             onSend: _handleSubmitted,
             isEnabled: !widget.isLoading,
             hintText: 'Ask about your project...',
+            controller: _inputController,
+            focusNode: _inputFocusNode,
+            queueCount: widget.outboxItems.length,
           ),
         ],
       ),
