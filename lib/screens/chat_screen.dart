@@ -11,6 +11,7 @@ import '../widgets/chat/message_list.dart';
 import '../widgets/chat/message_input.dart';
 import '../widgets/chat/message_skeleton.dart';
 import '../widgets/chat/quick_actions.dart';
+import '../widgets/chat/status_pill.dart';
 import '../widgets/alert.dart';
 
 /// Main chat screen for AI conversations
@@ -1114,15 +1115,13 @@ class _ChatScreenState extends State<ChatScreen>
                   child: child,
                 ),
               ),
-              child: Text(
-                'Task: ${_taskLabel()}',
-                key: ValueKey(_taskLabel()),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurfaceVariant
-                          .withValues(alpha: 0.8),
-                    ),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: ChatStatusPill(
+                  key: ValueKey(_taskLabel()),
+                  label: _taskLabel(),
+                  isError: _sessionError,
+                ),
               ),
             ),
           ],

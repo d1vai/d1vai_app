@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../models/message.dart';
 import '../file_type_visual.dart';
+import '../project_chat/code_tab/code_tab_file_detail_bottom_sheet.dart';
 import 'message_card_base.dart';
+import '../../snackbar_helper.dart';
 
 class ChatGitCommitCard extends StatelessWidget {
   final GitCommitMessageContent content;
@@ -13,6 +15,9 @@ class ChatGitCommitCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final files = content.files ?? const <String>[];
+    final projectId = (content.projectId ?? '').trim();
+    final sqlFiles = files.where((f) => f.toLowerCase().endsWith('.sql')).toList();
+    final otherFiles = files.where((f) => !f.toLowerCase().endsWith('.sql')).toList();
     const fileTextStyle = TextStyle(
       fontFamily: 'monospace',
       fontSize: 11.5,
@@ -25,6 +30,40 @@ class ChatGitCommitCard extends StatelessWidget {
     final cardBg = theme.colorScheme.surface.withValues(
       alpha: isDark ? 0.35 : 0.6,
     );
+
+    Future<void> openFile(String path, {bool autoOpenMigration = false}) async {
+      if (projectId.isEmpty) {
+        SnackBarHelper.showError(
+          context,
+          title: 'Missing project',
+          message: 'Cannot open file details without project_id.',
+          duration: const Duration(seconds: 2),
+        );
+        return;
+      }
+      await showProjectFileDetailBottomSheet(
+        context,
+        projectId: projectId,
+        filePath: path,
+        autoOpenMigration: autoOpenMigration,
+      );
+    }
+
+    Widget sectionLabel(String text, {Color? color}) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Text(
+          text,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: (color ?? theme.colorScheme.onSurfaceVariant).withValues(
+              alpha: 0.9,
+            ),
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.2,
+          ),
+        ),
+      );
+    }
 
     return ChatMessageCard(
       backgroundColor:
@@ -73,50 +112,53 @@ class ChatGitCommitCard extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            for (final f in files)
-                              Builder(
-                                builder: (context) {
-                                  final visual = fileTypeVisual(theme, f);
-                                  final iconColor =
-                                      (visual.color ??
-                                              theme.colorScheme.onSurfaceVariant)
-                                          .withValues(alpha: 0.85);
-
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 2,
-                                    ),
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        SizedBox(
-                                          width: 18,
-                                          height: firstLineHeight,
-                                          child: Center(
-                                            child: Icon(
-                                              visual.icon,
-                                              size: 14,
-                                              color: iconColor,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: SelectableText(
-                                            f,
-                                            maxLines: 2,
-                                            style: fileTextStyle.copyWith(
-                                              color: theme.colorScheme.onSurface
-                                                  .withValues(alpha: 0.9),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
+                            if (sqlFiles.isNotEmpty) ...[
+                              sectionLabel(
+                                'SQL migrations',
+                                color: Colors.amber.shade700,
                               ),
+                              for (final f in sqlFiles)
+                                _FileRow(
+                                  filePath: f,
+                                  firstLineHeight: firstLineHeight,
+                                  textStyle: fileTextStyle,
+                                  onOpen: () => openFile(f),
+                                  trailing: IconButton(
+                                    visualDensity: VisualDensity.compact,
+                                    icon: Icon(
+                                      Icons.play_arrow,
+                                      size: 18,
+                                      color: Colors.amber.shade700,
+                                    ),
+                                    tooltip: 'Run SQL migration',
+                                    onPressed: () => openFile(
+                                      f,
+                                      autoOpenMigration: true,
+                                    ),
+                                  ),
+                                ),
+                              if (otherFiles.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 8,
+                                  ),
+                                  child: Divider(
+                                    height: 1,
+                                    color: theme.colorScheme.outlineVariant
+                                        .withValues(alpha: 0.6),
+                                  ),
+                                ),
+                            ],
+                            if (otherFiles.isNotEmpty) ...[
+                              sectionLabel('Other files'),
+                              for (final f in otherFiles)
+                                _FileRow(
+                                  filePath: f,
+                                  firstLineHeight: firstLineHeight,
+                                  textStyle: fileTextStyle,
+                                  onOpen: () => openFile(f),
+                                ),
+                            ],
                           ],
                         ),
                       ),
@@ -127,6 +169,82 @@ class ChatGitCommitCard extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _FileRow extends StatelessWidget {
+  final String filePath;
+  final double firstLineHeight;
+  final TextStyle textStyle;
+  final VoidCallback onOpen;
+  final Widget? trailing;
+
+  const _FileRow({
+    required this.filePath,
+    required this.firstLineHeight,
+    required this.textStyle,
+    required this.onOpen,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final visual = fileTypeVisual(theme, filePath);
+    final iconColor =
+        (visual.color ?? theme.colorScheme.onSurfaceVariant).withValues(
+          alpha: 0.85,
+        );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onOpen,
+          borderRadius: BorderRadius.circular(10),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 18,
+                  height: firstLineHeight,
+                  child: Center(
+                    child: Icon(visual.icon, size: 14, color: iconColor),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    filePath,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: textStyle.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
+                    ),
+                  ),
+                ),
+                if (trailing != null) ...[
+                  const SizedBox(width: 6),
+                  trailing!,
+                ] else ...[
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.chevron_right,
+                    size: 18,
+                    color: theme.colorScheme.onSurfaceVariant.withValues(
+                      alpha: 0.65,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

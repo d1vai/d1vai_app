@@ -8,6 +8,7 @@ import 'code_tab_models.dart';
 import 'code_tab_types.dart';
 import 'code_tab_views.dart';
 import 'code_tab_code_block.dart';
+import 'code_tab_run_migration_bottom_sheet.dart';
 
 class CodeTabFileViewerPage extends StatefulWidget {
   final String projectId;
@@ -204,6 +205,7 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final content = _content;
+    final isSqlFile = widget.filePath.toLowerCase().trim().endsWith('.sql');
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -212,6 +214,19 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
+          if (isSqlFile && content != null && !content.isBinary)
+            IconButton(
+              onPressed: () {
+                showRunSqlMigrationBottomSheet(
+                  context,
+                  projectId: widget.projectId,
+                  sql: content.content,
+                  sourcePath: widget.filePath,
+                );
+              },
+              icon: const Icon(Icons.play_arrow),
+              tooltip: 'Run SQL migration',
+            ),
           IconButton(
             onPressed: () {
               widget.onAsk(
@@ -320,4 +335,3 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
     );
   }
 }
-
