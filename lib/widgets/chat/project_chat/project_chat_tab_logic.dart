@@ -1,5 +1,12 @@
 part of '../../project_chat/project_chat_tab.dart';
 
+class _OutboxAborted implements Exception {
+  const _OutboxAborted();
+
+  @override
+  String toString() => 'outbox_aborted';
+}
+
 mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
   final StringBuffer _assistantDeltaBuffer = StringBuffer();
   int _assistantDeltaChars = 0;
@@ -36,13 +43,17 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
   Future<void> _sleepAbortable(Duration d, int token) async {
     final deadline = DateTime.now().add(d);
     while (DateTime.now().isBefore(deadline)) {
-      if (_outboxAbortToken != token) throw Exception('aborted');
+      if (_outboxAbortToken != token) throw const _OutboxAborted();
       final remaining = deadline.difference(DateTime.now());
       final step = remaining.inMilliseconds.clamp(0, 120);
-      await Future.any<void>([
-        Future<void>.delayed(Duration(milliseconds: step)),
-        _outboxSignals.stream.first,
-      ]);
+      try {
+        await Future.any<void>([
+          Future<void>.delayed(Duration(milliseconds: step)),
+          _outboxSignals.stream.first,
+        ]);
+      } catch (_) {
+        throw const _OutboxAborted();
+      }
     }
   }
 
@@ -50,17 +61,21 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     if (_workspacePhase == WorkspacePhase.ready) return;
     _setOutboxMode(OutboxMode.waitingWorkspace);
     while (_workspacePhase != WorkspacePhase.ready) {
-      if (_outboxAbortToken != token) throw Exception('aborted');
+      if (_outboxAbortToken != token) throw const _OutboxAborted();
       try {
         await _ensureWorkspaceReadyForSend();
       } catch (_) {
         // fall through and wait for next signal/backoff
       }
       if (_workspacePhase == WorkspacePhase.ready) return;
-      await Future.any<void>([
-        Future<void>.delayed(const Duration(milliseconds: 700)),
-        _outboxSignals.stream.first,
-      ]);
+      try {
+        await Future.any<void>([
+          Future<void>.delayed(const Duration(milliseconds: 700)),
+          _outboxSignals.stream.first,
+        ]);
+      } catch (_) {
+        throw const _OutboxAborted();
+      }
     }
   }
 
@@ -68,11 +83,15 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     if (_isTaskIdleForQueue()) return false;
     _setOutboxMode(OutboxMode.waitingTask);
     while (!_isTaskIdleForQueue()) {
-      if (_outboxAbortToken != token) throw Exception('aborted');
-      await Future.any<void>([
-        Future<void>.delayed(const Duration(milliseconds: 250)),
-        _outboxSignals.stream.first,
-      ]);
+      if (_outboxAbortToken != token) throw const _OutboxAborted();
+      try {
+        await Future.any<void>([
+          Future<void>.delayed(const Duration(milliseconds: 250)),
+          _outboxSignals.stream.first,
+        ]);
+      } catch (_) {
+        throw const _OutboxAborted();
+      }
     }
     return true;
   }
@@ -162,16 +181,11 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
 
   void _outboxClear() {
     _abortOutboxDrain();
-    if (!mounted) {
-      _outboxItems.clear();
-      _outboxMode = OutboxMode.idle;
-      return;
-    }
+    if (!mounted) return;
     setState(() {
       _outboxItems.clear();
       _outboxMode = OutboxMode.idle;
     });
-    _signalOutbox();
     unawaited(_maybePowerSaveCloseWebSocket());
   }
 
@@ -198,10 +212,14 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       if (nextIndex == -1) return;
       final next = _outboxItems[nextIndex];
 
-      await _waitForWorkspaceReady(token);
-      final waited = await _waitForTaskIdle(token);
-      if (waited || next.needsCooldownAfterIdle) {
-        await _sleepAbortable(const Duration(milliseconds: 1500), token);
+      try {
+        await _waitForWorkspaceReady(token);
+        final waited = await _waitForTaskIdle(token);
+        if (waited || next.needsCooldownAfterIdle) {
+          await _sleepAbortable(const Duration(milliseconds: 1500), token);
+        }
+      } on _OutboxAborted {
+        return;
       }
       if (_outboxAbortToken != token) return;
 

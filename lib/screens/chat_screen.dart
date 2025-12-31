@@ -16,6 +16,13 @@ import '../widgets/chat/quick_actions.dart';
 import '../widgets/chat/status_pill.dart';
 import '../widgets/alert.dart';
 
+class _OutboxAborted implements Exception {
+  const _OutboxAborted();
+
+  @override
+  String toString() => 'outbox_aborted';
+}
+
 /// Main chat screen for AI conversations
 class ChatScreen extends StatefulWidget {
   final String projectId;
@@ -149,13 +156,17 @@ class _ChatScreenState extends State<ChatScreen>
   Future<void> _sleepAbortable(Duration d, int token) async {
     final deadline = DateTime.now().add(d);
     while (DateTime.now().isBefore(deadline)) {
-      if (_outboxAbortToken != token) throw Exception('aborted');
+      if (_outboxAbortToken != token) throw const _OutboxAborted();
       final remaining = deadline.difference(DateTime.now());
       final step = remaining.inMilliseconds.clamp(0, 120);
-      await Future.any<void>([
-        Future<void>.delayed(Duration(milliseconds: step)),
-        _outboxSignals.stream.first,
-      ]);
+      try {
+        await Future.any<void>([
+          Future<void>.delayed(Duration(milliseconds: step)),
+          _outboxSignals.stream.first,
+        ]);
+      } catch (_) {
+        throw const _OutboxAborted();
+      }
     }
   }
 
@@ -163,15 +174,19 @@ class _ChatScreenState extends State<ChatScreen>
     if (_workspacePhase == WorkspacePhase.ready) return;
     _setOutboxMode(OutboxMode.waitingWorkspace);
     while (_workspacePhase != WorkspacePhase.ready) {
-      if (_outboxAbortToken != token) throw Exception('aborted');
+      if (_outboxAbortToken != token) throw const _OutboxAborted();
       try {
         await _ensureWorkspaceReadyForSend();
       } catch (_) {}
       if (_workspacePhase == WorkspacePhase.ready) return;
-      await Future.any<void>([
-        Future<void>.delayed(const Duration(milliseconds: 700)),
-        _outboxSignals.stream.first,
-      ]);
+      try {
+        await Future.any<void>([
+          Future<void>.delayed(const Duration(milliseconds: 700)),
+          _outboxSignals.stream.first,
+        ]);
+      } catch (_) {
+        throw const _OutboxAborted();
+      }
     }
   }
 
@@ -179,11 +194,15 @@ class _ChatScreenState extends State<ChatScreen>
     if (_isTaskIdleForQueue()) return false;
     _setOutboxMode(OutboxMode.waitingTask);
     while (!_isTaskIdleForQueue()) {
-      if (_outboxAbortToken != token) throw Exception('aborted');
-      await Future.any<void>([
-        Future<void>.delayed(const Duration(milliseconds: 250)),
-        _outboxSignals.stream.first,
-      ]);
+      if (_outboxAbortToken != token) throw const _OutboxAborted();
+      try {
+        await Future.any<void>([
+          Future<void>.delayed(const Duration(milliseconds: 250)),
+          _outboxSignals.stream.first,
+        ]);
+      } catch (_) {
+        throw const _OutboxAborted();
+      }
     }
     return true;
   }
@@ -242,7 +261,6 @@ class _ChatScreenState extends State<ChatScreen>
       _outboxItems.clear();
       _outboxMode = OutboxMode.idle;
     });
-    _signalOutbox();
     unawaited(_maybePowerSaveCloseWebSocket());
   }
 
@@ -277,10 +295,14 @@ class _ChatScreenState extends State<ChatScreen>
       if (nextIndex == -1) return;
       final next = _outboxItems[nextIndex];
 
-      await _waitForWorkspaceReady(token);
-      final waited = await _waitForTaskIdle(token);
-      if (waited || next.needsCooldownAfterIdle) {
-        await _sleepAbortable(const Duration(milliseconds: 1500), token);
+      try {
+        await _waitForWorkspaceReady(token);
+        final waited = await _waitForTaskIdle(token);
+        if (waited || next.needsCooldownAfterIdle) {
+          await _sleepAbortable(const Duration(milliseconds: 1500), token);
+        }
+      } on _OutboxAborted {
+        return;
       }
       if (_outboxAbortToken != token) return;
       if (!mounted) return;

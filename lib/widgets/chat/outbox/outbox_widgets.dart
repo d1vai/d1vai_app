@@ -480,6 +480,9 @@ class _OutboxSheetState extends State<_OutboxSheet> {
       _editingId = null;
       _controller.clear();
     });
+    try {
+      _focusNode.unfocus();
+    } catch (_) {}
   }
 
   void _saveEdit(OutboxItem item) {
@@ -535,7 +538,14 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                     ),
                     const Spacer(),
                     TextButton(
-                      onPressed: widget.onClear,
+                      onPressed: () {
+                        widget.onClear();
+                        if (!mounted) return;
+                        setState(() {
+                          _editingId = null;
+                          _controller.clear();
+                        });
+                      },
                       child: const Text('Clear'),
                     ),
                   ],
@@ -581,24 +591,27 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                               required VoidCallback? onTap,
                               Color? color,
                             }) {
-                              return Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: onTap,
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: iconBg,
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        color: theme.colorScheme.outlineVariant.withValues(alpha: 0.55),
+                              return Tooltip(
+                                message: tooltip,
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: onTap,
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: iconBg,
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.55),
+                                        ),
                                       ),
-                                    ),
-                                    child: Icon(
-                                      icon,
-                                      size: 18,
-                                      color: color ?? iconFg,
+                                      child: Icon(
+                                        icon,
+                                        size: 18,
+                                        color: color ?? iconFg,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -650,7 +663,16 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                                 iconBtn(
                                   icon: Icons.delete_outline,
                                   tooltip: 'Delete',
-                                  onTap: canEdit ? () => widget.onDelete(item) : null,
+                                  onTap: canEdit
+                                      ? () {
+                                          widget.onDelete(item);
+                                          if (!mounted) return;
+                                          if (_editingId == item.id) {
+                                            _cancelEdit();
+                                          }
+                                          setState(() {});
+                                        }
+                                      : null,
                                   color: theme.colorScheme.error.withValues(alpha: 0.9),
                                 ),
                               ],
@@ -722,6 +744,7 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                               }
                               if (direction == DismissDirection.endToStart) {
                                 widget.onDelete(item);
+                                if (mounted) setState(() {});
                                 return true;
                               }
                               return false;
@@ -774,15 +797,70 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                                     color: theme.colorScheme.outlineVariant.withValues(alpha: 0.55),
                                   ),
                                 ),
-                                child: Padding(
-                                  padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
-                                  child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Expanded(child: content()),
-                                      const SizedBox(width: 10),
-                                      trailingIcons(),
-                                    ],
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(14),
+                                  onLongPress: isRunning
+                                      ? null
+                                      : () async {
+                                          await showModalBottomSheet<void>(
+                                            context: context,
+                                            useSafeArea: true,
+                                            backgroundColor: theme.colorScheme.surface,
+                                            shape: const RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.vertical(
+                                                top: Radius.circular(18),
+                                              ),
+                                            ),
+                                            builder: (context) {
+                                              return SafeArea(
+                                                child: Column(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    ListTile(
+                                                      leading: const Icon(Icons.edit),
+                                                      title: const Text('Edit'),
+                                                      enabled: canEdit,
+                                                      onTap: !canEdit
+                                                          ? null
+                                                          : () {
+                                                              Navigator.pop(context);
+                                                              _startEdit(item);
+                                                            },
+                                                    ),
+                                                    ListTile(
+                                                      leading: const Icon(Icons.delete),
+                                                      title: const Text('Delete'),
+                                                      enabled: canEdit,
+                                                      onTap: !canEdit
+                                                          ? null
+                                                          : () {
+                                                              widget.onDelete(item);
+                                                              Navigator.pop(context);
+                                                              if (mounted) setState(() {});
+                                                            },
+                                                    ),
+                                                    const SizedBox(height: 6),
+                                                    ListTile(
+                                                      leading: const Icon(Icons.close),
+                                                      title: const Text('Cancel'),
+                                                      onTap: () => Navigator.pop(context),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          );
+                                        },
+                                  child: Padding(
+                                    padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Expanded(child: content()),
+                                        const SizedBox(width: 10),
+                                        trailingIcons(),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),

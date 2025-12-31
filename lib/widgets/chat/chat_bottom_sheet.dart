@@ -90,7 +90,7 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
       mode: widget.outboxMode,
       onClear: widget.onOutboxClear ?? () {},
       onDelete: widget.onOutboxDelete ?? (_) {},
-      onUpdate: widget.onOutboxUpdate ?? (_, __) {},
+      onUpdate: widget.onOutboxUpdate ?? (item, nextPrompt) {},
     );
   }
 
