@@ -12,6 +12,7 @@ import '../../models/project.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/chat_service.dart';
 import '../../services/d1vai_service.dart';
+import '../../services/workspace_service.dart';
 import '../../utils/error_utils.dart';
 import '../../utils/message_parser.dart';
 import '../chat/message_list.dart';
@@ -38,6 +39,7 @@ class ProjectAnalyticsTab extends StatefulWidget {
 class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
   final D1vaiService _d1vaiService = D1vaiService();
   final ChatService _chatService = ChatService();
+  final WorkspaceService _workspaceService = WorkspaceService();
 
   Map<String, dynamic>? _values;
   Map<String, dynamic>? _activeVisitors;
@@ -337,6 +339,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
         );
       });
 
+      await _workspaceService.ensureWorkspaceReady();
       final exec = await _chatService.executeSession(
         projectId: widget.project.id,
         prompt: prompt,
