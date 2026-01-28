@@ -109,7 +109,7 @@
 ### 7. 社区内容生产与互动（Community）
 
 - [ ] 给 `PostDetailScreen` 增加“评论列表 + 发表评论”入口（先仅 UI + 占位数据也可，但要把 API/Model 结构预留）
-- [ ] 给 `PostCard` 增加轻量互动按钮（like/comment/share），并在未登录时统一走 `LoginRequiredDialog`
+- [x] 给 `PostCard` 增加轻量互动按钮（like/comment/share），并在未登录时统一走 `LoginRequiredDialog`
 - [ ] 增加“我的帖子 / 我的草稿”列表入口（可挂在 Profile 或 Community 顶部筛选）
 - [ ] 支持“发布失败重试 + 本地草稿保存”（复用 `models/outbox.dart` 的队列思想或新增轻量 Draft 存储）
 - [ ] 增加“举报/屏蔽”入口（先只走前端 UI + 提示；后续接后端）
