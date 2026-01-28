@@ -857,6 +857,36 @@ class _LoginScreenState extends State<LoginScreen> {
                 : 'Paste signature',
           ),
         ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: _isLoading
+                ? null
+                : () async {
+                    final data = await Clipboard.getData('text/plain');
+                    final text = (data?.text ?? '').trim();
+                    if (text.isEmpty) {
+                      if (!mounted) return;
+                      SnackBarHelper.showInfo(
+                        context,
+                        title: 'Paste',
+                        message: 'Clipboard is empty',
+                      );
+                      return;
+                    }
+                    _walletSignatureController.text = text;
+                    if (!mounted) return;
+                    SnackBarHelper.showSuccess(
+                      context,
+                      title: 'Pasted',
+                      message: 'Signature pasted',
+                    );
+                  },
+            icon: const Icon(Icons.content_paste, size: 16),
+            label: const Text('Paste signature'),
+          ),
+        ),
         const SizedBox(height: 12),
         Text(
           'Tip: sign the message in your wallet app, then paste the signature here.',

@@ -144,7 +144,7 @@
 - [x] SnackBar：成功/失败/提示统一加入轻量 haptic 反馈（让用户“操作有回声”）
 - [x] Login：模式切换栏适配 Dark/Light（使用 theme 色）+ 轻微动画（更顺滑）
 - [x] Login（Wallet）：nonce 不随地址输入频繁变化，仅在“Regenerate/切换链”时变化（避免签名消息抖动）
-- [ ] Login（Wallet）：增加“一键粘贴签名”按钮（Paste from clipboard）
+- [x] Login（Wallet）：增加“一键粘贴签名”按钮（Paste from clipboard）
 - [ ] Wallet Settings：已连接地址增加“Copy address”快捷动作（可点可复制）
 - [ ] Account & Data：删除账号入口增加二次确认弹窗（增加仪式感 + 防误触）
 - [ ] Dashboard heatmap：项目列表未加载时禁用筛选控件 + 显示 loading 文案
