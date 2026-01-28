@@ -376,6 +376,8 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
 
     return Scaffold(
       body: SafeArea(
@@ -413,46 +415,47 @@ class _LoginScreenState extends State<LoginScreen> {
                 // 模式切换标签
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
+                    color: cs.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     children: LoginMode.values.map((mode) {
                       final isSelected = mode == _loginMode;
                       return Expanded(
-                        child: GestureDetector(
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(8),
                           onTap: () => _onModeChanged(mode),
-                          child: Container(
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 160),
+                            curve: Curves.easeOutCubic,
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
-                              color: isSelected
-                                  ? Colors.white
-                                  : Colors.transparent,
+                              color: isSelected ? cs.surface : Colors.transparent,
                               borderRadius: BorderRadius.circular(8),
                               boxShadow: isSelected
                                   ? [
                                       BoxShadow(
-                                        color: Colors.black.withValues(
-                                          alpha: 0.05,
-                                        ),
-                                        blurRadius: 4,
+                                        color: Colors.black.withValues(alpha: 0.10),
+                                        blurRadius: 6,
                                         offset: const Offset(0, 2),
                                       ),
                                     ]
                                   : null,
                             ),
-                            child: Text(
-                              mode.getLabel(context),
+                            child: AnimatedDefaultTextStyle(
+                              duration: const Duration(milliseconds: 160),
+                              curve: Curves.easeOutCubic,
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: isSelected
                                     ? FontWeight.w600
                                     : FontWeight.normal,
-                                color: isSelected
-                                    ? Colors.deepPurple
-                                    : Colors.grey.shade600,
+                                color: isSelected ? cs.primary : cs.onSurfaceVariant,
                               ),
-                              textAlign: TextAlign.center,
+                              child: Text(
+                                mode.getLabel(context),
+                                textAlign: TextAlign.center,
+                              ),
                             ),
                           ),
                         ),

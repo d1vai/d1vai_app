@@ -142,7 +142,7 @@
 ## 4) UX 快速提升（最容易实现的 15 个点，逐一完成）
 
 - [x] SnackBar：成功/失败/提示统一加入轻量 haptic 反馈（让用户“操作有回声”）
-- [ ] Login：模式切换栏适配 Dark/Light（使用 theme 色）+ 轻微动画（更顺滑）
+- [x] Login：模式切换栏适配 Dark/Light（使用 theme 色）+ 轻微动画（更顺滑）
 - [ ] Login（Wallet）：nonce 不随地址输入频繁变化，仅在“Regenerate/切换链”时变化（避免签名消息抖动）
 - [ ] Login（Wallet）：增加“一键粘贴签名”按钮（Paste from clipboard）
 - [ ] Wallet Settings：已连接地址增加“Copy address”快捷动作（可点可复制）
