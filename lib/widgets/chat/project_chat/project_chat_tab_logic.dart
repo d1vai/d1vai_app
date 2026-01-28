@@ -132,6 +132,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     unawaited(_drainOutbox());
   }
 
+  @override
   void _outboxDelete(OutboxItem item) {
     _abortOutboxDrain();
     if (!mounted) {
@@ -145,6 +146,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     unawaited(_drainOutbox());
   }
 
+  @override
   void _outboxUpdate(OutboxItem item, String nextPrompt) {
     final next = nextPrompt.trim();
     _abortOutboxDrain();
@@ -179,6 +181,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     unawaited(_drainOutbox());
   }
 
+  @override
   void _outboxClear() {
     _abortOutboxDrain();
     if (!mounted) return;
@@ -1483,6 +1486,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     try {
       await _dispatchPrompt(prompt);
     } catch (e) {
+      if (!mounted) return;
       SnackBarHelper.showError(
         context,
         title: 'Error',
