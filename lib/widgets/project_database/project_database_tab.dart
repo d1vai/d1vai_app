@@ -33,6 +33,7 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
   bool _isLoading = false;
   bool _isInitialized = false;
   bool _enabling = false;
+  _DbViewMode _viewMode = _DbViewMode.tables;
 
   @override
   void didChangeDependencies() {
@@ -76,11 +77,28 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
       );
 
       final List<DatabaseTable> tables = [];
-      if (schemaData['schemas'] != null) {
-        for (final schema in schemaData['schemas']) {
-          if (schema['tables'] != null) {
-            for (final table in schema['tables']) {
+      // Backend returns either:
+      // - { tables: [...] } (new introspect)
+      // - { schemas: [{ tables: [...] }] } (legacy)
+      final rawTables = schemaData['tables'];
+      if (rawTables is List) {
+        for (final t in rawTables) {
+          if (t is Map<String, dynamic>) {
+            tables.add(DatabaseTable.fromJson(t));
+          } else if (t is Map) {
+            tables.add(DatabaseTable.fromJson(Map<String, dynamic>.from(t)));
+          }
+        }
+      } else if (schemaData['schemas'] is List) {
+        for (final schema in (schemaData['schemas'] as List)) {
+          if (schema is! Map) continue;
+          final st = schema['tables'];
+          if (st is! List) continue;
+          for (final table in st) {
+            if (table is Map<String, dynamic>) {
               tables.add(DatabaseTable.fromJson(table));
+            } else if (table is Map) {
+              tables.add(DatabaseTable.fromJson(Map<String, dynamic>.from(table)));
             }
           }
         }
@@ -201,6 +219,41 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
       );
     }
 
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: SegmentedButton<_DbViewMode>(
+            segments: const [
+              ButtonSegment(
+                value: _DbViewMode.tables,
+                icon: Icon(Icons.table_chart),
+                label: Text('Tables'),
+              ),
+              ButtonSegment(
+                value: _DbViewMode.relations,
+                icon: Icon(Icons.account_tree),
+                label: Text('Relations'),
+              ),
+            ],
+            selected: <_DbViewMode>{_viewMode},
+            onSelectionChanged: (set) {
+              setState(() {
+                _viewMode = set.first;
+              });
+            },
+          ),
+        ),
+        Expanded(
+          child: _viewMode == _DbViewMode.tables
+              ? _buildTablesList(theme)
+              : _buildRelationsList(theme),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTablesList(ThemeData theme) {
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: _tables.length,
@@ -244,6 +297,16 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                     fontSize: 13,
                   ),
                 ),
+                if (table.foreignKeys.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    '${table.foreignKeys.length} relations',
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
                 if (table.rowCount != null) ...[
                   const SizedBox(height: 2),
                   Text(
@@ -273,7 +336,77 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
       },
     );
   }
+
+  Widget _buildRelationsList(ThemeData theme) {
+    final withRelations = _tables
+        .where((t) => t.foreignKeys.isNotEmpty)
+        .toList(growable: false)
+      ..sort((a, b) => a.fullName.compareTo(b.fullName));
+
+    if (withRelations.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            'No foreign-key relationships found.',
+            style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemCount: withRelations.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final table = withRelations[index];
+        return Card(
+          child: ExpansionTile(
+            title: Text(
+              table.fullName,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            subtitle: Text(
+              '${table.foreignKeys.length} relations',
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+            ),
+            children: table.foreignKeys.map((fk) {
+              return ListTile(
+                leading: Icon(
+                  Icons.call_split,
+                  color: theme.colorScheme.tertiary,
+                  size: 18,
+                ),
+                title: Text(
+                  '${fk.columnName} → ${fk.refFullTable}.${fk.refColumn}',
+                ),
+                subtitle: fk.constraintName.trim().isEmpty
+                    ? null
+                    : Text(
+                        fk.constraintName,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                onTap: () {
+                  widget.onAskAi?.call(
+                    'Explain the relationship from ${table.fullName}.${fk.columnName} '
+                    'to ${fk.refFullTable}.${fk.refColumn}. Suggest indexes and common queries.',
+                  );
+                },
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
 }
+
+enum _DbViewMode { tables, relations }
 
 class _EnableDatabaseCard extends StatelessWidget {
   final bool enabling;

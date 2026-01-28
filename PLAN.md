@@ -49,6 +49,10 @@
    - 现状：Database Tab 以表列表为主，缺少整体关系视图。
    - 改进：提供 ERD/Schema Graph（节点=表/视图，边=外键/关联）；支持从 schema 一键生成“Ask AI”的上下文提问（例如：为订单表增加优惠券关系）。
    - 验收：用户可在手机上快速理解数据结构；能从图上定位表并跳转详情。
+   - 实施清单：
+     - [x] 修复 schema 解析：支持后端 `{tables:[...]}` 返回（含 foreign_keys）
+     - [x] Database Tab 增加 Relations 视图（外键关系列表 + 一键 Ask AI）
+     - [ ] ERD/Graph 可视化（节点/边布局）
 
 ### P1：提升高频体验与转化（次优先）
 
