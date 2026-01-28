@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shimmer/shimmer.dart';
 import '../models/analytics.dart';
@@ -253,6 +254,7 @@ class _RealtimeAnalyticsScreenState
   }
 
   Widget _buildContent() {
+    final anomalies = _detectAnomalies();
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -261,6 +263,10 @@ class _RealtimeAnalyticsScreenState
         const SizedBox(height: 16),
         // Real-time indicator
         _buildRealtimeIndicator(),
+        if (anomalies.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _buildAnomalyCard(anomalies),
+        ],
         const SizedBox(height: 24),
         // Summary cards
         if (_summary != null) ...[
@@ -348,6 +354,140 @@ class _RealtimeAnalyticsScreenState
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
+      ),
+    );
+  }
+
+  List<_RealtimeAnomaly> _detectAnomalies() {
+    final out = <_RealtimeAnomaly>[];
+    for (final m in _metrics) {
+      final name = m.name.toLowerCase();
+      final change = m.percentageChange;
+
+      // Heuristics: flag large jumps. Use name hints when possible.
+      final isErrorish = name.contains('error') || name.contains('fail');
+      final isLatencyish =
+          name.contains('latency') || name.contains('response');
+
+      if (isErrorish &&
+          m.currentValue > 0 &&
+          (change >= 50 || m.currentValue >= m.previousValue * 2)) {
+        out.add(
+          _RealtimeAnomaly(
+            title: 'Error spike',
+            detail:
+                '${m.name}: ${m.currentValue.toStringAsFixed(2)}${m.unit} (was ${m.previousValue.toStringAsFixed(2)}${m.unit})',
+            color: Colors.red,
+            icon: Icons.error_outline,
+          ),
+        );
+        continue;
+      }
+
+      if (isLatencyish &&
+          m.currentValue > 0 &&
+          (change >= 50 || m.currentValue >= m.previousValue * 2)) {
+        out.add(
+          _RealtimeAnomaly(
+            title: 'Latency spike',
+            detail:
+                '${m.name}: ${m.currentValue.toStringAsFixed(2)}${m.unit} (was ${m.previousValue.toStringAsFixed(2)}${m.unit})',
+            color: Colors.orange,
+            icon: Icons.timelapse,
+          ),
+        );
+        continue;
+      }
+
+      if (m.currentValue > 0 && change.abs() >= 120) {
+        out.add(
+          _RealtimeAnomaly(
+            title: 'Unusual change',
+            detail:
+                '${m.name}: ${m.currentValue.toStringAsFixed(2)}${m.unit} (${change >= 0 ? '+' : ''}${change.toStringAsFixed(0)}%)',
+            color: Colors.purple,
+            icon: Icons.insights,
+          ),
+        );
+      }
+    }
+    return out.take(3).toList(growable: false);
+  }
+
+  Widget _buildAnomalyCard(List<_RealtimeAnomaly> anomalies) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final prompt = anomalies.map((a) => '- ${a.title}: ${a.detail}').join('\n');
+
+    return Card(
+      color: cs.errorContainer.withValues(alpha: 0.25),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.warning_amber, color: cs.error),
+                const SizedBox(width: 8),
+                Text(
+                  'Anomaly detected',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            for (final a in anomalies) ...[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Icon(a.icon, size: 16, color: a.color),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${a.title}: ${a.detail}',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+            ],
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () => context.push(
+                    '/projects/${widget.projectId}?tab=deploy',
+                  ),
+                  icon: const Icon(Icons.cloud_upload, size: 18),
+                  label: const Text('Deploy logs'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => context.push(
+                    '/projects/${widget.projectId}?tab=api',
+                  ),
+                  icon: const Icon(Icons.api, size: 18),
+                  label: const Text('Env vars'),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () => context.push(
+                    '/projects/${widget.projectId}/chat?autoprompt=${Uri.encodeQueryComponent("My realtime analytics shows anomalies:\\n$prompt\\n\\nPlease help me debug step-by-step and propose fixes.")}',
+                  ),
+                  icon: const Icon(Icons.chat),
+                  label: const Text('Ask AI'),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -865,4 +1005,18 @@ class _RealtimeAnalyticsScreenState
       ),
     );
   }
+}
+
+class _RealtimeAnomaly {
+  final String title;
+  final String detail;
+  final Color color;
+  final IconData icon;
+
+  const _RealtimeAnomaly({
+    required this.title,
+    required this.detail,
+    required this.color,
+    required this.icon,
+  });
 }

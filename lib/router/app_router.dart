@@ -312,7 +312,10 @@ GoRouter createAppRouter() {
         pageBuilder: (context, state) => _buildPageWithTransition(
           context,
           state,
-          ProjectDetailScreen(projectId: state.pathParameters['id']!),
+          ProjectDetailScreen(
+            projectId: state.pathParameters['id']!,
+            initialTab: state.uri.queryParameters['tab'],
+          ),
         ),
       ),
       GoRoute(

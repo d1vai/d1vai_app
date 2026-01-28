@@ -24,8 +24,9 @@ import 'dart:ui';
 
 class ProjectDetailScreen extends StatefulWidget {
   final String projectId;
+  final String? initialTab;
 
-  const ProjectDetailScreen({super.key, required this.projectId});
+  const ProjectDetailScreen({super.key, required this.projectId, this.initialTab});
 
   @override
   State<ProjectDetailScreen> createState() => _ProjectDetailScreenState();
@@ -55,7 +56,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _tabs.length, vsync: this);
+    _tabController = TabController(
+      length: _tabs.length,
+      vsync: this,
+      initialIndex: _tabIndexFromName(widget.initialTab),
+    );
 
     final user = Provider.of<AuthProvider>(context, listen: false).user;
     if (user == null) {
@@ -76,6 +81,35 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadProject();
     });
+  }
+
+  int _tabIndexFromName(String? raw) {
+    final t = (raw ?? '').trim().toLowerCase();
+    if (t.isEmpty) return 0;
+    switch (t) {
+      case 'overview':
+        return 0;
+      case 'chat':
+        return 1;
+      case 'database':
+      case 'db':
+        return 2;
+      case 'api':
+        return 3;
+      case 'github':
+        return 4;
+      case 'payment':
+      case 'billing':
+        return 5;
+      case 'deploy':
+      case 'deployment':
+      case 'logs':
+        return 6;
+      case 'analytics':
+        return 7;
+      default:
+        return 0;
+    }
   }
 
   Future<void> _loadProject() async {
