@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../services/d1vai_service.dart';
 import '../../utils/error_utils.dart';
@@ -79,6 +80,78 @@ class _DeploymentLogScreenState extends State<DeploymentLogScreen> {
     }
   }
 
+  String _extractErrorSnippet(String log) {
+    final raw = log.trimRight();
+    if (raw.isEmpty) return '';
+
+    final lines = raw.split('\n');
+    final keyword = RegExp(
+      r'(error|failed|exception|traceback|fatal|panic|segmentation fault|exit code|status\s*[45]\d\d)',
+      caseSensitive: false,
+    );
+
+    final hits = <int>[];
+    for (var i = 0; i < lines.length; i++) {
+      if (keyword.hasMatch(lines[i])) hits.add(i);
+    }
+
+    // Fallback: last N lines if we can't find obvious error signals.
+    if (hits.isEmpty) {
+      final start = (lines.length - 120).clamp(0, lines.length);
+      return lines.sublist(start).join('\n');
+    }
+
+    final first = hits.first;
+    final last = hits.last;
+    final start = (first - 25).clamp(0, lines.length);
+    final end = (last + 25).clamp(0, lines.length);
+    final snippet = lines.sublist(start, end).join('\n');
+
+    // Avoid copying an entire megabyte when errors are very noisy.
+    const maxChars = 12000;
+    if (snippet.length <= maxChars) return snippet;
+    return snippet.substring(0, maxChars);
+  }
+
+  Future<void> _copyErrorSnippet() async {
+    final snippet = _extractErrorSnippet(_log);
+    if (snippet.trim().isEmpty) return;
+    try {
+      await Clipboard.setData(ClipboardData(text: snippet));
+      if (!mounted) return;
+      SnackBarHelper.showSuccess(
+        context,
+        title: 'Copied',
+        message: 'Error snippet copied',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      SnackBarHelper.showError(
+        context,
+        title: 'Copy failed',
+        message: humanizeError(e),
+      );
+    }
+  }
+
+  Future<void> _shareLog({required bool errorsOnly}) async {
+    final text = errorsOnly ? _extractErrorSnippet(_log) : _log;
+    if (text.trim().isEmpty) return;
+    try {
+      await Share.share(
+        text,
+        subject: errorsOnly ? '${widget.title} (errors)' : widget.title,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      SnackBarHelper.showError(
+        context,
+        title: 'Share failed',
+        message: humanizeError(e),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -98,10 +171,74 @@ class _DeploymentLogScreenState extends State<DeploymentLogScreen> {
                   )
                 : const Icon(Icons.refresh),
           ),
-          IconButton(
-            tooltip: 'Copy',
-            onPressed: _loading || _log.trim().isEmpty ? null : _copyAll,
-            icon: const Icon(Icons.copy),
+          PopupMenuButton<String>(
+            tooltip: 'More',
+            onSelected: (value) {
+              switch (value) {
+                case 'copy_all':
+                  _copyAll();
+                  break;
+                case 'copy_errors':
+                  _copyErrorSnippet();
+                  break;
+                case 'share_all':
+                  _shareLog(errorsOnly: false);
+                  break;
+                case 'share_errors':
+                  _shareLog(errorsOnly: true);
+                  break;
+              }
+            },
+            itemBuilder: (context) {
+              final disabled = _loading || _log.trim().isEmpty;
+              return [
+                PopupMenuItem(
+                  value: 'copy_all',
+                  enabled: !disabled,
+                  child: const Row(
+                    children: [
+                      Icon(Icons.copy, size: 18),
+                      SizedBox(width: 10),
+                      Text('Copy all'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'copy_errors',
+                  enabled: !disabled,
+                  child: const Row(
+                    children: [
+                      Icon(Icons.warning_amber, size: 18),
+                      SizedBox(width: 10),
+                      Text('Copy errors'),
+                    ],
+                  ),
+                ),
+                const PopupMenuDivider(),
+                PopupMenuItem(
+                  value: 'share_all',
+                  enabled: !disabled,
+                  child: const Row(
+                    children: [
+                      Icon(Icons.share, size: 18),
+                      SizedBox(width: 10),
+                      Text('Share all'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'share_errors',
+                  enabled: !disabled,
+                  child: const Row(
+                    children: [
+                      Icon(Icons.report, size: 18),
+                      SizedBox(width: 10),
+                      Text('Share errors'),
+                    ],
+                  ),
+                ),
+              ];
+            },
           ),
         ],
       ),
