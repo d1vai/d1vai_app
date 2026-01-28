@@ -4,6 +4,7 @@ class EnvVar {
   final int? id;
   final String key;
   final String? value;
+  final String? valuePreview;
   final String? description;
   final String? environment; // production, preview, development
   final bool isEncrypted;
@@ -14,6 +15,7 @@ class EnvVar {
     this.id,
     required this.key,
     this.value,
+    this.valuePreview,
     this.description,
     this.environment,
     this.isEncrypted = false,
@@ -26,9 +28,11 @@ class EnvVar {
       id: json['id'] != null ? (json['id'] as num).toInt() : null,
       key: json['key'] ?? '',
       value: json['value'],
+      valuePreview: json['value_preview']?.toString(),
       description: json['description'],
       environment: json['environment'],
-      isEncrypted: json['is_encrypted'] ?? false,
+      // Backend uses `is_sensitive`; some newer payloads may use `is_encrypted`.
+      isEncrypted: (json['is_encrypted'] ?? json['is_sensitive'] ?? false) as bool,
       createdAt: json['created_at'],
       updatedAt: json['updated_at'],
     );
@@ -39,6 +43,7 @@ class EnvVar {
       'id': id,
       'key': key,
       'value': value,
+      'value_preview': valuePreview,
       'description': description,
       'environment': environment,
       'is_encrypted': isEncrypted,
@@ -51,6 +56,7 @@ class EnvVar {
     int? id,
     String? key,
     String? value,
+    String? valuePreview,
     String? description,
     String? environment,
     bool? isEncrypted,
@@ -61,6 +67,7 @@ class EnvVar {
       id: id ?? this.id,
       key: key ?? this.key,
       value: value ?? this.value,
+      valuePreview: valuePreview ?? this.valuePreview,
       description: description ?? this.description,
       environment: environment ?? this.environment,
       isEncrypted: isEncrypted ?? this.isEncrypted,
@@ -69,11 +76,16 @@ class EnvVar {
     );
   }
 
+  bool get isSensitive => isEncrypted;
+
   String get displayValue {
-    if (isEncrypted && value != null && value!.isNotEmpty) {
-      return '••••••••';
+    final v = (value ?? '').trim();
+    if (v.isEmpty) return '';
+    // When backend masks, value is usually "***" and preview is "sk-***" etc.
+    if (v == '***' && (valuePreview ?? '').trim().isNotEmpty) {
+      return valuePreview!.trim();
     }
-    return value ?? '';
+    return v;
   }
 
   String get environmentLabel {

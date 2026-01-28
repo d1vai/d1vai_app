@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../models/env_var.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/d1vai_service.dart';
 import '../../utils/error_utils.dart';
 import '../snackbar_helper.dart';
+import 'env_var_editor_dialog.dart';
 
 /// 项目详情页 - API Tab（环境变量 + API 工具）
 class ProjectApiTab extends StatefulWidget {
@@ -27,6 +30,10 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
   bool _isLoadingEnvVars = false;
   bool _isInitialized = false;
   String? _loadError;
+  bool _showValues = false;
+  bool _exporting = false;
+  bool _importing = false;
+  bool _syncingVercel = false;
 
   @override
   void didChangeDependencies() {
@@ -45,7 +52,10 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
 
     try {
       final service = D1vaiService();
-      final data = await service.listEnvVars(widget.projectId, showValues: false);
+      final data = await service.listEnvVars(
+        widget.projectId,
+        showValues: _showValues,
+      );
       if (!mounted) return;
 
       final vars = data
@@ -78,6 +88,282 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
               }
             : null,
       );
+    }
+  }
+
+  Future<void> _showCreateEnvVarDialog() async {
+    final result = await showDialog<EnvVarEditorResult>(
+      context: context,
+      builder: (context) => const EnvVarEditorDialog(),
+    );
+    if (result == null) return;
+
+    try {
+      final service = D1vaiService();
+      await service.createEnvVar(widget.projectId, {
+        'key': result.key,
+        'value': result.value,
+        'description': result.description,
+        'is_sensitive': result.isSensitive,
+      });
+      if (!mounted) return;
+      SnackBarHelper.showSuccess(
+        context,
+        title: 'Added',
+        message: 'Environment variable created',
+      );
+      await _loadEnvVars();
+    } catch (e) {
+      final msg = humanizeError(e);
+      if (!mounted) return;
+      SnackBarHelper.showError(
+        context,
+        title: 'Create failed',
+        message: msg,
+      );
+    }
+  }
+
+  Future<EnvVar?> _fetchEnvVarWithValue(EnvVar envVar) async {
+    // If list already includes values, just use it.
+    final v = (envVar.value ?? '').trim();
+    if (v.isNotEmpty && v != '***') return envVar;
+
+    try {
+      final service = D1vaiService();
+      final data = await service.listEnvVars(widget.projectId, showValues: true);
+      final vars = data
+          .map((item) => EnvVar.fromJson(item as Map<String, dynamic>))
+          .toList();
+      final found = vars.firstWhere(
+        (x) => x.id != null && x.id == envVar.id,
+        orElse: () => envVar,
+      );
+      return found;
+    } catch (_) {
+      return envVar;
+    }
+  }
+
+  Future<void> _showEditEnvVarDialog(EnvVar envVar) async {
+    final hydrated = await _fetchEnvVarWithValue(envVar);
+    if (!mounted) return;
+    final result = await showDialog<EnvVarEditorResult>(
+      context: context,
+      builder: (context) => EnvVarEditorDialog(
+        initial: hydrated,
+        allowEditKey: false,
+      ),
+    );
+    if (result == null) return;
+    if (envVar.id == null) return;
+    try {
+      final service = D1vaiService();
+      await service.updateEnvVar(widget.projectId, envVar.id!, {
+        'value': result.value,
+        'description': result.description,
+        'is_sensitive': result.isSensitive,
+      });
+      if (!mounted) return;
+      SnackBarHelper.showSuccess(
+        context,
+        title: 'Saved',
+        message: 'Environment variable updated',
+      );
+      await _loadEnvVars();
+    } catch (e) {
+      final msg = humanizeError(e);
+      if (!mounted) return;
+      SnackBarHelper.showError(
+        context,
+        title: 'Update failed',
+        message: msg,
+      );
+    }
+  }
+
+  Future<void> _confirmAndDeleteEnvVar(EnvVar envVar) async {
+    if (envVar.id == null) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete variable'),
+          content: Text('Delete ${envVar.key}? This cannot be undone.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error,
+                foregroundColor: Theme.of(context).colorScheme.onError,
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+    if (ok != true) return;
+    try {
+      final service = D1vaiService();
+      await service.deleteEnvVar(widget.projectId, envVar.id!);
+      if (!mounted) return;
+      SnackBarHelper.showSuccess(
+        context,
+        title: 'Deleted',
+        message: envVar.key,
+      );
+      await _loadEnvVars();
+    } catch (e) {
+      final msg = humanizeError(e);
+      if (!mounted) return;
+      SnackBarHelper.showError(
+        context,
+        title: 'Delete failed',
+        message: msg,
+      );
+    }
+  }
+
+  Future<void> _exportEnvVars() async {
+    if (_exporting) return;
+    setState(() => _exporting = true);
+    try {
+      final service = D1vaiService();
+      final res = await service.exportEnvVars(widget.projectId);
+      final content =
+          (res['content'] ?? res['env'] ?? res['data'] ?? '').toString();
+      if (content.trim().isEmpty) {
+        throw Exception('Empty export content');
+      }
+      await Clipboard.setData(ClipboardData(text: content));
+      if (!mounted) return;
+      SnackBarHelper.showSuccess(
+        context,
+        title: 'Exported',
+        message: 'Copied .env to clipboard',
+        actionLabel: 'Share',
+        onActionPressed: () {
+          Share.share(content, subject: '${widget.projectId}.env');
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+      SnackBarHelper.showError(
+        context,
+        title: 'Export failed',
+        message: humanizeError(e),
+      );
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
+
+  Future<void> _importEnvVars() async {
+    if (_importing) return;
+    final controller = TextEditingController();
+    var overwrite = true;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: const Text('Import .env'),
+              content: SizedBox(
+                width: 560,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: controller,
+                      decoration: const InputDecoration(
+                        hintText: 'Paste .env content here…',
+                      ),
+                      maxLines: 10,
+                    ),
+                    const SizedBox(height: 8),
+                    SwitchListTile.adaptive(
+                      value: overwrite,
+                      onChanged: (v) => setStateDialog(() => overwrite = v),
+                      title: const Text('Overwrite existing'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Import'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    if (ok != true) return;
+
+    final content = controller.text;
+    controller.dispose();
+    if (content.trim().isEmpty) return;
+
+    setState(() => _importing = true);
+    try {
+      final service = D1vaiService();
+      final res = await service.batchImportEnvVars(widget.projectId, {
+        'env_content': content,
+        'overwrite': overwrite,
+      });
+      if (!mounted) return;
+      SnackBarHelper.showSuccess(
+        context,
+        title: 'Imported',
+        message: (res['message'] ?? 'Import completed').toString(),
+      );
+      await _loadEnvVars();
+    } catch (e) {
+      if (!mounted) return;
+      SnackBarHelper.showError(
+        context,
+        title: 'Import failed',
+        message: humanizeError(e),
+      );
+    } finally {
+      if (mounted) setState(() => _importing = false);
+    }
+  }
+
+  Future<void> _syncToVercel() async {
+    if (_syncingVercel) return;
+    setState(() => _syncingVercel = true);
+    try {
+      final service = D1vaiService();
+      final res = await service.syncEnvToVercel(widget.projectId);
+      if (!mounted) return;
+      SnackBarHelper.showSuccess(
+        context,
+        title: 'Synced',
+        message: (res['message'] ?? 'Synced to Vercel').toString(),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      SnackBarHelper.showError(
+        context,
+        title: 'Sync failed',
+        message: humanizeError(e),
+      );
+    } finally {
+      if (mounted) setState(() => _syncingVercel = false);
     }
   }
 
@@ -115,13 +401,7 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
                         ),
                       ),
                       ElevatedButton.icon(
-                        onPressed: () {
-                          SnackBarHelper.showInfo(
-                            context,
-                            title: 'Add Environment Variable',
-                            message: 'Add new environment variable...',
-                          );
-                        },
+                        onPressed: _isLoadingEnvVars ? null : _showCreateEnvVarDialog,
                         icon: const Icon(Icons.add, size: 18),
                         label: const Text('Add', style: TextStyle(fontSize: 12)),
                         style: ElevatedButton.styleFrom(
@@ -132,6 +412,55 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
                           minimumSize: Size.zero,
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _showValues ? 'Values visible' : 'Values masked',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                      Switch.adaptive(
+                        value: _showValues,
+                        onChanged:
+                            _isLoadingEnvVars
+                                ? null
+                                : (v) async {
+                                    final shouldShow = v;
+                                    if (shouldShow) {
+                                      final ok = await showDialog<bool>(
+                                        context: context,
+                                        builder: (context) {
+                                          return AlertDialog(
+                                            title: const Text('Show values?'),
+                                            content: const Text(
+                                              'This will reveal sensitive environment values on screen.',
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () => Navigator.of(context).pop(false),
+                                                child: const Text('Cancel'),
+                                              ),
+                                              ElevatedButton(
+                                                onPressed: () => Navigator.of(context).pop(true),
+                                                child: const Text('Show'),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+                                      if (ok != true) return;
+                                    }
+                                    setState(() => _showValues = v);
+                                    await _loadEnvVars();
+                                  },
                       ),
                     ],
                   ),
@@ -190,7 +519,11 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
                     )
                   else
                     ..._envVars.map(
-                      (envVar) => _EnvVarItem(envVar: envVar),
+                      (envVar) => _EnvVarItem(
+                        envVar: envVar,
+                        onEdit: () => _showEditEnvVarDialog(envVar),
+                        onDelete: () => _confirmAndDeleteEnvVar(envVar),
+                      ),
                     ),
                 ],
               ),
@@ -243,13 +576,7 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
                     title: const Text('Export Variables'),
                     subtitle: const Text('Download all environment variables'),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () {
-                      SnackBarHelper.showInfo(
-                        context,
-                        title: 'Export',
-                        message: 'Exporting environment variables...',
-                      );
-                    },
+                    onTap: _exporting ? null : _exportEnvVars,
                   ),
                   const Divider(),
                   ListTile(
@@ -257,13 +584,21 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
                     title: const Text('Import Variables'),
                     subtitle: const Text('Bulk import from .env file'),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () {
-                      SnackBarHelper.showInfo(
-                        context,
-                        title: 'Import',
-                        message: 'Import environment variables...',
-                      );
-                    },
+                    onTap: _importing ? null : _importEnvVars,
+                  ),
+                  const Divider(),
+                  ListTile(
+                    leading: Icon(Icons.sync, color: theme.colorScheme.tertiary),
+                    title: const Text('Sync to Vercel'),
+                    subtitle: const Text('Push env vars to Vercel preview/production'),
+                    trailing: _syncingVercel
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: _syncingVercel ? null : _syncToVercel,
                   ),
                 ],
               ),
@@ -277,9 +612,13 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
 
 class _EnvVarItem extends StatelessWidget {
   final EnvVar envVar;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   const _EnvVarItem({
     required this.envVar,
+    required this.onEdit,
+    required this.onDelete,
   });
 
   @override
@@ -322,29 +661,6 @@ class _EnvVarItem extends StatelessWidget {
                   ],
                 ),
               ),
-              if (envVar.environment != null) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: envVar.environmentColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: envVar.environmentColor,
-                      width: 1,
-                    ),
-                  ),
-                  child: Text(
-                    envVar.environmentLabel,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: envVar.environmentColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
               const SizedBox(width: 8),
               PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert, size: 20),
@@ -376,17 +692,9 @@ class _EnvVarItem extends StatelessWidget {
                 ],
                 onSelected: (value) {
                   if (value == 'edit') {
-                    SnackBarHelper.showInfo(
-                      context,
-                      title: 'Edit Variable',
-                      message: 'Editing ${envVar.key}...',
-                    );
+                    onEdit();
                   } else if (value == 'delete') {
-                    SnackBarHelper.showInfo(
-                      context,
-                      title: 'Delete Variable',
-                      message: 'Deleting ${envVar.key}...',
-                    );
+                    onDelete();
                   }
                 },
               ),
@@ -396,24 +704,59 @@ class _EnvVarItem extends StatelessWidget {
           Row(
             children: [
               Icon(
-                envVar.isEncrypted ? Icons.lock : Icons.code,
+                envVar.isSensitive ? Icons.lock : Icons.code,
                 size: 14,
-                color: envVar.isEncrypted
+                color: envVar.isSensitive
                     ? theme.colorScheme.tertiary
                     : theme.colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: 6),
               Text(
-                envVar.isEncrypted ? 'Encrypted' : 'Visible',
+                envVar.isSensitive ? 'Sensitive' : 'Not sensitive',
                 style: TextStyle(
                   fontSize: 11,
-                  color: envVar.isEncrypted
+                  color: envVar.isSensitive
                       ? theme.colorScheme.tertiary
                       : theme.colorScheme.onSurfaceVariant,
                 ),
               ),
+              const Spacer(),
+              if (envVar.displayValue.trim().isNotEmpty)
+                TextButton.icon(
+                  onPressed: () async {
+                    await Clipboard.setData(
+                      ClipboardData(text: envVar.value?.toString() ?? ''),
+                    );
+                    if (!context.mounted) return;
+                    SnackBarHelper.showSuccess(
+                      context,
+                      title: 'Copied',
+                      message: envVar.key,
+                    );
+                  },
+                  icon: const Icon(Icons.copy, size: 16),
+                  label: const Text('Copy', style: TextStyle(fontSize: 12)),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
             ],
           ),
+          if (envVar.displayValue.trim().isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              envVar.displayValue,
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontFamily: 'monospace',
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
         ],
       ),
     );
