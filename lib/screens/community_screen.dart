@@ -38,6 +38,26 @@ class _CommunityScreenState extends State<CommunityScreen>
   bool _hasMore = true;
   String _searchQuery = '';
   bool _isSearching = false;
+  _CommunityFeedFilter _filter = _CommunityFeedFilter.all;
+
+  List<CommunityPost> _applyFilter(List<CommunityPost> list) {
+    switch (_filter) {
+      case _CommunityFeedFilter.all:
+        return list;
+      case _CommunityFeedFilter.mine:
+        final auth = Provider.of<AuthProvider>(context, listen: false);
+        final uid = auth.user?.id;
+        if (uid == null) return const <CommunityPost>[];
+        return list.where((p) => p.userId == uid).toList();
+      case _CommunityFeedFilter.drafts:
+        final auth = Provider.of<AuthProvider>(context, listen: false);
+        final uid = auth.user?.id;
+        if (uid == null) return const <CommunityPost>[];
+        return list
+            .where((p) => p.userId == uid && (p.status ?? '') == 'draft')
+            .toList();
+    }
+  }
 
   @override
   void initState() {
@@ -193,6 +213,8 @@ class _CommunityScreenState extends State<CommunityScreen>
   }
 
   Widget _buildBody() {
+    final visiblePosts = _applyFilter(_posts);
+
     if (_isLoading && _posts.isEmpty) {
       return _buildShimmer();
     }
@@ -254,69 +276,151 @@ class _CommunityScreenState extends State<CommunityScreen>
       );
     }
 
-    return EasyRefresh(
-      controller: _controller,
-      header: const ClassicHeader(),
-      footer: const ClassicFooter(),
-      onRefresh: () async {
-        await _loadPosts(refresh: true);
-        if (!mounted) return;
-        _controller.finishRefresh();
-      },
-      onLoad: () async {
-        if (_hasMore) {
-          await _loadPosts();
-          if (!mounted) return;
-          _controller.finishLoad(
-            _hasMore ? IndicatorResult.success : IndicatorResult.noMore,
-          );
-        } else {
-          if (!mounted) return;
-          _controller.finishLoad(IndicatorResult.noMore);
-        }
-      },
-      child: ListView.builder(
-        itemCount: _posts.length,
-        itemBuilder: (context, index) {
-          final post = _posts[index];
-
-          return AnimatedBuilder(
-            animation: _animationController,
-            builder: (context, child) {
-              // To avoid long delays on long lists, cap the delay or use modulo
-              final safeIndex = index > 10 ? 10 : index;
-              final start = safeIndex * 0.1;
-              final end = (start + 0.4).clamp(0.0, 1.0);
-
-              final animation = CurvedAnimation(
-                parent: _animationController,
-                curve: Interval(start, end, curve: Curves.easeOut),
-              );
-
-              return FadeTransition(
-                opacity: animation,
-                child: SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(0, 0.2),
-                    end: Offset.zero,
-                  ).animate(animation),
-                  child: child,
-                ),
-              );
+    return Column(
+      children: [
+        _buildFilterBar(),
+        Expanded(
+          child: EasyRefresh(
+            controller: _controller,
+            header: const ClassicHeader(),
+            footer: const ClassicFooter(),
+            onRefresh: () async {
+              await _loadPosts(refresh: true);
+              if (!mounted) return;
+              _controller.finishRefresh();
             },
-            child: PostCard(
-              post: post,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => PostDetailScreen(post: post),
+            onLoad: () async {
+              if (_hasMore) {
+                await _loadPosts();
+                if (!mounted) return;
+                _controller.finishLoad(
+                  _hasMore ? IndicatorResult.success : IndicatorResult.noMore,
+                );
+              } else {
+                if (!mounted) return;
+                _controller.finishLoad(IndicatorResult.noMore);
+              }
+            },
+            child: ListView.builder(
+              itemCount: visiblePosts.isEmpty ? 1 : visiblePosts.length,
+              itemBuilder: (context, index) {
+                if (visiblePosts.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: _buildFilteredEmptyCard(context),
+                  );
+                }
+
+                final post = visiblePosts[index];
+                return AnimatedBuilder(
+                  animation: _animationController,
+                  builder: (context, child) {
+                    final safeIndex = index > 10 ? 10 : index;
+                    final start = safeIndex * 0.1;
+                    final end = (start + 0.4).clamp(0.0, 1.0);
+
+                    final animation = CurvedAnimation(
+                      parent: _animationController,
+                      curve: Interval(start, end, curve: Curves.easeOut),
+                    );
+
+                    return FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0, 0.2),
+                          end: Offset.zero,
+                        ).animate(animation),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: PostCard(
+                    post: post,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PostDetailScreen(post: post),
+                        ),
+                      );
+                    },
                   ),
                 );
               },
             ),
-          );
-        },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilterBar() {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final isAuthed = auth.user != null;
+
+    Future<void> setFilter(_CommunityFeedFilter next) async {
+      if ((next == _CommunityFeedFilter.mine || next == _CommunityFeedFilter.drafts) &&
+          !isAuthed) {
+        await showDialog<void>(
+          context: context,
+          builder: (_) => const LoginRequiredDialog(),
+        );
+        return;
+      }
+      setState(() {
+        _filter = next;
+      });
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+      child: Wrap(
+        spacing: 10,
+        runSpacing: 10,
+        children: [
+          ChoiceChip(
+            label: const Text('All'),
+            selected: _filter == _CommunityFeedFilter.all,
+            onSelected: (_) => setFilter(_CommunityFeedFilter.all),
+          ),
+          ChoiceChip(
+            label: Text(isAuthed ? 'My posts' : 'My posts (login)'),
+            selected: _filter == _CommunityFeedFilter.mine,
+            onSelected: (_) => setFilter(_CommunityFeedFilter.mine),
+          ),
+          ChoiceChip(
+            label: Text(isAuthed ? 'My drafts' : 'My drafts (login)'),
+            selected: _filter == _CommunityFeedFilter.drafts,
+            onSelected: (_) => setFilter(_CommunityFeedFilter.drafts),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilteredEmptyCard(BuildContext context) {
+    final theme = Theme.of(context);
+    final text =
+        switch (_filter) {
+          _CommunityFeedFilter.all => 'No posts.',
+          _CommunityFeedFilter.mine => 'No posts created by you yet.',
+          _CommunityFeedFilter.drafts => 'No drafts yet.',
+        };
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Text(
+        text,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
       ),
     );
   }
@@ -467,3 +571,5 @@ class _CommunityScreenState extends State<CommunityScreen>
     );
   }
 }
+
+enum _CommunityFeedFilter { all, mine, drafts }
