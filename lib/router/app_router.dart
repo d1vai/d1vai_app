@@ -19,6 +19,7 @@ import '../screens/help_support_screen.dart';
 import '../screens/github_settings_screen.dart';
 import '../screens/projects_screen.dart';
 import '../screens/settings/api_settings_screen.dart';
+import '../screens/settings/account_data_screen.dart';
 import '../screens/doc_detail_screen.dart';
 import '../screens/api_docs_screen.dart';
 import '../screens/community_post_link_screen.dart';
@@ -273,6 +274,14 @@ GoRouter createAppRouter() {
           context,
           state,
           const ApiSettingsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/settings/account-data',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const AccountDataScreen(),
         ),
       ),
       GoRoute(

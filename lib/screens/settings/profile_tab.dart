@@ -198,6 +198,28 @@ class SettingsProfileTab extends StatelessWidget {
                         : AppColors.borderLight,
                   ),
                   ListTile(
+                    leading: const Icon(
+                      Icons.manage_accounts,
+                      color: AppColors.info,
+                    ),
+                    title: const Text('Account & Data'),
+                    subtitle: const Text('Data export and account deletion'),
+                    trailing: const Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: AppColors.textSecondaryLight,
+                    ),
+                    onTap: user == null
+                        ? () => context.go('/login')
+                        : () => context.push('/settings/account-data'),
+                  ),
+                  Divider(
+                    height: 1,
+                    color: isDark
+                        ? AppColors.borderDark
+                        : AppColors.borderLight,
+                  ),
+                  ListTile(
                     leading: const Icon(Icons.help, color: AppColors.success),
                     title: Text(
                       loc?.translate('help_support') ?? 'Help & Support',
