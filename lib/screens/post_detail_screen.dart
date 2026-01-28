@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:ui' as ui;
 import '../models/community_post.dart';
+import '../providers/auth_provider.dart';
 import '../services/d1vai_service.dart';
 import '../widgets/avatar_image.dart';
 import '../widgets/chat/markdown_text.dart';
+import '../widgets/login_required_dialog.dart';
 import '../widgets/phone_frame_web_preview.dart';
 import '../widgets/share_sheet.dart';
+import '../widgets/snackbar_helper.dart';
 import '../utils/community_post_display.dart';
 
 class PostDetailScreen extends StatefulWidget {
@@ -26,6 +30,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   final ScrollController _scrollController = ScrollController();
 
   late CommunityPost _post;
+  final List<_LocalComment> _localComments = <_LocalComment>[];
   bool _showFrost = false;
   bool _isSnapping = false;
   ScrollDirection _lastUserScrollDirection = ScrollDirection.idle;
@@ -319,8 +324,168 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   ),
                 ),
               ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
+                  child: _buildCommentsSection(theme),
+                ),
+              ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  bool _ensureLoggedIn() {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    if (auth.user != null) return true;
+    showDialog(
+      context: context,
+      builder: (_) => const LoginRequiredDialog(),
+    );
+    return false;
+  }
+
+  Future<void> _openCommentComposer() async {
+    if (!_ensureLoggedIn()) return;
+
+    final controller = TextEditingController();
+    String? posted;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (ctx) {
+        final bottomInset = MediaQuery.viewInsetsOf(ctx).bottom;
+        return Padding(
+          padding: EdgeInsets.fromLTRB(16, 8, 16, 16 + bottomInset),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Write a comment',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                maxLines: 6,
+                minLines: 3,
+                decoration: const InputDecoration(
+                  hintText: 'Be kind. Add details that help others…',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    final text = controller.text.trim();
+                    if (text.isEmpty) return;
+                    posted = text;
+                    Navigator.of(ctx).pop();
+                  },
+                  icon: const Icon(Icons.send),
+                  label: const Text('Post (local)'),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (!mounted) {
+      controller.dispose();
+      return;
+    }
+
+    final text = (posted ?? '').trim();
+    controller.dispose();
+    if (text.isEmpty) return;
+
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final user = auth.user;
+    if (user == null) return;
+
+    setState(() {
+      _localComments.insert(
+        0,
+        _LocalComment(
+          authorName: user.slug ?? user.email ?? 'You',
+          authorAvatarUrl: user.picture,
+          content: text,
+          createdAt: DateTime.now(),
+        ),
+      );
+    });
+
+    if (!mounted) return;
+    SnackBarHelper.showSuccess(
+      context,
+      title: 'Posted',
+      message: 'Comment added locally (API coming soon)',
+    );
+  }
+
+  Widget _buildCommentsSection(ThemeData theme) {
+    final cs = theme.colorScheme;
+    final totalCount = _post.commentCount + _localComments.length;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.chat_bubble_outline, color: cs.primary),
+                const SizedBox(width: 8),
+                Text(
+                  'Comments ($totalCount)',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const Spacer(),
+                OutlinedButton.icon(
+                  onPressed: _openCommentComposer,
+                  icon: const Icon(Icons.edit, size: 18),
+                  label: const Text('Comment'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (_localComments.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: cs.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: cs.outlineVariant),
+                ),
+                child: Text(
+                  'No comments yet. Start the discussion.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: cs.onSurfaceVariant,
+                  ),
+                ),
+              )
+            else
+              Column(
+                children: _localComments
+                    .take(12)
+                    .map((c) => _CommentTile(comment: c))
+                    .toList(),
+              ),
+          ],
         ),
       ),
     );
@@ -795,6 +960,103 @@ class _GlassIconButton extends StatelessWidget {
           ),
           child: Icon(icon, color: Colors.white, size: 20),
         ),
+      ),
+    );
+  }
+}
+
+class _LocalComment {
+  final String authorName;
+  final String? authorAvatarUrl;
+  final String content;
+  final DateTime createdAt;
+
+  const _LocalComment({
+    required this.authorName,
+    required this.authorAvatarUrl,
+    required this.content,
+    required this.createdAt,
+  });
+}
+
+class _CommentTile extends StatelessWidget {
+  final _LocalComment comment;
+
+  const _CommentTile({required this.comment});
+
+  String _timeAgo() {
+    final diff = DateTime.now().difference(comment.createdAt);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
+    if (diff.inDays < 1) return '${diff.inHours}h ago';
+    return '${diff.inDays}d ago';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AvatarImage(
+            imageUrl:
+                (comment.authorAvatarUrl ?? '').trim().isNotEmpty
+                    ? comment.authorAvatarUrl!.trim()
+                    : 'placeholder',
+            size: 34,
+            borderRadius: BorderRadius.circular(12),
+            fit: BoxFit.cover,
+            showBorder: false,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: cs.outlineVariant),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          comment.authorName,
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        _timeAgo(),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: cs.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    comment.content,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      height: 1.25,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
