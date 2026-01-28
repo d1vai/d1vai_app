@@ -72,19 +72,7 @@ class AuthProvider extends ChangeNotifier {
         throw Exception('Login failed: invalid response');
       }
 
-      await _storageService.saveAuthToken(token);
-      AuthExpiryBus.reset();
-
-      _user = await _d1vaiService.getUserProfile();
-      _user = _user?.copyWith(bearerToken: token);
-
-      // 检查是否需要 onboarding
-      if (_user != null && !_user!.isOnboarded) {
-        _onboardingData = OnboardingData();
-        await _storageService.saveOnboardingData(_onboardingData!);
-      } else {
-        _onboardingData = null;
-      }
+      await _completeLogin(token);
 
       // 只需调用一次 notifyListeners
       notifyListeners();
@@ -102,24 +90,76 @@ class AuthProvider extends ChangeNotifier {
         throw Exception('Login failed: invalid response');
       }
 
-      await _storageService.saveAuthToken(token);
-      AuthExpiryBus.reset();
-
-      _user = await _d1vaiService.getUserProfile();
-      _user = _user?.copyWith(bearerToken: token);
-
-      // 检查是否需要 onboarding
-      if (_user != null && !_user!.isOnboarded) {
-        _onboardingData = OnboardingData();
-        await _storageService.saveOnboardingData(_onboardingData!);
-      } else {
-        _onboardingData = null;
-      }
+      await _completeLogin(token);
 
       // 只需调用一次 notifyListeners
       notifyListeners();
     } catch (e) {
       rethrow;
+    }
+  }
+
+  /// Solana 钱包登录（需要 message + signature）
+  Future<void> loginWithSolanaWallet({
+    required String walletAddress,
+    required String message,
+    required List<int> signature,
+  }) async {
+    try {
+      final token = await _d1vaiService.postUserSolanaLogin(
+        walletAddress,
+        message,
+        signature,
+      );
+
+      if (token == null) {
+        throw Exception('Login failed: invalid response');
+      }
+
+      await _completeLogin(token);
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Sui 钱包登录（需要 message + signature）
+  Future<void> loginWithSuiWallet({
+    required String walletAddress,
+    required String message,
+    required String signature,
+  }) async {
+    try {
+      final token = await _d1vaiService.postUserSuiLogin(
+        walletAddress,
+        message,
+        signature,
+      );
+
+      if (token == null) {
+        throw Exception('Login failed: invalid response');
+      }
+
+      await _completeLogin(token);
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> _completeLogin(String token) async {
+    await _storageService.saveAuthToken(token);
+    AuthExpiryBus.reset();
+
+    _user = await _d1vaiService.getUserProfile();
+    _user = _user?.copyWith(bearerToken: token);
+
+    // 检查是否需要 onboarding
+    if (_user != null && !_user!.isOnboarded) {
+      _onboardingData = OnboardingData();
+      await _storageService.saveOnboardingData(_onboardingData!);
+    } else {
+      _onboardingData = null;
     }
   }
 

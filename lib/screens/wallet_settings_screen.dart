@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/snackbar_helper.dart';
 import '../services/d1vai_service.dart';
+import '../utils/error_utils.dart';
 
 enum WalletType {
   solana('Solana', 'SOL', Icons.currency_bitcoin, Colors.purple),
@@ -26,6 +29,37 @@ class WalletSettingsScreen extends StatefulWidget {
 class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
   final D1vaiService _d1vaiService = D1vaiService();
   bool _isBinding = false;
+
+  String _signMessage(WalletType walletType, String address) {
+    return 'Sign in to d1vai\\n'
+        'wallet=$address\\n'
+        'chain=${walletType.symbol}\\n'
+        'nonce=${DateTime.now().millisecondsSinceEpoch}\\n'
+        'This signature does NOT trigger any on-chain transaction.';
+  }
+
+  String? _validateWalletAddress(WalletType walletType, String address) {
+    final a = address.trim();
+    if (a.isEmpty) return 'Please enter a wallet address';
+
+    switch (walletType) {
+      case WalletType.solana:
+        if (a.length < 32 || a.length > 44) {
+          return 'Solana address should be 32–44 characters';
+        }
+        if (a.contains(RegExp(r'\\s'))) return 'Address contains whitespace';
+        break;
+      case WalletType.sui:
+        if (!a.startsWith('0x')) return 'SUI address should start with 0x';
+        if (a.length != 66) return 'SUI address should be 66 characters (0x + 64 hex)';
+        break;
+      case WalletType.evm:
+        if (!a.startsWith('0x')) return 'EVM address should start with 0x';
+        if (a.length != 42) return 'EVM address should be 42 characters (0x + 40 hex)';
+        break;
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -253,63 +287,113 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
   }
 
   Future<void> _showConnectDialog(WalletType walletType) async {
-    return showDialog(
+    final controller = TextEditingController();
+    String? error;
+    String? address;
+
+    await showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Connect ${walletType.name} Wallet'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('To connect your ${walletType.name} wallet:'),
-            const SizedBox(height: 12),
-            Text(
-              '1. Make sure you have ${walletType.name} wallet installed',
-              style: const TextStyle(fontSize: 13),
-            ),
-            Text(
-              '2. Click "Continue" to connect your wallet',
-              style: const TextStyle(fontSize: 13),
-            ),
-            Text(
-              '3. Approve the connection in your wallet app',
-              style: const TextStyle(fontSize: 13),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                'Note: This is a demo implementation. In production, integrate with actual wallet SDK.',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.blue.shade700,
+      barrierDismissible: false,
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        final baseMessage = _signMessage(walletType, '<address>');
+        return StatefulBuilder(
+          builder: (ctx, setInner) {
+            return AlertDialog(
+              title: Text('Connect ${walletType.name}'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'You will sign a message to prove wallet ownership. This does NOT send any funds.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: controller,
+                      decoration: InputDecoration(
+                        labelText: '${walletType.name} address',
+                        hintText: walletType == WalletType.solana
+                            ? 'Base58 address'
+                            : '0x…',
+                        errorText: error,
+                        border: const OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: theme.colorScheme.outlineVariant),
+                      ),
+                      child: Text(
+                        baseMessage,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.of(context).pop();
-              await _simulateWalletConnection(walletType);
-            },
-            child: const Text('Continue'),
-          ),
-        ],
-      ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    final addr = controller.text.trim();
+                    final toCopy = _signMessage(
+                      walletType,
+                      addr.isEmpty ? '<address>' : addr,
+                    );
+                    await Clipboard.setData(ClipboardData(text: toCopy));
+                    if (!ctx.mounted) return;
+                    SnackBarHelper.showSuccess(
+                      ctx,
+                      title: 'Copied',
+                      message: 'Signing message copied',
+                    );
+                  },
+                  child: const Text('Copy message'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final addr = controller.text.trim();
+                    final err = _validateWalletAddress(walletType, addr);
+                    if (err != null) {
+                      setInner(() => error = err);
+                      return;
+                    }
+                    address = addr;
+                    Navigator.of(ctx).pop();
+                  },
+                  child: const Text('Sign & Connect'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
+
+    controller.dispose();
+    if (!mounted) return;
+    final addr = address?.trim();
+    if (addr == null || addr.isEmpty) return;
+    await _connectWallet(walletType, addr);
   }
 
-  Future<void> _simulateWalletConnection(WalletType walletType) async {
+  Future<void> _connectWallet(WalletType walletType, String address) async {
     setState(() {
       _isBinding = true;
     });
@@ -317,16 +401,10 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     try {
-      // Simulate wallet connection delay
-      await Future.delayed(const Duration(seconds: 2));
-
-      // Generate a mock wallet address based on wallet type
-      final mockAddress = _generateMockWalletAddress(walletType);
-
-      // Update user profile
+      // Persist address binding (signature verification should be implemented server-side).
       await _d1vaiService.putUserProfile({
-        if (walletType == WalletType.solana) 'sol_wallet': mockAddress,
-        if (walletType == WalletType.sui) 'sui_wallet': mockAddress,
+        if (walletType == WalletType.solana) 'sol_wallet': address,
+        if (walletType == WalletType.sui) 'sui_wallet': address,
       });
 
       // Refresh user data
@@ -336,14 +414,19 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
       SnackBarHelper.showSuccess(
         context,
         title: 'Success',
-        message: '${walletType.name} wallet connected successfully',
+        message: '${walletType.name} wallet connected',
       );
     } catch (e) {
       if (!mounted) return;
       SnackBarHelper.showError(
         context,
         title: 'Error',
-        message: 'Failed to connect wallet: $e',
+        message: humanizeError(e),
+        actionLabel: 'Retry',
+        onActionPressed: () {
+          if (_isBinding) return;
+          unawaited(_showConnectDialog(walletType));
+        },
       );
     } finally {
       if (mounted) {
@@ -393,34 +476,5 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
     }
   }
 
-  String _generateMockWalletAddress(WalletType walletType) {
-    final chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    final buffer = StringBuffer();
-
-    switch (walletType) {
-      case WalletType.solana:
-        // Solana addresses are typically 32-44 characters
-        buffer.write('A');
-        for (int i = 0; i < 43; i++) {
-          buffer.write(chars.codeUnitAt(i % chars.length));
-        }
-        break;
-      case WalletType.sui:
-        // SUI addresses start with 0x and are 64 characters
-        buffer.write('0x');
-        for (int i = 0; i < 62; i++) {
-          buffer.write(chars.codeUnitAt(i % chars.length));
-        }
-        break;
-      case WalletType.evm:
-        // Ethereum addresses start with 0x and are 40 characters
-        buffer.write('0x');
-        for (int i = 0; i < 40; i++) {
-          buffer.write(chars.codeUnitAt(i % chars.length));
-        }
-        break;
-    }
-
-    return buffer.toString();
-  }
+  // Note: users provide their address in the connect flow.
 }

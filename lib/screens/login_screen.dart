@@ -1,16 +1,20 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/otp_input_field.dart';
 import '../widgets/snackbar_helper.dart';
 import '../l10n/app_localizations.dart';
+import '../utils/error_utils.dart';
 
 /// 登录模式枚举
 enum LoginMode {
   code('code'),
-  password('password');
+  password('password'),
+  wallet('wallet');
 
   const LoginMode(this.value);
   final String value;
@@ -19,11 +23,17 @@ enum LoginMode {
     final loc = AppLocalizations.of(context);
     if (loc == null) {
       // 使用英文作为默认回退，确保多语言一致性
-      return this == code ? 'Login with Code' : 'Login with Password';
+      return switch (this) {
+        code => 'Login with Code',
+        password => 'Login with Password',
+        wallet => 'Login with Wallet',
+      };
     }
-    return this == code
-        ? loc.translate('login_with_code')
-        : loc.translate('login_with_password');
+    return switch (this) {
+      code => loc.translate('login_with_code'),
+      password => loc.translate('login_with_password'),
+      wallet => loc.translate('login_with_wallet'),
+    };
   }
 
   static LoginMode fromString(String code) {
@@ -32,6 +42,15 @@ enum LoginMode {
       orElse: () => LoginMode.code,
     );
   }
+}
+
+enum WalletLoginChain {
+  solana('Solana', 'SOL'),
+  sui('Sui', 'SUI');
+
+  const WalletLoginChain(this.label, this.symbol);
+  final String label;
+  final String symbol;
 }
 
 class LoginScreen extends StatefulWidget {
@@ -47,6 +66,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  final _walletAddressController = TextEditingController();
+  final _walletSignatureController = TextEditingController();
 
   // 登录模式
   LoginMode _loginMode = LoginMode.code;
@@ -68,6 +89,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _showSessionExpiredBanner = false;
 
+  WalletLoginChain _walletChain = WalletLoginChain.solana;
+  int _walletNonce = DateTime.now().millisecondsSinceEpoch;
+
   @override
   void initState() {
     super.initState();
@@ -79,6 +103,8 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _walletAddressController.dispose();
+    _walletSignatureController.dispose();
     // 安全地取消计时器
     _countdownTimer?.cancel();
     _countdownTimer = null;
@@ -136,6 +162,10 @@ class _LoginScreenState extends State<LoginScreen> {
       _countdownSeconds = 60;
       _countdownText = '';
       _countdownTimer?.cancel();
+      if (mode == LoginMode.wallet) {
+        _walletSignatureController.clear();
+        _walletNonce = DateTime.now().millisecondsSinceEpoch;
+      }
     });
   }
 
@@ -213,6 +243,102 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) context.go('/dashboard');
     } catch (e) {
       _showError(e.toString());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  String _buildWalletSignMessage(String walletAddress) {
+    final address = walletAddress.trim().isEmpty ? '<address>' : walletAddress.trim();
+    return 'Sign in to d1vai\\n'
+        'wallet=$address\\n'
+        'chain=${_walletChain.symbol}\\n'
+        'nonce=$_walletNonce\\n'
+        'This signature does NOT trigger any on-chain transaction.';
+  }
+
+  void _regenerateWalletNonce() {
+    setState(() {
+      _walletNonce = DateTime.now().millisecondsSinceEpoch;
+      _walletSignatureController.clear();
+    });
+  }
+
+  List<int> _parseSolanaSignature(String raw) {
+    final s = raw.trim();
+    if (s.isEmpty) {
+      throw const FormatException('Please paste your signature');
+    }
+
+    // 1) JSON array: [1,2,3,...]
+    if (s.startsWith('[') && s.endsWith(']')) {
+      final decoded = jsonDecode(s);
+      if (decoded is! List) {
+        throw const FormatException('Invalid signature JSON');
+      }
+      return decoded.map((e) => (e as num).toInt()).toList(growable: false);
+    }
+
+    // 2) Hex string: 0x... or ...
+    final hex = s.startsWith('0x') ? s.substring(2) : s;
+    final isHex = RegExp(r'^[0-9a-fA-F]+$').hasMatch(hex);
+    if (isHex && hex.length.isEven) {
+      final out = <int>[];
+      for (var i = 0; i < hex.length; i += 2) {
+        out.add(int.parse(hex.substring(i, i + 2), radix: 16));
+      }
+      return out;
+    }
+
+    // 3) Base64 string
+    try {
+      return base64Decode(s).toList(growable: false);
+    } catch (_) {
+      throw const FormatException(
+        'Invalid signature format. Paste JSON bytes ([...]), hex, or base64.',
+      );
+    }
+  }
+
+  Future<void> _loginWithWallet() async {
+    final address = _walletAddressController.text.trim();
+    if (address.isEmpty) {
+      _showError('Please enter a wallet address');
+      return;
+    }
+    final signatureRaw = _walletSignatureController.text.trim();
+    if (signatureRaw.isEmpty) {
+      _showError('Please paste your signature');
+      return;
+    }
+
+    final msg = _buildWalletSignMessage(address);
+    setState(() => _isLoading = true);
+
+    try {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      if (_walletChain == WalletLoginChain.solana) {
+        final sig = _parseSolanaSignature(signatureRaw);
+        await auth.loginWithSolanaWallet(
+          walletAddress: address,
+          message: msg,
+          signature: sig,
+        );
+      } else {
+        await auth.loginWithSuiWallet(
+          walletAddress: address,
+          message: msg,
+          signature: signatureRaw,
+        );
+      }
+
+      if (!mounted) return;
+      _showSuccess(
+        AppLocalizations.of(context)?.translate('login_success') ?? '登录成功',
+      );
+      context.go('/dashboard');
+    } catch (e) {
+      _showError(humanizeError(e));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -336,8 +462,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // 邮箱输入
-                if (!_isCodeSent)
+                // 邮箱输入（钱包登录不需要）
+                if (_loginMode != LoginMode.wallet && !_isCodeSent)
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -362,7 +488,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 24),
 
                 // 根据模式显示不同内容
-                if (_loginMode == LoginMode.password) ...[
+                if (_loginMode == LoginMode.wallet) ...[
+                  _buildWalletLoginCard(),
+                ] else if (_loginMode == LoginMode.password) ...[
                   // 密码登录
                   TextFormField(
                     controller: _passwordController,
@@ -577,6 +705,37 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                   ),
+                if (_loginMode == LoginMode.wallet) ...[
+                  ElevatedButton(
+                    onPressed: _isLoading ? null : _loginWithWallet,
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 56),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      backgroundColor: Colors.deepPurple,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                        : Text(
+                            loc?.translate('login') ?? '登录',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                  ),
+                ],
                 const SizedBox(height: 48),
 
                 // 底部提示
@@ -590,6 +749,120 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildWalletLoginCard() {
+    final theme = Theme.of(context);
+    final msg = _buildWalletSignMessage(_walletAddressController.text);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        DropdownButtonFormField<WalletLoginChain>(
+          key: ValueKey(_walletChain),
+          initialValue: _walletChain,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            labelText: 'Chain',
+          ),
+          items: WalletLoginChain.values
+              .map(
+                (c) => DropdownMenuItem(
+                  value: c,
+                  child: Text(c.label),
+                ),
+              )
+              .toList(),
+          onChanged: (v) {
+            if (v == null) return;
+            setState(() {
+              _walletChain = v;
+              _walletSignatureController.clear();
+              _walletNonce = DateTime.now().millisecondsSinceEpoch;
+            });
+          },
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _walletAddressController,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            labelText: 'Wallet address',
+            hintText: '0x… / base58…',
+          ),
+          onChanged: (_) {
+            // Changing address changes the signed payload; clear old signature.
+            setState(() {
+              _walletSignatureController.clear();
+              _walletNonce = DateTime.now().millisecondsSinceEpoch;
+            });
+          },
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: theme.colorScheme.outlineVariant),
+          ),
+          child: Text(
+            msg,
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontFamily: 'monospace',
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            TextButton.icon(
+              onPressed: _isLoading
+                  ? null
+                  : () async {
+                      await Clipboard.setData(ClipboardData(text: msg));
+                      if (!mounted) return;
+                      SnackBarHelper.showSuccess(
+                        context,
+                        title: AppLocalizations.of(context)?.translate('copied') ??
+                            'Copied',
+                        message: 'Signing message copied',
+                      );
+                    },
+              icon: const Icon(Icons.copy, size: 16),
+              label: const Text('Copy message'),
+            ),
+            const Spacer(),
+            TextButton.icon(
+              onPressed: _isLoading ? null : _regenerateWalletNonce,
+              icon: const Icon(Icons.refresh, size: 16),
+              label: const Text('Regenerate'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _walletSignatureController,
+          minLines: 2,
+          maxLines: 5,
+          decoration: InputDecoration(
+            border: const OutlineInputBorder(),
+            labelText: _walletChain == WalletLoginChain.solana
+                ? 'Signature (JSON bytes / hex / base64)'
+                : 'Signature',
+            hintText: _walletChain == WalletLoginChain.solana
+                ? 'Paste signature as: [1,2,...] or base64/hex'
+                : 'Paste signature',
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Tip: sign the message in your wallet app, then paste the signature here.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
     );
   }
 }
