@@ -117,7 +117,7 @@
 ### 8. 用户资料与账号安全（Profile/Auth/2FA/Wallet）
 
 - [x] 把 `TwoFactorAuthSettingsScreen` 从“设置项”升级为可用闭环：开启/关闭 2FA、展示备份码（至少复制/保存提示）
-- [ ] 增加“会话过期与多端登录提示”统一处理（目前各处有 `isAuthExpiredText` 分散处理，补一个全局拦截/提示策略）
+- [x] 增加“会话过期与多端登录提示”统一处理（统一改为触发 `AuthExpiryBus`，由全局 gate 处理登出与跳转）
 - [ ] 在 `ApiSettingsScreen` 的 diagnostics 基础上，新增“一键复制更完整诊断”（设备/版本/locale/baseUrl/token 后 6 位/最后一次 API 错误）
 - [ ] 钱包登录链路补齐一致性校验（签名消息展示、失败原因可读化、重试/切换钱包入口）
 - [ ] 增加“账号注销/数据导出”入口占位（至少有清晰预期与跳转到 docs/legal）

@@ -4,12 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
 import 'dart:async';
 import '../providers/project_provider.dart';
-import '../providers/auth_provider.dart';
 import '../models/project.dart';
 import '../widgets/create_project_dialog.dart';
 import '../widgets/snackbar_helper.dart';
 import '../widgets/search_field.dart';
 import '../utils/error_utils.dart';
+import '../core/auth_expiry_bus.dart';
 import 'projects/widgets/project_card_tile.dart';
 
 class ProjectsScreen extends StatefulWidget {
@@ -88,12 +88,6 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     FocusScope.of(context).unfocus();
   }
 
-  Future<void> _logoutAndGoLogin() async {
-    await Provider.of<AuthProvider>(context, listen: false).logout();
-    if (!mounted) return;
-    context.go('/login');
-  }
-
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<ProjectProvider>(context);
@@ -132,16 +126,14 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (!mounted) return;
                     final authExpired = isAuthExpiredText(provider.error!);
+                    if (authExpired) {
+                      AuthExpiryBus.trigger(endpoint: '/api/projects');
+                      return;
+                    }
                     SnackBarHelper.showError(
                       context,
                       title: 'Sync failed',
                       message: provider.error!,
-                      actionLabel: authExpired ? 'Re-login' : null,
-                      onActionPressed: authExpired
-                          ? () {
-                              unawaited(_logoutAndGoLogin());
-                            }
-                          : null,
                     );
                   });
                 }
@@ -179,7 +171,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                             if (authExpired)
                               OutlinedButton(
                                 onPressed: () {
-                                  unawaited(_logoutAndGoLogin());
+                                  AuthExpiryBus.trigger(endpoint: '/api/projects');
                                 },
                                 child: const Text('Re-login'),
                               ),

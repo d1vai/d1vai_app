@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../models/env_var.dart';
-import '../../providers/auth_provider.dart';
 import '../../screens/project_api_keys_screen.dart';
 import '../../services/d1vai_service.dart';
+import '../../core/auth_expiry_bus.dart';
 import '../../utils/error_utils.dart';
 import '../snackbar_helper.dart';
 import 'env_var_editor_dialog.dart';
@@ -78,16 +77,14 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
         _loadError = msg;
       });
       final authExpired = isAuthExpiredText(msg);
+      if (authExpired) {
+        AuthExpiryBus.trigger(endpoint: '/api/projects/${widget.projectId}/env-vars');
+        return;
+      }
       SnackBarHelper.showError(
         context,
         title: 'Error',
         message: msg,
-        actionLabel: authExpired ? 'Re-login' : null,
-        onActionPressed: authExpired
-            ? () {
-                unawaited(_logoutAndGoLogin());
-              }
-            : null,
       );
     }
   }
@@ -366,12 +363,6 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
     } finally {
       if (mounted) setState(() => _syncingVercel = false);
     }
-  }
-
-  Future<void> _logoutAndGoLogin() async {
-    await Provider.of<AuthProvider>(context, listen: false).logout();
-    if (!mounted) return;
-    context.go('/login');
   }
 
   @override

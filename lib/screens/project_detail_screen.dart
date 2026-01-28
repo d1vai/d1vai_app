@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
 
 import '../models/project.dart';
 import '../providers/auth_provider.dart';
@@ -20,6 +19,7 @@ import '../widgets/d1v_tab_bar_view.dart';
 import '../widgets/share_sheet.dart';
 import '../widgets/snackbar_helper.dart';
 import '../theme/d1v_theme_colors.dart';
+import '../core/auth_expiry_bus.dart';
 import 'dart:ui';
 
 class ProjectDetailScreen extends StatefulWidget {
@@ -120,10 +120,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     } catch (e) {
       final message = humanizeError(e);
       if (isAuthExpiredText(message)) {
-        if (!mounted) return;
-        await Provider.of<AuthProvider>(context, listen: false).logout();
-        if (!mounted) return;
-        context.go('/login');
+        AuthExpiryBus.trigger(endpoint: '/api/projects/${widget.projectId}');
         return;
       }
       setState(() {

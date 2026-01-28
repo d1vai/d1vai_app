@@ -12,6 +12,7 @@ import '../widgets/create_project_dialog.dart';
 import '../widgets/card.dart';
 import '../core/theme/app_colors.dart';
 import '../utils/error_utils.dart';
+import '../core/auth_expiry_bus.dart';
 import '../widgets/login_required_view.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/prompt_activity_heatmap.dart';
@@ -571,13 +572,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
                 if (authExpired)
                   OutlinedButton.icon(
-                    onPressed: () async {
-                      await Provider.of<AuthProvider>(
-                        context,
-                        listen: false,
-                      ).logout();
-                      if (!context.mounted) return;
-                      context.go('/login');
+                    onPressed: () {
+                      AuthExpiryBus.trigger(endpoint: '/api/projects');
                     },
                     icon: const Icon(Icons.login),
                     label: const Text('Re-login'),

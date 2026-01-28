@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import 'dart:async';
 
 import '../../models/deployment.dart';
 import '../../models/project.dart';
-import '../../providers/auth_provider.dart';
 import '../../services/d1vai_service.dart';
+import '../../core/auth_expiry_bus.dart';
 import '../../utils/error_utils.dart';
 import 'deployment_log_screen.dart';
 import '../snackbar_helper.dart';
@@ -137,24 +135,16 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
       });
       final msg = humanizeError(e);
       final authExpired = isAuthExpiredText(msg);
+      if (authExpired) {
+        AuthExpiryBus.trigger(endpoint: '/api/projects/${widget.project.id}/deployments');
+        return;
+      }
       SnackBarHelper.showError(
         context,
         title: 'Load failed',
         message: msg,
-        actionLabel: authExpired ? 'Re-login' : null,
-        onActionPressed: authExpired
-            ? () {
-                unawaited(_logoutAndGoLogin());
-              }
-            : null,
       );
     }
-  }
-
-  Future<void> _logoutAndGoLogin() async {
-    await Provider.of<AuthProvider>(context, listen: false).logout();
-    if (!mounted) return;
-    context.go('/login');
   }
 
   Future<void> _triggerPreviewDeploy() async {
@@ -181,16 +171,16 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
       if (!mounted) return;
       final msg = humanizeError(e);
       final authExpired = isAuthExpiredText(msg);
+      if (authExpired) {
+        AuthExpiryBus.trigger(endpoint: '/api/projects/${widget.project.id}/deploy/preview');
+        return;
+      }
       SnackBarHelper.showError(
         context,
         title: 'Preview deploy failed',
         message: msg,
-        actionLabel: authExpired ? 'Re-login' : 'Next steps',
-        onActionPressed: authExpired
-            ? () {
-                unawaited(_logoutAndGoLogin());
-              }
-            : () => _showNextStepsDialog(msg),
+        actionLabel: 'Next steps',
+        onActionPressed: () => _showNextStepsDialog(msg),
       );
     } finally {
       if (mounted) setState(() => _deployingPreview = false);
@@ -221,16 +211,16 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
       if (!mounted) return;
       final msg = humanizeError(e);
       final authExpired = isAuthExpiredText(msg);
+      if (authExpired) {
+        AuthExpiryBus.trigger(endpoint: '/api/projects/${widget.project.id}/deploy/production');
+        return;
+      }
       SnackBarHelper.showError(
         context,
         title: 'Production deploy failed',
         message: msg,
-        actionLabel: authExpired ? 'Re-login' : 'Next steps',
-        onActionPressed: authExpired
-            ? () {
-                unawaited(_logoutAndGoLogin());
-              }
-            : () => _showNextStepsDialog(msg),
+        actionLabel: 'Next steps',
+        onActionPressed: () => _showNextStepsDialog(msg),
       );
     } finally {
       if (mounted) setState(() => _deployingProduction = false);

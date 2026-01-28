@@ -3,16 +3,14 @@ import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
-import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
 import '../../models/analytics.dart';
 import '../../models/message.dart';
 import '../../models/project.dart';
-import '../../providers/auth_provider.dart';
 import '../../services/chat_service.dart';
 import '../../services/d1vai_service.dart';
 import '../../services/workspace_service.dart';
+import '../../core/auth_expiry_bus.dart';
 import '../../utils/error_utils.dart';
 import '../../utils/message_parser.dart';
 import '../chat/message_list.dart';
@@ -173,24 +171,16 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       });
       debugPrint('Error loading analytics: $e');
       final authExpired = isAuthExpiredText(msg);
+      if (authExpired) {
+        AuthExpiryBus.trigger(endpoint: '/api/analytics/data/${widget.project.id}');
+        return;
+      }
       SnackBarHelper.showError(
         context,
         title: 'Error',
         message: msg,
-        actionLabel: authExpired ? 'Re-login' : null,
-        onActionPressed: authExpired
-            ? () {
-                unawaited(_logoutAndGoLogin());
-              }
-            : null,
       );
     }
-  }
-
-  Future<void> _logoutAndGoLogin() async {
-    await Provider.of<AuthProvider>(context, listen: false).logout();
-    if (!mounted) return;
-    context.go('/login');
   }
 
   String _buildInstallPrompt(String websiteId) {
@@ -433,16 +423,14 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
         _installError = msg;
       });
       final authExpired = isAuthExpiredText(msg);
+      if (authExpired) {
+        AuthExpiryBus.trigger(endpoint: '/api/projects/${widget.project.id}/analytics/install');
+        return;
+      }
       SnackBarHelper.showError(
         context,
         title: 'Error',
         message: msg,
-        actionLabel: authExpired ? 'Re-login' : null,
-        onActionPressed: authExpired
-            ? () {
-                unawaited(_logoutAndGoLogin());
-              }
-            : null,
       );
     }
   }
