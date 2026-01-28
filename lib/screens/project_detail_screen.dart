@@ -17,6 +17,8 @@ import '../widgets/project_github/project_github_tab.dart';
 import '../widgets/project_overview/project_overview_tab.dart';
 import '../widgets/project_payment/project_payment_tab.dart';
 import '../widgets/d1v_tab_bar_view.dart';
+import '../widgets/share_sheet.dart';
+import '../widgets/snackbar_helper.dart';
 import '../theme/d1v_theme_colors.dart';
 import 'dart:ui';
 
@@ -156,6 +158,37 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     super.dispose();
   }
 
+  void _shareProject() {
+    final project = _project;
+    if (project == null) return;
+    final raw =
+        (project.latestProdDeploymentUrl ?? project.latestPreviewUrl ?? '')
+            .trim();
+    if (raw.isEmpty) {
+      SnackBarHelper.showInfo(
+        context,
+        title: 'Share',
+        message: 'No preview/production URL available yet.',
+      );
+      return;
+    }
+    final uri = Uri.tryParse(raw);
+    if (uri == null || (!uri.isScheme('http') && !uri.isScheme('https'))) {
+      SnackBarHelper.showError(
+        context,
+        title: 'Share',
+        message: 'Invalid URL: $raw',
+      );
+      return;
+    }
+    ShareSheet.show(
+      context,
+      url: uri,
+      title: project.projectName,
+      message: 'Preview link',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -262,8 +295,14 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
               elevation: 0,
               backgroundColor: Colors.transparent,
               foregroundColor: activeText,
-              title: SizedBox(
-                width: double.infinity,
+              actions: [
+                IconButton(
+                  tooltip: 'Share',
+                  icon: const Icon(Icons.share),
+                  onPressed: _shareProject,
+                ),
+              ],
+              title: ClipRect(
                 child: D1VTabBar(
                   controller: _tabController,
                   isScrollable: true,
@@ -278,9 +317,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
-                  tabs: _tabs
-                      .map((tab) => D1VTab(icon: tab.icon, text: tab.label))
-                      .toList(),
+                  tabs:
+                      _tabs
+                          .map((tab) => D1VTab(icon: tab.icon, text: tab.label))
+                          .toList(),
                 ),
               ),
             ),

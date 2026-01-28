@@ -9,6 +9,7 @@ import '../services/d1vai_service.dart';
 import '../widgets/avatar_image.dart';
 import '../widgets/chat/markdown_text.dart';
 import '../widgets/phone_frame_web_preview.dart';
+import '../widgets/share_sheet.dart';
 import '../utils/community_post_display.dart';
 
 class PostDetailScreen extends StatefulWidget {
@@ -609,6 +610,19 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       height: 1.05,
                     ),
               ),
+            ),
+            const SizedBox(width: 10),
+            _GlassIconButton(
+              icon: Icons.share,
+              onPressed: () {
+                final url = ShareLinks.communityPostBySlug(_post.slug);
+                ShareSheet.show(
+                  context,
+                  url: url,
+                  title: titleText.isEmpty ? 'Post' : titleText,
+                  message: summaryText.trim().isEmpty ? null : summaryText.trim(),
+                );
+              },
             ),
             const SizedBox(width: 10),
             if (showCta)

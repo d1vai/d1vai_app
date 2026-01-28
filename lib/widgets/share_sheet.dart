@@ -32,8 +32,11 @@ class ShareSheet {
 class ShareLinks {
   // Keep this centralized so future domain/deep-link changes are one-liners.
   static const String webBaseUrl = 'https://www.d1v.ai';
+  static const String marketplaceBaseUrl = 'https://d1vai.com';
 
-  static Uri appBySlug(String slug) => Uri.parse('$webBaseUrl/a/$slug');
+  // d1vai_app currently opens app detail via the marketplace domain.
+  static Uri marketplaceAppBySlug(String slug) =>
+      Uri.parse('$marketplaceBaseUrl/apps/$slug');
 
   static Uri communityPostBySlug(String slug) =>
       Uri.parse('$webBaseUrl/c/$slug');
@@ -134,4 +137,3 @@ class _ShareSheetBody extends StatelessWidget {
     );
   }
 }
-
