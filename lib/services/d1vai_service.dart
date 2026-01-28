@@ -503,10 +503,12 @@ class D1vaiService {
     return _apiClient.post('/api/community/posts/$postId/unpublish', {});
   }
 
-  /// 获取社区帖子详情
-  Future<CommunityPost> getCommunityPostDetails(int postId) async {
+  /// 获取社区帖子详情（slug）
+  ///
+  /// Backend: GET /api/community/posts/{slug}
+  Future<CommunityPost> getCommunityPostDetails(String slug) async {
     return _apiClient.get<CommunityPost>(
-      '/api/community/posts/$postId',
+      '/api/community/posts/$slug',
       fromJsonT: (json) => CommunityPost.fromJson(json),
     );
   }

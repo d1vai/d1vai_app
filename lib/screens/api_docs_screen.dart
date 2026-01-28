@@ -3,6 +3,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../core/api_client.dart';
+import '../utils/link_navigator.dart';
 import '../widgets/share_sheet.dart';
 import '../widgets/snackbar_helper.dart';
 
@@ -102,6 +103,20 @@ class _ApiDocsScreenState extends State<ApiDocsScreen> {
           InAppWebView(
             initialUrlRequest: URLRequest(url: WebUri(_docsUrl.toString())),
             pullToRefreshController: _pull,
+            shouldOverrideUrlLoading: (controller, navigationAction) async {
+              final webUri = navigationAction.request.url;
+              if (webUri == null) return NavigationActionPolicy.ALLOW;
+              final uri = Uri.tryParse(webUri.toString());
+              if (uri == null) return NavigationActionPolicy.ALLOW;
+              if (uri.scheme != 'http' && uri.scheme != 'https') {
+                await LinkNavigator.openExternal(uri);
+                return NavigationActionPolicy.CANCEL;
+              }
+              final handled = await LinkNavigator.tryNavigate(context, uri);
+              return handled
+                  ? NavigationActionPolicy.CANCEL
+                  : NavigationActionPolicy.ALLOW;
+            },
             onWebViewCreated: (controller) => _controller = controller,
             onLoadStart: (controller, url) {
               if (!mounted) return;
@@ -172,4 +187,3 @@ class _ApiDocsScreenState extends State<ApiDocsScreen> {
     );
   }
 }
-

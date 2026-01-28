@@ -21,6 +21,7 @@ import '../screens/projects_screen.dart';
 import '../screens/settings/api_settings_screen.dart';
 import '../screens/doc_detail_screen.dart';
 import '../screens/api_docs_screen.dart';
+import '../screens/community_post_link_screen.dart';
 import '../providers/auth_provider.dart';
 
 Page<dynamic> _buildPageWithTransition(
@@ -119,7 +120,9 @@ GoRouter createAppRouter() {
 
       final isPublicStandalone =
           state.matchedLocation == '/pricing' ||
-          state.matchedLocation.startsWith('/apps/');
+          state.matchedLocation.startsWith('/apps/') ||
+          state.matchedLocation.startsWith('/docs/') ||
+          state.matchedLocation.startsWith('/c/');
 
       final isPublicSettings =
           state.matchedLocation == '/settings/language' ||
@@ -204,6 +207,14 @@ GoRouter createAppRouter() {
           context,
           state,
           DocDetailScreen(slug: state.pathParameters['slug']!),
+        ),
+      ),
+      GoRoute(
+        path: '/c/:slug',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          CommunityPostLinkScreen(slug: state.pathParameters['slug']!),
         ),
       ),
       GoRoute(

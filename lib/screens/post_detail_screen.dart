@@ -98,7 +98,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
   Future<void> _refreshPostDetails() async {
     try {
-      final updatedPost = await _d1vaiService.getCommunityPostDetails(_post.id);
+      final updatedPost = await _d1vaiService.getCommunityPostDetails(_post.slug);
       if (mounted) {
         setState(() {
           _post = updatedPost;
