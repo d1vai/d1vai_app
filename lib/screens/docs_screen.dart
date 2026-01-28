@@ -133,11 +133,21 @@ class _DocsScreenState extends State<DocsScreen> {
           preferredSize: const Size.fromHeight(60),
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: TextField(
+              child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Search docs...',
                 prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchController.text.trim().isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: 'Clear',
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {});
+                        },
+                      ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -145,6 +155,7 @@ class _DocsScreenState extends State<DocsScreen> {
                 fillColor: theme.colorScheme.surfaceContainerHighest,
                 contentPadding: EdgeInsets.zero,
                 prefixIconColor: theme.colorScheme.onSurfaceVariant,
+                suffixIconColor: theme.colorScheme.onSurfaceVariant,
               ),
               onChanged: (value) {
                 setState(() {});
