@@ -615,20 +615,23 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
             const SizedBox(height: 16),
             _buildKeyMetricsRow(),
             const SizedBox(height: 16),
-            if (_trafficSeries.isNotEmpty) ...[
-              RealtimeChart(
-                title: 'Traffic Overview',
-                series: _trafficSeries,
-                timeRange: _timeRange,
-                height: 250,
-                showLegend: true,
-                onTimeRangeChanged: (range) {
-                  setState(() {
-                    _timeRange = range;
-                  });
-                  _loadAnalytics();
-                },
-              ),
+            if (_pageviews != null) ...[
+              if (_trafficSeries.isNotEmpty)
+                RealtimeChart(
+                  title: 'Traffic Overview',
+                  series: _trafficSeries,
+                  timeRange: _timeRange,
+                  height: 250,
+                  showLegend: true,
+                  onTimeRangeChanged: (range) {
+                    setState(() {
+                      _timeRange = range;
+                    });
+                    _loadAnalytics();
+                  },
+                )
+              else
+                _buildSeriesEmptyCard(),
               const SizedBox(height: 16),
             ],
             _buildTopListsCard(),
@@ -636,6 +639,50 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
             _buildStatusCard(),
             const SizedBox(height: 16),
             _buildActionsCard(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSeriesEmptyCard() {
+    final theme = Theme.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Traffic Overview',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'No metrics selected. Enable Pageviews/Sessions in Filters.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _showPageviewsSeries = true;
+                    _showSessionsSeries = true;
+                    if (_pageviews != null) {
+                      _trafficSeries = _createTrafficSeries(_pageviews!);
+                    }
+                  });
+                },
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Restore defaults'),
+              ),
+            ),
           ],
         ),
       ),

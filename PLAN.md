@@ -149,7 +149,7 @@
 - [x] Account & Data：删除账号入口增加二次确认弹窗（增加仪式感 + 防误触）
 - [x] Dashboard heatmap：项目列表未加载时禁用筛选控件 + 显示 loading 文案
 - [x] Heatmap cell：点击时触发 selection haptic（轻反馈）
-- [ ] Project Analytics：当所有 series 被关闭时显示空态 + 一键恢复默认
+- [x] Project Analytics：当所有 series 被关闭时显示空态 + 一键恢复默认
 - [ ] Project Analytics：Filters 卡片增加 “Reset filters” 一键重置
 - [ ] Docs：搜索框增加 clear（x）按钮
 - [ ] Docs：Recent 区域增加 “Clear recent” 入口
