@@ -147,7 +147,31 @@ class AccountDataScreen extends StatelessWidget {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
-                          onPressed: () => context.push('/settings/help'),
+                          onPressed: () async {
+                            final shouldProceed = await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('Request account deletion'),
+                                content: const Text(
+                                  'This will contact support to request account deletion. '
+                                  'Deletion may be irreversible. Continue?',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(ctx).pop(false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () => Navigator.of(ctx).pop(true),
+                                    child: const Text('Continue'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (shouldProceed != true) return;
+                            if (!context.mounted) return;
+                            context.push('/settings/help');
+                          },
                           icon: const Icon(Icons.support_agent),
                           label: const Text('Contact support to delete account'),
                           style: ElevatedButton.styleFrom(
