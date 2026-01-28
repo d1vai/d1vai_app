@@ -108,6 +108,15 @@ class _DocsScreenState extends State<DocsScreen> {
     });
   }
 
+  Future<void> _clearRecent() async {
+    final prefs = await _prefsFuture;
+    await prefs.remove(_prefsKeyRecent);
+    if (!mounted) return;
+    setState(() {
+      _recentSlugs = <String>[];
+    });
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -226,6 +235,11 @@ class _DocsScreenState extends State<DocsScreen> {
                 const Text(
                   'Recently viewed',
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                ),
+                const Spacer(),
+                TextButton(
+                  onPressed: _clearRecent,
+                  child: const Text('Clear'),
                 ),
               ],
             ),

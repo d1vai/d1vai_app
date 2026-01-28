@@ -152,7 +152,7 @@
 - [x] Project Analytics：当所有 series 被关闭时显示空态 + 一键恢复默认
 - [x] Project Analytics：Filters 卡片增加 “Reset filters” 一键重置
 - [x] Docs：搜索框增加 clear（x）按钮
-- [ ] Docs：Recent 区域增加 “Clear recent” 入口
+- [x] Docs：Recent 区域增加 “Clear recent” 入口
 - [ ] Doc Detail：复制代码成功增加 haptic + 更明确的 snackbar 文案
 - [ ] Realtime：异常提示卡增加“Dismiss”（本次会话隐藏，避免打扰）
 - [ ] Settings：Account & Data 文案与标题补齐 i18n key（至少 zh/en）
