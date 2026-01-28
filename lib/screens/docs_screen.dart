@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:go_router/go_router.dart';
 import '../widgets/snackbar_helper.dart';
 
 class DocsScreen extends StatefulWidget {
@@ -213,17 +213,19 @@ class _DocsScreenState extends State<DocsScreen> {
   }
 
   void _navigateToDoc(BuildContext context, String href) async {
-    SnackBarHelper.showInfo(
-      context,
-      title: 'Opening Doc',
-      message: 'Opening $href...',
-    );
-
-    final url = 'https://docs.d1v.ai$href';
-    final uri = Uri.tryParse(url);
-    if (uri != null && await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    final slug = Uri.tryParse(href)?.pathSegments.isNotEmpty == true
+        ? Uri.parse(href).pathSegments.last
+        : href.replaceAll('/docs/', '');
+    if (slug.trim().isEmpty) {
+      SnackBarHelper.showError(
+        context,
+        title: 'Open failed',
+        message: 'Invalid doc link: $href',
+      );
+      return;
     }
+    // Open in-app doc viewer to reduce context switching.
+    context.push('/docs/$slug');
   }
 }
 

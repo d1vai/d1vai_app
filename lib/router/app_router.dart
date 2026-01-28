@@ -18,6 +18,7 @@ import '../screens/help_support_screen.dart';
 import '../screens/github_settings_screen.dart';
 import '../screens/projects_screen.dart';
 import '../screens/settings/api_settings_screen.dart';
+import '../screens/doc_detail_screen.dart';
 import '../providers/auth_provider.dart';
 
 Page<dynamic> _buildPageWithTransition(
@@ -193,6 +194,14 @@ GoRouter createAppRouter() {
           context,
           state,
           const MainScreen(initialIndex: 2),
+        ),
+      ),
+      GoRoute(
+        path: '/docs/:slug',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          DocDetailScreen(slug: state.pathParameters['slug']!),
         ),
       ),
       GoRoute(

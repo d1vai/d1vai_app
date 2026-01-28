@@ -36,6 +36,10 @@
    - 现状：DocsScreen 点击外跳浏览器。
    - 改进：提供站内文档阅读（InAppWebView 或 Markdown 渲染）；支持目录/站内搜索、复制代码块、最近阅读、深链接（`/docs/:slug`）。
    - 验收：用户从 app 内阅读文档不离开应用；返回时状态可恢复（滚动位置、搜索词）。
+   - 实施清单：
+     - [x] Docs 列表点击后站内打开（新增 `DocDetailScreen` + 路由 `/docs/:slug`）
+     - [ ] 代码块复制/优化阅读（后续可做 Markdown 渲染或 WebView 注入）
+     - [ ] 最近阅读/滚动位置恢复
 
 4. 增加“Schema 可视化/结构化理解”能力（对齐 Web 的 scheme 可视化价值）
    - 现状：Database Tab 以表列表为主，缺少整体关系视图。
