@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -24,6 +25,8 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
 
   Uri get _docUrl => Uri.parse('https://docs.d1v.ai/docs/${widget.slug}');
 
+  static const _jsHandlerCopyCode = 'd1vCopyCode';
+
   @override
   void initState() {
     super.initState();
@@ -46,6 +49,81 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
     _pullToRefreshController = null;
     _controller = null;
     super.dispose();
+  }
+
+  Future<void> _injectCodeCopy() async {
+    // Add a lightweight "Copy" button to code blocks for quick reuse on mobile.
+    // Uses a JS handler to bridge clipboard access back to Flutter.
+    await _controller?.evaluateJavascript(
+      source: '''
+(() => {
+  try {
+    const FLAG = '__d1v_copy_injected__';
+    if (window[FLAG]) return;
+    window[FLAG] = true;
+
+    const BTN_ATTR = 'data-d1v-copy-btn';
+    const PRE_ATTR = 'data-d1v-copy';
+
+    function ensureButtons() {
+      const blocks = document.querySelectorAll('pre');
+      blocks.forEach((pre) => {
+        if (!pre || pre.getAttribute(PRE_ATTR) === '1') return;
+
+        // If the page already has a copy button, avoid duplicates.
+        if (pre.querySelector('button[aria-label*="Copy"], button[title*="Copy"], button[title*="copy"]')) {
+          pre.setAttribute(PRE_ATTR, '1');
+          return;
+        }
+
+        pre.setAttribute(PRE_ATTR, '1');
+        if (!pre.style.position) pre.style.position = 'relative';
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = 'Copy';
+        btn.setAttribute(BTN_ATTR, '1');
+        btn.style.cssText = [
+          'position:absolute',
+          'top:8px',
+          'right:8px',
+          'z-index:2',
+          'padding:6px 10px',
+          'border-radius:999px',
+          'border:1px solid rgba(127,127,127,0.35)',
+          'background:rgba(0,0,0,0.55)',
+          'color:#fff',
+          'font-size:12px',
+          'font-weight:700',
+          'cursor:pointer',
+          'user-select:none',
+        ].join(';');
+
+        btn.addEventListener('click', (e) => {
+          try {
+            e.preventDefault();
+            e.stopPropagation();
+            const codeEl = pre.querySelector('code');
+            const text = (codeEl ? codeEl.innerText : pre.innerText) || '';
+            if (!text.trim()) return;
+            window.flutter_inappwebview.callHandler('$_jsHandlerCopyCode', text);
+            const old = btn.textContent;
+            btn.textContent = 'Copied';
+            setTimeout(() => { btn.textContent = old || 'Copy'; }, 900);
+          } catch (_) {}
+        });
+
+        pre.appendChild(btn);
+      });
+    }
+
+    ensureButtons();
+    const obs = new MutationObserver(() => ensureButtons());
+    obs.observe(document.body, { childList: true, subtree: true });
+  } catch (_) {}
+})();
+''',
+    );
   }
 
   Future<void> _openExternal() async {
@@ -105,6 +183,21 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
             pullToRefreshController: _pullToRefreshController,
             onWebViewCreated: (controller) {
               _controller = controller;
+              controller.addJavaScriptHandler(
+                handlerName: _jsHandlerCopyCode,
+                callback: (args) {
+                  final text = args.isNotEmpty ? args.first?.toString() : null;
+                  if (text == null || text.trim().isEmpty) return null;
+                  Clipboard.setData(ClipboardData(text: text));
+                  if (!mounted) return null;
+                  SnackBarHelper.showSuccess(
+                    context,
+                    title: 'Copied',
+                    message: 'Code copied to clipboard',
+                  );
+                  return null;
+                },
+              );
             },
             onLoadStart: (controller, url) {
               if (!mounted) return;
@@ -125,6 +218,7 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
             },
             onLoadStop: (controller, url) async {
               _pullToRefreshController?.endRefreshing();
+              await _injectCodeCopy();
               if (!mounted) return;
               setState(() {
                 _isLoading = false;
@@ -200,4 +294,3 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
     );
   }
 }
-
