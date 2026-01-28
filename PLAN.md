@@ -52,7 +52,7 @@
    - 实施清单：
      - [x] 修复 schema 解析：支持后端 `{tables:[...]}` 返回（含 foreign_keys）
      - [x] Database Tab 增加 Relations 视图（外键关系列表 + 一键 Ask AI）
-     - [ ] ERD/Graph 可视化（节点/边布局）
+     - [x] ERD/Graph 可视化（节点/边布局）
 
 ### P1：提升高频体验与转化（次优先）
 

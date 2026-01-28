@@ -235,6 +235,11 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                 icon: Icon(Icons.account_tree),
                 label: Text('Relations'),
               ),
+              ButtonSegment(
+                value: _DbViewMode.graph,
+                icon: Icon(Icons.hub),
+                label: Text('Graph'),
+              ),
             ],
             selected: <_DbViewMode>{_viewMode},
             onSelectionChanged: (set) {
@@ -245,9 +250,11 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
           ),
         ),
         Expanded(
-          child: _viewMode == _DbViewMode.tables
-              ? _buildTablesList(theme)
-              : _buildRelationsList(theme),
+          child: switch (_viewMode) {
+            _DbViewMode.tables => _buildTablesList(theme),
+            _DbViewMode.relations => _buildRelationsList(theme),
+            _DbViewMode.graph => _buildGraphView(theme),
+          },
         ),
       ],
     );
@@ -404,9 +411,261 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
       },
     );
   }
+
+  Widget _buildGraphView(ThemeData theme) {
+    final tables = _tables.toList(growable: false)
+      ..sort((a, b) => a.fullName.compareTo(b.fullName));
+
+    if (tables.length <= 1) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            'Add more tables to see relationships as a graph.',
+            style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
+    const nodeSize = Size(168, 64);
+    const gapX = 90.0;
+    const gapY = 54.0;
+    final cols = (tables.length <= 6) ? 2 : (tables.length <= 16 ? 3 : 4);
+
+    final positions = <String, Offset>{};
+    for (var i = 0; i < tables.length; i++) {
+      final row = i ~/ cols;
+      final col = i % cols;
+      positions[tables[i].fullName] = Offset(
+        col * (nodeSize.width + gapX),
+        row * (nodeSize.height + gapY),
+      );
+    }
+
+    final maxRow = (tables.length - 1) ~/ cols;
+    final canvasWidth =
+        cols * nodeSize.width + (cols - 1) * gapX + 80;
+    final canvasHeight =
+        (maxRow + 1) * nodeSize.height + maxRow * gapY + 120;
+
+    return InteractiveViewer(
+      minScale: 0.5,
+      maxScale: 2.5,
+      boundaryMargin: const EdgeInsets.all(200),
+      child: SizedBox(
+        width: canvasWidth,
+        height: canvasHeight,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _DbGraphPainter(
+                  tables: tables,
+                  positions: positions,
+                  nodeSize: nodeSize,
+                  colorScheme: theme.colorScheme,
+                ),
+              ),
+            ),
+            for (final t in tables)
+              Positioned(
+                left: (positions[t.fullName]?.dx ?? 0) + 30,
+                top: (positions[t.fullName]?.dy ?? 0) + 30,
+                child: _DbGraphNode(
+                  table: t,
+                  size: nodeSize,
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (_) => TableDetailDialog(table: t),
+                    );
+                  },
+                  onLongPress: () {
+                    final question =
+                        'Given the database schema, explain how "${t.fullName}" relates to other tables (foreign keys) and suggest improvements.';
+                    widget.onAskAi?.call(question);
+                  },
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-enum _DbViewMode { tables, relations }
+enum _DbViewMode { tables, relations, graph }
+
+class _DbGraphNode extends StatelessWidget {
+  final DatabaseTable table;
+  final Size size;
+  final VoidCallback onTap;
+  final VoidCallback onLongPress;
+
+  const _DbGraphNode({
+    required this.table,
+    required this.size,
+    required this.onTap,
+    required this.onLongPress,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isView = table.type == 'view';
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          width: size.width,
+          height: size.height,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: cs.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: cs.outlineVariant),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 10,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 26,
+                height: 26,
+                decoration: BoxDecoration(
+                  color: isView ? cs.tertiaryContainer : cs.primaryContainer,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  isView ? Icons.visibility : Icons.table_chart,
+                  size: 16,
+                  color: isView ? cs.tertiary : cs.primary,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      table.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      table.schema,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              Icon(
+                Icons.open_in_new,
+                size: 16,
+                color: cs.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DbGraphPainter extends CustomPainter {
+  final List<DatabaseTable> tables;
+  final Map<String, Offset> positions;
+  final Size nodeSize;
+  final ColorScheme colorScheme;
+
+  const _DbGraphPainter({
+    required this.tables,
+    required this.positions,
+    required this.nodeSize,
+    required this.colorScheme,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6
+      ..color = colorScheme.outlineVariant;
+
+    final arrowPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = colorScheme.outlineVariant;
+
+    Offset centerOf(String fullName) {
+      final p = positions[fullName];
+      if (p == null) return Offset.zero;
+      // Node is positioned with an extra (30,30) offset.
+      return Offset(p.dx + 30 + nodeSize.width / 2, p.dy + 30 + nodeSize.height / 2);
+    }
+
+    for (final table in tables) {
+      final from = centerOf(table.fullName);
+      if (from == Offset.zero) continue;
+      for (final fk in table.foreignKeys) {
+        final to = centerOf(fk.refFullTable);
+        if (to == Offset.zero) continue;
+
+        final path = Path()..moveTo(from.dx, from.dy);
+        final midX = (from.dx + to.dx) / 2;
+        path.cubicTo(midX, from.dy, midX, to.dy, to.dx, to.dy);
+        canvas.drawPath(path, paint);
+
+        // Arrow head.
+        final dir = (to - from);
+        final len = dir.distance;
+        if (len > 1) {
+          final ux = dir.dx / len;
+          final uy = dir.dy / len;
+          final tip = to;
+          const s = 7.0;
+          final left = Offset(tip.dx - ux * s - uy * (s * 0.6), tip.dy - uy * s + ux * (s * 0.6));
+          final right = Offset(tip.dx - ux * s + uy * (s * 0.6), tip.dy - uy * s - ux * (s * 0.6));
+          final arrow = Path()
+            ..moveTo(tip.dx, tip.dy)
+            ..lineTo(left.dx, left.dy)
+            ..lineTo(right.dx, right.dy)
+            ..close();
+          canvas.drawPath(arrow, arrowPaint);
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DbGraphPainter oldDelegate) {
+    return oldDelegate.tables != tables ||
+        oldDelegate.positions != positions ||
+        oldDelegate.nodeSize != nodeSize ||
+        oldDelegate.colorScheme != colorScheme;
+  }
+}
 
 class _EnableDatabaseCard extends StatelessWidget {
   final bool enabling;
