@@ -106,6 +106,22 @@
 - [ ] 增加“从分享链接打开 app”的深链方案（先只做：识别 `https://...` 路由 → `go_router` 跳转；未命中则落到对应 WebView/外部浏览器）
 - [ ] 为 `/apps/:slug` 增加“打开官网 / 打开预览 / 复制”三联动作（减少用户找入口成本）
 
+### 7. 社区内容生产与互动（Community）
+
+- [ ] 给 `PostDetailScreen` 增加“评论列表 + 发表评论”入口（先仅 UI + 占位数据也可，但要把 API/Model 结构预留）
+- [ ] 给 `PostCard` 增加轻量互动按钮（like/comment/share），并在未登录时统一走 `LoginRequiredDialog`
+- [ ] 增加“我的帖子 / 我的草稿”列表入口（可挂在 Profile 或 Community 顶部筛选）
+- [ ] 支持“发布失败重试 + 本地草稿保存”（复用 `models/outbox.dart` 的队列思想或新增轻量 Draft 存储）
+- [ ] 增加“举报/屏蔽”入口（先只走前端 UI + 提示；后续接后端）
+
+### 8. 用户资料与账号安全（Profile/Auth/2FA/Wallet）
+
+- [ ] 把 `TwoFactorAuthSettingsScreen` 从“设置项”升级为可用闭环：开启/关闭 2FA、展示备份码（至少复制/保存提示）
+- [ ] 增加“会话过期与多端登录提示”统一处理（目前各处有 `isAuthExpiredText` 分散处理，补一个全局拦截/提示策略）
+- [ ] 在 `ApiSettingsScreen` 的 diagnostics 基础上，新增“一键复制更完整诊断”（设备/版本/locale/baseUrl/token 后 6 位/最后一次 API 错误）
+- [ ] 钱包登录链路补齐一致性校验（签名消息展示、失败原因可读化、重试/切换钱包入口）
+- [ ] 增加“账号注销/数据导出”入口占位（至少有清晰预期与跳转到 docs/legal）
+
 
 
 ### 9. 监控与分析（Analytics / Realtime）
@@ -119,4 +135,6 @@
 
 - [x] `DeploymentLogScreen` 增加：复制全部日志 / 复制错误片段 / 系统分享（用于发给同事或支持）
 - [x] 日志关键字高亮（error/warn/failed/traceback/http 4xx/5xx），并提供“仅看错误”过滤
-- [ ] Deploy Tab 增加“一键重试上次部署”（复用现有 preview/prod deploy action，并带确认弹窗）
+- [x] Deploy Tab 增加“一键重试上次部署”（复用现有 preview/prod deploy action，并带确认弹窗）
+- [x] 增加“排障向导”入口（FAQ 卡片）：检查 GitHub 权限 → 检查 env var → 检查 workspace → 重试部署（每步给可执行按钮/跳转）
+- [ ] 当部署失败时，把错误与“下一步建议”写入 SnackBar/对话框（避免只给 raw message）

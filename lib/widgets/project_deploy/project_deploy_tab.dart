@@ -34,6 +34,33 @@ class ProjectDeployTab extends StatefulWidget {
 
 enum _DeploymentEnvFilter { all, dev, prod }
 
+class _TroubleRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _TroubleRow({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: theme.colorScheme.onSurfaceVariant),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 13,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _ProjectDeployTabState extends State<ProjectDeployTab>
     with SingleTickerProviderStateMixin {
   final List<DeploymentHistory> _deployments = [];
@@ -41,6 +68,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
   bool _isInitialized = false;
   bool _deployingPreview = false;
   bool _deployingProduction = false;
+  bool _retryingLast = false;
   _DeploymentEnvFilter _envFilter = _DeploymentEnvFilter.all;
   late final AnimationController _ambientController;
 
@@ -209,6 +237,33 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
     }
   }
 
+  Future<void> _retryLastDeployment() async {
+    if (_retryingLast) return;
+    if (_deployments.isEmpty) {
+      SnackBarHelper.showInfo(
+        context,
+        title: 'Retry',
+        message: 'No deployment history yet.',
+      );
+      return;
+    }
+    final last = _deployments.first;
+    final env = last.environment.toLowerCase().trim();
+    final isProd = env == 'prod' || env == 'production';
+    setState(() => _retryingLast = true);
+    try {
+      await _confirmAndDeploy(
+        title: isProd ? 'Retry production deploy?' : 'Retry preview deploy?',
+        message: isProd
+            ? 'This will trigger a new production deployment.'
+            : 'This will trigger a new preview (dev) deployment.',
+        action: isProd ? _triggerProductionDeploy : _triggerPreviewDeploy,
+      );
+    } finally {
+      if (mounted) setState(() => _retryingLast = false);
+    }
+  }
+
   Future<void> _confirmAndDeploy({
     required String title,
     required String message,
@@ -250,6 +305,8 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildActionsCard(project),
+            const SizedBox(height: 16),
+            _buildTroubleshootingCard(project),
             const SizedBox(height: 16),
             _buildCurrentDeploymentsCard(project),
             const SizedBox(height: 16),
@@ -318,6 +375,23 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
               ],
             ),
             const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: (_deployingPreview || _deployingProduction || _retryingLast)
+                    ? null
+                    : _retryLastDeployment,
+                icon: _retryingLast
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.replay),
+                label: const Text('Retry last deployment'),
+              ),
+            ),
+            const SizedBox(height: 12),
             Row(
               children: [
                 const Text(
@@ -358,6 +432,65 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.refresh),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTroubleshootingCard(UserProject project) {
+    final theme = Theme.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Troubleshooting',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'If deploy fails, try these quick checks:',
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 10),
+            const _TroubleRow(icon: Icons.code, text: 'GitHub access / repo permissions'),
+            const SizedBox(height: 6),
+            const _TroubleRow(icon: Icons.key, text: 'Env vars configured (and synced to Vercel)'),
+            const SizedBox(height: 6),
+            const _TroubleRow(icon: Icons.cloud, text: 'Retry preview deploy first'),
+            const SizedBox(height: 6),
+            const _TroubleRow(icon: Icons.receipt_long, text: 'Open build logs and share error snippet'),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: widget.onAskAi == null
+                        ? null
+                        : () {
+                            widget.onAskAi!(
+                              'My Vercel deployment failed for project "${project.projectName}". '
+                              'Give a step-by-step debugging checklist based on common Vercel/Remix issues. '
+                              'Also suggest what logs/env vars to check first.',
+                            );
+                          },
+                    icon: const Icon(Icons.auto_awesome, size: 18),
+                    label: const Text('Ask AI'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _retryingLast ? null : _retryLastDeployment,
+                    icon: const Icon(Icons.replay, size: 18),
+                    label: const Text('Retry'),
+                  ),
                 ),
               ],
             ),
