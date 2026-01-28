@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter/services.dart';
 import 'dart:ui' as ui;
@@ -17,8 +18,16 @@ import 'share_sheet.dart';
 class PostCard extends StatefulWidget {
   final CommunityPost post;
   final VoidCallback? onTap;
+  final ValueChanged<String>? onHidePost;
+  final ValueChanged<String>? onBlockAuthor;
 
-  const PostCard({super.key, required this.post, this.onTap});
+  const PostCard({
+    super.key,
+    required this.post,
+    this.onTap,
+    this.onHidePost,
+    this.onBlockAuthor,
+  });
 
   @override
   State<PostCard> createState() => _PostCardState();
@@ -31,6 +40,9 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
   late bool _isLiked;
   late int _likeCount;
   late int _commentCount;
+
+  static const _prefsHiddenPostsKey = 'community_hidden_post_slugs';
+  static const _prefsBlockedAuthorsKey = 'community_blocked_author_slugs';
 
   String _displayTitle(String raw) {
     return raw.replaceAll('_', ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
@@ -115,6 +127,53 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
       message: (widget.post.summary ?? '').trim().isNotEmpty
           ? widget.post.summary!.trim()
           : '/c/${widget.post.slug}',
+    );
+  }
+
+  void _hidePost() {
+    final slug = widget.post.slug.trim();
+    if (slug.isEmpty) return;
+    HapticFeedback.selectionClick();
+
+    // Persist in the background.
+    SharedPreferences.getInstance().then((prefs) {
+      final list = prefs.getStringList(_prefsHiddenPostsKey) ?? <String>[];
+      final next = <String>[slug, ...list.where((s) => s != slug)];
+      prefs.setStringList(_prefsHiddenPostsKey, next);
+    });
+
+    widget.onHidePost?.call(slug);
+    SnackBarHelper.showSuccess(
+      context,
+      title: 'Hidden',
+      message: 'This post will be hidden on this device',
+    );
+  }
+
+  void _blockAuthor() {
+    if (!_ensureLoggedIn()) return;
+    final slug = (widget.post.author?.slug ?? '').trim();
+    if (slug.isEmpty) {
+      SnackBarHelper.showInfo(
+        context,
+        title: 'Block',
+        message: 'Missing author identifier',
+      );
+      return;
+    }
+    HapticFeedback.selectionClick();
+
+    SharedPreferences.getInstance().then((prefs) {
+      final list = prefs.getStringList(_prefsBlockedAuthorsKey) ?? <String>[];
+      final next = <String>[slug, ...list.where((s) => s != slug)];
+      prefs.setStringList(_prefsBlockedAuthorsKey, next);
+    });
+
+    widget.onBlockAuthor?.call(slug);
+    SnackBarHelper.showSuccess(
+      context,
+      title: 'Blocked',
+      message: 'You will no longer see posts from @$slug',
     );
   }
 
@@ -509,6 +568,24 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
                 onTap: () {
                   Navigator.pop(context);
                   _sharePostSheet();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.visibility_off_outlined),
+                title: const Text('Hide'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _hidePost();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.block),
+                title: Text(
+                  'Block @${widget.post.author?.slug ?? 'author'}',
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _blockAuthor();
                 },
               ),
               ListTile(

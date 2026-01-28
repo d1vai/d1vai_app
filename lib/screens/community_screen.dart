@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import '../services/d1vai_service.dart';
 import '../models/community_post.dart';
@@ -39,21 +40,35 @@ class _CommunityScreenState extends State<CommunityScreen>
   String _searchQuery = '';
   bool _isSearching = false;
   _CommunityFeedFilter _filter = _CommunityFeedFilter.all;
+  final Set<String> _hiddenPostSlugs = <String>{};
+  final Set<String> _blockedAuthorSlugs = <String>{};
+
+  static const _prefsHiddenPostsKey = 'community_hidden_post_slugs';
+  static const _prefsBlockedAuthorsKey = 'community_blocked_author_slugs';
 
   List<CommunityPost> _applyFilter(List<CommunityPost> list) {
+    final base = list.where((p) {
+      if (_hiddenPostSlugs.contains(p.slug)) return false;
+      final authorSlug = (p.author?.slug ?? '').trim();
+      if (authorSlug.isNotEmpty && _blockedAuthorSlugs.contains(authorSlug)) {
+        return false;
+      }
+      return true;
+    }).toList();
+
     switch (_filter) {
       case _CommunityFeedFilter.all:
-        return list;
+        return base;
       case _CommunityFeedFilter.mine:
         final auth = Provider.of<AuthProvider>(context, listen: false);
         final uid = auth.user?.id;
         if (uid == null) return const <CommunityPost>[];
-        return list.where((p) => p.userId == uid).toList();
+        return base.where((p) => p.userId == uid).toList();
       case _CommunityFeedFilter.drafts:
         final auth = Provider.of<AuthProvider>(context, listen: false);
         final uid = auth.user?.id;
         if (uid == null) return const <CommunityPost>[];
-        return list
+        return base
             .where((p) => p.userId == uid && (p.status ?? '') == 'draft')
             .toList();
     }
@@ -70,6 +85,7 @@ class _CommunityScreenState extends State<CommunityScreen>
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
+    _loadModerationPrefs();
     _loadPosts();
   }
 
@@ -80,6 +96,41 @@ class _CommunityScreenState extends State<CommunityScreen>
     _searchController.dispose();
     _searchDebounce?.cancel();
     super.dispose();
+  }
+
+  Future<void> _loadModerationPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (!mounted) return;
+      setState(() {
+        _hiddenPostSlugs
+          ..clear()
+          ..addAll(prefs.getStringList(_prefsHiddenPostsKey) ?? const <String>[]);
+        _blockedAuthorSlugs
+          ..clear()
+          ..addAll(
+            prefs.getStringList(_prefsBlockedAuthorsKey) ?? const <String>[],
+          );
+      });
+    } catch (_) {
+      // Best-effort only.
+    }
+  }
+
+  void _handleHidePost(String slug) {
+    if (slug.trim().isEmpty) return;
+    setState(() {
+      _hiddenPostSlugs.add(slug.trim());
+      _posts.removeWhere((p) => p.slug == slug.trim());
+    });
+  }
+
+  void _handleBlockAuthor(String authorSlug) {
+    if (authorSlug.trim().isEmpty) return;
+    setState(() {
+      _blockedAuthorSlugs.add(authorSlug.trim());
+      _posts.removeWhere((p) => (p.author?.slug ?? '').trim() == authorSlug.trim());
+    });
   }
 
   Future<void> _loadPosts({bool refresh = false}) async {
@@ -345,6 +396,8 @@ class _CommunityScreenState extends State<CommunityScreen>
                         ),
                       );
                     },
+                    onHidePost: _handleHidePost,
+                    onBlockAuthor: _handleBlockAuthor,
                   ),
                 );
               },
