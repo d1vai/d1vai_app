@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'dart:async';
 
@@ -9,6 +10,28 @@ enum SnackBarPosition { bottom, top }
 class SnackBarHelper {
   static OverlayEntry? _topToastEntry;
   static Timer? _topToastTimer;
+
+  static void _triggerHaptic(ContentType type) {
+    try {
+      switch (type) {
+        case ContentType.success:
+          HapticFeedback.lightImpact();
+          break;
+        case ContentType.failure:
+          HapticFeedback.mediumImpact();
+          break;
+        case ContentType.warning:
+          HapticFeedback.selectionClick();
+          break;
+        case ContentType.help:
+        default:
+          HapticFeedback.selectionClick();
+          break;
+      }
+    } catch (_) {
+      // Best-effort UX; ignore platform failures.
+    }
+  }
 
   /// 显示成功 SnackBar
   static void showSuccess(
@@ -185,6 +208,7 @@ class SnackBarHelper {
     Duration? duration,
     SnackBarPosition position = SnackBarPosition.bottom,
   }) {
+    _triggerHaptic(contentType);
     if (position == SnackBarPosition.top) {
       _showTopToast(
         context,

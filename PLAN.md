@@ -138,3 +138,21 @@
 - [x] Deploy Tab 增加“一键重试上次部署”（复用现有 preview/prod deploy action，并带确认弹窗）
 - [x] 增加“排障向导”入口（FAQ 卡片）：检查 GitHub 权限 → 检查 env var → 检查 workspace → 重试部署（每步给可执行按钮/跳转）
 - [x] 当部署失败时，把错误与“下一步建议”写入 SnackBar/对话框（避免只给 raw message）
+
+## 4) UX 快速提升（最容易实现的 15 个点，逐一完成）
+
+- [x] SnackBar：成功/失败/提示统一加入轻量 haptic 反馈（让用户“操作有回声”）
+- [ ] Login：模式切换栏适配 Dark/Light（使用 theme 色）+ 轻微动画（更顺滑）
+- [ ] Login（Wallet）：nonce 不随地址输入频繁变化，仅在“Regenerate/切换链”时变化（避免签名消息抖动）
+- [ ] Login（Wallet）：增加“一键粘贴签名”按钮（Paste from clipboard）
+- [ ] Wallet Settings：已连接地址增加“Copy address”快捷动作（可点可复制）
+- [ ] Account & Data：删除账号入口增加二次确认弹窗（增加仪式感 + 防误触）
+- [ ] Dashboard heatmap：项目列表未加载时禁用筛选控件 + 显示 loading 文案
+- [ ] Heatmap cell：点击时触发 selection haptic（轻反馈）
+- [ ] Project Analytics：当所有 series 被关闭时显示空态 + 一键恢复默认
+- [ ] Project Analytics：Filters 卡片增加 “Reset filters” 一键重置
+- [ ] Docs：搜索框增加 clear（x）按钮
+- [ ] Docs：Recent 区域增加 “Clear recent” 入口
+- [ ] Doc Detail：复制代码成功增加 haptic + 更明确的 snackbar 文案
+- [ ] Realtime：异常提示卡增加“Dismiss”（本次会话隐藏，避免打扰）
+- [ ] Settings：Account & Data 文案与标题补齐 i18n key（至少 zh/en）
