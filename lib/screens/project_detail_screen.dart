@@ -161,9 +161,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   void _shareProject() {
     final project = _project;
     if (project == null) return;
-    final raw =
-        (project.latestProdDeploymentUrl ?? project.latestPreviewUrl ?? '')
-            .trim();
+    final prod = (project.latestProdDeploymentUrl ?? '').trim();
+    final preview = (project.latestPreviewUrl ?? '').trim();
+    final raw = (prod.isNotEmpty ? prod : preview).trim();
     if (raw.isEmpty) {
       SnackBarHelper.showInfo(
         context,
@@ -185,7 +185,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
       context,
       url: uri,
       title: project.projectName,
-      message: 'Preview link',
+      message:
+          project.projectDescription.trim().isNotEmpty
+              ? project.projectDescription.trim()
+              : (prod.isNotEmpty ? 'Production link' : 'Preview link'),
     );
   }
 

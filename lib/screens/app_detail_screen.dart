@@ -23,6 +23,7 @@ class AppDetailScreen extends StatelessWidget {
                 context,
                 url: url,
                 title: 'App: $slug',
+                message: 'Open this app in the d1vai marketplace.',
               );
             },
           ),

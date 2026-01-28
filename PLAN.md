@@ -81,7 +81,7 @@
 
 - [x] 在 `AppDetailScreen` / `PostDetailScreen` / `ProjectDetailScreen` 加统一“分享”入口（右上角 Share icon）
 - [x] 统一生成分享链接策略（优先：现有 Web URL；后续：App Deep Link），并把“复制链接 / 系统分享”做成通用组件（例如 `widgets/share_sheet.dart`）
-- [ ] 为分享内容补齐可读摘要（标题、短描述、预览链接），避免只分享裸 URL
+- [x] 为分享内容补齐可读摘要（标题、短描述、预览链接），避免只分享裸 URL
 - [ ] 增加“从分享链接打开 app”的深链方案（先只做：识别 `https://...` 路由 → `go_router` 跳转；未命中则落到对应 WebView/外部浏览器）
 - [ ] 为 `/apps/:slug` 增加“打开官网 / 打开预览 / 复制”三联动作（减少用户找入口成本）
 

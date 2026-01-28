@@ -59,12 +59,12 @@ class _ShareSheetBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final link = url.toString();
+    final desc = (message ?? '').trim();
     final subject = (title ?? '').trim().isEmpty ? null : title!.trim();
 
     String textToShare() {
-      final msg = (message ?? '').trim();
-      if (msg.isEmpty) return link;
-      return '$msg\n$link';
+      if (desc.isEmpty) return link;
+      return '$desc\n$link';
     }
 
     return SafeArea(
@@ -79,6 +79,17 @@ class _ShareSheetBody extends StatelessWidget {
               title?.trim().isNotEmpty == true ? title!.trim() : 'Share',
               style: theme.textTheme.titleMedium,
             ),
+            if (desc.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                desc,
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             Container(
               width: double.infinity,
