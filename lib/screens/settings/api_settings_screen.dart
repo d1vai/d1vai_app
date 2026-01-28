@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -166,6 +168,11 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
   }
 
   Future<void> _copyDiagnostics() async {
+    final localeTag = Localizations.localeOf(context).toLanguageTag();
+    final platform =
+        '${Platform.operatingSystem} ${Platform.operatingSystemVersion}'.trim();
+    final target = defaultTargetPlatform.name;
+
     final prefs = await SharedPreferences.getInstance();
     final token = (prefs.getString('auth_token') ?? '').trim();
     final tokenSuffix = token.isEmpty
@@ -192,11 +199,41 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
         "jwt_type=${claims['type']}",
       if (claims != null && claims['sub'] != null) "jwt_sub=${claims['sub']}",
       if (expIso != null) 'jwt_exp_utc=$expIso',
-      if (_status != null)
+    if (_status != null)
         'workspace_status=${_status!.status ?? ''} ip=${_status!.ip ?? ''} port=${_status!.port ?? ''}',
+      'locale=$localeTag',
+      'platform=$platform',
+      'target_platform=$target',
     ].join('\n');
 
-    await Clipboard.setData(ClipboardData(text: text));
+    // Attach the last recorded API error if available.
+    final lastErrRaw = prefs.getString('api_last_error');
+    final lastErrLine = (lastErrRaw == null || lastErrRaw.trim().isEmpty)
+        ? null
+        : () {
+            try {
+              final decoded = jsonDecode(lastErrRaw);
+              if (decoded is Map) {
+                final m = Map<String, dynamic>.from(decoded);
+                final at = (m['at'] ?? '').toString();
+                final ep = (m['endpoint'] ?? '').toString();
+                final st = m['status'];
+                final msg = (m['message'] ?? '').toString();
+                return [
+                  'last_api_error.at=$at',
+                  'last_api_error.endpoint=$ep',
+                  if (st != null) 'last_api_error.status=$st',
+                  if (msg.trim().isNotEmpty) 'last_api_error.message=$msg',
+                ].join('\n');
+              }
+            } catch (_) {}
+            return 'last_api_error.raw=$lastErrRaw';
+          }();
+
+    final fullText =
+        lastErrLine == null ? text : '$text\n$lastErrLine';
+
+    await Clipboard.setData(ClipboardData(text: fullText));
     if (!mounted) return;
     SnackBarHelper.showSuccess(
       context,

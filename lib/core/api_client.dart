@@ -51,6 +51,7 @@ class ApiClient {
   );
 
   static const String _prefsBaseUrlKey = 'api_base_url_override';
+  static const String _prefsLastErrorKey = 'api_last_error';
   static String? _runtimeBaseUrl;
   static bool _configLoaded = false;
 
@@ -72,6 +73,77 @@ class ApiClient {
     _init();
   }
 
+  void _noteLastApiError({
+    String? endpoint,
+    int? statusCode,
+    String? message,
+  }) {
+    final ep = (endpoint ?? '').trim();
+    if (ep.isEmpty) return;
+    final msg = (message ?? '').trim();
+    final payload = <String, dynamic>{
+      'at': DateTime.now().toIso8601String(),
+      'endpoint': ep,
+      if (statusCode != null) 'status': statusCode,
+      if (msg.isNotEmpty)
+        'message': msg.length > 800 ? msg.substring(0, 800) : msg,
+    };
+    unawaited(() async {
+      try {
+        _sharedPreferences ??= await SharedPreferences.getInstance();
+        await _sharedPreferences!.setString(
+          _prefsLastErrorKey,
+          jsonEncode(payload),
+        );
+      } catch (_) {
+        // Best-effort only.
+      }
+    }());
+  }
+
+  /// Build a request URI from the configured baseUrl and a relative endpoint.
+  ///
+  /// The app historically used endpoints that include `/api/...`, but some builds
+  /// or runtime overrides may set a base URL that already ends with `/api`.
+  /// This helper prevents accidental double prefixes like `/api/api/...`.
+  Uri _buildUri(
+    String endpoint, {
+    Map<String, String>? queryParams,
+  }) {
+    final base = Uri.parse(baseUrl);
+    final endpointUri = Uri.parse(endpoint);
+
+    // Path normalize
+    var basePath = base.path;
+    if (basePath.endsWith('/')) {
+      basePath = basePath.substring(0, basePath.length - 1);
+    }
+
+    var epPath = endpointUri.path;
+    if (!epPath.startsWith('/')) epPath = '/$epPath';
+
+    // Avoid double `/api` when baseUrl already includes it.
+    if (basePath.endsWith('/api') && epPath.startsWith('/api/')) {
+      epPath = epPath.substring('/api'.length);
+    } else if (basePath == '/api' && epPath == '/api') {
+      epPath = '';
+    }
+
+    final combinedPath = (basePath.isEmpty ? '' : basePath) + epPath;
+
+    // Merge queries from baseUrl, endpoint string, and explicit params.
+    final mergedQuery = <String, String>{
+      ...base.queryParameters,
+      ...endpointUri.queryParameters,
+      if (queryParams != null) ...queryParams,
+    };
+
+    return base.replace(
+      path: combinedPath.isEmpty ? '/' : combinedPath,
+      queryParameters: mergedQuery.isEmpty ? null : mergedQuery,
+    );
+  }
+
   bool _isPublicEndpoint(String? endpoint) {
     if (endpoint == null) return false;
     return endpoint.startsWith('/api/user/login') ||
@@ -79,6 +151,7 @@ class ApiClient {
         endpoint.startsWith('/api/user/password/') ||
         endpoint.startsWith('/api/user/public/') ||
         endpoint.startsWith('/api/user/activity/prompt-daily/slug/') ||
+        endpoint.startsWith('/api/upload/pic') ||
         endpoint.startsWith('/api/solana/login') ||
         endpoint.startsWith('/api/sui/login');
   }
@@ -159,9 +232,7 @@ class ApiClient {
   }) async {
     final headers = await _getHeaders();
     final hasAuthToken = headers.containsKey('Authorization');
-    final uri = Uri.parse(
-      '$baseUrl$endpoint',
-    ).replace(queryParameters: queryParams);
+    final uri = _buildUri(endpoint, queryParams: queryParams);
 
     debugPrint('🌐 API Request: GET $uri');
 
@@ -188,9 +259,7 @@ class ApiClient {
   }) async {
     final headers = await _getHeaders();
     final hasAuthToken = headers.containsKey('Authorization');
-    final uri = Uri.parse(
-      '$baseUrl$endpoint',
-    ).replace(queryParameters: queryParams);
+    final uri = _buildUri(endpoint, queryParams: queryParams);
 
     debugPrint('🌐 API Request: POST $uri');
     debugPrint('📤 Request Body: ${jsonEncode(body)}');
@@ -217,14 +286,15 @@ class ApiClient {
   }) async {
     final headers = await _getHeaders();
     final hasAuthToken = headers.containsKey('Authorization');
+    final uri = _buildUri(endpoint);
 
-    debugPrint('🌐 API Request: POST ${Uri.parse('$baseUrl$endpoint')}');
+    debugPrint('🌐 API Request: POST $uri');
     debugPrint('📤 Request Body: ${jsonEncode(body)}');
 
     return executeWithRetry<T>(
       () {
         final fut = client.post(
-          Uri.parse('$baseUrl$endpoint'),
+          uri,
           headers: headers,
           body: jsonEncode(body),
         );
@@ -247,14 +317,15 @@ class ApiClient {
   }) async {
     final headers = await _getHeaders();
     final hasAuthToken = headers.containsKey('Authorization');
+    final uri = _buildUri(endpoint);
 
-    debugPrint('🌐 API Request: PUT ${Uri.parse('$baseUrl$endpoint')}');
+    debugPrint('🌐 API Request: PUT $uri');
     debugPrint('📤 Request Body: ${jsonEncode(body)}');
 
     return executeWithRetry<T>(
       () {
         final fut = client.put(
-          Uri.parse('$baseUrl$endpoint'),
+          uri,
           headers: headers,
           body: jsonEncode(body),
         );
@@ -278,14 +349,15 @@ class ApiClient {
   }) async {
     final headers = await _getHeaders();
     final hasAuthToken = headers.containsKey('Authorization');
+    final uri = _buildUri(endpoint);
 
-    debugPrint('🌐 API Request: PATCH ${Uri.parse('$baseUrl$endpoint')}');
+    debugPrint('🌐 API Request: PATCH $uri');
     debugPrint('📤 Request Body: ${jsonEncode(body)}');
 
     return executeWithRetry<T>(
       () {
         final fut = client.patch(
-          Uri.parse('$baseUrl$endpoint'),
+          uri,
           headers: headers,
           body: jsonEncode(body),
         );
@@ -307,13 +379,14 @@ class ApiClient {
   }) async {
     final headers = await _getHeaders();
     final hasAuthToken = headers.containsKey('Authorization');
+    final uri = _buildUri(endpoint);
 
-    debugPrint('🌐 API Request: DELETE ${Uri.parse('$baseUrl$endpoint')}');
+    debugPrint('🌐 API Request: DELETE $uri');
 
     return executeWithRetry<T>(
       () {
         final fut = client.delete(
-          Uri.parse('$baseUrl$endpoint'),
+          uri,
           headers: headers,
         );
         return timeout != null ? fut.timeout(timeout) : fut;
@@ -367,11 +440,14 @@ class ApiClient {
     final hasAuthToken = headers.containsKey('Authorization');
     headers.remove('Content-Type');
 
-    debugPrint('🌐 API Request: POST /upload');
+    const endpoint = '/api/upload/pic';
+    final uri = _buildUri(endpoint);
+
+    debugPrint('🌐 API Request: POST $uri');
     debugPrint('📁 File Name: $fileName');
     debugPrint('📏 File Size: ${finalBytes.length} bytes');
 
-    final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/upload'));
+    final request = http.MultipartRequest('POST', uri);
     request.headers.addAll(headers);
     final contentType = _getContentType(fileName);
 
@@ -394,14 +470,14 @@ class ApiClient {
     } else {
       if (httpResponse.statusCode == 401 &&
           hasAuthToken &&
-          !_isPublicEndpoint('/upload')) {
-        AuthExpiryBus.trigger(endpoint: '/upload');
+          !_isPublicEndpoint(endpoint)) {
+        AuthExpiryBus.trigger(endpoint: endpoint);
       }
       // 打印上传错误
       debugPrint('═══════════════════════════════════════');
       debugPrint('API Upload Error Detected');
       debugPrint('═══════════════════════════════════════');
-      debugPrint('📍 API Path: /upload');
+      debugPrint('📍 API Path: $endpoint');
       debugPrint('🔢 HTTP Status Code: ${httpResponse.statusCode}');
       debugPrint('📥 Response Body: $responseBody');
       debugPrint('═══════════════════════════════════════');
@@ -437,11 +513,12 @@ class ApiClient {
   Future<Stream<Uint8List>> postStream(String endpoint, dynamic body) async {
     final headers = await _getHeaders();
     final hasAuthToken = headers.containsKey('Authorization');
-    final request = http.Request('POST', Uri.parse('$baseUrl$endpoint'));
+    final uri = _buildUri(endpoint);
+    final request = http.Request('POST', uri);
     request.headers.addAll(headers);
     request.body = jsonEncode(body);
 
-    debugPrint('🌐 API Request: POST (Stream) $endpoint');
+    debugPrint('🌐 API Request: POST (Stream) $uri');
     debugPrint('📤 Request Body: ${jsonEncode(body)}');
 
     final streamedResponse = await client.send(request);
@@ -603,6 +680,11 @@ class ApiClient {
             hasAuthToken &&
             !_isPublicEndpoint(endpoint)) {
           AuthExpiryBus.trigger(endpoint: endpoint);
+          _noteLastApiError(
+            endpoint: endpoint,
+            statusCode: response.statusCode,
+            message: apiResponse.msg,
+          );
           throw AuthExpiredException(apiResponse.msg);
         }
         // 打印业务逻辑错误
@@ -619,6 +701,11 @@ class ApiClient {
         }
         debugPrint('📥 Response Body: ${jsonEncode(json)}');
         debugPrint('═══════════════════════════════════════');
+        _noteLastApiError(
+          endpoint: endpoint,
+          statusCode: response.statusCode,
+          message: apiResponse.msg,
+        );
         throw Exception(apiResponse.msg);
       }
     } else {
@@ -673,6 +760,11 @@ class ApiClient {
 
       if (response.statusCode == 401 && !_isPublicEndpoint(endpoint)) {
         if (!hasAuthToken) {
+          _noteLastApiError(
+            endpoint: endpoint,
+            statusCode: response.statusCode,
+            message: 'Unauthenticated',
+          );
           throw Exception('Unauthenticated');
         }
         AuthExpiryBus.trigger(endpoint: endpoint);
@@ -681,6 +773,13 @@ class ApiClient {
         if (prefs != null) {
           unawaited(prefs.remove('auth_token').then((_) {}));
         }
+        _noteLastApiError(
+          endpoint: endpoint,
+          statusCode: response.statusCode,
+          message: responseBodyForException.isNotEmpty
+              ? responseBodyForException
+              : 'Bad credentials',
+        );
         throw AuthExpiredException(
           responseBodyForException.isNotEmpty
               ? responseBodyForException
@@ -693,6 +792,13 @@ class ApiClient {
       }
 
       debugPrint('═══════════════════════════════════════');
+      _noteLastApiError(
+        endpoint: endpoint,
+        statusCode: response.statusCode,
+        message: responseBodyForException.isNotEmpty
+            ? responseBodyForException
+            : response.body,
+      );
       throw Exception(
         'HTTP Error: ${response.statusCode} ${responseBodyForException.isNotEmpty ? responseBodyForException : response.body}',
       );
