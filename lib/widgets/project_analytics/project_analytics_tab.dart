@@ -751,6 +751,23 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                   ),
                 ),
                 const Spacer(),
+                TextButton(
+                  onPressed: _isLoading
+                      ? null
+                      : () {
+                          setState(() {
+                            _timeRange = TimeRange.last24Hours;
+                            _envScope = AnalyticsEnvScope.all;
+                            _showPageviewsSeries = true;
+                            _showSessionsSeries = true;
+                            if (_pageviews != null) {
+                              _trafficSeries = _createTrafficSeries(_pageviews!);
+                            }
+                          });
+                          reload();
+                        },
+                  child: const Text('Reset'),
+                ),
                 if (_isLoading)
                   const SizedBox(
                     width: 16,

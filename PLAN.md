@@ -150,7 +150,7 @@
 - [x] Dashboard heatmap：项目列表未加载时禁用筛选控件 + 显示 loading 文案
 - [x] Heatmap cell：点击时触发 selection haptic（轻反馈）
 - [x] Project Analytics：当所有 series 被关闭时显示空态 + 一键恢复默认
-- [ ] Project Analytics：Filters 卡片增加 “Reset filters” 一键重置
+- [x] Project Analytics：Filters 卡片增加 “Reset filters” 一键重置
 - [ ] Docs：搜索框增加 clear（x）按钮
 - [ ] Docs：Recent 区域增加 “Clear recent” 入口
 - [ ] Doc Detail：复制代码成功增加 haptic + 更明确的 snackbar 文案
