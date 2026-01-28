@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/snackbar_helper.dart';
 
 class TwoFactorAuthSettingsScreen extends StatefulWidget {
@@ -15,6 +16,12 @@ class _TwoFactorAuthSettingsScreenState
   bool _isEnabled = false; // 2FA是否启用
   bool _isLoading = true;
   bool _isEnabling = false;
+  String? _secret;
+  List<String> _backupCodes = const <String>[];
+
+  static const _prefsEnabledKey = 'two_factor_enabled';
+  static const _prefsSecretKey = 'two_factor_secret';
+  static const _prefsBackupCodesKey = 'two_factor_backup_codes';
 
   @override
   void initState() {
@@ -28,16 +35,17 @@ class _TwoFactorAuthSettingsScreenState
         _isLoading = true;
       });
 
-      // 尝试从API获取2FA状态
-      // 在实际实现中，这里会调用后端API
-      // 由于API可能不存在，我们使用模拟数据
-
-      // 模拟API延迟
-      await Future.delayed(const Duration(milliseconds: 500));
+      final prefs = await SharedPreferences.getInstance();
+      final enabled = prefs.getBool(_prefsEnabledKey) ?? false;
+      final secret = prefs.getString(_prefsSecretKey);
+      final codes = prefs.getStringList(_prefsBackupCodesKey) ?? const <String>[];
 
       if (!mounted) return;
 
       setState(() {
+        _isEnabled = enabled;
+        _secret = secret;
+        _backupCodes = codes;
         _isLoading = false;
       });
     } catch (e) {
@@ -58,11 +66,6 @@ class _TwoFactorAuthSettingsScreenState
     });
 
     try {
-      // 模拟生成2FA密钥和二维码
-      await Future.delayed(const Duration(milliseconds: 1000));
-
-      if (!mounted) return;
-
       // 生成模拟的密钥和二维码
       final secret = _generateSecret();
       final qrCodeUrl = _generateQrCodeUrl(secret);
@@ -70,10 +73,21 @@ class _TwoFactorAuthSettingsScreenState
 
       // 显示设置对话框
       if (!mounted) return;
-      await _showSetupDialog(secret, qrCodeUrl, backupCodes);
+      final ok = await _showSetupDialog(secret, qrCodeUrl, backupCodes);
+      if (!mounted) return;
+      if (ok != true) return;
 
-      // 在真实应用中，这里会确认用户已正确设置2FA
-      // 然后调用API启用2FA
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_prefsEnabledKey, true);
+      await prefs.setString(_prefsSecretKey, secret);
+      await prefs.setStringList(_prefsBackupCodesKey, backupCodes);
+
+      if (!mounted) return;
+      setState(() {
+        _isEnabled = true;
+        _secret = secret;
+        _backupCodes = backupCodes;
+      });
 
     } catch (e) {
       debugPrint('Failed to enable 2FA: $e');
@@ -118,13 +132,17 @@ class _TwoFactorAuthSettingsScreenState
     if (confirm != true) return;
 
     try {
-      // 模拟API调用
-      await Future.delayed(const Duration(milliseconds: 500));
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_prefsEnabledKey);
+      await prefs.remove(_prefsSecretKey);
+      await prefs.remove(_prefsBackupCodesKey);
 
       if (!mounted) return;
 
       setState(() {
         _isEnabled = false;
+        _secret = null;
+        _backupCodes = const <String>[];
       });
 
       SnackBarHelper.showSuccess(
@@ -144,14 +162,14 @@ class _TwoFactorAuthSettingsScreenState
     }
   }
 
-  Future<void> _showSetupDialog(
+  Future<bool?> _showSetupDialog(
     String secret,
     String qrCodeUrl,
     List<String> backupCodes,
   ) async {
     final codeController = TextEditingController();
 
-    return showDialog(
+    return showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
@@ -307,7 +325,7 @@ class _TwoFactorAuthSettingsScreenState
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.of(context).pop();
+              Navigator.of(context).pop(false);
             },
             child: const Text('Cancel'),
           ),
@@ -325,27 +343,7 @@ class _TwoFactorAuthSettingsScreenState
                 return;
               }
 
-              // 模拟验证代码
-              await Future.delayed(const Duration(milliseconds: 500));
-
-              if (!context.mounted) return;
-
-              Navigator.of(context, rootNavigator: true).pop();
-
-              if (!mounted) return;
-
-              // 启用2FA
-              setState(() {
-                _isEnabled = true;
-              });
-
-              if (!mounted) return;
-
-              SnackBarHelper.showSuccess(
-                context,
-                title: 'Success',
-                message: 'Two-factor authentication has been enabled',
-              );
+              Navigator.of(context, rootNavigator: true).pop(true);
             },
             child: const Text('Verify & Enable'),
           ),
@@ -398,12 +396,141 @@ class _TwoFactorAuthSettingsScreenState
               padding: const EdgeInsets.all(16),
               children: [
                 _buildStatusCard(),
+                if (_isEnabled) ...[
+                  const SizedBox(height: 16),
+                  _buildBackupCodesCard(),
+                ],
                 const SizedBox(height: 24),
                 _buildInstructionsCard(),
                 const SizedBox(height: 24),
                 _buildActionButton(),
               ],
             ),
+    );
+  }
+
+  Widget _buildBackupCodesCard() {
+    final theme = Theme.of(context);
+    final codes = _backupCodes;
+    final secret = (_secret ?? '').trim();
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Backup codes',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Copy all',
+                  onPressed: codes.isEmpty
+                      ? null
+                      : () async {
+                          await Clipboard.setData(
+                            ClipboardData(text: codes.join('\n')),
+                          );
+                          if (!mounted) return;
+                          SnackBarHelper.showSuccess(
+                            context,
+                            title: 'Copied',
+                            message: 'Backup codes copied',
+                          );
+                        },
+                  icon: const Icon(Icons.copy),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Store these codes securely. Each code can be used once if you lose access to your authenticator.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (secret.isNotEmpty) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: theme.colorScheme.outlineVariant),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Secret: ${secret.substring(0, 6)}…${secret.substring(secret.length - 4)}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontFamily: 'monospace',
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Copy secret',
+                      onPressed: () async {
+                        await Clipboard.setData(ClipboardData(text: secret));
+                        if (!mounted) return;
+                        SnackBarHelper.showSuccess(
+                          context,
+                          title: 'Copied',
+                          message: 'Secret key copied',
+                        );
+                      },
+                      icon: const Icon(Icons.copy, size: 18),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+            if (codes.isEmpty)
+              Text(
+                'No backup codes stored.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              )
+            else
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: codes
+                    .take(10)
+                    .map(
+                      (c) => Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: theme.colorScheme.outlineVariant),
+                        ),
+                        child: Text(
+                          c,
+                          style: const TextStyle(
+                            fontFamily: 'monospace',
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
