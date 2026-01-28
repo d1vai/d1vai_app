@@ -261,21 +261,22 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
             },
             onWebViewCreated: (controller) {
               _controller = controller;
-              controller.addJavaScriptHandler(
-                handlerName: _jsHandlerCopyCode,
-                callback: (args) {
-                  final text = args.isNotEmpty ? args.first?.toString() : null;
-                  if (text == null || text.trim().isEmpty) return null;
-                  Clipboard.setData(ClipboardData(text: text));
-                  if (!mounted) return null;
-                  SnackBarHelper.showSuccess(
-                    context,
-                    title: 'Copied',
-                    message: 'Code copied to clipboard',
-                  );
-                  return null;
-                },
-              );
+	              controller.addJavaScriptHandler(
+	                handlerName: _jsHandlerCopyCode,
+	                callback: (args) async {
+	                  final ctx = context;
+	                  final text = args.isNotEmpty ? args.first?.toString() : null;
+	                  if (text == null || text.trim().isEmpty) return null;
+	                  await Clipboard.setData(ClipboardData(text: text));
+	                  if (!ctx.mounted) return null;
+	                  SnackBarHelper.showSuccess(
+	                    ctx,
+	                    title: 'Copied',
+	                    message: 'Code block copied. Paste it anywhere.',
+	                  );
+	                  return null;
+	                },
+	              );
             },
             onLoadStart: (controller, url) {
               if (!mounted) return;
