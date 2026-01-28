@@ -43,7 +43,7 @@
    - 实施清单：
      - [x] Docs 列表点击后站内打开（新增 `DocDetailScreen` + 路由 `/docs/:slug`）
      - [x] 代码块复制/优化阅读（后续可做 Markdown 渲染或 WebView 注入）
-     - [ ] 最近阅读/滚动位置恢复
+     - [x] 最近阅读/滚动位置恢复
 
 4. 增加“Schema 可视化/结构化理解”能力（对齐 Web 的 scheme 可视化价值）
    - 现状：Database Tab 以表列表为主，缺少整体关系视图。

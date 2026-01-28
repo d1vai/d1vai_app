@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../widgets/share_sheet.dart';
@@ -26,10 +29,18 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
   Uri get _docUrl => Uri.parse('https://docs.d1v.ai/docs/${widget.slug}');
 
   static const _jsHandlerCopyCode = 'd1vCopyCode';
+  static const _prefsKeyRecent = 'docs_recent_slugs';
+
+  late final Future<SharedPreferences> _prefsFuture;
+  Timer? _scrollDebounce;
+  int _lastSavedScrollY = -1;
+  bool _didRestoreScroll = false;
 
   @override
   void initState() {
     super.initState();
+    _prefsFuture = SharedPreferences.getInstance();
+    unawaited(_recordRecent());
     _pullToRefreshController = PullToRefreshController(
       settings: PullToRefreshSettings(
         color: Colors.deepPurple,
@@ -46,9 +57,61 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
 
   @override
   void dispose() {
+    _scrollDebounce?.cancel();
     _pullToRefreshController = null;
     _controller = null;
     super.dispose();
+  }
+
+  String get _prefsKeyScrollY => 'doc_scroll_y:${widget.slug}';
+
+  Future<void> _recordRecent() async {
+    final prefs = await _prefsFuture;
+    final current = widget.slug.trim();
+    if (current.isEmpty) return;
+
+    final list = prefs.getStringList(_prefsKeyRecent) ?? <String>[];
+    final next = <String>[current, ...list.where((s) => s != current)];
+    // Keep it lightweight.
+    if (next.length > 8) {
+      next.removeRange(8, next.length);
+    }
+    await prefs.setStringList(_prefsKeyRecent, next);
+  }
+
+  Future<int?> _loadSavedScrollY() async {
+    final prefs = await _prefsFuture;
+    return prefs.getInt(_prefsKeyScrollY);
+  }
+
+  Future<void> _saveScrollY(int y) async {
+    if (y < 0) return;
+    final prefs = await _prefsFuture;
+    await prefs.setInt(_prefsKeyScrollY, y);
+  }
+
+  void _scheduleSaveScrollY(int y) {
+    // Avoid spamming disk while scrolling.
+    if ((y - _lastSavedScrollY).abs() < 12) return;
+    _scrollDebounce?.cancel();
+    _scrollDebounce = Timer(const Duration(milliseconds: 450), () async {
+      _lastSavedScrollY = y;
+      await _saveScrollY(y);
+    });
+  }
+
+  Future<void> _restoreScrollIfNeeded() async {
+    if (_didRestoreScroll) return;
+    _didRestoreScroll = true;
+
+    final saved = await _loadSavedScrollY();
+    if (saved == null || saved <= 0) return;
+
+    // Wait a tick so layout settles.
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+    await _controller?.evaluateJavascript(
+      source: 'window.scrollTo(0, ${saved.toString()});',
+    );
   }
 
   Future<void> _injectCodeCopy() async {
@@ -219,6 +282,7 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
             onLoadStop: (controller, url) async {
               _pullToRefreshController?.endRefreshing();
               await _injectCodeCopy();
+              await _restoreScrollIfNeeded();
               if (!mounted) return;
               setState(() {
                 _isLoading = false;
@@ -232,6 +296,9 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
                 _isLoading = false;
                 _hasError = true;
               });
+            },
+            onScrollChanged: (controller, x, y) {
+              _scheduleSaveScrollY(y);
             },
           ),
           if (_hasError)

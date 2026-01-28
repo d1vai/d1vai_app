@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/snackbar_helper.dart';
 
 class DocsScreen extends StatefulWidget {
@@ -11,6 +12,10 @@ class DocsScreen extends StatefulWidget {
 
 class _DocsScreenState extends State<DocsScreen> {
   final TextEditingController _searchController = TextEditingController();
+
+  static const _prefsKeyRecent = 'docs_recent_slugs';
+  late final Future<SharedPreferences> _prefsFuture;
+  List<String> _recentSlugs = <String>[];
 
   final List<DocItem> _pages = [
     DocItem(
@@ -88,6 +93,22 @@ class _DocsScreenState extends State<DocsScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _prefsFuture = SharedPreferences.getInstance();
+    _loadRecent();
+  }
+
+  Future<void> _loadRecent() async {
+    final prefs = await _prefsFuture;
+    final list = prefs.getStringList(_prefsKeyRecent) ?? <String>[];
+    if (!mounted) return;
+    setState(() {
+      _recentSlugs = list;
+    });
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -104,6 +125,7 @@ class _DocsScreenState extends State<DocsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final showRecent = _searchController.text.trim().isEmpty;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Documentation'),
@@ -153,10 +175,63 @@ class _DocsScreenState extends State<DocsScreen> {
             )
           : ListView(
               padding: const EdgeInsets.all(16),
-              children: _filteredPages
-                  .map((page) => _buildDocCard(context, page))
-                  .toList(),
+              children: [
+                if (showRecent && _recentSlugs.isNotEmpty) _buildRecent(context),
+                ..._filteredPages.map((page) => _buildDocCard(context, page)),
+              ],
             ),
+    );
+  }
+
+  Widget _buildRecent(BuildContext context) {
+    final theme = Theme.of(context);
+
+    DocItem? findBySlug(String slug) {
+      for (final p in _pages) {
+        final s = Uri.tryParse(p.href)?.pathSegments.last ?? '';
+        if (s == slug) return p;
+      }
+      return null;
+    }
+
+    final items = _recentSlugs
+        .map(findBySlug)
+        .whereType<DocItem>()
+        .toList(growable: false);
+
+    if (items.isEmpty) return const SizedBox.shrink();
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.history, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                const Text(
+                  'Recently viewed',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: items.map((p) {
+                return ActionChip(
+                  label: Text(p.title),
+                  onPressed: () => _navigateToDoc(context, p.href),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -224,8 +299,26 @@ class _DocsScreenState extends State<DocsScreen> {
       );
       return;
     }
+    final router = GoRouter.of(context);
+
+    // Persist recent list locally (also updated by DocDetailScreen).
+    final prefs = await _prefsFuture;
+    final current = slug.trim();
+    final list = prefs.getStringList(_prefsKeyRecent) ?? <String>[];
+    final next = <String>[current, ...list.where((s) => s != current)];
+    if (next.length > 8) {
+      next.removeRange(8, next.length);
+    }
+    await prefs.setStringList(_prefsKeyRecent, next);
+    if (mounted) {
+      setState(() {
+        _recentSlugs = next;
+      });
+    }
+
     // Open in-app doc viewer to reduce context switching.
-    context.push('/docs/$slug');
+    await router.push('/docs/$slug');
+    await _loadRecent();
   }
 }
 
