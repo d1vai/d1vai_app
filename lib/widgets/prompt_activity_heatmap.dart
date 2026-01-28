@@ -39,7 +39,9 @@ class PromptActivityHeatmap extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     if (level <= 0) {
-      return scheme.surfaceVariant.withValues(alpha: isDark ? 0.15 : 0.25);
+      return scheme.surfaceContainerHighest.withValues(
+        alpha: isDark ? 0.15 : 0.25,
+      );
     }
 
     if (!isDark) {
@@ -72,7 +74,7 @@ class PromptActivityHeatmap extends StatelessWidget {
 
   String _fmtMonthShort(Locale locale, String iso) {
     try {
-      return DateFormat.MMM(locale.toLanguageTag()).format(_parseUtcDate(iso));
+      return DateFormat.MMM(locale.toString()).format(_parseUtcDate(iso));
     } catch (_) {
       return '';
     }
@@ -80,7 +82,7 @@ class PromptActivityHeatmap extends StatelessWidget {
 
   String _fmtWeekdayShort(Locale locale, DateTime d) {
     try {
-      return DateFormat.E(locale.toLanguageTag()).format(d);
+      return DateFormat.E(locale.toString()).format(d);
     } catch (_) {
       return '';
     }
@@ -90,8 +92,8 @@ class PromptActivityHeatmap extends StatelessWidget {
     try {
       final dt = _parseUtcDate(iso);
       return (compact
-              ? DateFormat.MMMd(locale.toLanguageTag())
-              : DateFormat.yMMMd(locale.toLanguageTag()))
+              ? DateFormat.MMMd(locale.toString())
+              : DateFormat.yMMMd(locale.toString()))
           .format(dt);
     } catch (_) {
       return iso;
@@ -174,11 +176,20 @@ class PromptActivityHeatmap extends StatelessWidget {
                           children: List.generate(7, (row) {
                             String label = '';
                             if (row == 1) {
-                              label = _fmtWeekdayShort(locale, DateTime.utc(2024, 1, 1));
+                              label = _fmtWeekdayShort(
+                                locale,
+                                DateTime.utc(2024, 1, 1),
+                              );
                             } else if (row == 3) {
-                              label = _fmtWeekdayShort(locale, DateTime.utc(2024, 1, 3));
+                              label = _fmtWeekdayShort(
+                                locale,
+                                DateTime.utc(2024, 1, 3),
+                              );
                             } else if (row == 5) {
-                              label = _fmtWeekdayShort(locale, DateTime.utc(2024, 1, 5));
+                              label = _fmtWeekdayShort(
+                                locale,
+                                DateTime.utc(2024, 1, 5),
+                              );
                             }
 
                             return SizedBox(
@@ -190,7 +201,8 @@ class PromptActivityHeatmap extends StatelessWidget {
                                   style: theme.textTheme.labelSmall?.copyWith(
                                     fontSize: 10,
                                     height: 1.0,
-                                    color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+                                    color: theme.colorScheme.onSurface
+                                        .withValues(alpha: 0.55),
                                   ),
                                 ),
                               ),
@@ -215,8 +227,9 @@ class PromptActivityHeatmap extends StatelessWidget {
                                 final weekStart = _addDaysUtc(startDate, w * 7);
                                 final weekStartIso = _fmtIsoDateUtc(weekStart);
                                 final showMonth = weekStart.day <= 7;
-                                final label =
-                                    showMonth ? _fmtMonthShort(locale, weekStartIso) : null;
+                                final label = showMonth
+                                    ? _fmtMonthShort(locale, weekStartIso)
+                                    : null;
                                 if (label == null || label.isEmpty) {
                                   return const SizedBox.shrink();
                                 }
@@ -228,7 +241,8 @@ class PromptActivityHeatmap extends StatelessWidget {
                                     style: theme.textTheme.labelSmall?.copyWith(
                                       fontSize: 10,
                                       height: 1.0,
-                                      color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+                                      color: theme.colorScheme.onSurface
+                                          .withValues(alpha: 0.55),
                                     ),
                                   ),
                                 );
@@ -243,30 +257,46 @@ class PromptActivityHeatmap extends StatelessWidget {
                               scrollDirection: Axis.horizontal,
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 7, // 7 rows (Sun..Sat)
-                                mainAxisSpacing: gap,
-                                crossAxisSpacing: gap,
-                                childAspectRatio: 1,
-                              ),
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 7, // 7 rows (Sun..Sat)
+                                    mainAxisSpacing: gap,
+                                    crossAxisSpacing: gap,
+                                    childAspectRatio: 1,
+                                  ),
                               itemCount: clampedWeeks * 7,
                               itemBuilder: (context, index) {
                                 final col = index ~/ 7;
                                 final row = index % 7;
-                                final d = _addDaysUtc(startDate, (col * 7) + row);
+                                final d = _addDaysUtc(
+                                  startDate,
+                                  (col * 7) + row,
+                                );
                                 if (d.isAfter(endDate)) {
                                   return Container(
                                     width: cellSize,
                                     height: cellSize,
                                     decoration: BoxDecoration(
-                                      color: theme.colorScheme.surfaceVariant.withValues(
-                                        alpha: theme.brightness == Brightness.dark ? 0.15 : 0.25,
-                                      ),
+                                      color: theme
+                                          .colorScheme
+                                          .surfaceContainerHighest
+                                          .withValues(
+                                            alpha:
+                                                theme.brightness ==
+                                                    Brightness.dark
+                                                ? 0.15
+                                                : 0.25,
+                                          ),
                                       borderRadius: BorderRadius.circular(3),
                                       border: Border.all(
-                                        color: theme.colorScheme.outlineVariant.withValues(
-                                          alpha: theme.brightness == Brightness.dark ? 0.35 : 0.5,
-                                        ),
+                                        color: theme.colorScheme.outlineVariant
+                                            .withValues(
+                                              alpha:
+                                                  theme.brightness ==
+                                                      Brightness.dark
+                                                  ? 0.35
+                                                  : 0.5,
+                                            ),
                                       ),
                                     ),
                                   );
@@ -288,9 +318,14 @@ class PromptActivityHeatmap extends StatelessWidget {
                                       color: color,
                                       borderRadius: BorderRadius.circular(3),
                                       border: Border.all(
-                                        color: theme.colorScheme.outlineVariant.withValues(
-                                          alpha: theme.brightness == Brightness.dark ? 0.35 : 0.5,
-                                        ),
+                                        color: theme.colorScheme.outlineVariant
+                                            .withValues(
+                                              alpha:
+                                                  theme.brightness ==
+                                                      Brightness.dark
+                                                  ? 0.35
+                                                  : 0.5,
+                                            ),
                                       ),
                                     ),
                                   ),
@@ -310,8 +345,7 @@ class PromptActivityHeatmap extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  (loc?.translate('prompt_activity_total') ?? 'Total:') +
-                      ' $total',
+                  '${loc?.translate('prompt_activity_total') ?? 'Total:'} $total',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
@@ -321,7 +355,9 @@ class PromptActivityHeatmap extends StatelessWidget {
                     Text(
                       loc?.translate('legend_less') ?? 'Less',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.7,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -336,7 +372,11 @@ class PromptActivityHeatmap extends StatelessWidget {
                             borderRadius: BorderRadius.circular(3),
                             border: Border.all(
                               color: theme.colorScheme.outlineVariant
-                                  .withValues(alpha: theme.brightness == Brightness.dark ? 0.35 : 0.5),
+                                  .withValues(
+                                    alpha: theme.brightness == Brightness.dark
+                                        ? 0.35
+                                        : 0.5,
+                                  ),
                             ),
                           ),
                         );
@@ -346,7 +386,9 @@ class PromptActivityHeatmap extends StatelessWidget {
                     Text(
                       loc?.translate('legend_more') ?? 'More',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.7,
+                        ),
                       ),
                     ),
                   ],
