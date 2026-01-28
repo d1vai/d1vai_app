@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../l10n/app_localizations.dart';
@@ -348,7 +349,10 @@ class PromptActivityHeatmap extends StatelessWidget {
                                           color: Colors.transparent,
                                           child: InkWell(
                                             borderRadius: borderRadius,
-                                            onTap: () => onDayTap!(iso, count),
+                                            onTap: () {
+                                              HapticFeedback.selectionClick();
+                                              onDayTap!(iso, count);
+                                            },
                                             child: cell,
                                           ),
                                         ),
