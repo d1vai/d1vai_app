@@ -96,6 +96,11 @@ class AppLocalizations {
       'recent_projects': 'Recent Projects',
       'activity': 'Activity',
       'create_project': 'Create Project',
+      'prompt_activity_title': 'Prompt activity',
+      'prompt_activity_total': 'Total:',
+      'prompts_unit': 'prompts',
+      'legend_less': 'Less',
+      'legend_more': 'More',
 
       // Community
       'no_posts_yet': 'No posts yet',
@@ -285,6 +290,11 @@ class AppLocalizations {
       'recent_projects': '近期项目',
       'activity': '动态',
       'create_project': '新建项目',
+      'prompt_activity_title': '提示词活跃度',
+      'prompt_activity_total': '总计：',
+      'prompts_unit': '次',
+      'legend_less': '少',
+      'legend_more': '多',
 
       // Community
       'no_posts_yet': '暂无内容',
@@ -469,6 +479,11 @@ class AppLocalizations {
       'recent_projects': '近期專案',
       'activity': '動態',
       'create_project': '建立專案',
+      'prompt_activity_title': '提示詞活躍度',
+      'prompt_activity_total': '總計：',
+      'prompts_unit': '次',
+      'legend_less': '少',
+      'legend_more': '多',
 
       // Community
       'no_posts_yet': '暫無內容',

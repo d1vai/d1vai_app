@@ -77,6 +77,8 @@ class ApiClient {
     return endpoint.startsWith('/api/user/login') ||
         endpoint == '/api/user/verify-code' ||
         endpoint.startsWith('/api/user/password/') ||
+        endpoint.startsWith('/api/user/public/') ||
+        endpoint.startsWith('/api/user/activity/prompt-daily/slug/') ||
         endpoint.startsWith('/api/solana/login') ||
         endpoint.startsWith('/api/sui/login');
   }

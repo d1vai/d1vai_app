@@ -7,12 +7,15 @@ import '../providers/auth_provider.dart';
 import '../providers/project_provider.dart';
 import '../models/user.dart';
 import '../models/project.dart';
+import '../models/prompt_activity.dart';
+import '../services/d1vai_service.dart';
 import '../widgets/create_project_dialog.dart';
 import '../widgets/card.dart';
 import '../core/theme/app_colors.dart';
 import '../utils/error_utils.dart';
 import '../widgets/login_required_view.dart';
 import '../l10n/app_localizations.dart';
+import '../widgets/prompt_activity_heatmap.dart';
 import 'projects/widgets/project_card_tile.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -28,6 +31,8 @@ class _DashboardScreenState extends State<DashboardScreen>
   final TextEditingController _searchController = TextEditingController();
   List<UserProject> _searchResults = [];
   bool _didAutoLoadAfterLogin = false;
+  Future<PromptDailyActivity>? _promptActivityFuture;
+  final D1vaiService _service = D1vaiService();
 
   late AnimationController _animationController;
 
@@ -55,6 +60,14 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   /// 加载数据
   Future<void> _loadData() async {
+    // Start heatmap fetch early; UI will render as soon as data arrives.
+    if (mounted) {
+      setState(() {
+        _promptActivityFuture = _service.getPromptDailyActivity(days: 90);
+      });
+    } else {
+      _promptActivityFuture = _service.getPromptDailyActivity(days: 90);
+    }
     await Provider.of<ProjectProvider>(context, listen: false).loadProjects();
     if (mounted) {
       _animationController.forward(from: 0);
@@ -241,8 +254,47 @@ class _DashboardScreenState extends State<DashboardScreen>
           _buildStatsCards(stats, context),
           const SizedBox(height: 24),
 
-          // 活动图表
-          _buildAnalyticsChart(context, stats),
+          // Prompt activity heatmap (GitHub-style)
+          if (user == null)
+            const SizedBox.shrink()
+          else
+            FutureBuilder<PromptDailyActivity>(
+              future: _promptActivityFuture,
+              builder: (context, snapshot) {
+                if (_promptActivityFuture == null) {
+                  return const SizedBox.shrink();
+                }
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return CustomCard(
+                    glass: true,
+                    child: Container(
+                      height: 140,
+                      padding: const EdgeInsets.all(16),
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        loc?.translate('activity') ?? 'Activity',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                  );
+                }
+                if (snapshot.hasError || !snapshot.hasData) {
+                  return CustomCard(
+                    glass: true,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        loc?.translate('failed_to_load') ?? 'Failed to load',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                return PromptActivityHeatmap(activity: snapshot.data!);
+              },
+            ),
           const SizedBox(height: 24),
 
           // 最近项目
@@ -293,7 +345,12 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     if (user == null) return content;
     return RefreshIndicator(
-      onRefresh: () async => await projectProvider.refresh(),
+      onRefresh: () async {
+        setState(() {
+          _promptActivityFuture = _service.getPromptDailyActivity(days: 90);
+        });
+        await projectProvider.refresh();
+      },
       child: content,
     );
   }

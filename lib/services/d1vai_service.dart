@@ -3,6 +3,7 @@ import '../core/api_client.dart';
 import '../models/user.dart';
 import '../models/project.dart';
 import '../models/community_post.dart';
+import '../models/prompt_activity.dart';
 
 import '../models/deployment.dart';
 import 'cache_service.dart';
@@ -199,6 +200,27 @@ class D1vaiService {
   /// 获取公共用户信息（按 Slug）
   Future<Map<String, dynamic>> getPublicUserBySlug(String slug) async {
     return _apiClient.get<Map<String, dynamic>>('/api/user/public/slug/$slug');
+  }
+
+  /// 获取当前用户最近 N 天 prompt 活跃度（GitHub-style heatmap）
+  Future<PromptDailyActivity> getPromptDailyActivity({int days = 90}) async {
+    return _apiClient.get<PromptDailyActivity>(
+      '/api/user/activity/prompt-daily',
+      queryParams: {'days': days.toString()},
+      fromJsonT: (json) => PromptDailyActivity.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// 获取指定用户（slug）最近 N 天 prompt 活跃度（公开接口）
+  Future<PromptDailyActivity> getPublicPromptDailyActivityBySlug(
+    String slug, {
+    int days = 90,
+  }) async {
+    return _apiClient.get<PromptDailyActivity>(
+      '/api/user/activity/prompt-daily/slug/$slug',
+      queryParams: {'days': days.toString()},
+      fromJsonT: (json) => PromptDailyActivity.fromJson(json as Map<String, dynamic>),
+    );
   }
 
   // ============================================
