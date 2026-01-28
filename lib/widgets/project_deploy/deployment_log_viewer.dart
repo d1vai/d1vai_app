@@ -26,6 +26,7 @@ class DeploymentLogViewer extends StatefulWidget {
 class _DeploymentLogViewerState extends State<DeploymentLogViewer>
     with SingleTickerProviderStateMixin {
   bool _copied = false;
+  bool _errorsOnly = false;
   Timer? _copiedTimer;
   late final AnimationController _ambientController;
 
@@ -101,10 +102,14 @@ class _DeploymentLogViewerState extends State<DeploymentLogViewer>
 
     final parsed = _parseDeploymentLog(widget.log);
     final allLines = parsed.lines;
+    final errorLineCount = allLines.where(_isErrorLikeLine).length;
     const maxRenderLines = 5000;
-    final lines = allLines.length > maxRenderLines
-        ? allLines.sublist(allLines.length - maxRenderLines)
+    final filteredLines = _errorsOnly
+        ? allLines.where(_isErrorLikeLine).toList()
         : allLines;
+    final lines = filteredLines.length > maxRenderLines
+        ? filteredLines.sublist(filteredLines.length - maxRenderLines)
+        : filteredLines;
     final stderrCount =
         allLines.where((l) => l.stream == _LogStream.stderr).length;
 
@@ -247,6 +252,19 @@ class _DeploymentLogViewerState extends State<DeploymentLogViewer>
                                     ],
                                   ),
                                 ),
+                                if (errorLineCount > 0) ...[
+                                  Text(
+                                    ' · $errorLineCount errors',
+                                    style:
+                                        theme.textTheme.labelSmall?.copyWith(
+                                      color: stderrText,
+                                      fontFeatures: const [
+                                        FontFeature.tabularFigures(),
+                                      ],
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
                                 if (allLines.length > maxRenderLines) ...[
                                   const SizedBox(width: 8),
                                   Text(
@@ -295,6 +313,19 @@ class _DeploymentLogViewerState extends State<DeploymentLogViewer>
                               ],
                             ),
                           ),
+                          const SizedBox(width: 10),
+                          FilterChip(
+                            label: const Text('Errors'),
+                            selected: _errorsOnly,
+                            onSelected: (value) {
+                              setState(() {
+                                _errorsOnly = value;
+                              });
+                            },
+                            labelStyle: const TextStyle(fontSize: 12),
+                            showCheckmark: false,
+                          ),
+                          const SizedBox(width: 10),
                           TextButton.icon(
                             onPressed: parsed.copyText.trim().isEmpty
                                 ? null
@@ -399,6 +430,10 @@ List<InlineSpan> _buildSpans(
   required Color stderrText,
 }) {
   final spans = <InlineSpan>[];
+  final keyword = RegExp(
+    r'(error|warn|failed|exception|traceback|fatal|panic|status\\s*[45]\\d\\d)',
+    caseSensitive: false,
+  );
   for (var i = 0; i < lines.length; i++) {
     final line = lines[i];
     final time = _formatTime(line.timestampMs);
@@ -436,16 +471,59 @@ List<InlineSpan> _buildSpans(
       ),
     );
 
+    final normalStyle = baseText.copyWith(color: textColor);
+    final highlightStyle = normalStyle.copyWith(
+      color: stderrMarker,
+      backgroundColor: stderrMarker.withValues(alpha: 0.14),
+      fontWeight: FontWeight.w700,
+    );
+
     spans.add(
       TextSpan(
-        text: line.text,
-        style: baseText.copyWith(color: textColor),
+        children: _highlightText(
+          line.text,
+          keyword: keyword,
+          normal: normalStyle,
+          highlight: highlightStyle,
+        ),
       ),
     );
 
     if (i != lines.length - 1) {
       spans.add(const TextSpan(text: '\n'));
     }
+  }
+  return spans;
+}
+
+bool _isErrorLikeLine(_DeploymentLogLine l) {
+  if (l.stream == _LogStream.stderr) return true;
+  final keyword = RegExp(
+    r'(error|warn|failed|exception|traceback|fatal|panic|status\\s*[45]\\d\\d)',
+    caseSensitive: false,
+  );
+  return keyword.hasMatch(l.text);
+}
+
+List<TextSpan> _highlightText(
+  String text, {
+  required RegExp keyword,
+  required TextStyle normal,
+  required TextStyle highlight,
+}) {
+  if (text.isEmpty) return [TextSpan(text: text, style: normal)];
+
+  final spans = <TextSpan>[];
+  var last = 0;
+  for (final m in keyword.allMatches(text)) {
+    if (m.start > last) {
+      spans.add(TextSpan(text: text.substring(last, m.start), style: normal));
+    }
+    spans.add(TextSpan(text: text.substring(m.start, m.end), style: highlight));
+    last = m.end;
+  }
+  if (last < text.length) {
+    spans.add(TextSpan(text: text.substring(last), style: normal));
   }
   return spans;
 }

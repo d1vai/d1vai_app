@@ -97,5 +97,5 @@
 ### 10. 部署日志与排障（Deploy Logs / Debug）
 
 - [x] `DeploymentLogScreen` 增加：复制全部日志 / 复制错误片段 / 系统分享（用于发给同事或支持）
-- [ ] 日志关键字高亮（error/warn/failed/traceback/http 4xx/5xx），并提供“仅看错误”过滤
+- [x] 日志关键字高亮（error/warn/failed/traceback/http 4xx/5xx），并提供“仅看错误”过滤
 - [ ] Deploy Tab 增加“一键重试上次部署”（复用现有 preview/prod deploy action，并带确认弹窗）
