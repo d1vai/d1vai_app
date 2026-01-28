@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../models/env_var.dart';
 import '../../providers/auth_provider.dart';
+import '../../screens/project_api_keys_screen.dart';
 import '../../services/d1vai_service.dart';
 import '../../utils/error_utils.dart';
 import '../snackbar_helper.dart';
@@ -549,10 +550,12 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
                     subtitle: const Text('Manage your API keys'),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
-                      SnackBarHelper.showInfo(
-                        context,
-                        title: 'API Keys',
-                        message: 'API key management coming soon',
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ProjectApiKeysScreen(
+                            projectId: widget.projectId,
+                          ),
+                        ),
                       );
                     },
                   ),

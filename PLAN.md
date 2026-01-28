@@ -24,7 +24,7 @@
      - [x] Env Var：Add/Edit/Delete（对齐后端 `is_sensitive` + `show_values`）
      - [x] Env Var：Import/Export（.env 粘贴导入 + 导出复制/分享）
      - [x] Env Var：Sync to Vercel（手动触发）
-     - [ ] API Keys：列表/创建/撤销
+     - [x] API Keys：发放项目 Token（TTL + scopes）+ 复制/分享（后端暂无持久化列表/撤销接口，先用短 TTL 替代）
      - [x] API Documentation：站内查看（OpenAPI/WebView）
 
 2. 项目级 GitHub Tab 对齐 Web 的“导入/连接/验证”闭环（复用现有 GitHubIntegrationScreen/GitHubService）
