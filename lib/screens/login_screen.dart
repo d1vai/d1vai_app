@@ -797,7 +797,6 @@ class _LoginScreenState extends State<LoginScreen> {
             // Changing address changes the signed payload; clear old signature.
             setState(() {
               _walletSignatureController.clear();
-              _walletNonce = DateTime.now().millisecondsSinceEpoch;
             });
           },
         ),
