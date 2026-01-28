@@ -11,6 +11,7 @@ import '../screens/profile_screen.dart';
 import '../screens/pricing_screen.dart';
 import '../screens/language_settings_screen.dart';
 import '../screens/chat_screen.dart';
+import '../screens/chat_playground_screen.dart';
 import '../screens/realtime_analytics_screen.dart';
 import '../screens/invites_list_screen.dart';
 import '../screens/notification_settings_screen.dart';
@@ -203,6 +204,14 @@ GoRouter createAppRouter() {
           context,
           state,
           DocDetailScreen(slug: state.pathParameters['slug']!),
+        ),
+      ),
+      GoRoute(
+        path: '/chat',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const ChatPlaygroundScreen(),
         ),
       ),
       GoRoute(

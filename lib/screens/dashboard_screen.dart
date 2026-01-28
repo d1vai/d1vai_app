@@ -131,6 +131,13 @@ class _DashboardScreenState extends State<DashboardScreen>
             : const Text('Dashboard'),
         actions: [
           IconButton(
+            tooltip: 'Chat',
+            icon: const Icon(Icons.chat_bubble_outline),
+            onPressed: () {
+              context.push('/chat');
+            },
+          ),
+          IconButton(
             icon: Icon(_isSearching ? Icons.close : Icons.search),
             onPressed: () {
               setState(() {
