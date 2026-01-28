@@ -18,6 +18,8 @@ import '../snackbar_helper.dart';
 import '../analytics/realtime_chart.dart';
 
 /// 项目详情页 - Analytics Tab
+enum AnalyticsEnvScope { all, preview, prod }
+
 class ProjectAnalyticsTab extends StatefulWidget {
   final UserProject project;
   final void Function(String prompt)? onAskAi;
@@ -50,6 +52,9 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
   bool _isLoading = false;
   bool _isInitialized = false;
   TimeRange _timeRange = TimeRange.last24Hours;
+  AnalyticsEnvScope _envScope = AnalyticsEnvScope.all;
+  bool _showPageviewsSeries = true;
+  bool _showSessionsSeries = true;
 
   bool _installing = false;
   bool _installTyping = false;
@@ -105,6 +110,36 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       widget.project.analyticsId != null &&
       widget.project.analyticsId!.trim().isNotEmpty;
 
+  String? _hostFromUrl(String? raw) {
+    final s = (raw ?? '').trim();
+    if (s.isEmpty) return null;
+    final uri = Uri.tryParse(s);
+    if (uri == null) return null;
+    if (uri.host.trim().isEmpty) return null;
+    return uri.host.trim();
+  }
+
+  String? get _previewHost => _hostFromUrl(widget.project.latestPreviewUrl);
+  String? get _prodHost =>
+      _hostFromUrl(widget.project.latestProdDeploymentUrl) ??
+      (widget.project.vercelProdDomain?.trim().isEmpty ?? true
+          ? null
+          : widget.project.vercelProdDomain!.trim());
+
+  List<Map<String, dynamic>> _buildEnvFilters() {
+    final host = switch (_envScope) {
+      AnalyticsEnvScope.preview => _previewHost,
+      AnalyticsEnvScope.prod => _prodHost,
+      AnalyticsEnvScope.all => null,
+    };
+    if (host == null || host.trim().isEmpty) return const [];
+    // Backend/web allow filtering by `url`. If `url` contains the hostname (full URL),
+    // this becomes a simple environment scope filter. If it doesn't, it's a no-op.
+    return [
+      {'column': 'url', 'operator': 'c', 'value': host.trim()},
+    ];
+  }
+
   Future<void> _loadAnalytics() async {
     setState(() {
       _isLoading = true;
@@ -130,19 +165,19 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
           'timezone': timezone,
           'startAt': startAt,
           'endAt': endAt,
-        }),
+        }, filters: _buildEnvFilters()),
         _d1vaiService.getUmamiMetrics(widget.project.id, {
           'type': 'url',
           'startAt': startAt,
           'endAt': endAt,
           'limit': 5,
-        }),
+        }, filters: _buildEnvFilters()),
         _d1vaiService.getUmamiMetrics(widget.project.id, {
           'type': 'referrer',
           'startAt': startAt,
           'endAt': endAt,
           'limit': 5,
-        }),
+        }, filters: _buildEnvFilters()),
       ]);
 
       if (!mounted) return;
@@ -479,12 +514,12 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
     final sessions = parseSeries(data['sessions']);
 
     final series = <ChartSeries>[];
-    if (pageviews.isNotEmpty) {
+    if (_showPageviewsSeries && pageviews.isNotEmpty) {
       series.add(
         ChartSeries(name: 'Pageviews', data: pageviews, color: Colors.blue),
       );
     }
-    if (sessions.isNotEmpty) {
+    if (_showSessionsSeries && sessions.isNotEmpty) {
       series.add(
         ChartSeries(name: 'Sessions', data: sessions, color: Colors.green),
       );
@@ -574,6 +609,8 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildFiltersCard(),
+            const SizedBox(height: 16),
             _buildPeriodCard(),
             const SizedBox(height: 16),
             _buildKeyMetricsRow(),
@@ -630,6 +667,167 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       return raw['data'] as List;
     }
     return const [];
+  }
+
+  Widget _buildFiltersCard() {
+    final theme = Theme.of(context);
+    final previewHost = _previewHost;
+    final prodHost = _prodHost;
+
+    Widget chipRow(List<Widget> children) {
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: children,
+        ),
+      );
+    }
+
+    Future<void> reload() async {
+      await _loadAnalytics();
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  'Filters',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const Spacer(),
+                if (_isLoading)
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Time range',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            chipRow([
+              for (final r in const [
+                TimeRange.last24Hours,
+                TimeRange.last7Days,
+                TimeRange.last30Days,
+                TimeRange.last90Days,
+              ])
+                ChoiceChip(
+                  label: Text(r.label),
+                  selected: _timeRange == r,
+                  onSelected: (v) {
+                    if (!v || _timeRange == r) return;
+                    setState(() => _timeRange = r);
+                    reload();
+                  },
+                ),
+            ]),
+            const SizedBox(height: 12),
+            Text(
+              'Environment',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            chipRow([
+              ChoiceChip(
+                label: const Text('All'),
+                selected: _envScope == AnalyticsEnvScope.all,
+                onSelected: (v) {
+                  if (!v || _envScope == AnalyticsEnvScope.all) return;
+                  setState(() => _envScope = AnalyticsEnvScope.all);
+                  reload();
+                },
+              ),
+              ChoiceChip(
+                label: const Text('Preview'),
+                selected: _envScope == AnalyticsEnvScope.preview,
+                onSelected: previewHost == null
+                    ? null
+                    : (v) {
+                        if (!v || _envScope == AnalyticsEnvScope.preview) return;
+                        setState(() => _envScope = AnalyticsEnvScope.preview);
+                        reload();
+                      },
+              ),
+              ChoiceChip(
+                label: const Text('Prod'),
+                selected: _envScope == AnalyticsEnvScope.prod,
+                onSelected: prodHost == null
+                    ? null
+                    : (v) {
+                        if (!v || _envScope == AnalyticsEnvScope.prod) return;
+                        setState(() => _envScope = AnalyticsEnvScope.prod);
+                        reload();
+                      },
+              ),
+            ]),
+            const SizedBox(height: 12),
+            Text(
+              'Metrics',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            chipRow([
+              FilterChip(
+                label: const Text('Pageviews'),
+                selected: _showPageviewsSeries,
+                onSelected: (v) {
+                  setState(() {
+                    _showPageviewsSeries = v;
+                    if (_pageviews != null) {
+                      _trafficSeries = _createTrafficSeries(_pageviews!);
+                    }
+                  });
+                },
+              ),
+              FilterChip(
+                label: const Text('Sessions'),
+                selected: _showSessionsSeries,
+                onSelected: (v) {
+                  setState(() {
+                    _showSessionsSeries = v;
+                    if (_pageviews != null) {
+                      _trafficSeries = _createTrafficSeries(_pageviews!);
+                    }
+                  });
+                },
+              ),
+            ]),
+            if (_envScope != AnalyticsEnvScope.all) ...[
+              const SizedBox(height: 10),
+              Text(
+                'Note: environment filter uses URL contains-host matching.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildPeriodCard() {
