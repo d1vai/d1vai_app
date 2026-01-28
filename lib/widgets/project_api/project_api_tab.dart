@@ -563,11 +563,7 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
                     subtitle: const Text('View API documentation'),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
-                      SnackBarHelper.showInfo(
-                        context,
-                        title: 'API Documentation',
-                        message: 'Documentation coming soon',
-                      );
+                      context.push('/api-docs');
                     },
                   ),
                   const Divider(),

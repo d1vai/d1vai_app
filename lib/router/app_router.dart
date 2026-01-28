@@ -19,6 +19,7 @@ import '../screens/github_settings_screen.dart';
 import '../screens/projects_screen.dart';
 import '../screens/settings/api_settings_screen.dart';
 import '../screens/doc_detail_screen.dart';
+import '../screens/api_docs_screen.dart';
 import '../providers/auth_provider.dart';
 
 Page<dynamic> _buildPageWithTransition(
@@ -321,6 +322,14 @@ GoRouter createAppRouter() {
         path: '/pricing',
         pageBuilder: (context, state) =>
             _buildPageWithTransition(context, state, const PricingScreen()),
+      ),
+      GoRoute(
+        path: '/api-docs',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const ApiDocsScreen(),
+        ),
       ),
     ],
   );

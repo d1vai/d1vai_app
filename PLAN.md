@@ -25,7 +25,7 @@
      - [x] Env Var：Import/Export（.env 粘贴导入 + 导出复制/分享）
      - [x] Env Var：Sync to Vercel（手动触发）
      - [ ] API Keys：列表/创建/撤销
-     - [ ] API Documentation：站内查看（OpenAPI/WebView）
+     - [x] API Documentation：站内查看（OpenAPI/WebView）
 
 2. 项目级 GitHub Tab 对齐 Web 的“导入/连接/验证”闭环（复用现有 GitHubIntegrationScreen/GitHubService）
    - 现状：项目详情 GitHub Tab 偏展示/说明，Connected Repositories 为 0 的占位；而 Settings 的 GitHub 集成已具备连接与拉取 repo 能力。
