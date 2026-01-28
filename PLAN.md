@@ -137,4 +137,4 @@
 - [x] 日志关键字高亮（error/warn/failed/traceback/http 4xx/5xx），并提供“仅看错误”过滤
 - [x] Deploy Tab 增加“一键重试上次部署”（复用现有 preview/prod deploy action，并带确认弹窗）
 - [x] 增加“排障向导”入口（FAQ 卡片）：检查 GitHub 权限 → 检查 env var → 检查 workspace → 重试部署（每步给可执行按钮/跳转）
-- [ ] 当部署失败时，把错误与“下一步建议”写入 SnackBar/对话框（避免只给 raw message）
+- [x] 当部署失败时，把错误与“下一步建议”写入 SnackBar/对话框（避免只给 raw message）

@@ -185,12 +185,12 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
         context,
         title: 'Preview deploy failed',
         message: msg,
-        actionLabel: authExpired ? 'Re-login' : null,
+        actionLabel: authExpired ? 'Re-login' : 'Next steps',
         onActionPressed: authExpired
             ? () {
                 unawaited(_logoutAndGoLogin());
               }
-            : null,
+            : () => _showNextStepsDialog(msg),
       );
     } finally {
       if (mounted) setState(() => _deployingPreview = false);
@@ -225,16 +225,107 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
         context,
         title: 'Production deploy failed',
         message: msg,
-        actionLabel: authExpired ? 'Re-login' : null,
+        actionLabel: authExpired ? 'Re-login' : 'Next steps',
         onActionPressed: authExpired
             ? () {
                 unawaited(_logoutAndGoLogin());
               }
-            : null,
+            : () => _showNextStepsDialog(msg),
       );
     } finally {
       if (mounted) setState(() => _deployingProduction = false);
     }
+  }
+
+  void _showNextStepsDialog(String errorText) {
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        final theme = Theme.of(context);
+        final tips = _suggestNextSteps(errorText);
+        return AlertDialog(
+          title: const Text('Next steps'),
+          content: SizedBox(
+            width: 560,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Common fixes:',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ...tips.map(
+                  (t) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.arrow_right,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            t,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+            if (widget.onAskAi != null)
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  widget.onAskAi!(
+                    'My deploy failed with this error:\n$errorText\n\n'
+                    'Give me the most likely root cause and a step-by-step fix.',
+                  );
+                },
+                icon: const Icon(Icons.auto_awesome),
+                label: const Text('Ask AI'),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  List<String> _suggestNextSteps(String msg) {
+    final lower = msg.toLowerCase();
+    final tips = <String>[
+      'Open the latest build logs and copy/share the error snippet.',
+      'Retry preview deploy first (then production).',
+      'Check GitHub collaborator/bot access to the repo.',
+      'Check environment variables (and sync to Vercel).',
+    ];
+    if (lower.contains('permission') || lower.contains('access denied')) {
+      tips.insert(0, 'This looks like a permission issue — verify GitHub access and tokens.');
+    }
+    if (lower.contains('env') || lower.contains('secret') || lower.contains('key')) {
+      tips.insert(0, 'This looks like an env var issue — verify required secrets are set.');
+    }
+    if (lower.contains('build') || lower.contains('compile') || lower.contains('typescript')) {
+      tips.insert(0, 'This looks like a build failure — check compilation errors in logs.');
+    }
+    return tips.toSet().toList();
   }
 
   Future<void> _retryLastDeployment() async {
