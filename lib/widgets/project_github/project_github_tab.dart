@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../models/project.dart';
 import '../../providers/project_provider.dart';
 import '../../services/d1vai_service.dart';
 import '../../utils/error_utils.dart';
@@ -16,7 +18,9 @@ import '../snackbar_helper.dart';
 /// Note: current backend API focuses on "import" flows + github-ops. This tab
 /// provides a practical "import/verify/accept" loop, instead of a placeholder.
 class ProjectGithubTab extends StatefulWidget {
-  const ProjectGithubTab({super.key});
+  final UserProject project;
+
+  const ProjectGithubTab({super.key, required this.project});
 
   @override
   State<ProjectGithubTab> createState() => _ProjectGithubTabState();
@@ -75,6 +79,18 @@ class _ProjectGithubTabState extends State<ProjectGithubTab> {
   }
 
   String? _repoFullName() => parseGithubRepoFullName(_repoUrlController.text);
+
+  Future<void> _openExternalUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  Future<void> _copyText(String label, String value) async {
+    await Clipboard.setData(ClipboardData(text: value));
+    if (!mounted) return;
+    SnackBarHelper.showSuccess(context, title: 'Copied', message: label);
+  }
 
   Future<void> _copyBotUsername() async {
     await Clipboard.setData(ClipboardData(text: _botUsername));
@@ -222,11 +238,133 @@ class _ProjectGithubTabState extends State<ProjectGithubTab> {
     final canGoStep2 = repoFullName != null;
     final canGoStep3 = _accessVerified && _repoInfo != null;
 
+    final boundRepo = (widget.project.repositoryFullName ?? '').trim();
+    final boundBranch =
+        (widget.project.repositoryCurrentBranch ??
+                widget.project.repositoryDefaultBranch ??
+                '')
+            .trim();
+    final workspaceBranch = (widget.project.workspaceCurrentBranch ?? '').trim();
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (boundRepo.isNotEmpty) ...[
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.link,
+                          color: theme.colorScheme.primary,
+                          size: 22,
+                        ),
+                        const SizedBox(width: 10),
+                        const Expanded(
+                          child: Text(
+                            'Connected Repository',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Copy repo',
+                          onPressed: () => _copyText('Repo', boundRepo),
+                          icon: const Icon(Icons.copy, size: 18),
+                        ),
+                        IconButton(
+                          tooltip: 'Open on GitHub',
+                          onPressed: () => _openExternalUrl(
+                            'https://github.com/$boundRepo',
+                          ),
+                          icon: const Icon(Icons.open_in_new, size: 18),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      boundRepo,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        if (widget.project.repositoryIsPrivate != null)
+                          _Tag(
+                            text: widget.project.repositoryIsPrivate == true
+                                ? 'private'
+                                : 'public',
+                          ),
+                        if (boundBranch.isNotEmpty) _Tag(text: 'repo: $boundBranch'),
+                        if (workspaceBranch.isNotEmpty)
+                          _Tag(text: 'workspace: $workspaceBranch'),
+                        if ((widget.project.repositoryPlatform ?? '').trim().isNotEmpty)
+                          _Tag(text: (widget.project.repositoryPlatform ?? '').trim()),
+                      ],
+                    ),
+                    if ((widget.project.opcodeLastAccessedAt ?? '').trim().isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        'Last workspace sync: ${widget.project.opcodeLastAccessedAt}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                    if ((widget.project.repositoryCloneUrl ?? '').trim().isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: theme.colorScheme.outlineVariant,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                'Clone URL',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              tooltip: 'Copy clone URL',
+                              onPressed: () => _copyText(
+                                'Clone URL',
+                                widget.project.repositoryCloneUrl!.trim(),
+                              ),
+                              icon: const Icon(Icons.copy, size: 18),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -461,4 +599,3 @@ class _Tag extends StatelessWidget {
     );
   }
 }
-

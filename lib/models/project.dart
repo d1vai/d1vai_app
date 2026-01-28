@@ -20,6 +20,19 @@ class UserProject {
   final String? workspaceCurrentBranch;
   final String? repositoryCurrentBranch;
 
+  // Git binding (optional; available on /api/projects/:id)
+  final String? repositoryPlatform;
+  final String? repositoryFullName;
+  final String? repositoryOwner;
+  final String? repositoryName;
+  final String? repositoryCloneUrl;
+  final String? repositorySshUrl;
+  final String? repositoryDefaultBranch;
+  final bool? repositoryIsPrivate;
+
+  // Workspace / sync hints (optional)
+  final String? opcodeLastAccessedAt;
+
   const UserProject({
     required this.id,
     required this.projectName,
@@ -40,6 +53,16 @@ class UserProject {
     this.latestProdDeploymentUrl,
     this.workspaceCurrentBranch,
     this.repositoryCurrentBranch,
+
+    this.repositoryPlatform,
+    this.repositoryFullName,
+    this.repositoryOwner,
+    this.repositoryName,
+    this.repositoryCloneUrl,
+    this.repositorySshUrl,
+    this.repositoryDefaultBranch,
+    this.repositoryIsPrivate,
+    this.opcodeLastAccessedAt,
   });
 
   factory UserProject.fromJson(Map<String, dynamic> json) {
@@ -76,6 +99,18 @@ class UserProject {
       latestProdDeploymentUrl: json['latest_prod_deployment_url']?.toString(),
       workspaceCurrentBranch: json['workspace_current_branch']?.toString(),
       repositoryCurrentBranch: json['repository_current_branch']?.toString(),
+
+      repositoryPlatform: json['repository_platform']?.toString(),
+      repositoryFullName: json['repository_full_name']?.toString(),
+      repositoryOwner: json['repository_owner']?.toString(),
+      repositoryName: json['repository_name']?.toString(),
+      repositoryCloneUrl: json['repository_clone_url']?.toString(),
+      repositorySshUrl: json['repository_ssh_url']?.toString(),
+      repositoryDefaultBranch: json['repository_default_branch']?.toString(),
+      repositoryIsPrivate: json['repository_is_private'] is bool
+          ? json['repository_is_private'] as bool
+          : null,
+      opcodeLastAccessedAt: json['opcode_last_accessed_at']?.toString(),
     );
   }
 
@@ -100,6 +135,16 @@ class UserProject {
       'latest_prod_deployment_url': latestProdDeploymentUrl,
       'workspace_current_branch': workspaceCurrentBranch,
       'repository_current_branch': repositoryCurrentBranch,
+
+      'repository_platform': repositoryPlatform,
+      'repository_full_name': repositoryFullName,
+      'repository_owner': repositoryOwner,
+      'repository_name': repositoryName,
+      'repository_clone_url': repositoryCloneUrl,
+      'repository_ssh_url': repositorySshUrl,
+      'repository_default_branch': repositoryDefaultBranch,
+      'repository_is_private': repositoryIsPrivate,
+      'opcode_last_accessed_at': opcodeLastAccessedAt,
     };
   }
 
@@ -124,6 +169,16 @@ class UserProject {
     String? latestProdDeploymentUrl,
     String? workspaceCurrentBranch,
     String? repositoryCurrentBranch,
+
+    String? repositoryPlatform,
+    String? repositoryFullName,
+    String? repositoryOwner,
+    String? repositoryName,
+    String? repositoryCloneUrl,
+    String? repositorySshUrl,
+    String? repositoryDefaultBranch,
+    bool? repositoryIsPrivate,
+    String? opcodeLastAccessedAt,
   }) {
     return UserProject(
       id: id ?? this.id,
@@ -145,6 +200,16 @@ class UserProject {
       latestProdDeploymentUrl: latestProdDeploymentUrl ?? this.latestProdDeploymentUrl,
       workspaceCurrentBranch: workspaceCurrentBranch ?? this.workspaceCurrentBranch,
       repositoryCurrentBranch: repositoryCurrentBranch ?? this.repositoryCurrentBranch,
+
+      repositoryPlatform: repositoryPlatform ?? this.repositoryPlatform,
+      repositoryFullName: repositoryFullName ?? this.repositoryFullName,
+      repositoryOwner: repositoryOwner ?? this.repositoryOwner,
+      repositoryName: repositoryName ?? this.repositoryName,
+      repositoryCloneUrl: repositoryCloneUrl ?? this.repositoryCloneUrl,
+      repositorySshUrl: repositorySshUrl ?? this.repositorySshUrl,
+      repositoryDefaultBranch: repositoryDefaultBranch ?? this.repositoryDefaultBranch,
+      repositoryIsPrivate: repositoryIsPrivate ?? this.repositoryIsPrivate,
+      opcodeLastAccessedAt: opcodeLastAccessedAt ?? this.opcodeLastAccessedAt,
     );
   }
 

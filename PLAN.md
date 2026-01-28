@@ -34,7 +34,7 @@
    - 实施清单：
      - [x] GitHub Tab：拉取 bot username + 一键复制
      - [x] GitHub Tab：Accept invitation / Verify access / Import（复用后端 github-import 接口）
-     - [ ] GitHub Tab：展示当前项目绑定仓库/分支/最近同步（需后端字段或新接口）
+     - [x] GitHub Tab：展示当前项目绑定仓库/分支/最近同步（需后端字段或新接口）
 
 3. Docs 站内化（减少外跳流失）
    - 现状：DocsScreen 点击外跳浏览器。

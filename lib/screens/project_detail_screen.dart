@@ -249,7 +249,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
             onRefreshProject: _loadProject,
           ),
           ProjectApiTab(projectId: project.id),
-          const ProjectGithubTab(),
+          ProjectGithubTab(project: project),
           ProjectPaymentTab(projectId: project.id, onAskAi: _handleAskAi),
           ProjectDeployTab(
             project: project,
