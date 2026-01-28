@@ -128,7 +128,7 @@
 
 - [ ] 在 `ProjectAnalyticsTab` 增加筛选：时间范围（7/30/90）、环境（dev/prod）、关键指标切换（errors/requests/latency…按现有 API 能力逐步打开）
 - [ ] 在 Realtime 页增加“异常提示卡”：当错误率/延迟飙升时，提供快捷跳转（Deploy Logs / Ask AI / Env Vars）
-- [ ] 增加“导出/分享报表摘要”（复制文本或 CSV；优先做复制摘要）
+- [x] 增加“导出/分享报表摘要”（复制文本或 CSV；优先做复制摘要）
 - [ ] 把 Dashboard 的 prompt heatmap 增加“按项目过滤/跳转到项目详情”入口（减少孤立指标）
 
 ### 10. 部署日志与排障（Deploy Logs / Debug）

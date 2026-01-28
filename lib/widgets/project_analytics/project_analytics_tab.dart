@@ -939,6 +939,14 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
             ),
             const SizedBox(height: 12),
             ListTile(
+              leading: const Icon(Icons.copy_all, color: Colors.green),
+              title: const Text('Copy Summary'),
+              subtitle: const Text('Copy a shareable analytics snapshot'),
+              trailing: const Icon(Icons.copy, size: 18),
+              onTap: _copyAnalyticsSummary,
+            ),
+            const Divider(),
+            ListTile(
               leading: const Icon(Icons.code, color: Colors.deepPurple),
               title: const Text('Copy Tracking Code'),
               subtitle: const Text('Copy Umami script snippet'),
@@ -973,6 +981,65 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
         ),
       ),
     );
+  }
+
+  Future<void> _copyAnalyticsSummary() async {
+    try {
+      final now = DateTime.now();
+      final start = now.subtract(_timeRange.duration);
+      final buf = StringBuffer();
+      buf.writeln('Analytics summary');
+      buf.writeln('Project: ${widget.project.projectName}');
+      buf.writeln('Range: ${_timeRange.label}');
+      buf.writeln(
+        'Window: ${start.toLocal().toIso8601String()} → ${now.toLocal().toIso8601String()}',
+      );
+      buf.writeln('Active now: ${_activeNow()}');
+      if (_values != null) {
+        final visitors = _asInt(_values!['visitors'] ?? _values!['users']);
+        final pageviews = _asInt(_values!['pageviews']);
+        if (visitors > 0) buf.writeln('Visitors: $visitors');
+        if (pageviews > 0) buf.writeln('Pageviews: $pageviews');
+      }
+      if (_topPages.isNotEmpty) {
+        buf.writeln('');
+        buf.writeln('Top pages:');
+        for (final p in _topPages.take(5)) {
+          final m = (p is Map) ? p : null;
+          final x = (m?['x'] ?? m?['url'] ?? '').toString();
+          final y = _asInt(m?['y'] ?? m?['count']);
+          if (x.trim().isEmpty) continue;
+          buf.writeln('- $x (${y > 0 ? y : '?'})');
+        }
+      }
+      if (_topReferrers.isNotEmpty) {
+        buf.writeln('');
+        buf.writeln('Top referrers:');
+        for (final p in _topReferrers.take(5)) {
+          final m = (p is Map) ? p : null;
+          final x = (m?['x'] ?? m?['referrer'] ?? '').toString();
+          final y = _asInt(m?['y'] ?? m?['count']);
+          if (x.trim().isEmpty) continue;
+          buf.writeln('- $x (${y > 0 ? y : '?'})');
+        }
+      }
+
+      final text = buf.toString().trim();
+      await Clipboard.setData(ClipboardData(text: text));
+      if (!mounted) return;
+      SnackBarHelper.showSuccess(
+        context,
+        title: 'Copied',
+        message: 'Analytics summary copied',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      SnackBarHelper.showError(
+        context,
+        title: 'Copy failed',
+        message: humanizeError(e),
+      );
+    }
   }
 
   Future<void> _copyTrackingCode() async {
