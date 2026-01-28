@@ -287,6 +287,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       project: project,
       updatedText: _formatTimeAgo(project.updatedAt),
       onTap: () => context.push('/projects/${project.id}'),
+      onChat: () => context.push('/projects/${project.id}/chat'),
     );
   }
 

@@ -8,12 +8,14 @@ class ProjectCardTile extends StatefulWidget {
   final UserProject project;
   final String updatedText;
   final VoidCallback onTap;
+  final VoidCallback? onChat;
 
   const ProjectCardTile({
     super.key,
     required this.project,
     required this.updatedText,
     required this.onTap,
+    this.onChat,
   });
 
   @override
@@ -97,6 +99,7 @@ class _ProjectCardTileState extends State<ProjectCardTile>
     final accent = status.color;
     final tags = project.tags.take(3).toList(growable: false);
     final hasPreview = (project.latestPreviewUrl ?? '').trim().isNotEmpty;
+    final hasChatAction = widget.onChat != null;
 
     final scale = Tween<double>(begin: 1, end: 0.992).animate(
       CurvedAnimation(parent: _pressController, curve: Curves.easeOut),
@@ -283,43 +286,53 @@ class _ProjectCardTileState extends State<ProjectCardTile>
                             Expanded(
                               child: Align(
                                 alignment: Alignment.centerRight,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Color.alphaBlend(
-                                      colorScheme.secondary.withValues(
-                                        alpha: isDark ? 0.16 : 0.12,
-                                      ),
-                                      colorScheme.surface,
+                                child: GestureDetector(
+                                  onTap: hasChatAction
+                                      ? () {
+                                          HapticFeedback.selectionClick();
+                                          widget.onChat?.call();
+                                        }
+                                      : null,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 6,
                                     ),
-                                    borderRadius: BorderRadius.circular(999),
-                                    border: Border.all(
-                                      color: colorScheme.secondary.withValues(
-                                        alpha: isDark ? 0.30 : 0.22,
+                                    decoration: BoxDecoration(
+                                      color: Color.alphaBlend(
+                                        colorScheme.secondary.withValues(
+                                          alpha: isDark ? 0.16 : 0.12,
+                                        ),
+                                        colorScheme.surface,
+                                      ),
+                                      borderRadius: BorderRadius.circular(999),
+                                      border: Border.all(
+                                        color: colorScheme.secondary.withValues(
+                                          alpha: isDark ? 0.30 : 0.22,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.visibility_outlined,
-                                        size: 14,
-                                        color: colorScheme.secondary,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        'Preview',
-                                        style: theme.textTheme.bodySmall
-                                            ?.copyWith(
-                                              color: colorScheme.secondary,
-                                              fontWeight: FontWeight.w800,
-                                            ),
-                                      ),
-                                    ],
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          hasChatAction
+                                              ? Icons.chat_bubble_outline
+                                              : Icons.visibility_outlined,
+                                          size: 14,
+                                          color: colorScheme.secondary,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          hasChatAction ? 'Chat' : 'Preview',
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                                color: colorScheme.secondary,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),

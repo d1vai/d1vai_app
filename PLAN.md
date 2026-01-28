@@ -60,6 +60,9 @@
    - 现状：Chat 不在底部主导航；用户需进入项目详情后再切到 Chat。
    - 改进：在 Dashboard/ProjectCard 增加“继续聊天/继续上次任务”按钮；提供全局浮动入口（可选）并支持带 `autoprompt` 快速提问。
    - 验收：从打开 app 到发出第一条有效 prompt 的步骤减少（可量化：点击次数/耗时）。
+   - 实施清单：
+     - [x] Dashboard/Projects：ProjectCard 提供直达 Chat 的快捷入口
+     - [ ] 全局 Chat Playground（不绑定项目）
 
 6. API 文档与 OpenAPI Viewer 对齐（移动端快速查阅/调试）
    - 现状：Web 有 `/openapi` viewer；移动端 API 文档仍占位。
