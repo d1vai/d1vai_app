@@ -12,6 +12,8 @@ class PromptActivityHeatmap extends StatelessWidget {
   final double cellSize;
   final double gap;
   final int? weeks;
+  final Widget? headerTrailing;
+  final void Function(String isoDate, int count)? onDayTap;
 
   const PromptActivityHeatmap({
     super.key,
@@ -19,6 +21,8 @@ class PromptActivityHeatmap extends StatelessWidget {
     this.cellSize = 12,
     this.gap = 4,
     this.weeks,
+    this.headerTrailing,
+    this.onDayTap,
   });
 
   int _levelFor(int count, int max) {
@@ -136,11 +140,18 @@ class PromptActivityHeatmap extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              loc?.translate('prompt_activity_title') ?? 'Prompt activity',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    loc?.translate('prompt_activity_title') ?? 'Prompt activity',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                if (headerTrailing != null) headerTrailing!,
+              ],
             ),
             const SizedBox(height: 4),
             if (!isCompact)
@@ -309,26 +320,38 @@ class PromptActivityHeatmap extends StatelessWidget {
                                 final tooltip =
                                     '${_fmtDate(locale, iso, compact: false)} • $count ${loc?.translate('prompts_unit') ?? 'prompts'}';
 
-                                return Tooltip(
-                                  message: tooltip,
-                                  child: Container(
-                                    width: cellSize,
-                                    height: cellSize,
-                                    decoration: BoxDecoration(
-                                      color: color,
-                                      borderRadius: BorderRadius.circular(3),
-                                      border: Border.all(
-                                        color: theme.colorScheme.outlineVariant
-                                            .withValues(
-                                              alpha:
-                                                  theme.brightness ==
-                                                      Brightness.dark
-                                                  ? 0.35
-                                                  : 0.5,
-                                            ),
-                                      ),
+                                final borderRadius = BorderRadius.circular(3);
+                                final cell = Container(
+                                  width: cellSize,
+                                  height: cellSize,
+                                  decoration: BoxDecoration(
+                                    color: color,
+                                    borderRadius: borderRadius,
+                                    border: Border.all(
+                                      color: theme.colorScheme.outlineVariant
+                                          .withValues(
+                                            alpha:
+                                                theme.brightness ==
+                                                        Brightness.dark
+                                                    ? 0.35
+                                                    : 0.5,
+                                          ),
                                     ),
                                   ),
+                                );
+
+                                return Tooltip(
+                                  message: tooltip,
+                                  child: onDayTap == null
+                                      ? cell
+                                      : Material(
+                                          color: Colors.transparent,
+                                          child: InkWell(
+                                            borderRadius: borderRadius,
+                                            onTap: () => onDayTap!(iso, count),
+                                            child: cell,
+                                          ),
+                                        ),
                                 );
                               },
                             ),

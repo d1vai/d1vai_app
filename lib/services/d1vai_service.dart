@@ -203,10 +203,19 @@ class D1vaiService {
   }
 
   /// 获取当前用户最近 N 天 prompt 活跃度（GitHub-style heatmap）
-  Future<PromptDailyActivity> getPromptDailyActivity({int days = 90}) async {
+  Future<PromptDailyActivity> getPromptDailyActivity({
+    int days = 90,
+    String? projectId,
+  }) async {
+    final qp = <String, String>{'days': days.toString()};
+    final pid = (projectId ?? '').trim();
+    if (pid.isNotEmpty) {
+      // Backend may ignore this param if unsupported; safe fallback to global activity.
+      qp['project_id'] = pid;
+    }
     return _apiClient.get<PromptDailyActivity>(
       '/api/user/activity/prompt-daily',
-      queryParams: {'days': days.toString()},
+      queryParams: qp,
       fromJsonT: (json) => PromptDailyActivity.fromJson(json as Map<String, dynamic>),
     );
   }

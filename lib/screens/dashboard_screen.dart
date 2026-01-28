@@ -16,6 +16,7 @@ import '../core/auth_expiry_bus.dart';
 import '../widgets/login_required_view.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/prompt_activity_heatmap.dart';
+import '../widgets/snackbar_helper.dart';
 import 'projects/widgets/project_card_tile.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -32,6 +33,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   List<UserProject> _searchResults = [];
   bool _didAutoLoadAfterLogin = false;
   Future<PromptDailyActivity>? _promptActivityFuture;
+  String? _promptActivityProjectId;
   final D1vaiService _service = D1vaiService();
 
   late AnimationController _animationController;
@@ -63,15 +65,81 @@ class _DashboardScreenState extends State<DashboardScreen>
     // Start heatmap fetch early; UI will render as soon as data arrives.
     if (mounted) {
       setState(() {
-        _promptActivityFuture = _service.getPromptDailyActivity(days: 90);
+        _promptActivityFuture = _service.getPromptDailyActivity(
+          days: 90,
+          projectId: _promptActivityProjectId,
+        );
       });
     } else {
-      _promptActivityFuture = _service.getPromptDailyActivity(days: 90);
+      _promptActivityFuture = _service.getPromptDailyActivity(
+        days: 90,
+        projectId: _promptActivityProjectId,
+      );
     }
     await Provider.of<ProjectProvider>(context, listen: false).loadProjects();
     if (mounted) {
       _animationController.forward(from: 0);
     }
+  }
+
+  void _reloadPromptActivity() {
+    setState(() {
+      _promptActivityFuture = _service.getPromptDailyActivity(
+        days: 90,
+        projectId: _promptActivityProjectId,
+      );
+    });
+  }
+
+  Widget _buildPromptActivityHeaderTrailing(ProjectProvider projectProvider) {
+    final projects = projectProvider.projects;
+    final items = <DropdownMenuItem<String?>>[
+      const DropdownMenuItem<String?>(
+        value: null,
+        child: Text('All projects'),
+      ),
+      ...projects.take(50).map((p) {
+        final name = p.projectName.trim().isEmpty ? p.id : p.projectName.trim();
+        return DropdownMenuItem<String?>(
+          value: p.id,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 170),
+            child: Text(
+              name,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        );
+      }),
+    ];
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        DropdownButtonHideUnderline(
+          child: DropdownButton<String?>(
+            value: _promptActivityProjectId,
+            items: items,
+            onChanged: (value) {
+              setState(() {
+                _promptActivityProjectId = value;
+              });
+              _reloadPromptActivity();
+            },
+          ),
+        ),
+        if (_promptActivityProjectId != null)
+          IconButton(
+            tooltip: 'Open project',
+            icon: const Icon(Icons.open_in_new, size: 18),
+            onPressed: () {
+              final pid = _promptActivityProjectId;
+              if (pid == null) return;
+              context.push('/projects/$pid');
+            },
+          ),
+      ],
+    );
   }
 
   @override
@@ -299,7 +367,28 @@ class _DashboardScreenState extends State<DashboardScreen>
                     ),
                   );
                 }
-                return PromptActivityHeatmap(activity: snapshot.data!);
+                return PromptActivityHeatmap(
+                  activity: snapshot.data!,
+                  headerTrailing: _buildPromptActivityHeaderTrailing(
+                    projectProvider,
+                  ),
+                  onDayTap: (isoDate, count) {
+                    final pid = _promptActivityProjectId;
+                    if (pid == null) {
+                      SnackBarHelper.showInfo(
+                        context,
+                        title: 'Activity',
+                        message: 'Select a project to jump from the heatmap.',
+                      );
+                      return;
+                    }
+                    final prompt =
+                        'On $isoDate I sent $count prompts. Please summarize what I was doing and suggest next steps.';
+                    context.push(
+                      '/projects/$pid/chat?autoprompt=${Uri.encodeQueryComponent(prompt)}',
+                    );
+                  },
+                );
               },
             ),
           const SizedBox(height: 24),
@@ -354,7 +443,10 @@ class _DashboardScreenState extends State<DashboardScreen>
     return RefreshIndicator(
       onRefresh: () async {
         setState(() {
-          _promptActivityFuture = _service.getPromptDailyActivity(days: 90);
+          _promptActivityFuture = _service.getPromptDailyActivity(
+            days: 90,
+            projectId: _promptActivityProjectId,
+          );
         });
         await projectProvider.refresh();
       },
