@@ -175,17 +175,43 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    isConnected
-                        ? '${walletType.symbol} • ${_formatAddress(currentAddress)}'
-                        : isComingSoon
-                            ? 'Coming Soon'
-                            : 'Not connected',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey.shade600,
+                  if (isConnected)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${walletType.symbol} • ${_formatAddress(currentAddress)}',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+	                          tooltip: 'Copy address',
+	                          icon: const Icon(Icons.copy, size: 18),
+	                          onPressed: () async {
+	                            final raw = currentAddress.trim();
+	                            if (raw.isEmpty) return;
+	                            await Clipboard.setData(ClipboardData(text: raw));
+	                            if (!mounted) return;
+	                            SnackBarHelper.showSuccess(
+	                              context,
+                              title: 'Copied',
+                              message: '${walletType.name} address copied',
+                            );
+                          },
+                        ),
+                      ],
+                    )
+                  else
+                    Text(
+                      isComingSoon ? 'Coming Soon' : 'Not connected',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade600,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
