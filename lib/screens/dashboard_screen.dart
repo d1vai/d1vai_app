@@ -93,6 +93,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Widget _buildPromptActivityHeaderTrailing(ProjectProvider projectProvider) {
     final projects = projectProvider.projects;
+    final isLoading = projectProvider.isLoading;
     final items = <DropdownMenuItem<String?>>[
       const DropdownMenuItem<String?>(
         value: null,
@@ -116,16 +117,26 @@ class _DashboardScreenState extends State<DashboardScreen>
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (isLoading) ...[
+          const SizedBox(
+            width: 14,
+            height: 14,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          const SizedBox(width: 8),
+        ],
         DropdownButtonHideUnderline(
           child: DropdownButton<String?>(
             value: _promptActivityProjectId,
             items: items,
-            onChanged: (value) {
-              setState(() {
-                _promptActivityProjectId = value;
-              });
-              _reloadPromptActivity();
-            },
+            onChanged: isLoading
+                ? null
+                : (value) {
+                    setState(() {
+                      _promptActivityProjectId = value;
+                    });
+                    _reloadPromptActivity();
+                  },
           ),
         ),
         if (_promptActivityProjectId != null)
