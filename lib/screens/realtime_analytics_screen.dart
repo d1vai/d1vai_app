@@ -36,6 +36,7 @@ class _RealtimeAnalyticsScreenState
   bool _isLoading = true;
   bool _isRealTimeEnabled = true;
   bool _isLoadingGeographic = false;
+  bool _dismissedAnomalyCard = false;
 
   @override
   void initState() {
@@ -263,7 +264,7 @@ class _RealtimeAnalyticsScreenState
         const SizedBox(height: 16),
         // Real-time indicator
         _buildRealtimeIndicator(),
-        if (anomalies.isNotEmpty) ...[
+        if (!_dismissedAnomalyCard && anomalies.isNotEmpty) ...[
           const SizedBox(height: 12),
           _buildAnomalyCard(anomalies),
         ],
@@ -435,6 +436,14 @@ class _RealtimeAnalyticsScreenState
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
+                ),
+                const Spacer(),
+                IconButton(
+                  tooltip: 'Dismiss',
+                  icon: const Icon(Icons.close),
+                  onPressed: () {
+                    setState(() => _dismissedAnomalyCard = true);
+                  },
                 ),
               ],
             ),
