@@ -42,7 +42,7 @@ class AccountDataScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Account & Data'),
+        title: Text(loc?.translate('account_data_title') ?? 'Account & Data'),
       ),
       body: Consumer<AuthProvider>(
         builder: (context, auth, _) {

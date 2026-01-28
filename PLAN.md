@@ -155,4 +155,4 @@
 - [x] Docs：Recent 区域增加 “Clear recent” 入口
 - [x] Doc Detail：复制代码成功增加 haptic + 更明确的 snackbar 文案
 - [x] Realtime：异常提示卡增加“Dismiss”（本次会话隐藏，避免打扰）
-- [ ] Settings：Account & Data 文案与标题补齐 i18n key（至少 zh/en）
+- [x] Settings：Account & Data 文案与标题补齐 i18n key（至少 zh/en）

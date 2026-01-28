@@ -202,8 +202,13 @@ class SettingsProfileTab extends StatelessWidget {
                       Icons.manage_accounts,
                       color: AppColors.info,
                     ),
-                    title: const Text('Account & Data'),
-                    subtitle: const Text('Data export and account deletion'),
+                    title: Text(
+                      loc?.translate('account_data_title') ?? 'Account & Data',
+                    ),
+                    subtitle: Text(
+                      loc?.translate('account_data_subtitle') ??
+                          'Data export and account deletion',
+                    ),
                     trailing: const Icon(
                       Icons.arrow_forward_ios,
                       size: 16,
