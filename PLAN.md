@@ -31,6 +31,10 @@
    - 现状：项目详情 GitHub Tab 偏展示/说明，Connected Repositories 为 0 的占位；而 Settings 的 GitHub 集成已具备连接与拉取 repo 能力。
    - 改进：在项目内提供：选择仓库→验证权限→导入/绑定→展示绑定信息（仓库、分支、最近同步/导入状态、错误提示与修复建议）。
    - 验收：新用户在移动端可独立完成“导入 GitHub repo → 生成/更新项目 → 进入 Deploy/Preview”的完整流程。
+   - 实施清单：
+     - [x] GitHub Tab：拉取 bot username + 一键复制
+     - [x] GitHub Tab：Accept invitation / Verify access / Import（复用后端 github-import 接口）
+     - [ ] GitHub Tab：展示当前项目绑定仓库/分支/最近同步（需后端字段或新接口）
 
 3. Docs 站内化（减少外跳流失）
    - 现状：DocsScreen 点击外跳浏览器。
