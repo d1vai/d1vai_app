@@ -28,3 +28,11 @@ If project creation fails in `d1vai_app` but works in `d1vai` web:
 - Open `Settings → Profile → API` and tap `Copy diagnostics`.
 - Verify `effective_base_url` is `https://api.d1v.ai` and `auth_token_present=true`.
 - Compare `jwt_sub` / `jwt_type` (or at least token suffix) with the token used in the web/curl request.
+
+## Localization (l10n) workflow
+
+- Source of truth: `lib/l10n/arb/app_*.arb`
+- Generate runtime lookup table after edits:
+  - `dart run tool/gen_l10n.dart`
+- CI safeguard:
+  - `test/l10n_arb_consistency_test.dart` fails if any locale is missing/adding keys vs `app_en.arb`.

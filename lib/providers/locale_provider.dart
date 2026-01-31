@@ -8,7 +8,7 @@ class LocaleProvider extends ChangeNotifier {
   Locale get locale => _locale;
 
   // 语言 key 与 Locale 映射
-  // 六种常用语言：英语、简体中文、繁体中文、日语、法语、俄语
+  // 以 AppLocalizations（ARB）支持的语言为准。
   static const Map<String, Locale> _localeMap = {
     'en': Locale('en'),
     'zh': Locale('zh'), // 简体中文
@@ -19,6 +19,8 @@ class LocaleProvider extends ChangeNotifier {
     'ja': Locale('ja'),
     'fr': Locale('fr'),
     'ru': Locale('ru'),
+    'es': Locale('es'),
+    'ar': Locale('ar'),
   };
 
   static List<Locale> get supportedLocales => _localeMap.values.toList();
@@ -31,6 +33,8 @@ class LocaleProvider extends ChangeNotifier {
     'ja': '日本語',
     'fr': 'Français',
     'ru': 'Русский',
+    'es': 'Español',
+    'ar': 'العربية',
   };
 
   static String languageKeyFromLocale(Locale locale) =>
@@ -116,6 +120,10 @@ class LocaleProvider extends ChangeNotifier {
         return 'fr';
       case 'ru':
         return 'ru';
+      case 'es':
+        return 'es';
+      case 'ar':
+        return 'ar';
       case 'en':
       default:
         return 'en';

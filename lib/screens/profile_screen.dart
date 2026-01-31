@@ -8,6 +8,8 @@ import '../models/user.dart';
 import '../widgets/login_required_dialog.dart';
 import '../widgets/ai_avatar_selector_dialog.dart';
 import '../widgets/avatar_image.dart';
+import '../core/theme/app_colors.dart';
+import '../widgets/card.dart';
 import '../widgets/snackbar_helper.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -115,7 +117,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 right: 0,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.deepPurple,
+                    color: AppColors.primaryBrand,
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 2),
                   ),
@@ -223,7 +225,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 right: 0,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.deepPurple,
+                    color: AppColors.primaryBrand,
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 2),
                   ),
@@ -574,9 +576,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   /// 构建区块标题
   Widget _buildSectionTitle(String title) {
+    final theme = Theme.of(context);
     return Text(
       title,
-      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ) ??
+          const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
     );
   }
 
@@ -607,10 +613,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     IconData icon, {
     bool isLink = false,
   }) {
-    return Card(
+    return CustomCard(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
-        leading: Icon(icon, color: Colors.deepPurple),
+        leading: Icon(icon, color: AppColors.primaryBrand),
         title: Text(label),
         subtitle: isLink
             ? GestureDetector(
@@ -620,7 +626,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Text(
                   value,
                   style: const TextStyle(
-                    color: Colors.deepPurple,
+                    color: AppColors.primaryBrand,
                     decoration: TextDecoration.underline,
                   ),
                 ),
@@ -633,10 +639,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   /// 构建钱包卡片
   Widget _buildWalletCard(String label, String address, IconData icon) {
-    return Card(
+    return CustomCard(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
-        leading: Icon(icon, color: Colors.deepPurple),
+        leading: Icon(icon, color: AppColors.primaryBrand),
         title: Text(label),
         subtitle: Text(
           address.isNotEmpty ? address : 'Not set',

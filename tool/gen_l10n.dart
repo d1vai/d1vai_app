@@ -8,29 +8,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-String _escapeForSingleQuotedDart(String input) {
-  final buf = StringBuffer();
-  for (final r in input.runes) {
-    final ch = String.fromCharCode(r);
-    switch (ch) {
-      case r"\\":
-        buf.write(r"\\\\");
-      case "'":
-        buf.write(r"\\'");
-      case "\n":
-        buf.write(r"\\n");
-      case "\r":
-        buf.write(r"\\r");
-      case "\t":
-        buf.write(r"\\t");
-      default:
-        buf.write(ch);
-    }
-  }
-  return buf.toString();
-}
-
-String _dartString(String input) => "'${_escapeForSingleQuotedDart(input)}'";
+String _dartString(String input) => jsonEncode(input);
 
 void main() {
   final arbDir = Directory('lib/l10n/arb');

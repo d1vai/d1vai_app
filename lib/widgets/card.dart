@@ -13,6 +13,8 @@ class CustomCard extends StatelessWidget {
   final List<BoxShadow>? shadow;
   final Clip? clipBehavior;
   final bool glass; // New: Glassmorphism support
+  final bool borderless; // New: no border/shadow framing
+  final bool embedded; // New: transparent background for embedding
 
   const CustomCard({
     super.key,
@@ -26,6 +28,8 @@ class CustomCard extends StatelessWidget {
     this.shadow,
     this.clipBehavior,
     this.glass = false,
+    this.borderless = false,
+    this.embedded = false,
   });
 
   @override
@@ -35,7 +39,8 @@ class CustomCard extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     final effectiveBorderRadius = borderRadius ?? 14.0;
-    final effectiveElevation = elevation ?? (glass ? 0.0 : 1.0);
+    final effectiveElevation =
+        elevation ?? ((glass || embedded || borderless) ? 0.0 : 1.0);
 
     final defaultSurface = glass
         ? Color.alphaBlend(
@@ -44,12 +49,16 @@ class CustomCard extends StatelessWidget {
           ).withValues(alpha: isDark ? 0.74 : 0.92)
         : colorScheme.surface;
 
-    final effectiveBackgroundColor = backgroundColor ?? defaultSurface;
+    final effectiveBackgroundColor =
+        backgroundColor ?? (embedded ? Colors.transparent : defaultSurface);
 
     final defaultBorder = glass
         ? colorScheme.outlineVariant.withValues(alpha: isDark ? 0.35 : 0.5)
         : colorScheme.outlineVariant.withValues(alpha: isDark ? 0.28 : 0.42);
     final effectiveBorderColor = borderColor ?? defaultBorder;
+    final effectiveBorderWidth = (embedded || borderless) ? 0.0 : 1.0;
+    final effectiveResolvedBorderColor =
+        (embedded || borderless) ? Colors.transparent : effectiveBorderColor;
 
     final defaultShadowColor = isDark
         ? Colors.black.withValues(alpha: 0.25)
@@ -68,8 +77,14 @@ class CustomCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: effectiveBackgroundColor,
         borderRadius: BorderRadius.circular(effectiveBorderRadius),
-        border: Border.all(color: effectiveBorderColor, width: 1.0),
-        boxShadow: shadow ?? (glass ? const <BoxShadow>[] : defaultShadows),
+        border: Border.all(
+          color: effectiveResolvedBorderColor,
+          width: effectiveBorderWidth,
+        ),
+        boxShadow: shadow ??
+            ((glass || embedded || borderless)
+                ? const <BoxShadow>[]
+                : defaultShadows),
       ),
       child: child != null
           ? Padding(padding: padding ?? EdgeInsets.zero, child: child)
