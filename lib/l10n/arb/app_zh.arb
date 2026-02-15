@@ -162,5 +162,19 @@
   "verifying": "验证中...",
   "wallet_addresses": "钱包地址",
   "welcome": "欢迎",
-  "your_invite_code": "您的邀请码"
+  "your_invite_code": "您的邀请码",
+  "account_data_title": "账户与数据",
+  "account_data_subtitle": "数据导出与账户删除",
+  "account_data_export_title": "数据导出",
+  "account_data_export_description": "导出目前由客服处理。我们提供可复制并发送的请求模板。",
+  "account_data_delete_title": "账户删除",
+  "account_data_delete_description": "账户删除目前由客服处理。在发起删除前请先阅读法律限制说明。",
+  "account_data_copy_request_template": "复制请求文案",
+  "account_data_request_template_copied": "请求文案已复制到剪贴板",
+  "account_data_support_dialog_message": "请通过 {support_email} 联系客服处理此请求。",
+  "account_data_delete_confirm_message": "这将通过 {support_email} 发起账户删除请求。删除可能不可恢复，是否继续？",
+  "account_data_contact_support_delete": "联系支持删除账户",
+  "account_data_legal": "法律",
+  "account_data_export_template": "请求：数据导出\\n账户：{email}\\n请导出我的账户数据（资料、项目、计费）。\\n联系方式：{support_email}",
+  "account_data_delete_template": "请求：账户删除\\n账户：{email}\\n请删除我的账户及关联数据。\\n我理解该操作可能不可逆。\\n联系方式：{support_email}"
 }

@@ -11,19 +11,35 @@ import '../../widgets/snackbar_helper.dart';
 class AccountDataScreen extends StatelessWidget {
   const AccountDataScreen({super.key});
 
-  String _exportTemplate(String? email) {
+  static const String _supportEmail = 'dev@d1v.ai';
+
+  String _exportTemplate(BuildContext context, String? email) {
+    final loc = AppLocalizations.of(context);
     final e = (email ?? '').trim().isEmpty ? '<your email>' : email!.trim();
-    return 'Request: Data Export\\n'
-        'Account: $e\\n'
-        'Please export my account data (profile, projects, billing).';
+    final template =
+        loc?.translate('account_data_export_template') ??
+        'Request: Data Export\\n'
+            'Account: {email}\\n'
+            'Please export my account data (profile, projects, billing).\\n'
+            'Contact: {support_email}';
+    return template
+        .replaceAll('{email}', e)
+        .replaceAll('{support_email}', _supportEmail);
   }
 
-  String _deleteTemplate(String? email) {
+  String _deleteTemplate(BuildContext context, String? email) {
+    final loc = AppLocalizations.of(context);
     final e = (email ?? '').trim().isEmpty ? '<your email>' : email!.trim();
-    return 'Request: Account Deletion\\n'
-        'Account: $e\\n'
-        'Please delete my account and associated data.\\n'
-        'I understand this action may be irreversible.';
+    final template =
+        loc?.translate('account_data_delete_template') ??
+        'Request: Account Deletion\\n'
+            'Account: {email}\\n'
+            'Please delete my account and associated data.\\n'
+            'I understand this action may be irreversible.\\n'
+            'Contact: {support_email}';
+    return template
+        .replaceAll('{email}', e)
+        .replaceAll('{support_email}', _supportEmail);
   }
 
   Future<void> _copy(BuildContext context, String text) async {
@@ -32,7 +48,32 @@ class AccountDataScreen extends StatelessWidget {
     SnackBarHelper.showSuccess(
       context,
       title: AppLocalizations.of(context)?.translate('copied') ?? 'Copied',
-      message: 'Copied to clipboard',
+      message:
+          AppLocalizations.of(
+            context,
+          )?.translate('account_data_request_template_copied') ??
+          'Request template copied to clipboard',
+    );
+  }
+
+  Future<void> _showSupportDialog(BuildContext context) async {
+    final loc = AppLocalizations.of(context);
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(loc?.translate('contact_support') ?? 'Contact Support'),
+        content: Text(
+          (loc?.translate('account_data_support_dialog_message') ??
+                  'Please contact {support_email} for this request.')
+              .replaceAll('{support_email}', _supportEmail),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(loc?.translate('confirm') ?? 'OK'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -67,12 +108,14 @@ class AccountDataScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Data Export',
+                        loc?.translate('account_data_export_title') ??
+                            'Data Export',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Export is currently handled by support. We provide a template you can copy and send.',
+                        loc?.translate('account_data_export_description') ??
+                            'Export is currently handled by support. We provide a template you can copy and send.',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
@@ -84,17 +127,22 @@ class AccountDataScreen extends StatelessWidget {
                             child: OutlinedButton.icon(
                               onPressed: () => _copy(
                                 context,
-                                _exportTemplate(user.email),
+                                _exportTemplate(context, user.email),
                               ),
                               icon: const Icon(Icons.copy, size: 18),
-                              label: const Text('Copy request template'),
+                              label: Text(
+                                loc?.translate('account_data_copy_request_template') ??
+                                    'Copy request template',
+                              ),
                             ),
                           ),
                           const SizedBox(width: 12),
                           OutlinedButton.icon(
-                            onPressed: () => context.push('/settings/help'),
+                            onPressed: () => _showSupportDialog(context),
                             icon: const Icon(Icons.support_agent, size: 18),
-                            label: const Text('Support'),
+                            label: Text(
+                              loc?.translate('contact_support') ?? 'Support',
+                            ),
                           ),
                         ],
                       ),
@@ -110,14 +158,16 @@ class AccountDataScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Account Deletion',
+                        loc?.translate('account_data_delete_title') ??
+                            'Account Deletion',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: Theme.of(context).colorScheme.error,
                         ),
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Account deletion is currently handled by support. Please review the legal restrictions before requesting deletion.',
+                        loc?.translate('account_data_delete_description') ??
+                            'Account deletion is currently handled by support. Please review the legal restrictions before requesting deletion.',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
@@ -129,17 +179,22 @@ class AccountDataScreen extends StatelessWidget {
                             child: OutlinedButton.icon(
                               onPressed: () => _copy(
                                 context,
-                                _deleteTemplate(user.email),
+                                _deleteTemplate(context, user.email),
                               ),
                               icon: const Icon(Icons.copy, size: 18),
-                              label: const Text('Copy request template'),
+                              label: Text(
+                                loc?.translate('account_data_copy_request_template') ??
+                                    'Copy request template',
+                              ),
                             ),
                           ),
                           const SizedBox(width: 12),
                           OutlinedButton.icon(
                             onPressed: () => context.push('/docs/legal-restrictions'),
                             icon: const Icon(Icons.gavel, size: 18),
-                            label: const Text('Legal'),
+                            label: Text(
+                              loc?.translate('account_data_legal') ?? 'Legal',
+                            ),
                           ),
                         ],
                       ),
@@ -151,29 +206,43 @@ class AccountDataScreen extends StatelessWidget {
                             final shouldProceed = await showDialog<bool>(
                               context: context,
                               builder: (ctx) => AlertDialog(
-                                title: const Text('Request account deletion'),
-                                content: const Text(
-                                  'This will contact support to request account deletion. '
-                                  'Deletion may be irreversible. Continue?',
+                                title: Text(
+                                  loc?.translate('account_data_delete_title') ??
+                                      'Account Deletion',
+                                ),
+                                content: Text(
+                                  (loc?.translate('account_data_delete_confirm_message') ??
+                                          'This will contact {support_email} to request account deletion. Deletion may be irreversible. Continue?')
+                                      .replaceAll(
+                                        '{support_email}',
+                                        _supportEmail,
+                                      ),
                                 ),
                                 actions: [
                                   TextButton(
                                     onPressed: () => Navigator.of(ctx).pop(false),
-                                    child: const Text('Cancel'),
+                                    child: Text(
+                                      loc?.translate('cancel') ?? 'Cancel',
+                                    ),
                                   ),
                                   ElevatedButton(
                                     onPressed: () => Navigator.of(ctx).pop(true),
-                                    child: const Text('Continue'),
+                                    child: Text(
+                                      loc?.translate('confirm') ?? 'Continue',
+                                    ),
                                   ),
                                 ],
                               ),
                             );
                             if (shouldProceed != true) return;
                             if (!context.mounted) return;
-                            context.push('/settings/help');
+                            await _showSupportDialog(context);
                           },
                           icon: const Icon(Icons.support_agent),
-                          label: const Text('Contact support to delete account'),
+                          label: Text(
+                            loc?.translate('account_data_contact_support_delete') ??
+                                'Contact support to delete account',
+                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Theme.of(context).colorScheme.error,
                             foregroundColor:

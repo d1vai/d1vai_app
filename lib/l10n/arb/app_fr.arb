@@ -162,5 +162,19 @@
   "prompt_activity_total": "Total :",
   "prompts_unit": "prompts",
   "legend_less": "Moins",
-  "legend_more": "Plus"
+  "legend_more": "Plus",
+  "account_data_title": "Account & Data",
+  "account_data_subtitle": "Data export and account deletion",
+  "account_data_export_title": "Data Export",
+  "account_data_export_description": "Export is currently handled by support. We provide a template you can copy and send.",
+  "account_data_delete_title": "Account Deletion",
+  "account_data_delete_description": "Account deletion is currently handled by support. Please review the legal restrictions before requesting deletion.",
+  "account_data_copy_request_template": "Copy request template",
+  "account_data_request_template_copied": "Request template copied to clipboard",
+  "account_data_support_dialog_message": "Please contact {support_email} for this request.",
+  "account_data_delete_confirm_message": "This will contact {support_email} to request account deletion. Deletion may be irreversible. Continue?",
+  "account_data_contact_support_delete": "Contact support to delete account",
+  "account_data_legal": "Legal",
+  "account_data_export_template": "Request: Data Export\\nAccount: {email}\\nPlease export my account data (profile, projects, billing).\\nContact: {support_email}",
+  "account_data_delete_template": "Request: Account Deletion\\nAccount: {email}\\nPlease delete my account and associated data.\\nI understand this action may be irreversible.\\nContact: {support_email}"
 }

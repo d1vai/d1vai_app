@@ -162,5 +162,19 @@
   "verifying": "驗證中...",
   "wallet_addresses": "錢包地址",
   "welcome": "歡迎",
-  "your_invite_code": "您的邀請碼"
+  "your_invite_code": "您的邀請碼",
+  "account_data_title": "帳戶與資料",
+  "account_data_subtitle": "資料匯出與帳戶刪除",
+  "account_data_export_title": "資料匯出",
+  "account_data_export_description": "匯出目前由客服處理。我們提供可複製並發送的請求範本。",
+  "account_data_delete_title": "帳戶刪除",
+  "account_data_delete_description": "帳戶刪除目前由客服處理。提出刪除前請先閱讀法律限制說明。",
+  "account_data_copy_request_template": "複製請求文案",
+  "account_data_request_template_copied": "請求文案已複製到剪貼簿",
+  "account_data_support_dialog_message": "請透過 {support_email} 聯絡客服處理此請求。",
+  "account_data_delete_confirm_message": "這將透過 {support_email} 發起帳戶刪除請求。刪除可能無法復原，是否繼續？",
+  "account_data_contact_support_delete": "聯絡客服刪除帳戶",
+  "account_data_legal": "法律",
+  "account_data_export_template": "請求：資料匯出\\n帳戶：{email}\\n請匯出我的帳戶資料（資料、專案、計費）。\\n聯絡方式：{support_email}",
+  "account_data_delete_template": "請求：帳戶刪除\\n帳戶：{email}\\n請刪除我的帳戶及關聯資料。\\n我了解此操作可能不可逆。\\n聯絡方式：{support_email}"
 }
