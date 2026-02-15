@@ -2,10 +2,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
-import '../widgets/snackbar_helper.dart';
-import '../services/d1vai_service.dart';
-import '../utils/error_utils.dart';
+import 'package:d1vai_app/providers/auth_provider.dart';
+import 'package:d1vai_app/widgets/snackbar_helper.dart';
+import 'package:d1vai_app/services/d1vai_service.dart';
+import 'package:d1vai_app/utils/error_utils.dart';
 
 enum WalletType {
   solana('Solana', 'SOL', Icons.currency_bitcoin, Colors.purple),

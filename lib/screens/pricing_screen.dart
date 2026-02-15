@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import '../models/pricing_plan.dart';
-import '../services/wallet_service.dart';
+import 'package:d1vai_app/models/pricing_plan.dart';
+import 'package:d1vai_app/services/wallet_service.dart';
 
 class PricingScreen extends StatefulWidget {
   const PricingScreen({super.key});

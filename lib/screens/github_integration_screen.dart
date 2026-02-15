@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../services/github_service.dart';
-import '../widgets/snackbar_helper.dart';
-import '../widgets/import_repository_dialog.dart';
+import 'package:d1vai_app/services/github_service.dart';
+import 'package:d1vai_app/widgets/snackbar_helper.dart';
+import 'package:d1vai_app/widgets/import_repository_dialog.dart';
 
 class GitHubIntegrationScreen extends StatefulWidget {
   const GitHubIntegrationScreen({super.key});

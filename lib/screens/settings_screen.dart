@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../providers/auth_provider.dart';
-import '../providers/theme_provider.dart';
-import '../l10n/app_localizations.dart';
-import '../services/d1vai_service.dart';
-import '../widgets/snackbar_helper.dart';
-import '../widgets/button.dart';
-import '../core/theme/app_colors.dart';
-import 'settings/profile_tab.dart';
-import 'settings/github_tab.dart';
-import 'settings/invites_tab.dart';
+import 'package:d1vai_app/providers/auth_provider.dart';
+import 'package:d1vai_app/providers/theme_provider.dart';
+import 'package:d1vai_app/l10n/app_localizations.dart';
+import 'package:d1vai_app/services/d1vai_service.dart';
+import 'package:d1vai_app/widgets/snackbar_helper.dart';
+import 'package:d1vai_app/widgets/button.dart';
+import 'package:d1vai_app/core/theme/app_colors.dart';
+import 'package:d1vai_app/screens/settings/profile_tab.dart';
+import 'package:d1vai_app/screens/settings/github_tab.dart';
+import 'package:d1vai_app/screens/settings/invites_tab.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});

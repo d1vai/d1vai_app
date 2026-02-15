@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../../models/env_var.dart';
 import '../../services/d1vai_service.dart';
@@ -9,6 +8,7 @@ import '../../core/auth_expiry_bus.dart';
 import '../../utils/error_utils.dart';
 import '../snackbar_helper.dart';
 import 'env_var_editor_dialog.dart';
+import 'env_var_loading_skeleton.dart';
 
 /// 项目详情页 - Environment Tab（环境变量）
 class ProjectApiTab extends StatefulWidget {
@@ -340,7 +340,7 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
                     const SizedBox(height: 12),
                   ],
                   if (_isLoadingEnvVars)
-                    const _EnvVarLoadingSkeleton()
+                    const EnvVarLoadingSkeleton()
                   else if (_envVars.isEmpty)
                     _EnvVarEmptyState(
                       onAdd: _showCreateEnvVarDialog,
@@ -359,95 +359,6 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _EnvVarLoadingSkeleton extends StatelessWidget {
-  const _EnvVarLoadingSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final base = isDark
-        ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.40)
-        : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.85);
-    final highlight = isDark
-        ? theme.colorScheme.surface.withValues(alpha: 0.70)
-        : theme.colorScheme.surface.withValues(alpha: 0.98);
-    final cardBg = isDark
-        ? theme.colorScheme.surface.withValues(alpha: 0.35)
-        : theme.colorScheme.surface.withValues(alpha: 0.9);
-    final borderColor = theme.colorScheme.outlineVariant.withValues(
-      alpha: 0.65,
-    );
-
-    Widget line(double width, double height, {double radius = 6}) {
-      return Container(
-        width: width,
-        height: height,
-        decoration: BoxDecoration(
-          color: theme.colorScheme.onSurface.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(radius),
-        ),
-      );
-    }
-
-    return Shimmer.fromColors(
-      baseColor: base,
-      highlightColor: highlight,
-      period: const Duration(milliseconds: 1200),
-      child: Column(
-        children: List.generate(3, (index) {
-          return Container(
-            margin: EdgeInsets.only(bottom: index == 2 ? 0 : 12),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: cardBg,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: borderColor),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 26,
-                      height: 26,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.08,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(child: line(220 - (index * 24), 14)),
-                    const SizedBox(width: 8),
-                    line(16, 16, radius: 999),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                line(260 - (index * 20), 11),
-                const SizedBox(height: 6),
-                line(180 - (index * 14), 11),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    line(12, 12, radius: 999),
-                    const SizedBox(width: 8),
-                    line(78, 11),
-                    const Spacer(),
-                    line(72, 24, radius: 999),
-                  ],
-                ),
-              ],
-            ),
-          );
-        }),
       ),
     );
   }

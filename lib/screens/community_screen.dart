@@ -4,16 +4,16 @@ import 'package:shimmer/shimmer.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
-import '../services/d1vai_service.dart';
-import '../models/community_post.dart';
-import '../widgets/search_field.dart';
-import 'create_post_screen.dart';
-import 'post_detail_screen.dart';
-import '../widgets/post_card.dart';
-import '../utils/error_utils.dart';
-import '../providers/auth_provider.dart';
-import '../widgets/login_required_dialog.dart';
-import '../l10n/app_localizations.dart';
+import 'package:d1vai_app/services/d1vai_service.dart';
+import 'package:d1vai_app/models/community_post.dart';
+import 'package:d1vai_app/widgets/search_field.dart';
+import 'package:d1vai_app/screens/create_post_screen.dart';
+import 'package:d1vai_app/screens/post_detail_screen.dart';
+import 'package:d1vai_app/widgets/post_card.dart';
+import 'package:d1vai_app/utils/error_utils.dart';
+import 'package:d1vai_app/providers/auth_provider.dart';
+import 'package:d1vai_app/widgets/login_required_dialog.dart';
+import 'package:d1vai_app/l10n/app_localizations.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});

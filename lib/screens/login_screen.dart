@@ -2,12 +2,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import '../providers/auth_provider.dart';
-import '../widgets/otp_input_field.dart';
-import '../widgets/snackbar_helper.dart';
-import '../widgets/auth/login_legal_links.dart';
-import '../widgets/auth/session_expired_banner.dart';
-import '../l10n/app_localizations.dart';
+import 'package:d1vai_app/providers/auth_provider.dart';
+import 'package:d1vai_app/widgets/otp_input_field.dart';
+import 'package:d1vai_app/widgets/snackbar_helper.dart';
+import 'package:d1vai_app/widgets/auth/login_legal_links.dart';
+import 'package:d1vai_app/widgets/auth/session_expired_banner.dart';
+import 'package:d1vai_app/l10n/app_localizations.dart';
 
 /// 登录模式枚举
 enum LoginMode {

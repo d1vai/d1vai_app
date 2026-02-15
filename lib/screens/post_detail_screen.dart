@@ -5,16 +5,16 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:ui' as ui;
-import '../models/community_post.dart';
-import '../providers/auth_provider.dart';
-import '../services/d1vai_service.dart';
-import '../widgets/avatar_image.dart';
-import '../widgets/chat/markdown_text.dart';
-import '../widgets/login_required_dialog.dart';
-import '../widgets/phone_frame_web_preview.dart';
-import '../widgets/share_sheet.dart';
-import '../widgets/snackbar_helper.dart';
-import '../utils/community_post_display.dart';
+import 'package:d1vai_app/models/community_post.dart';
+import 'package:d1vai_app/providers/auth_provider.dart';
+import 'package:d1vai_app/services/d1vai_service.dart';
+import 'package:d1vai_app/widgets/avatar_image.dart';
+import 'package:d1vai_app/widgets/chat/markdown_text.dart';
+import 'package:d1vai_app/widgets/login_required_dialog.dart';
+import 'package:d1vai_app/widgets/phone_frame_web_preview.dart';
+import 'package:d1vai_app/widgets/share_sheet.dart';
+import 'package:d1vai_app/widgets/snackbar_helper.dart';
+import 'package:d1vai_app/utils/community_post_display.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final CommunityPost post;

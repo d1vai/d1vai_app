@@ -1,25 +1,27 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import '../models/message.dart';
-import '../models/model_config.dart';
-import '../models/outbox.dart';
+import 'package:d1vai_app/models/message.dart';
+import 'package:d1vai_app/models/model_config.dart';
+import 'package:d1vai_app/models/outbox.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../services/chat_service.dart';
-import '../services/model_config_service.dart';
-import '../services/workspace_service.dart';
-import '../l10n/app_localizations.dart';
-import '../utils/error_utils.dart';
-import '../utils/message_parser.dart';
-import '../widgets/chat/message_list.dart';
-import '../widgets/chat/message_input.dart';
-import '../widgets/chat/outbox/outbox_widgets.dart';
-import '../widgets/chat/chat_screen_states.dart';
-import '../widgets/chat/status_pill.dart';
-import '../widgets/compact_selector.dart';
-import '../widgets/alert.dart';
-import '../widgets/snackbar_helper.dart';
+import 'package:d1vai_app/services/chat_service.dart';
+import 'package:d1vai_app/services/d1vai_service.dart';
+import 'package:d1vai_app/services/model_config_service.dart';
+import 'package:d1vai_app/services/workspace_service.dart';
+import 'package:d1vai_app/l10n/app_localizations.dart';
+import 'package:d1vai_app/utils/error_utils.dart';
+import 'package:d1vai_app/utils/message_parser.dart';
+import 'package:d1vai_app/widgets/chat/message_list.dart';
+import 'package:d1vai_app/widgets/chat/message_input.dart';
+import 'package:d1vai_app/widgets/chat/outbox/outbox_widgets.dart';
+import 'package:d1vai_app/widgets/chat/chat_screen_states.dart';
+import 'package:d1vai_app/widgets/chat/floating_preview_dock.dart';
+import 'package:d1vai_app/widgets/chat/status_pill.dart';
+import 'package:d1vai_app/widgets/compact_selector.dart';
+import 'package:d1vai_app/widgets/alert.dart';
+import 'package:d1vai_app/widgets/snackbar_helper.dart';
 
 class _OutboxAborted implements Exception {
   const _OutboxAborted();
@@ -53,6 +55,7 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final ChatService _chatService = ChatService();
+  final D1vaiService _d1vaiService = D1vaiService();
   final WorkspaceService _workspaceService = WorkspaceService();
   final ModelConfigService _modelConfigService = ModelConfigService();
   final ScrollController _scrollController = ScrollController();
@@ -114,11 +117,27 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _hasLoadedModelConfig = false;
   Timer? _modelConfigRetryTimer;
 
+  String? _miniPreviewUrl;
+  int _miniPreviewReloadVersion = 0;
+
   @override
   void initState() {
     super.initState();
     unawaited(_bootstrapWorkspace());
     unawaited(_initialize());
+    unawaited(_syncMiniPreviewUrl());
+  }
+
+  @override
+  void didUpdateWidget(covariant ChatScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.projectId != widget.projectId) {
+      setState(() {
+        _miniPreviewUrl = null;
+        _miniPreviewReloadVersion = 0;
+      });
+      unawaited(_syncMiniPreviewUrl());
+    }
   }
 
   @override
@@ -381,6 +400,50 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _initialize() async {
     await _refreshHistory(attemptReconnect: true);
     await _maybeRunAutoprompt();
+  }
+
+  Future<void> _syncMiniPreviewUrl({bool bumpVersion = false}) async {
+    try {
+      final project = await _d1vaiService.getUserProjectById(widget.projectId);
+      final next =
+          (project.latestPreviewUrl ?? project.latestProdDeploymentUrl ?? '')
+              .trim();
+      if (!mounted) return;
+      if (next.isEmpty) {
+        if ((_miniPreviewUrl ?? '').isNotEmpty || bumpVersion) {
+          setState(() {
+            _miniPreviewUrl = null;
+            if (bumpVersion) _miniPreviewReloadVersion += 1;
+          });
+        }
+        return;
+      }
+
+      final changed = next != (_miniPreviewUrl ?? '').trim();
+      if (!changed && !bumpVersion) return;
+      setState(() {
+        _miniPreviewUrl = next;
+        if (changed || bumpVersion) {
+          _miniPreviewReloadVersion += 1;
+        }
+      });
+    } catch (_) {
+      if (!mounted || !bumpVersion) return;
+      setState(() {
+        _miniPreviewReloadVersion += 1;
+      });
+    }
+  }
+
+  void _refreshMiniPreview({bool fetchLatestUrl = false}) {
+    if (fetchLatestUrl) {
+      unawaited(_syncMiniPreviewUrl(bumpVersion: true));
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      _miniPreviewReloadVersion += 1;
+    });
   }
 
   void _scheduleWorkspacePoll(WorkspacePhase phase) {
@@ -1092,6 +1155,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
     // Web filters these from history; treat them as non-chat side-effect frames.
     if (type == 'deployment_start' || type == 'deployment_complete') {
+      if (type == 'deployment_complete') {
+        _refreshMiniPreview(fetchLatestUrl: true);
+      }
       return;
     }
 
@@ -1212,6 +1278,9 @@ class _ChatScreenState extends State<ChatScreen> {
       _autoConnectDisabled = true;
       if (mounted) {
         setState(() {});
+      }
+      if (type == 'result' || type == 'complete' || type == 'cancelled') {
+        _refreshMiniPreview(fetchLatestUrl: false);
       }
       _signalOutbox();
       unawaited(_drainOutbox());
@@ -1597,6 +1666,7 @@ class _ChatScreenState extends State<ChatScreen> {
         break;
       case _ChatAppBarAction.refresh:
         unawaited(_refreshHistory(attemptReconnect: true));
+        _refreshMiniPreview(fetchLatestUrl: true);
         break;
       case _ChatAppBarAction.clearChat:
         unawaited(_showClearChatDialog());
@@ -1820,62 +1890,76 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
-      body: Column(
+      body: Stack(
         children: [
-          // Messages list
-          Expanded(
-            child: Hero(
-              tag: heroTag,
-              transitionOnUserGestures: true,
-              child: Material(
-                color: theme.colorScheme.surface,
-                child: _messages.isEmpty
-                    ? _isLoadingHistory
-                          ? const ChatScreenLoadingState()
-                          : ChatScreenEmptyState(onQuickAction: _sendMessage)
-                    : MessageList(
-                        messages: _messages,
-                        scrollController: _scrollController,
-                        messageStatuses: _messageStatuses,
-                        onRetry: _retryMessage,
-                        onLoadMore: _loadMoreHistory,
-                        hasMoreHistory: _hasMoreHistory,
-                        isLoadingMore: _isLoadingMoreHistory,
-                      ),
+          Column(
+            children: [
+              // Messages list
+              Expanded(
+                child: Hero(
+                  tag: heroTag,
+                  transitionOnUserGestures: true,
+                  child: Material(
+                    color: theme.colorScheme.surface,
+                    child: _messages.isEmpty
+                        ? _isLoadingHistory
+                              ? const ChatScreenLoadingState()
+                              : ChatScreenEmptyState(
+                                  onQuickAction: _sendMessage,
+                                )
+                        : MessageList(
+                            messages: _messages,
+                            scrollController: _scrollController,
+                            messageStatuses: _messageStatuses,
+                            onRetry: _retryMessage,
+                            onLoadMore: _loadMoreHistory,
+                            hasMoreHistory: _hasMoreHistory,
+                            isLoadingMore: _isLoadingMoreHistory,
+                          ),
+                  ),
+                ),
+              ),
+              OutboxBar(
+                count: _outboxItems.length,
+                mode: _outboxMode,
+                collapsed: _outboxCollapsed,
+                onToggleCollapsed: () {
+                  setState(() {
+                    _outboxCollapsed = !_outboxCollapsed;
+                  });
+                },
+                onOpen: () {
+                  if (_outboxItems.isEmpty) return;
+                  showOutboxSheet(
+                    context,
+                    items: _outboxItems,
+                    mode: _outboxMode,
+                    onClear: _outboxClear,
+                    onDelete: _outboxDelete,
+                    onUpdate: _outboxUpdate,
+                  );
+                },
+              ),
+              // Message input
+              MessageInput(
+                onSend: _sendMessage,
+                isEnabled: !_isLoading,
+                hintText: 'Type your message...',
+                controller: _inputController,
+                focusNode: _inputFocusNode,
+                queueCount: _outboxItems.length,
+                showSendPulse: _outboxMode == OutboxMode.dispatching,
+              ),
+            ],
+          ),
+          if ((_miniPreviewUrl ?? '').trim().isNotEmpty)
+            Positioned.fill(
+              child: FloatingPreviewDock(
+                previewUrl: (_miniPreviewUrl ?? '').trim(),
+                reloadVersion: _miniPreviewReloadVersion,
+                topDock: 8,
               ),
             ),
-          ),
-          OutboxBar(
-            count: _outboxItems.length,
-            mode: _outboxMode,
-            collapsed: _outboxCollapsed,
-            onToggleCollapsed: () {
-              setState(() {
-                _outboxCollapsed = !_outboxCollapsed;
-              });
-            },
-            onOpen: () {
-              if (_outboxItems.isEmpty) return;
-              showOutboxSheet(
-                context,
-                items: _outboxItems,
-                mode: _outboxMode,
-                onClear: _outboxClear,
-                onDelete: _outboxDelete,
-                onUpdate: _outboxUpdate,
-              );
-            },
-          ),
-          // Message input
-          MessageInput(
-            onSend: _sendMessage,
-            isEnabled: !_isLoading,
-            hintText: 'Type your message...',
-            controller: _inputController,
-            focusNode: _inputFocusNode,
-            queueCount: _outboxItems.length,
-            showSendPulse: _outboxMode == OutboxMode.dispatching,
-          ),
         ],
       ),
     );

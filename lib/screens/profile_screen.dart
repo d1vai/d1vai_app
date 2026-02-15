@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../providers/auth_provider.dart';
-import '../providers/profile_provider.dart';
-import '../models/user.dart';
-import '../widgets/login_required_dialog.dart';
-import '../widgets/ai_avatar_selector_dialog.dart';
-import '../widgets/avatar_image.dart';
-import '../core/theme/app_colors.dart';
-import '../widgets/card.dart';
-import '../widgets/snackbar_helper.dart';
+import 'package:d1vai_app/providers/auth_provider.dart';
+import 'package:d1vai_app/providers/profile_provider.dart';
+import 'package:d1vai_app/models/user.dart';
+import 'package:d1vai_app/widgets/login_required_dialog.dart';
+import 'package:d1vai_app/widgets/ai_avatar_selector_dialog.dart';
+import 'package:d1vai_app/widgets/avatar_image.dart';
+import 'package:d1vai_app/core/theme/app_colors.dart';
+import 'package:d1vai_app/widgets/card.dart';
+import 'package:d1vai_app/widgets/snackbar_helper.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

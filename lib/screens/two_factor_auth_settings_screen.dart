@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../widgets/snackbar_helper.dart';
+import 'package:d1vai_app/widgets/snackbar_helper.dart';
 
 class TwoFactorAuthSettingsScreen extends StatefulWidget {
   const TwoFactorAuthSettingsScreen({super.key});

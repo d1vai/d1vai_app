@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shimmer/shimmer.dart';
-import '../models/analytics.dart';
-import '../services/analytics_service.dart';
-import '../widgets/analytics/metric_card.dart';
-import '../widgets/analytics/realtime_chart.dart';
-import '../widgets/snackbar_helper.dart';
+import 'package:d1vai_app/models/analytics.dart';
+import 'package:d1vai_app/services/analytics_service.dart';
+import 'package:d1vai_app/widgets/analytics/metric_card.dart';
+import 'package:d1vai_app/widgets/analytics/realtime_chart.dart';
+import 'package:d1vai_app/widgets/snackbar_helper.dart';
 
 /// Real-time analytics dashboard screen
 class RealtimeAnalyticsScreen extends StatefulWidget {
