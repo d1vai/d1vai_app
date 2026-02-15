@@ -28,6 +28,8 @@ class _OutboxAborted implements Exception {
   String toString() => 'outbox_aborted';
 }
 
+enum _ChatAppBarAction { workspaceStatus, refresh, clearChat }
+
 /// Main chat screen for AI conversations
 class ChatScreen extends StatefulWidget {
   final String projectId;
@@ -1374,6 +1376,25 @@ class _ChatScreenState extends State<ChatScreen> {
         : 'Ready';
   }
 
+  String _workspaceStatusLabel() {
+    switch (_workspacePhase) {
+      case WorkspacePhase.ready:
+        return 'Ready';
+      case WorkspacePhase.starting:
+        return 'Starting';
+      case WorkspacePhase.syncing:
+        return 'Syncing';
+      case WorkspacePhase.standby:
+        return 'Standby';
+      case WorkspacePhase.archived:
+        return 'Archived';
+      case WorkspacePhase.error:
+        return 'Error';
+      case WorkspacePhase.unknown:
+        return 'Unknown';
+    }
+  }
+
   /// Send a message
   Future<void> _sendMessage(String text, {bool forceNewSession = false}) async {
     final prompt = text.trim();
@@ -1517,6 +1538,44 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
+  Future<void> _showClearChatDialog() async {
+    final shouldClear = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear Chat'),
+        content: const Text('Are you sure you want to clear all messages?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Clear'),
+          ),
+        ],
+      ),
+    );
+    if (shouldClear != true || !mounted) return;
+    setState(() {
+      _messages.clear();
+    });
+  }
+
+  void _handleAppBarAction(_ChatAppBarAction action) {
+    switch (action) {
+      case _ChatAppBarAction.workspaceStatus:
+        unawaited(_refreshWorkspaceStatus(bypassCache: true));
+        break;
+      case _ChatAppBarAction.refresh:
+        unawaited(_refreshHistory(attemptReconnect: true));
+        break;
+      case _ChatAppBarAction.clearChat:
+        unawaited(_showClearChatDialog());
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -1624,59 +1683,51 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
           ),
-          Tooltip(
-            message: wsTooltip,
-            child: IconButton(
-              tooltip: 'Workspace status',
-              onPressed: () {
-                unawaited(_refreshWorkspaceStatus(bypassCache: true));
-              },
-              icon: Container(
-                width: 14,
-                height: 14,
-                decoration: BoxDecoration(
-                  color: dotColor,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              unawaited(_refreshHistory(attemptReconnect: true));
-            },
-            tooltip: 'Refresh',
-          ),
-          IconButton(
-            icon: const Icon(Icons.clear_all),
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Clear Chat'),
-                  content: const Text(
-                    'Are you sure you want to clear all messages?',
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel'),
+          PopupMenuButton<_ChatAppBarAction>(
+            tooltip: wsTooltip,
+            icon: const Icon(Icons.more_vert),
+            onSelected: _handleAppBarAction,
+            itemBuilder: (context) => [
+              PopupMenuItem<_ChatAppBarAction>(
+                value: _ChatAppBarAction.workspaceStatus,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: dotColor,
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _messages.clear();
-                        });
-                        Navigator.pop(context);
-                      },
-                      child: const Text('Clear'),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text('Workspace: ${_workspaceStatusLabel()}'),
                     ),
                   ],
                 ),
-              );
-            },
-            tooltip: 'Clear Chat',
+              ),
+              const PopupMenuItem<_ChatAppBarAction>(
+                value: _ChatAppBarAction.refresh,
+                child: Row(
+                  children: [
+                    Icon(Icons.refresh, size: 18),
+                    SizedBox(width: 10),
+                    Text('Refresh'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<_ChatAppBarAction>(
+                value: _ChatAppBarAction.clearChat,
+                child: Row(
+                  children: [
+                    Icon(Icons.clear_all, size: 18),
+                    SizedBox(width: 10),
+                    Text('Clear Chat'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),

@@ -300,16 +300,23 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Widget _buildWorkspaceStatusWidget({bool inAppBar = false}) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final dotColor = _workspaceDotColor();
     final loadingVisual = _workspaceIsLoadingVisual();
+    final appBarFg =
+        theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface;
     final bg = inAppBar
-        ? Colors.white.withValues(alpha: 0.12)
+        ? (isDark
+              ? Colors.white.withValues(alpha: 0.10)
+              : Colors.black.withValues(alpha: 0.06))
         : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.45);
     final borderColor = inAppBar
-        ? Colors.white.withValues(alpha: 0.26)
+        ? (isDark
+              ? Colors.white.withValues(alpha: 0.24)
+              : Colors.black.withValues(alpha: 0.16))
         : theme.colorScheme.outlineVariant.withValues(alpha: 0.8);
     final textColor = inAppBar
-        ? Colors.white.withValues(alpha: 0.94)
+        ? appBarFg.withValues(alpha: 0.94)
         : theme.colorScheme.onSurface;
     final statusText = _workspaceStatusLabel();
     return Tooltip(
