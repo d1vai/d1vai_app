@@ -27,7 +27,12 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
   bool _hasError = false;
   double _progress = 0;
 
-  Uri get _docUrl => Uri.parse('https://docs.d1v.ai/docs/${widget.slug}');
+  Uri get _docUrl {
+    if (widget.slug == 'legal-restrictions') {
+      return Uri.parse('https://www.d1v.ai/docs/legal-restrictions');
+    }
+    return Uri.parse('https://docs.d1v.ai/docs/${widget.slug}');
+  }
 
   static const _jsHandlerCopyCode = 'd1vCopyCode';
   static const _prefsKeyRecent = 'docs_recent_slugs';
@@ -43,9 +48,7 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
     _prefsFuture = SharedPreferences.getInstance();
     unawaited(_recordRecent());
     _pullToRefreshController = PullToRefreshController(
-      settings: PullToRefreshSettings(
-        color: Colors.deepPurple,
-      ),
+      settings: PullToRefreshSettings(color: Colors.deepPurple),
       onRefresh: () async {
         try {
           await _controller?.reload();
@@ -119,7 +122,8 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
     // Add a lightweight "Copy" button to code blocks for quick reuse on mobile.
     // Uses a JS handler to bridge clipboard access back to Flutter.
     await _controller?.evaluateJavascript(
-      source: '''
+      source:
+          '''
 (() => {
   try {
     const FLAG = '__d1v_copy_injected__';
@@ -210,6 +214,11 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          tooltip: 'Close',
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
         title: Text('Docs: ${widget.slug}'),
         actions: [
           IconButton(
@@ -261,22 +270,22 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
             },
             onWebViewCreated: (controller) {
               _controller = controller;
-	              controller.addJavaScriptHandler(
-	                handlerName: _jsHandlerCopyCode,
-	                callback: (args) async {
-	                  final ctx = context;
-	                  final text = args.isNotEmpty ? args.first?.toString() : null;
-	                  if (text == null || text.trim().isEmpty) return null;
-	                  await Clipboard.setData(ClipboardData(text: text));
-	                  if (!ctx.mounted) return null;
-	                  SnackBarHelper.showSuccess(
-	                    ctx,
-	                    title: 'Copied',
-	                    message: 'Code block copied. Paste it anywhere.',
-	                  );
-	                  return null;
-	                },
-	              );
+              controller.addJavaScriptHandler(
+                handlerName: _jsHandlerCopyCode,
+                callback: (args) async {
+                  final ctx = context;
+                  final text = args.isNotEmpty ? args.first?.toString() : null;
+                  if (text == null || text.trim().isEmpty) return null;
+                  await Clipboard.setData(ClipboardData(text: text));
+                  if (!ctx.mounted) return null;
+                  SnackBarHelper.showSuccess(
+                    ctx,
+                    title: 'Copied',
+                    message: 'Code block copied. Paste it anywhere.',
+                  );
+                  return null;
+                },
+              );
             },
             onLoadStart: (controller, url) {
               if (!mounted) return;

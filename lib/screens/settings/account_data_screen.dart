@@ -131,7 +131,9 @@ class AccountDataScreen extends StatelessWidget {
                               ),
                               icon: const Icon(Icons.copy, size: 18),
                               label: Text(
-                                loc?.translate('account_data_copy_request_template') ??
+                                loc?.translate(
+                                      'account_data_copy_request_template',
+                                    ) ??
                                     'Copy request template',
                               ),
                             ),
@@ -160,9 +162,10 @@ class AccountDataScreen extends StatelessWidget {
                       Text(
                         loc?.translate('account_data_delete_title') ??
                             'Account Deletion',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
                       ),
                       const SizedBox(height: 6),
                       Text(
@@ -183,14 +186,17 @@ class AccountDataScreen extends StatelessWidget {
                               ),
                               icon: const Icon(Icons.copy, size: 18),
                               label: Text(
-                                loc?.translate('account_data_copy_request_template') ??
+                                loc?.translate(
+                                      'account_data_copy_request_template',
+                                    ) ??
                                     'Copy request template',
                               ),
                             ),
                           ),
                           const SizedBox(width: 12),
                           OutlinedButton.icon(
-                            onPressed: () => context.push('/docs/legal-restrictions'),
+                            onPressed: () =>
+                                context.push('/docs/legal-restrictions'),
                             icon: const Icon(Icons.gavel, size: 18),
                             label: Text(
                               loc?.translate('account_data_legal') ?? 'Legal',
@@ -211,7 +217,9 @@ class AccountDataScreen extends StatelessWidget {
                                       'Account Deletion',
                                 ),
                                 content: Text(
-                                  (loc?.translate('account_data_delete_confirm_message') ??
+                                  (loc?.translate(
+                                            'account_data_delete_confirm_message',
+                                          ) ??
                                           'This will contact {support_email} to request account deletion. Deletion may be irreversible. Continue?')
                                       .replaceAll(
                                         '{support_email}',
@@ -220,13 +228,15 @@ class AccountDataScreen extends StatelessWidget {
                                 ),
                                 actions: [
                                   TextButton(
-                                    onPressed: () => Navigator.of(ctx).pop(false),
+                                    onPressed: () =>
+                                        Navigator.of(ctx).pop(false),
                                     child: Text(
                                       loc?.translate('cancel') ?? 'Cancel',
                                     ),
                                   ),
                                   ElevatedButton(
-                                    onPressed: () => Navigator.of(ctx).pop(true),
+                                    onPressed: () =>
+                                        Navigator.of(ctx).pop(true),
                                     child: Text(
                                       loc?.translate('confirm') ?? 'Continue',
                                     ),
@@ -240,13 +250,18 @@ class AccountDataScreen extends StatelessWidget {
                           },
                           icon: const Icon(Icons.support_agent),
                           label: Text(
-                            loc?.translate('account_data_contact_support_delete') ??
+                            loc?.translate(
+                                  'account_data_contact_support_delete',
+                                ) ??
                                 'Contact support to delete account',
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).colorScheme.error,
-                            foregroundColor:
-                                Theme.of(context).colorScheme.onError,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.error,
+                            foregroundColor: Theme.of(
+                              context,
+                            ).colorScheme.onError,
                           ),
                         ),
                       ),

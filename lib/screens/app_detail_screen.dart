@@ -85,6 +85,11 @@ class _AppDetailScreenState extends State<AppDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          tooltip: 'Close',
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
         title: Text('App: ${widget.slug}'),
         actions: [
           IconButton(

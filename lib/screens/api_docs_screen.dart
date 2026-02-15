@@ -68,6 +68,11 @@ class _ApiDocsScreenState extends State<ApiDocsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          tooltip: 'Close',
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
         title: const Text('API Documentation'),
         actions: [
           IconButton(
