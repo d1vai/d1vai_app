@@ -141,6 +141,7 @@
   "share_invite_code": "Share Invite Code",
   "share_message_subject": "Join me on d1v.ai",
   "share_success": "Invite code shared successfully",
+  "report_success": "Report submitted successfully",
   "sort": "Sort",
   "success": "Success",
   "sync_failed": "Failed to sync repositories",

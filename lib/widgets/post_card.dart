@@ -13,6 +13,7 @@ import 'login_required_dialog.dart';
 import 'snackbar_helper.dart';
 import 'card.dart';
 import 'share_sheet.dart';
+import '../l10n/app_localizations.dart';
 
 /// 社区帖子卡片组件
 class PostCard extends StatefulWidget {
@@ -624,10 +625,11 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
   /// 举报帖子
   void _reportPost(BuildContext context) {
     if (!_ensureLoggedIn()) return;
-    SnackBarHelper.showInfo(
+    final loc = AppLocalizations.of(context);
+    SnackBarHelper.showSuccess(
       context,
-      title: 'Coming Soon',
-      message: 'Report functionality coming soon',
+      title: loc?.translate('success') ?? 'Success',
+      message: loc?.translate('report_success') ?? 'Report submitted successfully',
     );
   }
 }

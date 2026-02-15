@@ -136,6 +136,7 @@
   "share_invite_code": "招待コードをシェア",
   "share_message_subject": "d1v.ai に参加しよう",
   "share_success": "招待コードが正常にシェアされました",
+  "report_success": "報告が送信されました",
   "sort": "並べ替え",
   "success": "成功",
   "sync_failed": "リポジトリの同期に失敗しました",
