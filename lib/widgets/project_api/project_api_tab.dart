@@ -372,74 +372,76 @@ class _EnvVarLoadingSkeleton extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final base = isDark
-        ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35)
-        : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.72);
+        ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.40)
+        : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.85);
     final highlight = isDark
-        ? theme.colorScheme.surface.withValues(alpha: 0.85)
-        : theme.colorScheme.surface.withValues(alpha: 1.0);
-    final block = isDark
-        ? theme.colorScheme.onSurface.withValues(alpha: 0.18)
-        : theme.colorScheme.onSurface.withValues(alpha: 0.08);
+        ? theme.colorScheme.surface.withValues(alpha: 0.70)
+        : theme.colorScheme.surface.withValues(alpha: 0.98);
+    final cardBg = isDark
+        ? theme.colorScheme.surface.withValues(alpha: 0.35)
+        : theme.colorScheme.surface.withValues(alpha: 0.9);
+    final borderColor = theme.colorScheme.outlineVariant.withValues(
+      alpha: 0.65,
+    );
 
-    Widget bar({
-      double? width,
-      required double height,
-      double radius = 6,
-      bool expand = false,
-    }) {
-      final child = Container(
+    Widget line(double width, double height, {double radius = 6}) {
+      return Container(
         width: width,
         height: height,
         decoration: BoxDecoration(
-          color: block,
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.10),
           borderRadius: BorderRadius.circular(radius),
         ),
       );
-      return expand ? Expanded(child: child) : child;
     }
 
     return Shimmer.fromColors(
       baseColor: base,
       highlightColor: highlight,
-      period: const Duration(milliseconds: 1350),
+      period: const Duration(milliseconds: 1200),
       child: Column(
-        children: List.generate(4, (index) {
+        children: List.generate(3, (index) {
           return Container(
-            margin: EdgeInsets.only(bottom: index == 3 ? 0 : 10),
-            padding: const EdgeInsets.all(12),
+            margin: EdgeInsets.only(bottom: index == 2 ? 0 : 12),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.7),
-              ),
+              color: cardBg,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: borderColor),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          bar(width: 160, height: 14),
-                          const SizedBox(height: 8),
-                          bar(width: 220, height: 12),
-                        ],
+                    Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.08,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
+                    const SizedBox(width: 10),
+                    Expanded(child: line(220 - (index * 24), 14)),
                     const SizedBox(width: 8),
-                    bar(width: 18, height: 18, radius: 999),
+                    line(16, 16, radius: 999),
                   ],
                 ),
+                const SizedBox(height: 10),
+                line(260 - (index * 20), 11),
+                const SizedBox(height: 6),
+                line(180 - (index * 14), 11),
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    bar(width: 12, height: 12, radius: 999),
+                    line(12, 12, radius: 999),
                     const SizedBox(width: 8),
-                    bar(width: 80, height: 11),
+                    line(78, 11),
                     const Spacer(),
-                    bar(width: 70, height: 24, radius: 14),
+                    line(72, 24, radius: 999),
                   ],
                 ),
               ],
@@ -460,51 +462,63 @@ class _EnvVarEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final bg = LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: isDark ? 0.32 : 0.58,
+        ),
+        theme.colorScheme.surface.withValues(alpha: isDark ? 0.28 : 0.86),
+      ],
+    );
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        gradient: bg,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.8),
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.75),
         ),
       ),
       child: Column(
         children: [
           Container(
-            width: 46,
-            height: 46,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
+              shape: BoxShape.circle,
               color: theme.colorScheme.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(
               Icons.key_rounded,
               color: theme.colorScheme.primary,
-              size: 24,
+              size: 26,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Text(
-            'No environment variables yet',
+            'No environment variables',
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
-            'Add your first key-value pair to configure runtime behavior.',
+            'Create your first key-value pair to configure\nruntime behavior for this project.',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
+              height: 1.35,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           FilledButton.icon(
             onPressed: canAdd ? onAdd : null,
             icon: const Icon(Icons.add, size: 16),
-            label: const Text('Add environment variable'),
+            label: const Text('Add variable'),
           ),
         ],
       ),

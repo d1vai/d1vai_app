@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/otp_input_field.dart';
 import '../widgets/snackbar_helper.dart';
+import '../widgets/auth/login_legal_links.dart';
+import '../widgets/auth/session_expired_banner.dart';
 import '../l10n/app_localizations.dart';
 
 /// 登录模式枚举
@@ -268,7 +270,7 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 const SizedBox(height: 60),
                 if (_showSessionExpiredBanner) ...[
-                  _SessionExpiredBanner(
+                  SessionExpiredBanner(
                     title:
                         loc?.translate('session_expired_title') ??
                         'Session expired',
@@ -592,95 +594,19 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 const SizedBox(height: 48),
 
-                // 底部提示 + 法律链接
-                Text(
-                  loc?.translate('agree_terms') ?? '登录即表示您同意我们的服务条款和隐私政策',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 4),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 2,
-                  children: [
-                    TextButton(
-                      onPressed: () => context.push('/docs/terms-of-service'),
-                      child: const Text('Terms'),
-                    ),
-                    const Text('·', style: TextStyle(color: Colors.grey)),
-                    TextButton(
-                      onPressed: () => context.push('/docs/privacy-policy'),
-                      child: Text(loc?.translate('privacy') ?? 'Privacy'),
-                    ),
-                    const Text('·', style: TextStyle(color: Colors.grey)),
-                    TextButton(
-                      onPressed: () => context.push('/docs/legal-restrictions'),
-                      child: Text(
-                        loc?.translate('account_data_legal') ?? 'Legal',
-                      ),
-                    ),
-                  ],
+                LoginLegalLinks(
+                  agreementText:
+                      loc?.translate('agree_terms') ?? '登录即表示您同意我们的服务条款和隐私政策',
+                  privacyLabel: loc?.translate('privacy') ?? 'Privacy',
+                  legalLabel: loc?.translate('account_data_legal') ?? 'Legal',
+                  onOpenTerms: () => context.push('/docs/terms-of-service'),
+                  onOpenPrivacy: () => context.push('/docs/privacy-policy'),
+                  onOpenLegal: () => context.push('/docs/legal-restrictions'),
                 ),
               ],
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _SessionExpiredBanner extends StatelessWidget {
-  final String title;
-  final String message;
-  final VoidCallback onClose;
-
-  const _SessionExpiredBanner({
-    required this.title,
-    required this.message,
-    required this.onClose,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: cs.errorContainer.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.error.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.info_outline, color: cs.onErrorContainer),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: cs.onErrorContainer,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(message, style: TextStyle(color: cs.onErrorContainer)),
-              ],
-            ),
-          ),
-          IconButton(
-            onPressed: onClose,
-            icon: Icon(Icons.close, color: cs.onErrorContainer),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-            tooltip: 'Close',
-          ),
-        ],
       ),
     );
   }

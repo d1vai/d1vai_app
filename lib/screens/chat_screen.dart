@@ -15,8 +15,7 @@ import '../utils/message_parser.dart';
 import '../widgets/chat/message_list.dart';
 import '../widgets/chat/message_input.dart';
 import '../widgets/chat/outbox/outbox_widgets.dart';
-import '../widgets/chat/message_skeleton.dart';
-import '../widgets/chat/quick_actions.dart';
+import '../widgets/chat/chat_screen_states.dart';
 import '../widgets/chat/status_pill.dart';
 import '../widgets/compact_selector.dart';
 import '../widgets/alert.dart';
@@ -1832,8 +1831,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 color: theme.colorScheme.surface,
                 child: _messages.isEmpty
                     ? _isLoadingHistory
-                          ? _buildLoadingState()
-                          : _buildEmptyState()
+                          ? const ChatScreenLoadingState()
+                          : ChatScreenEmptyState(onQuickAction: _sendMessage)
                     : MessageList(
                         messages: _messages,
                         scrollController: _scrollController,
@@ -1877,67 +1876,6 @@ class _ChatScreenState extends State<ChatScreen> {
             queueCount: _outboxItems.length,
             showSendPulse: _outboxMode == OutboxMode.dispatching,
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    final theme = Theme.of(context);
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final maxH = (constraints.maxHeight * 0.48).clamp(0.0, 420.0);
-        return Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: maxH, maxWidth: 520),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.smart_toy,
-                  size: 44.0,
-                  color: theme.colorScheme.primary.withValues(alpha: 0.55),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Ask AI',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Ask about this project or paste code.',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant.withValues(
-                      alpha: 0.9,
-                    ),
-                    height: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                QuickActions(
-                  onSelect: _sendMessage,
-                  dense: true,
-                  showTitle: false,
-                  padding: EdgeInsets.zero,
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildLoadingState() {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          MessageSkeleton(isUser: true, delay: 0),
-          MessageSkeleton(isUser: false, delay: 150),
-          MessageSkeleton(isUser: true, delay: 300),
         ],
       ),
     );

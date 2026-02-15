@@ -19,6 +19,7 @@ import '../core/auth_expiry_bus.dart';
 import '../widgets/login_required_view.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/compact_selector.dart';
+import '../widgets/dashboard/workspace_status_badge.dart';
 import '../widgets/prompt_activity_heatmap.dart';
 import '../widgets/snackbar_helper.dart';
 import 'projects/widgets/project_card_tile.dart';
@@ -258,104 +259,20 @@ class _DashboardScreenState extends State<DashboardScreen>
         _workspacePhase == WorkspacePhase.syncing;
   }
 
-  Widget _buildWorkspaceDot({
-    required Color color,
-    required bool breathing,
-    double size = 10,
-  }) {
-    if (!breathing) {
-      return Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-      );
-    }
-    return AnimatedBuilder(
-      animation: _workspaceBreathController,
-      builder: (context, child) {
-        final t = Curves.easeInOut.transform(_workspaceBreathController.value);
-        final scale = 1.0 + (0.18 * t);
-        final glow = 0.15 + (0.35 * t);
-        return Transform.scale(
-          scale: scale,
-          child: Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.75 + (0.25 * t)),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: color.withValues(alpha: glow),
-                  blurRadius: 10,
-                  spreadRadius: 1.5,
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   Widget _buildWorkspaceStatusWidget({bool inAppBar = false}) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final dotColor = _workspaceDotColor();
     final loadingVisual = _workspaceIsLoadingVisual();
-    final appBarFg =
-        theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface;
-    final bg = inAppBar
-        ? (isDark
-              ? Colors.white.withValues(alpha: 0.10)
-              : Colors.black.withValues(alpha: 0.06))
-        : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.45);
-    final borderColor = inAppBar
-        ? (isDark
-              ? Colors.white.withValues(alpha: 0.24)
-              : Colors.black.withValues(alpha: 0.16))
-        : theme.colorScheme.outlineVariant.withValues(alpha: 0.8);
-    final textColor = inAppBar
-        ? appBarFg.withValues(alpha: 0.94)
-        : theme.colorScheme.onSurface;
     final statusText = _workspaceStatusLabel();
-    return Tooltip(
-      message: _workspaceTooltip(),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(10),
-        onTap: _workspaceActiveInFlight
-            ? null
-            : () => unawaited(_requestWorkspaceActive(fromTap: true)),
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: inAppBar ? 8 : 10,
-            vertical: inAppBar ? 6 : 8,
-          ),
-          decoration: BoxDecoration(
-            color: bg,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: borderColor),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildWorkspaceDot(
-                color: dotColor,
-                breathing: loadingVisual,
-                size: inAppBar ? 9 : 10,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                inAppBar ? 'WS $statusText' : 'Workspace $statusText',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: textColor,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return WorkspaceStatusBadge(
+      inAppBar: inAppBar,
+      statusText: statusText,
+      tooltip: _workspaceTooltip(),
+      dotColor: dotColor,
+      breathing: loadingVisual,
+      breathAnimation: _workspaceBreathController,
+      onTap: _workspaceActiveInFlight
+          ? null
+          : () => unawaited(_requestWorkspaceActive(fromTap: true)),
     );
   }
 
