@@ -119,7 +119,8 @@ class _ChatPlaygroundScreenState extends State<ChatPlaygroundScreen> {
                             final qp = prompt.isEmpty
                                 ? ''
                                 : '?autoprompt=${Uri.encodeQueryComponent(prompt)}';
-                            context.go('/projects/${p.id}/chat$qp');
+                            // Keep navigation stack so Chat With AI can show a back button.
+                            context.push('/projects/${p.id}/chat$qp');
                           },
                         ),
                       );

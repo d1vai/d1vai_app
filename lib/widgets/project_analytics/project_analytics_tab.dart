@@ -821,8 +821,9 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                 onSelected: previewHost == null
                     ? null
                     : (v) {
-                        if (!v || _envScope == AnalyticsEnvScope.preview)
+                        if (!v || _envScope == AnalyticsEnvScope.preview) {
                           return;
+                        }
                         setState(() => _envScope = AnalyticsEnvScope.preview);
                         reload();
                       },

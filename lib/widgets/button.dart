@@ -168,7 +168,9 @@ class _ButtonState extends State<Button> with SingleTickerProviderStateMixin {
         buttonChild = widgets.first;
       } else {
         buttonChild = Row(
-          mainAxisSize: MainAxisSize.max,
+          // Keep intrinsic width so the button still lays out in
+          // unbounded horizontal constraints (e.g. compact app bars / chips).
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: widget.iconAlignment,
           children: widgets,
         );

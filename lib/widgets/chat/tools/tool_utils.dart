@@ -163,8 +163,9 @@ String toolSummary(String toolName, dynamic input) {
         {
           final header = todoWriteHeader(input);
           if (header == null) return 'TodoWrite';
-          if (header.state == 'done_all')
+          if (header.state == 'done_all') {
             return 'TodoWrite · ${header.progressText} · done';
+          }
           return 'TodoWrite · ${header.progressText} · In Progress${header.taskText.isNotEmpty ? ' · ${header.taskText}' : ''}';
         }
       case 'Task':

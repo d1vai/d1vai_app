@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../models/env_var.dart';
 import '../../services/d1vai_service.dart';
@@ -339,22 +340,11 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
                     const SizedBox(height: 12),
                   ],
                   if (_isLoadingEnvVars)
-                    const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(16),
-                        child: CircularProgressIndicator(),
-                      ),
-                    )
+                    const _EnvVarLoadingSkeleton()
                   else if (_envVars.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Text(
-                        'No environment variables — add one to get started.',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
+                    _EnvVarEmptyState(
+                      onAdd: _showCreateEnvVarDialog,
+                      canAdd: !_isLoadingEnvVars,
                     )
                   else
                     ..._envVars.map(
@@ -367,6 +357,154 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
                 ],
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EnvVarLoadingSkeleton extends StatelessWidget {
+  const _EnvVarLoadingSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final base = isDark
+        ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35)
+        : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.72);
+    final highlight = isDark
+        ? theme.colorScheme.surface.withValues(alpha: 0.85)
+        : theme.colorScheme.surface.withValues(alpha: 1.0);
+    final block = isDark
+        ? theme.colorScheme.onSurface.withValues(alpha: 0.18)
+        : theme.colorScheme.onSurface.withValues(alpha: 0.08);
+
+    Widget bar({
+      double? width,
+      required double height,
+      double radius = 6,
+      bool expand = false,
+    }) {
+      final child = Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: block,
+          borderRadius: BorderRadius.circular(radius),
+        ),
+      );
+      return expand ? Expanded(child: child) : child;
+    }
+
+    return Shimmer.fromColors(
+      baseColor: base,
+      highlightColor: highlight,
+      period: const Duration(milliseconds: 1350),
+      child: Column(
+        children: List.generate(4, (index) {
+          return Container(
+            margin: EdgeInsets.only(bottom: index == 3 ? 0 : 10),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.7),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          bar(width: 160, height: 14),
+                          const SizedBox(height: 8),
+                          bar(width: 220, height: 12),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    bar(width: 18, height: 18, radius: 999),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    bar(width: 12, height: 12, radius: 999),
+                    const SizedBox(width: 8),
+                    bar(width: 80, height: 11),
+                    const Spacer(),
+                    bar(width: 70, height: 24, radius: 14),
+                  ],
+                ),
+              ],
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+class _EnvVarEmptyState extends StatelessWidget {
+  final VoidCallback onAdd;
+  final bool canAdd;
+
+  const _EnvVarEmptyState({required this.onAdd, required this.canAdd});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.8),
+        ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(
+              Icons.key_rounded,
+              color: theme.colorScheme.primary,
+              size: 24,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'No environment variables yet',
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Add your first key-value pair to configure runtime behavior.',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 14),
+          FilledButton.icon(
+            onPressed: canAdd ? onAdd : null,
+            icon: const Icon(Icons.add, size: 16),
+            label: const Text('Add environment variable'),
           ),
         ],
       ),

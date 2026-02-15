@@ -592,11 +592,35 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 const SizedBox(height: 48),
 
-                // 底部提示
+                // 底部提示 + 法律链接
                 Text(
                   loc?.translate('agree_terms') ?? '登录即表示您同意我们的服务条款和隐私政策',
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                   textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 2,
+                  children: [
+                    TextButton(
+                      onPressed: () => context.push('/docs/terms-of-service'),
+                      child: const Text('Terms'),
+                    ),
+                    const Text('·', style: TextStyle(color: Colors.grey)),
+                    TextButton(
+                      onPressed: () => context.push('/docs/privacy-policy'),
+                      child: Text(loc?.translate('privacy') ?? 'Privacy'),
+                    ),
+                    const Text('·', style: TextStyle(color: Colors.grey)),
+                    TextButton(
+                      onPressed: () => context.push('/docs/legal-restrictions'),
+                      child: Text(
+                        loc?.translate('account_data_legal') ?? 'Legal',
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

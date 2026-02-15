@@ -329,8 +329,9 @@ String _toolSubtitle(
           {
             final header = todoWriteHeader(input);
             if (header == null) return summaryFallback;
-            if (header.state == 'done_all')
+            if (header.state == 'done_all') {
               return 'Done · ${header.progressText}';
+            }
             return header.taskText.isNotEmpty
                 ? 'In progress · ${header.progressText} · ${header.taskText}'
                 : 'In progress · ${header.progressText}';

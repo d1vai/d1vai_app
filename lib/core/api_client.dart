@@ -596,6 +596,33 @@ class ApiClient {
         }
         debugPrint('═══════════════════════════════════════');
         rethrow;
+      } on http.ClientException catch (e) {
+        final retryable = _isTransientClientException(e);
+        if (retryable && attempt < retries) {
+          debugPrint(
+            '🔄 Transient client error on attempt ${attempt + 1}/$retries, retrying in ${delay.inMilliseconds}ms: $e',
+          );
+          if (endpoint != null) {
+            debugPrint('📍 API Path: $endpoint');
+          }
+          await Future.delayed(delay);
+          delay *= 2;
+          attempt++;
+          continue;
+        }
+        debugPrint('═══════════════════════════════════════');
+        debugPrint('Client Exception');
+        debugPrint('═══════════════════════════════════════');
+        if (endpoint != null) {
+          debugPrint('📍 API Path: $endpoint');
+        }
+        debugPrint('🔢 Retry Count: $attempt/$retries');
+        debugPrint('💥 Error: $e');
+        if (requestBody != null) {
+          debugPrint('📤 Request Body: ${jsonEncode(requestBody)}');
+        }
+        debugPrint('═══════════════════════════════════════');
+        rethrow;
       } catch (e) {
         // 其他错误，检查是否包含可重试的状态码
         if (e.toString().contains('HTTP Error: 5')) {
@@ -640,6 +667,16 @@ class ApiClient {
     }
 
     throw Exception('Max retries exceeded');
+  }
+
+  bool _isTransientClientException(http.ClientException e) {
+    final msg = e.message.toLowerCase();
+    return msg.contains('connection closed before full header') ||
+        msg.contains('connection reset') ||
+        msg.contains('connection terminated') ||
+        msg.contains('broken pipe') ||
+        msg.contains('http2') ||
+        msg.contains('temporarily unavailable');
   }
 
   T _handleResponse<T>(

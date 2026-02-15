@@ -51,13 +51,15 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
         break;
       case WalletType.sui:
         if (!a.startsWith('0x')) return 'SUI address should start with 0x';
-        if (a.length != 66)
+        if (a.length != 66) {
           return 'SUI address should be 66 characters (0x + 64 hex)';
+        }
         break;
       case WalletType.evm:
         if (!a.startsWith('0x')) return 'EVM address should start with 0x';
-        if (a.length != 42)
+        if (a.length != 42) {
           return 'EVM address should be 42 characters (0x + 40 hex)';
+        }
         break;
     }
     return null;

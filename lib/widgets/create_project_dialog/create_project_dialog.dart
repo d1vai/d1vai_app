@@ -480,37 +480,26 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
           SnackBarHelper.showInfo(
             context,
             title: 'Retrying',
-            message:
-                'Create-with-integrations failed, retrying with fallback flow…',
+            message: 'Create-with-integrations failed, retrying once…',
             duration: const Duration(seconds: 5),
           );
 
           await _workspaceService.ensureWorkspaceReady();
 
           final d1vaiService = D1vaiService();
-          final meta = await d1vaiService.generateProjectMeta(
+          final retryResult = await d1vaiService.createProjectWithIntegrations(
             prompt: description,
             maxDescLen: 120,
+            enablePay: false,
+            enableDatabase: true,
           );
-          final name = meta['project_name']?.toString().trim();
-          final desc = meta['project_description']?.toString() ?? '';
-          if (name == null || name.isEmpty) {
-            throw Exception('Fallback meta missing project_name');
-          }
-
-          final fallback = await d1vaiService.createUserProject({
-            'project_name': name,
-            'project_description': desc,
-            'enable_pay': false,
-            'enable_database': true,
-          });
 
           if (!mounted) return;
 
-          final project = fallback['project'] as Map<String, dynamic>?;
+          final project = retryResult['project'] as Map<String, dynamic>?;
           final projectId = project?['id']?.toString();
           if (projectId == null || projectId.isEmpty) {
-            throw Exception('Fallback create project missing id');
+            throw Exception('Retry create project missing id');
           }
 
           final projectProvider = Provider.of<ProjectProvider>(
@@ -532,9 +521,9 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
             '/projects/$projectId/chat?autoprompt=${Uri.encodeQueryComponent(autoprompt)}',
           );
           return;
-        } catch (fallbackErr) {
+        } catch (retryErr) {
           // fallthrough to show combined error below
-          errText = 'primary=$errText; fallback=$fallbackErr';
+          errText = 'primary=$errText; retry=$retryErr';
         }
       }
       if (!mounted) return;
