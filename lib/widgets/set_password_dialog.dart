@@ -5,10 +5,7 @@ import '../services/d1vai_service.dart';
 class SetPasswordDialog extends StatefulWidget {
   final VoidCallback? onSuccess;
 
-  const SetPasswordDialog({
-    super.key,
-    this.onSuccess,
-  });
+  const SetPasswordDialog({super.key, this.onSuccess});
 
   @override
   State<SetPasswordDialog> createState() => _SetPasswordDialogState();
@@ -189,9 +186,7 @@ class _SetPasswordDialogState extends State<SetPasswordDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: Text(
             'Cancel',
-            style: TextStyle(
-              color: theme.colorScheme.onSurface,
-            ),
+            style: TextStyle(color: theme.colorScheme.onSurface),
           ),
         ),
         ElevatedButton(
@@ -200,7 +195,9 @@ class _SetPasswordDialogState extends State<SetPasswordDialog> {
             backgroundColor: theme.colorScheme.primary,
             foregroundColor: theme.colorScheme.onPrimary,
             disabledBackgroundColor: theme.colorScheme.surfaceContainerHighest,
-            disabledForegroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.38),
+            disabledForegroundColor: theme.colorScheme.onSurface.withValues(
+              alpha: 0.38,
+            ),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),

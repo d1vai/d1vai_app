@@ -59,4 +59,3 @@ class CreateProjectChooserView extends StatelessWidget {
     );
   }
 }
-

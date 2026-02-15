@@ -15,10 +15,7 @@ import 'snackbar_helper.dart';
 class AccountStatusCard extends StatelessWidget {
   final User user;
 
-  const AccountStatusCard({
-    super.key,
-    required this.user,
-  });
+  const AccountStatusCard({super.key, required this.user});
 
   @override
   Widget build(BuildContext context) {
@@ -34,17 +31,16 @@ class AccountStatusCard extends StatelessWidget {
             // 标题和描述
             const Text(
               'Account Status',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
             Text(
               'Your account information and permissions',
               style: TextStyle(
                 fontSize: 14,
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
             const SizedBox(height: 16),
@@ -53,19 +49,33 @@ class AccountStatusCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                color: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.outline.withValues(alpha: 0.5),
                   width: 1,
                 ),
               ),
               child: Column(
                 children: [
-                  _buildInfoRow(context, 'User ID', '#${user.id}', Icons.fingerprint),
+                  _buildInfoRow(
+                    context,
+                    'User ID',
+                    '#${user.id}',
+                    Icons.fingerprint,
+                  ),
                   if (user.slug != null && user.slug!.isNotEmpty) ...[
                     const SizedBox(height: 8),
-                    _buildInfoRow(context, 'Username', user.slug!, Icons.person_outline),
+                    _buildInfoRow(
+                      context,
+                      'Username',
+                      user.slug!,
+                      Icons.person_outline,
+                    ),
                   ],
                   if (user.stripeCustomerId != null &&
                       user.stripeCustomerId!.isNotEmpty) ...[
@@ -90,11 +100,7 @@ class AccountStatusCard extends StatelessWidget {
                 Expanded(
                   child: Column(
                     children: [
-                      _buildStatusRow(
-                        context,
-                        'Onboarded',
-                        user.isOnboarded,
-                      ),
+                      _buildStatusRow(context, 'Onboarded', user.isOnboarded),
                       const SizedBox(height: 12),
                       _buildStatusRow(
                         context,
@@ -116,11 +122,7 @@ class AccountStatusCard extends StatelessWidget {
                 Expanded(
                   child: Column(
                     children: [
-                      _buildStatusRow(
-                        context,
-                        'Admin',
-                        user.isAdmin,
-                      ),
+                      _buildStatusRow(context, 'Admin', user.isAdmin),
                       const SizedBox(height: 12),
                       _buildStatusRow(
                         context,
@@ -161,10 +163,7 @@ class AccountStatusCard extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 4),
         Container(
@@ -191,21 +190,14 @@ class AccountStatusCard extends StatelessWidget {
   }
 
   /// 构建文本行（用于最后登录方式）
-  Widget _buildTextRow(
-    BuildContext context,
-    String label,
-    String value,
-  ) {
+  Widget _buildTextRow(BuildContext context, String label, String value) {
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 4),
         Container(
@@ -232,7 +224,12 @@ class AccountStatusCard extends StatelessWidget {
   }
 
   /// 构建信息行（用于 User ID、Username 等）
-  Widget _buildInfoRow(BuildContext context, String label, String value, IconData icon) {
+  Widget _buildInfoRow(
+    BuildContext context,
+    String label,
+    String value,
+    IconData icon,
+  ) {
     return InkWell(
       onTap: () async {
         await Clipboard.setData(ClipboardData(text: value));
@@ -249,11 +246,7 @@ class AccountStatusCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
           children: [
-            Icon(
-              icon,
-              size: 16,
-              color: Colors.deepPurple,
-            ),
+            Icon(icon, size: 16, color: Colors.deepPurple),
             const SizedBox(width: 8),
             Expanded(
               child: Column(
@@ -280,11 +273,7 @@ class AccountStatusCard extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(
-              Icons.copy,
-              size: 14,
-              color: Colors.grey.shade500,
-            ),
+            Icon(Icons.copy, size: 14, color: Colors.grey.shade500),
           ],
         ),
       ),

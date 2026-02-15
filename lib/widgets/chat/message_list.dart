@@ -5,11 +5,7 @@ import 'message_bubble.dart';
 import 'message_metadata.dart';
 
 /// Message status enum
-enum MessageStatus {
-  pending,
-  sent,
-  failed,
-}
+enum MessageStatus { pending, sent, failed }
 
 /// Enhanced scrollable list of chat messages with advanced features
 class MessageList extends StatefulWidget {
@@ -99,9 +95,7 @@ class _MessageListState extends State<MessageList> {
     // Update seen messages when new messages arrive
     if (widget.messages.length > oldWidget.messages.length) {
       // Mark new messages as unseen
-      for (int i = oldWidget.messages.length;
-          i < widget.messages.length;
-          i++) {
+      for (int i = oldWidget.messages.length; i < widget.messages.length; i++) {
         final newMessage = widget.messages[i];
         _seenMessages.add(newMessage.id);
       }
@@ -172,9 +166,7 @@ class _MessageListState extends State<MessageList> {
             curve: Curves.easeOut,
           );
         } else {
-          controller.jumpTo(
-            0,
-          );
+          controller.jumpTo(0);
         }
       }
     });
@@ -218,7 +210,9 @@ class _MessageListState extends State<MessageList> {
             reverse: true,
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.only(bottom: 16.0),
-            itemCount: widget.messages.isEmpty ? 0 : (widget.messages.length + 1),
+            itemCount: widget.messages.isEmpty
+                ? 0
+                : (widget.messages.length + 1),
             itemBuilder: (context, index) {
               if (index == widget.messages.length) {
                 return _HistoryHeader(
@@ -226,21 +220,23 @@ class _MessageListState extends State<MessageList> {
                   loading: widget.isLoadingMore,
                 );
               }
-              final message = widget.messages[widget.messages.length - 1 - index];
+              final message =
+                  widget.messages[widget.messages.length - 1 - index];
               final isUser = message.role == 'user';
               final isNew = !_isNewMessage(message);
               final messageStatus =
                   widget.messageStatuses?[message.id] ?? MessageStatus.sent;
               final userAccessory =
                   (isUser && messageStatus != MessageStatus.sent)
-                      ? _UserSendAccessory(
-                          status: messageStatus,
-                          onRetry: messageStatus == MessageStatus.failed &&
-                                  widget.onRetry != null
-                              ? () => widget.onRetry!(message)
-                              : null,
-                        )
-                      : null;
+                  ? _UserSendAccessory(
+                      status: messageStatus,
+                      onRetry:
+                          messageStatus == MessageStatus.failed &&
+                              widget.onRetry != null
+                          ? () => widget.onRetry!(message)
+                          : null,
+                    )
+                  : null;
 
               return AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
@@ -297,8 +293,10 @@ class _MessageListState extends State<MessageList> {
                 setState(() {});
               },
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary,
                   borderRadius: BorderRadius.circular(20),
@@ -441,10 +439,7 @@ class _UserSendAccessory extends StatelessWidget {
   final MessageStatus status;
   final VoidCallback? onRetry;
 
-  const _UserSendAccessory({
-    required this.status,
-    required this.onRetry,
-  });
+  const _UserSendAccessory({required this.status, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -509,11 +504,7 @@ class EmptyMessageList extends StatelessWidget {
   final String? title;
   final String? message;
 
-  const EmptyMessageList({
-    super.key,
-    this.title,
-    this.message,
-  });
+  const EmptyMessageList({super.key, this.title, this.message});
 
   @override
   Widget build(BuildContext context) {
@@ -526,31 +517,28 @@ class EmptyMessageList extends StatelessWidget {
             Icon(
               Icons.chat_bubble_outline,
               size: 64.0,
-              color: Theme.of(context)
-                  .colorScheme
-                  .onSurfaceVariant
-                  .withValues(alpha: 0.5),
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 16.0),
             Text(
               title ?? 'No messages yet',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurfaceVariant
-                        .withValues(alpha: 0.8),
-                  ),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+              ),
             ),
             const SizedBox(height: 8.0),
             Text(
               message ?? 'Start a conversation with AI',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurfaceVariant
-                        .withValues(alpha: 0.6),
-                  ),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+              ),
             ),
           ],
         ),

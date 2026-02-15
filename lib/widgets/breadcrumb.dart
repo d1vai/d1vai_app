@@ -45,12 +45,14 @@ class Breadcrumb extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final effectiveTextStyle = textStyle ??
+    final effectiveTextStyle =
+        textStyle ??
         TextStyle(
           fontSize: 14,
           color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
         );
-    final effectiveCurrentStyle = currentPageStyle ??
+    final effectiveCurrentStyle =
+        currentPageStyle ??
         TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w500,
@@ -67,15 +69,20 @@ class Breadcrumb extends StatelessWidget {
       displayItems = [firstItem, ...lastItems];
 
       ellipsisWidget ??= _DefaultEllipsis(
-        color: separatorColor ?? theme.colorScheme.onSurface.withValues(alpha: 0.5),
+        color:
+            separatorColor ??
+            theme.colorScheme.onSurface.withValues(alpha: 0.5),
       );
     }
 
-    final effectiveSeparator = separator ??
+    final effectiveSeparator =
+        separator ??
         Icon(
           Icons.chevron_right,
           size: 16,
-          color: separatorColor ?? theme.colorScheme.onSurface.withValues(alpha: 0.5),
+          color:
+              separatorColor ??
+              theme.colorScheme.onSurface.withValues(alpha: 0.5),
         );
 
     return Container(
@@ -126,10 +133,12 @@ class Breadcrumb extends StatelessWidget {
 
       // Add separator between items (except after last)
       if (!isLast) {
-        widgets.add(Padding(
-          padding: EdgeInsets.symmetric(horizontal: separatorSpacing ?? 4),
-          child: separator,
-        ));
+        widgets.add(
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: separatorSpacing ?? 4),
+            child: separator,
+          ),
+        );
       }
     }
 
@@ -171,10 +180,7 @@ class _BreadcrumbItem extends StatelessWidget {
     );
 
     if (item.isCurrentPage || !item.enabled || item.onTap == null || isLast) {
-      return Opacity(
-        opacity: item.enabled ? 1.0 : 0.5,
-        child: content,
-      );
+      return Opacity(opacity: item.enabled ? 1.0 : 0.5, child: content);
     }
 
     return InkWell(
@@ -197,13 +203,7 @@ class _DefaultEllipsis extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-      child: Text(
-        '...',
-        style: TextStyle(
-          color: color,
-          fontSize: 16,
-        ),
-      ),
+      child: Text('...', style: TextStyle(color: color, fontSize: 16)),
     );
   }
 }
@@ -258,23 +258,28 @@ class SimpleBreadcrumb extends StatelessWidget {
       );
     }
 
-    final effectiveStyle = textStyle ??
+    final effectiveStyle =
+        textStyle ??
         TextStyle(
           fontSize: 14,
           color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
         );
-    final effectiveCurrentStyle = currentPageStyle ??
+    final effectiveCurrentStyle =
+        currentPageStyle ??
         TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
           color: theme.colorScheme.primary,
         );
 
-    final effectiveSeparator = separator ??
+    final effectiveSeparator =
+        separator ??
         Icon(
           Icons.chevron_right,
           size: 16,
-          color: separatorColor ?? theme.colorScheme.onSurface.withValues(alpha: 0.5),
+          color:
+              separatorColor ??
+              theme.colorScheme.onSurface.withValues(alpha: 0.5),
         );
 
     return Container(
@@ -282,7 +287,12 @@ class SimpleBreadcrumb extends StatelessWidget {
       child: Wrap(
         spacing: 8,
         runSpacing: 4,
-        children: _buildItems(breadcrumbItems, effectiveStyle, effectiveCurrentStyle, effectiveSeparator),
+        children: _buildItems(
+          breadcrumbItems,
+          effectiveStyle,
+          effectiveCurrentStyle,
+          effectiveSeparator,
+        ),
       ),
     );
   }
@@ -346,11 +356,14 @@ class CustomBreadcrumb extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    final effectiveSeparator = separator ??
+    final effectiveSeparator =
+        separator ??
         Icon(
           Icons.chevron_right,
           size: 16,
-          color: separatorColor ?? theme.colorScheme.onSurface.withValues(alpha: 0.5),
+          color:
+              separatorColor ??
+              theme.colorScheme.onSurface.withValues(alpha: 0.5),
         );
 
     return Container(

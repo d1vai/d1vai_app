@@ -66,11 +66,13 @@ class _ExpandableTextState extends State<ExpandableText>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final effectiveTextStyle = widget.textStyle ??
+    final effectiveTextStyle =
+        widget.textStyle ??
         theme.textTheme.bodyMedium ??
         const TextStyle(fontSize: 14);
 
-    final effectiveLinkStyle = widget.linkStyle ??
+    final effectiveLinkStyle =
+        widget.linkStyle ??
         effectiveTextStyle.copyWith(
           color: theme.colorScheme.primary,
           fontWeight: FontWeight.w600,
@@ -92,19 +94,13 @@ class _ExpandableTextState extends State<ExpandableText>
 
   Widget _buildText(TextStyle textStyle, TextStyle linkStyle) {
     if (_isExpanded) {
-      return Text(
-        widget.text,
-        style: textStyle,
-      );
+      return Text(widget.text, style: textStyle);
     }
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final textPainter = TextPainter(
-          text: TextSpan(
-            text: widget.text,
-            style: textStyle,
-          ),
+          text: TextSpan(text: widget.text, style: textStyle),
           maxLines: widget.maxLines,
           textDirection: TextDirection.ltr,
         );
@@ -117,10 +113,7 @@ class _ExpandableTextState extends State<ExpandableText>
         final isTextOverflowing = textPainter.didExceedMaxLines;
 
         if (!isTextOverflowing) {
-          return Text(
-            widget.text,
-            style: textStyle,
-          );
+          return Text(widget.text, style: textStyle);
         }
 
         return Text(
@@ -144,8 +137,11 @@ class _ExpandableTextState extends State<ExpandableText>
             if (widget.showIcon) ...[
               AnimatedRotation(
                 turns: _isExpanded ? 0.5 : 0.0,
-                duration: widget.animationDuration ?? const Duration(milliseconds: 200),
-                child: widget.expandIcon ??
+                duration:
+                    widget.animationDuration ??
+                    const Duration(milliseconds: 200),
+                child:
+                    widget.expandIcon ??
                     Icon(
                       Icons.keyboard_arrow_down,
                       size: 16,
@@ -237,11 +233,13 @@ class _ExpandableWidgetState extends State<ExpandableWidget>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final effectiveTextStyle = widget.textStyle ??
+    final effectiveTextStyle =
+        widget.textStyle ??
         theme.textTheme.bodyMedium ??
         const TextStyle(fontSize: 14);
 
-    final effectiveLinkStyle = widget.linkStyle ??
+    final effectiveLinkStyle =
+        widget.linkStyle ??
         effectiveTextStyle.copyWith(
           color: theme.colorScheme.primary,
           fontWeight: FontWeight.w600,
@@ -260,7 +258,8 @@ class _ExpandableWidgetState extends State<ExpandableWidget>
                       ? CrossFadeState.showSecond
                       : CrossFadeState.showFirst,
                   duration:
-                      widget.animationDuration ?? const Duration(milliseconds: 200),
+                      widget.animationDuration ??
+                      const Duration(milliseconds: 200),
                 ),
               )
             : AnimatedCrossFade(
@@ -270,7 +269,8 @@ class _ExpandableWidgetState extends State<ExpandableWidget>
                     ? CrossFadeState.showSecond
                     : CrossFadeState.showFirst,
                 duration:
-                    widget.animationDuration ?? const Duration(milliseconds: 200),
+                    widget.animationDuration ??
+                    const Duration(milliseconds: 200),
               ),
         if (_shouldShowToggle()) _buildToggle(effectiveLinkStyle),
       ],
@@ -288,8 +288,11 @@ class _ExpandableWidgetState extends State<ExpandableWidget>
             if (widget.showIcon) ...[
               AnimatedRotation(
                 turns: _isExpanded ? 0.5 : 0.0,
-                duration: widget.animationDuration ?? const Duration(milliseconds: 200),
-                child: widget.expandIcon ??
+                duration:
+                    widget.animationDuration ??
+                    const Duration(milliseconds: 200),
+                child:
+                    widget.expandIcon ??
                     Icon(
                       Icons.keyboard_arrow_down,
                       size: 16,

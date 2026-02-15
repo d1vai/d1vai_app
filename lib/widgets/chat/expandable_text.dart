@@ -52,21 +52,12 @@ class _ExpandableTextState extends State<ExpandableText> {
       children: [
         if (_isExpanded || !shouldShowExpandButton) ...[
           widget.isMarkdown
-              ? MarkdownText(
-                  text: widget.text,
-                  style: widget.style,
-                )
-              : Text(
-                  widget.text,
-                  style: widget.style,
-                ),
+              ? MarkdownText(text: widget.text, style: widget.style)
+              : Text(widget.text, style: widget.style),
         ] else ...[
           // Show truncated text
           if (widget.isMarkdown)
-            MarkdownText(
-              text: truncatedText,
-              style: widget.style,
-            )
+            MarkdownText(text: truncatedText, style: widget.style)
           else
             Text(
               truncatedText,

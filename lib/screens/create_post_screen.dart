@@ -97,11 +97,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(ctx).pop(_DraftRestoreAction.discard),
+              onPressed: () =>
+                  Navigator.of(ctx).pop(_DraftRestoreAction.discard),
               child: const Text('Discard'),
             ),
             ElevatedButton(
-              onPressed: () => Navigator.of(ctx).pop(_DraftRestoreAction.restore),
+              onPressed: () =>
+                  Navigator.of(ctx).pop(_DraftRestoreAction.restore),
               child: const Text('Restore'),
             ),
           ],
@@ -206,13 +208,16 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         actions: [
           TextButton(
             onPressed: (!authed || _isLoading) ? null : _submitPost,
-            child: _isLoading 
+            child: _isLoading
                 ? const SizedBox(
-                    width: 20, 
-                    height: 20, 
+                    width: 20,
+                    height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Post', style: TextStyle(fontWeight: FontWeight.bold)),
+                : const Text(
+                    'Post',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
           ),
         ],
       ),

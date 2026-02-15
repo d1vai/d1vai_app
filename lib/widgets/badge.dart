@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum BadgeVariant {
-  defaultVariant,
-  secondary,
-  destructive,
-  outline,
-}
+enum BadgeVariant { defaultVariant, secondary, destructive, outline }
 
 class Badge extends StatelessWidget {
   final Widget? child;
@@ -72,10 +67,10 @@ class Badge extends StatelessWidget {
     final effectivePadding =
         padding ?? const EdgeInsets.symmetric(horizontal: 10, vertical: 6);
     final effectiveRadius =
-        borderRadiusGeometry ??
-        BorderRadius.circular(borderRadius ?? 999);
+        borderRadiusGeometry ?? BorderRadius.circular(borderRadius ?? 999);
 
-    final content = child ??
+    final content =
+        child ??
         (label != null
             ? Text(
                 label!,
@@ -97,11 +92,9 @@ class Badge extends StatelessWidget {
       padding: effectivePadding,
       decoration: BoxDecoration(
         color: variant == BadgeVariant.outline ? null : bgColor,
-        border: border ??
-            Border.all(
-              color: brdColor ?? Colors.transparent,
-              width: 1,
-            ),
+        border:
+            border ??
+            Border.all(color: brdColor ?? Colors.transparent, width: 1),
         borderRadius: effectiveRadius,
         boxShadow:
             boxShadow ??
@@ -109,7 +102,9 @@ class Badge extends StatelessWidget {
                 ? null
                 : [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.06),
+                      color: Colors.black.withValues(
+                        alpha: isDark ? 0.18 : 0.06,
+                      ),
                       blurRadius: 10,
                       offset: const Offset(0, 6),
                     ),
@@ -322,12 +317,7 @@ class CountBadge extends StatelessWidget {
   final Color? color;
   final VoidCallback? onTap;
 
-  const CountBadge({
-    super.key,
-    required this.count,
-    this.color,
-    this.onTap,
-  });
+  const CountBadge({super.key, required this.count, this.color, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -359,10 +349,7 @@ class CountBadge extends StatelessWidget {
 class PremiumBadge extends StatelessWidget {
   final VoidCallback? onTap;
 
-  const PremiumBadge({
-    super.key,
-    this.onTap,
-  });
+  const PremiumBadge({super.key, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -375,10 +362,7 @@ class PremiumBadge extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              goldColor,
-              Colors.amber.shade600,
-            ],
+            colors: [goldColor, Colors.amber.shade600],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -394,11 +378,7 @@ class PremiumBadge extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.star,
-              size: 12,
-              color: Colors.white,
-            ),
+            Icon(Icons.star, size: 12, color: Colors.white),
             const SizedBox(width: 4),
             Text(
               'Premium',

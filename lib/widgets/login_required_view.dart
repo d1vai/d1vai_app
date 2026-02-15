@@ -25,8 +25,10 @@ class LoginRequiredView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
-    final t = title ?? (loc?.translate('login_required_title') ?? 'Login required');
-    final a = actionText ?? (loc?.translate('login_required_button') ?? 'Login');
+    final t =
+        title ?? (loc?.translate('login_required_title') ?? 'Login required');
+    final a =
+        actionText ?? (loc?.translate('login_required_button') ?? 'Login');
 
     final action = onAction ?? () => context.go('/login');
 
@@ -52,21 +54,16 @@ class LoginRequiredView extends StatelessWidget {
                   Text(
                     message,
                     style: TextStyle(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.65),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.65),
                     ),
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 12),
-            Button(
-              size: ButtonSize.sm,
-              text: a,
-              onPressed: action,
-            ),
+            Button(size: ButtonSize.sm, text: a, onPressed: action),
           ],
         ),
       );
@@ -84,21 +81,19 @@ class LoginRequiredView extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 t,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleLarge
-                    ?.copyWith(fontWeight: FontWeight.w700),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 10),
               Text(
                 message,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.65),
-                    ),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.65),
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 18),
@@ -113,4 +108,3 @@ class LoginRequiredView extends StatelessWidget {
     );
   }
 }
-

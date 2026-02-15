@@ -120,9 +120,10 @@ class _CreateProjectOptionCardAnimatedState
     final attention = widget.attention;
     final accent = widget.badgeColor ?? colorScheme.primary;
 
-    final scale = Tween<double>(begin: 1, end: 0.992).animate(
-      CurvedAnimation(parent: _pressController, curve: Curves.easeOut),
-    );
+    final scale = Tween<double>(
+      begin: 1,
+      end: 0.992,
+    ).animate(CurvedAnimation(parent: _pressController, curve: Curves.easeOut));
 
     final glowT = _breatheController?.value ?? 0.0;
     final borderColor = attention && enabled
@@ -338,4 +339,3 @@ class _CreateProjectOptionCardAnimatedState
     );
   }
 }
-

@@ -66,8 +66,7 @@ class DbUsagePeriod {
           (json['compute_time_seconds'] as num?)?.toDouble() ?? 0.0,
       activeTimeSeconds:
           (json['active_time_seconds'] as num?)?.toDouble() ?? 0.0,
-      writtenDataBytes:
-          (json['written_data_bytes'] as num?)?.toDouble() ?? 0.0,
+      writtenDataBytes: (json['written_data_bytes'] as num?)?.toDouble() ?? 0.0,
       dataTransferBytes:
           (json['data_transfer_bytes'] as num?)?.toDouble() ?? 0.0,
       dataStorageBytesHour:

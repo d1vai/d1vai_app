@@ -188,10 +188,7 @@ class _StaggeredIn extends StatelessWidget {
           opacity: t,
           child: Transform.translate(
             offset: Offset(0, (1 - t) * 10),
-            child: Transform.scale(
-              scale: 0.98 + 0.02 * t,
-              child: child,
-            ),
+            child: Transform.scale(scale: 0.98 + 0.02 * t, child: child),
           ),
         );
       },
@@ -232,9 +229,10 @@ class _QuickActionChipState extends State<_QuickActionChip>
       vsync: this,
       duration: const Duration(milliseconds: 90),
     );
-    _pressScale = Tween<double>(begin: 1, end: 0.98).animate(
-      CurvedAnimation(parent: _pressController, curve: Curves.easeOut),
-    );
+    _pressScale = Tween<double>(
+      begin: 1,
+      end: 0.98,
+    ).animate(CurvedAnimation(parent: _pressController, curve: Curves.easeOut));
 
     _breathController = AnimationController(
       vsync: this,
@@ -318,14 +316,19 @@ class _QuickActionChipState extends State<_QuickActionChip>
                 child: Padding(
                   padding: isDense
                       ? const EdgeInsets.symmetric(horizontal: 10, vertical: 8)
-                      : const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      : const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
                         widget.icon,
                         size: avatarSize,
-                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
+                        color: colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.9,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Flexible(

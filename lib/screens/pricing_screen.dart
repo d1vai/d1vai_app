@@ -15,11 +15,7 @@ class CountdownTimer extends StatefulWidget {
   final DateTime targetDate;
   final String? title;
 
-  const CountdownTimer({
-    super.key,
-    required this.targetDate,
-    this.title,
-  });
+  const CountdownTimer({super.key, required this.targetDate, this.title});
 
   @override
   State<CountdownTimer> createState() => _CountdownTimerState();
@@ -94,10 +90,7 @@ class _CountdownTimerState extends State<CountdownTimer> {
       decoration: BoxDecoration(
         color: Colors.orange.shade50,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: Colors.orange.shade200,
-          width: 1,
-        ),
+        border: Border.all(color: Colors.orange.shade200, width: 1),
       ),
       child: Column(
         children: [
@@ -213,7 +206,8 @@ class _PricingScreenState extends State<PricingScreen> {
     try {
       // 创建成功和取消 URL
       final Uri currentUri = Uri.base;
-      final successUrl = '${currentUri.scheme}://${currentUri.host}/orders?pay=success';
+      final successUrl =
+          '${currentUri.scheme}://${currentUri.host}/orders?pay=success';
       final cancelUrl = currentUri.toString();
 
       String? stripePriceId;
@@ -297,10 +291,7 @@ class _PricingScreenState extends State<PricingScreen> {
               selectedColor: Colors.white,
               fillColor: Colors.deepPurple,
               color: Colors.deepPurple,
-              constraints: const BoxConstraints(
-                minHeight: 36,
-                minWidth: 80,
-              ),
+              constraints: const BoxConstraints(minHeight: 36, minWidth: 80),
               children: const [
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16),
@@ -333,8 +324,8 @@ class _PricingScreenState extends State<PricingScreen> {
             color: plan.isPopular
                 ? Colors.deepPurple
                 : plan.isExclusive
-                    ? Colors.orange
-                    : Colors.grey.shade300,
+                ? Colors.orange
+                : Colors.grey.shade300,
             width: plan.isPopular || plan.isExclusive ? 2 : 1,
           ),
         ),
@@ -421,25 +412,27 @@ class _PricingScreenState extends State<PricingScreen> {
               const SizedBox(height: 16),
 
               // 功能列表
-              ...plan.features.map((feature) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.check_circle,
-                          size: 16,
-                          color: Colors.green,
+              ...plan.features.map(
+                (feature) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.check_circle,
+                        size: 16,
+                        color: Colors.green,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          feature,
+                          style: const TextStyle(fontSize: 14),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            feature,
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ),
-                      ],
-                    ),
-                  )),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
 
               const SizedBox(height: 16),
 
@@ -454,8 +447,8 @@ class _PricingScreenState extends State<PricingScreen> {
                     backgroundColor: plan.isPopular
                         ? Colors.deepPurple
                         : plan.isExclusive
-                            ? Colors.orange
-                            : Colors.grey.shade800,
+                        ? Colors.orange
+                        : Colors.grey.shade800,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -468,8 +461,9 @@ class _PricingScreenState extends State<PricingScreen> {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         )
                       : Text(
@@ -492,10 +486,7 @@ class _PricingScreenState extends State<PricingScreen> {
     if (plan.isFree) {
       return const Text(
         'Free',
-        style: TextStyle(
-          fontSize: 32,
-          fontWeight: FontWeight.bold,
-        ),
+        style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
       );
     }
 
@@ -506,18 +497,12 @@ class _PricingScreenState extends State<PricingScreen> {
         children: [
           Text(
             '\$${plan.oneTimePrice?.toStringAsFixed(0)}',
-            style: const TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
           ),
           const SizedBox(width: 8),
           Text(
             'one-time',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
           ),
         ],
       );
@@ -537,18 +522,12 @@ class _PricingScreenState extends State<PricingScreen> {
       children: [
         Text(
           '\$${price.toStringAsFixed(price % 1 == 0 ? 0 : 2)}',
-          style: const TextStyle(
-            fontSize: 36,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
         ),
         const SizedBox(width: 8),
         Text(
           _isYearly ? '/year' : '/month',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey.shade600,
-          ),
+          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
         ),
         if (_isYearly && plan.monthlyPrice != null) ...[
           const SizedBox(width: 8),
@@ -593,10 +572,7 @@ class _PricingScreenState extends State<PricingScreen> {
 
       return Container(
         padding: const EdgeInsets.symmetric(vertical: 8),
-        child: CountdownTimer(
-          targetDate: targetDate,
-          title: 'Offer ends in',
-        ),
+        child: CountdownTimer(targetDate: targetDate, title: 'Offer ends in'),
       );
     } catch (e) {
       // 如果日期解析失败，不显示倒计时

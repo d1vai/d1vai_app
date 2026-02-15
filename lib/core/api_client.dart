@@ -64,6 +64,7 @@ class ApiClient {
     if (raw.endsWith('/')) return raw.substring(0, raw.length - 1);
     return raw;
   }
+
   final http.Client client;
 
   // 缓存 SharedPreferences 实例以避免重复调用
@@ -73,11 +74,7 @@ class ApiClient {
     _init();
   }
 
-  void _noteLastApiError({
-    String? endpoint,
-    int? statusCode,
-    String? message,
-  }) {
+  void _noteLastApiError({String? endpoint, int? statusCode, String? message}) {
     final ep = (endpoint ?? '').trim();
     if (ep.isEmpty) return;
     final msg = (message ?? '').trim();
@@ -106,10 +103,7 @@ class ApiClient {
   /// The app historically used endpoints that include `/api/...`, but some builds
   /// or runtime overrides may set a base URL that already ends with `/api`.
   /// This helper prevents accidental double prefixes like `/api/api/...`.
-  Uri _buildUri(
-    String endpoint, {
-    Map<String, String>? queryParams,
-  }) {
+  Uri _buildUri(String endpoint, {Map<String, String>? queryParams}) {
     final base = Uri.parse(baseUrl);
     final endpointUri = Uri.parse(endpoint);
 
@@ -192,7 +186,8 @@ class ApiClient {
     final tokenRaw = _sharedPreferences!.getString('auth_token');
     final tokenTrimmed = tokenRaw?.trim();
     // Some callers might accidentally persist "Bearer <token>" or include whitespace.
-    final token = (tokenTrimmed != null &&
+    final token =
+        (tokenTrimmed != null &&
             tokenTrimmed.toLowerCase().startsWith('bearer '))
         ? tokenTrimmed.substring('bearer '.length).trim()
         : tokenTrimmed;
@@ -204,7 +199,9 @@ class ApiClient {
       } else {
         final suffix = t.length <= 6 ? t : t.substring(t.length - 6);
         final kind = t.startsWith('eyJ') ? 'jwt' : 'opaque';
-        debugPrint('🔐 Auth: present kind=$kind len=${t.length} suffix=$suffix');
+        debugPrint(
+          '🔐 Auth: present kind=$kind len=${t.length} suffix=$suffix',
+        );
       }
     }
 
@@ -293,11 +290,7 @@ class ApiClient {
 
     return executeWithRetry<T>(
       () {
-        final fut = client.post(
-          uri,
-          headers: headers,
-          body: jsonEncode(body),
-        );
+        final fut = client.post(uri, headers: headers, body: jsonEncode(body));
         return timeout != null ? fut.timeout(timeout) : fut;
       },
       fromJsonT,
@@ -324,11 +317,7 @@ class ApiClient {
 
     return executeWithRetry<T>(
       () {
-        final fut = client.put(
-          uri,
-          headers: headers,
-          body: jsonEncode(body),
-        );
+        final fut = client.put(uri, headers: headers, body: jsonEncode(body));
         return timeout != null ? fut.timeout(timeout) : fut;
       },
       fromJsonT,
@@ -356,11 +345,7 @@ class ApiClient {
 
     return executeWithRetry<T>(
       () {
-        final fut = client.patch(
-          uri,
-          headers: headers,
-          body: jsonEncode(body),
-        );
+        final fut = client.patch(uri, headers: headers, body: jsonEncode(body));
         return timeout != null ? fut.timeout(timeout) : fut;
       },
       fromJsonT,
@@ -385,10 +370,7 @@ class ApiClient {
 
     return executeWithRetry<T>(
       () {
-        final fut = client.delete(
-          uri,
-          headers: headers,
-        );
+        final fut = client.delete(uri, headers: headers);
         return timeout != null ? fut.timeout(timeout) : fut;
       },
       fromJsonT,
@@ -729,12 +711,17 @@ class ApiClient {
         // 尝试解析为 JSON
         try {
           final json = jsonDecode(responseBody);
-          debugPrint('📦 Parsed JSON: ${jsonEncode(json, toEncodable: (obj) => obj)}');
+          debugPrint(
+            '📦 Parsed JSON: ${jsonEncode(json, toEncodable: (obj) => obj)}',
+          );
 
           // Prefer backend error message fields when present.
           if (json is Map<String, dynamic>) {
             final msg =
-                json['msg'] ?? json['detail'] ?? json['message'] ?? json['error'];
+                json['msg'] ??
+                json['detail'] ??
+                json['message'] ??
+                json['error'];
             if (msg is String && msg.trim().isNotEmpty) {
               responseBodyForException = msg.trim();
             }

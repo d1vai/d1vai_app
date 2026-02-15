@@ -43,11 +43,7 @@ class _InvitesListScreenState extends State<InvitesListScreen> {
         _isLoading = false;
       });
       if (mounted) {
-        SnackBarHelper.showError(
-          context,
-          title: 'Error',
-          message: message,
-        );
+        SnackBarHelper.showError(context, title: 'Error', message: message);
       }
     }
   }
@@ -78,11 +74,7 @@ class _InvitesListScreenState extends State<InvitesListScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.red.shade300,
-            ),
+            Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
             const SizedBox(height: 16),
             Text(
               'Failed to load invited users',
@@ -95,9 +87,7 @@ class _InvitesListScreenState extends State<InvitesListScreen> {
             const SizedBox(height: 8),
             Text(
               _error!,
-              style: TextStyle(
-                color: Colors.grey.shade600,
-              ),
+              style: TextStyle(color: Colors.grey.shade600),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -115,7 +105,8 @@ class _InvitesListScreenState extends State<InvitesListScreen> {
       return EmptyStateWidget(
         icon: Icons.group_add_outlined,
         title: 'No Invites Yet',
-        message: 'You haven\'t invited any friends yet.\nShare your invite code to get started!',
+        message:
+            'You haven\'t invited any friends yet.\nShare your invite code to get started!',
       );
     }
 

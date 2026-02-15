@@ -13,10 +13,7 @@ class TimestampTooltip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: _formatFullDateTime(timestamp),
-      child: child,
-    );
+    return Tooltip(message: _formatFullDateTime(timestamp), child: child);
   }
 
   String _formatFullDateTime(DateTime dateTime) {
@@ -34,7 +31,8 @@ class TimestampTooltip extends StatelessWidget {
       dateStr = '${dateTime.day}/${dateTime.month}/${dateTime.year}';
     }
 
-    final time = '${dateTime.hour.toString().padLeft(2, '0')}:'
+    final time =
+        '${dateTime.hour.toString().padLeft(2, '0')}:'
         '${dateTime.minute.toString().padLeft(2, '0')}';
 
     return '$dateStr at $time';

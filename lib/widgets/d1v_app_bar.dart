@@ -131,11 +131,7 @@ class _D1VAppBarState extends State<D1VAppBar>
 
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: blurValue, sigmaY: blurValue),
-      child: Container(
-        decoration: BoxDecoration(
-          color: overlayColor,
-        ),
-      ),
+      child: Container(decoration: BoxDecoration(color: overlayColor)),
     );
   }
 
@@ -252,10 +248,9 @@ class _D1VSimpleAppBarState extends State<D1VSimpleAppBar>
                     child: Container(
                       decoration: BoxDecoration(
                         color: Color.alphaBlend(
-                          Theme.of(context)
-                              .colorScheme
-                              .primary
-                              .withValues(alpha: 0.14),
+                          Theme.of(
+                            context,
+                          ).colorScheme.primary.withValues(alpha: 0.14),
                           Theme.of(context).colorScheme.surface,
                         ).withValues(alpha: 0.72),
                       ),

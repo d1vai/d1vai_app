@@ -268,9 +268,7 @@ class _BindEmailDialogState extends State<BindEmailDialog> {
                 SizedBox(
                   width: 120,
                   child: ElevatedButton(
-                    onPressed: _sending || _countdown > 0
-                        ? null
-                        : _sendCode,
+                    onPressed: _sending || _countdown > 0 ? null : _sendCode,
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       backgroundColor: theme.primaryColor,
@@ -287,7 +285,9 @@ class _BindEmailDialogState extends State<BindEmailDialog> {
                             width: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
                             ),
                           )
                         : Text(
@@ -306,9 +306,7 @@ class _BindEmailDialogState extends State<BindEmailDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: Text(
             'Cancel',
-            style: TextStyle(
-              color: theme.colorScheme.onSurface,
-            ),
+            style: TextStyle(color: theme.colorScheme.onSurface),
           ),
         ),
         ElevatedButton(

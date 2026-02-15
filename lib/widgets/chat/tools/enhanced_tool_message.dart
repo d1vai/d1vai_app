@@ -18,8 +18,11 @@ class EnhancedToolMessage extends StatelessWidget {
 
     final normalized = name.toLowerCase().trim();
     final title = _toolTitle(normalized, fallback: name);
-    final subtitle =
-        _toolSubtitle(normalized, content.input, summaryFallback: summary);
+    final subtitle = _toolSubtitle(
+      normalized,
+      content.input,
+      summaryFallback: summary,
+    );
 
     IconData icon;
     switch (normalized) {
@@ -107,7 +110,9 @@ class EnhancedToolMessage extends StatelessWidget {
                     TextSpan(
                       text: title,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.9,
+                        ),
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.2,
                       ),
@@ -183,9 +188,9 @@ class _StatusRight extends StatelessWidget {
       label = 'Error';
     } else if (st == 'warning') {
       fg = _warningTint(theme);
-      bg = _warningTint(theme).withValues(
-        alpha: theme.brightness == Brightness.dark ? 0.18 : 0.14,
-      );
+      bg = _warningTint(
+        theme,
+      ).withValues(alpha: theme.brightness == Brightness.dark ? 0.18 : 0.14);
       icon = Icon(Icons.warning_amber_rounded, size: 16, color: fg);
       showLabel = true;
       label = 'Warn';
@@ -264,63 +269,82 @@ String _toolTitle(String normalized, {required String fallback}) {
   }
 }
 
-String _toolSubtitle(String normalized, dynamic input, {required String summaryFallback}) {
+String _toolSubtitle(
+  String normalized,
+  dynamic input, {
+  required String summaryFallback,
+}) {
   try {
     if (input is Map) {
       switch (normalized) {
-        case 'bash': {
-          final cmd = input['command']?.toString().trim() ?? '';
-          return cmd.isNotEmpty ? '\$ ${truncateText(cmd, maxLen: 64)}' : summaryFallback;
-        }
+        case 'bash':
+          {
+            final cmd = input['command']?.toString().trim() ?? '';
+            return cmd.isNotEmpty
+                ? '\$ ${truncateText(cmd, maxLen: 64)}'
+                : summaryFallback;
+          }
         case 'read':
         case 'write':
-        case 'edit': {
-          final p = input['file_path']?.toString().trim() ?? '';
-          final s = shortenToolFilePath(p, maxSegments: 4);
-          return s.isNotEmpty ? s : summaryFallback;
-        }
+        case 'edit':
+          {
+            final p = input['file_path']?.toString().trim() ?? '';
+            final s = shortenToolFilePath(p, maxSegments: 4);
+            return s.isNotEmpty ? s : summaryFallback;
+          }
         case 'multi_edit':
-        case 'multiedit': {
-          final p = input['file_path']?.toString().trim() ?? '';
-          final edits = input['edits'];
-          final n = edits is List ? edits.length : null;
-          final base = shortenToolFilePath(p, maxSegments: 4);
-          final left = base.isNotEmpty ? base : '(unknown)';
-          return n != null ? '$left · $n edits' : left;
-        }
+        case 'multiedit':
+          {
+            final p = input['file_path']?.toString().trim() ?? '';
+            final edits = input['edits'];
+            final n = edits is List ? edits.length : null;
+            final base = shortenToolFilePath(p, maxSegments: 4);
+            final left = base.isNotEmpty ? base : '(unknown)';
+            return n != null ? '$left · $n edits' : left;
+          }
         case 'glob':
-        case 'grep': {
-          final pat = input['pattern']?.toString().trim() ?? '';
-          return pat.isNotEmpty ? truncateText(pat, maxLen: 64) : summaryFallback;
-        }
+        case 'grep':
+          {
+            final pat = input['pattern']?.toString().trim() ?? '';
+            return pat.isNotEmpty
+                ? truncateText(pat, maxLen: 64)
+                : summaryFallback;
+          }
         case 'websearch':
-        case 'web_search': {
-          final q = input['query']?.toString().trim() ?? '';
-          return q.isNotEmpty ? truncateText(q, maxLen: 64) : summaryFallback;
-        }
+        case 'web_search':
+          {
+            final q = input['query']?.toString().trim() ?? '';
+            return q.isNotEmpty ? truncateText(q, maxLen: 64) : summaryFallback;
+          }
         case 'webfetch':
-        case 'web_fetch': {
-          final url = input['url']?.toString().trim() ?? '';
-          return url.isNotEmpty ? truncateText(url, maxLen: 64) : summaryFallback;
-        }
+        case 'web_fetch':
+          {
+            final url = input['url']?.toString().trim() ?? '';
+            return url.isNotEmpty
+                ? truncateText(url, maxLen: 64)
+                : summaryFallback;
+          }
         case 'todowrite':
-        case 'todo_write': {
-          final header = todoWriteHeader(input);
-          if (header == null) return summaryFallback;
-          if (header.state == 'done_all') return 'Done · ${header.progressText}';
-          return header.taskText.isNotEmpty
-              ? 'In progress · ${header.progressText} · ${header.taskText}'
-              : 'In progress · ${header.progressText}';
-        }
-        case 'task': {
-          final t = input['task_type']?.toString().trim() ?? '';
-          final desc = input['description']?.toString().trim() ?? '';
-          final bits = <String>[
-            if (t.isNotEmpty) t,
-            if (desc.isNotEmpty) truncateText(desc, maxLen: 56),
-          ];
-          return bits.isNotEmpty ? bits.join(' · ') : summaryFallback;
-        }
+        case 'todo_write':
+          {
+            final header = todoWriteHeader(input);
+            if (header == null) return summaryFallback;
+            if (header.state == 'done_all')
+              return 'Done · ${header.progressText}';
+            return header.taskText.isNotEmpty
+                ? 'In progress · ${header.progressText} · ${header.taskText}'
+                : 'In progress · ${header.progressText}';
+          }
+        case 'task':
+          {
+            final t = input['task_type']?.toString().trim() ?? '';
+            final desc = input['description']?.toString().trim() ?? '';
+            final bits = <String>[
+              if (t.isNotEmpty) t,
+              if (desc.isNotEmpty) truncateText(desc, maxLen: 56),
+            ];
+            return bits.isNotEmpty ? bits.join(' · ') : summaryFallback;
+          }
       }
     }
   } catch (_) {

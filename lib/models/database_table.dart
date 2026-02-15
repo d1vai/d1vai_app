@@ -19,11 +19,12 @@ class DatabaseTable {
     final fkListRaw = json['foreign_keys'];
     final foreignKeys = (fkListRaw is List)
         ? fkListRaw
-            .whereType<Map>()
-            .map((e) => DatabaseForeignKey.fromJson(
-                  Map<String, dynamic>.from(e),
-                ))
-            .toList()
+              .whereType<Map>()
+              .map(
+                (e) =>
+                    DatabaseForeignKey.fromJson(Map<String, dynamic>.from(e)),
+              )
+              .toList()
         : const <DatabaseForeignKey>[];
 
     final kind = (json['kind'] ?? json['table_type'] ?? json['type'] ?? 'table')
@@ -36,7 +37,9 @@ class DatabaseTable {
     return DatabaseTable(
       name: json['table_name'] ?? json['name'] ?? '',
       schema: json['schema_name'] ?? json['schema'] ?? 'public',
-      rowCount: json['row_count'] != null ? (json['row_count'] as num).toInt() : null,
+      rowCount: json['row_count'] != null
+          ? (json['row_count'] as num).toInt()
+          : null,
       columns: json['columns'] != null
           ? List<String>.from(json['columns'].map((col) => col['name'] ?? col))
           : [],

@@ -40,8 +40,7 @@ class Switch extends StatefulWidget {
   State<Switch> createState() => _SwitchState();
 }
 
-class _SwitchState extends State<Switch>
-    with SingleTickerProviderStateMixin {
+class _SwitchState extends State<Switch> with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _animation;
   late bool _currentValue;
@@ -54,13 +53,9 @@ class _SwitchState extends State<Switch>
       duration: widget.duration,
       vsync: this,
     );
-    _animation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
 
     if (_currentValue) {
       _animationController.value = 1.0;
@@ -107,16 +102,15 @@ class _SwitchState extends State<Switch>
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final effectiveActiveColor = widget.activeColor ??
-        colorScheme.primary;
-    final effectiveInactiveColor = widget.inactiveColor ??
-        colorScheme.outline.withValues(alpha: 0.5);
-    final effectiveActiveThumbColor = widget.activeThumbColor ??
-        colorScheme.onPrimary;
-    final effectiveInactiveThumbColor = widget.inactiveThumbColor ??
-        colorScheme.onSurface;
-    final effectiveBorderColor = widget.borderColor ??
-        colorScheme.outline.withValues(alpha: 0.3);
+    final effectiveActiveColor = widget.activeColor ?? colorScheme.primary;
+    final effectiveInactiveColor =
+        widget.inactiveColor ?? colorScheme.outline.withValues(alpha: 0.5);
+    final effectiveActiveThumbColor =
+        widget.activeThumbColor ?? colorScheme.onPrimary;
+    final effectiveInactiveThumbColor =
+        widget.inactiveThumbColor ?? colorScheme.onSurface;
+    final effectiveBorderColor =
+        widget.borderColor ?? colorScheme.outline.withValues(alpha: 0.3);
 
     return GestureDetector(
       onTap: _handleTap,
@@ -127,11 +121,10 @@ class _SwitchState extends State<Switch>
           height: widget.height,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(widget.height / 2),
-            color: _currentValue ? effectiveActiveColor : effectiveInactiveColor,
-            border: Border.all(
-              color: effectiveBorderColor,
-              width: 1.0,
-            ),
+            color: _currentValue
+                ? effectiveActiveColor
+                : effectiveInactiveColor,
+            border: Border.all(color: effectiveBorderColor, width: 1.0),
           ),
           child: Stack(
             children: [
@@ -278,13 +271,9 @@ class _CustomSwitchState extends State<CustomSwitch>
       duration: widget.duration,
       vsync: this,
     );
-    _animation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
 
     if (widget.value) {
       _animationController.value = 1.0;
@@ -317,8 +306,11 @@ class _CustomSwitchState extends State<CustomSwitch>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final effectiveActiveColor = widget.activeColor ?? theme.colorScheme.primary;
-    final effectiveInactiveColor = widget.inactiveColor ?? theme.colorScheme.outline.withValues(alpha: 0.5);
+    final effectiveActiveColor =
+        widget.activeColor ?? theme.colorScheme.primary;
+    final effectiveInactiveColor =
+        widget.inactiveColor ??
+        theme.colorScheme.outline.withValues(alpha: 0.5);
 
     return GestureDetector(
       onTap: _handleTap,
@@ -339,34 +331,38 @@ class _CustomSwitchState extends State<CustomSwitch>
               children: [
                 if (widget.activeContent != null)
                   Positioned.fill(
-                    child: widget.value ? widget.activeContent! : const SizedBox.shrink(),
+                    child: widget.value
+                        ? widget.activeContent!
+                        : const SizedBox.shrink(),
                   ),
                 if (widget.inactiveContent != null)
                   Positioned.fill(
-                    child: !widget.value ? widget.inactiveContent! : const SizedBox.shrink(),
+                    child: !widget.value
+                        ? widget.inactiveContent!
+                        : const SizedBox.shrink(),
                   ),
                 Positioned(
                   left: thumbPosition,
                   top: (widget.height - (widget.height - 8)) / 2,
                   child: widget.value
                       ? (widget.activeThumb ??
-                          Container(
-                            width: widget.height - 8,
-                            height: widget.height - 8,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: theme.colorScheme.onPrimary,
-                            ),
-                          ))
+                            Container(
+                              width: widget.height - 8,
+                              height: widget.height - 8,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: theme.colorScheme.onPrimary,
+                              ),
+                            ))
                       : (widget.inactiveThumb ??
-                          Container(
-                            width: widget.height - 8,
-                            height: widget.height - 8,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: theme.colorScheme.onSurface,
-                            ),
-                          )),
+                            Container(
+                              width: widget.height - 8,
+                              height: widget.height - 8,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                            )),
                 ),
               ],
             );

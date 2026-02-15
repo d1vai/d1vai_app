@@ -24,7 +24,8 @@ class LoginRequiredDialog extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final loc = AppLocalizations.of(context);
 
-    final t = title ?? (loc?.translate('login_required_title') ?? 'Login required');
+    final t =
+        title ?? (loc?.translate('login_required_title') ?? 'Login required');
     final m =
         message ??
         (loc?.translate('login_required_orders_message') ??
@@ -71,7 +72,8 @@ class LoginRequiredDialog extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               t,
-              style: theme.textTheme.titleLarge?.copyWith(
+              style:
+                  theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w800,
                   ) ??
                   const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
@@ -80,7 +82,8 @@ class LoginRequiredDialog extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               m,
-              style: theme.textTheme.bodyMedium?.copyWith(
+              style:
+                  theme.textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
                     height: 1.25,
                   ) ??

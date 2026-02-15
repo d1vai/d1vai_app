@@ -38,7 +38,8 @@ class _TwoFactorAuthSettingsScreenState
       final prefs = await SharedPreferences.getInstance();
       final enabled = prefs.getBool(_prefsEnabledKey) ?? false;
       final secret = prefs.getString(_prefsSecretKey);
-      final codes = prefs.getStringList(_prefsBackupCodesKey) ?? const <String>[];
+      final codes =
+          prefs.getStringList(_prefsBackupCodesKey) ?? const <String>[];
 
       if (!mounted) return;
 
@@ -88,7 +89,6 @@ class _TwoFactorAuthSettingsScreenState
         _secret = secret;
         _backupCodes = backupCodes;
       });
-
     } catch (e) {
       debugPrint('Failed to enable 2FA: $e');
       if (mounted) {
@@ -387,9 +387,7 @@ class _TwoFactorAuthSettingsScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Two-Factor Authentication'),
-      ),
+      appBar: AppBar(title: const Text('Two-Factor Authentication')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
@@ -515,7 +513,9 @@ class _TwoFactorAuthSettingsScreenState
                         decoration: BoxDecoration(
                           color: theme.colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: theme.colorScheme.outlineVariant),
+                          border: Border.all(
+                            color: theme.colorScheme.outlineVariant,
+                          ),
                         ),
                         child: Text(
                           c,
@@ -579,7 +579,9 @@ class _TwoFactorAuthSettingsScreenState
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: _isEnabled ? Colors.green.shade600 : Colors.grey.shade400,
+                color: _isEnabled
+                    ? Colors.green.shade600
+                    : Colors.grey.shade400,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
@@ -606,10 +608,7 @@ class _TwoFactorAuthSettingsScreenState
           children: [
             Text(
               'How it works',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 12),
             _buildInstructionItem(
@@ -641,7 +640,11 @@ class _TwoFactorAuthSettingsScreenState
     );
   }
 
-  Widget _buildInstructionItem(String number, String title, String description) {
+  Widget _buildInstructionItem(
+    String number,
+    String title,
+    String description,
+  ) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -678,10 +681,7 @@ class _TwoFactorAuthSettingsScreenState
               const SizedBox(height: 4),
               Text(
                 description,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade600,
-                ),
+                style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
               ),
             ],
           ),
@@ -694,7 +694,11 @@ class _TwoFactorAuthSettingsScreenState
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
-        onPressed: _isEnabling ? null : _isEnabled ? _disableTwoFactor : _enableTwoFactor,
+        onPressed: _isEnabling
+            ? null
+            : _isEnabled
+            ? _disableTwoFactor
+            : _enableTwoFactor,
         icon: _isEnabling
             ? const SizedBox(
                 width: 20,
@@ -705,7 +709,13 @@ class _TwoFactorAuthSettingsScreenState
                 ),
               )
             : Icon(_isEnabled ? Icons.shield : Icons.shield_outlined),
-        label: Text(_isEnabling ? 'Setting up...' : _isEnabled ? 'Disable 2FA' : 'Enable 2FA'),
+        label: Text(
+          _isEnabling
+              ? 'Setting up...'
+              : _isEnabled
+              ? 'Disable 2FA'
+              : 'Enable 2FA',
+        ),
         style: ElevatedButton.styleFrom(
           backgroundColor: _isEnabled ? Colors.red : Colors.deepPurple,
           foregroundColor: Colors.white,

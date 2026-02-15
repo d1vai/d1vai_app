@@ -12,10 +12,7 @@ import 'snackbar_helper.dart';
 class WalletStatusCard extends StatelessWidget {
   final User user;
 
-  const WalletStatusCard({
-    super.key,
-    required this.user,
-  });
+  const WalletStatusCard({super.key, required this.user});
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +63,9 @@ class WalletStatusCard extends StatelessWidget {
                             : 'Connect wallets on web to enable blockchain features',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
                       ),
                     ],
@@ -113,10 +112,14 @@ class WalletStatusCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.2),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primaryContainer.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.3),
                     width: 1,
                   ),
                 ),
@@ -133,7 +136,9 @@ class WalletStatusCard extends StatelessWidget {
                         'Visit d1v.ai on web to connect your crypto wallets',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.8),
                         ),
                       ),
                     ),
@@ -274,10 +279,7 @@ class WalletStatusCard extends StatelessWidget {
             )
           else
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: 4,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: Colors.grey.shade200,
                 borderRadius: BorderRadius.circular(4),

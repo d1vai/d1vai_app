@@ -43,7 +43,9 @@ class ToolDetailSheet {
                   boxShadow: [
                     BoxShadow(
                       color: theme.colorScheme.shadow.withValues(
-                        alpha: theme.brightness == Brightness.dark ? 0.35 : 0.12,
+                        alpha: theme.brightness == Brightness.dark
+                            ? 0.35
+                            : 0.12,
                       ),
                       blurRadius: 18,
                       offset: const Offset(0, -8),
@@ -115,8 +117,8 @@ class ToolDetailSheet {
                         subtitle: (status == 'processing')
                             ? 'Running…'
                             : 'Result',
-                        trailing: (content.output?.text.trim().isNotEmpty ??
-                                false)
+                        trailing:
+                            (content.output?.text.trim().isNotEmpty ?? false)
                             ? _CopyButton(
                                 label: 'Copy output',
                                 onPressed: () async {
@@ -128,7 +130,8 @@ class ToolDetailSheet {
                                 },
                               )
                             : null,
-                        child: (content.output != null &&
+                        child:
+                            (content.output != null &&
                                 content.output!.text.trim().isNotEmpty)
                             ? _CodeBlock(
                                 text: content.output!.text,
@@ -213,7 +216,9 @@ class _ToolIcon extends StatelessWidget {
     };
 
     final bg = Color.alphaBlend(
-      accent.withValues(alpha: theme.brightness == Brightness.dark ? 0.24 : 0.16),
+      accent.withValues(
+        alpha: theme.brightness == Brightness.dark ? 0.24 : 0.16,
+      ),
       theme.colorScheme.surface,
     );
 
@@ -250,9 +255,9 @@ class _StatusChip extends StatelessWidget {
     final bg = switch (st) {
       'processing' => theme.colorScheme.primary.withValues(alpha: 0.12),
       'error' => theme.colorScheme.error.withValues(alpha: 0.12),
-      'warning' => _warningTint(theme).withValues(
-          alpha: theme.brightness == Brightness.dark ? 0.18 : 0.14,
-        ),
+      'warning' => _warningTint(
+        theme,
+      ).withValues(alpha: theme.brightness == Brightness.dark ? 0.18 : 0.14),
       _ => theme.colorScheme.surfaceContainerHighest,
     };
     final fg = switch (st) {
@@ -375,14 +380,14 @@ class _TodoList extends StatelessWidget {
                   t.status == 'done'
                       ? Icons.check_circle
                       : t.status == 'in_progress'
-                          ? Icons.radio_button_checked
-                          : Icons.radio_button_unchecked,
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
                   size: 18,
                   color: t.status == 'done'
                       ? _successTint(theme)
                       : t.status == 'in_progress'
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.onSurfaceVariant,
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -498,7 +503,9 @@ class _CopyButton extends StatelessWidget {
               label,
               style: theme.textTheme.labelSmall?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.9,
+                ),
               ),
             ),
           ],
@@ -630,57 +637,66 @@ class _ToolDetails {
       case 'write':
       case 'edit':
       case 'multi_edit':
-      case 'multiedit': {
-        final p = getStr('file_path');
-        if (p.isNotEmpty) lines.add((label: 'File', value: p));
-        break;
-      }
-      case 'bash': {
-        final cmd = getStr('command');
-        if (cmd.isNotEmpty) lines.add((label: 'Command', value: cmd));
-        break;
-      }
+      case 'multiedit':
+        {
+          final p = getStr('file_path');
+          if (p.isNotEmpty) lines.add((label: 'File', value: p));
+          break;
+        }
+      case 'bash':
+        {
+          final cmd = getStr('command');
+          if (cmd.isNotEmpty) lines.add((label: 'Command', value: cmd));
+          break;
+        }
       case 'glob':
-      case 'grep': {
-        final pat = getStr('pattern');
-        if (pat.isNotEmpty) lines.add((label: 'Pattern', value: pat));
-        final path = getStr('path');
-        if (path.isNotEmpty) lines.add((label: 'Path', value: path));
-        break;
-      }
+      case 'grep':
+        {
+          final pat = getStr('pattern');
+          if (pat.isNotEmpty) lines.add((label: 'Pattern', value: pat));
+          final path = getStr('path');
+          if (path.isNotEmpty) lines.add((label: 'Path', value: path));
+          break;
+        }
       case 'websearch':
-      case 'web_search': {
-        final q = getStr('query');
-        if (q.isNotEmpty) lines.add((label: 'Query', value: q));
-        break;
-      }
+      case 'web_search':
+        {
+          final q = getStr('query');
+          if (q.isNotEmpty) lines.add((label: 'Query', value: q));
+          break;
+        }
       case 'webfetch':
-      case 'web_fetch': {
-        final url = getStr('url');
-        if (url.isNotEmpty) lines.add((label: 'URL', value: url));
-        break;
-      }
+      case 'web_fetch':
+        {
+          final url = getStr('url');
+          if (url.isNotEmpty) lines.add((label: 'URL', value: url));
+          break;
+        }
       case 'todowrite':
-      case 'todo_write': {
-        final header = todoWriteHeader(input);
-        if (header != null) {
-          lines.add((label: 'Progress', value: header.progressText));
-          if (header.state == 'in_progress' && header.taskText.isNotEmpty) {
-            lines.add((label: 'Current', value: header.taskText));
+      case 'todo_write':
+        {
+          final header = todoWriteHeader(input);
+          if (header != null) {
+            lines.add((label: 'Progress', value: header.progressText));
+            if (header.state == 'in_progress' && header.taskText.isNotEmpty) {
+              lines.add((label: 'Current', value: header.taskText));
+            }
           }
-        }
-        final todos = <_TodoItem>[];
-        if (input is Map && input['todos'] is List) {
-          for (final t in (input['todos'] as List)) {
-            if (t is! Map) continue;
-            final content = t['content']?.toString().trim() ?? '';
-            if (content.isEmpty) continue;
-            final st = t['status']?.toString().trim() ?? '';
-            todos.add(_TodoItem(content: content, status: st));
+          final todos = <_TodoItem>[];
+          if (input is Map && input['todos'] is List) {
+            for (final t in (input['todos'] as List)) {
+              if (t is! Map) continue;
+              final content = t['content']?.toString().trim() ?? '';
+              if (content.isEmpty) continue;
+              final st = t['status']?.toString().trim() ?? '';
+              todos.add(_TodoItem(content: content, status: st));
+            }
           }
+          return _ToolDetails(
+            primaryLines: lines,
+            todos: todos.isEmpty ? null : todos,
+          );
         }
-        return _ToolDetails(primaryLines: lines, todos: todos.isEmpty ? null : todos);
-      }
       default:
         break;
     }

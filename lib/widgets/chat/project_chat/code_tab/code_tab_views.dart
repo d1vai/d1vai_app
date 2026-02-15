@@ -66,4 +66,3 @@ class CodeTabErrorView extends StatelessWidget {
     );
   }
 }
-

@@ -54,7 +54,8 @@ class _ProjectFileDetailSheet extends StatefulWidget {
   });
 
   @override
-  State<_ProjectFileDetailSheet> createState() => _ProjectFileDetailSheetState();
+  State<_ProjectFileDetailSheet> createState() =>
+      _ProjectFileDetailSheetState();
 }
 
 class _ProjectFileDetailSheetState extends State<_ProjectFileDetailSheet> {

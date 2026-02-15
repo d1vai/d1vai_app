@@ -171,7 +171,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                             if (authExpired)
                               OutlinedButton(
                                 onPressed: () {
-                                  AuthExpiryBus.trigger(endpoint: '/api/projects');
+                                  AuthExpiryBus.trigger(
+                                    endpoint: '/api/projects',
+                                  );
                                 },
                                 child: const Text('Re-login'),
                               ),

@@ -1,12 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-enum TooltipPosition {
-  top,
-  bottom,
-  left,
-  right,
-}
+enum TooltipPosition { top, bottom, left, right }
 
 class TooltipWidget extends StatefulWidget {
   final Widget child;
@@ -122,7 +117,8 @@ class _TooltipWidgetState extends State<TooltipWidget>
 
   Widget _buildTooltip() {
     final theme = Theme.of(context);
-    final bgColor = widget.backgroundColor ??
+    final bgColor =
+        widget.backgroundColor ??
         theme.colorScheme.onSurface.withValues(alpha: 0.9);
     final textColor = widget.textColor ?? theme.colorScheme.surface;
 
@@ -135,7 +131,8 @@ class _TooltipWidgetState extends State<TooltipWidget>
             opacity: _fadeAnimation.value,
             child: Container(
               margin: widget.margin ?? const EdgeInsets.all(8),
-              padding: widget.padding ??
+              padding:
+                  widget.padding ??
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: bgColor,
@@ -161,7 +158,8 @@ class _TooltipWidgetState extends State<TooltipWidget>
       Flexible(
         child: Text(
           widget.message,
-          style: widget.textStyle ??
+          style:
+              widget.textStyle ??
               TextStyle(
                 color: textColor,
                 fontSize: widget.fontSize ?? 12,
@@ -177,11 +175,7 @@ class _TooltipWidgetState extends State<TooltipWidget>
       case TooltipPosition.top:
         return Column(
           mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildArrow(),
-            const SizedBox(height: 4),
-            ...children,
-          ],
+          children: [_buildArrow(), const SizedBox(height: 4), ...children],
         );
       case TooltipPosition.bottom:
         return Column(
@@ -215,7 +209,8 @@ class _TooltipWidgetState extends State<TooltipWidget>
 
   Widget _buildArrow({bool isInverted = false, bool isHorizontal = false}) {
     final theme = Theme.of(context);
-    final bgColor = widget.backgroundColor ??
+    final bgColor =
+        widget.backgroundColor ??
         theme.colorScheme.onSurface.withValues(alpha: 0.9);
 
     if (isHorizontal) {

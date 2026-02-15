@@ -95,11 +95,7 @@ class _ProjectGithubTabState extends State<ProjectGithubTab> {
   Future<void> _copyBotUsername() async {
     await Clipboard.setData(ClipboardData(text: _botUsername));
     if (!mounted) return;
-    SnackBarHelper.showSuccess(
-      context,
-      title: 'Copied',
-      message: _botUsername,
-    );
+    SnackBarHelper.showSuccess(context, title: 'Copied', message: _botUsername);
   }
 
   Future<void> _acceptInvitation() async {
@@ -153,8 +149,8 @@ class _ProjectGithubTabState extends State<ProjectGithubTab> {
         _repoInfo = res;
         _accessVerified = true;
         if (_projectNameController.text.trim().isEmpty) {
-          _projectNameController.text =
-              (res['repository_name'] ?? parts[1]).toString();
+          _projectNameController.text = (res['repository_name'] ?? parts[1])
+              .toString();
         }
       });
       SnackBarHelper.showSuccess(
@@ -177,20 +173,19 @@ class _ProjectGithubTabState extends State<ProjectGithubTab> {
     final repoInfo = _repoInfo;
     if (full == null || repoInfo == null) return;
 
-    final projectName =
-        _projectNameController.text.trim().isNotEmpty
-            ? _projectNameController.text.trim()
-            : (repoInfo['repository_name']?.toString().isNotEmpty ?? false)
-            ? repoInfo['repository_name'].toString()
-            : full.split('/')[1];
+    final projectName = _projectNameController.text.trim().isNotEmpty
+        ? _projectNameController.text.trim()
+        : (repoInfo['repository_name']?.toString().isNotEmpty ?? false)
+        ? repoInfo['repository_name'].toString()
+        : full.split('/')[1];
 
     final payload = <String, dynamic>{
       'repository_full_name': full,
       'project_name': projectName,
       'project_description':
           (repoInfo['description']?.toString().trim().isNotEmpty ?? false)
-              ? repoInfo['description'].toString()
-              : 'Imported from GitHub: $full',
+          ? repoInfo['description'].toString()
+          : 'Imported from GitHub: $full',
       'repository_url': repoInfo['clone_url'],
       'repository_ssh_url': repoInfo['ssh_url'],
       'default_branch': repoInfo['default_branch'] ?? 'main',
@@ -244,7 +239,8 @@ class _ProjectGithubTabState extends State<ProjectGithubTab> {
                 widget.project.repositoryDefaultBranch ??
                 '')
             .trim();
-    final workspaceBranch = (widget.project.workspaceCurrentBranch ?? '').trim();
+    final workspaceBranch = (widget.project.workspaceCurrentBranch ?? '')
+        .trim();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -282,9 +278,8 @@ class _ProjectGithubTabState extends State<ProjectGithubTab> {
                         ),
                         IconButton(
                           tooltip: 'Open on GitHub',
-                          onPressed: () => _openExternalUrl(
-                            'https://github.com/$boundRepo',
-                          ),
+                          onPressed: () =>
+                              _openExternalUrl('https://github.com/$boundRepo'),
                           icon: const Icon(Icons.open_in_new, size: 18),
                         ),
                       ],
@@ -308,14 +303,22 @@ class _ProjectGithubTabState extends State<ProjectGithubTab> {
                                 ? 'private'
                                 : 'public',
                           ),
-                        if (boundBranch.isNotEmpty) _Tag(text: 'repo: $boundBranch'),
+                        if (boundBranch.isNotEmpty)
+                          _Tag(text: 'repo: $boundBranch'),
                         if (workspaceBranch.isNotEmpty)
                           _Tag(text: 'workspace: $workspaceBranch'),
-                        if ((widget.project.repositoryPlatform ?? '').trim().isNotEmpty)
-                          _Tag(text: (widget.project.repositoryPlatform ?? '').trim()),
+                        if ((widget.project.repositoryPlatform ?? '')
+                            .trim()
+                            .isNotEmpty)
+                          _Tag(
+                            text: (widget.project.repositoryPlatform ?? '')
+                                .trim(),
+                          ),
                       ],
                     ),
-                    if ((widget.project.opcodeLastAccessedAt ?? '').trim().isNotEmpty) ...[
+                    if ((widget.project.opcodeLastAccessedAt ?? '')
+                        .trim()
+                        .isNotEmpty) ...[
                       const SizedBox(height: 10),
                       Text(
                         'Last workspace sync: ${widget.project.opcodeLastAccessedAt}',
@@ -325,7 +328,9 @@ class _ProjectGithubTabState extends State<ProjectGithubTab> {
                         ),
                       ),
                     ],
-                    if ((widget.project.repositoryCloneUrl ?? '').trim().isNotEmpty) ...[
+                    if ((widget.project.repositoryCloneUrl ?? '')
+                        .trim()
+                        .isNotEmpty) ...[
                       const SizedBox(height: 10),
                       Container(
                         padding: const EdgeInsets.all(12),
@@ -424,7 +429,9 @@ class _ProjectGithubTabState extends State<ProjectGithubTab> {
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: theme.colorScheme.outlineVariant),
+                      border: Border.all(
+                        color: theme.colorScheme.outlineVariant,
+                      ),
                     ),
                     child: Row(
                       children: [
@@ -480,7 +487,9 @@ class _ProjectGithubTabState extends State<ProjectGithubTab> {
                               : _acceptInvitation,
                           icon: const Icon(Icons.mail, size: 18),
                           label: Text(
-                            _invitationAccepted ? 'Invitation accepted' : 'Accept invitation',
+                            _invitationAccepted
+                                ? 'Invitation accepted'
+                                : 'Accept invitation',
                             style: const TextStyle(fontSize: 12),
                           ),
                         ),
@@ -488,9 +497,14 @@ class _ProjectGithubTabState extends State<ProjectGithubTab> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed: _loading || !canGoStep2 ? null : _verifyAccess,
+                          onPressed: _loading || !canGoStep2
+                              ? null
+                              : _verifyAccess,
                           icon: const Icon(Icons.check_circle, size: 18),
-                          label: const Text('Verify access', style: TextStyle(fontSize: 12)),
+                          label: const Text(
+                            'Verify access',
+                            style: TextStyle(fontSize: 12),
+                          ),
                         ),
                       ),
                     ],
@@ -503,17 +517,19 @@ class _ProjectGithubTabState extends State<ProjectGithubTab> {
                       decoration: BoxDecoration(
                         color: theme.colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: theme.colorScheme.outlineVariant),
+                        border: Border.all(
+                          color: theme.colorScheme.outlineVariant,
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            (_repoInfo!['repository_name'] ?? repoFullName ?? '')
+                            (_repoInfo!['repository_name'] ??
+                                    repoFullName ??
+                                    '')
                                 .toString(),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                            ),
+                            style: const TextStyle(fontWeight: FontWeight.w800),
                           ),
                           const SizedBox(height: 4),
                           Text(
@@ -531,15 +547,22 @@ class _ProjectGithubTabState extends State<ProjectGithubTab> {
                             runSpacing: 8,
                             children: [
                               _Tag(
-                                text: 'branch: ${_repoInfo!['default_branch'] ?? 'main'}',
+                                text:
+                                    'branch: ${_repoInfo!['default_branch'] ?? 'main'}',
                               ),
                               _Tag(
                                 text: (_repoInfo!['is_private'] == true)
                                     ? 'private'
                                     : 'public',
                               ),
-                              if ((_repoInfo!['language'] ?? '').toString().trim().isNotEmpty)
-                                _Tag(text: (_repoInfo!['language'] ?? '').toString()),
+                              if ((_repoInfo!['language'] ?? '')
+                                  .toString()
+                                  .trim()
+                                  .isNotEmpty)
+                                _Tag(
+                                  text: (_repoInfo!['language'] ?? '')
+                                      .toString(),
+                                ),
                             ],
                           ),
                         ],
@@ -557,7 +580,9 @@ class _ProjectGithubTabState extends State<ProjectGithubTab> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: _loading || !canGoStep3 ? null : _importProject,
+                        onPressed: _loading || !canGoStep3
+                            ? null
+                            : _importProject,
                         icon: const Icon(Icons.download),
                         label: const Text('Import as new project'),
                       ),

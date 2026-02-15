@@ -51,11 +51,13 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
         break;
       case WalletType.sui:
         if (!a.startsWith('0x')) return 'SUI address should start with 0x';
-        if (a.length != 66) return 'SUI address should be 66 characters (0x + 64 hex)';
+        if (a.length != 66)
+          return 'SUI address should be 66 characters (0x + 64 hex)';
         break;
       case WalletType.evm:
         if (!a.startsWith('0x')) return 'EVM address should start with 0x';
-        if (a.length != 42) return 'EVM address should be 42 characters (0x + 40 hex)';
+        if (a.length != 42)
+          return 'EVM address should be 42 characters (0x + 40 hex)';
         break;
     }
     return null;
@@ -64,9 +66,7 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Wallet Settings'),
-      ),
+      appBar: AppBar(title: const Text('Wallet Settings')),
       body: Consumer<AuthProvider>(
         builder: (context, authProvider, _) {
           final user = authProvider.user;
@@ -81,7 +81,11 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.wallet, color: Colors.deepPurple, size: 32),
+                          Icon(
+                            Icons.wallet,
+                            color: Colors.deepPurple,
+                            size: 32,
+                          ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
@@ -89,14 +93,14 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
                               children: [
                                 Text(
                                   'Connect Your Wallet',
-                                  style: Theme.of(context).textTheme.titleMedium,
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.titleMedium,
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   'Connect your wallet to receive payments and rewards',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
+                                  style: Theme.of(context).textTheme.bodySmall
                                       ?.copyWith(color: Colors.grey.shade600),
                                 ),
                               ],
@@ -111,25 +115,15 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
               const SizedBox(height: 16),
 
               // Solana Wallet Card
-              _buildWalletCard(
-                WalletType.solana,
-                user?.solWallet,
-              ),
+              _buildWalletCard(WalletType.solana, user?.solWallet),
               const SizedBox(height: 12),
 
               // SUI Wallet Card
-              _buildWalletCard(
-                WalletType.sui,
-                user?.suiWallet,
-              ),
+              _buildWalletCard(WalletType.sui, user?.suiWallet),
               const SizedBox(height: 12),
 
               // Ethereum Wallet Card (Coming Soon)
-              _buildWalletCard(
-                WalletType.evm,
-                null,
-                isComingSoon: true,
-              ),
+              _buildWalletCard(WalletType.evm, null, isComingSoon: true),
             ],
           );
         },
@@ -142,7 +136,8 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
     String? currentAddress, {
     bool isComingSoon = false,
   }) {
-    final bool isConnected = currentAddress != null && currentAddress.isNotEmpty;
+    final bool isConnected =
+        currentAddress != null && currentAddress.isNotEmpty;
 
     return Card(
       child: Padding(
@@ -156,11 +151,7 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
                 color: walletType.color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(24),
               ),
-              child: Icon(
-                walletType.icon,
-                color: walletType.color,
-                size: 28,
-              ),
+              child: Icon(walletType.icon, color: walletType.color, size: 28),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -188,15 +179,15 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
                           ),
                         ),
                         IconButton(
-	                          tooltip: 'Copy address',
-	                          icon: const Icon(Icons.copy, size: 18),
-	                          onPressed: () async {
-	                            final raw = currentAddress.trim();
-	                            if (raw.isEmpty) return;
-	                            await Clipboard.setData(ClipboardData(text: raw));
-	                            if (!mounted) return;
-	                            SnackBarHelper.showSuccess(
-	                              context,
+                          tooltip: 'Copy address',
+                          icon: const Icon(Icons.copy, size: 18),
+                          onPressed: () async {
+                            final raw = currentAddress.trim();
+                            if (raw.isEmpty) return;
+                            await Clipboard.setData(ClipboardData(text: raw));
+                            if (!mounted) return;
+                            SnackBarHelper.showSuccess(
+                              context,
                               title: 'Copied',
                               message: '${walletType.name} address copied',
                             );
@@ -288,7 +279,9 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Disconnect Wallet'),
-          content: Text('Are you sure you want to disconnect your ${walletType.name} wallet?'),
+          content: Text(
+            'Are you sure you want to disconnect your ${walletType.name} wallet?',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -297,7 +290,10 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              child: const Text('Disconnect', style: TextStyle(color: Colors.white)),
+              child: const Text(
+                'Disconnect',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         ),
@@ -358,7 +354,9 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
                       decoration: BoxDecoration(
                         color: theme.colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: theme.colorScheme.outlineVariant),
+                        border: Border.all(
+                          color: theme.colorScheme.outlineVariant,
+                        ),
                       ),
                       child: Text(
                         baseMessage,

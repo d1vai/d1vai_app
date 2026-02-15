@@ -7,11 +7,7 @@ class ResetPasswordDialog extends StatefulWidget {
   final String? initialEmail;
   final VoidCallback? onSuccess;
 
-  const ResetPasswordDialog({
-    super.key,
-    this.initialEmail,
-    this.onSuccess,
-  });
+  const ResetPasswordDialog({super.key, this.initialEmail, this.onSuccess});
 
   @override
   State<ResetPasswordDialog> createState() => _ResetPasswordDialogState();
@@ -243,8 +239,10 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       backgroundColor: theme.colorScheme.primary,
                       foregroundColor: theme.colorScheme.onPrimary,
-                      disabledBackgroundColor: theme.colorScheme.surfaceContainerHighest,
-                      disabledForegroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.38),
+                      disabledBackgroundColor:
+                          theme.colorScheme.surfaceContainerHighest,
+                      disabledForegroundColor: theme.colorScheme.onSurface
+                          .withValues(alpha: 0.38),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -255,7 +253,9 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
                             width: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
                             ),
                           )
                         : Text(
@@ -350,9 +350,7 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: Text(
             'Cancel',
-            style: TextStyle(
-              color: theme.colorScheme.onSurface,
-            ),
+            style: TextStyle(color: theme.colorScheme.onSurface),
           ),
         ),
         ElevatedButton(
@@ -361,7 +359,9 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
             backgroundColor: theme.colorScheme.primary,
             foregroundColor: theme.colorScheme.onPrimary,
             disabledBackgroundColor: theme.colorScheme.surfaceContainerHighest,
-            disabledForegroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.38),
+            disabledForegroundColor: theme.colorScheme.onSurface.withValues(
+              alpha: 0.38,
+            ),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),

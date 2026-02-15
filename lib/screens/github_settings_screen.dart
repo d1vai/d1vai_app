@@ -102,7 +102,9 @@ class _GithubSettingsScreenState extends State<GithubSettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Disconnect GitHub'),
-        content: const Text('Are you sure you want to disconnect your GitHub account?'),
+        content: const Text(
+          'Are you sure you want to disconnect your GitHub account?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -111,7 +113,10 @@ class _GithubSettingsScreenState extends State<GithubSettingsScreen> {
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Disconnect', style: TextStyle(color: Colors.white)),
+            child: const Text(
+              'Disconnect',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -149,15 +154,11 @@ class _GithubSettingsScreenState extends State<GithubSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     if (!_isTokenLoaded) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('GitHub Integration'),
-      ),
+      appBar: AppBar(title: const Text('GitHub Integration')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -169,11 +170,7 @@ class _GithubSettingsScreenState extends State<GithubSettingsScreen> {
                 children: [
                   Row(
                     children: [
-                      Icon(
-                        Icons.code,
-                        color: Colors.deepPurple,
-                        size: 32,
-                      ),
+                      Icon(Icons.code, color: Colors.deepPurple, size: 32),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -184,7 +181,9 @@ class _GithubSettingsScreenState extends State<GithubSettingsScreen> {
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: _isConnected ? Colors.green : Colors.grey,
+                                color: _isConnected
+                                    ? Colors.green
+                                    : Colors.grey,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -220,16 +219,15 @@ class _GithubSettingsScreenState extends State<GithubSettingsScreen> {
                   const SizedBox(height: 12),
                   Text(
                     'Enter your GitHub Personal Access Token with the following permissions:',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey.shade600,
-                    ),
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
                   ),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Column(
@@ -270,8 +268,8 @@ class _GithubSettingsScreenState extends State<GithubSettingsScreen> {
                         _isConnecting
                             ? 'Connecting...'
                             : _isConnected
-                                ? 'Update Token'
-                                : 'Connect GitHub',
+                            ? 'Update Token'
+                            : 'Connect GitHub',
                       ),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),

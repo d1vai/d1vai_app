@@ -13,8 +13,9 @@ class ChatThinkingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return ChatMessageCard(
-      backgroundColor:
-          theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+      backgroundColor: theme.colorScheme.surfaceContainerHighest.withValues(
+        alpha: 0.35,
+      ),
       borderColor: Color.alphaBlend(
         theme.colorScheme.primary.withValues(
           alpha: theme.brightness == Brightness.dark ? 0.22 : 0.16,

@@ -35,7 +35,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
-
   /// 显示登录提示对话框
   void _showLoginRequiredDialog() {
     showDialog(
@@ -105,9 +104,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               AvatarImage(
                 key: ValueKey(user.picture), // 添加 key 以确保头像更新时重新构建
-                imageUrl: user.picture.isEmpty
-                    ? 'placeholder'
-                    : user.picture,
+                imageUrl: user.picture.isEmpty ? 'placeholder' : user.picture,
                 size: 120,
                 borderRadius: BorderRadius.circular(60),
                 fit: BoxFit.cover,
@@ -213,9 +210,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               AvatarImage(
                 key: ValueKey(user.picture), // 添加 key 以确保头像更新时重新构建
-                imageUrl: user.picture.isEmpty
-                    ? 'placeholder'
-                    : user.picture,
+                imageUrl: user.picture.isEmpty ? 'placeholder' : user.picture,
                 size: 120,
                 borderRadius: BorderRadius.circular(60),
                 fit: BoxFit.cover,
@@ -380,7 +375,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       SnackBarHelper.showError(
                         context,
                         title: 'Error',
-                        message: profileProvider.error ?? 'Failed to update profile',
+                        message:
+                            profileProvider.error ?? 'Failed to update profile',
                       );
                     }
                   },
@@ -517,7 +513,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               onSelect: (selectedAvatarUrl) async {
                 // 先关闭对话框，避免 Hero tag 冲突
                 Navigator.of(dialogContext).pop();
-                
+
                 if (!mounted) return;
 
                 final authProvider = Provider.of<AuthProvider>(
@@ -543,7 +539,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   if (!mounted) return;
 
                   await Future.delayed(const Duration(milliseconds: 300));
-                  
+
                   if (!mounted) return;
                   SnackBarHelper.showError(
                     context,
@@ -579,9 +575,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final theme = Theme.of(context);
     return Text(
       title,
-      style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-          ) ??
+      style:
+          theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700) ??
           const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
     );
   }

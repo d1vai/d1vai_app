@@ -8,11 +8,7 @@ class CacheEntry {
   final DateTime timestamp;
   final Duration ttl;
 
-  CacheEntry({
-    required this.data,
-    required this.timestamp,
-    required this.ttl,
-  });
+  CacheEntry({required this.data, required this.timestamp, required this.ttl});
 
   bool get isExpired {
     return DateTime.now().difference(timestamp) > ttl;
@@ -43,7 +39,10 @@ class CacheService {
 
   /// 从缓存获取数据
   /// 返回 null 如果缓存不存在或已过期
-  Future<T?> get<T>(String key, T Function(Map<String, dynamic>) fromJsonT) async {
+  Future<T?> get<T>(
+    String key,
+    T Function(Map<String, dynamic>) fromJsonT,
+  ) async {
     // 首先检查内存缓存
     if (_memoryCache.containsKey(key)) {
       final entry = _memoryCache[key]!;
@@ -110,7 +109,10 @@ class CacheService {
   }
 
   /// 从磁盘加载缓存
-  Future<T?> _loadFromDisk<T>(String key, T Function(Map<String, dynamic>) fromJsonT) async {
+  Future<T?> _loadFromDisk<T>(
+    String key,
+    T Function(Map<String, dynamic>) fromJsonT,
+  ) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final cacheKey = 'cache_$key';

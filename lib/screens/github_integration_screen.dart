@@ -8,7 +8,8 @@ class GitHubIntegrationScreen extends StatefulWidget {
   const GitHubIntegrationScreen({super.key});
 
   @override
-  State<GitHubIntegrationScreen> createState() => _GitHubIntegrationScreenState();
+  State<GitHubIntegrationScreen> createState() =>
+      _GitHubIntegrationScreenState();
 }
 
 class _GitHubIntegrationScreenState extends State<GitHubIntegrationScreen> {
@@ -245,9 +246,7 @@ class _GitHubIntegrationScreenState extends State<GitHubIntegrationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('GitHub Integration'),
-      ),
+      appBar: AppBar(title: const Text('GitHub Integration')),
       body: _isConnected ? _buildConnectedState() : _buildDisconnectedState(),
     );
   }
@@ -277,9 +276,8 @@ class _GitHubIntegrationScreenState extends State<GitHubIntegrationScreen> {
                           const SizedBox(height: 4),
                           Text(
                             'Connect your GitHub account to import repositories',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Colors.grey.shade600,
-                                ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: Colors.grey.shade600),
                           ),
                         ],
                       ),
@@ -303,10 +301,7 @@ class _GitHubIntegrationScreenState extends State<GitHubIntegrationScreen> {
                 const SizedBox(height: 8),
                 Text(
                   'Create a Personal Access Token in your GitHub Settings',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
@@ -320,7 +315,9 @@ class _GitHubIntegrationScreenState extends State<GitHubIntegrationScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.link),
-                    label: Text(_isLoading ? 'Connecting...' : 'Connect GitHub'),
+                    label: Text(
+                      _isLoading ? 'Connecting...' : 'Connect GitHub',
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black,
                       foregroundColor: Colors.white,
@@ -351,7 +348,9 @@ class _GitHubIntegrationScreenState extends State<GitHubIntegrationScreen> {
                     if (_githubUser?['avatar_url'] != null)
                       CircleAvatar(
                         radius: 24,
-                        backgroundImage: NetworkImage(_githubUser!['avatar_url']),
+                        backgroundImage: NetworkImage(
+                          _githubUser!['avatar_url'],
+                        ),
                       )
                     else
                       CircleAvatar(
@@ -373,9 +372,7 @@ class _GitHubIntegrationScreenState extends State<GitHubIntegrationScreen> {
                           if (_githubUser?['name'] != null)
                             Text(
                               _githubUser!['name'],
-                              style: TextStyle(
-                                color: Colors.grey.shade600,
-                              ),
+                              style: TextStyle(color: Colors.grey.shade600),
                             ),
                         ],
                       ),
@@ -478,8 +475,8 @@ class _GitHubIntegrationScreenState extends State<GitHubIntegrationScreen> {
                   onPressed: _activeRepoTab == 'all'
                       ? (_loadingRepositories ? null : _fetchRepositories)
                       : (_loadingWritableRepositories
-                          ? null
-                          : _fetchWritableRepositories),
+                            ? null
+                            : _fetchWritableRepositories),
                 ),
               ),
               const Divider(height: 1),
@@ -516,7 +513,9 @@ class _GitHubIntegrationScreenState extends State<GitHubIntegrationScreen> {
                 _buildRepositoriesList(_repositories, _loadingRepositories)
               else
                 _buildRepositoriesList(
-                    _writableRepositories, _loadingWritableRepositories),
+                  _writableRepositories,
+                  _loadingWritableRepositories,
+                ),
             ],
           ),
         ),
@@ -537,10 +536,7 @@ class _GitHubIntegrationScreenState extends State<GitHubIntegrationScreen> {
         ),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey.shade600,
-          ),
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
         ),
       ],
     );
@@ -551,21 +547,27 @@ class _GitHubIntegrationScreenState extends State<GitHubIntegrationScreen> {
     if (scopes == null || scopes.isEmpty) return [];
 
     final permissionMap = <String, Map<String, String>>{
-      'repo': {'label': 'Full Repository Access', 'color': '0xFF4CAF50'}, // green
-      'public_repo': {'label': 'Public Repositories', 'color': '0xFF2196F3'}, // blue
-      'read:user': {'label': 'Read User Profile', 'color': '0xFF9C27B0'}, // purple
+      'repo': {
+        'label': 'Full Repository Access',
+        'color': '0xFF4CAF50',
+      }, // green
+      'public_repo': {
+        'label': 'Public Repositories',
+        'color': '0xFF2196F3',
+      }, // blue
+      'read:user': {
+        'label': 'Read User Profile',
+        'color': '0xFF9C27B0',
+      }, // purple
       'user:email': {'label': 'User Email', 'color': '0xFFFF9800'}, // orange
       'read:org': {'label': 'Read Organization', 'color': '0xFFE91E63'}, // pink
       'workflow': {'label': 'GitHub Actions', 'color': '0xFFFFC107'}, // yellow
     };
 
     return scopes.map((scope) {
-      final info = permissionMap[scope] ?? {'label': scope, 'color': '0xFF757575'};
-      return {
-        'scope': scope,
-        'label': info['label']!,
-        'color': info['color']!,
-      };
+      final info =
+          permissionMap[scope] ?? {'label': scope, 'color': '0xFF757575'};
+      return {'scope': scope, 'label': info['label']!, 'color': info['color']!};
     }).toList();
   }
 
@@ -654,10 +656,7 @@ class _GitHubIntegrationScreenState extends State<GitHubIntegrationScreen> {
                 ? 'No repositories found — check your GitHub connection or try syncing again.'
                 : 'No writable repositories — grant access or switch to a different repo.',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.grey.shade600,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
           ),
         ),
       );
@@ -665,7 +664,12 @@ class _GitHubIntegrationScreenState extends State<GitHubIntegrationScreen> {
 
     return Column(
       children: repositories
-          .map((repo) => _buildRepositoryCard(repo, isWritable: _activeRepoTab == 'writable'))
+          .map(
+            (repo) => _buildRepositoryCard(
+              repo,
+              isWritable: _activeRepoTab == 'writable',
+            ),
+          )
           .toList(),
     );
   }
@@ -712,11 +716,7 @@ class _GitHubIntegrationScreenState extends State<GitHubIntegrationScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: Colors.grey.shade200,
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
       ),
       child: ListTile(
         leading: Icon(
@@ -735,10 +735,7 @@ class _GitHubIntegrationScreenState extends State<GitHubIntegrationScreen> {
                 ),
                 child: Text(
                   'Private',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.orange.shade700,
-                  ),
+                  style: TextStyle(fontSize: 10, color: Colors.orange.shade700),
                 ),
               ),
             if (isWritable)
@@ -752,11 +749,7 @@ class _GitHubIntegrationScreenState extends State<GitHubIntegrationScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.shield,
-                      size: 10,
-                      color: Colors.green.shade700,
-                    ),
+                    Icon(Icons.shield, size: 10, color: Colors.green.shade700),
                     const SizedBox(width: 4),
                     Text(
                       'Writable',
@@ -789,7 +782,10 @@ class _GitHubIntegrationScreenState extends State<GitHubIntegrationScreen> {
               children: [
                 if (language != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.deepPurple.shade50,
                       borderRadius: BorderRadius.circular(12),
@@ -823,7 +819,11 @@ class _GitHubIntegrationScreenState extends State<GitHubIntegrationScreen> {
             Row(
               children: [
                 if (defaultBranch != null && defaultBranch.isNotEmpty) ...[
-                  Icon(Icons.account_tree, size: 14, color: Colors.grey.shade600),
+                  Icon(
+                    Icons.account_tree,
+                    size: 14,
+                    color: Colors.grey.shade600,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     defaultBranch,
@@ -832,7 +832,11 @@ class _GitHubIntegrationScreenState extends State<GitHubIntegrationScreen> {
                   const SizedBox(width: 12),
                 ],
                 if (updatedTimeText.isNotEmpty) ...[
-                  Icon(Icons.access_time, size: 14, color: Colors.grey.shade600),
+                  Icon(
+                    Icons.access_time,
+                    size: 14,
+                    color: Colors.grey.shade600,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     updatedTimeText,

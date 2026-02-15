@@ -75,7 +75,8 @@ class _AvatarImageState extends State<AvatarImage> {
 
   void _recomputeSvgState() {
     final isValidHttpUrl = _isValidHttpUrl(widget.imageUrl);
-    _isSvg = isValidHttpUrl &&
+    _isSvg =
+        isValidHttpUrl &&
         (widget.imageUrl.contains('.svg') || widget.imageUrl.contains('/svg'));
     _svgFuture = _isSvg ? _loadAndCleanSvg(widget.imageUrl) : null;
   }
@@ -91,7 +92,8 @@ class _AvatarImageState extends State<AvatarImage> {
 
     final border = widget.showBorder
         ? Border.all(
-            color: widget.borderColor ??
+            color:
+                widget.borderColor ??
                 colorScheme.outlineVariant.withValues(alpha: 0.55),
             width: widget.borderWidth,
           )
@@ -122,16 +124,16 @@ class _AvatarImageState extends State<AvatarImage> {
               },
             )
           : (isValidHttpUrl
-              ? CachedNetworkImage(
-                  imageUrl: widget.imageUrl,
-                  width: widget.size,
-                  height: widget.size,
-                  fit: widget.fit,
-                  placeholder: (context, url) => _buildPlaceholder(context),
-                  errorWidget: (context, url, error) =>
-                      _buildPlaceholder(context),
-                )
-              : _buildPlaceholder(context)),
+                ? CachedNetworkImage(
+                    imageUrl: widget.imageUrl,
+                    width: widget.size,
+                    height: widget.size,
+                    fit: widget.fit,
+                    placeholder: (context, url) => _buildPlaceholder(context),
+                    errorWidget: (context, url, error) =>
+                        _buildPlaceholder(context),
+                  )
+                : _buildPlaceholder(context)),
     );
   }
 

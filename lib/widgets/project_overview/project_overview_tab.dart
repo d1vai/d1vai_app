@@ -372,8 +372,8 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
     final id = postId is num
         ? postId.toInt()
         : postId is String
-            ? int.tryParse(postId)
-            : null;
+        ? int.tryParse(postId)
+        : null;
     if (id == null) return;
 
     setState(() {
@@ -466,7 +466,8 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
 
           try {
             final service = D1vaiService();
-            final head = (project.repositoryCurrentBranch ?? '').trim().isNotEmpty
+            final head =
+                (project.repositoryCurrentBranch ?? '').trim().isNotEmpty
                 ? project.repositoryCurrentBranch!.trim()
                 : 'dev';
             const base = 'main';
@@ -524,7 +525,10 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
 
             await widget.onRefreshProject?.call();
             if (mounted) {
-              await Provider.of<ProjectProvider>(context, listen: false).refresh();
+              await Provider.of<ProjectProvider>(
+                context,
+                listen: false,
+              ).refresh();
               await widget.onReloadDeployments();
             }
 
@@ -544,7 +548,8 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
 
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            final showProgress = releaseRunning ||
+            final showProgress =
+                releaseRunning ||
                 releaseCompleted ||
                 (releaseError != null && releaseError!.trim().isNotEmpty);
             return AlertDialog(
@@ -564,9 +569,8 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
                           const SizedBox(height: 10),
                           Text(
                             'Current domain: $prodLabel',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  fontFamily: 'monospace',
-                                ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(fontFamily: 'monospace'),
                           ),
                         ],
                       ] else ...[
@@ -586,10 +590,7 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
                     ] else ...[
                       ProgressWidget(
                         tipList: hasProdDomain
-                            ? const [
-                                'Publishing to community…',
-                                'Finalizing…',
-                              ]
+                            ? const ['Publishing to community…', 'Finalizing…']
                             : const [
                                 'Merging branches…',
                                 'Triggering production deploy…',
@@ -602,21 +603,21 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
                           Navigator.of(dialogContext).pop();
                         },
                       ),
-                      if (releaseError != null && releaseError!.trim().isNotEmpty) ...[
+                      if (releaseError != null &&
+                          releaseError!.trim().isNotEmpty) ...[
                         const SizedBox(height: 10),
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .errorContainer
+                            color: Theme.of(context).colorScheme.errorContainer
                                 .withValues(alpha: 0.25),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
                             releaseError!,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
                                   color: Theme.of(context).colorScheme.error,
                                 ),
                           ),
@@ -628,7 +629,9 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
               ),
               actions: [
                 TextButton(
-                  onPressed: releaseRunning ? null : () => Navigator.of(dialogContext).pop(),
+                  onPressed: releaseRunning
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(),
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
@@ -679,7 +682,10 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(14),
@@ -721,8 +727,9 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
                     label: const Text('Publish'),
                   ),
                   OutlinedButton.icon(
-                    onPressed:
-                        canInteract && _status != 'none' ? _update : null,
+                    onPressed: canInteract && _status != 'none'
+                        ? _update
+                        : null,
                     icon: _loadingAction == 'update'
                         ? const SizedBox(
                             width: 18,
@@ -733,8 +740,9 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
                     label: const Text('Update'),
                   ),
                   OutlinedButton.icon(
-                    onPressed:
-                        canInteract && _status == 'published' ? _unpublish : null,
+                    onPressed: canInteract && _status == 'published'
+                        ? _unpublish
+                        : null,
                     icon: _loadingAction == 'unpublish'
                         ? const SizedBox(
                             width: 18,
@@ -745,8 +753,9 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
                     label: const Text('Unpublish'),
                   ),
                   OutlinedButton.icon(
-                    onPressed:
-                        canInteract && _status == 'published' ? _openCommunityPost : null,
+                    onPressed: canInteract && _status == 'published'
+                        ? _openCommunityPost
+                        : null,
                     icon: const Icon(Icons.open_in_new, size: 18),
                     label: const Text('View'),
                   ),

@@ -73,8 +73,7 @@ class CodeHighlightBlock extends StatelessWidget {
         (baseTextStyle.fontSize ?? 12.5) * (baseTextStyle.height ?? 1.3);
     final boxVerticalPadding = 12.0;
     final boxHorizontalPadding = 12.0;
-    final targetHeight =
-        (visibleLines * lineHeight) + (boxVerticalPadding * 2);
+    final targetHeight = (visibleLines * lineHeight) + (boxVerticalPadding * 2);
     final needsScroll = lineCount > maxVisibleLines || text.length > 2800;
 
     Widget inner;

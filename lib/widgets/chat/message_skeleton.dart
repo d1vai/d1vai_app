@@ -34,18 +34,10 @@ class _MessageSkeletonState extends State<MessageSkeleton>
     _opacityAnimation = Tween<double>(
       begin: 0.4,
       end: 0.8,
-    ).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeInOut,
-      ),
-    );
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     _shimmerAnimation = Tween<double>(begin: -1.2, end: 2.2).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeInOutCubic,
-      ),
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOutCubic),
     );
 
     Future.delayed(Duration(milliseconds: widget.delay), () {
@@ -181,13 +173,7 @@ class _ShimmerMask extends StatelessWidget {
         return LinearGradient(
           begin: Alignment(-1, 0),
           end: Alignment(1, 0),
-          colors: [
-            base,
-            base,
-            highlight,
-            base,
-            base,
-          ],
+          colors: [base, base, highlight, base, base],
           stops: [
             0.0,
             (t - 0.4).clamp(0.0, 1.0),
@@ -230,10 +216,7 @@ class _TypingDots extends StatelessWidget {
               child: Container(
                 width: 6,
                 height: 6,
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
-                ),
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
               ),
             ),
           ),
@@ -247,10 +230,7 @@ class _TypingDots extends StatelessWidget {
 class MessageSkeletonList extends StatelessWidget {
   final int count;
 
-  const MessageSkeletonList({
-    super.key,
-    this.count = 3,
-  });
+  const MessageSkeletonList({super.key, this.count = 3});
 
   @override
   Widget build(BuildContext context) {
@@ -258,10 +238,7 @@ class MessageSkeletonList extends StatelessWidget {
       children: List.generate(count, (index) {
         // Alternate between user and assistant skeletons
         final isUser = index % 2 == 1;
-        return MessageSkeleton(
-          delay: index * 100,
-          isUser: isUser,
-        );
+        return MessageSkeleton(delay: index * 100, isUser: isUser);
       }),
     );
   }

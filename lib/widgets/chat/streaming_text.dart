@@ -48,7 +48,8 @@ class _StreamingTextState extends State<StreamingText> {
       return;
     }
 
-    final duration = widget.animationDuration ??
+    final duration =
+        widget.animationDuration ??
         Duration(milliseconds: (widget.text.length * 30));
 
     final interval = duration.inMilliseconds ~/ widget.text.length;
@@ -69,7 +70,7 @@ class _StreamingTextState extends State<StreamingText> {
   @override
   void didUpdateWidget(StreamingText oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     if (widget.text != oldWidget.text) {
       _timer?.cancel();
       setState(() {
@@ -88,10 +89,7 @@ class _StreamingTextState extends State<StreamingText> {
       return _buildFormattedText(_displayedText, widget.style);
     }
 
-    return Text(
-      _displayedText,
-      style: widget.style,
-    );
+    return Text(_displayedText, style: widget.style);
   }
 
   Widget _buildFormattedText(String text, TextStyle? baseStyle) {
@@ -122,40 +120,46 @@ class _StreamingTextState extends State<StreamingText> {
 
     for (var match in allMatches) {
       if (match.start > cursor) {
-        spans.add(TextSpan(text: text.substring(cursor, match.start), style: baseStyle));
+        spans.add(
+          TextSpan(text: text.substring(cursor, match.start), style: baseStyle),
+        );
       }
 
       String matched = match.group(0)!;
 
       if (matched.startsWith('**')) {
-        spans.add(TextSpan(
-          text: match.group(1)!,
-          style: baseStyle?.copyWith(fontWeight: FontWeight.bold),
-        ));
-      } else if (matched.startsWith('*') && !matched.startsWith('**')) {
-        spans.add(TextSpan(
-          text: match.group(1)!,
-          style: baseStyle?.copyWith(fontStyle: FontStyle.italic),
-        ));
-      } else if (matched.startsWith('`')) {
-        spans.add(TextSpan(
-          text: match.group(1)!,
-          style: baseStyle?.copyWith(
-            fontFamily: 'monospace',
-            backgroundColor: Colors.grey[300],
+        spans.add(
+          TextSpan(
+            text: match.group(1)!,
+            style: baseStyle?.copyWith(fontWeight: FontWeight.bold),
           ),
-        ));
+        );
+      } else if (matched.startsWith('*') && !matched.startsWith('**')) {
+        spans.add(
+          TextSpan(
+            text: match.group(1)!,
+            style: baseStyle?.copyWith(fontStyle: FontStyle.italic),
+          ),
+        );
+      } else if (matched.startsWith('`')) {
+        spans.add(
+          TextSpan(
+            text: match.group(1)!,
+            style: baseStyle?.copyWith(
+              fontFamily: 'monospace',
+              backgroundColor: Colors.grey[300],
+            ),
+          ),
+        );
       }
-      
+
       cursor = match.end;
     }
-    
+
     if (cursor < text.length) {
       spans.add(TextSpan(text: text.substring(cursor), style: baseStyle));
     }
-    
-    return RichText(
-      text: TextSpan(children: spans),
-    );
+
+    return RichText(text: TextSpan(children: spans));
   }
 }

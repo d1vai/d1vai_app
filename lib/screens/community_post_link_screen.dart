@@ -10,7 +10,8 @@ class CommunityPostLinkScreen extends StatefulWidget {
   const CommunityPostLinkScreen({super.key, required this.slug});
 
   @override
-  State<CommunityPostLinkScreen> createState() => _CommunityPostLinkScreenState();
+  State<CommunityPostLinkScreen> createState() =>
+      _CommunityPostLinkScreenState();
 }
 
 class _CommunityPostLinkScreenState extends State<CommunityPostLinkScreen> {
@@ -55,9 +56,7 @@ class _CommunityPostLinkScreenState extends State<CommunityPostLinkScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final post = _post;
@@ -89,4 +88,3 @@ class _CommunityPostLinkScreenState extends State<CommunityPostLinkScreen> {
     );
   }
 }
-

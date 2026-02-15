@@ -122,8 +122,7 @@ class Input extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     final effectiveTextStyle =
-        textStyle ??
-        _getTextStyle(size, theme.textTheme.bodyMedium);
+        textStyle ?? _getTextStyle(size, theme.textTheme.bodyMedium);
     final effectiveLabelStyle =
         labelStyle ??
         _getTextStyle(
@@ -160,7 +159,8 @@ class Input extends StatelessWidget {
       disabled,
       context,
     );
-    final effectiveFocusedBorderColor = focusedBorderColor ?? colorScheme.primary;
+    final effectiveFocusedBorderColor =
+        focusedBorderColor ?? colorScheme.primary;
     final effectiveErrorBorderColor = errorBorderColor ?? colorScheme.error;
 
     final effectiveBorder =

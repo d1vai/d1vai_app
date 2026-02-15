@@ -46,7 +46,10 @@ class _CountUpState extends State<CountUp> {
 
     void updateValue() {
       final elapsed = DateTime.now().difference(startTime);
-      final progress = (elapsed.inMilliseconds / duration.inMilliseconds).clamp(0.0, 1.0);
+      final progress = (elapsed.inMilliseconds / duration.inMilliseconds).clamp(
+        0.0,
+        1.0,
+      );
 
       setState(() {
         _currentValue = widget.value * progress;
@@ -62,10 +65,7 @@ class _CountUpState extends State<CountUp> {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      _currentValue.toStringAsFixed(2),
-      style: widget.style,
-    );
+    return Text(_currentValue.toStringAsFixed(2), style: widget.style);
   }
 }
 
@@ -115,7 +115,9 @@ class _CreditHistoryState extends State<CreditHistory> {
     });
 
     try {
-      final creditIssuances = await _walletService.getCreditIssuances(limit: 50);
+      final creditIssuances = await _walletService.getCreditIssuances(
+        limit: 50,
+      );
 
       // Get last seen timestamp from SharedPreferences
       final prefs = await SharedPreferences.getInstance();
@@ -274,15 +276,17 @@ class _CreditHistoryState extends State<CreditHistory> {
               child: Icon(
                 Icons.wallet,
                 size: 40,
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.6,
+                ),
               ),
             ),
             const SizedBox(height: 24),
             Text(
               'No credit records yet',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
@@ -299,9 +303,7 @@ class _CreditHistoryState extends State<CreditHistory> {
               decoration: BoxDecoration(
                 color: Colors.deepPurple.shade50,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.deepPurple.shade200,
-                ),
+                border: Border.all(color: Colors.deepPurple.shade200),
               ),
               child: Column(
                 children: [
@@ -327,10 +329,7 @@ class _CreditHistoryState extends State<CreditHistory> {
                   const SizedBox(height: 8),
                   Text(
                     'Switch to the Balance tab to add funds to your account',
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                   ),
                 ],
               ),
@@ -348,10 +347,7 @@ class _CreditHistoryState extends State<CreditHistory> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: Colors.green.shade50,
-        border: Border.all(
-          color: Colors.green.shade300,
-          width: 1,
-        ),
+        border: Border.all(color: Colors.green.shade300, width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.green.shade200.withValues(alpha: 0.3),
@@ -362,11 +358,7 @@ class _CreditHistoryState extends State<CreditHistory> {
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.check_circle,
-            color: Colors.green.shade700,
-            size: 24,
-          ),
+          Icon(Icons.check_circle, color: Colors.green.shade700, size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -408,20 +400,13 @@ class _CreditHistoryState extends State<CreditHistory> {
             ),
           ),
           IconButton(
-            icon: Icon(
-              Icons.close,
-              color: Colors.green.shade600,
-              size: 20,
-            ),
+            icon: Icon(Icons.close, color: Colors.green.shade600, size: 20),
             onPressed: () {
               setState(() {
                 _arrivalBanner = null;
               });
             },
-            constraints: const BoxConstraints(
-              minWidth: 32,
-              minHeight: 32,
-            ),
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
             padding: EdgeInsets.zero,
           ),
         ],
@@ -438,10 +423,7 @@ class _CreditHistoryState extends State<CreditHistory> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         border: isHighlighted
-            ? Border.all(
-                color: Colors.green.shade400,
-                width: 2,
-              )
+            ? Border.all(color: Colors.green.shade400, width: 2)
             : null,
         boxShadow: isHighlighted
             ? [
@@ -471,7 +453,9 @@ class _CreditHistoryState extends State<CreditHistory> {
                     ),
                     child: Icon(
                       Icons.check_circle,
-                      color: isHighlighted ? Colors.green.shade800 : Colors.green.shade600,
+                      color: isHighlighted
+                          ? Colors.green.shade800
+                          : Colors.green.shade600,
                       size: 20,
                     ),
                   ),
@@ -484,28 +468,33 @@ class _CreditHistoryState extends State<CreditHistory> {
                           children: [
                             Text(
                               '+ \$',
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: isHighlighted ? Colors.green.shade800 : Colors.green.shade600,
-                              ),
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: isHighlighted
+                                        ? Colors.green.shade800
+                                        : Colors.green.shade600,
+                                  ),
                             ),
                             if (isHighlighted)
                               Expanded(
                                 child: CountUp(
                                   value: credit.amount,
-                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.green.shade800,
-                                  ),
+                                  style: Theme.of(context).textTheme.titleLarge
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.green.shade800,
+                                      ),
                                 ),
                               )
                             else
                               Text(
                                 credit.amount.toStringAsFixed(2),
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.green.shade600,
-                                ),
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.green.shade600,
+                                    ),
                               ),
                             if (isHighlighted)
                               Padding(
@@ -525,10 +514,15 @@ class _CreditHistoryState extends State<CreditHistory> {
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.green.shade50,
-                                border: Border.all(color: Colors.green.shade200),
+                                border: Border.all(
+                                  color: Colors.green.shade200,
+                                ),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
@@ -543,10 +537,15 @@ class _CreditHistoryState extends State<CreditHistory> {
                             const SizedBox(width: 8),
                             if (credit.isNew)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.amber.shade50,
-                                  border: Border.all(color: Colors.amber.shade200),
+                                  border: Border.all(
+                                    color: Colors.amber.shade200,
+                                  ),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
@@ -588,11 +587,7 @@ class _CreditHistoryState extends State<CreditHistory> {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Icon(
-                    Icons.person,
-                    size: 16,
-                    color: Colors.grey.shade600,
-                  ),
+                  Icon(Icons.person, size: 16, color: Colors.grey.shade600),
                   const SizedBox(width: 8),
                   Text(
                     'Source: ${_formatSource(credit.source)}',
@@ -600,11 +595,7 @@ class _CreditHistoryState extends State<CreditHistory> {
                   ),
                   if (credit.expiresAt != null) ...[
                     const Spacer(),
-                    Icon(
-                      Icons.schedule,
-                      size: 16,
-                      color: Colors.grey.shade600,
-                    ),
+                    Icon(Icons.schedule, size: 16, color: Colors.grey.shade600),
                     const SizedBox(width: 8),
                     Text(
                       'Expires: ${_formatDate(credit.expiresAt!)}',

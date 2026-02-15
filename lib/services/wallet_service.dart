@@ -33,14 +33,11 @@ class WalletService {
     required String successUrl,
     required String cancelUrl,
   }) async {
-    return _apiClient.post<Map<String, dynamic>>(
-      '/api/wallet/topup/initiate',
-      {
-        'amount_usd': amountUsd,
-        'success_url': successUrl,
-        'cancel_url': cancelUrl,
-      },
-    );
+    return _apiClient.post<Map<String, dynamic>>('/api/wallet/topup/initiate', {
+      'amount_usd': amountUsd,
+      'success_url': successUrl,
+      'cancel_url': cancelUrl,
+    });
   }
 
   /// 创建订阅链接（用于购买定价计划）
@@ -63,16 +60,11 @@ class WalletService {
       throw Exception('Either stripe_price_id or package_id must be provided');
     }
 
-    return _apiClient.post<Map<String, dynamic>>(
-      '/api/wallet/subscribe',
-      body,
-    );
+    return _apiClient.post<Map<String, dynamic>>('/api/wallet/subscribe', body);
   }
 
   /// 获取交易历史（对齐 Web 端订单记录）
-  Future<List<PaymentTransaction>> getTransactions({
-    int limit = 50,
-  }) async {
+  Future<List<PaymentTransaction>> getTransactions({int limit = 50}) async {
     // 对齐 d1vai Web：使用 `/api/package_order/my-orders` 作为用户购买记录接口
     // 包含套餐订单 + 充值（topup）两类记录
     final queryParams = <String, String>{
@@ -103,8 +95,9 @@ class WalletService {
           : 'USD';
 
       final statusRaw = map['plan_status'];
-      final status =
-          statusRaw is String && statusRaw.isNotEmpty ? statusRaw : 'paid';
+      final status = statusRaw is String && statusRaw.isNotEmpty
+          ? statusRaw
+          : 'paid';
 
       final createdAt = map['created_at']?.toString();
       final updatedAt = map['updated_at']?.toString();

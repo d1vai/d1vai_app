@@ -36,8 +36,7 @@ class Separator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final effectiveColor = color ??
-        theme.dividerColor.withValues(alpha: 0.3);
+    final effectiveColor = color ?? theme.dividerColor.withValues(alpha: 0.3);
 
     if (direction == Axis.horizontal) {
       return Container(
@@ -99,8 +98,7 @@ class CustomSeparator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final effectiveColor = (color ??
-            theme.dividerColor.withValues(alpha: 0.3))
+    final effectiveColor = (color ?? theme.dividerColor.withValues(alpha: 0.3))
         .withValues(alpha: opacity);
 
     Widget separator;
@@ -108,8 +106,12 @@ class CustomSeparator extends StatelessWidget {
     switch (variant) {
       case SeparatorVariant.solid:
         separator = Container(
-          width: direction == Axis.horizontal ? width ?? double.infinity : thickness,
-          height: direction == Axis.horizontal ? thickness : height ?? double.infinity,
+          width: direction == Axis.horizontal
+              ? width ?? double.infinity
+              : thickness,
+          height: direction == Axis.horizontal
+              ? thickness
+              : height ?? double.infinity,
           color: effectiveColor,
         );
         break;
@@ -129,11 +131,7 @@ class CustomSeparator extends StatelessWidget {
     );
 
     if (padding != null || margin != null) {
-      return Container(
-        padding: padding,
-        margin: margin,
-        child: separator,
-      );
+      return Container(padding: padding, margin: margin, child: separator);
     }
 
     return separator;
@@ -234,16 +232,14 @@ class LabeledSeparator extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final effectiveColor = color ?? theme.dividerColor.withValues(alpha: 0.3);
-    final effectiveLabelStyle = labelStyle ??
+    final effectiveLabelStyle =
+        labelStyle ??
         theme.textTheme.bodySmall?.copyWith(
           color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
         );
 
     final labelWidget = label != null
-        ? Text(
-            label!,
-            style: effectiveLabelStyle,
-          )
+        ? Text(label!, style: effectiveLabelStyle)
         : child ?? const SizedBox.shrink();
 
     if (direction == Axis.horizontal) {
@@ -364,11 +360,7 @@ class _DottedLinePainter extends CustomPainter {
 
     double start = dotRadius;
     while (start < size.width) {
-      canvas.drawCircle(
-        Offset(start, size.height / 2),
-        dotRadius,
-        paint,
-      );
+      canvas.drawCircle(Offset(start, size.height / 2), dotRadius, paint);
       start = dotRadius * 2 + dotGap;
     }
   }

@@ -355,7 +355,6 @@ class _GradientPillIndicatorPainter extends BoxPainter {
   }
 }
 
-
 /// D1V Tab 项（带微妙缩放效果）
 class D1VTab extends StatefulWidget {
   final String text;

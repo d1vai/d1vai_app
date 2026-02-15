@@ -33,17 +33,11 @@ class _SkeletonState extends State<Skeleton>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: widget.duration,
-    );
+    _controller = AnimationController(vsync: this, duration: widget.duration);
     _animation = Tween<double>(
       begin: -2.0,
       end: 2.0,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
     _controller.repeat();
   }
 
@@ -56,9 +50,11 @@ class _SkeletonState extends State<Skeleton>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final baseColor = widget.baseColor ??
+    final baseColor =
+        widget.baseColor ??
         theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6);
-    final highlightColor = widget.highlightColor ??
+    final highlightColor =
+        widget.highlightColor ??
         theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.9);
 
     return AnimatedBuilder(
@@ -99,11 +95,7 @@ class SkeletonCircle extends StatelessWidget {
   final double size;
   final Color? color;
 
-  const SkeletonCircle({
-    super.key,
-    required this.size,
-    this.color,
-  });
+  const SkeletonCircle({super.key, required this.size, this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -162,7 +154,9 @@ class SkeletonText extends StatelessWidget {
     return Column(
       children: List.generate(lines, (index) {
         final isLast = index == lines - 1;
-        final width = isLast && lines > 1 ? null : null; // Full width for first lines
+        final width = isLast && lines > 1
+            ? null
+            : null; // Full width for first lines
 
         return Padding(
           padding: EdgeInsets.only(bottom: index < lines - 1 ? spacing : 0),
@@ -181,10 +175,7 @@ class SkeletonText extends StatelessWidget {
 class SkeletonAvatar extends StatelessWidget {
   final double size;
 
-  const SkeletonAvatar({
-    super.key,
-    this.size = 48,
-  });
+  const SkeletonAvatar({super.key, this.size = 48});
 
   @override
   Widget build(BuildContext context) {
@@ -236,9 +227,7 @@ class SkeletonCard extends StatelessWidget {
             const SizedBox(height: 16),
             Expanded(
               child: Column(
-                children: [
-                  SkeletonText(lines: 3, lineHeight: 14, spacing: 6),
-                ],
+                children: [SkeletonText(lines: 3, lineHeight: 14, spacing: 6)],
               ),
             ),
           ],

@@ -105,7 +105,9 @@ class _CommunityScreenState extends State<CommunityScreen>
       setState(() {
         _hiddenPostSlugs
           ..clear()
-          ..addAll(prefs.getStringList(_prefsHiddenPostsKey) ?? const <String>[]);
+          ..addAll(
+            prefs.getStringList(_prefsHiddenPostsKey) ?? const <String>[],
+          );
         _blockedAuthorSlugs
           ..clear()
           ..addAll(
@@ -129,7 +131,9 @@ class _CommunityScreenState extends State<CommunityScreen>
     if (authorSlug.trim().isEmpty) return;
     setState(() {
       _blockedAuthorSlugs.add(authorSlug.trim());
-      _posts.removeWhere((p) => (p.author?.slug ?? '').trim() == authorSlug.trim());
+      _posts.removeWhere(
+        (p) => (p.author?.slug ?? '').trim() == authorSlug.trim(),
+      );
     });
   }
 
@@ -413,7 +417,8 @@ class _CommunityScreenState extends State<CommunityScreen>
     final isAuthed = auth.user != null;
 
     Future<void> setFilter(_CommunityFeedFilter next) async {
-      if ((next == _CommunityFeedFilter.mine || next == _CommunityFeedFilter.drafts) &&
+      if ((next == _CommunityFeedFilter.mine ||
+              next == _CommunityFeedFilter.drafts) &&
           !isAuthed) {
         await showDialog<void>(
           context: context,
@@ -454,12 +459,11 @@ class _CommunityScreenState extends State<CommunityScreen>
 
   Widget _buildFilteredEmptyCard(BuildContext context) {
     final theme = Theme.of(context);
-    final text =
-        switch (_filter) {
-          _CommunityFeedFilter.all => 'No posts.',
-          _CommunityFeedFilter.mine => 'No posts created by you yet.',
-          _CommunityFeedFilter.drafts => 'No drafts yet.',
-        };
+    final text = switch (_filter) {
+      _CommunityFeedFilter.all => 'No posts.',
+      _CommunityFeedFilter.mine => 'No posts created by you yet.',
+      _CommunityFeedFilter.drafts => 'No drafts yet.',
+    };
 
     return Container(
       width: double.infinity,

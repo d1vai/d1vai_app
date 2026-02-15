@@ -7,11 +7,7 @@ class AuthExpiredEvent {
   final DateTime at;
   final String? endpoint;
 
-  AuthExpiredEvent({
-    required this.reason,
-    required this.at,
-    this.endpoint,
-  });
+  AuthExpiredEvent({required this.reason, required this.at, this.endpoint});
 }
 
 class AuthExpiredException implements Exception {
@@ -48,4 +44,3 @@ class AuthExpiryBus {
     _triggered = false;
   }
 }
-

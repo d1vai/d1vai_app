@@ -70,7 +70,10 @@ class _ProjectChatStatusDotState extends State<ProjectChatStatusDot>
         child: Container(
           width: widget.size,
           height: widget.size,
-          decoration: BoxDecoration(color: widget.color, shape: BoxShape.circle),
+          decoration: BoxDecoration(
+            color: widget.color,
+            shape: BoxShape.circle,
+          ),
         ),
       ),
     );

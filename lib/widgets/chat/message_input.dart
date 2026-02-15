@@ -36,7 +36,8 @@ class _MessageInputState extends State<MessageInput> {
   TextEditingController get _controller =>
       widget.controller ?? (_ownedController ??= TextEditingController());
 
-  FocusNode get _focusNode => widget.focusNode ?? (_ownedFocusNode ??= FocusNode());
+  FocusNode get _focusNode =>
+      widget.focusNode ?? (_ownedFocusNode ??= FocusNode());
 
   void _syncComposingFromController() {
     final next = _controller.text.trim().isNotEmpty;
@@ -125,11 +126,16 @@ class _MessageInputState extends State<MessageInput> {
                 duration: const Duration(milliseconds: 160),
                 curve: Curves.easeOut,
                 decoration: BoxDecoration(
-                  color: enabled ? fieldBg : theme.colorScheme.surfaceContainerHighest,
+                  color: enabled
+                      ? fieldBg
+                      : theme.colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(18.0),
                   border: Border.all(color: borderColor),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 child: TextField(
                   controller: _controller,
                   focusNode: _focusNode,
@@ -177,7 +183,9 @@ class _MessageInputState extends State<MessageInput> {
                     : theme.colorScheme.surfaceContainerHighest,
                 shape: const CircleBorder(),
                 child: InkWell(
-                  onTap: canSend ? () => _handleSubmitted(_controller.text) : null,
+                  onTap: canSend
+                      ? () => _handleSubmitted(_controller.text)
+                      : null,
                   customBorder: const CircleBorder(),
                   child: SizedBox(
                     width: 44,
@@ -199,9 +207,8 @@ class _MessageInputState extends State<MessageInput> {
                                   size: 20,
                                   color: canSend
                                       ? theme.colorScheme.onPrimary
-                                      : theme.colorScheme.onSurfaceVariant.withValues(
-                                          alpha: 0.65,
-                                        ),
+                                      : theme.colorScheme.onSurfaceVariant
+                                            .withValues(alpha: 0.65),
                                 ),
                         ),
                         Positioned(

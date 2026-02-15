@@ -9,7 +9,11 @@ bool chatStatusIsPulsing(String label) {
   return false;
 }
 
-Color chatStatusDotColor(ThemeData theme, String label, {required bool isError}) {
+Color chatStatusDotColor(
+  ThemeData theme,
+  String label, {
+  required bool isError,
+}) {
   final lower = label.toLowerCase().trim();
   if (isError) {
     return theme.colorScheme.error;
@@ -33,11 +37,7 @@ class ChatStatusPill extends StatelessWidget {
   final String label;
   final bool isError;
 
-  const ChatStatusPill({
-    super.key,
-    required this.label,
-    this.isError = false,
-  });
+  const ChatStatusPill({super.key, required this.label, this.isError = false});
 
   @override
   Widget build(BuildContext context) {
@@ -67,15 +67,12 @@ class ChatStatusPill extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ProjectChatStatusDot(
-              color: color,
-              size: 8,
-              enablePulse: isPulsing,
-            ),
+            ProjectChatStatusDot(color: color, size: 8, enablePulse: isPulsing),
             const SizedBox(width: 6),
             Text(
               label,
-              style: theme.textTheme.labelSmall?.copyWith(
+              style:
+                  theme.textTheme.labelSmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant.withValues(
                       alpha: 0.95,
                     ),
@@ -96,4 +93,3 @@ class ChatStatusPill extends StatelessWidget {
     );
   }
 }
-

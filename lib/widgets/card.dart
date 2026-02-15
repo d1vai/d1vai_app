@@ -57,8 +57,9 @@ class CustomCard extends StatelessWidget {
         : colorScheme.outlineVariant.withValues(alpha: isDark ? 0.28 : 0.42);
     final effectiveBorderColor = borderColor ?? defaultBorder;
     final effectiveBorderWidth = (embedded || borderless) ? 0.0 : 1.0;
-    final effectiveResolvedBorderColor =
-        (embedded || borderless) ? Colors.transparent : effectiveBorderColor;
+    final effectiveResolvedBorderColor = (embedded || borderless)
+        ? Colors.transparent
+        : effectiveBorderColor;
 
     final defaultShadowColor = isDark
         ? Colors.black.withValues(alpha: 0.25)
@@ -81,7 +82,8 @@ class CustomCard extends StatelessWidget {
           color: effectiveResolvedBorderColor,
           width: effectiveBorderWidth,
         ),
-        boxShadow: shadow ??
+        boxShadow:
+            shadow ??
             ((glass || embedded || borderless)
                 ? const <BoxShadow>[]
                 : defaultShadows),

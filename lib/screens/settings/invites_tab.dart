@@ -151,13 +151,13 @@ class SettingsInvitesTab extends StatelessWidget {
                     subtitle: isLoading
                         ? Text(loc?.translate('loading') ?? 'Loading...')
                         : hasError
-                            ? Text(
-                                loc?.translate('failed_to_load') ??
-                                    'Failed to load',
-                              )
-                            : Text(
-                                '$friendCount ${loc?.translate('friends_count') ?? 'friends'}',
-                              ),
+                        ? Text(
+                            loc?.translate('failed_to_load') ??
+                                'Failed to load',
+                          )
+                        : Text(
+                            '$friendCount ${loc?.translate('friends_count') ?? 'friends'}',
+                          ),
                     trailing: const Icon(
                       Icons.arrow_forward_ios,
                       size: 16,

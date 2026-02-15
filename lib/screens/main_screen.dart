@@ -44,31 +44,41 @@ class _MainScreenState extends State<MainScreen> {
         icon: Icon(PhosphorIcons.house()),
         title: (loc?.translate('dashboard') ?? 'Dashboard'),
         activeColorPrimary: theme.colorScheme.primary,
-        inactiveColorPrimary: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+        inactiveColorPrimary: theme.colorScheme.onSurface.withValues(
+          alpha: 0.6,
+        ),
       ),
       PersistentBottomNavBarItem(
         icon: Icon(PhosphorIcons.users()),
         title: (loc?.translate('community') ?? 'Community'),
         activeColorPrimary: theme.colorScheme.primary,
-        inactiveColorPrimary: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+        inactiveColorPrimary: theme.colorScheme.onSurface.withValues(
+          alpha: 0.6,
+        ),
       ),
       PersistentBottomNavBarItem(
         icon: Icon(PhosphorIcons.book()),
         title: (loc?.translate('docs') ?? 'Docs'),
         activeColorPrimary: theme.colorScheme.primary,
-        inactiveColorPrimary: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+        inactiveColorPrimary: theme.colorScheme.onSurface.withValues(
+          alpha: 0.6,
+        ),
       ),
       PersistentBottomNavBarItem(
         icon: Icon(PhosphorIcons.receipt()),
         title: 'Orders',
         activeColorPrimary: theme.colorScheme.primary,
-        inactiveColorPrimary: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+        inactiveColorPrimary: theme.colorScheme.onSurface.withValues(
+          alpha: 0.6,
+        ),
       ),
       PersistentBottomNavBarItem(
         icon: Icon(PhosphorIcons.gear()),
         title: (loc?.translate('settings') ?? 'Settings'),
         activeColorPrimary: theme.colorScheme.primary,
-        inactiveColorPrimary: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+        inactiveColorPrimary: theme.colorScheme.onSurface.withValues(
+          alpha: 0.6,
+        ),
       ),
     ];
   }

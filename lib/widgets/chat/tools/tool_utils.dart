@@ -54,8 +54,10 @@ String shortenToolFilePath(String input, {int maxSegments = 3}) {
 
   if (inProgressIdx >= 0) {
     final taskText = truncateText(
-      (todos[inProgressIdx] is Map ? (todos[inProgressIdx] as Map)['content'] : '')
-          ?.toString() ??
+      (todos[inProgressIdx] is Map
+                  ? (todos[inProgressIdx] as Map)['content']
+                  : '')
+              ?.toString() ??
           '',
       maxLen: 80,
     );
@@ -74,75 +76,113 @@ String toolSummary(String toolName, dynamic input) {
   try {
     switch (name) {
       case 'Read':
-      case 'read': {
-        final p = (input is Map ? (input['file_path']?.toString() ?? '') : '');
-        return shortenToolFilePath(p).isNotEmpty ? shortenToolFilePath(p) : '(unknown)';
-      }
+      case 'read':
+        {
+          final p = (input is Map
+              ? (input['file_path']?.toString() ?? '')
+              : '');
+          return shortenToolFilePath(p).isNotEmpty
+              ? shortenToolFilePath(p)
+              : '(unknown)';
+        }
       case 'Write':
-      case 'write': {
-        final p = (input is Map ? (input['file_path']?.toString() ?? '') : '');
-        return 'Write File ${p.isNotEmpty ? shortenToolFilePath(p, maxSegments: 4) : '(unknown)'}';
-      }
+      case 'write':
+        {
+          final p = (input is Map
+              ? (input['file_path']?.toString() ?? '')
+              : '');
+          return 'Write File ${p.isNotEmpty ? shortenToolFilePath(p, maxSegments: 4) : '(unknown)'}';
+        }
       case 'Edit':
-      case 'edit': {
-        final p = (input is Map ? (input['file_path']?.toString() ?? '') : '');
-        return shortenToolFilePath(p).isNotEmpty ? shortenToolFilePath(p) : '(unknown)';
-      }
+      case 'edit':
+        {
+          final p = (input is Map
+              ? (input['file_path']?.toString() ?? '')
+              : '');
+          return shortenToolFilePath(p).isNotEmpty
+              ? shortenToolFilePath(p)
+              : '(unknown)';
+        }
       case 'MultiEdit':
       case 'multi_edit':
-      case 'multiedit': {
-        final p = (input is Map ? (input['file_path']?.toString() ?? '') : '');
-        final edits = (input is Map ? input['edits'] : null);
-        final n = edits is List ? edits.length : null;
-        final base = p.isNotEmpty ? shortenToolFilePath(p, maxSegments: 4) : '(unknown)';
-        return 'MultiEdit $base${n != null ? ' ($n)' : ''}';
-      }
+      case 'multiedit':
+        {
+          final p = (input is Map
+              ? (input['file_path']?.toString() ?? '')
+              : '');
+          final edits = (input is Map ? input['edits'] : null);
+          final n = edits is List ? edits.length : null;
+          final base = p.isNotEmpty
+              ? shortenToolFilePath(p, maxSegments: 4)
+              : '(unknown)';
+          return 'MultiEdit $base${n != null ? ' ($n)' : ''}';
+        }
       case 'Bash':
-      case 'bash': {
-        final cmd = (input is Map ? (input['command']?.toString() ?? '') : '');
-        return cmd.isNotEmpty ? 'Run ${truncateText(cmd, maxLen: 64)}' : 'Run command';
-      }
+      case 'bash':
+        {
+          final cmd = (input is Map
+              ? (input['command']?.toString() ?? '')
+              : '');
+          return cmd.isNotEmpty
+              ? 'Run ${truncateText(cmd, maxLen: 64)}'
+              : 'Run command';
+        }
       case 'Glob':
-      case 'glob': {
-        final pat = (input is Map ? (input['pattern']?.toString() ?? '') : '');
-        return pat.isNotEmpty ? 'Glob ${truncateText(pat)}' : 'Glob';
-      }
+      case 'glob':
+        {
+          final pat = (input is Map
+              ? (input['pattern']?.toString() ?? '')
+              : '');
+          return pat.isNotEmpty ? 'Glob ${truncateText(pat)}' : 'Glob';
+        }
       case 'Grep':
-      case 'grep': {
-        final pat = (input is Map ? (input['pattern']?.toString() ?? '') : '');
-        return pat.isNotEmpty ? 'Grep ${truncateText(pat)}' : 'Grep';
-      }
+      case 'grep':
+        {
+          final pat = (input is Map
+              ? (input['pattern']?.toString() ?? '')
+              : '');
+          return pat.isNotEmpty ? 'Grep ${truncateText(pat)}' : 'Grep';
+        }
       case 'WebSearch':
       case 'websearch':
-      case 'web_search': {
-        final q = (input is Map ? (input['query']?.toString() ?? '') : '');
-        return q.isNotEmpty ? 'WebSearch ${truncateText(q)}' : 'WebSearch';
-      }
+      case 'web_search':
+        {
+          final q = (input is Map ? (input['query']?.toString() ?? '') : '');
+          return q.isNotEmpty ? 'WebSearch ${truncateText(q)}' : 'WebSearch';
+        }
       case 'WebFetch':
       case 'webfetch':
-      case 'web_fetch': {
-        final url = (input is Map ? (input['url']?.toString() ?? '') : '');
-        return url.isNotEmpty ? 'WebFetch ${truncateText(url)}' : 'WebFetch';
-      }
+      case 'web_fetch':
+        {
+          final url = (input is Map ? (input['url']?.toString() ?? '') : '');
+          return url.isNotEmpty ? 'WebFetch ${truncateText(url)}' : 'WebFetch';
+        }
       case 'TodoWrite':
       case 'todowrite':
-      case 'todo_write': {
-        final header = todoWriteHeader(input);
-        if (header == null) return 'TodoWrite';
-        if (header.state == 'done_all') return 'TodoWrite · ${header.progressText} · done';
-        return 'TodoWrite · ${header.progressText} · In Progress${header.taskText.isNotEmpty ? ' · ${header.taskText}' : ''}';
-      }
+      case 'todo_write':
+        {
+          final header = todoWriteHeader(input);
+          if (header == null) return 'TodoWrite';
+          if (header.state == 'done_all')
+            return 'TodoWrite · ${header.progressText} · done';
+          return 'TodoWrite · ${header.progressText} · In Progress${header.taskText.isNotEmpty ? ' · ${header.taskText}' : ''}';
+        }
       case 'Task':
-      case 'task': {
-        final desc = (input is Map ? (input['description']?.toString() ?? '') : '');
-        final t = (input is Map ? (input['task_type']?.toString() ?? '') : '');
-        final s = [
-          'Task',
-          if (t.isNotEmpty) t,
-          if (desc.isNotEmpty) truncateText(desc, maxLen: 56),
-        ].join(' · ');
-        return s;
-      }
+      case 'task':
+        {
+          final desc = (input is Map
+              ? (input['description']?.toString() ?? '')
+              : '');
+          final t = (input is Map
+              ? (input['task_type']?.toString() ?? '')
+              : '');
+          final s = [
+            'Task',
+            if (t.isNotEmpty) t,
+            if (desc.isNotEmpty) truncateText(desc, maxLen: 56),
+          ].join(' · ');
+          return s;
+        }
       default:
         return name.isNotEmpty ? 'Tool · $name' : 'Tool';
     }
@@ -171,4 +211,3 @@ String prettyJson(dynamic input) {
 bool toolMessageHasProcessing(ToolMessageContent c) {
   return coerceToolStatus(c.status, c.input) == 'processing';
 }
-

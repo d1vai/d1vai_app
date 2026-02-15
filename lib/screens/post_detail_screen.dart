@@ -75,12 +75,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     final offset = _scrollController.offset;
     if (offset <= 0 || offset >= collapseRange) return;
 
-    final target =
-        switch (_lastUserScrollDirection) {
-          ScrollDirection.forward => 0.0,
-          ScrollDirection.reverse => collapseRange,
-          _ => offset < (collapseRange * 0.5) ? 0.0 : collapseRange,
-        };
+    final target = switch (_lastUserScrollDirection) {
+      ScrollDirection.forward => 0.0,
+      ScrollDirection.reverse => collapseRange,
+      _ => offset < (collapseRange * 0.5) ? 0.0 : collapseRange,
+    };
 
     if ((offset - target).abs() < 1.0) return;
 
@@ -98,7 +97,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
   Future<void> _refreshPostDetails() async {
     try {
-      final updatedPost = await _d1vaiService.getCommunityPostDetails(_post.slug);
+      final updatedPost = await _d1vaiService.getCommunityPostDetails(
+        _post.slug,
+      );
       if (mounted) {
         setState(() {
           _post = updatedPost;
@@ -220,15 +221,14 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       maxLines: expanded ? 2 : 1,
     );
     final authorRowHeight = expanded ? 34.0 : 28.0;
-    final summaryHeight =
-        previewText.trim().isEmpty
-            ? 0.0
-            : _measureTextHeight(
-              text: previewText,
-              style: summaryStyle,
-              maxWidth: innerWidth,
-              maxLines: expanded ? 6 : 2,
-            );
+    final summaryHeight = previewText.trim().isEmpty
+        ? 0.0
+        : _measureTextHeight(
+            text: previewText,
+            style: summaryStyle,
+            maxWidth: innerWidth,
+            maxLines: expanded ? 6 : 2,
+          );
 
     return (_cardInnerPadding +
             titleHeight +
@@ -244,10 +244,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final titleText = displayCommunityPostTitle(_post.title);
-    final summaryText =
-        (_post.summary ?? _post.content ?? '')
-            .replaceAll(RegExp(r'\s+'), ' ')
-            .trim();
+    final summaryText = (_post.summary ?? _post.content ?? '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
     final contentText = (_post.content ?? _post.summary ?? '').trim();
     final topPadding = MediaQuery.paddingOf(context).top;
     final hasTags = _post.tags.isNotEmpty;
@@ -340,10 +339,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   bool _ensureLoggedIn() {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     if (auth.user != null) return true;
-    showDialog(
-      context: context,
-      builder: (_) => const LoginRequiredDialog(),
-    );
+    showDialog(context: context, builder: (_) => const LoginRequiredDialog());
     return false;
   }
 
@@ -510,10 +506,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 ? Colors.black.withValues(alpha: 0.12)
                 : Colors.white.withValues(alpha: 0.10),
             border: Border.all(
-              color:
-                  isDark
-                      ? Colors.white.withValues(alpha: 0.14)
-                      : Colors.white.withValues(alpha: 0.20),
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.14)
+                  : Colors.white.withValues(alpha: 0.20),
             ),
             borderRadius: BorderRadius.circular(16),
           ),
@@ -532,9 +527,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   color: Colors.white.withValues(alpha: isDark ? 0.10 : 0.14),
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(
-                    color: Colors.white.withValues(
-                      alpha: isDark ? 0.10 : 0.16,
-                    ),
+                    color: Colors.white.withValues(alpha: isDark ? 0.10 : 0.16),
                   ),
                 ),
                 child: Text(
@@ -542,7 +535,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelMedium?.copyWith(
+                  style:
+                      theme.textTheme.labelMedium?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
                         height: 1.0,
@@ -590,38 +584,33 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       expandedHeight: expandedHeight,
       flexibleSpace: LayoutBuilder(
         builder: (context, constraints) {
-          final settings =
-              context.dependOnInheritedWidgetOfExactType<
-                FlexibleSpaceBarSettings
-              >();
-          final currentExtent = settings?.currentExtent ?? constraints.maxHeight;
+          final settings = context
+              .dependOnInheritedWidgetOfExactType<FlexibleSpaceBarSettings>();
+          final currentExtent =
+              settings?.currentExtent ?? constraints.maxHeight;
           final minExtent = settings?.minExtent ?? collapsedHeight;
           final maxExtent = settings?.maxExtent ?? expandedHeight;
-          final t =
-              ((currentExtent - minExtent) / (maxExtent - minExtent)).clamp(
-                0.0,
-                1.0,
-              );
+          final t = ((currentExtent - minExtent) / (maxExtent - minExtent))
+              .clamp(0.0, 1.0);
 
           final cardTop = ui.lerpDouble(topPadding + 2, topPadding + 10, t)!;
-          final cardHeight =
-              ui.lerpDouble(collapsedCardHeight, expandedCardHeight, t)!;
+          final cardHeight = ui.lerpDouble(
+            collapsedCardHeight,
+            expandedCardHeight,
+            t,
+          )!;
           final cardHorizontal = ui.lerpDouble(12, 16, t)!;
           final titleFont = ui.lerpDouble(16, 20, t)!;
           final titleLines = t < 0.35 ? 1 : 2;
           final avatarSize = ui.lerpDouble(28, 34, t)!;
           final overlayOpacity = ui.lerpDouble(0.18, 0.34, t)!;
           final isDark = theme.brightness == Brightness.dark;
-          final glassBg =
-              isDark
-                  ? Colors.black.withValues(alpha: ui.lerpDouble(0.12, 0.18, t)!)
-                  : Colors.white.withValues(
-                    alpha: ui.lerpDouble(0.08, 0.12, t)!,
-                  );
-          final glassBorder =
-              isDark
-                  ? Colors.white.withValues(alpha: 0.14)
-                  : Colors.white.withValues(alpha: 0.20);
+          final glassBg = isDark
+              ? Colors.black.withValues(alpha: ui.lerpDouble(0.12, 0.18, t)!)
+              : Colors.white.withValues(alpha: ui.lerpDouble(0.08, 0.12, t)!);
+          final glassBorder = isDark
+              ? Colors.white.withValues(alpha: 0.14)
+              : Colors.white.withValues(alpha: 0.20);
 
           Widget background = DecoratedBox(
             decoration: BoxDecoration(
@@ -762,7 +751,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 titleText.isEmpty ? 'Post' : titleText,
                 maxLines: titleMaxLines,
                 overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleLarge?.copyWith(
+                style:
+                    theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w900,
                       color: Colors.white,
                       fontSize: titleFontSize,
@@ -785,7 +775,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   context,
                   url: url,
                   title: titleText.isEmpty ? 'Post' : titleText,
-                  message: summaryText.trim().isEmpty ? null : summaryText.trim(),
+                  message: summaryText.trim().isEmpty
+                      ? null
+                      : summaryText.trim(),
                 );
               },
             ),
@@ -804,18 +796,16 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               tag: communityPostAuthorHeroTag(_post),
               child: RepaintBoundary(
                 child: AvatarImage(
-                  imageUrl:
-                      _post.author?.picture?.isNotEmpty == true
-                          ? _post.author!.picture!
-                          : 'placeholder',
+                  imageUrl: _post.author?.picture?.isNotEmpty == true
+                      ? _post.author!.picture!
+                      : 'placeholder',
                   size: avatarSize,
                   borderRadius: BorderRadius.circular(avatarSize / 2),
                   fit: BoxFit.cover,
                   showBorder: false,
-                  placeholderText:
-                      _post.author?.picture?.isNotEmpty != true
-                          ? _getAuthorDisplayName(_post.author)
-                          : null,
+                  placeholderText: _post.author?.picture?.isNotEmpty != true
+                      ? _getAuthorDisplayName(_post.author)
+                      : null,
                 ),
               ),
             ),
@@ -828,7 +818,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     _getAuthorDisplayName(_post.author),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleMedium?.copyWith(
+                    style:
+                        theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w800,
                           color: Colors.white,
                           height: 1.0,
@@ -842,7 +833,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   const SizedBox(height: 2),
                   Text(
                     _formatTime(_post.createdAt),
-                    style: theme.textTheme.labelSmall?.copyWith(
+                    style:
+                        theme.textTheme.labelSmall?.copyWith(
                           color: Colors.white.withValues(alpha: 0.78),
                           fontWeight: FontWeight.w700,
                         ) ??
@@ -856,7 +848,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             ),
             if (authorPrefix.isNotEmpty)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: isDark ? 0.10 : 0.14),
                   borderRadius: BorderRadius.circular(999),
@@ -866,7 +861,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 ),
                 child: Text(
                   '@$authorPrefix',
-                  style: theme.textTheme.labelSmall?.copyWith(
+                  style:
+                      theme.textTheme.labelSmall?.copyWith(
                         color: Colors.white.withValues(alpha: 0.86),
                         fontWeight: FontWeight.w800,
                       ) ??
@@ -883,7 +879,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           MarkdownText(
             text: previewText,
             maxLines: summaryLines,
-            style: theme.textTheme.bodyMedium?.copyWith(
+            style:
+                theme.textTheme.bodyMedium?.copyWith(
                   color: Colors.white.withValues(alpha: 0.90),
                   fontSize: 13,
                   height: 1.25,
@@ -1003,10 +1000,9 @@ class _CommentTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           AvatarImage(
-            imageUrl:
-                (comment.authorAvatarUrl ?? '').trim().isNotEmpty
-                    ? comment.authorAvatarUrl!.trim()
-                    : 'placeholder',
+            imageUrl: (comment.authorAvatarUrl ?? '').trim().isNotEmpty
+                ? comment.authorAvatarUrl!.trim()
+                : 'placeholder',
             size: 34,
             borderRadius: BorderRadius.circular(12),
             fit: BoxFit.cover,
@@ -1048,9 +1044,7 @@ class _CommentTile extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     comment.content,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      height: 1.25,
-                    ),
+                    style: theme.textTheme.bodyMedium?.copyWith(height: 1.25),
                   ),
                 ],
               ),

@@ -3,12 +3,7 @@ import 'package:flutter/services.dart';
 import '../../models/message.dart';
 
 /// Message context menu actions
-enum MessageAction {
-  copy,
-  reply,
-  forward,
-  delete,
-}
+enum MessageAction { copy, reply, forward, delete }
 
 /// Callback for message actions
 typedef MessageActionCallback = void Function(MessageAction action);
@@ -47,11 +42,7 @@ class MessageContextMenu extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.copy,
-                size: 18,
-                color: theme.colorScheme.onSurface,
-              ),
+              Icon(Icons.copy, size: 18, color: theme.colorScheme.onSurface),
               const SizedBox(width: 12),
               Text(
                 'Copy',
@@ -69,11 +60,7 @@ class MessageContextMenu extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.reply,
-                size: 18,
-                color: theme.colorScheme.onSurface,
-              ),
+              Icon(Icons.reply, size: 18, color: theme.colorScheme.onSurface),
               const SizedBox(width: 12),
               Text(
                 'Reply',
@@ -91,11 +78,7 @@ class MessageContextMenu extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.forward,
-                size: 18,
-                color: theme.colorScheme.onSurface,
-              ),
+              Icon(Icons.forward, size: 18, color: theme.colorScheme.onSurface),
               const SizedBox(width: 12),
               Text(
                 'Forward',

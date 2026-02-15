@@ -436,7 +436,9 @@ class _UsageStatsState extends State<UsageStats>
                           border: Border.all(
                             color: isSelected
                                 ? theme.colorScheme.primary
-                                : theme.colorScheme.outline.withValues(alpha: 0.35),
+                                : theme.colorScheme.outline.withValues(
+                                    alpha: 0.35,
+                                  ),
                             width: 1,
                           ),
                         ),

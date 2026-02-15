@@ -41,7 +41,10 @@ class ProjectOverviewRecentDeploymentsCard extends StatelessWidget {
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Color.alphaBlend(
                     colorScheme.primary.withValues(alpha: isDark ? 0.16 : 0.08),
@@ -126,7 +129,9 @@ class ProjectOverviewRecentDeploymentsCard extends StatelessWidget {
                       width: 34,
                       height: 34,
                       decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: isDark ? 0.16 : 0.10),
+                        color: statusColor.withValues(
+                          alpha: isDark ? 0.16 : 0.10,
+                        ),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: statusColor.withValues(
@@ -138,8 +143,8 @@ class ProjectOverviewRecentDeploymentsCard extends StatelessWidget {
                         deployment.status == 'success'
                             ? Icons.check_circle_outline
                             : deployment.status == 'pending'
-                                ? Icons.hourglass_bottom_rounded
-                                : Icons.error_outline,
+                            ? Icons.hourglass_bottom_rounded
+                            : Icons.error_outline,
                         size: 18,
                         color: statusColor,
                       ),

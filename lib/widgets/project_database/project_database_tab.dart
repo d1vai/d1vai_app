@@ -96,7 +96,9 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
             if (table is Map<String, dynamic>) {
               tables.add(DatabaseTable.fromJson(table));
             } else if (table is Map) {
-              tables.add(DatabaseTable.fromJson(Map<String, dynamic>.from(table)));
+              tables.add(
+                DatabaseTable.fromJson(Map<String, dynamic>.from(table)),
+              );
             }
           }
         }
@@ -118,14 +120,12 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
       final msg = humanizeError(e);
       final authExpired = isAuthExpiredText(msg);
       if (authExpired) {
-        AuthExpiryBus.trigger(endpoint: '/api/projects/${widget.project.id}/db/schema');
+        AuthExpiryBus.trigger(
+          endpoint: '/api/projects/${widget.project.id}/db/schema',
+        );
         return;
       }
-      SnackBarHelper.showError(
-        context,
-        title: 'Error',
-        message: msg,
-      );
+      SnackBarHelper.showError(context, title: 'Error', message: msg);
     }
   }
 
@@ -154,14 +154,13 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
       final msg = humanizeError(e);
       final authExpired = isAuthExpiredText(msg);
       if (authExpired) {
-        AuthExpiryBus.trigger(endpoint: '/api/projects/${widget.project.id}/integrations/database/activate');
+        AuthExpiryBus.trigger(
+          endpoint:
+              '/api/projects/${widget.project.id}/integrations/database/activate',
+        );
         return;
       }
-      SnackBarHelper.showError(
-        context,
-        title: 'Error',
-        message: msg,
-      );
+      SnackBarHelper.showError(context, title: 'Error', message: msg);
     } finally {
       if (mounted) {
         setState(() {
@@ -191,11 +190,18 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.storage, size: 64, color: theme.colorScheme.onSurfaceVariant),
+            Icon(
+              Icons.storage,
+              size: 64,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
             const SizedBox(height: 16),
             Text(
               'No database tables',
-              style: TextStyle(fontSize: 18, color: theme.colorScheme.onSurfaceVariant),
+              style: TextStyle(
+                fontSize: 18,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -276,10 +282,7 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
             ),
             title: Text(
               table.displayName,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -333,10 +336,9 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
   }
 
   Widget _buildRelationsList(ThemeData theme) {
-    final withRelations = _tables
-        .where((t) => t.foreignKeys.isNotEmpty)
-        .toList(growable: false)
-      ..sort((a, b) => a.fullName.compareTo(b.fullName));
+    final withRelations =
+        _tables.where((t) => t.foreignKeys.isNotEmpty).toList(growable: false)
+          ..sort((a, b) => a.fullName.compareTo(b.fullName));
 
     if (withRelations.isEmpty) {
       return Center(
@@ -433,10 +435,8 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
     }
 
     final maxRow = (tables.length - 1) ~/ cols;
-    final canvasWidth =
-        cols * nodeSize.width + (cols - 1) * gapX + 80;
-    final canvasHeight =
-        (maxRow + 1) * nodeSize.height + maxRow * gapY + 120;
+    final canvasWidth = cols * nodeSize.width + (cols - 1) * gapX + 80;
+    final canvasHeight = (maxRow + 1) * nodeSize.height + maxRow * gapY + 120;
 
     return InteractiveViewer(
       minScale: 0.5,
@@ -569,11 +569,7 @@ class _DbGraphNode extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 6),
-              Icon(
-                Icons.open_in_new,
-                size: 16,
-                color: cs.onSurfaceVariant,
-              ),
+              Icon(Icons.open_in_new, size: 16, color: cs.onSurfaceVariant),
             ],
           ),
         ),
@@ -610,7 +606,10 @@ class _DbGraphPainter extends CustomPainter {
       final p = positions[fullName];
       if (p == null) return Offset.zero;
       // Node is positioned with an extra (30,30) offset.
-      return Offset(p.dx + 30 + nodeSize.width / 2, p.dy + 30 + nodeSize.height / 2);
+      return Offset(
+        p.dx + 30 + nodeSize.width / 2,
+        p.dy + 30 + nodeSize.height / 2,
+      );
     }
 
     for (final table in tables) {
@@ -633,8 +632,14 @@ class _DbGraphPainter extends CustomPainter {
           final uy = dir.dy / len;
           final tip = to;
           const s = 7.0;
-          final left = Offset(tip.dx - ux * s - uy * (s * 0.6), tip.dy - uy * s + ux * (s * 0.6));
-          final right = Offset(tip.dx - ux * s + uy * (s * 0.6), tip.dy - uy * s - ux * (s * 0.6));
+          final left = Offset(
+            tip.dx - ux * s - uy * (s * 0.6),
+            tip.dy - uy * s + ux * (s * 0.6),
+          );
+          final right = Offset(
+            tip.dx - ux * s + uy * (s * 0.6),
+            tip.dy - uy * s - ux * (s * 0.6),
+          );
           final arrow = Path()
             ..moveTo(tip.dx, tip.dy)
             ..lineTo(left.dx, left.dy)
@@ -659,10 +664,7 @@ class _EnableDatabaseCard extends StatelessWidget {
   final bool enabling;
   final VoidCallback onEnable;
 
-  const _EnableDatabaseCard({
-    required this.enabling,
-    required this.onEnable,
-  });
+  const _EnableDatabaseCard({required this.enabling, required this.onEnable});
 
   @override
   Widget build(BuildContext context) {
@@ -679,7 +681,9 @@ class _EnableDatabaseCard extends StatelessWidget {
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.4)),
+              side: BorderSide(
+                color: theme.dividerColor.withValues(alpha: 0.4),
+              ),
             ),
             child: Padding(
               padding: const EdgeInsets.all(20),

@@ -55,8 +55,9 @@ class SettingsProfileTab extends StatelessWidget {
                   leading: AvatarImage(
                     // Ensure avatar updates when picture changes.
                     key: ValueKey(user.picture),
-                    imageUrl:
-                        user.picture.isEmpty ? 'placeholder' : user.picture,
+                    imageUrl: user.picture.isEmpty
+                        ? 'placeholder'
+                        : user.picture,
                     size: 40,
                     borderRadius: BorderRadius.circular(20),
                     fit: BoxFit.cover,
@@ -167,7 +168,9 @@ class SettingsProfileTab extends StatelessWidget {
                       size: 16,
                       color: AppColors.textSecondaryLight,
                     ),
-                    onTap: user == null ? () => context.go('/login') : onShowBindEmailDialog,
+                    onTap: user == null
+                        ? () => context.go('/login')
+                        : onShowBindEmailDialog,
                   ),
                   Divider(
                     height: 1,
@@ -189,7 +192,9 @@ class SettingsProfileTab extends StatelessWidget {
                       size: 16,
                       color: AppColors.textSecondaryLight,
                     ),
-                    onTap: user == null ? () => context.go('/login') : onShowResetPasswordDialog,
+                    onTap: user == null
+                        ? () => context.go('/login')
+                        : onShowResetPasswordDialog,
                   ),
                   Divider(
                     height: 1,

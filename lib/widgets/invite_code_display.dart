@@ -36,13 +36,8 @@ class InviteCodeDisplay extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(6, (index) {
         return Padding(
-          padding: EdgeInsets.only(
-            right: index < 5 ? spacing : 0,
-          ),
-          child: _buildCodeBox(
-            context,
-            codeChars[index],
-          ),
+          padding: EdgeInsets.only(right: index < 5 ? spacing : 0),
+          child: _buildCodeBox(context, codeChars[index]),
         );
       }),
     );
@@ -58,10 +53,7 @@ class InviteCodeDisplay extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: theme.colorScheme.outline,
-          width: 1.5,
-        ),
+        border: Border.all(color: theme.colorScheme.outline, width: 1.5),
         // 内部阴影效果
         boxShadow: [
           BoxShadow(
@@ -92,10 +84,7 @@ class InviteCodeDisplay extends StatelessWidget {
 class ResponsiveInviteCodeDisplay extends StatelessWidget {
   final String inviteCode;
 
-  const ResponsiveInviteCodeDisplay({
-    super.key,
-    required this.inviteCode,
-  });
+  const ResponsiveInviteCodeDisplay({super.key, required this.inviteCode});
 
   @override
   Widget build(BuildContext context) {

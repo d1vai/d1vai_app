@@ -14,4 +14,3 @@ class LocaleBus {
     _locale = locale;
   }
 }
-

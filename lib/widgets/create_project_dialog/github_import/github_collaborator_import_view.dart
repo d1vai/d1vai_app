@@ -158,10 +158,7 @@ class _BotUsernameCard extends StatelessWidget {
   final String botUsername;
   final VoidCallback onCopy;
 
-  const _BotUsernameCard({
-    required this.botUsername,
-    required this.onCopy,
-  });
+  const _BotUsernameCard({required this.botUsername, required this.onCopy});
 
   @override
   Widget build(BuildContext context) {
@@ -244,23 +241,19 @@ class _GithubStep1 extends StatelessWidget {
               : null,
         ),
         const SizedBox(height: 12),
-        _BotUsernameCard(
-          botUsername: botUsername,
-          onCopy: onCopyBotUsername,
-        ),
+        _BotUsernameCard(botUsername: botUsername, onCopy: onCopyBotUsername),
         const SizedBox(height: 16),
         SizedBox(
           width: double.infinity,
           child: Button(
-            onPressed: (loading || repoFullName == null) ? null : onOpenSettings,
+            onPressed: (loading || repoFullName == null)
+                ? null
+                : onOpenSettings,
             disabled: loading || repoFullName == null,
             variant: ButtonVariant.defaultVariant,
             size: ButtonSize.defaultSize,
             text: 'Open GitHub Settings',
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 12,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           ),
         ),
       ],
@@ -300,10 +293,7 @@ class _GithubStep2 extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        _BotUsernameCard(
-          botUsername: botUsername,
-          onCopy: onCopyBotUsername,
-        ),
+        _BotUsernameCard(botUsername: botUsername, onCopy: onCopyBotUsername),
         const SizedBox(height: 12),
         if (repoFullName != null)
           Container(
@@ -330,10 +320,7 @@ class _GithubStep2 extends StatelessWidget {
             text: invitationAccepted
                 ? 'Invitation Accepted'
                 : 'Accept Invitation',
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 12,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           ),
         ),
       ],
@@ -364,7 +351,8 @@ class _GithubStep3 extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final repoFullName = parseGithubRepoFullName(repoUrlController.text);
-    final canImport = repoFullName != null && repoInfo != null && accessVerified;
+    final canImport =
+        repoFullName != null && repoInfo != null && accessVerified;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -377,10 +365,7 @@ class _GithubStep3 extends StatelessWidget {
             variant: ButtonVariant.defaultVariant,
             size: ButtonSize.defaultSize,
             text: accessVerified ? 'Access Verified' : 'Verify Access',
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 12,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           ),
         ),
         const SizedBox(height: 12),
@@ -435,14 +420,10 @@ class _GithubStep3 extends StatelessWidget {
             variant: ButtonVariant.defaultVariant,
             size: ButtonSize.defaultSize,
             text: 'Import Project',
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 12,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           ),
         ),
       ],
     );
   }
 }
-

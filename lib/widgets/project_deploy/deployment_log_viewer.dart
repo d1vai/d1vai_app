@@ -110,8 +110,9 @@ class _DeploymentLogViewerState extends State<DeploymentLogViewer>
     final lines = filteredLines.length > maxRenderLines
         ? filteredLines.sublist(filteredLines.length - maxRenderLines)
         : filteredLines;
-    final stderrCount =
-        allLines.where((l) => l.stream == _LogStream.stderr).length;
+    final stderrCount = allLines
+        .where((l) => l.stream == _LogStream.stderr)
+        .length;
 
     final background = isDark
         ? Color.alphaBlend(
@@ -135,10 +136,18 @@ class _DeploymentLogViewerState extends State<DeploymentLogViewer>
     );
 
     final muted = isDark ? const Color(0xFF71717A) : const Color(0xFF64748B);
-    final unknownText = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF334155);
-    final stdoutMarker = isDark ? const Color(0xFF34D399) : const Color(0xFF059669);
-    final stderrMarker = isDark ? const Color(0xFFFCA5A5) : const Color(0xFFDC2626);
-    final stderrText = isDark ? const Color(0xFFFDA4AF) : const Color(0xFFB91C1C);
+    final unknownText = isDark
+        ? const Color(0xFFD4D4D8)
+        : const Color(0xFF334155);
+    final stdoutMarker = isDark
+        ? const Color(0xFF34D399)
+        : const Color(0xFF059669);
+    final stderrMarker = isDark
+        ? const Color(0xFFFCA5A5)
+        : const Color(0xFFDC2626);
+    final stderrText = isDark
+        ? const Color(0xFFFDA4AF)
+        : const Color(0xFFB91C1C);
 
     final String cacheLabel = widget.fromCache == null
         ? ''
@@ -157,7 +166,9 @@ class _DeploymentLogViewerState extends State<DeploymentLogViewer>
     return AnimatedBuilder(
       animation: _ambientController,
       builder: (context, child) {
-        final t = widget.enableAmbientAnimation ? _ambientController.value : 0.0;
+        final t = widget.enableAmbientAnimation
+            ? _ambientController.value
+            : 0.0;
         final scanOpacity = isDark ? (0.10 + 0.06 * t) : (0.08 + 0.05 * t);
         final scanColor = colorScheme.primary.withValues(alpha: scanOpacity);
 
@@ -255,8 +266,7 @@ class _DeploymentLogViewerState extends State<DeploymentLogViewer>
                                 if (errorLineCount > 0) ...[
                                   Text(
                                     ' · $errorLineCount errors',
-                                    style:
-                                        theme.textTheme.labelSmall?.copyWith(
+                                    style: theme.textTheme.labelSmall?.copyWith(
                                       color: stderrText,
                                       fontFeatures: const [
                                         FontFeature.tabularFigures(),
@@ -269,8 +279,7 @@ class _DeploymentLogViewerState extends State<DeploymentLogViewer>
                                   const SizedBox(width: 8),
                                   Text(
                                     '(showing last $maxRenderLines)',
-                                    style:
-                                        theme.textTheme.labelSmall?.copyWith(
+                                    style: theme.textTheme.labelSmall?.copyWith(
                                       color: muted,
                                     ),
                                   ),
@@ -278,8 +287,7 @@ class _DeploymentLogViewerState extends State<DeploymentLogViewer>
                                 if (stderrCount > 0) ...[
                                   Text(
                                     ' · $stderrCount stderr',
-                                    style:
-                                        theme.textTheme.labelSmall?.copyWith(
+                                    style: theme.textTheme.labelSmall?.copyWith(
                                       color: stderrText,
                                       fontFeatures: const [
                                         FontFeature.tabularFigures(),
@@ -296,8 +304,9 @@ class _DeploymentLogViewerState extends State<DeploymentLogViewer>
                                     ),
                                     decoration: BoxDecoration(
                                       color: Color.alphaBlend(
-                                        colorScheme.surface
-                                            .withValues(alpha: 0.70),
+                                        colorScheme.surface.withValues(
+                                          alpha: 0.70,
+                                        ),
                                         background,
                                       ),
                                       borderRadius: BorderRadius.circular(999),
@@ -305,8 +314,9 @@ class _DeploymentLogViewerState extends State<DeploymentLogViewer>
                                     ),
                                     child: Text(
                                       cacheLabel,
-                                      style:
-                                          badgeTextStyle?.copyWith(color: muted),
+                                      style: badgeTextStyle?.copyWith(
+                                        color: muted,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -336,12 +346,12 @@ class _DeploymentLogViewerState extends State<DeploymentLogViewer>
                               switchOutCurve: Curves.easeIn,
                               transitionBuilder: (child, anim) =>
                                   ScaleTransition(
-                                scale: anim,
-                                child: FadeTransition(
-                                  opacity: anim,
-                                  child: child,
-                                ),
-                              ),
+                                    scale: anim,
+                                    child: FadeTransition(
+                                      opacity: anim,
+                                      child: child,
+                                    ),
+                                  ),
                               child: Icon(
                                 _copied ? Icons.check_rounded : Icons.copy,
                                 key: ValueKey(_copied),
@@ -596,8 +606,8 @@ _ParsedDeploymentLog _parseDeploymentLog(String log) {
           final stream = type == 'stderr'
               ? _LogStream.stderr
               : type == 'stdout'
-                  ? _LogStream.stdout
-                  : _LogStream.unknown;
+              ? _LogStream.stdout
+              : _LogStream.unknown;
 
           lines.add(
             _DeploymentLogLine(stream: stream, timestampMs: ts, text: text),
@@ -616,7 +626,10 @@ _ParsedDeploymentLog _parseDeploymentLog(String log) {
     }
   }
 
-  final plainLines = raw.split(RegExp(r'\r?\n')).where((l) => l.isNotEmpty).toList();
+  final plainLines = raw
+      .split(RegExp(r'\r?\n'))
+      .where((l) => l.isNotEmpty)
+      .toList();
   return _ParsedDeploymentLog(
     lines: plainLines
         .map(

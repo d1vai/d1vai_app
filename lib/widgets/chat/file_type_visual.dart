@@ -60,4 +60,3 @@ FileTypeVisual fileTypeVisual(ThemeData theme, String path) {
     color: theme.colorScheme.onSurfaceVariant,
   );
 }
-

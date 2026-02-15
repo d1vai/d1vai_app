@@ -65,7 +65,9 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
   String _normalizeBaseUrl(String raw) {
     final v = raw.trim();
     final uri = Uri.parse(v);
-    final normalized = uri.replace(path: '', query: '', fragment: '').toString();
+    final normalized = uri
+        .replace(path: '', query: '', fragment: '')
+        .toString();
     return normalized.endsWith('/')
         ? normalized.substring(0, normalized.length - 1)
         : normalized;
@@ -194,12 +196,13 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
       'env_base_url=${ApiClient.envBaseUrl}',
       'override_base_url=${ApiClient.runtimeBaseUrl ?? ''}',
       'auth_token_present=${token.isNotEmpty}',
-      if (token.isNotEmpty) 'auth_token_len=${token.length} suffix=$tokenSuffix',
+      if (token.isNotEmpty)
+        'auth_token_len=${token.length} suffix=$tokenSuffix',
       if (claims != null && claims['type'] != null)
         "jwt_type=${claims['type']}",
       if (claims != null && claims['sub'] != null) "jwt_sub=${claims['sub']}",
       if (expIso != null) 'jwt_exp_utc=$expIso',
-    if (_status != null)
+      if (_status != null)
         'workspace_status=${_status!.status ?? ''} ip=${_status!.ip ?? ''} port=${_status!.port ?? ''}',
       'locale=$localeTag',
       'platform=$platform',
@@ -230,8 +233,7 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
             return 'last_api_error.raw=$lastErrRaw';
           }();
 
-    final fullText =
-        lastErrLine == null ? text : '$text\n$lastErrLine';
+    final fullText = lastErrLine == null ? text : '$text\n$lastErrLine';
 
     await Clipboard.setData(ClipboardData(text: fullText));
     if (!mounted) return;
@@ -273,7 +275,10 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
                   const SizedBox(height: 10),
                   _KeyValueRow(label: 'Effective', value: ApiClient.baseUrl),
                   const SizedBox(height: 6),
-                  _KeyValueRow(label: 'Build-time', value: ApiClient.envBaseUrl),
+                  _KeyValueRow(
+                    label: 'Build-time',
+                    value: ApiClient.envBaseUrl,
+                  ),
                   const SizedBox(height: 6),
                   _KeyValueRow(
                     label: 'Override',
@@ -336,7 +341,9 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
                               ? const SizedBox(
                                   width: 18,
                                   height: 18,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
                                 )
                               : const Text('Save'),
                         ),
@@ -353,7 +360,9 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
                               ? const SizedBox(
                                   width: 18,
                                   height: 18,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
                                 )
                               : const Icon(Icons.wifi_tethering),
                           label: const Text('Test connection'),
@@ -377,7 +386,9 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
                       decoration: BoxDecoration(
                         color: theme.colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: theme.colorScheme.outlineVariant),
+                        border: Border.all(
+                          color: theme.colorScheme.outlineVariant,
+                        ),
                       ),
                       child: Text(
                         'workspace.status=${_status!.status ?? '—'}\n'
@@ -424,9 +435,7 @@ class _KeyValueRow extends StatelessWidget {
         Expanded(
           child: Text(
             value,
-            style: theme.textTheme.bodySmall?.copyWith(
-              fontFamily: 'monospace',
-            ),
+            style: theme.textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
           ),
         ),
       ],

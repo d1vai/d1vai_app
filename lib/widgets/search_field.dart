@@ -156,8 +156,9 @@ class _SearchFieldState extends State<SearchField> {
                       icon: Icon(
                         Icons.close_rounded,
                         size: 18,
-                        color:
-                            colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                        color: colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.8,
+                        ),
                       ),
                       tooltip: 'Clear',
                       padding: EdgeInsets.zero,
@@ -178,10 +179,7 @@ class _SearchFieldState extends State<SearchField> {
               vertical: 10,
             ),
           ),
-          style: TextStyle(
-            color: colorScheme.onSurface,
-            fontSize: 14,
-          ),
+          style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
         ),
       ),
     );
@@ -275,9 +273,7 @@ class _AppBarSearchFieldState extends State<AppBarSearchField> {
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: borderColor,
-        ),
+        border: Border.all(color: borderColor),
         boxShadow: _isFocused
             ? [
                 BoxShadow(
@@ -319,7 +315,9 @@ class _AppBarSearchFieldState extends State<AppBarSearchField> {
                     icon: Icon(
                       Icons.close_rounded,
                       size: 16,
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                      color: colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.8,
+                      ),
                     ),
                     tooltip: 'Clear',
                     padding: EdgeInsets.zero,
@@ -343,10 +341,7 @@ class _AppBarSearchFieldState extends State<AppBarSearchField> {
             vertical: 6,
           ),
         ),
-        style: TextStyle(
-          color: colorScheme.onSurface,
-          fontSize: 14,
-        ),
+        style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
       ),
     );
   }

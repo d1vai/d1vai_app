@@ -23,7 +23,10 @@ class MessageParser {
     if (s.isEmpty) return null;
     if (s == 'user') return 'user';
     if (s == 'system') return 'system';
-    if (s == 'assistant' || s == 'ai' || s == 'assistant_message' || s == 'bot') {
+    if (s == 'assistant' ||
+        s == 'ai' ||
+        s == 'assistant_message' ||
+        s == 'bot') {
       return 'assistant';
     }
     if (s == 'warning') return 'warning';
@@ -79,11 +82,13 @@ class MessageParser {
       // Anthropic-style aggregated assistant message with full content array
       if (type == 'assistant_message' && payload['content'] is List) {
         final texts = (payload['content'] as List)
-            .where((p) =>
-                p != null &&
-                p is Map<String, dynamic> &&
-                p['type'] == 'text' &&
-                p['text'] != null)
+            .where(
+              (p) =>
+                  p != null &&
+                  p is Map<String, dynamic> &&
+                  p['type'] == 'text' &&
+                  p['text'] != null,
+            )
             .map((p) => p['text'].toString())
             .toList();
         return texts.isNotEmpty ? texts.join('\n') : null;
@@ -158,8 +163,7 @@ class MessageParser {
             if (item is! Map<String, dynamic>) continue;
             if (item['type'] == 'text' && item['text'] != null) {
               contents.add(TextMessageContent(text: item['text'].toString()));
-            } else if (item['type'] == 'thinking' &&
-                item['thinking'] != null) {
+            } else if (item['type'] == 'thinking' && item['thinking'] != null) {
               contents.add(
                 ThinkingMessageContent(text: item['thinking'].toString()),
               );
@@ -201,15 +205,15 @@ class MessageParser {
             if (item['type'] == 'tool_result') {
               String codeStr;
               if (item['content'] is List) {
-                codeStr =
-                    (item['content'] as List).map((p) => toText(p)).join('\n');
+                codeStr = (item['content'] as List)
+                    .map((p) => toText(p))
+                    .join('\n');
               } else {
                 codeStr = toText(item['content']);
               }
               final isErr = item['is_error'] == true;
               final toolUseId = item['tool_use_id']?.toString().trim();
-              final baseSubtype =
-                  isErr ? 'tool_result_error' : 'tool_result';
+              final baseSubtype = isErr ? 'tool_result_error' : 'tool_result';
               final subtype = (toolUseId != null && toolUseId.isNotEmpty)
                   ? '$baseSubtype:$toolUseId'
                   : baseSubtype;
@@ -242,8 +246,8 @@ class MessageParser {
             final message = (rawPayload['message'] ?? '').toString();
             final files = rawPayload['files'] is List
                 ? (rawPayload['files'] as List)
-                    .map((f) => f.toString())
-                    .toList()
+                      .map((f) => f.toString())
+                      .toList()
                 : null;
             return [
               GitCommitMessageContent(
@@ -262,8 +266,7 @@ class MessageParser {
                 ? rawPayload['success'] as bool
                 : false;
             final errorVal = rawPayload['error'];
-            final error =
-                errorVal is String ? errorVal : null;
+            final error = errorVal is String ? errorVal : null;
             return [
               GitPushMessageContent(
                 projectId: projectId,
@@ -289,10 +292,13 @@ class MessageParser {
               } else if (item['type'] == 'thinking' &&
                   item['thinking'] is String) {
                 contents.add(
-                    ThinkingMessageContent(text: item['thinking'] as String));
+                  ThinkingMessageContent(text: item['thinking'] as String),
+                );
               }
             }
-            return contents.isNotEmpty ? contents : [const TextMessageContent(text: '')];
+            return contents.isNotEmpty
+                ? contents
+                : [const TextMessageContent(text: '')];
           }
 
         case 'deployment_checking':
@@ -308,7 +314,8 @@ class MessageParser {
             final vercel = rawPayload['payload']?['vercel_url'] as String?;
             final custom = rawPayload['payload']?['custom_url'] as String?;
             final url = custom ?? vercel ?? '';
-            final text = '✅ Deployment succeeded${url.isNotEmpty ? ': $url' : ''}';
+            final text =
+                '✅ Deployment succeeded${url.isNotEmpty ? ': $url' : ''}';
             return [TextMessageContent(text: text)];
           }
 
@@ -320,8 +327,8 @@ class MessageParser {
             final err = p['error_logs'];
             final retryText = rc != null
                 ? mr != null
-                    ? ' (retry $rc/$mr)'
-                    : ' (retry $rc)'
+                      ? ' (retry $rc/$mr)'
+                      : ' (retry $rc)'
                 : '';
             final errorText = err != null
                 ? '\n${err.toString().substring(0, err.toString().length > 800 ? 800 : err.toString().length)}'
@@ -361,33 +368,40 @@ class MessageParser {
           {
             // Standard assistant message handling
             final message = rawPayload['message'];
-            if (message is Map<String, dynamic> &&
-                message['content'] is List) {
+            if (message is Map<String, dynamic> && message['content'] is List) {
               final contents = <MessageContent>[];
               final blocks = message['content'] as List;
               final toolUseTotal = blocks
-                  .where((it) =>
-                      it is Map<String, dynamic> && it['type'] == 'tool_use')
+                  .where(
+                    (it) =>
+                        it is Map<String, dynamic> && it['type'] == 'tool_use',
+                  )
                   .length;
               var toolUseSeen = 0;
 
               for (final item in blocks) {
                 if (item is! Map<String, dynamic>) continue;
                 if (item['type'] == 'text' && item['text'] != null) {
-                  contents.add(TextMessageContent(text: item['text'].toString()));
+                  contents.add(
+                    TextMessageContent(text: item['text'].toString()),
+                  );
                 } else if (item['type'] == 'thinking' &&
                     item['thinking'] != null) {
                   contents.add(
-                      ThinkingMessageContent(text: item['thinking'].toString()));
-                } else if (item['type'] == 'tool_use' &&
-                    item['name'] != null) {
+                    ThinkingMessageContent(text: item['thinking'].toString()),
+                  );
+                } else if (item['type'] == 'tool_use' && item['name'] != null) {
                   toolUseSeen += 1;
-                  contents.add(ToolMessageContent(
-                    id: item['id']?.toString(),
-                    name: item['name'].toString(),
-                    input: item['input'],
-                    status: toolUseSeen >= toolUseTotal ? 'processing' : 'done',
-                  ));
+                  contents.add(
+                    ToolMessageContent(
+                      id: item['id']?.toString(),
+                      name: item['name'].toString(),
+                      input: item['input'],
+                      status: toolUseSeen >= toolUseTotal
+                          ? 'processing'
+                          : 'done',
+                    ),
+                  );
                 }
               }
 
@@ -402,8 +416,7 @@ class MessageParser {
           {
             // User message handling (usually tool results)
             final message = rawPayload['message'];
-            if (message is Map<String, dynamic> &&
-                message['content'] is List) {
+            if (message is Map<String, dynamic> && message['content'] is List) {
               final contents = <MessageContent>[];
 
               String toText(dynamic val) {
@@ -433,7 +446,9 @@ class MessageParser {
                   }
                   final isErr = item['is_error'] == true;
                   final toolUseId = item['tool_use_id']?.toString().trim();
-                  final baseSubtype = isErr ? 'tool_result_error' : 'tool_result';
+                  final baseSubtype = isErr
+                      ? 'tool_result_error'
+                      : 'tool_result';
                   final subtype = (toolUseId != null && toolUseId.isNotEmpty)
                       ? '$baseSubtype:$toolUseId'
                       : baseSubtype;
@@ -458,9 +473,8 @@ class MessageParser {
         case 'error':
           {
             // Error message handling
-            final errorMsg = rawPayload['message'] ??
-                rawPayload['error'] ??
-                'Unknown error';
+            final errorMsg =
+                rawPayload['message'] ?? rawPayload['error'] ?? 'Unknown error';
             return [TextMessageContent(text: '❌ $errorMsg')];
           }
 
@@ -469,7 +483,9 @@ class MessageParser {
             // Complete message handling
             final success = rawPayload['success'];
             final code = rawPayload['code'];
-            final statusText = success == true ? '✅ Task completed' : '❌ Task failed';
+            final statusText = success == true
+                ? '✅ Task completed'
+                : '❌ Task failed';
             final codeText = code != null ? ' (code: $code)' : '';
             return [TextMessageContent(text: '$statusText$codeText')];
           }
@@ -505,12 +521,7 @@ class MessageParser {
             }
 
             if (codeStr.trim().isEmpty) break;
-            return [
-              CodeMessageContent(
-                code: codeStr,
-                subtype: subtype,
-              ),
-            ];
+            return [CodeMessageContent(code: codeStr, subtype: subtype)];
           }
         case 'task_update':
           {
@@ -554,11 +565,15 @@ class MessageParser {
                     if (item is Map<String, dynamic>) {
                       if (item['type'] == 'text' && item['text'] is String) {
                         results.add(
-                            TextMessageContent(text: item['text'] as String));
+                          TextMessageContent(text: item['text'] as String),
+                        );
                       } else if (item['type'] == 'thinking' &&
                           item['thinking'] is String) {
                         results.add(
-                            ThinkingMessageContent(text: item['thinking'] as String));
+                          ThinkingMessageContent(
+                            text: item['thinking'] as String,
+                          ),
+                        );
                       }
                     }
                   }
@@ -656,8 +671,8 @@ class MessageParser {
 
     final effectiveType =
         entry.messageType?.toString().trim().isNotEmpty == true
-            ? entry.messageType?.toString()
-            : payloadType;
+        ? entry.messageType?.toString()
+        : payloadType;
 
     if (_isNonRenderableType(effectiveType)) return null;
 
@@ -682,7 +697,8 @@ class MessageParser {
       payloadRole = p['role']?.toString();
     }
 
-    String role = _normalizeRole(msgRole) ??
+    String role =
+        _normalizeRole(msgRole) ??
         _normalizeRole(payloadRole) ??
         _normalizeRole(payloadType) ??
         _normalizeRole(entry.messageType) ??
@@ -750,10 +766,9 @@ class MessageParser {
         if (!_isToolResultSubtype(c.subtype)) continue;
         final id = _extractToolUseIdFromSubtype(c.subtype);
         if (id == null) continue;
-        final isErr = (c.subtype ?? '')
-            .toLowerCase()
-            .trim()
-            .startsWith('tool_result_error');
+        final isErr = (c.subtype ?? '').toLowerCase().trim().startsWith(
+          'tool_result_error',
+        );
         (resultsById[id] ??= []).add((text: c.code, isError: isErr));
       }
     }
@@ -781,7 +796,8 @@ class MessageParser {
           .where((c) => _isToolResultSubtype(c.subtype))
           .toList();
 
-      final isToolResultMsg = toolResultCodes.isNotEmpty &&
+      final isToolResultMsg =
+          toolResultCodes.isNotEmpty &&
           contents.isNotEmpty &&
           contents.every((c) {
             if (c is CodeMessageContent) return _isToolResultSubtype(c.subtype);
@@ -807,10 +823,9 @@ class MessageParser {
             continue;
           }
 
-          final isErr = (code.subtype ?? '')
-              .toLowerCase()
-              .trim()
-              .startsWith('tool_result_error');
+          final isErr = (code.subtype ?? '').toLowerCase().trim().startsWith(
+            'tool_result_error',
+          );
 
           // If the result has no id, best-effort attach to a previous tool call.
           if (toolUseId == null) {
@@ -860,7 +875,10 @@ class MessageParser {
                 name: toolName,
                 input: input,
                 status: anyError ? 'error' : 'done',
-                output: ToolOutput(text: joined, isError: anyError ? true : null),
+                output: ToolOutput(
+                  text: joined,
+                  isError: anyError ? true : null,
+                ),
               ),
             ],
           ),
@@ -980,10 +998,10 @@ class MessageParser {
     final prevTool = prevContents[targetToolIndex] as ToolMessageContent;
 
     final prevOut = prevTool.output?.text ?? '';
-    final joined =
-        prevOut.trim().isNotEmpty ? '$prevOut\n\n$text' : text;
-    final capped =
-        joined.length > 120000 ? joined.substring(joined.length - 120000) : joined;
+    final joined = prevOut.trim().isNotEmpty ? '$prevOut\n\n$text' : text;
+    final capped = joined.length > 120000
+        ? joined.substring(joined.length - 120000)
+        : joined;
 
     final nextStatus = isError ? 'error' : 'done';
 
@@ -1030,12 +1048,15 @@ class MessageParser {
                 input: contentJson['input'],
                 status: contentJson['status']?.toString(),
                 output: contentJson['output'] is Map<String, dynamic>
-                    ? ToolOutput.fromJson(contentJson['output'] as Map<String, dynamic>)
+                    ? ToolOutput.fromJson(
+                        contentJson['output'] as Map<String, dynamic>,
+                      )
                     : null,
               );
             case 'result':
               return ResultMessageContent(
-                payload: contentJson['result'] ??
+                payload:
+                    contentJson['result'] ??
                     contentJson['payload'] ??
                     contentJson['content'],
               );
@@ -1085,7 +1106,8 @@ class MessageParser {
               );
             default:
               return TextMessageContent(
-                text: contentJson['text']?.toString() ??
+                text:
+                    contentJson['text']?.toString() ??
                     contentJson['content']?.toString() ??
                     json.encode(contentJson),
               );
@@ -1093,10 +1115,12 @@ class MessageParser {
         }).toList();
 
         return ChatMessage(
-          id: data['id']?.toString() ??
+          id:
+              data['id']?.toString() ??
               DateTime.now().millisecondsSinceEpoch.toString(),
           role: data['role']?.toString() ?? 'assistant',
-          createdAt: DateTime.tryParse(data['createdAt']?.toString() ?? '') ??
+          createdAt:
+              DateTime.tryParse(data['createdAt']?.toString() ?? '') ??
               DateTime.now(),
           contents: contents,
         );
@@ -1106,34 +1130,34 @@ class MessageParser {
       if (data['type'] is String) {
         final messageType = data['type'] as String;
         final role = data['role']?.toString() ?? 'assistant';
-        final id = data['id']?.toString() ??
+        final id =
+            data['id']?.toString() ??
             DateTime.now().millisecondsSinceEpoch.toString();
-        final createdAt = data['createdAt']?.toString() ??
-            DateTime.now().toIso8601String();
+        final createdAt =
+            data['createdAt']?.toString() ?? DateTime.now().toIso8601String();
 
         final contents = <MessageContent>[];
 
         switch (messageType) {
           case 'text':
           case 'assistant':
-            final text = data['text']?.toString() ??
-                data['content']?.toString() ??
-                '';
+            final text =
+                data['text']?.toString() ?? data['content']?.toString() ?? '';
 
             // Smart detection based on content
             if (text.contains('✅') || text.contains('❌')) {
               if (text.contains('finished') || text.contains('failed')) {
-                contents.add(CompletionMessageContent(
-                  message: text,
-                  success: text.contains('✅'),
-                  details: null,
-                ));
+                contents.add(
+                  CompletionMessageContent(
+                    message: text,
+                    success: text.contains('✅'),
+                    details: null,
+                  ),
+                );
               } else if (text.startsWith('❌')) {
-                contents.add(ErrorMessageContent(
-                  message: text,
-                  code: null,
-                  details: null,
-                ));
+                contents.add(
+                  ErrorMessageContent(message: text, code: null, details: null),
+                );
               } else {
                 contents.add(TextMessageContent(text: text));
               }
@@ -1145,71 +1169,89 @@ class MessageParser {
           case 'tool_call':
             if (data['tool'] is Map<String, dynamic>) {
               final tool = data['tool'] as Map<String, dynamic>;
-              contents.add(ToolMessageContent(
-                id: tool['id']?.toString(),
-                name: tool['name']?.toString() ?? 'unknown',
-                input: tool['input'],
-                status: tool['status']?.toString(),
-              ));
+              contents.add(
+                ToolMessageContent(
+                  id: tool['id']?.toString(),
+                  name: tool['name']?.toString() ?? 'unknown',
+                  input: tool['input'],
+                  status: tool['status']?.toString(),
+                ),
+              );
             }
             break;
 
           case 'tool_result':
           case 'result':
-            contents.add(ResultMessageContent(
-              payload: data['result'] ?? data['payload'] ?? data['content'],
-            ));
+            contents.add(
+              ResultMessageContent(
+                payload: data['result'] ?? data['payload'] ?? data['content'],
+              ),
+            );
             break;
 
           case 'deployment':
-            contents.add(DeploymentMessageContent(
-              status: data['status']?.toString() ?? 'unknown',
-              environment: data['environment']?.toString(),
-              url: data['url']?.toString(),
-              message: data['message']?.toString(),
-              deploymentId: data['deploymentId']?.toString(),
-            ));
+            contents.add(
+              DeploymentMessageContent(
+                status: data['status']?.toString() ?? 'unknown',
+                environment: data['environment']?.toString(),
+                url: data['url']?.toString(),
+                message: data['message']?.toString(),
+                deploymentId: data['deploymentId']?.toString(),
+              ),
+            );
             break;
 
           case 'git_commit':
-            contents.add(GitCommitMessageContent(
-              projectId: data['projectId']?.toString(),
-              message: data['message']?.toString() ?? '',
-              files: (data['files'] as List<dynamic>?)
-                  ?.map((e) => e.toString())
-                  .toList(),
-            ));
+            contents.add(
+              GitCommitMessageContent(
+                projectId: data['projectId']?.toString(),
+                message: data['message']?.toString() ?? '',
+                files: (data['files'] as List<dynamic>?)
+                    ?.map((e) => e.toString())
+                    .toList(),
+              ),
+            );
             break;
 
           case 'git_push':
-            contents.add(GitPushMessageContent(
-              projectId: data['projectId']?.toString(),
-              branch: data['branch']?.toString() ?? '',
-              success: data['success'] is bool ? data['success'] as bool : false,
-              error: data['error']?.toString(),
-            ));
+            contents.add(
+              GitPushMessageContent(
+                projectId: data['projectId']?.toString(),
+                branch: data['branch']?.toString() ?? '',
+                success: data['success'] is bool
+                    ? data['success'] as bool
+                    : false,
+                error: data['error']?.toString(),
+              ),
+            );
             break;
 
           case 'error':
-            contents.add(ErrorMessageContent(
-              message: data['message']?.toString() ?? 'Unknown error',
-              code: data['code']?.toString(),
-              details: data['details'],
-            ));
+            contents.add(
+              ErrorMessageContent(
+                message: data['message']?.toString() ?? 'Unknown error',
+                code: data['code']?.toString(),
+                details: data['details'],
+              ),
+            );
             break;
 
           case 'thinking':
             if (data['text'] is String) {
-              contents.add(ThinkingMessageContent(text: data['text'] as String));
+              contents.add(
+                ThinkingMessageContent(text: data['text'] as String),
+              );
             }
             break;
 
           case 'code':
             if (data['code'] is String) {
-              contents.add(CodeMessageContent(
-                code: data['code'] as String,
-                subtype: data['subtype']?.toString(),
-              ));
+              contents.add(
+                CodeMessageContent(
+                  code: data['code'] as String,
+                  subtype: data['subtype']?.toString(),
+                ),
+              );
             }
             break;
 
@@ -1251,14 +1293,14 @@ class MessageParser {
 
       // Format 3: Legacy format with text/content
       if (data['text'] is String || data['content'] is String) {
-        final text = data['text']?.toString() ??
-            data['content']?.toString() ??
-            '';
+        final text =
+            data['text']?.toString() ?? data['content']?.toString() ?? '';
         final role = data['role']?.toString() ?? 'assistant';
-        final id = data['id']?.toString() ??
+        final id =
+            data['id']?.toString() ??
             DateTime.now().millisecondsSinceEpoch.toString();
-        final createdAt = data['createdAt']?.toString() ??
-            DateTime.now().toIso8601String();
+        final createdAt =
+            data['createdAt']?.toString() ?? DateTime.now().toIso8601String();
 
         // Smart detection for legacy format
         if (text.contains('✅') || text.contains('❌')) {
@@ -1281,11 +1323,7 @@ class MessageParser {
               role: role,
               createdAt: DateTime.parse(createdAt),
               contents: [
-                ErrorMessageContent(
-                  message: text,
-                  code: null,
-                  details: null,
-                ),
+                ErrorMessageContent(message: text, code: null, details: null),
               ],
             );
           }
@@ -1301,10 +1339,12 @@ class MessageParser {
 
       // Format 4: Raw payload
       return ChatMessage(
-        id: data['id']?.toString() ??
+        id:
+            data['id']?.toString() ??
             DateTime.now().millisecondsSinceEpoch.toString(),
         role: data['role']?.toString() ?? 'assistant',
-        createdAt: DateTime.tryParse(data['createdAt']?.toString() ?? '') ??
+        createdAt:
+            DateTime.tryParse(data['createdAt']?.toString() ?? '') ??
             DateTime.now(),
         contents: [RawMessageContent(payload: data)],
       );

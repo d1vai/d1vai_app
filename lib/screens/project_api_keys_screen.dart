@@ -53,11 +53,7 @@ class _ProjectApiKeysScreenState extends State<ProjectApiKeysScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      SnackBarHelper.showError(
-        context,
-        title: 'Failed',
-        message: e.toString(),
-      );
+      SnackBarHelper.showError(context, title: 'Failed', message: e.toString());
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -104,15 +100,14 @@ class _ProjectApiKeysScreenState extends State<ProjectApiKeysScreen> {
     final theme = Theme.of(context);
     final token = (_token ?? '').trim();
 
-    final exampleUrl = '${ApiClient.baseUrl}/api/projects/${widget.projectId}/db/schema';
+    final exampleUrl =
+        '${ApiClient.baseUrl}/api/projects/${widget.projectId}/db/schema';
     final curl = token.isEmpty
         ? 'curl -H "Authorization: Bearer <token>" "$exampleUrl"'
         : 'curl -H "Authorization: Bearer $token" "$exampleUrl"';
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('API Keys'),
-      ),
+      appBar: AppBar(title: const Text('API Keys')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -184,7 +179,13 @@ class _ProjectApiKeysScreenState extends State<ProjectApiKeysScreen> {
                     spacing: 10,
                     runSpacing: 10,
                     children: [
-                      for (final v in const <int>[900, 1800, 3600, 6 * 3600, 24 * 3600])
+                      for (final v in const <int>[
+                        900,
+                        1800,
+                        3600,
+                        6 * 3600,
+                        24 * 3600,
+                      ])
                         ChoiceChip(
                           label: Text(_ttlLabel(v)),
                           selected: _ttlSeconds == v,
@@ -237,7 +238,9 @@ class _ProjectApiKeysScreenState extends State<ProjectApiKeysScreen> {
                       decoration: BoxDecoration(
                         color: theme.colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: theme.colorScheme.outlineVariant),
+                        border: Border.all(
+                          color: theme.colorScheme.outlineVariant,
+                        ),
                       ),
                       child: SelectableText(
                         token,
@@ -306,7 +309,9 @@ class _ProjectApiKeysScreenState extends State<ProjectApiKeysScreen> {
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: theme.colorScheme.outlineVariant),
+                      border: Border.all(
+                        color: theme.colorScheme.outlineVariant,
+                      ),
                     ),
                     child: SelectableText(
                       curl,
@@ -371,4 +376,3 @@ class _MetaTag extends StatelessWidget {
     );
   }
 }
-

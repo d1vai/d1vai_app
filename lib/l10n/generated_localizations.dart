@@ -14,7 +14,8 @@ const List<String> kSupportedLocaleKeys = <String>[
   "zh_Hant",
 ];
 
-const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, String>>{
+const Map<String, Map<String, String>>
+kLocalizedValues = <String, Map<String, String>>{
   "ar": <String, String>{
     "about": "حول",
     "about_description": "منصة تطوير تطبيقات تعمل بالذكاء الاصطناعي.",
@@ -22,17 +23,23 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "about_title": "حول",
     "account_data_contact_support_delete": "التواصل مع الدعم لحذف الحساب",
     "account_data_copy_request_template": "نسخ قالب الطلب",
-    "account_data_delete_confirm_message": "سيتم التواصل مع {support_email} لطلب حذف الحساب. قد تكون عملية الحذف غير قابلة للاسترجاع. هل تريد المتابعة؟",
-    "account_data_delete_description": "يتم حذف الحساب حاليا عبر الدعم. يرجى مراجعة القيود القانونية قبل طلب الحذف.",
-    "account_data_delete_template": "الطلب: حذف الحساب\\nالحساب: {email}\\nيرجى حذف حسابي والبيانات المرتبطة به.\\nأفهم أن هذا الإجراء قد يكون غير قابل للاسترجاع.\\nالتواصل: {support_email}",
+    "account_data_delete_confirm_message":
+        "سيتم التواصل مع {support_email} لطلب حذف الحساب. قد تكون عملية الحذف غير قابلة للاسترجاع. هل تريد المتابعة؟",
+    "account_data_delete_description":
+        "يتم حذف الحساب حاليا عبر الدعم. يرجى مراجعة القيود القانونية قبل طلب الحذف.",
+    "account_data_delete_template":
+        "الطلب: حذف الحساب\\nالحساب: {email}\\nيرجى حذف حسابي والبيانات المرتبطة به.\\nأفهم أن هذا الإجراء قد يكون غير قابل للاسترجاع.\\nالتواصل: {support_email}",
     "account_data_delete_title": "حذف الحساب",
-    "account_data_export_description": "يتم تنفيذ التصدير حاليا عبر الدعم. نوفر قالبا يمكنك نسخه وإرساله.",
-    "account_data_export_template": "الطلب: تصدير البيانات\\nالحساب: {email}\\nيرجى تصدير بيانات حسابي (الملف الشخصي، المشاريع، الفوترة).\\nالتواصل: {support_email}",
+    "account_data_export_description":
+        "يتم تنفيذ التصدير حاليا عبر الدعم. نوفر قالبا يمكنك نسخه وإرساله.",
+    "account_data_export_template":
+        "الطلب: تصدير البيانات\\nالحساب: {email}\\nيرجى تصدير بيانات حسابي (الملف الشخصي، المشاريع، الفوترة).\\nالتواصل: {support_email}",
     "account_data_export_title": "تصدير البيانات",
     "account_data_legal": "قانوني",
     "account_data_request_template_copied": "تم نسخ قالب الطلب إلى الحافظة",
     "account_data_subtitle": "تصدير البيانات وحذف الحساب",
-    "account_data_support_dialog_message": "يرجى التواصل مع {support_email} بخصوص هذا الطلب.",
+    "account_data_support_dialog_message":
+        "يرجى التواصل مع {support_email} بخصوص هذا الطلب.",
     "account_data_title": "الحساب والبيانات",
     "activity": "النشاط",
     "agree_terms": "بتسجيل الدخول، فإنك توافق على شروط الخدمة وسياسة الخصوصية",
@@ -86,7 +93,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "friends_count": "أصدقاء",
     "friends_referred": "الأصدقاء المدعوون",
     "github": "GitHub",
-    "github_connect_description": "قم بتوصيل حساب GitHub الخاص بك لاستيراد المستودعات",
+    "github_connect_description":
+        "قم بتوصيل حساب GitHub الخاص بك لاستيراد المستودعات",
     "github_integration": "تكامل GitHub",
     "help_support": "المساعدة والدعم",
     "help_support_subtitle": "احصل على المساعدة والدعم",
@@ -102,7 +110,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "input_error_owner_repo": "يرجى إدخال اسم المالك والمستودع",
     "invite_code_copied": "تم نسخ رمز الدعوة إلى الحافظة",
     "invite_code_unavailable": "رمز الدعوة غير متاح",
-    "invite_description": "قم بدعوة الأصدقاء للانضمام إلى d1v.ai واحصل على مكافآت",
+    "invite_description":
+        "قم بدعوة الأصدقاء للانضمام إلى d1v.ai واحصل على مكافآت",
     "invite_friends": "دعوة الأصدقاء",
     "invites": "الدعوات",
     "just_now": "الآن",
@@ -115,12 +124,17 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "login_failed": "فشل في تسجيل الدخول",
     "login_first": "يرجى تسجيل الدخول أولاً",
     "login_required_button": "تسجيل الدخول",
-    "login_required_create_post_message": "تحتاج إلى تسجيل الدخول لإنشاء منشور.",
+    "login_required_create_post_message":
+        "تحتاج إلى تسجيل الدخول لإنشاء منشور.",
     "login_required_dashboard_message": "تحتاج إلى تسجيل الدخول لعرض مشاريعك.",
-    "login_required_github_message": "تحتاج إلى تسجيل الدخول لإدارة تكامل GitHub.",
-    "login_required_invites_message": "تحتاج إلى تسجيل الدخول لعرض الدعوات والمكافآت.",
-    "login_required_orders_message": "تحتاج إلى تسجيل الدخول لعرض الطلبات والفوترة.",
-    "login_required_settings_message": "تحتاج إلى تسجيل الدخول لإدارة إعدادات حسابك.",
+    "login_required_github_message":
+        "تحتاج إلى تسجيل الدخول لإدارة تكامل GitHub.",
+    "login_required_invites_message":
+        "تحتاج إلى تسجيل الدخول لعرض الدعوات والمكافآت.",
+    "login_required_orders_message":
+        "تحتاج إلى تسجيل الدخول لعرض الطلبات والفوترة.",
+    "login_required_settings_message":
+        "تحتاج إلى تسجيل الدخول لإدارة إعدادات حسابك.",
     "login_required_title": "تسجيل الدخول مطلوب",
     "login_success": "تم تسجيل الدخول بنجاح",
     "login_with_code": "تسجيل الدخول بالرمز",
@@ -167,7 +181,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "search": "بحث",
     "send_code": "إرسال الرمز",
     "sending": "جاري الإرسال...",
-    "session_expired_message": "انتهت صلاحية تسجيل الدخول. يرجى تسجيل الدخول مرة أخرى.",
+    "session_expired_message":
+        "انتهت صلاحية تسجيل الدخول. يرجى تسجيل الدخول مرة أخرى.",
     "session_expired_title": "انتهت الجلسة",
     "settings": "الإعدادات",
     "share_failed": "فشل المشاركة",
@@ -203,20 +218,28 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "about_title": "About",
     "account_data_contact_support_delete": "Contact support to delete account",
     "account_data_copy_request_template": "Copy request template",
-    "account_data_delete_confirm_message": "This will contact {support_email} to request account deletion. Deletion may be irreversible. Continue?",
-    "account_data_delete_description": "Account deletion is currently handled by support. Please review the legal restrictions before requesting deletion.",
-    "account_data_delete_template": "Request: Account Deletion\\nAccount: {email}\\nPlease delete my account and associated data.\\nI understand this action may be irreversible.\\nContact: {support_email}",
+    "account_data_delete_confirm_message":
+        "This will contact {support_email} to request account deletion. Deletion may be irreversible. Continue?",
+    "account_data_delete_description":
+        "Account deletion is currently handled by support. Please review the legal restrictions before requesting deletion.",
+    "account_data_delete_template":
+        "Request: Account Deletion\\nAccount: {email}\\nPlease delete my account and associated data.\\nI understand this action may be irreversible.\\nContact: {support_email}",
     "account_data_delete_title": "Account Deletion",
-    "account_data_export_description": "Export is currently handled by support. We provide a template you can copy and send.",
-    "account_data_export_template": "Request: Data Export\\nAccount: {email}\\nPlease export my account data (profile, projects, billing).\\nContact: {support_email}",
+    "account_data_export_description":
+        "Export is currently handled by support. We provide a template you can copy and send.",
+    "account_data_export_template":
+        "Request: Data Export\\nAccount: {email}\\nPlease export my account data (profile, projects, billing).\\nContact: {support_email}",
     "account_data_export_title": "Data Export",
     "account_data_legal": "Legal",
-    "account_data_request_template_copied": "Request template copied to clipboard",
+    "account_data_request_template_copied":
+        "Request template copied to clipboard",
     "account_data_subtitle": "Data export and account deletion",
-    "account_data_support_dialog_message": "Please contact {support_email} for this request.",
+    "account_data_support_dialog_message":
+        "Please contact {support_email} for this request.",
     "account_data_title": "Account & Data",
     "activity": "Activity",
-    "agree_terms": "By logging in, you agree to our Terms of Service and Privacy Policy",
+    "agree_terms":
+        "By logging in, you agree to our Terms of Service and Privacy Policy",
     "api_settings": "API",
     "appearance": "Appearance",
     "basic_information": "Basic Information",
@@ -247,15 +270,18 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "email_bound_success": "Email bound successfully",
     "email_invalid": "Please enter a valid email address",
     "email_required": "Please enter email address",
-    "enter_code_and_new_password": "Enter the verification code and your new password",
+    "enter_code_and_new_password":
+        "Enter the verification code and your new password",
     "enter_code_sent": "Enter the 6-digit verification code sent to your email",
     "enter_email": "Enter your email",
-    "enter_email_for_code": "Enter your email address to receive a verification code",
+    "enter_email_for_code":
+        "Enter your email address to receive a verification code",
     "enter_new_password": "Enter new password",
     "enter_password": "Enter password",
     "enter_verify_code": "Enter verification code",
     "error": "Error",
-    "error_network": "Network error. Please check your connection and try again.",
+    "error_network":
+        "Network error. Please check your connection and try again.",
     "error_request_failed": "Request failed. Please try again later.",
     "error_timeout": "Request timed out. Please try again.",
     "failed_to_load": "Failed to load",
@@ -267,12 +293,14 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "friends_count": "friends",
     "friends_referred": "Friends Referred",
     "github": "GitHub",
-    "github_connect_description": "Connect your GitHub account to import repositories",
+    "github_connect_description":
+        "Connect your GitHub account to import repositories",
     "github_integration": "GitHub Integration",
     "help_support": "Help & Support",
     "help_support_subtitle": "Get help and support",
     "import_action": "Import",
-    "import_dialog_description": "Enter the repository information you want to import",
+    "import_dialog_description":
+        "Enter the repository information you want to import",
     "import_dialog_title": "Import Public Repository",
     "import_failed": "Failed to import repository",
     "import_repository": "Import Repository",
@@ -296,12 +324,18 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "login_failed": "Login failed",
     "login_first": "Please login first",
     "login_required_button": "Login",
-    "login_required_create_post_message": "You need to log in to create a post.",
-    "login_required_dashboard_message": "You need to log in to view your projects.",
-    "login_required_github_message": "You need to log in to manage GitHub integration.",
-    "login_required_invites_message": "You need to log in to view invites and rewards.",
-    "login_required_orders_message": "You need to log in to view orders and billing.",
-    "login_required_settings_message": "You need to log in to manage your account settings.",
+    "login_required_create_post_message":
+        "You need to log in to create a post.",
+    "login_required_dashboard_message":
+        "You need to log in to view your projects.",
+    "login_required_github_message":
+        "You need to log in to manage GitHub integration.",
+    "login_required_invites_message":
+        "You need to log in to view invites and rewards.",
+    "login_required_orders_message":
+        "You need to log in to view orders and billing.",
+    "login_required_settings_message":
+        "You need to log in to manage your account settings.",
     "login_required_title": "Login required",
     "login_success": "Login successful",
     "login_with_code": "Login with Code",
@@ -379,25 +413,35 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
   },
   "es": <String, String>{
     "about": "Acerca de",
-    "about_description": "Una plataforma de desarrollo de aplicaciones impulsada por IA.",
+    "about_description":
+        "Una plataforma de desarrollo de aplicaciones impulsada por IA.",
     "about_subtitle": "Versión e información de la aplicación",
     "about_title": "Acerca de",
-    "account_data_contact_support_delete": "Contactar con soporte para eliminar la cuenta",
+    "account_data_contact_support_delete":
+        "Contactar con soporte para eliminar la cuenta",
     "account_data_copy_request_template": "Copiar plantilla de solicitud",
-    "account_data_delete_confirm_message": "Esto contactará con {support_email} para solicitar la eliminación de la cuenta. Esta acción puede ser irreversible. ¿Continuar?",
-    "account_data_delete_description": "Actualmente la eliminación de cuenta la gestiona soporte. Revisa las restricciones legales antes de solicitar la eliminación.",
-    "account_data_delete_template": "Solicitud: Eliminación de cuenta\\nCuenta: {email}\\nPor favor, eliminen mi cuenta y los datos asociados.\\nEntiendo que esta acción puede ser irreversible.\\nContacto: {support_email}",
+    "account_data_delete_confirm_message":
+        "Esto contactará con {support_email} para solicitar la eliminación de la cuenta. Esta acción puede ser irreversible. ¿Continuar?",
+    "account_data_delete_description":
+        "Actualmente la eliminación de cuenta la gestiona soporte. Revisa las restricciones legales antes de solicitar la eliminación.",
+    "account_data_delete_template":
+        "Solicitud: Eliminación de cuenta\\nCuenta: {email}\\nPor favor, eliminen mi cuenta y los datos asociados.\\nEntiendo que esta acción puede ser irreversible.\\nContacto: {support_email}",
     "account_data_delete_title": "Eliminación de cuenta",
-    "account_data_export_description": "Actualmente la exportación la gestiona soporte. Te ofrecemos una plantilla para copiar y enviar.",
-    "account_data_export_template": "Solicitud: Exportación de datos\\nCuenta: {email}\\nPor favor, exporten los datos de mi cuenta (perfil, proyectos, facturación).\\nContacto: {support_email}",
+    "account_data_export_description":
+        "Actualmente la exportación la gestiona soporte. Te ofrecemos una plantilla para copiar y enviar.",
+    "account_data_export_template":
+        "Solicitud: Exportación de datos\\nCuenta: {email}\\nPor favor, exporten los datos de mi cuenta (perfil, proyectos, facturación).\\nContacto: {support_email}",
     "account_data_export_title": "Exportación de datos",
     "account_data_legal": "Legal",
-    "account_data_request_template_copied": "Plantilla de solicitud copiada al portapapeles",
+    "account_data_request_template_copied":
+        "Plantilla de solicitud copiada al portapapeles",
     "account_data_subtitle": "Exportación de datos y eliminación de cuenta",
-    "account_data_support_dialog_message": "Ponte en contacto con {support_email} para esta solicitud.",
+    "account_data_support_dialog_message":
+        "Ponte en contacto con {support_email} para esta solicitud.",
     "account_data_title": "Cuenta y datos",
     "activity": "Actividad",
-    "agree_terms": "Al iniciar sesión, acepta nuestros Términos de Servicio y Política de Privacidad",
+    "agree_terms":
+        "Al iniciar sesión, acepta nuestros Términos de Servicio y Política de Privacidad",
     "api_settings": "API",
     "appearance": "Apariencia",
     "basic_information": "Información básica",
@@ -431,12 +475,14 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "enter_code_and_new_password": "Ingrese el código y la nueva contraseña",
     "enter_code_sent": "Ingrese el código de 6 dígitos enviado a su correo",
     "enter_email": "Ingrese su correo electrónico",
-    "enter_email_for_code": "Ingrese su correo para recibir un código de verificación",
+    "enter_email_for_code":
+        "Ingrese su correo para recibir un código de verificación",
     "enter_new_password": "Ingrese la nueva contraseña",
     "enter_password": "Ingrese la contraseña",
     "enter_verify_code": "Ingrese el código de verificación",
     "error": "Error",
-    "error_network": "Error de red. Comprueba tu conexión e inténtalo de nuevo.",
+    "error_network":
+        "Error de red. Comprueba tu conexión e inténtalo de nuevo.",
     "error_request_failed": "La solicitud falló. Inténtalo más tarde.",
     "error_timeout": "Tiempo de espera agotado. Inténtalo de nuevo.",
     "failed_to_load": "Error al cargar",
@@ -448,12 +494,14 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "friends_count": "amigos",
     "friends_referred": "Amigos referidos",
     "github": "GitHub",
-    "github_connect_description": "Conecte su cuenta de GitHub para importar repositorios",
+    "github_connect_description":
+        "Conecte su cuenta de GitHub para importar repositorios",
     "github_integration": "Integración con GitHub",
     "help_support": "Ayuda y soporte",
     "help_support_subtitle": "Obtener ayuda y soporte",
     "import_action": "Importar",
-    "import_dialog_description": "Ingrese la información del repositorio que desea importar",
+    "import_dialog_description":
+        "Ingrese la información del repositorio que desea importar",
     "import_dialog_title": "Importar Repositorio Público",
     "import_failed": "Error al importar repositorio",
     "import_repository": "Importar repositorio",
@@ -461,10 +509,12 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "import_success": "Repositorio importado exitosamente",
     "importing": "Importando...",
     "industry": "Industria",
-    "input_error_owner_repo": "Por favor ingrese el propietario y el nombre del repositorio",
+    "input_error_owner_repo":
+        "Por favor ingrese el propietario y el nombre del repositorio",
     "invite_code_copied": "Código de invitación copiado al portapapeles",
     "invite_code_unavailable": "Código de invitación no disponible",
-    "invite_description": "Invite a amigos a unirse a d1v.ai y obtenga recompensas",
+    "invite_description":
+        "Invite a amigos a unirse a d1v.ai y obtenga recompensas",
     "invite_friends": "Invitar amigos",
     "invites": "Invitaciones",
     "just_now": "Justo ahora",
@@ -477,12 +527,18 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "login_failed": "Error al iniciar sesión",
     "login_first": "Por favor inicie sesión primero",
     "login_required_button": "Iniciar sesión",
-    "login_required_create_post_message": "Necesitas iniciar sesión para crear una publicación.",
-    "login_required_dashboard_message": "Necesitas iniciar sesión para ver tus proyectos.",
-    "login_required_github_message": "Necesitas iniciar sesión para administrar la integración con GitHub.",
-    "login_required_invites_message": "Necesitas iniciar sesión para ver invitaciones y recompensas.",
-    "login_required_orders_message": "Necesitas iniciar sesión para ver pedidos y facturación.",
-    "login_required_settings_message": "Necesitas iniciar sesión para administrar la configuración de tu cuenta.",
+    "login_required_create_post_message":
+        "Necesitas iniciar sesión para crear una publicación.",
+    "login_required_dashboard_message":
+        "Necesitas iniciar sesión para ver tus proyectos.",
+    "login_required_github_message":
+        "Necesitas iniciar sesión para administrar la integración con GitHub.",
+    "login_required_invites_message":
+        "Necesitas iniciar sesión para ver invitaciones y recompensas.",
+    "login_required_orders_message":
+        "Necesitas iniciar sesión para ver pedidos y facturación.",
+    "login_required_settings_message":
+        "Necesitas iniciar sesión para administrar la configuración de tu cuenta.",
     "login_required_title": "Inicio de sesión requerido",
     "login_success": "Inicio de sesión exitoso",
     "login_with_code": "Iniciar sesión con código",
@@ -550,7 +606,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "theme_title": "Tema",
     "theme_updated": "Tema actualizado",
     "verify_code": "Código de verificación",
-    "verify_code_complete": "Por favor ingrese el código de verificación completo",
+    "verify_code_complete":
+        "Por favor ingrese el código de verificación completo",
     "verify_code_required": "Por favor ingrese el código de verificación",
     "verify_login": "Verificar inicio de sesión",
     "verifying": "Verificando...",
@@ -560,25 +617,35 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
   },
   "fr": <String, String>{
     "about": "À propos",
-    "about_description": "Une plateforme de développement d'applications alimentée par l'IA.",
+    "about_description":
+        "Une plateforme de développement d'applications alimentée par l'IA.",
     "about_subtitle": "Version de l'application et informations",
     "about_title": "À propos",
-    "account_data_contact_support_delete": "Contacter le support pour supprimer le compte",
+    "account_data_contact_support_delete":
+        "Contacter le support pour supprimer le compte",
     "account_data_copy_request_template": "Copier le modèle de demande",
-    "account_data_delete_confirm_message": "Cela contactera {support_email} pour demander la suppression du compte. La suppression peut être irréversible. Continuer ?",
-    "account_data_delete_description": "La suppression du compte est actuellement gérée par le support. Veuillez consulter les restrictions légales avant de demander la suppression.",
-    "account_data_delete_template": "Demande : Suppression du compte\\nCompte : {email}\\nVeuillez supprimer mon compte et les données associées.\\nJe comprends que cette action peut être irréversible.\\nContact : {support_email}",
+    "account_data_delete_confirm_message":
+        "Cela contactera {support_email} pour demander la suppression du compte. La suppression peut être irréversible. Continuer ?",
+    "account_data_delete_description":
+        "La suppression du compte est actuellement gérée par le support. Veuillez consulter les restrictions légales avant de demander la suppression.",
+    "account_data_delete_template":
+        "Demande : Suppression du compte\\nCompte : {email}\\nVeuillez supprimer mon compte et les données associées.\\nJe comprends que cette action peut être irréversible.\\nContact : {support_email}",
     "account_data_delete_title": "Suppression du compte",
-    "account_data_export_description": "L’export est actuellement géré par le support. Nous fournissons un modèle que vous pouvez copier et envoyer.",
-    "account_data_export_template": "Demande : Export des données\\nCompte : {email}\\nVeuillez exporter les données de mon compte (profil, projets, facturation).\\nContact : {support_email}",
+    "account_data_export_description":
+        "L’export est actuellement géré par le support. Nous fournissons un modèle que vous pouvez copier et envoyer.",
+    "account_data_export_template":
+        "Demande : Export des données\\nCompte : {email}\\nVeuillez exporter les données de mon compte (profil, projets, facturation).\\nContact : {support_email}",
     "account_data_export_title": "Export des données",
     "account_data_legal": "Juridique",
-    "account_data_request_template_copied": "Le modèle de demande a été copié dans le presse-papiers",
+    "account_data_request_template_copied":
+        "Le modèle de demande a été copié dans le presse-papiers",
     "account_data_subtitle": "Export des données et suppression du compte",
-    "account_data_support_dialog_message": "Veuillez contacter {support_email} pour cette demande.",
+    "account_data_support_dialog_message":
+        "Veuillez contacter {support_email} pour cette demande.",
     "account_data_title": "Compte et données",
     "activity": "Activité",
-    "agree_terms": "En vous connectant, vous acceptez nos Conditions de Service et notre Politique de Confidentialité",
+    "agree_terms":
+        "En vous connectant, vous acceptez nos Conditions de Service et notre Politique de Confidentialité",
     "api_settings": "API",
     "appearance": "Apparence",
     "basic_information": "Informations de base",
@@ -609,16 +676,20 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "email_bound_success": "E-mail lié avec succès",
     "email_invalid": "Veuillez entrer une adresse e-mail valide",
     "email_required": "Veuillez entrer votre adresse e-mail",
-    "enter_code_and_new_password": "Entrez le code de vérification et votre nouveau mot de passe",
-    "enter_code_sent": "Entrez le code de vérification à 6 chiffres envoyé à votre e-mail",
+    "enter_code_and_new_password":
+        "Entrez le code de vérification et votre nouveau mot de passe",
+    "enter_code_sent":
+        "Entrez le code de vérification à 6 chiffres envoyé à votre e-mail",
     "enter_email": "Entrez votre e-mail",
-    "enter_email_for_code": "Entrez votre adresse e-mail pour recevoir un code de vérification",
+    "enter_email_for_code":
+        "Entrez votre adresse e-mail pour recevoir un code de vérification",
     "enter_new_password": "Entrez le nouveau mot de passe",
     "enter_password": "Entrez le mot de passe",
     "enter_verify_code": "Entrez le code de vérification",
     "error": "Erreur",
     "error_network": "Erreur réseau. Vérifiez votre connexion et réessayez.",
-    "error_request_failed": "La requête a échoué. Veuillez réessayer plus tard.",
+    "error_request_failed":
+        "La requête a échoué. Veuillez réessayer plus tard.",
     "error_timeout": "Délai d’attente dépassé. Veuillez réessayer.",
     "failed_to_load": "Échec du chargement",
     "failed_to_load_posts": "Échec du chargement des publications",
@@ -629,12 +700,14 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "friends_count": "amis",
     "friends_referred": "Amis parrainés",
     "github": "GitHub",
-    "github_connect_description": "Connectez votre compte GitHub pour importer des référentiels",
+    "github_connect_description":
+        "Connectez votre compte GitHub pour importer des référentiels",
     "github_integration": "Intégration GitHub",
     "help_support": "Aide et support",
     "help_support_subtitle": "Obtenir de l'aide et du support",
     "import_action": "Importer",
-    "import_dialog_description": "Entrez les informations du référentiel que vous souhaitez importer",
+    "import_dialog_description":
+        "Entrez les informations du référentiel que vous souhaitez importer",
     "import_dialog_title": "Importer un référentiel public",
     "import_failed": "Échec de l'importation du référentiel",
     "import_repository": "Importer un référentiel",
@@ -642,10 +715,12 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "import_success": "Référentiel importé avec succès",
     "importing": "Importation...",
     "industry": "Industrie",
-    "input_error_owner_repo": "Veuillez entrer le propriétaire et le nom du référentiel",
+    "input_error_owner_repo":
+        "Veuillez entrer le propriétaire et le nom du référentiel",
     "invite_code_copied": "Code d'invitation copié dans le presse-papiers",
     "invite_code_unavailable": "Code d'invitation non disponible",
-    "invite_description": "Invitez des amis à rejoindre d1v.ai et obtenez des récompenses",
+    "invite_description":
+        "Invitez des amis à rejoindre d1v.ai et obtenez des récompenses",
     "invite_friends": "Inviter des amis",
     "invites": "Invitations",
     "just_now": "À l'instant",
@@ -658,12 +733,18 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "login_failed": "Échec de la connexion",
     "login_first": "Veuillez d'abord vous connecter",
     "login_required_button": "Se connecter",
-    "login_required_create_post_message": "Vous devez vous connecter pour créer une publication.",
-    "login_required_dashboard_message": "Vous devez vous connecter pour voir vos projets.",
-    "login_required_github_message": "Vous devez vous connecter pour gérer l’intégration GitHub.",
-    "login_required_invites_message": "Vous devez vous connecter pour voir les invitations et les récompenses.",
-    "login_required_orders_message": "Vous devez vous connecter pour voir les commandes et la facturation.",
-    "login_required_settings_message": "Vous devez vous connecter pour gérer les paramètres de votre compte.",
+    "login_required_create_post_message":
+        "Vous devez vous connecter pour créer une publication.",
+    "login_required_dashboard_message":
+        "Vous devez vous connecter pour voir vos projets.",
+    "login_required_github_message":
+        "Vous devez vous connecter pour gérer l’intégration GitHub.",
+    "login_required_invites_message":
+        "Vous devez vous connecter pour voir les invitations et les récompenses.",
+    "login_required_orders_message":
+        "Vous devez vous connecter pour voir les commandes et la facturation.",
+    "login_required_settings_message":
+        "Vous devez vous connecter pour gérer les paramètres de votre compte.",
     "login_required_title": "Connexion requise",
     "login_success": "Connexion réussie",
     "login_with_code": "Se connecter avec code",
@@ -681,7 +762,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "owner_hint": "nom d'utilisateur ou organisation",
     "owner_label": "Propriétaire",
     "password": "Mot de passe",
-    "password_length_error": "Le mot de passe doit comporter au moins 6 caractères",
+    "password_length_error":
+        "Le mot de passe doit comporter au moins 6 caractères",
     "password_required": "Veuillez entrer le mot de passe",
     "password_reset_success": "Mot de passe réinitialisé avec succès",
     "passwords_do_not_match": "Les mots de passe ne correspondent pas",
@@ -710,7 +792,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "search": "Rechercher",
     "send_code": "Envoyer le code",
     "sending": "Envoi...",
-    "session_expired_message": "Votre session a expiré. Veuillez vous reconnecter.",
+    "session_expired_message":
+        "Votre session a expiré. Veuillez vous reconnecter.",
     "session_expired_title": "Session expirée",
     "settings": "Paramètres",
     "share_failed": "Échec du partage",
@@ -746,12 +829,17 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "about_title": "アプリ情報",
     "account_data_contact_support_delete": "サポートに連絡してアカウントを削除",
     "account_data_copy_request_template": "依頼テンプレートをコピー",
-    "account_data_delete_confirm_message": "{support_email} にアカウント削除を依頼します。削除は元に戻せない場合があります。続行しますか？",
-    "account_data_delete_description": "アカウント削除は現在サポートが対応しています。削除を依頼する前に法的制限をご確認ください。",
-    "account_data_delete_template": "依頼: アカウント削除\\nアカウント: {email}\\nアカウントおよび関連データの削除をお願いします。\\nこの操作は元に戻せない可能性があることを理解しています。\\n連絡先: {support_email}",
+    "account_data_delete_confirm_message":
+        "{support_email} にアカウント削除を依頼します。削除は元に戻せない場合があります。続行しますか？",
+    "account_data_delete_description":
+        "アカウント削除は現在サポートが対応しています。削除を依頼する前に法的制限をご確認ください。",
+    "account_data_delete_template":
+        "依頼: アカウント削除\\nアカウント: {email}\\nアカウントおよび関連データの削除をお願いします。\\nこの操作は元に戻せない可能性があることを理解しています。\\n連絡先: {support_email}",
     "account_data_delete_title": "アカウント削除",
-    "account_data_export_description": "エクスポートは現在サポートが対応しています。コピーして送信できる依頼テンプレートを用意しています。",
-    "account_data_export_template": "依頼: データエクスポート\\nアカウント: {email}\\nアカウントデータ（プロフィール、プロジェクト、請求情報）のエクスポートをお願いします。\\n連絡先: {support_email}",
+    "account_data_export_description":
+        "エクスポートは現在サポートが対応しています。コピーして送信できる依頼テンプレートを用意しています。",
+    "account_data_export_template":
+        "依頼: データエクスポート\\nアカウント: {email}\\nアカウントデータ（プロフィール、プロジェクト、請求情報）のエクスポートをお願いします。\\n連絡先: {support_email}",
     "account_data_export_title": "データエクスポート",
     "account_data_legal": "法務",
     "account_data_request_template_copied": "依頼テンプレートをクリップボードにコピーしました",
@@ -922,25 +1010,35 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
   },
   "ru": <String, String>{
     "about": "О программе",
-    "about_description": "Платформа для разработки приложений с использованием ИИ.",
+    "about_description":
+        "Платформа для разработки приложений с использованием ИИ.",
     "about_subtitle": "Версия приложения и информация",
     "about_title": "О приложении",
-    "account_data_contact_support_delete": "Связаться с поддержкой для удаления аккаунта",
+    "account_data_contact_support_delete":
+        "Связаться с поддержкой для удаления аккаунта",
     "account_data_copy_request_template": "Скопировать шаблон запроса",
-    "account_data_delete_confirm_message": "Это свяжется с {support_email} для запроса удаления аккаунта. Удаление может быть необратимым. Продолжить?",
-    "account_data_delete_description": "Сейчас удаление аккаунта выполняется через поддержку. Перед запросом удаления ознакомьтесь с юридическими ограничениями.",
-    "account_data_delete_template": "Запрос: Удаление аккаунта\\nАккаунт: {email}\\nПожалуйста, удалите мой аккаунт и связанные данные.\\nЯ понимаю, что это действие может быть необратимым.\\nКонтакт: {support_email}",
+    "account_data_delete_confirm_message":
+        "Это свяжется с {support_email} для запроса удаления аккаунта. Удаление может быть необратимым. Продолжить?",
+    "account_data_delete_description":
+        "Сейчас удаление аккаунта выполняется через поддержку. Перед запросом удаления ознакомьтесь с юридическими ограничениями.",
+    "account_data_delete_template":
+        "Запрос: Удаление аккаунта\\nАккаунт: {email}\\nПожалуйста, удалите мой аккаунт и связанные данные.\\nЯ понимаю, что это действие может быть необратимым.\\nКонтакт: {support_email}",
     "account_data_delete_title": "Удаление аккаунта",
-    "account_data_export_description": "Сейчас экспорт выполняется через поддержку. Мы предоставляем шаблон, который можно скопировать и отправить.",
-    "account_data_export_template": "Запрос: Экспорт данных\\nАккаунт: {email}\\nПожалуйста, экспортируйте данные моего аккаунта (профиль, проекты, биллинг).\\nКонтакт: {support_email}",
+    "account_data_export_description":
+        "Сейчас экспорт выполняется через поддержку. Мы предоставляем шаблон, который можно скопировать и отправить.",
+    "account_data_export_template":
+        "Запрос: Экспорт данных\\nАккаунт: {email}\\nПожалуйста, экспортируйте данные моего аккаунта (профиль, проекты, биллинг).\\nКонтакт: {support_email}",
     "account_data_export_title": "Экспорт данных",
     "account_data_legal": "Юридическое",
-    "account_data_request_template_copied": "Шаблон запроса скопирован в буфер обмена",
+    "account_data_request_template_copied":
+        "Шаблон запроса скопирован в буфер обмена",
     "account_data_subtitle": "Экспорт данных и удаление аккаунта",
-    "account_data_support_dialog_message": "Пожалуйста, свяжитесь с {support_email} по этому запросу.",
+    "account_data_support_dialog_message":
+        "Пожалуйста, свяжитесь с {support_email} по этому запросу.",
     "account_data_title": "Аккаунт и данные",
     "activity": "Активность",
-    "agree_terms": "Входя в систему, вы соглашаетесь с нашими Условиями обслуживания и Политикой конфиденциальности",
+    "agree_terms":
+        "Входя в систему, вы соглашаетесь с нашими Условиями обслуживания и Политикой конфиденциальности",
     "api_settings": "API",
     "appearance": "Внешний вид",
     "basic_information": "Основная информация",
@@ -969,12 +1067,15 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "email": "Электронная почта",
     "email_address": "Адрес электронной почты",
     "email_bound_success": "Электронная почта успешно привязана",
-    "email_invalid": "Пожалуйста, введите действительный адрес электронной почты",
+    "email_invalid":
+        "Пожалуйста, введите действительный адрес электронной почты",
     "email_required": "Пожалуйста, введите адрес электронной почты",
     "enter_code_and_new_password": "Введите код подтверждения и новый пароль",
-    "enter_code_sent": "Введите 6-значный код подтверждения, отправленный на вашу почту",
+    "enter_code_sent":
+        "Введите 6-значный код подтверждения, отправленный на вашу почту",
     "enter_email": "Введите вашу почту",
-    "enter_email_for_code": "Введите адрес электронной почты для получения кода подтверждения",
+    "enter_email_for_code":
+        "Введите адрес электронной почты для получения кода подтверждения",
     "enter_new_password": "Введите новый пароль",
     "enter_password": "Введите пароль",
     "enter_verify_code": "Введите код подтверждения",
@@ -991,12 +1092,14 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "friends_count": "друзей",
     "friends_referred": "Приглашенные друзья",
     "github": "GitHub",
-    "github_connect_description": "Подключите свой аккаунт GitHub для импорта репозиториев",
+    "github_connect_description":
+        "Подключите свой аккаунт GitHub для импорта репозиториев",
     "github_integration": "Интеграция с GitHub",
     "help_support": "Помощь и поддержка",
     "help_support_subtitle": "Получить помощь и поддержку",
     "import_action": "Импортировать",
-    "import_dialog_description": "Введите информацию о репозитории, который хотите импортировать",
+    "import_dialog_description":
+        "Введите информацию о репозитории, который хотите импортировать",
     "import_dialog_title": "Импорт публичного репозитория",
     "import_failed": "Не удалось импортировать репозиторий",
     "import_repository": "Импортировать репозиторий",
@@ -1004,10 +1107,12 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "import_success": "Репозиторий успешно импортирован",
     "importing": "Импорт...",
     "industry": "Отрасль",
-    "input_error_owner_repo": "Пожалуйста, введите владельца и название репозитория",
+    "input_error_owner_repo":
+        "Пожалуйста, введите владельца и название репозитория",
     "invite_code_copied": "Код приглашения скопирован в буфер обмена",
     "invite_code_unavailable": "Код приглашения недоступен",
-    "invite_description": "Приглашайте друзей присоединиться к d1v.ai и получайте награды",
+    "invite_description":
+        "Приглашайте друзей присоединиться к d1v.ai и получайте награды",
     "invite_friends": "Пригласить друзей",
     "invites": "Приглашения",
     "just_now": "Только что",
@@ -1020,12 +1125,18 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "login_failed": "Ошибка входа",
     "login_first": "Пожалуйста, войдите сначала",
     "login_required_button": "Войти",
-    "login_required_create_post_message": "Чтобы создать публикацию, необходимо войти в систему.",
-    "login_required_dashboard_message": "Чтобы просматривать проекты, необходимо войти в систему.",
-    "login_required_github_message": "Чтобы управлять интеграцией GitHub, необходимо войти в систему.",
-    "login_required_invites_message": "Чтобы просматривать приглашения и награды, необходимо войти в систему.",
-    "login_required_orders_message": "Чтобы просматривать заказы и биллинг, необходимо войти в систему.",
-    "login_required_settings_message": "Чтобы управлять настройками аккаунта, необходимо войти в систему.",
+    "login_required_create_post_message":
+        "Чтобы создать публикацию, необходимо войти в систему.",
+    "login_required_dashboard_message":
+        "Чтобы просматривать проекты, необходимо войти в систему.",
+    "login_required_github_message":
+        "Чтобы управлять интеграцией GitHub, необходимо войти в систему.",
+    "login_required_invites_message":
+        "Чтобы просматривать приглашения и награды, необходимо войти в систему.",
+    "login_required_orders_message":
+        "Чтобы просматривать заказы и биллинг, необходимо войти в систему.",
+    "login_required_settings_message":
+        "Чтобы управлять настройками аккаунта, необходимо войти в систему.",
     "login_required_title": "Требуется вход",
     "login_success": "Успешный вход",
     "login_with_code": "Войти с кодом",
@@ -1050,7 +1161,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "pricing": "Цены",
     "privacy": "Конфиденциальность",
     "profile": "Профиль",
-    "project_name_hint": "Оставьте пустым, чтобы использовать название репозитория",
+    "project_name_hint":
+        "Оставьте пустым, чтобы использовать название репозитория",
     "project_name_optional": "Название проекта (необязательно)",
     "prompt_activity_title": "Активность промптов",
     "prompt_activity_total": "Итого:",
@@ -1072,7 +1184,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "search": "Поиск",
     "send_code": "Отправить код",
     "sending": "Отправка...",
-    "session_expired_message": "Срок действия входа истек. Пожалуйста, войдите снова.",
+    "session_expired_message":
+        "Срок действия входа истек. Пожалуйста, войдите снова.",
     "session_expired_title": "Сессия истекла",
     "settings": "Настройки",
     "share_failed": "Не удалось поделиться",
@@ -1108,12 +1221,15 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "about_title": "关于",
     "account_data_contact_support_delete": "联系支持删除账户",
     "account_data_copy_request_template": "复制请求文案",
-    "account_data_delete_confirm_message": "这将通过 {support_email} 发起账户删除请求。删除可能不可恢复，是否继续？",
+    "account_data_delete_confirm_message":
+        "这将通过 {support_email} 发起账户删除请求。删除可能不可恢复，是否继续？",
     "account_data_delete_description": "账户删除目前由客服处理。在发起删除前请先阅读法律限制说明。",
-    "account_data_delete_template": "请求：账户删除\\n账户：{email}\\n请删除我的账户及关联数据。\\n我理解该操作可能不可逆。\\n联系方式：{support_email}",
+    "account_data_delete_template":
+        "请求：账户删除\\n账户：{email}\\n请删除我的账户及关联数据。\\n我理解该操作可能不可逆。\\n联系方式：{support_email}",
     "account_data_delete_title": "账户删除",
     "account_data_export_description": "导出目前由客服处理。我们提供可复制并发送的请求模板。",
-    "account_data_export_template": "请求：数据导出\\n账户：{email}\\n请导出我的账户数据（资料、项目、计费）。\\n联系方式：{support_email}",
+    "account_data_export_template":
+        "请求：数据导出\\n账户：{email}\\n请导出我的账户数据（资料、项目、计费）。\\n联系方式：{support_email}",
     "account_data_export_title": "数据导出",
     "account_data_legal": "法律",
     "account_data_request_template_copied": "请求文案已复制到剪贴板",
@@ -1289,12 +1405,15 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "about_title": "關於",
     "account_data_contact_support_delete": "聯絡客服刪除帳戶",
     "account_data_copy_request_template": "複製請求文案",
-    "account_data_delete_confirm_message": "這將透過 {support_email} 發起帳戶刪除請求。刪除可能無法復原，是否繼續？",
+    "account_data_delete_confirm_message":
+        "這將透過 {support_email} 發起帳戶刪除請求。刪除可能無法復原，是否繼續？",
     "account_data_delete_description": "帳戶刪除目前由客服處理。提出刪除前請先閱讀法律限制說明。",
-    "account_data_delete_template": "請求：帳戶刪除\\n帳戶：{email}\\n請刪除我的帳戶及關聯資料。\\n我了解此操作可能不可逆。\\n聯絡方式：{support_email}",
+    "account_data_delete_template":
+        "請求：帳戶刪除\\n帳戶：{email}\\n請刪除我的帳戶及關聯資料。\\n我了解此操作可能不可逆。\\n聯絡方式：{support_email}",
     "account_data_delete_title": "帳戶刪除",
     "account_data_export_description": "匯出目前由客服處理。我們提供可複製並發送的請求範本。",
-    "account_data_export_template": "請求：資料匯出\\n帳戶：{email}\\n請匯出我的帳戶資料（資料、專案、計費）。\\n聯絡方式：{support_email}",
+    "account_data_export_template":
+        "請求：資料匯出\\n帳戶：{email}\\n請匯出我的帳戶資料（資料、專案、計費）。\\n聯絡方式：{support_email}",
     "account_data_export_title": "資料匯出",
     "account_data_legal": "法律",
     "account_data_request_template_copied": "請求文案已複製到剪貼簿",

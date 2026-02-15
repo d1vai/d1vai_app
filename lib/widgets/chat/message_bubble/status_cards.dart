@@ -14,8 +14,9 @@ class ChatErrorCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final title = content.code != null ? 'Error ${content.code}' : 'Error';
-    final detailsText =
-        content.details != null ? prettyJson(content.details) : null;
+    final detailsText = content.details != null
+        ? prettyJson(content.details)
+        : null;
 
     return ChatMessageCard(
       backgroundColor: theme.colorScheme.error.withValues(alpha: 0.10),
@@ -47,7 +48,9 @@ class ChatErrorCard extends StatelessWidget {
                 fontFamily: 'monospace',
                 fontSize: 11.5,
                 height: 1.25,
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.9,
+                ),
               ),
             ),
           ],
@@ -65,8 +68,9 @@ class ChatCompletionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final tint =
-        content.success ? chatSuccessTint(theme) : theme.colorScheme.error;
+    final tint = content.success
+        ? chatSuccessTint(theme)
+        : theme.colorScheme.error;
     final bg = tint.withValues(alpha: 0.10);
 
     return ChatMessageCard(
@@ -79,10 +83,7 @@ class ChatCompletionCard extends StatelessWidget {
               Container(
                 width: 8,
                 height: 8,
-                decoration: BoxDecoration(
-                  color: tint,
-                  shape: BoxShape.circle,
-                ),
+                decoration: BoxDecoration(color: tint, shape: BoxShape.circle),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -98,14 +99,17 @@ class ChatCompletionCard extends StatelessWidget {
               ),
             ],
           ),
-          if (content.details != null && content.details!.trim().isNotEmpty) ...[
+          if (content.details != null &&
+              content.details!.trim().isNotEmpty) ...[
             const SizedBox(height: 8),
             ExpandableText(
               text: content.details!,
               maxLines: 4,
               isMarkdown: false,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.9,
+                ),
                 fontSize: 12.5,
                 height: 1.3,
               ),
@@ -135,18 +139,18 @@ class ChatDeploymentCard extends StatelessWidget {
     final Color tint = isSuccess
         ? successTint
         : isPending
-            ? warningTint
-            : isFailed
-                ? theme.colorScheme.error
-                : theme.colorScheme.onSurfaceVariant;
+        ? warningTint
+        : isFailed
+        ? theme.colorScheme.error
+        : theme.colorScheme.onSurfaceVariant;
 
     final IconData icon = isSuccess
         ? Icons.check_circle
         : isPending
-            ? Icons.hourglass_empty
-            : isFailed
-                ? Icons.error
-                : Icons.info;
+        ? Icons.hourglass_empty
+        : isFailed
+        ? Icons.error
+        : Icons.info;
 
     return ChatMessageCard(
       backgroundColor: tint.withValues(alpha: 0.10),
@@ -174,7 +178,8 @@ class ChatDeploymentCard extends StatelessWidget {
               ),
             ),
           ),
-          if (content.message != null && content.message!.trim().isNotEmpty) ...[
+          if (content.message != null &&
+              content.message!.trim().isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
               content.message!,

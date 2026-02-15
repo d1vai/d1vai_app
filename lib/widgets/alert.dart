@@ -41,13 +41,10 @@ class Alert extends StatelessWidget {
         padding ?? const EdgeInsets.symmetric(horizontal: 14, vertical: 12);
     final effectiveBorderWidth = borderWidth ?? 1.0;
 
-    final Widget? leading = icon ??
+    final Widget? leading =
+        icon ??
         (showDefaultIcon && resolved.defaultIcon != null
-            ? Icon(
-                resolved.defaultIcon,
-                color: resolved.iconColor,
-                size: 18,
-              )
+            ? Icon(resolved.defaultIcon, color: resolved.iconColor, size: 18)
             : null);
 
     return Container(
@@ -74,9 +71,7 @@ class Alert extends StatelessWidget {
             ),
             const SizedBox(width: 10),
           ],
-          Expanded(
-            child: child ?? const SizedBox.shrink(),
-          ),
+          Expanded(child: child ?? const SizedBox.shrink()),
         ],
       ),
     );
@@ -175,27 +170,18 @@ class AlertDescription extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final effectiveStyle = style ??
-        theme.textTheme.bodyMedium?.copyWith(
-          height: 1.5,
-        ) ??
-        const TextStyle(
-          fontSize: 14,
-          height: 1.5,
-        );
+    final effectiveStyle =
+        style ??
+        theme.textTheme.bodyMedium?.copyWith(height: 1.5) ??
+        const TextStyle(fontSize: 14, height: 1.5);
 
-    final content = child ??
+    final content =
+        child ??
         (text != null
-            ? Text(
-                text!,
-                style: effectiveStyle,
-              )
+            ? Text(text!, style: effectiveStyle)
             : const SizedBox.shrink());
 
-    return Padding(
-      padding: padding ?? EdgeInsets.zero,
-      child: content,
-    );
+    return Padding(padding: padding ?? EdgeInsets.zero, child: content);
   }
 }
 
@@ -224,9 +210,9 @@ class SimpleAlert extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 4),
               child: Text(
                 title!,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
               ),
             ),
           AlertDescription(text: message),
@@ -241,11 +227,7 @@ class SuccessAlert extends StatelessWidget {
   final String message;
   final String? title;
 
-  const SuccessAlert({
-    super.key,
-    required this.message,
-    this.title,
-  });
+  const SuccessAlert({super.key, required this.message, this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -262,11 +244,7 @@ class ErrorAlert extends StatelessWidget {
   final String message;
   final String? title;
 
-  const ErrorAlert({
-    super.key,
-    required this.message,
-    this.title,
-  });
+  const ErrorAlert({super.key, required this.message, this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -283,11 +261,7 @@ class InfoAlert extends StatelessWidget {
   final String message;
   final String? title;
 
-  const InfoAlert({
-    super.key,
-    required this.message,
-    this.title,
-  });
+  const InfoAlert({super.key, required this.message, this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -304,11 +278,7 @@ class WarningAlert extends StatelessWidget {
   final String message;
   final String? title;
 
-  const WarningAlert({
-    super.key,
-    required this.message,
-    this.title,
-  });
+  const WarningAlert({super.key, required this.message, this.title});
 
   @override
   Widget build(BuildContext context) {

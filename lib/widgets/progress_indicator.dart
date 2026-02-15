@@ -50,10 +50,7 @@ class _ProgressBarState extends State<ProgressBar>
     _animation = Tween<double>(
       begin: 0,
       end: 1,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
     _controller.forward();
   }
 
@@ -86,7 +83,8 @@ class _ProgressBarState extends State<ProgressBar>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bgColor = widget.backgroundColor ??
+    final bgColor =
+        widget.backgroundColor ??
         theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4);
     final valColor = widget.valueColor ?? theme.colorScheme.primary;
 
@@ -100,7 +98,8 @@ class _ProgressBarState extends State<ProgressBar>
               Expanded(
                 child: Text(
                   widget.label!,
-                  style: widget.labelStyle ??
+                  style:
+                      widget.labelStyle ??
                       TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -111,7 +110,8 @@ class _ProgressBarState extends State<ProgressBar>
               if (widget.showPercentage)
                 Text(
                   '${(_animatedValue * 100).toInt()}%',
-                  style: widget.percentageStyle ??
+                  style:
+                      widget.percentageStyle ??
                       TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -135,12 +135,10 @@ class _ProgressBarState extends State<ProgressBar>
           height: widget.height ?? 8,
           decoration: BoxDecoration(
             color: bgColor,
-            borderRadius: widget.borderRadius ??
-                BorderRadius.circular(4),
+            borderRadius: widget.borderRadius ?? BorderRadius.circular(4),
           ),
           child: ClipRRect(
-            borderRadius: widget.borderRadius ??
-                BorderRadius.circular(4),
+            borderRadius: widget.borderRadius ?? BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: _animatedValue.clamp(0.0, 1.0),
               backgroundColor: Colors.transparent,
@@ -177,7 +175,8 @@ class CircularProgress extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final valColor = valueColor ?? theme.colorScheme.primary;
-    final bgColor = backgroundColor ??
+    final bgColor =
+        backgroundColor ??
         theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4);
 
     return SizedBox(
@@ -192,8 +191,7 @@ class CircularProgress extends StatelessWidget {
             valueColor: AlwaysStoppedAnimation<Color>(valColor),
             strokeWidth: strokeWidth,
           ),
-          if (centerChild != null)
-            centerChild!,
+          if (centerChild != null) centerChild!,
         ],
       ),
     );
@@ -224,10 +222,13 @@ class CircularProgressWithPercentage extends StatelessWidget {
       value: value,
       size: size,
       valueColor: progressColor,
-      backgroundColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
+      backgroundColor: theme.colorScheme.surfaceContainerHighest.withValues(
+        alpha: 0.2,
+      ),
       centerChild: Text(
         '${(value * 100).toInt()}%',
-        style: textStyle ??
+        style:
+            textStyle ??
             TextStyle(
               fontSize: (size ?? 48) * 0.25,
               fontWeight: FontWeight.bold,
@@ -264,7 +265,9 @@ class LoadingProgress extends StatelessWidget {
         ProgressBar(
           value: value,
           height: height ?? 6,
-          backgroundColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+          backgroundColor: theme.colorScheme.surfaceContainerHighest.withValues(
+            alpha: 0.4,
+          ),
           valueColor: progressColor,
           animationDuration: const Duration(milliseconds: 500),
         ),
@@ -318,8 +321,8 @@ class StepProgressIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final active = activeColor ?? theme.colorScheme.primary;
-    final inactive = inactiveColor ??
-        theme.colorScheme.onSurface.withValues(alpha: 0.3);
+    final inactive =
+        inactiveColor ?? theme.colorScheme.onSurface.withValues(alpha: 0.3);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -340,17 +343,10 @@ class StepProgressIndicator extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: isActive ? active : inactive,
                           shape: BoxShape.circle,
-                          border: Border.all(
-                            color: active,
-                            width: 2,
-                          ),
+                          border: Border.all(color: active, width: 2),
                         ),
                         child: isCompleted
-                            ? Icon(
-                                Icons.check,
-                                size: 14,
-                                color: Colors.white,
-                              )
+                            ? Icon(Icons.check, size: 14, color: Colors.white)
                             : Center(
                                 child: Text(
                                   '${index + 1}',
@@ -367,7 +363,9 @@ class StepProgressIndicator extends StatelessWidget {
                           width: width ?? double.infinity,
                           height: 2,
                           margin: const EdgeInsets.symmetric(horizontal: 4),
-                          color: isActive ? active : inactive.withValues(alpha: 0.5),
+                          color: isActive
+                              ? active
+                              : inactive.withValues(alpha: 0.5),
                         ),
                     ],
                   ),
@@ -389,8 +387,9 @@ class StepProgressIndicator extends StatelessWidget {
                   color: index <= currentStep
                       ? active
                       : inactive.withValues(alpha: 0.7),
-                  fontWeight:
-                      index == currentStep ? FontWeight.w600 : FontWeight.w400,
+                  fontWeight: index == currentStep
+                      ? FontWeight.w600
+                      : FontWeight.w400,
                 ),
               ),
             );

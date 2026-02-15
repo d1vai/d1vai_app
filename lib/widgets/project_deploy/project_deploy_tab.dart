@@ -136,14 +136,12 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
       final msg = humanizeError(e);
       final authExpired = isAuthExpiredText(msg);
       if (authExpired) {
-        AuthExpiryBus.trigger(endpoint: '/api/projects/${widget.project.id}/deployments');
+        AuthExpiryBus.trigger(
+          endpoint: '/api/projects/${widget.project.id}/deployments',
+        );
         return;
       }
-      SnackBarHelper.showError(
-        context,
-        title: 'Load failed',
-        message: msg,
-      );
+      SnackBarHelper.showError(context, title: 'Load failed', message: msg);
     }
   }
 
@@ -172,7 +170,9 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
       final msg = humanizeError(e);
       final authExpired = isAuthExpiredText(msg);
       if (authExpired) {
-        AuthExpiryBus.trigger(endpoint: '/api/projects/${widget.project.id}/deploy/preview');
+        AuthExpiryBus.trigger(
+          endpoint: '/api/projects/${widget.project.id}/deploy/preview',
+        );
         return;
       }
       SnackBarHelper.showError(
@@ -212,7 +212,9 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
       final msg = humanizeError(e);
       final authExpired = isAuthExpiredText(msg);
       if (authExpired) {
-        AuthExpiryBus.trigger(endpoint: '/api/projects/${widget.project.id}/deploy/production');
+        AuthExpiryBus.trigger(
+          endpoint: '/api/projects/${widget.project.id}/deploy/production',
+        );
         return;
       }
       SnackBarHelper.showError(
@@ -307,13 +309,26 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
       'Check environment variables (and sync to Vercel).',
     ];
     if (lower.contains('permission') || lower.contains('access denied')) {
-      tips.insert(0, 'This looks like a permission issue — verify GitHub access and tokens.');
+      tips.insert(
+        0,
+        'This looks like a permission issue — verify GitHub access and tokens.',
+      );
     }
-    if (lower.contains('env') || lower.contains('secret') || lower.contains('key')) {
-      tips.insert(0, 'This looks like an env var issue — verify required secrets are set.');
+    if (lower.contains('env') ||
+        lower.contains('secret') ||
+        lower.contains('key')) {
+      tips.insert(
+        0,
+        'This looks like an env var issue — verify required secrets are set.',
+      );
     }
-    if (lower.contains('build') || lower.contains('compile') || lower.contains('typescript')) {
-      tips.insert(0, 'This looks like a build failure — check compilation errors in logs.');
+    if (lower.contains('build') ||
+        lower.contains('compile') ||
+        lower.contains('typescript')) {
+      tips.insert(
+        0,
+        'This looks like a build failure — check compilation errors in logs.',
+      );
     }
     return tips.toSet().toList();
   }
@@ -459,7 +474,8 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: (_deployingPreview || _deployingProduction || _retryingLast)
+                onPressed:
+                    (_deployingPreview || _deployingProduction || _retryingLast)
                     ? null
                     : _retryLastDeployment,
                 icon: _retryingLast
@@ -540,13 +556,25 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
               style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 10),
-            const _TroubleRow(icon: Icons.code, text: 'GitHub access / repo permissions'),
+            const _TroubleRow(
+              icon: Icons.code,
+              text: 'GitHub access / repo permissions',
+            ),
             const SizedBox(height: 6),
-            const _TroubleRow(icon: Icons.key, text: 'Env vars configured (and synced to Vercel)'),
+            const _TroubleRow(
+              icon: Icons.key,
+              text: 'Env vars configured (and synced to Vercel)',
+            ),
             const SizedBox(height: 6),
-            const _TroubleRow(icon: Icons.cloud, text: 'Retry preview deploy first'),
+            const _TroubleRow(
+              icon: Icons.cloud,
+              text: 'Retry preview deploy first',
+            ),
             const SizedBox(height: 6),
-            const _TroubleRow(icon: Icons.receipt_long, text: 'Open build logs and share error snippet'),
+            const _TroubleRow(
+              icon: Icons.receipt_long,
+              text: 'Open build logs and share error snippet',
+            ),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -720,7 +748,8 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
           ),
           child: Text(
             '${_deployments.length}',
-            style: theme.textTheme.labelSmall?.copyWith(
+            style:
+                theme.textTheme.labelSmall?.copyWith(
                   fontWeight: FontWeight.w900,
                   color: colorScheme.primary,
                 ) ??
@@ -759,41 +788,40 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
               ],
             )
           : _deployments.isEmpty
-              ? Padding(
-                  key: const ValueKey('deploy-history-empty'),
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Text(
-                    'No deployments yet — deploy your project to see history here.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant.withValues(
-                            alpha: 0.85,
-                          ),
-                        ) ??
-                        TextStyle(
-                          color: colorScheme.onSurfaceVariant.withValues(
-                            alpha: 0.85,
-                          ),
-                        ),
-                  ),
-                )
-              : Column(
-                  key: const ValueKey('deploy-history-list'),
-                  children: [
-                    for (final entry in _deployments.asMap().entries)
-                      _StaggeredIn(
-                        index: entry.key,
-                        count: _deployments.length,
-                        child: Padding(
-                          padding: EdgeInsets.only(
-                            bottom: entry.key == _deployments.length - 1
-                                ? 0
-                                : 12,
-                          ),
-                          child: _buildDeploymentHistoryRow(entry.value),
-                        ),
+          ? Padding(
+              key: const ValueKey('deploy-history-empty'),
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'No deployments yet — deploy your project to see history here.',
+                style:
+                    theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.85,
                       ),
-                  ],
-                ),
+                    ) ??
+                    TextStyle(
+                      color: colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.85,
+                      ),
+                    ),
+              ),
+            )
+          : Column(
+              key: const ValueKey('deploy-history-list'),
+              children: [
+                for (final entry in _deployments.asMap().entries)
+                  _StaggeredIn(
+                    index: entry.key,
+                    count: _deployments.length,
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        bottom: entry.key == _deployments.length - 1 ? 0 : 12,
+                      ),
+                      child: _buildDeploymentHistoryRow(entry.value),
+                    ),
+                  ),
+              ],
+            ),
     );
 
     return CustomCard(
@@ -805,7 +833,8 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
             children: [
               Text(
                 'Deployment History',
-                style: theme.textTheme.titleMedium?.copyWith(
+                style:
+                    theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                     ) ??
                     const TextStyle(fontWeight: FontWeight.w800),
@@ -848,14 +877,14 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
     final statusColor = isSuccess
         ? colorScheme.tertiary
         : isRunning
-            ? colorScheme.secondary
-            : colorScheme.error;
+        ? colorScheme.secondary
+        : colorScheme.error;
 
     final statusIcon = isSuccess
         ? Icons.check_circle_outline
         : isRunning
-            ? Icons.autorenew_rounded
-            : Icons.error_outline;
+        ? Icons.autorenew_rounded
+        : Icons.error_outline;
 
     return InkWell(
       onTap: () => _showDeploymentActions(deployment),
@@ -909,7 +938,8 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                       Expanded(
                         child: Text(
                           '${deployment.environmentLabel} • ${deployment.statusLabel}',
-                          style: theme.textTheme.bodyMedium?.copyWith(
+                          style:
+                              theme.textTheme.bodyMedium?.copyWith(
                                 fontWeight: FontWeight.w800,
                               ) ??
                               const TextStyle(fontWeight: FontWeight.w800),
@@ -1070,9 +1100,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                   runSpacing: 10,
                   children: [
                     ElevatedButton.icon(
-                      onPressed: canOpenUrl
-                          ? () => _openUrl(url)
-                          : null,
+                      onPressed: canOpenUrl ? () => _openUrl(url) : null,
                       icon: const Icon(Icons.open_in_new),
                       label: const Text('Open'),
                     ),

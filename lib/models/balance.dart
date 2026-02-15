@@ -15,7 +15,8 @@ class BalanceResponse {
     return BalanceResponse(
       balanceExpiringUsd: (json['balance_expiring_usd'] ?? 0.0).toDouble(),
       balanceExpiringExpiresAt: json['balance_expiring_expires_at'],
-      balanceNonExpiringUsd: (json['balance_nonexpiring_usd'] ?? 0.0).toDouble(),
+      balanceNonExpiringUsd: (json['balance_nonexpiring_usd'] ?? 0.0)
+          .toDouble(),
       totalBalanceUsd: json['total_balance_usd']?.toDouble(),
     );
   }

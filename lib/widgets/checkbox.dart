@@ -60,20 +60,12 @@ class _CheckboxState extends State<Checkbox>
       duration: widget.duration,
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.elasticOut,
-    ));
-    _opacityAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeIn,
-    ));
+    _scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.elasticOut),
+    );
+    _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
+    );
 
     if (_currentValue) {
       _animationController.value = 1.0;
@@ -129,18 +121,16 @@ class _CheckboxState extends State<Checkbox>
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final effectiveActiveColor = widget.activeColor ??
-        colorScheme.primary;
-    final effectiveInactiveColor = widget.inactiveColor ??
-        colorScheme.surface;
-    final effectiveActiveBorderColor = widget.activeBorderColor ??
-        effectiveActiveColor;
-    final effectiveInactiveBorderColor = widget.inactiveBorderColor ??
-        colorScheme.outline;
+    final effectiveActiveColor = widget.activeColor ?? colorScheme.primary;
+    final effectiveInactiveColor = widget.inactiveColor ?? colorScheme.surface;
+    final effectiveActiveBorderColor =
+        widget.activeBorderColor ?? effectiveActiveColor;
+    final effectiveInactiveBorderColor =
+        widget.inactiveBorderColor ?? colorScheme.outline;
     final effectiveCheckColor = widget.checkColor ?? colorScheme.onPrimary;
 
-    final effectiveBorderRadius = widget.borderRadius ??
-        BorderRadius.circular(3.0);
+    final effectiveBorderRadius =
+        widget.borderRadius ?? BorderRadius.circular(3.0);
 
     Widget checkboxWidget = GestureDetector(
       onTap: _handleTap,
@@ -176,28 +166,19 @@ class _CheckboxState extends State<Checkbox>
     if (widget.showLabel && widget.label != null) {
       final labelWidget = Text(
         widget.label!,
-        style: widget.labelStyle ??
-            theme.textTheme.bodyMedium,
+        style: widget.labelStyle ?? theme.textTheme.bodyMedium,
       );
 
       if (widget.labelAlignment == MainAxisAlignment.start) {
         return Row(
           mainAxisSize: MainAxisSize.min,
-          children: [
-            checkboxWidget,
-            const SizedBox(width: 8),
-            labelWidget,
-          ],
+          children: [checkboxWidget, const SizedBox(width: 8), labelWidget],
         );
       } else {
         return Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            checkboxWidget,
-            const SizedBox(height: 4),
-            labelWidget,
-          ],
+          children: [checkboxWidget, const SizedBox(height: 4), labelWidget],
         );
       }
     }
@@ -321,13 +302,9 @@ class _CustomCheckboxState extends State<CustomCheckbox>
       duration: widget.duration,
       vsync: this,
     );
-    _animation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
 
     if (widget.value) {
       _animationController.value = 1.0;
@@ -360,14 +337,14 @@ class _CustomCheckboxState extends State<CustomCheckbox>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final effectiveActiveColor = widget.activeColor ??
-        theme.colorScheme.primary;
-    final effectiveInactiveColor = widget.inactiveColor ??
-        theme.colorScheme.surface;
-    final effectiveActiveBorderColor = widget.activeBorderColor ??
-        effectiveActiveColor;
-    final effectiveInactiveBorderColor = widget.inactiveBorderColor ??
-        theme.colorScheme.outline;
+    final effectiveActiveColor =
+        widget.activeColor ?? theme.colorScheme.primary;
+    final effectiveInactiveColor =
+        widget.inactiveColor ?? theme.colorScheme.surface;
+    final effectiveActiveBorderColor =
+        widget.activeBorderColor ?? effectiveActiveColor;
+    final effectiveInactiveBorderColor =
+        widget.inactiveBorderColor ?? theme.colorScheme.outline;
 
     return GestureDetector(
       onTap: _handleTap,
@@ -391,11 +368,11 @@ class _CustomCheckboxState extends State<CustomCheckbox>
             ),
             child: widget.value
                 ? widget.checkWidget ??
-                    Icon(
-                      Icons.check,
-                      size: widget.size * 0.7,
-                      color: theme.colorScheme.onPrimary,
-                    )
+                      Icon(
+                        Icons.check,
+                        size: widget.size * 0.7,
+                        color: theme.colorScheme.onPrimary,
+                      )
                 : null,
           );
         },

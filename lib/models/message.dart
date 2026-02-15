@@ -41,10 +41,7 @@ class ToolOutput {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'text': text,
-      if (isError != null) 'is_error': isError,
-    };
+    return {'text': text, if (isError != null) 'is_error': isError};
   }
 }
 
@@ -62,8 +59,7 @@ class ToolMessageContent extends MessageContent {
     required this.input,
     this.status,
     this.output,
-  })
-    : super('tool');
+  }) : super('tool');
 
   ToolMessageContent copyWith({
     String? id,
@@ -200,7 +196,9 @@ class ChatMessage {
             input: contentJson['input'],
             status: contentJson['status']?.toString(),
             output: contentJson['output'] is Map<String, dynamic>
-                ? ToolOutput.fromJson(contentJson['output'] as Map<String, dynamic>)
+                ? ToolOutput.fromJson(
+                    contentJson['output'] as Map<String, dynamic>,
+                  )
                 : null,
           );
         case 'result':

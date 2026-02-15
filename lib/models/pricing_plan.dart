@@ -82,10 +82,7 @@ class PricingResponse {
   final List<PricingPlan> plans;
   final bool isYearly;
 
-  PricingResponse({
-    required this.plans,
-    this.isYearly = false,
-  });
+  PricingResponse({required this.plans, this.isYearly = false});
 
   factory PricingResponse.fromJson(Map<String, dynamic> json) {
     final plansJson = json['plans'] as List<dynamic>? ?? [];

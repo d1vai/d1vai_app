@@ -6,10 +6,7 @@ import '../models/payment.dart';
 class OrderDetailDialog extends StatefulWidget {
   final PaymentTransaction order;
 
-  const OrderDetailDialog({
-    super.key,
-    required this.order,
-  });
+  const OrderDetailDialog({super.key, required this.order});
 
   @override
   State<OrderDetailDialog> createState() => _OrderDetailDialogState();
@@ -30,9 +27,7 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not download invoice'),
-        ),
+        const SnackBar(content: Text('Could not download invoice')),
       );
     }
   }
@@ -69,7 +64,9 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
                       Text(
                         'Transaction ID: ${order.id}',
                         style: TextStyle(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
+                          ),
                           fontSize: 14,
                         ),
                       ),
@@ -241,17 +238,11 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
       decoration: BoxDecoration(
         color: order.statusColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: order.statusColor.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: order.statusColor.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          Icon(
-            order.statusIcon,
-            color: order.statusColor,
-            size: 28,
-          ),
+          Icon(order.statusIcon, color: order.statusColor, size: 28),
           const SizedBox(width: 16),
           Expanded(
             child: Column(

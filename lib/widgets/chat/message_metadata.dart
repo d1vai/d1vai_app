@@ -57,7 +57,9 @@ class MessageMetadata extends StatelessWidget {
               _formatTime(createdAt),
               style: TextStyle(
                 fontSize: 10,
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.6,
+                ),
               ),
             ),
           ),

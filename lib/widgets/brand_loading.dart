@@ -219,10 +219,7 @@ class _ScanBandPainter extends CustomPainter {
   final double scanPosition;
   final Color color;
 
-  const _ScanBandPainter({
-    required this.scanPosition,
-    required this.color,
-  });
+  const _ScanBandPainter({required this.scanPosition, required this.color});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -233,21 +230,14 @@ class _ScanBandPainter extends CustomPainter {
 
     // Main scanning line
     final y = size.height * scanPosition;
-    canvas.drawLine(
-      Offset(0, y),
-      Offset(size.width, y),
-      paint,
-    );
+    canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
 
     // Gradient blur effect
     final blurPaint = Paint()
       ..color = color.withValues(alpha: 0.3)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
 
-    canvas.drawRect(
-      Rect.fromLTRB(0, y - 16, size.width, y + 16),
-      blurPaint,
-    );
+    canvas.drawRect(Rect.fromLTRB(0, y - 16, size.width, y + 16), blurPaint);
   }
 
   @override
@@ -260,10 +250,7 @@ class _TipLine extends StatefulWidget {
   final String text;
   final Color accentColor;
 
-  const _TipLine({
-    required this.text,
-    required this.accentColor,
-  });
+  const _TipLine({required this.text, required this.accentColor});
 
   @override
   State<_TipLine> createState() => _TipLineState();
@@ -333,10 +320,7 @@ class _RandomMatrix extends StatefulWidget {
   final int density;
   final Color color;
 
-  const _RandomMatrix({
-    required this.density,
-    required this.color,
-  });
+  const _RandomMatrix({required this.density, required this.color});
 
   @override
   State<_RandomMatrix> createState() => _RandomMatrixState();
@@ -388,14 +372,16 @@ class _RandomMatrixState extends State<_RandomMatrix>
                 runSpacing: 2,
                 spacing: 4,
                 children: _chars
-                    .map((char) => Text(
-                          char,
-                          style: TextStyle(
-                            fontSize: 8,
-                            color: widget.color,
-                            fontFamily: 'monospace',
-                          ),
-                        ))
+                    .map(
+                      (char) => Text(
+                        char,
+                        style: TextStyle(
+                          fontSize: 8,
+                          color: widget.color,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    )
                     .toList(),
               ),
             ],

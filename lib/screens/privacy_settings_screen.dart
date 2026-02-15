@@ -45,7 +45,8 @@ class PrivacySettings {
       allowMarketingEmails: json['allow_marketing_emails'] as bool? ?? false,
       showActivityStatus: json['show_activity_status'] as bool? ?? false,
       discoverableByEmail: json['discoverable_by_email'] as bool? ?? true,
-      allowThirdPartyIntegrations: json['allow_third_party_integrations'] as bool? ?? true,
+      allowThirdPartyIntegrations:
+          json['allow_third_party_integrations'] as bool? ?? true,
     );
   }
 
@@ -93,14 +94,20 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
 
       setState(() {
         _settings = PrivacySettings(
-          profileVisibility: prefs.getBool('privacy_profile_visibility') ?? true,
-          showOnlineStatus: prefs.getBool('privacy_show_online_status') ?? false,
+          profileVisibility:
+              prefs.getBool('privacy_profile_visibility') ?? true,
+          showOnlineStatus:
+              prefs.getBool('privacy_show_online_status') ?? false,
           allowDataSharing: prefs.getBool('privacy_allow_data_sharing') ?? true,
           allowAnalytics: prefs.getBool('privacy_allow_analytics') ?? true,
-          allowMarketingEmails: prefs.getBool('privacy_allow_marketing_emails') ?? false,
-          showActivityStatus: prefs.getBool('privacy_show_activity_status') ?? false,
-          discoverableByEmail: prefs.getBool('privacy_discoverable_by_email') ?? true,
-          allowThirdPartyIntegrations: prefs.getBool('privacy_allow_third_party_integrations') ?? true,
+          allowMarketingEmails:
+              prefs.getBool('privacy_allow_marketing_emails') ?? false,
+          showActivityStatus:
+              prefs.getBool('privacy_show_activity_status') ?? false,
+          discoverableByEmail:
+              prefs.getBool('privacy_discoverable_by_email') ?? true,
+          allowThirdPartyIntegrations:
+              prefs.getBool('privacy_allow_third_party_integrations') ?? true,
         );
         _isLoading = false;
       });
@@ -125,14 +132,35 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
 
-      await prefs.setBool('privacy_profile_visibility', _settings.profileVisibility);
-      await prefs.setBool('privacy_show_online_status', _settings.showOnlineStatus);
-      await prefs.setBool('privacy_allow_data_sharing', _settings.allowDataSharing);
+      await prefs.setBool(
+        'privacy_profile_visibility',
+        _settings.profileVisibility,
+      );
+      await prefs.setBool(
+        'privacy_show_online_status',
+        _settings.showOnlineStatus,
+      );
+      await prefs.setBool(
+        'privacy_allow_data_sharing',
+        _settings.allowDataSharing,
+      );
       await prefs.setBool('privacy_allow_analytics', _settings.allowAnalytics);
-      await prefs.setBool('privacy_allow_marketing_emails', _settings.allowMarketingEmails);
-      await prefs.setBool('privacy_show_activity_status', _settings.showActivityStatus);
-      await prefs.setBool('privacy_discoverable_by_email', _settings.discoverableByEmail);
-      await prefs.setBool('privacy_allow_third_party_integrations', _settings.allowThirdPartyIntegrations);
+      await prefs.setBool(
+        'privacy_allow_marketing_emails',
+        _settings.allowMarketingEmails,
+      );
+      await prefs.setBool(
+        'privacy_show_activity_status',
+        _settings.showActivityStatus,
+      );
+      await prefs.setBool(
+        'privacy_discoverable_by_email',
+        _settings.discoverableByEmail,
+      );
+      await prefs.setBool(
+        'privacy_allow_third_party_integrations',
+        _settings.allowThirdPartyIntegrations,
+      );
 
       if (!mounted) return;
       SnackBarHelper.showSuccess(
@@ -281,56 +309,52 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
   }
 
   Widget _buildDataSharingSection() {
-    return _buildSection(
-      'Data Sharing',
-      'Manage how your data is used',
-      [
-        SwitchListTile(
-          secondary: Icon(
-            Icons.analytics,
-            color: _settings.allowAnalytics ? Colors.purple : Colors.grey,
-          ),
-          title: const Text('Allow Analytics'),
-          subtitle: const Text('Help improve the app by sharing usage analytics'),
-          value: _settings.allowAnalytics,
-          onChanged: (value) {
-            setState(() {
-              _settings.allowAnalytics = value;
-            });
-          },
+    return _buildSection('Data Sharing', 'Manage how your data is used', [
+      SwitchListTile(
+        secondary: Icon(
+          Icons.analytics,
+          color: _settings.allowAnalytics ? Colors.purple : Colors.grey,
         ),
-        const Divider(height: 1),
-        SwitchListTile(
-          secondary: Icon(
-            Icons.share,
-            color: _settings.allowDataSharing ? Colors.orange : Colors.grey,
-          ),
-          title: const Text('Allow Data Sharing'),
-          subtitle: const Text('Share data to improve our services'),
-          value: _settings.allowDataSharing,
-          onChanged: (value) {
-            setState(() {
-              _settings.allowDataSharing = value;
-            });
-          },
+        title: const Text('Allow Analytics'),
+        subtitle: const Text('Help improve the app by sharing usage analytics'),
+        value: _settings.allowAnalytics,
+        onChanged: (value) {
+          setState(() {
+            _settings.allowAnalytics = value;
+          });
+        },
+      ),
+      const Divider(height: 1),
+      SwitchListTile(
+        secondary: Icon(
+          Icons.share,
+          color: _settings.allowDataSharing ? Colors.orange : Colors.grey,
         ),
-        const Divider(height: 1),
-        SwitchListTile(
-          secondary: Icon(
-            Icons.mark_email_unread,
-            color: _settings.allowMarketingEmails ? Colors.red : Colors.grey,
-          ),
-          title: const Text('Marketing Emails'),
-          subtitle: const Text('Receive emails about new features and offers'),
-          value: _settings.allowMarketingEmails,
-          onChanged: (value) {
-            setState(() {
-              _settings.allowMarketingEmails = value;
-            });
-          },
+        title: const Text('Allow Data Sharing'),
+        subtitle: const Text('Share data to improve our services'),
+        value: _settings.allowDataSharing,
+        onChanged: (value) {
+          setState(() {
+            _settings.allowDataSharing = value;
+          });
+        },
+      ),
+      const Divider(height: 1),
+      SwitchListTile(
+        secondary: Icon(
+          Icons.mark_email_unread,
+          color: _settings.allowMarketingEmails ? Colors.red : Colors.grey,
         ),
-      ],
-    );
+        title: const Text('Marketing Emails'),
+        subtitle: const Text('Receive emails about new features and offers'),
+        value: _settings.allowMarketingEmails,
+        onChanged: (value) {
+          setState(() {
+            _settings.allowMarketingEmails = value;
+          });
+        },
+      ),
+    ]);
   }
 
   Widget _buildActivitySection() {
@@ -379,7 +403,9 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
         SwitchListTile(
           secondary: Icon(
             Icons.extension,
-            color: _settings.allowThirdPartyIntegrations ? Colors.indigo : Colors.grey,
+            color: _settings.allowThirdPartyIntegrations
+                ? Colors.indigo
+                : Colors.grey,
           ),
           title: const Text('Allow Third-Party Apps'),
           subtitle: const Text('Enable integrations with third-party services'),
@@ -416,10 +442,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey.shade600,
-                    ),
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
                   ),
                 ],
               ),

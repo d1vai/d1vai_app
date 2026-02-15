@@ -8,18 +8,13 @@ class MetricCard extends StatefulWidget {
   final RealtimeMetric metric;
   final VoidCallback? onTap;
 
-  const MetricCard({
-    super.key,
-    required this.metric,
-    this.onTap,
-  });
+  const MetricCard({super.key, required this.metric, this.onTap});
 
   @override
   State<MetricCard> createState() => _MetricCardState();
 }
 
-class _MetricCardState extends State<MetricCard>
-    with TickerProviderStateMixin {
+class _MetricCardState extends State<MetricCard> with TickerProviderStateMixin {
   late final AnimationController _pressController;
   late final AnimationController _shineController;
   late final AnimationController _progressController;
@@ -79,9 +74,10 @@ class _MetricCardState extends State<MetricCard>
     final isPositive = metric.isPositiveTrend;
     final trendColor = isPositive ? colorScheme.primary : colorScheme.error;
 
-    final scale = Tween<double>(begin: 1, end: 0.992).animate(
-      CurvedAnimation(parent: _pressController, curve: Curves.easeOut),
-    );
+    final scale = Tween<double>(
+      begin: 1,
+      end: 0.992,
+    ).animate(CurvedAnimation(parent: _pressController, curve: Curves.easeOut));
 
     final surface = Color.alphaBlend(
       trendColor.withValues(alpha: isDark ? 0.07 : 0.04),
@@ -111,9 +107,12 @@ class _MetricCardState extends State<MetricCard>
                       _shineController.forward(from: 0);
                     }
                   },
-            onTapCancel:
-                widget.onTap == null ? null : () => _pressController.reverse(),
-            onTapUp: widget.onTap == null ? null : (_) => _pressController.reverse(),
+            onTapCancel: widget.onTap == null
+                ? null
+                : () => _pressController.reverse(),
+            onTapUp: widget.onTap == null
+                ? null
+                : (_) => _pressController.reverse(),
             child: Stack(
               children: [
                 Padding(
@@ -141,7 +140,9 @@ class _MetricCardState extends State<MetricCard>
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(12),
                               color: Color.alphaBlend(
-                                trendColor.withValues(alpha: isDark ? 0.18 : 0.12),
+                                trendColor.withValues(
+                                  alpha: isDark ? 0.18 : 0.12,
+                                ),
                                 colorScheme.surface,
                               ),
                               border: Border.all(
@@ -232,8 +233,9 @@ class _MetricCardState extends State<MetricCard>
                               value: _progress.value,
                               backgroundColor:
                                   colorScheme.surfaceContainerHighest,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(trendColor),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                trendColor,
+                              ),
                               minHeight: 6,
                             ),
                           );
@@ -353,10 +355,7 @@ class MetricMiniChart extends StatelessWidget {
     return SizedBox(
       height: height,
       child: CustomPaint(
-        painter: _LineChartPainter(
-          data: data,
-          color: color,
-        ),
+        painter: _LineChartPainter(data: data, color: color),
       ),
     );
   }
@@ -366,10 +365,7 @@ class _LineChartPainter extends CustomPainter {
   final List<MetricDataPoint> data;
   final Color color;
 
-  _LineChartPainter({
-    required this.data,
-    required this.color,
-  });
+  _LineChartPainter({required this.data, required this.color});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -380,12 +376,8 @@ class _LineChartPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
 
     final path = Path();
-    final maxValue = data
-        .map((e) => e.value)
-        .reduce((a, b) => a > b ? a : b);
-    final minValue = data
-        .map((e) => e.value)
-        .reduce((a, b) => a < b ? a : b);
+    final maxValue = data.map((e) => e.value).reduce((a, b) => a > b ? a : b);
+    final minValue = data.map((e) => e.value).reduce((a, b) => a < b ? a : b);
     final range = maxValue - minValue;
 
     for (int i = 0; i < data.length; i++) {

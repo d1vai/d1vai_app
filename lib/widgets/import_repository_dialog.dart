@@ -329,7 +329,9 @@ class _ImportRepositoryDialogState extends State<ImportRepositoryDialog>
                   animation: _pulseController,
                   builder: (context, _) {
                     if (!_isImporting) return const SizedBox.shrink();
-                    final t = Curves.easeInOut.transform(_pulseController.value);
+                    final t = Curves.easeInOut.transform(
+                      _pulseController.value,
+                    );
                     final opacity = (isDark ? 0.10 : 0.06) * (0.35 + 0.65 * t);
                     return Opacity(
                       opacity: opacity.clamp(0.0, 1.0),
@@ -365,10 +367,7 @@ class _ImportRepositoryDialogState extends State<ImportRepositoryDialog>
           final eased = Curves.easeOutCubic.transform(t);
           return Opacity(
             opacity: eased,
-            child: Transform.scale(
-              scale: 0.98 + (0.02 * eased),
-              child: child,
-            ),
+            child: Transform.scale(scale: 0.98 + (0.02 * eased), child: child),
           );
         },
         child: dialog,

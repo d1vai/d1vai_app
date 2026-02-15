@@ -13,9 +13,7 @@ class LlmUsageResponse {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'projects': projects.map((p) => p.toJson()).toList(),
-    };
+    return {'projects': projects.map((p) => p.toJson()).toList()};
   }
 }
 
@@ -59,9 +57,11 @@ class ProjectMonthlyUsage {
       totalCache1hTokens: json['total_cache_1h_tokens']?.toInt() ?? 0,
       totalCacheReadTokens: json['total_cache_read_tokens']?.toInt() ?? 0,
       totalCostUsd: (json['total_cost_usd'] ?? 0.0).toDouble(),
-      modelBreakdown: modelBreakdownJson
-          ?.map((key, value) => MapEntry(key, ModelAggregate.fromJson(value))),
-      monthly: (json['monthly'] as List<dynamic>?)
+      modelBreakdown: modelBreakdownJson?.map(
+        (key, value) => MapEntry(key, ModelAggregate.fromJson(value)),
+      ),
+      monthly:
+          (json['monthly'] as List<dynamic>?)
               ?.map((m) => MonthlyBreakdown.fromJson(m))
               .toList() ??
           [],

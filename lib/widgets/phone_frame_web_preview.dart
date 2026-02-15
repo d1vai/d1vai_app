@@ -164,29 +164,28 @@ class PhoneFrameWebPreviewState extends State<PhoneFrameWebPreview>
     final screenRadius = widget.screenBorderRadius;
     final hasStatusBar = widget.showStatusBar;
 
-    final available =
-        widget.height != null
-            ? (widget.height! - widget.padding.vertical)
-            : null;
-    final effectiveWebViewHeight =
-        available != null
-            ? (available - (hasStatusBar ? widget.statusBarHeight : 0))
-                .clamp(160.0, 99999.0)
-            : widget.webViewHeight;
+    final available = widget.height != null
+        ? (widget.height! - widget.padding.vertical)
+        : null;
+    final effectiveWebViewHeight = available != null
+        ? (available - (hasStatusBar ? widget.statusBarHeight : 0)).clamp(
+            160.0,
+            99999.0,
+          )
+        : widget.webViewHeight;
 
-    final gestureRecognizers =
-        widget.allowParentVerticalScroll
-            ? <Factory<OneSequenceGestureRecognizer>>{
-              Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
-              Factory<LongPressGestureRecognizer>(
-                () => LongPressGestureRecognizer(),
-              ),
-              Factory<HorizontalDragGestureRecognizer>(
-                () => HorizontalDragGestureRecognizer(),
-              ),
-              Factory<ScaleGestureRecognizer>(() => ScaleGestureRecognizer()),
-            }
-            : null;
+    final gestureRecognizers = widget.allowParentVerticalScroll
+        ? <Factory<OneSequenceGestureRecognizer>>{
+            Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
+            Factory<LongPressGestureRecognizer>(
+              () => LongPressGestureRecognizer(),
+            ),
+            Factory<HorizontalDragGestureRecognizer>(
+              () => HorizontalDragGestureRecognizer(),
+            ),
+            Factory<ScaleGestureRecognizer>(() => ScaleGestureRecognizer()),
+          }
+        : null;
 
     return Container(
       margin: widget.margin,
@@ -296,24 +295,24 @@ class PhoneFrameWebPreviewState extends State<PhoneFrameWebPreview>
                       ),
                       child: _hasUrl
                           ? (_hasError
-                              ? _buildErrorState(context)
-                              : AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 220),
-                                  switchInCurve: Curves.easeOutCubic,
-                                  switchOutCurve: Curves.easeIn,
-                                        child: InAppWebView(
-                                          key: ValueKey(widget.url),
-                                          contextMenu: ContextMenu(),
-                                          initialUrlRequest: URLRequest(
-                                            url: WebUri(widget.url!.trim()),
-                                          ),
-                                          gestureRecognizers: gestureRecognizers,
-                                          onWebViewCreated: _onWebViewCreated,
-                                          onLoadStart: _onLoadStart,
-                                          onLoadStop: _onLoadStop,
-                                          onProgressChanged: _onProgressChanged,
-                                        ),
-                                      ))
+                                ? _buildErrorState(context)
+                                : AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 220),
+                                    switchInCurve: Curves.easeOutCubic,
+                                    switchOutCurve: Curves.easeIn,
+                                    child: InAppWebView(
+                                      key: ValueKey(widget.url),
+                                      contextMenu: ContextMenu(),
+                                      initialUrlRequest: URLRequest(
+                                        url: WebUri(widget.url!.trim()),
+                                      ),
+                                      gestureRecognizers: gestureRecognizers,
+                                      onWebViewCreated: _onWebViewCreated,
+                                      onLoadStart: _onLoadStart,
+                                      onLoadStop: _onLoadStop,
+                                      onProgressChanged: _onProgressChanged,
+                                    ),
+                                  ))
                           : _buildNoPreviewState(context),
                     ),
                     if (_hasUrl)
@@ -329,8 +328,9 @@ class PhoneFrameWebPreviewState extends State<PhoneFrameWebPreview>
                             child: LinearProgressIndicator(
                               value: _isLoading ? _progress : null,
                               minHeight: 3,
-                              backgroundColor:
-                                  Colors.black.withValues(alpha: 0.08),
+                              backgroundColor: Colors.black.withValues(
+                                alpha: 0.08,
+                              ),
                               valueColor: AlwaysStoppedAnimation<Color>(
                                 colorScheme.primary,
                               ),
@@ -399,11 +399,7 @@ class PhoneFrameWebPreviewState extends State<PhoneFrameWebPreview>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 44,
-              color: theme.colorScheme.error,
-            ),
+            Icon(Icons.error_outline, size: 44, color: theme.colorScheme.error),
             const SizedBox(height: 12),
             Text(
               'Failed to load preview',

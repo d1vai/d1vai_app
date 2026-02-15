@@ -202,7 +202,8 @@ class ChatService {
             path: overrideUri.path,
             queryParameters: overrideUri.queryParameters,
           );
-        } else if (overrideUri.scheme == 'http' || overrideUri.scheme == 'https') {
+        } else if (overrideUri.scheme == 'http' ||
+            overrideUri.scheme == 'https') {
           resolved = overrideUri.replace(
             scheme: overrideUri.scheme == 'https' ? 'wss' : 'ws',
           );

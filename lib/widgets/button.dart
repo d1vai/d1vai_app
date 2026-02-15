@@ -218,7 +218,8 @@ class _ButtonState extends State<Button> with SingleTickerProviderStateMixin {
               shape: WidgetStateProperty.all(
                 RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(effectiveBorderRadius),
-                  side: widget.variant == ButtonVariant.outline ||
+                  side:
+                      widget.variant == ButtonVariant.outline ||
                           widget.borderColor != null ||
                           widget.borderWidth != null
                       ? BorderSide(

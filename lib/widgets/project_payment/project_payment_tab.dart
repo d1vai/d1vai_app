@@ -13,11 +13,7 @@ class ProjectPaymentTab extends StatefulWidget {
   final String projectId;
   final void Function(String prompt)? onAskAi;
 
-  const ProjectPaymentTab({
-    super.key,
-    required this.projectId,
-    this.onAskAi,
-  });
+  const ProjectPaymentTab({super.key, required this.projectId, this.onAskAi});
 
   @override
   State<ProjectPaymentTab> createState() => _ProjectPaymentTabState();
@@ -60,8 +56,9 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
       final transactionsData = results[2] as List<dynamic>;
 
       final metrics = PayMetrics.fromJson(metricsData);
-      final products =
-          productsData.map((item) => PayProduct.fromJson(item)).toList();
+      final products = productsData
+          .map((item) => PayProduct.fromJson(item))
+          .toList();
       final transactions = transactionsData
           .map((item) => PaymentTransaction.fromJson(item))
           .toList();
@@ -88,14 +85,12 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
       });
       final authExpired = isAuthExpiredText(msg);
       if (authExpired) {
-        AuthExpiryBus.trigger(endpoint: '/api/projects/${widget.projectId}/payment');
+        AuthExpiryBus.trigger(
+          endpoint: '/api/projects/${widget.projectId}/payment',
+        );
         return;
       }
-      SnackBarHelper.showError(
-        context,
-        title: 'Load failed',
-        message: msg,
-      );
+      SnackBarHelper.showError(context, title: 'Load failed', message: msg);
     }
   }
 
@@ -256,8 +251,10 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                   icon: const Icon(Icons.add, size: 18),
                   label: const Text('Add', style: TextStyle(fontSize: 12)),
                   style: ElevatedButton.styleFrom(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
@@ -270,10 +267,7 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Text(
                   'No payment products yet',
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 13,
-                  ),
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                 ),
               )
             else
@@ -392,7 +386,10 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.deepPurple.shade100,
                     borderRadius: BorderRadius.circular(12),
@@ -414,10 +411,7 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Text(
                   'No transactions yet',
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 13,
-                  ),
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                 ),
               )
             else
@@ -439,11 +433,7 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                     ),
                     child: Row(
                       children: [
-                        Icon(
-                          tx.statusIcon,
-                          size: 20,
-                          color: tx.statusColor,
-                        ),
+                        Icon(tx.statusIcon, size: 20, color: tx.statusColor),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -527,8 +517,10 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                     ),
                     child: Text(
                       error,
-                      style:
-                          TextStyle(color: Colors.red.shade700, fontSize: 12),
+                      style: TextStyle(
+                        color: Colors.red.shade700,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -563,8 +555,9 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                           hintText: '0.00',
                           border: OutlineInputBorder(),
                         ),
-                        keyboardType:
-                            const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -651,8 +644,7 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                         final product = PayProduct(
                           id: DateTime.now().millisecondsSinceEpoch.toString(),
                           name: name,
-                          description:
-                              description.isEmpty ? null : description,
+                          description: description.isEmpty ? null : description,
                           price: price,
                           currency: selectedCurrency,
                           isActive: isActive,
@@ -689,10 +681,12 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
 
   void _showEditPayProductDialog(BuildContext context, PayProduct product) {
     final nameController = TextEditingController(text: product.name);
-    final descriptionController =
-        TextEditingController(text: product.description ?? '');
-    final priceController =
-        TextEditingController(text: product.price.toString());
+    final descriptionController = TextEditingController(
+      text: product.description ?? '',
+    );
+    final priceController = TextEditingController(
+      text: product.price.toString(),
+    );
     String selectedCurrency = product.currency;
     bool isActive = product.isActive;
     String error = '';
@@ -717,8 +711,10 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                     ),
                     child: Text(
                       error,
-                      style:
-                          TextStyle(color: Colors.red.shade700, fontSize: 12),
+                      style: TextStyle(
+                        color: Colors.red.shade700,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -753,8 +749,9 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                           hintText: '0.00',
                           border: OutlineInputBorder(),
                         ),
-                        keyboardType:
-                            const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -844,8 +841,9 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                             _payProducts[index] = PayProduct(
                               id: product.id,
                               name: name,
-                              description:
-                                  description.isEmpty ? null : description,
+                              description: description.isEmpty
+                                  ? null
+                                  : description,
                               price: price,
                               currency: selectedCurrency,
                               isActive: isActive,
@@ -908,18 +906,12 @@ class _PayMetricCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(
             title,
-            style: TextStyle(
-              color: Colors.grey.shade600,
-              fontSize: 12,
-            ),
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
           ),
         ],
       ),

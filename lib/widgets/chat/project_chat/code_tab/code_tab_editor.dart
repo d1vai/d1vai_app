@@ -77,4 +77,3 @@ class CodeTabEditor extends StatelessWidget {
     );
   }
 }
-

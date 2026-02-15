@@ -19,11 +19,7 @@ class ShareSheet {
       context: context,
       showDragHandle: true,
       builder: (ctx) {
-        return _ShareSheetBody(
-          url: url,
-          title: title,
-          message: message,
-        );
+        return _ShareSheetBody(url: url, title: title, message: message);
       },
     );
   }
@@ -49,11 +45,7 @@ class _ShareSheetBody extends StatelessWidget {
   final String? title;
   final String? message;
 
-  const _ShareSheetBody({
-    required this.url,
-    this.title,
-    this.message,
-  });
+  const _ShareSheetBody({required this.url, this.title, this.message});
 
   @override
   Widget build(BuildContext context) {
@@ -129,10 +121,7 @@ class _ShareSheetBody extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () async {
-                      await Share.share(
-                        textToShare(),
-                        subject: subject,
-                      );
+                      await Share.share(textToShare(), subject: subject);
                       if (!context.mounted) return;
                       Navigator.of(context).pop();
                     },

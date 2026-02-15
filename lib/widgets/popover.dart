@@ -44,8 +44,7 @@ class Popover extends StatefulWidget {
   State<Popover> createState() => _PopoverState();
 }
 
-class _PopoverState extends State<Popover>
-    with SingleTickerProviderStateMixin {
+class _PopoverState extends State<Popover> with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
 
   @override
@@ -95,11 +94,7 @@ class PopoverTrigger extends StatelessWidget {
   final Widget child;
   final bool asChild;
 
-  const PopoverTrigger({
-    super.key,
-    required this.child,
-    this.asChild = false,
-  });
+  const PopoverTrigger({super.key, required this.child, this.asChild = false});
 
   @override
   Widget build(BuildContext context) {
@@ -125,10 +120,7 @@ class PopoverTrigger extends StatelessWidget {
 class PopoverAnchor extends StatelessWidget {
   final Widget child;
 
-  const PopoverAnchor({
-    super.key,
-    required this.child,
-  });
+  const PopoverAnchor({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -258,15 +250,14 @@ class _PopoverContentState extends State<PopoverContent> {
   Widget _buildContent() {
     final theme = Theme.of(context);
     final popover = PopoverContext.of(context);
-    final effectiveBackgroundColor = widget.backgroundColor ??
-        theme.colorScheme.surface;
-    final effectiveBorderColor = widget.borderColor ??
-        theme.dividerColor.withValues(alpha: 0.2);
+    final effectiveBackgroundColor =
+        widget.backgroundColor ?? theme.colorScheme.surface;
+    final effectiveBorderColor =
+        widget.borderColor ?? theme.dividerColor.withValues(alpha: 0.2);
     final effectiveBorderWidth = widget.borderWidth ?? 1.0;
     final effectiveBorderRadius =
         widget.borderRadius ?? BorderRadius.circular(8.0);
-    final effectivePadding =
-        widget.padding ?? const EdgeInsets.all(16.0);
+    final effectivePadding = widget.padding ?? const EdgeInsets.all(16.0);
 
     final animationController = popover?.animation;
 
@@ -370,12 +361,7 @@ class PopoverContext extends InheritedWidget {
 }
 
 /// ArrowDirection - Direction of the popover arrow
-enum ArrowDirection {
-  top,
-  bottom,
-  left,
-  right,
-}
+enum ArrowDirection { top, bottom, left, right }
 
 /// SimplePopover - Helper to create simple popovers
 class SimplePopover extends StatelessWidget {
@@ -441,9 +427,8 @@ class TooltipPopover extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final effectiveTextStyle = textStyle ??
-        theme.textTheme.bodySmall ??
-        const TextStyle(fontSize: 12);
+    final effectiveTextStyle =
+        textStyle ?? theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12);
 
     return Popover(
       child: Column(
@@ -452,12 +437,8 @@ class TooltipPopover extends StatelessWidget {
           PopoverTrigger(child: child),
           PopoverContent(
             width: width ?? 200,
-            backgroundColor: backgroundColor ??
-                theme.colorScheme.surface,
-            child: Text(
-              message,
-              style: effectiveTextStyle,
-            ),
+            backgroundColor: backgroundColor ?? theme.colorScheme.surface,
+            child: Text(message, style: effectiveTextStyle),
           ),
         ],
       ),

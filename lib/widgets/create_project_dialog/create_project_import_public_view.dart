@@ -103,8 +103,7 @@ class CreateProjectImportPublicView extends StatelessWidget {
         ListenableBuilder(
           listenable: listenable,
           builder: (context, _) {
-            final enabled =
-                _canImport(urlController.text, nameController.text);
+            final enabled = _canImport(urlController.text, nameController.text);
             return SizedBox(
               width: double.infinity,
               child: Button(
@@ -125,4 +124,3 @@ class CreateProjectImportPublicView extends StatelessWidget {
     );
   }
 }
-

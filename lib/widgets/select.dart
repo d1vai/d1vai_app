@@ -112,9 +112,7 @@ class _SelectState<T> extends State<Select<T>> {
         surfaceTintColor: widget.surfaceTintColor,
         borderRadius: BorderRadius.circular(8.0),
         child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: widget.menuMaxHeight ?? 300.0,
-          ),
+          constraints: BoxConstraints(maxHeight: widget.menuMaxHeight ?? 300.0),
           child: ListView(
             padding: const EdgeInsets.symmetric(vertical: 4.0),
             children: widget.items.map((item) {
@@ -170,16 +168,14 @@ class _SelectState<T> extends State<Select<T>> {
 
   Widget _buildTrigger() {
     final theme = Theme.of(context);
-    final effectivePadding = widget.padding ?? const EdgeInsets.symmetric(
-      horizontal: 12,
-      vertical: 8,
-    );
+    final effectivePadding =
+        widget.padding ??
+        const EdgeInsets.symmetric(horizontal: 12, vertical: 8);
 
-    final selectedItem = widget.items
-        .firstWhere(
-          (item) => item.value == _selectedValue,
-          orElse: () => widget.items.first,
-        );
+    final selectedItem = widget.items.firstWhere(
+      (item) => item.value == _selectedValue,
+      orElse: () => widget.items.first,
+    );
 
     return CompositedTransformTarget(
       link: _layerLink,
@@ -203,23 +199,28 @@ class _SelectState<T> extends State<Select<T>> {
             color: theme.colorScheme.surface,
           ),
           child: Row(
-            mainAxisSize: widget.isExpanded ? MainAxisSize.max : MainAxisSize.min,
+            mainAxisSize: widget.isExpanded
+                ? MainAxisSize.max
+                : MainAxisSize.min,
             children: [
               Expanded(
                 child: _selectedValue != null
                     ? selectedItem
                     : widget.hint ??
-                        Text(
-                          'Select an option',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                          Text(
+                            'Select an option',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.6,
+                              ),
+                            ),
                           ),
-                        ),
               ),
               Icon(
                 widget.icon ?? Icons.keyboard_arrow_down,
                 size: widget.iconSize ?? 20,
-                color: widget.iconEnabledColor ??
+                color:
+                    widget.iconEnabledColor ??
                     theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ],
@@ -241,7 +242,8 @@ class _SelectState<T> extends State<Select<T>> {
             padding: const EdgeInsets.only(bottom: 8.0),
             child: Text(
               widget.label!,
-              style: widget.labelStyle ??
+              style:
+                  widget.labelStyle ??
                   theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w500,
                   ),
@@ -253,7 +255,8 @@ class _SelectState<T> extends State<Select<T>> {
             padding: const EdgeInsets.only(top: 4.0),
             child: Text(
               widget.errorText!,
-              style: widget.errorStyle ??
+              style:
+                  widget.errorStyle ??
                   theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.error,
                   ),
@@ -281,12 +284,7 @@ class SelectItem<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return isDisabled
-        ? Opacity(
-            opacity: 0.5,
-            child: child,
-          )
-        : child;
+    return isDisabled ? Opacity(opacity: 0.5, child: child) : child;
   }
 }
 
@@ -322,21 +320,13 @@ class SimpleSelect<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selectItems = items.map((item) {
-      final label = itemLabel != null
-          ? itemLabel!(item)
-          : item.toString();
+      final label = itemLabel != null ? itemLabel!(item) : item.toString();
 
       final builder = itemBuilder != null
           ? itemBuilder!(item)
-          : Text(
-              label,
-              style: Theme.of(context).textTheme.bodyMedium,
-            );
+          : Text(label, style: Theme.of(context).textTheme.bodyMedium);
 
-      return SelectItem(
-        value: item,
-        child: builder,
-      );
+      return SelectItem(value: item, child: builder);
     }).toList();
 
     return Select(
@@ -400,13 +390,8 @@ class DropdownSelect<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selectItems = items
-        .where((item) => item.value != null)
-        .map((item) {
-      return SelectItem(
-        value: item.value as T,
-        child: item.child,
-      );
+    final selectItems = items.where((item) => item.value != null).map((item) {
+      return SelectItem(value: item.value as T, child: item.child);
     }).toList();
 
     return Select(

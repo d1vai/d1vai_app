@@ -101,9 +101,10 @@ class _ProjectCardTileState extends State<ProjectCardTile>
     final hasPreview = (project.latestPreviewUrl ?? '').trim().isNotEmpty;
     final hasChatAction = widget.onChat != null;
 
-    final scale = Tween<double>(begin: 1, end: 0.992).animate(
-      CurvedAnimation(parent: _pressController, curve: Curves.easeOut),
-    );
+    final scale = Tween<double>(
+      begin: 1,
+      end: 0.992,
+    ).animate(CurvedAnimation(parent: _pressController, curve: Curves.easeOut));
 
     final surface = Color.alphaBlend(
       colorScheme.primary.withValues(alpha: isDark ? 0.05 : 0.03),
@@ -253,12 +254,7 @@ class _ProjectCardTileState extends State<ProjectCardTile>
                           spacing: 8,
                           runSpacing: 8,
                           children: tags
-                              .map(
-                                (t) => _TagPill(
-                                  text: t,
-                                  accent: accent,
-                                ),
-                              )
+                              .map((t) => _TagPill(text: t, accent: accent))
                               .toList(growable: false),
                         ),
                       ],

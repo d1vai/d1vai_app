@@ -116,7 +116,8 @@ class _OrderHistoryState extends State<OrderHistory> {
             const SizedBox(height: 16),
             Text(
               'No orders yet',
-              style: theme.textTheme.titleMedium?.copyWith(
+              style:
+                  theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ) ??
                   const TextStyle(fontWeight: FontWeight.w800),
@@ -124,7 +125,8 @@ class _OrderHistoryState extends State<OrderHistory> {
             const SizedBox(height: 8),
             Text(
               'Your purchase history will appear here',
-              style: theme.textTheme.bodyMedium?.copyWith(
+              style:
+                  theme.textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant.withValues(alpha: 0.85),
                     height: 1.25,
                   ) ??
@@ -170,7 +172,8 @@ class _OrderHistoryState extends State<OrderHistory> {
                         children: [
                           Text(
                             order.productName ?? 'Unknown Product',
-                            style: theme.textTheme.titleMedium?.copyWith(
+                            style:
+                                theme.textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.w800,
                                 ) ??
                                 const TextStyle(fontWeight: FontWeight.w800),
@@ -178,7 +181,8 @@ class _OrderHistoryState extends State<OrderHistory> {
                           const SizedBox(height: 4),
                           Text(
                             'Order ID: ${order.id}',
-                            style: theme.textTheme.bodySmall?.copyWith(
+                            style:
+                                theme.textTheme.bodySmall?.copyWith(
                                   color: colorScheme.onSurfaceVariant
                                       .withValues(alpha: 0.8),
                                   fontFeatures: const [
@@ -199,7 +203,8 @@ class _OrderHistoryState extends State<OrderHistory> {
                       children: [
                         Text(
                           order.formattedAmount,
-                          style: theme.textTheme.titleLarge?.copyWith(
+                          style:
+                              theme.textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.w900,
                                 color: colorScheme.primary,
                               ) ??
@@ -225,14 +230,17 @@ class _OrderHistoryState extends State<OrderHistory> {
                     Icon(
                       Icons.calendar_today,
                       size: 16,
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                      color: colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.8,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       'Created: ${_formatDate(order.createdAt)}',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color:
-                            colorScheme.onSurfaceVariant.withValues(alpha: 0.85),
+                        color: colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.85,
+                        ),
                       ),
                     ),
                     const Spacer(),
@@ -240,8 +248,9 @@ class _OrderHistoryState extends State<OrderHistory> {
                       Icon(
                         Icons.credit_card,
                         size: 16,
-                        color:
-                            colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                        color: colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.8,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Text(
@@ -259,7 +268,9 @@ class _OrderHistoryState extends State<OrderHistory> {
                     Icon(
                       Icons.chevron_right,
                       size: 18,
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.55),
+                      color: colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.55,
+                      ),
                     ),
                   ],
                 ),
@@ -324,11 +335,7 @@ class _OrderHistoryState extends State<OrderHistory> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 14,
-            color: color,
-          ),
+          Icon(icon, size: 14, color: color),
           const SizedBox(width: 6),
           Text(
             label,

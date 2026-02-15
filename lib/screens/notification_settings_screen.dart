@@ -45,18 +45,12 @@ class _NotificationSettingsScreenState
     try {
       final prefs = await SharedPreferences.getInstance();
       setState(() {
-        _emailNotifications =
-            prefs.getBool('notification_email') ?? true;
-        _pushNotifications =
-            prefs.getBool('notification_push') ?? true;
-        _projectUpdates =
-            prefs.getBool('notification_project_updates') ?? true;
-        _inviteNotifications =
-            prefs.getBool('notification_invites') ?? true;
-        _systemAnnouncements =
-            prefs.getBool('notification_system') ?? true;
-        _marketingEmails =
-            prefs.getBool('notification_marketing') ?? false;
+        _emailNotifications = prefs.getBool('notification_email') ?? true;
+        _pushNotifications = prefs.getBool('notification_push') ?? true;
+        _projectUpdates = prefs.getBool('notification_project_updates') ?? true;
+        _inviteNotifications = prefs.getBool('notification_invites') ?? true;
+        _systemAnnouncements = prefs.getBool('notification_system') ?? true;
+        _marketingEmails = prefs.getBool('notification_marketing') ?? false;
         _isLoading = false;
       });
     } catch (e) {
@@ -83,10 +77,8 @@ class _NotificationSettingsScreenState
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('notification_email', _emailNotifications);
       await prefs.setBool('notification_push', _pushNotifications);
-      await prefs.setBool(
-          'notification_project_updates', _projectUpdates);
-      await prefs.setBool(
-          'notification_invites', _inviteNotifications);
+      await prefs.setBool('notification_project_updates', _projectUpdates);
+      await prefs.setBool('notification_invites', _inviteNotifications);
       await prefs.setBool('notification_system', _systemAnnouncements);
       await prefs.setBool('notification_marketing', _marketingEmails);
 
@@ -113,9 +105,7 @@ class _NotificationSettingsScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Notification Settings'),
-      ),
+      appBar: AppBar(title: const Text('Notification Settings')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
@@ -128,8 +118,11 @@ class _NotificationSettingsScreenState
                     padding: const EdgeInsets.all(16),
                     child: Row(
                       children: [
-                        Icon(Icons.info_outline,
-                            color: Colors.blue.shade700, size: 24),
+                        Icon(
+                          Icons.info_outline,
+                          color: Colors.blue.shade700,
+                          size: 24,
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
@@ -157,8 +150,7 @@ class _NotificationSettingsScreenState
                       SwitchListTile(
                         secondary: const Icon(Icons.email),
                         title: const Text('Email Notifications'),
-                        subtitle: const Text(
-                            'Receive notifications via email'),
+                        subtitle: const Text('Receive notifications via email'),
                         value: _emailNotifications,
                         onChanged: (value) {
                           setState(() {
@@ -171,7 +163,8 @@ class _NotificationSettingsScreenState
                         secondary: const Icon(Icons.notifications_active),
                         title: const Text('Push Notifications'),
                         subtitle: const Text(
-                            'Receive push notifications on your device'),
+                          'Receive push notifications on your device',
+                        ),
                         value: _pushNotifications,
                         onChanged: (value) {
                           setState(() {
@@ -195,7 +188,8 @@ class _NotificationSettingsScreenState
                         secondary: const Icon(Icons.folder),
                         title: const Text('Project Updates'),
                         subtitle: const Text(
-                            'Deployment status, build results, and errors'),
+                          'Deployment status, build results, and errors',
+                        ),
                         value: _projectUpdates,
                         onChanged: (value) {
                           setState(() {
@@ -208,7 +202,8 @@ class _NotificationSettingsScreenState
                         secondary: const Icon(Icons.person_add),
                         title: const Text('Invite Notifications'),
                         subtitle: const Text(
-                            'When someone accepts your invite'),
+                          'When someone accepts your invite',
+                        ),
                         value: _inviteNotifications,
                         onChanged: (value) {
                           setState(() {
@@ -221,7 +216,8 @@ class _NotificationSettingsScreenState
                         secondary: const Icon(Icons.campaign),
                         title: const Text('System Announcements'),
                         subtitle: const Text(
-                            'Platform updates and important notices'),
+                          'Platform updates and important notices',
+                        ),
                         value: _systemAnnouncements,
                         onChanged: (value) {
                           setState(() {
@@ -234,7 +230,8 @@ class _NotificationSettingsScreenState
                         secondary: const Icon(Icons.mail_outline),
                         title: const Text('Marketing Emails'),
                         subtitle: const Text(
-                            'Product news, tips, and special offers'),
+                          'Product news, tips, and special offers',
+                        ),
                         value: _marketingEmails,
                         onChanged: (value) {
                           setState(() {
@@ -259,8 +256,9 @@ class _NotificationSettingsScreenState
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
                             ),
                           )
                         : const Icon(Icons.save),

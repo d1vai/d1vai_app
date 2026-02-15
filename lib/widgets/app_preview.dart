@@ -8,11 +8,7 @@ class AppPreview extends StatefulWidget {
   final String? previewUrl;
   final String? projectName;
 
-  const AppPreview({
-    super.key,
-    this.previewUrl,
-    this.projectName,
-  });
+  const AppPreview({super.key, this.previewUrl, this.projectName});
 
   @override
   State<AppPreview> createState() => _AppPreviewState();
@@ -35,7 +31,8 @@ class _AppPreviewState extends State<AppPreview> {
   @override
   void didUpdateWidget(covariant AppPreview oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final had = oldWidget.previewUrl != null && oldWidget.previewUrl!.isNotEmpty;
+    final had =
+        oldWidget.previewUrl != null && oldWidget.previewUrl!.isNotEmpty;
     final has = widget.previewUrl != null && widget.previewUrl!.isNotEmpty;
     if (had && !has && _isLoading) {
       setState(() {
@@ -58,9 +55,9 @@ class _AppPreviewState extends State<AppPreview> {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not open $appUrl')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not open $appUrl')));
     }
   }
 
@@ -76,9 +73,7 @@ class _AppPreviewState extends State<AppPreview> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest,
-        border: Border(
-          bottom: BorderSide(color: colorScheme.outlineVariant),
-        ),
+        border: Border(bottom: BorderSide(color: colorScheme.outlineVariant)),
       ),
       child: Row(
         children: [
@@ -90,7 +85,8 @@ class _AppPreviewState extends State<AppPreview> {
               children: [
                 Text(
                   'App Preview',
-                  style: theme.textTheme.titleMedium?.copyWith(
+                  style:
+                      theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
                       ) ??
                       const TextStyle(fontWeight: FontWeight.w800),
@@ -117,10 +113,7 @@ class _AppPreviewState extends State<AppPreview> {
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Icon(
-                        Icons.refresh,
-                        key: ValueKey('refresh'),
-                      ),
+                    : const Icon(Icons.refresh, key: ValueKey('refresh')),
               ),
               tooltip: 'Refresh',
             ),
@@ -139,9 +132,7 @@ class _AppPreviewState extends State<AppPreview> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest,
-        border: Border(
-          top: BorderSide(color: colorScheme.outlineVariant),
-        ),
+        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
       ),
       child: Row(
         children: [

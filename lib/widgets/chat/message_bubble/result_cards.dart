@@ -59,18 +59,20 @@ class ChatResultCard extends StatelessWidget {
         _map(p['usage']) ??
         _map(_map(p['message'])?['usage']) ??
         const <String, dynamic>{};
-    final inputTokens = _int(p['input_tokens']) ??
+    final inputTokens =
+        _int(p['input_tokens']) ??
         _int(usage['input_tokens']) ??
         _int(usage['prompt_tokens']);
-    final outputTokens = _int(p['output_tokens']) ??
+    final outputTokens =
+        _int(p['output_tokens']) ??
         _int(usage['output_tokens']) ??
         _int(usage['completion_tokens']);
 
     final Color tint = isError
         ? theme.colorScheme.error
         : subtype == 'success'
-            ? successTint
-            : theme.colorScheme.primary;
+        ? successTint
+        : theme.colorScheme.primary;
 
     final bg = tint.withValues(
       alpha: theme.brightness == Brightness.dark ? 0.14 : 0.10,
@@ -207,8 +209,9 @@ class ChatRawCard extends StatelessWidget {
     }
 
     return ChatMessageCard(
-      backgroundColor:
-          theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+      backgroundColor: theme.colorScheme.surfaceContainerHighest.withValues(
+        alpha: 0.35,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -245,4 +248,3 @@ class ChatRawCard extends StatelessWidget {
     );
   }
 }
-

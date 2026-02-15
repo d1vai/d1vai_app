@@ -87,10 +87,7 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
   bool _ensureLoggedIn() {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     if (auth.user != null) return true;
-    showDialog(
-      context: context,
-      builder: (_) => const LoginRequiredDialog(),
-    );
+    showDialog(context: context, builder: (_) => const LoginRequiredDialog());
     return false;
   }
 
@@ -581,9 +578,7 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
               ),
               ListTile(
                 leading: const Icon(Icons.block),
-                title: Text(
-                  'Block @${widget.post.author?.slug ?? 'author'}',
-                ),
+                title: Text('Block @${widget.post.author?.slug ?? 'author'}'),
                 onTap: () {
                   Navigator.pop(context);
                   _blockAuthor();
@@ -629,7 +624,8 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
     SnackBarHelper.showSuccess(
       context,
       title: loc?.translate('success') ?? 'Success',
-      message: loc?.translate('report_success') ?? 'Report submitted successfully',
+      message:
+          loc?.translate('report_success') ?? 'Report submitted successfully',
     );
   }
 }
@@ -673,15 +669,13 @@ class _ActionPill extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 label,
-                style: theme.textTheme.labelSmall?.copyWith(
+                style:
+                    theme.textTheme.labelSmall?.copyWith(
                       color: fg,
                       fontWeight: FontWeight.w800,
                       height: 1.0,
                     ) ??
-                    TextStyle(
-                      color: fg,
-                      fontWeight: FontWeight.w800,
-                    ),
+                    TextStyle(color: fg, fontWeight: FontWeight.w800),
               ),
             ],
           ),

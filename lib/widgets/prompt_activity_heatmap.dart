@@ -145,7 +145,8 @@ class PromptActivityHeatmap extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    loc?.translate('prompt_activity_title') ?? 'Prompt activity',
+                    loc?.translate('prompt_activity_title') ??
+                        'Prompt activity',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -333,9 +334,9 @@ class PromptActivityHeatmap extends StatelessWidget {
                                           .withValues(
                                             alpha:
                                                 theme.brightness ==
-                                                        Brightness.dark
-                                                    ? 0.35
-                                                    : 0.5,
+                                                    Brightness.dark
+                                                ? 0.35
+                                                : 0.5,
                                           ),
                                     ),
                                   ),

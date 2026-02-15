@@ -66,15 +66,16 @@ class CreateProjectDialogShell extends StatelessWidget {
                             return FadeTransition(
                               opacity: animation,
                               child: SlideTransition(
-                                position: Tween<Offset>(
-                                  begin: const Offset(0, 0.15),
-                                  end: Offset.zero,
-                                ).animate(
-                                  CurvedAnimation(
-                                    parent: animation,
-                                    curve: Curves.easeOutCubic,
-                                  ),
-                                ),
+                                position:
+                                    Tween<Offset>(
+                                      begin: const Offset(0, 0.15),
+                                      end: Offset.zero,
+                                    ).animate(
+                                      CurvedAnimation(
+                                        parent: animation,
+                                        curve: Curves.easeOutCubic,
+                                      ),
+                                    ),
                                 child: child,
                               ),
                             );
@@ -110,15 +111,16 @@ class CreateProjectDialogShell extends StatelessWidget {
                           return FadeTransition(
                             opacity: animation,
                             child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(0, 0.06),
-                                end: Offset.zero,
-                              ).animate(
-                                CurvedAnimation(
-                                  parent: animation,
-                                  curve: Curves.easeOutCubic,
-                                ),
-                              ),
+                              position:
+                                  Tween<Offset>(
+                                    begin: const Offset(0, 0.06),
+                                    end: Offset.zero,
+                                  ).animate(
+                                    CurvedAnimation(
+                                      parent: animation,
+                                      curve: Curves.easeOutCubic,
+                                    ),
+                                  ),
                               child: child,
                             ),
                           );
@@ -163,14 +165,10 @@ class CreateProjectDialogShell extends StatelessWidget {
         final eased = Curves.easeOutCubic.transform(t);
         return Opacity(
           opacity: eased,
-          child: Transform.scale(
-            scale: 0.98 + (0.02 * eased),
-            child: child,
-          ),
+          child: Transform.scale(scale: 0.98 + (0.02 * eased), child: child),
         );
       },
       child: dialog,
     );
   }
 }
-

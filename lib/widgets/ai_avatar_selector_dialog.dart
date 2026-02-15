@@ -109,21 +109,17 @@ class _AiAvatarSelectorDialogState extends State<AiAvatarSelectorDialog>
     );
 
     _fadeAnimations = _controllers.map((controller) {
-      return Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(
-          parent: controller,
-          curve: Curves.easeOut,
-        ),
-      );
+      return Tween<double>(
+        begin: 0.0,
+        end: 1.0,
+      ).animate(CurvedAnimation(parent: controller, curve: Curves.easeOut));
     }).toList();
 
     _scaleAnimations = _controllers.map((controller) {
-      return Tween<double>(begin: 0.3, end: 1.0).animate(
-        CurvedAnimation(
-          parent: controller,
-          curve: Curves.elasticOut,
-        ),
-      );
+      return Tween<double>(
+        begin: 0.3,
+        end: 1.0,
+      ).animate(CurvedAnimation(parent: controller, curve: Curves.elasticOut));
     }).toList();
 
     _slideAnimations = _controllers.map((controller) {
@@ -131,10 +127,7 @@ class _AiAvatarSelectorDialogState extends State<AiAvatarSelectorDialog>
         begin: const Offset(0, 0.5),
         end: Offset.zero,
       ).animate(
-        CurvedAnimation(
-          parent: controller,
-          curve: Curves.easeOutCubic,
-        ),
+        CurvedAnimation(parent: controller, curve: Curves.easeOutCubic),
       );
     }).toList();
   }
@@ -208,9 +201,7 @@ class _AiAvatarSelectorDialogState extends State<AiAvatarSelectorDialog>
     );
 
     return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       backgroundColor: Colors.transparent,
       child: Container(
         constraints: const BoxConstraints(maxWidth: 500),
@@ -272,110 +263,110 @@ class _AiAvatarSelectorDialogState extends State<AiAvatarSelectorDialog>
         );
 
         return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [headerA, headerB]),
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
-        ),
-        border: Border(
-          bottom: BorderSide(color: border),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Color.alphaBlend(
-                colorScheme.surface.withValues(alpha: 0.20),
-                Colors.transparent,
-              ),
-              borderRadius: BorderRadius.circular(12),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(colors: [headerA, headerB]),
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
             ),
-            child: Icon(
-              Icons.auto_awesome,
-              color: colorScheme.onSurface,
-              size: 22,
-            ),
+            border: Border(bottom: BorderSide(color: border)),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'AI Avatar Cards',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        color: colorScheme.onSurface,
-                      ) ??
-                      TextStyle(
-                        fontWeight: FontWeight.w900,
-                        color: colorScheme.onSurface,
-                      ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Choose your favorite avatar',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant.withValues(
-                          alpha: 0.9,
-                        ),
-                      ) ??
-                      TextStyle(
-                        color: colorScheme.onSurfaceVariant.withValues(
-                          alpha: 0.9,
-                        ),
-                      ),
-                ),
-              ],
-            ),
-          ),
-          // 刷新按钮
-          Material(
-            color: Color.alphaBlend(
-              colorScheme.surface.withValues(alpha: 0.18),
-              Colors.transparent,
-            ),
-            borderRadius: BorderRadius.circular(12),
-            child: InkWell(
-              onTap: widget.isGenerating ? null : widget.onRefresh,
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 180),
-                  switchInCurve: Curves.easeOutBack,
-                  switchOutCurve: Curves.easeIn,
-                  transitionBuilder: (child, anim) => FadeTransition(
-                    opacity: anim,
-                    child: ScaleTransition(scale: anim, child: child),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Color.alphaBlend(
+                    colorScheme.surface.withValues(alpha: 0.20),
+                    Colors.transparent,
                   ),
-                  child: widget.isGenerating
-                      ? RotationTransition(
-                          key: const ValueKey('spinning'),
-                          turns: _spinController,
-                          child: Icon(
-                            Icons.refresh_rounded,
-                            size: 20,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.auto_awesome,
+                  color: colorScheme.onSurface,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'AI Avatar Cards',
+                      style:
+                          theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            color: colorScheme.onSurface,
+                          ) ??
+                          TextStyle(
+                            fontWeight: FontWeight.w900,
                             color: colorScheme.onSurface,
                           ),
-                        )
-                      : Icon(
-                          key: const ValueKey('idle'),
-                          Icons.refresh_rounded,
-                          color: colorScheme.onSurface,
-                          size: 20,
-                        ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Choose your favorite avatar',
+                      style:
+                          theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant.withValues(
+                              alpha: 0.9,
+                            ),
+                          ) ??
+                          TextStyle(
+                            color: colorScheme.onSurfaceVariant.withValues(
+                              alpha: 0.9,
+                            ),
+                          ),
+                    ),
+                  ],
                 ),
               ),
-            ),
+              // 刷新按钮
+              Material(
+                color: Color.alphaBlend(
+                  colorScheme.surface.withValues(alpha: 0.18),
+                  Colors.transparent,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  onTap: widget.isGenerating ? null : widget.onRefresh,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 180),
+                      switchInCurve: Curves.easeOutBack,
+                      switchOutCurve: Curves.easeIn,
+                      transitionBuilder: (child, anim) => FadeTransition(
+                        opacity: anim,
+                        child: ScaleTransition(scale: anim, child: child),
+                      ),
+                      child: widget.isGenerating
+                          ? RotationTransition(
+                              key: const ValueKey('spinning'),
+                              turns: _spinController,
+                              child: Icon(
+                                Icons.refresh_rounded,
+                                size: 20,
+                                color: colorScheme.onSurface,
+                              ),
+                            )
+                          : Icon(
+                              key: const ValueKey('idle'),
+                              Icons.refresh_rounded,
+                              color: colorScheme.onSurface,
+                              size: 20,
+                            ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
+        );
       },
     );
   }
@@ -402,7 +393,8 @@ class _AiAvatarSelectorDialogState extends State<AiAvatarSelectorDialog>
                 const SizedBox(height: 14),
                 Text(
                   'Tap refresh to generate avatars',
-                  style: theme.textTheme.bodyMedium?.copyWith(
+                  style:
+                      theme.textTheme.bodyMedium?.copyWith(
                         color: colorScheme.onSurfaceVariant.withValues(
                           alpha: 0.9,
                         ),
@@ -467,7 +459,11 @@ class _AiAvatarSelectorDialogState extends State<AiAvatarSelectorDialog>
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final t = widget.enableBreathing ? _breathController.value : 0.0;
-    final accent = Color.lerp(colorScheme.primary, colorScheme.secondary, 0.35)!;
+    final accent = Color.lerp(
+      colorScheme.primary,
+      colorScheme.secondary,
+      0.35,
+    )!;
     final borderColor = Color.alphaBlend(
       accent.withValues(alpha: isSelected ? (0.35 + 0.18 * t) : 0.22),
       colorScheme.outlineVariant,
@@ -489,10 +485,7 @@ class _AiAvatarSelectorDialogState extends State<AiAvatarSelectorDialog>
         curve: Curves.easeOutCubic,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: borderColor,
-            width: isSelected ? 2.5 : 1.5,
-          ),
+          border: Border.all(color: borderColor, width: isSelected ? 2.5 : 1.5),
           boxShadow: [
             if (isSelected)
               BoxShadow(

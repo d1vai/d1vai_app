@@ -216,7 +216,8 @@ class D1vaiService {
     return _apiClient.get<PromptDailyActivity>(
       '/api/user/activity/prompt-daily',
       queryParams: qp,
-      fromJsonT: (json) => PromptDailyActivity.fromJson(json as Map<String, dynamic>),
+      fromJsonT: (json) =>
+          PromptDailyActivity.fromJson(json as Map<String, dynamic>),
     );
   }
 
@@ -228,7 +229,8 @@ class D1vaiService {
     return _apiClient.get<PromptDailyActivity>(
       '/api/user/activity/prompt-daily/slug/$slug',
       queryParams: {'days': days.toString()},
-      fromJsonT: (json) => PromptDailyActivity.fromJson(json as Map<String, dynamic>),
+      fromJsonT: (json) =>
+          PromptDailyActivity.fromJson(json as Map<String, dynamic>),
     );
   }
 

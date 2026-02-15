@@ -13,7 +13,7 @@ class AnalyticsService {
       StreamController.broadcast();
 
   AnalyticsService({ApiClient? apiClient})
-      : _apiClient = apiClient ?? ApiClient();
+    : _apiClient = apiClient ?? ApiClient();
 
   /// Stream of real-time metrics
   Stream<List<RealtimeMetric>> get metricsStream => _metricsController.stream;
@@ -102,22 +102,22 @@ class AnalyticsService {
     TimeRange timeRange = TimeRange.last24Hours,
   }) async {
     try {
-      final response = await _apiClient.post(
-        '/api/projects/$projectId/analytics/compare',
-        {
-          'primary_metric': primaryMetric,
-          'compare_with': compareWith ?? [],
-          'period': timeRange.name,
-        },
-      );
+      final response = await _apiClient
+          .post('/api/projects/$projectId/analytics/compare', {
+            'primary_metric': primaryMetric,
+            'compare_with': compareWith ?? [],
+            'period': timeRange.name,
+          });
 
       final List<dynamic> data = response['data'] ?? response;
       return data
-          .map((json) => ComparisonData(
-                label: json['label'] as String,
-                value: (json['value'] as num).toDouble(),
-                color: const Color(0xFF000000),
-              ))
+          .map(
+            (json) => ComparisonData(
+              label: json['label'] as String,
+              value: (json['value'] as num).toDouble(),
+              color: const Color(0xFF000000),
+            ),
+          )
           .toList();
     } catch (e) {
       throw AnalyticsException('Failed to get comparison data: $e');
@@ -176,7 +176,10 @@ class AnalyticsService {
   }
 
   /// Load initial metrics
-  Future<void> _loadInitialMetrics(String projectId, List<String>? metricIds) async {
+  Future<void> _loadInitialMetrics(
+    String projectId,
+    List<String>? metricIds,
+  ) async {
     try {
       final metrics = await getRealtimeMetrics(
         projectId: projectId,
@@ -236,12 +239,7 @@ class AnalyticsService {
     try {
       final response = await _apiClient.post(
         '/api/projects/$projectId/analytics/custom-metrics',
-        {
-          'name': name,
-          'description': description,
-          'unit': unit,
-          'type': type,
-        },
+        {'name': name, 'description': description, 'unit': unit, 'type': type},
       );
 
       return RealtimeMetric.fromJson(response['metric'] ?? response);

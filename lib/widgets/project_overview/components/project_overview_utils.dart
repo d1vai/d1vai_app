@@ -31,4 +31,3 @@ String getDeploymentLabel(String? url) {
     return url;
   }
 }
-

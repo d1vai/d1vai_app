@@ -32,10 +32,9 @@ class _ProgressWidgetState extends State<ProgressWidget>
   Timer? _delayedTimer;
   Timer? _fireworksTimer;
 
-  List<String> get tips =>
-      widget.tipList != null && widget.tipList!.isNotEmpty
-          ? widget.tipList!
-          : ['Starting…', 'Working…', 'Finalizing…'];
+  List<String> get tips => widget.tipList != null && widget.tipList!.isNotEmpty
+      ? widget.tipList!
+      : ['Starting…', 'Working…', 'Finalizing…'];
 
   @override
   void initState() {
@@ -195,7 +194,9 @@ class _ProgressWidgetState extends State<ProgressWidget>
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.35 : 0.5),
+          color: colorScheme.outlineVariant.withValues(
+            alpha: isDark ? 0.35 : 0.5,
+          ),
         ),
         borderRadius: BorderRadius.circular(12),
         color: colorScheme.surface,
@@ -233,7 +234,9 @@ class _ProgressWidgetState extends State<ProgressWidget>
                     tips[_tipIndex],
                     key: ValueKey(_tipIndex),
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
+                      color: colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.9,
+                      ),
                       height: 1.2,
                     ),
                   ),
@@ -243,9 +246,7 @@ class _ProgressWidgetState extends State<ProgressWidget>
                 '${_progress.floor()}%',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
-                  fontFeatures: [
-                    const FontFeature.tabularFigures(),
-                  ],
+                  fontFeatures: [const FontFeature.tabularFigures()],
                 ),
               ),
             ],
@@ -275,10 +276,7 @@ class _ProgressWidgetState extends State<ProgressWidget>
                       width: constraints.maxWidth * progress,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [
-                            colorScheme.primary,
-                            colorScheme.secondary,
-                          ],
+                          colors: [colorScheme.primary, colorScheme.secondary],
                         ),
                       ),
                     ),

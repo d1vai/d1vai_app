@@ -119,8 +119,9 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
       );
 
       final commit = result['commit'];
-      final commitSha =
-          commit is Map<String, dynamic> ? commit['sha']?.toString() : null;
+      final commitSha = commit is Map<String, dynamic>
+          ? commit['sha']?.toString()
+          : null;
       final shortSha = (commitSha != null && commitSha.length >= 7)
           ? commitSha.substring(0, 7)
           : null;
@@ -129,8 +130,9 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
       SnackBarHelper.showSuccess(
         context,
         title: 'Saved',
-        message:
-            shortSha == null ? 'Saved successfully' : 'Saved (commit: $shortSha)',
+        message: shortSha == null
+            ? 'Saved successfully'
+            : 'Saved (commit: $shortSha)',
       );
 
       setState(() {

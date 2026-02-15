@@ -1,8 +1,9 @@
 String? parseGithubRepoFullName(String repoUrl) {
   final url = repoUrl.trim();
   if (url.isEmpty) return null;
-  final match = RegExp(r'github\\.com\\/([^\\/]+)\\/([^\\/\\?#]+)')
-      .firstMatch(url);
+  final match = RegExp(
+    r'github\\.com\\/([^\\/]+)\\/([^\\/\\?#]+)',
+  ).firstMatch(url);
   if (match == null) return null;
   final owner = match.group(1);
   final repo = (match.group(2) ?? '').replaceAll(RegExp(r'\\.git$'), '');
@@ -31,4 +32,3 @@ String? parseGithubRepoFullName(String repoUrl) {
   final projectId = idRaw?.toString();
   return (project: project, projectId: projectId);
 }
-

@@ -73,4 +73,3 @@ class ChatCodeCard extends StatelessWidget {
     );
   }
 }
-

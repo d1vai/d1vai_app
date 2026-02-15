@@ -52,16 +52,15 @@ class _RealtimeChartState extends State<RealtimeChart> {
                   icon: const Icon(Icons.arrow_drop_down),
                   elevation: 16,
                   style: theme.textTheme.bodyMedium,
-                  underline: Container(
-                    height: 0,
-                  ),
+                  underline: Container(height: 0),
                   onChanged: (TimeRange? newValue) {
                     if (newValue != null && widget.onTimeRangeChanged != null) {
                       widget.onTimeRangeChanged!(newValue);
                     }
                   },
-                  items: TimeRange.values
-                      .map<DropdownMenuItem<TimeRange>>((TimeRange value) {
+                  items: TimeRange.values.map<DropdownMenuItem<TimeRange>>((
+                    TimeRange value,
+                  ) {
                     return DropdownMenuItem<TimeRange>(
                       value: value,
                       child: Text(value.label),
@@ -75,7 +74,9 @@ class _RealtimeChartState extends State<RealtimeChart> {
             Container(
               height: widget.height,
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                color: theme.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.3,
+                ),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: _buildChart(theme),
@@ -127,10 +128,7 @@ class _RealtimeChartState extends State<RealtimeChart> {
               ),
             ),
             const SizedBox(width: 4),
-            Text(
-              series.name,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+            Text(series.name, style: Theme.of(context).textTheme.bodySmall),
           ],
         );
       }).toList(),
@@ -184,8 +182,8 @@ class _LineChartPainter extends CustomPainter {
         final x = (i / (series.data.length - 1)) * size.width;
         final y = globalMax > globalMin
             ? size.height -
-                ((point.value - globalMin) / (globalMax - globalMin)) *
-                    size.height
+                  ((point.value - globalMin) / (globalMax - globalMin)) *
+                      size.height
             : size.height / 2;
 
         if (i == 0) {
@@ -207,21 +205,13 @@ class _LineChartPainter extends CustomPainter {
     // Draw horizontal lines
     for (int i = 1; i < 5; i++) {
       final y = (size.height / 5) * i;
-      canvas.drawLine(
-        Offset(0, y),
-        Offset(size.width, y),
-        paint,
-      );
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
     }
 
     // Draw vertical lines
     for (int i = 1; i < 5; i++) {
       final x = (size.width / 5) * i;
-      canvas.drawLine(
-        Offset(x, 0),
-        Offset(x, size.height),
-        paint,
-      );
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
     }
   }
 

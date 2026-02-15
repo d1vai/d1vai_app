@@ -69,10 +69,8 @@ class CommunityProvider extends ChangeNotifier {
 
     try {
       // 调用真实 API 获取社区帖子
-      final List<CommunityPost> newPosts = await _d1vaiService.getCommunityPosts(
-        limit: _limit,
-        offset: _currentOffset,
-      );
+      final List<CommunityPost> newPosts = await _d1vaiService
+          .getCommunityPosts(limit: _limit, offset: _currentOffset);
 
       if (_currentOffset == 0) {
         _posts = newPosts;

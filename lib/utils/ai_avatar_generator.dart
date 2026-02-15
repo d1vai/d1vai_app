@@ -1,12 +1,5 @@
 /// Avatar style options for AI-generated avatars
-enum AvatarStyle {
-  micah,
-  lorelei,
-  adventurer,
-  personas,
-  bigSmile,
-  avataaars,
-}
+enum AvatarStyle { micah, lorelei, adventurer, personas, bigSmile, avataaars }
 
 /// Options for generating AI avatars
 class AvatarOptions {
@@ -14,17 +7,9 @@ class AvatarOptions {
   final bool? consistent;
   final AvatarStyle? style;
 
-  const AvatarOptions({
-    this.size,
-    this.consistent,
-    this.style,
-  });
+  const AvatarOptions({this.size, this.consistent, this.style});
 
-  AvatarOptions copyWith({
-    int? size,
-    bool? consistent,
-    AvatarStyle? style,
-  }) {
+  AvatarOptions copyWith({int? size, bool? consistent, AvatarStyle? style}) {
     return AvatarOptions(
       size: size ?? this.size,
       consistent: consistent ?? this.consistent,
@@ -53,7 +38,10 @@ class AiAvatarGenerator {
   ///
   /// [seed] - The seed string (usually username or unique identifier)
   /// [options] - Generation options (size, consistency, style)
-  String generateAvatar(String seed, {AvatarOptions options = const AvatarOptions()}) {
+  String generateAvatar(
+    String seed, {
+    AvatarOptions options = const AvatarOptions(),
+  }) {
     final size = options.size ?? 160;
     final consistent = options.consistent ?? true;
     final customStyle = options.style;
@@ -99,16 +87,9 @@ class AiAvatarGenerator {
   }
 
   /// Build full avatar URL.
-  String _buildAvatarUrl(
-    String seed,
-    AvatarStyle style,
-    int size,
-  ) {
+  String _buildAvatarUrl(String seed, AvatarStyle style, int size) {
     final styleString = _styleToString(style);
-    final params = {
-      'seed': seed,
-      'size': size.toString(),
-    };
+    final params = {'seed': seed, 'size': size.toString()};
 
     final queryString = params.entries
         .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
@@ -157,8 +138,14 @@ class AiAvatarGenerator {
   }) {
     final avatars = <String>[];
     for (int i = 0; i < count; i++) {
-      final seed = '$baseSeed-${DateTime.now().millisecondsSinceEpoch}-$i-${(DateTime.now().microsecondsSinceEpoch % 100000).toString()}';
-      avatars.add(generateAvatar(seed, options: AvatarOptions(size: size, consistent: false)));
+      final seed =
+          '$baseSeed-${DateTime.now().millisecondsSinceEpoch}-$i-${(DateTime.now().microsecondsSinceEpoch % 100000).toString()}';
+      avatars.add(
+        generateAvatar(
+          seed,
+          options: AvatarOptions(size: size, consistent: false),
+        ),
+      );
     }
     return avatars;
   }

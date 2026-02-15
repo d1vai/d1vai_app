@@ -45,9 +45,9 @@ Future<void> showRunSqlMigrationBottomSheet(
             onSendToChat: (prompt) {
               final encoded = Uri.encodeQueryComponent(prompt);
               Navigator.of(sheetContext).pop();
-              GoRouter.of(hostContext).push(
-                '/projects/$projectId/chat?autoprompt=$encoded',
-              );
+              GoRouter.of(
+                hostContext,
+              ).push('/projects/$projectId/chat?autoprompt=$encoded');
             },
           ),
         ),
@@ -287,8 +287,9 @@ class _RunSqlMigrationSheetState extends State<_RunSqlMigrationSheet> {
 
   void _sendReasonsToChat() {
     final rawReasons = _autoReviewStatus?['reasons'];
-    final reasons =
-        (rawReasons is List) ? rawReasons.map((e) => e.toString()).toList() : <String>[];
+    final reasons = (rawReasons is List)
+        ? rawReasons.map((e) => e.toString()).toList()
+        : <String>[];
     final file = widget.sourcePath.trim().isNotEmpty
         ? widget.sourcePath.trim()
         : 'migration.sql';
@@ -455,7 +456,12 @@ class _RunSqlMigrationSheetState extends State<_RunSqlMigrationSheet> {
                       padding: const EdgeInsets.symmetric(vertical: 2),
                       child: Row(
                         children: [
-                          Icon(Icons.circle, size: 8, color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5)),
+                          Icon(
+                            Icons.circle,
+                            size: 8,
+                            color: theme.colorScheme.onSurfaceVariant
+                                .withValues(alpha: 0.5),
+                          ),
                           const SizedBox(width: 8),
                           Text(s.label, style: theme.textTheme.bodySmall),
                         ],
@@ -467,7 +473,9 @@ class _RunSqlMigrationSheetState extends State<_RunSqlMigrationSheet> {
                   _RejectedBox(
                     riskScore: _autoReviewStatus?['risk_score'],
                     reasons: (_autoReviewStatus?['reasons'] is List)
-                        ? (_autoReviewStatus!['reasons'] as List).map((e) => e.toString()).toList()
+                        ? (_autoReviewStatus!['reasons'] as List)
+                              .map((e) => e.toString())
+                              .toList()
                         : const <String>[],
                     onRunAnyway: _runAnyway,
                     onSendToChat: _sendReasonsToChat,
@@ -491,8 +499,9 @@ class _RunSqlMigrationSheetState extends State<_RunSqlMigrationSheet> {
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed:
-                        _running ? null : () => Navigator.of(context).pop(),
+                    onPressed: _running
+                        ? null
+                        : () => Navigator.of(context).pop(),
                     child: Text(_completed ? 'Close' : 'Cancel'),
                   ),
                 ),
@@ -516,8 +525,9 @@ class _RunSqlMigrationSheetState extends State<_RunSqlMigrationSheet> {
                               SizedBox(
                                 width: 18,
                                 height: 18,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               ),
                               SizedBox(width: 10),
                               Text('Running'),
@@ -691,7 +701,9 @@ class _ErrorBox extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.errorContainer.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.error.withValues(alpha: 0.25)),
+        border: Border.all(
+          color: theme.colorScheme.error.withValues(alpha: 0.25),
+        ),
       ),
       child: Text(
         text,
@@ -724,10 +736,14 @@ class _RejectedBox extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.amber.withValues(alpha: theme.brightness == Brightness.dark ? 0.14 : 0.18),
+        color: Colors.amber.withValues(
+          alpha: theme.brightness == Brightness.dark ? 0.14 : 0.18,
+        ),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.amber.withValues(alpha: theme.brightness == Brightness.dark ? 0.35 : 0.5),
+          color: Colors.amber.withValues(
+            alpha: theme.brightness == Brightness.dark ? 0.35 : 0.5,
+          ),
         ),
       ),
       child: Column(
@@ -762,12 +778,7 @@ class _RejectedBox extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('• ', style: theme.textTheme.bodySmall),
-                    Expanded(
-                      child: Text(
-                        r,
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    ),
+                    Expanded(child: Text(r, style: theme.textTheme.bodySmall)),
                   ],
                 ),
               ),
@@ -790,7 +801,9 @@ class _RejectedBox extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                       side: BorderSide(
                         color: theme.colorScheme.error.withValues(
-                          alpha: theme.brightness == Brightness.dark ? 0.55 : 0.35,
+                          alpha: theme.brightness == Brightness.dark
+                              ? 0.55
+                              : 0.35,
                         ),
                       ),
                     ),

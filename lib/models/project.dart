@@ -91,7 +91,9 @@ class UserProject {
       latestPreviewUrl: json['latest_preview_url']?.toString(),
       tags: json['tags'] != null ? List<String>.from(json['tags']) : [],
       status: json['status']?.toString() ?? 'active',
-      analyticsEnabled: json['analytics_enabled'] is bool ? json['analytics_enabled'] : null,
+      analyticsEnabled: json['analytics_enabled'] is bool
+          ? json['analytics_enabled']
+          : null,
       analyticsId: json['analytics_id']?.toString(),
       projectDatabaseId: parseInt(json['project_database_id']),
       projectPayId: parseInt(json['project_pay_id']),
@@ -197,9 +199,12 @@ class UserProject {
       projectDatabaseId: projectDatabaseId ?? this.projectDatabaseId,
       projectPayId: projectPayId ?? this.projectPayId,
       vercelProdDomain: vercelProdDomain ?? this.vercelProdDomain,
-      latestProdDeploymentUrl: latestProdDeploymentUrl ?? this.latestProdDeploymentUrl,
-      workspaceCurrentBranch: workspaceCurrentBranch ?? this.workspaceCurrentBranch,
-      repositoryCurrentBranch: repositoryCurrentBranch ?? this.repositoryCurrentBranch,
+      latestProdDeploymentUrl:
+          latestProdDeploymentUrl ?? this.latestProdDeploymentUrl,
+      workspaceCurrentBranch:
+          workspaceCurrentBranch ?? this.workspaceCurrentBranch,
+      repositoryCurrentBranch:
+          repositoryCurrentBranch ?? this.repositoryCurrentBranch,
 
       repositoryPlatform: repositoryPlatform ?? this.repositoryPlatform,
       repositoryFullName: repositoryFullName ?? this.repositoryFullName,
@@ -207,7 +212,8 @@ class UserProject {
       repositoryName: repositoryName ?? this.repositoryName,
       repositoryCloneUrl: repositoryCloneUrl ?? this.repositoryCloneUrl,
       repositorySshUrl: repositorySshUrl ?? this.repositorySshUrl,
-      repositoryDefaultBranch: repositoryDefaultBranch ?? this.repositoryDefaultBranch,
+      repositoryDefaultBranch:
+          repositoryDefaultBranch ?? this.repositoryDefaultBranch,
       repositoryIsPrivate: repositoryIsPrivate ?? this.repositoryIsPrivate,
       opcodeLastAccessedAt: opcodeLastAccessedAt ?? this.opcodeLastAccessedAt,
     );

@@ -1,4 +1,3 @@
-
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 
@@ -35,7 +34,8 @@ class ImageCompressor {
 
       // 如果图片太大，进行尺寸压缩
       if (image.width > maxWidth || image.height > maxHeight) {
-        final ratio = (image.width / maxWidth).compareTo(image.height / maxHeight) > 0
+        final ratio =
+            (image.width / maxWidth).compareTo(image.height / maxHeight) > 0
             ? maxWidth / image.width
             : maxHeight / image.height;
         newWidth = (image.width * ratio).round();
@@ -56,7 +56,9 @@ class ImageCompressor {
       );
 
       // 质量压缩
-      return Uint8List.fromList(img.encodeJpg(resized, quality: (quality * 100).round()));
+      return Uint8List.fromList(
+        img.encodeJpg(resized, quality: (quality * 100).round()),
+      );
     } catch (e) {
       debugPrint('Image compression failed: $e');
       return imageBytes;
@@ -69,7 +71,9 @@ class ImageCompressor {
     if (image == null) {
       return imageBytes;
     }
-    return Uint8List.fromList(img.encodeJpg(image, quality: (quality * 100).round()));
+    return Uint8List.fromList(
+      img.encodeJpg(image, quality: (quality * 100).round()),
+    );
   }
 
   /// 获取图片信息

@@ -32,7 +32,8 @@ class EnvVar {
       description: json['description'],
       environment: json['environment'],
       // Backend uses `is_sensitive`; some newer payloads may use `is_encrypted`.
-      isEncrypted: (json['is_encrypted'] ?? json['is_sensitive'] ?? false) as bool,
+      isEncrypted:
+          (json['is_encrypted'] ?? json['is_sensitive'] ?? false) as bool,
       createdAt: json['created_at'],
       updatedAt: json['updated_at'],
     );

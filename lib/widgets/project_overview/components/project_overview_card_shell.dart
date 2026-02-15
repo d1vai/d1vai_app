@@ -28,7 +28,8 @@ class ProjectOverviewCardShell extends StatelessWidget {
 
     final accent = accentColor ?? colorScheme.primary;
 
-    final surface = backgroundColor ??
+    final surface =
+        backgroundColor ??
         Color.alphaBlend(
           colorScheme.primary.withValues(alpha: isDark ? 0.055 : 0.022),
           colorScheme.surface,

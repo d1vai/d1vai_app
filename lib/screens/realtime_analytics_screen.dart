@@ -13,18 +13,14 @@ import '../widgets/snackbar_helper.dart';
 class RealtimeAnalyticsScreen extends StatefulWidget {
   final String projectId;
 
-  const RealtimeAnalyticsScreen({
-    super.key,
-    required this.projectId,
-  });
+  const RealtimeAnalyticsScreen({super.key, required this.projectId});
 
   @override
   State<RealtimeAnalyticsScreen> createState() =>
       _RealtimeAnalyticsScreenState();
 }
 
-class _RealtimeAnalyticsScreenState
-    extends State<RealtimeAnalyticsScreen> {
+class _RealtimeAnalyticsScreenState extends State<RealtimeAnalyticsScreen> {
   final AnalyticsService _analyticsService = AnalyticsService();
   late StreamSubscription<List<RealtimeMetric>> _metricsSubscription;
 
@@ -86,7 +82,11 @@ class _RealtimeAnalyticsScreenState
       setState(() {
         _isLoading = false;
       });
-      SnackBarHelper.showError(context, title: 'Error', message: 'Failed to load analytics: $e');
+      SnackBarHelper.showError(
+        context,
+        title: 'Error',
+        message: 'Failed to load analytics: $e',
+      );
     }
   }
 
@@ -121,16 +121,14 @@ class _RealtimeAnalyticsScreenState
 
   /// Setup real-time data stream
   void _setupRealtimeStream() {
-    _metricsSubscription = _analyticsService.metricsStream.listen(
-      (metrics) {
-        if (mounted) {
-          setState(() {
-            _metrics = metrics;
-            _chartSeries = _createChartSeries(metrics);
-          });
-        }
-      },
-    );
+    _metricsSubscription = _analyticsService.metricsStream.listen((metrics) {
+      if (mounted) {
+        setState(() {
+          _metrics = metrics;
+          _chartSeries = _createChartSeries(metrics);
+        });
+      }
+    });
 
     // Start real-time updates
     _analyticsService.startRealtimeStream(
@@ -201,7 +199,11 @@ class _RealtimeAnalyticsScreenState
       }
     } catch (e) {
       if (!mounted) return;
-      SnackBarHelper.showError(context, title: 'Error', message: 'Failed to export: $e');
+      SnackBarHelper.showError(
+        context,
+        title: 'Error',
+        message: 'Failed to export: $e',
+      );
     }
   }
 
@@ -225,28 +227,16 @@ class _RealtimeAnalyticsScreenState
           PopupMenuButton<String>(
             onSelected: _exportData,
             itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'json',
-                child: Text('Export as JSON'),
-              ),
-              const PopupMenuItem(
-                value: 'csv',
-                child: Text('Export as CSV'),
-              ),
-              const PopupMenuItem(
-                value: 'pdf',
-                child: Text('Export as PDF'),
-              ),
+              const PopupMenuItem(value: 'json', child: Text('Export as JSON')),
+              const PopupMenuItem(value: 'csv', child: Text('Export as CSV')),
+              const PopupMenuItem(value: 'pdf', child: Text('Export as PDF')),
             ],
           ),
         ],
       ),
       body: _isLoading
           ? _buildLoadingState()
-          : RefreshIndicator(
-              onRefresh: _loadData,
-              child: _buildContent(),
-            ),
+          : RefreshIndicator(onRefresh: _loadData, child: _buildContent()),
     );
   }
 
@@ -309,8 +299,9 @@ class _RealtimeAnalyticsScreenState
                   _loadData();
                 }
               },
-              items: TimeRange.values
-                  .map<DropdownMenuItem<TimeRange>>((TimeRange value) {
+              items: TimeRange.values.map<DropdownMenuItem<TimeRange>>((
+                TimeRange value,
+              ) {
                 return DropdownMenuItem<TimeRange>(
                   value: value,
                   child: Text(value.label),
@@ -473,16 +464,14 @@ class _RealtimeAnalyticsScreenState
               runSpacing: 8,
               children: [
                 OutlinedButton.icon(
-                  onPressed: () => context.push(
-                    '/projects/${widget.projectId}?tab=deploy',
-                  ),
+                  onPressed: () =>
+                      context.push('/projects/${widget.projectId}?tab=deploy'),
                   icon: const Icon(Icons.cloud_upload, size: 18),
                   label: const Text('Deploy logs'),
                 ),
                 OutlinedButton.icon(
-                  onPressed: () => context.push(
-                    '/projects/${widget.projectId}?tab=api',
-                  ),
+                  onPressed: () =>
+                      context.push('/projects/${widget.projectId}?tab=api'),
                   icon: const Icon(Icons.api, size: 18),
                   label: const Text('Env vars'),
                 ),
@@ -645,9 +634,9 @@ class _RealtimeAnalyticsScreenState
               children: [
                 Text(
                   'Metric Comparison',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 16),
                 Container(
@@ -655,9 +644,7 @@ class _RealtimeAnalyticsScreenState
                   alignment: Alignment.center,
                   child: const Text(
                     'Comparison chart will appear here',
-                    style: TextStyle(
-                      color: Colors.grey,
-                    ),
+                    style: TextStyle(color: Colors.grey),
                   ),
                 ),
               ],
@@ -680,9 +667,9 @@ class _RealtimeAnalyticsScreenState
               children: [
                 Text(
                   'Geographic Distribution',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
                 ),
                 IconButton(
                   icon: _isLoadingGeographic
@@ -692,9 +679,11 @@ class _RealtimeAnalyticsScreenState
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.refresh),
-                  onPressed: _isLoadingGeographic ? null : () {
-                    _loadGeographicData();
-                  },
+                  onPressed: _isLoadingGeographic
+                      ? null
+                      : () {
+                          _loadGeographicData();
+                        },
                   tooltip: 'Refresh',
                 ),
               ],
@@ -705,7 +694,9 @@ class _RealtimeAnalyticsScreenState
               Container(
                 height: 200,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 alignment: Alignment.center,
@@ -736,7 +727,12 @@ class _RealtimeAnalyticsScreenState
                 itemBuilder: (context, index) {
                   final data = _geographicData[index];
                   final percentage = _geographicData.isNotEmpty
-                      ? (data.value / _geographicData.fold<int>(0, (sum, item) => sum + item.value) * 100)
+                      ? (data.value /
+                            _geographicData.fold<int>(
+                              0,
+                              (sum, item) => sum + item.value,
+                            ) *
+                            100)
                       : 0.0;
 
                   return _buildGeographicItem(data, percentage);
@@ -850,7 +846,9 @@ class _RealtimeAnalyticsScreenState
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: Container(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -875,7 +873,10 @@ class _RealtimeAnalyticsScreenState
                   ],
                 ),
                 const SizedBox(height: 24),
-                _buildDetailRow('Current Value', '${metric.currentValue} ${metric.unit}'),
+                _buildDetailRow(
+                  'Current Value',
+                  '${metric.currentValue} ${metric.unit}',
+                ),
                 const SizedBox(height: 12),
                 _buildDetailRow(
                   'Change',
@@ -905,19 +906,13 @@ class _RealtimeAnalyticsScreenState
           width: 120,
           child: Text(
             label,
-            style: const TextStyle(
-              color: Colors.grey,
-              fontSize: 14,
-            ),
+            style: const TextStyle(color: Colors.grey, fontSize: 14),
           ),
         ),
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-            ),
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
           ),
         ),
       ],

@@ -149,10 +149,9 @@ class MessageBubble extends StatelessWidget {
         code: content.code,
         isToolResult:
             isUser ||
-            (content.subtype ?? '')
-                .toLowerCase()
-                .trim()
-                .startsWith('tool_result'),
+            (content.subtype ?? '').toLowerCase().trim().startsWith(
+              'tool_result',
+            ),
       );
     } else if (content is ToolMessageContent) {
       return EnhancedToolMessage(content: content);

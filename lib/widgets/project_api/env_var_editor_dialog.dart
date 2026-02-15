@@ -20,11 +20,7 @@ class EnvVarEditorDialog extends StatefulWidget {
   final EnvVar? initial;
   final bool allowEditKey;
 
-  const EnvVarEditorDialog({
-    super.key,
-    this.initial,
-    this.allowEditKey = true,
-  });
+  const EnvVarEditorDialog({super.key, this.initial, this.allowEditKey = true});
 
   @override
   State<EnvVarEditorDialog> createState() => _EnvVarEditorDialogState();
@@ -99,10 +95,9 @@ class _EnvVarEditorDialogState extends State<EnvVarEditorDialog> {
               decoration: InputDecoration(
                 labelText: 'Key',
                 hintText: 'EXAMPLE_API_KEY',
-                errorText:
-                    _keyController.text.trim().isEmpty || _validKey
-                        ? null
-                        : 'Use only letters, numbers, _ and -',
+                errorText: _keyController.text.trim().isEmpty || _validKey
+                    ? null
+                    : 'Use only letters, numbers, _ and -',
               ),
               onChanged: (_) => setState(() {}),
             ),
@@ -155,4 +150,3 @@ class _EnvVarEditorDialogState extends State<EnvVarEditorDialog> {
     );
   }
 }
-

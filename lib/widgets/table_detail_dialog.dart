@@ -5,10 +5,7 @@ import '../models/database_table.dart';
 class TableDetailDialog extends StatefulWidget {
   final DatabaseTable table;
 
-  const TableDetailDialog({
-    super.key,
-    required this.table,
-  });
+  const TableDetailDialog({super.key, required this.table});
 
   @override
   State<TableDetailDialog> createState() => _TableDetailDialogState();
@@ -47,7 +44,9 @@ class _TableDetailDialogState extends State<TableDetailDialog> {
                       Text(
                         '${widget.table.schema} schema • ${widget.table.type}',
                         style: TextStyle(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
+                          ),
                           fontSize: 14,
                         ),
                       ),
@@ -65,7 +64,9 @@ class _TableDetailDialogState extends State<TableDetailDialog> {
             // Tab Bar
             Container(
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                color: theme.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.5,
+                ),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -81,10 +82,7 @@ class _TableDetailDialogState extends State<TableDetailDialog> {
             Expanded(
               child: IndexedStack(
                 index: _currentTab,
-                children: [
-                  _buildSchemaTab(),
-                  _buildDataTab(),
-                ],
+                children: [_buildSchemaTab(), _buildDataTab()],
               ),
             ),
           ],
@@ -258,9 +256,7 @@ class _TableDetailDialogState extends State<TableDetailDialog> {
                           padding: const EdgeInsets.all(12),
                           child: Text(
                             'Unknown',
-                            style: TextStyle(
-                              color: Colors.grey.shade600,
-                            ),
+                            style: TextStyle(color: Colors.grey.shade600),
                           ),
                         ),
                       ],
@@ -305,11 +301,7 @@ class _TableDetailDialogState extends State<TableDetailDialog> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.table_chart,
-                  size: 64,
-                  color: Colors.grey.shade400,
-                ),
+                Icon(Icons.table_chart, size: 64, color: Colors.grey.shade400),
                 const SizedBox(height: 16),
                 Text(
                   'Data Preview Coming Soon',
@@ -322,9 +314,7 @@ class _TableDetailDialogState extends State<TableDetailDialog> {
                 const SizedBox(height: 8),
                 Text(
                   'View and edit table data directly in the app',
-                  style: TextStyle(
-                    color: Colors.grey.shade500,
-                  ),
+                  style: TextStyle(color: Colors.grey.shade500),
                 ),
               ],
             ),

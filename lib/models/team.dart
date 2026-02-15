@@ -38,7 +38,8 @@ class Team {
           ? DateTime.parse(json['updated_at'] as String)
           : null,
       memberCount: json['member_count'] as int? ?? 0,
-      members: (json['members'] as List<dynamic>?)
+      members:
+          (json['members'] as List<dynamic>?)
               ?.map((e) => TeamMember.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],

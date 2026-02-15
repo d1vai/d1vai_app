@@ -100,13 +100,7 @@ class RealtimeMetric {
 }
 
 /// Metric type
-enum MetricType {
-  counter,
-  gauge,
-  rate,
-  duration,
-  percentage,
-}
+enum MetricType { counter, gauge, rate, duration, percentage }
 
 /// Comparison data for analytics
 class ComparisonData {
@@ -167,7 +161,8 @@ class AnalyticsSummary {
       averageResponseTime: (json['average_response_time'] as num).toDouble(),
       uptime: (json['uptime'] as num).toDouble(),
       customMetrics: json['custom_metrics'] as Map<String, dynamic>? ?? {},
-      metrics: (json['metrics'] as List<dynamic>?)
+      metrics:
+          (json['metrics'] as List<dynamic>?)
               ?.map((e) => RealtimeMetric.fromJson(e))
               .toList() ??
           [],
@@ -297,8 +292,4 @@ class KPICard {
 }
 
 /// Trend direction
-enum Trend {
-  up,
-  down,
-  stable,
-}
+enum Trend { up, down, stable }

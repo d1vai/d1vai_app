@@ -207,14 +207,12 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       debugPrint('Error loading analytics: $e');
       final authExpired = isAuthExpiredText(msg);
       if (authExpired) {
-        AuthExpiryBus.trigger(endpoint: '/api/analytics/data/${widget.project.id}');
+        AuthExpiryBus.trigger(
+          endpoint: '/api/analytics/data/${widget.project.id}',
+        );
         return;
       }
-      SnackBarHelper.showError(
-        context,
-        title: 'Error',
-        message: msg,
-      );
+      SnackBarHelper.showError(context, title: 'Error', message: msg);
     }
   }
 
@@ -459,14 +457,12 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       });
       final authExpired = isAuthExpiredText(msg);
       if (authExpired) {
-        AuthExpiryBus.trigger(endpoint: '/api/projects/${widget.project.id}/analytics/install');
+        AuthExpiryBus.trigger(
+          endpoint: '/api/projects/${widget.project.id}/analytics/install',
+        );
         return;
       }
-      SnackBarHelper.showError(
-        context,
-        title: 'Error',
-        message: msg,
-      );
+      SnackBarHelper.showError(context, title: 'Error', message: msg);
     }
   }
 
@@ -724,11 +720,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
     Widget chipRow(List<Widget> children) {
       return Align(
         alignment: Alignment.centerLeft,
-        child: Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: children,
-        ),
+        child: Wrap(spacing: 8, runSpacing: 8, children: children),
       );
     }
 
@@ -761,7 +753,9 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                             _showPageviewsSeries = true;
                             _showSessionsSeries = true;
                             if (_pageviews != null) {
-                              _trafficSeries = _createTrafficSeries(_pageviews!);
+                              _trafficSeries = _createTrafficSeries(
+                                _pageviews!,
+                              );
                             }
                           });
                           reload();
@@ -827,7 +821,8 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                 onSelected: previewHost == null
                     ? null
                     : (v) {
-                        if (!v || _envScope == AnalyticsEnvScope.preview) return;
+                        if (!v || _envScope == AnalyticsEnvScope.preview)
+                          return;
                         setState(() => _envScope = AnalyticsEnvScope.preview);
                         reload();
                       },

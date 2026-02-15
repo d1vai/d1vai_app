@@ -31,9 +31,7 @@ class _ChatPlaygroundScreenState extends State<ChatPlaygroundScreen> {
 
     if (!auth.isAuthenticated) {
       return const Scaffold(
-        body: LoginRequiredView(
-          message: 'Please login first to use Chat.',
-        ),
+        body: LoginRequiredView(message: 'Please login first to use Chat.'),
       );
     }
 
@@ -92,7 +90,8 @@ class _ChatPlaygroundScreenState extends State<ChatPlaygroundScreen> {
                 : ListView.separated(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     itemCount: projects.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 10),
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 10),
                     itemBuilder: (context, index) {
                       final p = projects[index];
                       return Card(
@@ -111,7 +110,10 @@ class _ChatPlaygroundScreenState extends State<ChatPlaygroundScreen> {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                          trailing: const Icon(
+                            Icons.arrow_forward_ios,
+                            size: 16,
+                          ),
                           onTap: () {
                             final prompt = _promptController.text.trim();
                             final qp = prompt.isEmpty
@@ -129,4 +131,3 @@ class _ChatPlaygroundScreenState extends State<ChatPlaygroundScreen> {
     );
   }
 }
-

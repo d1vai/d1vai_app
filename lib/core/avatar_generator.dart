@@ -1,14 +1,7 @@
 import 'dart:math';
 
 /// Available avatar styles, mirroring the web implementation.
-enum AvatarStyle {
-  micah,
-  lorelei,
-  adventurer,
-  personas,
-  bigSmile,
-  avataaars,
-}
+enum AvatarStyle { micah, lorelei, adventurer, personas, bigSmile, avataaars }
 
 /// Advanced avatar generator using DiceBear.
 /// Provides stable styles per username while allowing random draws.
@@ -65,22 +58,11 @@ class DeveloperAvatarGenerator {
     return hash;
   }
 
-  String _buildAvatarUrl(
-    String username,
-    AvatarStyle style,
-    int size,
-  ) {
-    final params = <String, String>{
-      'seed': username,
-      'size': size.toString(),
-    };
+  String _buildAvatarUrl(String username, AvatarStyle style, int size) {
+    final params = <String, String>{'seed': username, 'size': size.toString()};
 
     final stylePath = _styleToPath(style);
-    final uri = Uri.https(
-      'api.dicebear.com',
-      '/7.x/$stylePath/svg',
-      params,
-    );
+    final uri = Uri.https('api.dicebear.com', '/7.x/$stylePath/svg', params);
     return uri.toString();
   }
 
@@ -116,4 +98,3 @@ String generateDeveloperAvatar(String username, {int? size}) {
   }
   return _defaultGenerator.generateAvatar(username);
 }
-

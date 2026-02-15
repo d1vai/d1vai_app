@@ -176,7 +176,6 @@ class _OnboardingWizardState extends State<OnboardingWizard>
       // 显示带动画的 AI Avatar 选择对话框
       if (!mounted) return;
 
-
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -194,11 +193,13 @@ class _OnboardingWizardState extends State<OnboardingWizard>
                 onSelect: (selectedAvatarUrl) async {
                   // 先关闭对话框，避免 Hero tag 冲突
                   Navigator.of(dialogContext).pop();
-                  
+
                   if (!mounted) return;
 
-                  final authProvider =
-                      Provider.of<AuthProvider>(context, listen: false);
+                  final authProvider = Provider.of<AuthProvider>(
+                    context,
+                    listen: false,
+                  );
 
                   try {
                     await authProvider.updateAvatar(selectedAvatarUrl);
@@ -206,17 +207,17 @@ class _OnboardingWizardState extends State<OnboardingWizard>
                     if (!mounted) return;
 
                     setState(() => _avatarUrl = selectedAvatarUrl);
-                    
+
                     // 等待一帧，确保对话框完全关闭
                     await Future.delayed(const Duration(milliseconds: 100));
-                    
+
                     if (!mounted) return;
                     _showSuccess('头像选择成功');
                   } catch (e) {
                     if (!mounted) return;
-                    
+
                     await Future.delayed(const Duration(milliseconds: 100));
-                    
+
                     if (!mounted) return;
                     _showError('选择头像失败: $e');
                   }
@@ -227,8 +228,10 @@ class _OnboardingWizardState extends State<OnboardingWizard>
                   });
 
                   try {
-                    final authProvider =
-                        Provider.of<AuthProvider>(context, listen: false);
+                    final authProvider = Provider.of<AuthProvider>(
+                      context,
+                      listen: false,
+                    );
                     final newAvatars = await authProvider.generateAiAvatars();
 
                     if (!dialogContext.mounted) return;
@@ -266,8 +269,7 @@ class _OnboardingWizardState extends State<OnboardingWizard>
     if (!mounted) return;
     setState(() => _avatarUrl = url);
     try {
-      final authProvider =
-          Provider.of<AuthProvider>(context, listen: false);
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
       await authProvider.updateAvatar(url);
       if (!mounted) return;
       _showSuccess('Avatar updated successfully');
@@ -310,20 +312,12 @@ class _OnboardingWizardState extends State<OnboardingWizard>
 
   /// 显示错误消息
   void _showError(String message) {
-    SnackBarHelper.showError(
-      context,
-      title: 'Error',
-      message: message,
-    );
+    SnackBarHelper.showError(context, title: 'Error', message: message);
   }
 
   /// 显示成功消息
   void _showSuccess(String message) {
-    SnackBarHelper.showSuccess(
-      context,
-      title: 'Success',
-      message: message,
-    );
+    SnackBarHelper.showSuccess(context, title: 'Success', message: message);
   }
 
   /// 构建步骤指示器
@@ -335,8 +329,14 @@ class _OnboardingWizardState extends State<OnboardingWizard>
       animation: _breathController,
       builder: (context, child) {
         final t = _breathController.value;
-        final accent = Color.lerp(colorScheme.primary, colorScheme.secondary, 0.3)!;
-        final glow = accent.withValues(alpha: isDark ? (0.10 + 0.10 * t) : (0.08 + 0.08 * t));
+        final accent = Color.lerp(
+          colorScheme.primary,
+          colorScheme.secondary,
+          0.3,
+        )!;
+        final glow = accent.withValues(
+          alpha: isDark ? (0.10 + 0.10 * t) : (0.08 + 0.08 * t),
+        );
         final inactive = colorScheme.outlineVariant.withValues(alpha: 0.55);
 
         return Row(
@@ -350,8 +350,8 @@ class _OnboardingWizardState extends State<OnboardingWizard>
             final bg = isDone
                 ? colorScheme.tertiary.withValues(alpha: 0.85)
                 : isCurrent
-                    ? accent
-                    : inactive;
+                ? accent
+                : inactive;
 
             return AnimatedContainer(
               duration: const Duration(milliseconds: 240),
@@ -416,7 +416,8 @@ class _OnboardingWizardState extends State<OnboardingWizard>
         children: [
           Text(
             titles[_currentStep],
-            style: theme.textTheme.headlineSmall?.copyWith(
+            style:
+                theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w900,
                 ) ??
                 const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
@@ -425,7 +426,8 @@ class _OnboardingWizardState extends State<OnboardingWizard>
           const SizedBox(height: 8),
           Text(
             subtitles[_currentStep],
-            style: theme.textTheme.bodyMedium?.copyWith(
+            style:
+                theme.textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
                   height: 1.25,
                 ) ??
@@ -452,9 +454,14 @@ class _OnboardingWizardState extends State<OnboardingWizard>
       colorScheme.primary.withValues(alpha: isDark ? 0.10 : 0.06),
       colorScheme.surface,
     );
-    final border = colorScheme.outlineVariant.withValues(alpha: isDark ? 0.35 : 0.55);
+    final border = colorScheme.outlineVariant.withValues(
+      alpha: isDark ? 0.35 : 0.55,
+    );
 
-    final enter = CurvedAnimation(parent: _enterController, curve: Curves.easeOutCubic);
+    final enter = CurvedAnimation(
+      parent: _enterController,
+      curve: Curves.easeOutCubic,
+    );
     final scale = Tween<double>(begin: 0.98, end: 1).animate(enter);
 
     final primaryButton = AnimatedBuilder(
@@ -501,7 +508,10 @@ class _OnboardingWizardState extends State<OnboardingWizard>
       child: ScaleTransition(
         scale: scale,
         child: Dialog(
-          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 24,
+          ),
           backgroundColor: Colors.transparent,
           child: Container(
             padding: const EdgeInsets.all(20),
@@ -581,7 +591,9 @@ class _OnboardingWizardState extends State<OnboardingWizard>
             hintText: '请输入您的邀请码',
             border: const OutlineInputBorder(),
             filled: true,
-            fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+            fillColor: colorScheme.surfaceContainerHighest.withValues(
+              alpha: 0.5,
+            ),
           ),
           onChanged: (value) {
             _inviteCode = value;
@@ -590,7 +602,8 @@ class _OnboardingWizardState extends State<OnboardingWizard>
         const SizedBox(height: 16),
         Text(
           '提示：邀请码已发送到您的邮箱，请查收',
-          style: theme.textTheme.bodySmall?.copyWith(
+          style:
+              theme.textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
               ) ??
               TextStyle(
@@ -619,7 +632,9 @@ class _OnboardingWizardState extends State<OnboardingWizard>
               hintText: '请输入您的公司名称',
               border: const OutlineInputBorder(),
               filled: true,
-              fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+              fillColor: colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.5,
+              ),
             ),
             onChanged: (value) {
               _companyName = value;
@@ -634,7 +649,9 @@ class _OnboardingWizardState extends State<OnboardingWizard>
               hintText: 'https://example.com',
               border: const OutlineInputBorder(),
               filled: true,
-              fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+              fillColor: colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.5,
+              ),
             ),
             onChanged: (value) {
               _companyWebsite = value;
@@ -648,7 +665,9 @@ class _OnboardingWizardState extends State<OnboardingWizard>
               labelText: '所属行业',
               border: const OutlineInputBorder(),
               filled: true,
-              fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+              fillColor: colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.5,
+              ),
             ),
             items: _industries
                 .map(
@@ -667,7 +686,8 @@ class _OnboardingWizardState extends State<OnboardingWizard>
           const SizedBox(height: 10),
           Text(
             '这将帮助我们提供更适合你的模板与建议。',
-            style: theme.textTheme.bodySmall?.copyWith(
+            style:
+                theme.textTheme.bodySmall?.copyWith(
                   color: colorScheme.onSurfaceVariant.withValues(alpha: 0.85),
                 ) ??
                 TextStyle(
@@ -705,7 +725,8 @@ class _OnboardingWizardState extends State<OnboardingWizard>
                   children: [
                     Text(
                       'Profile picture',
-                      style: theme.textTheme.bodyMedium?.copyWith(
+                      style:
+                          theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w800,
                           ) ??
                           const TextStyle(fontWeight: FontWeight.w800),
@@ -713,7 +734,8 @@ class _OnboardingWizardState extends State<OnboardingWizard>
                     const SizedBox(height: 4),
                     Text(
                       'Recommended: square image, PNG/JPG/WEBP, up to 5MB.',
-                      style: theme.textTheme.bodySmall?.copyWith(
+                      style:
+                          theme.textTheme.bodySmall?.copyWith(
                             color: colorScheme.onSurfaceVariant.withValues(
                               alpha: 0.9,
                             ),
@@ -741,7 +763,8 @@ class _OnboardingWizardState extends State<OnboardingWizard>
                 children: [
                   Text(
                     'AI Avatar Cards',
-                    style: theme.textTheme.bodyMedium?.copyWith(
+                    style:
+                        theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w800,
                         ) ??
                         const TextStyle(fontWeight: FontWeight.w800),
@@ -749,14 +772,18 @@ class _OnboardingWizardState extends State<OnboardingWizard>
                   AnimatedBuilder(
                     animation: _breathController,
                     builder: (context, child) {
-                      final t = _isGeneratingAvatars ? 0.0 : _breathController.value;
+                      final t = _isGeneratingAvatars
+                          ? 0.0
+                          : _breathController.value;
                       final fg = Color.lerp(
                         colorScheme.primary,
                         colorScheme.secondary,
                         0.2 + 0.35 * t,
                       )!;
                       return TextButton(
-                        onPressed: _isGeneratingAvatars ? null : _generateAiAvatars,
+                        onPressed: _isGeneratingAvatars
+                            ? null
+                            : _generateAiAvatars,
                         style: TextButton.styleFrom(foregroundColor: fg),
                         child: AnimatedSwitcher(
                           duration: const Duration(milliseconds: 160),
@@ -776,8 +803,7 @@ class _OnboardingWizardState extends State<OnboardingWizard>
                 GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 4,
                     mainAxisSpacing: 8,
                     crossAxisSpacing: 8,
@@ -836,7 +862,8 @@ class _OnboardingWizardState extends State<OnboardingWizard>
                       const SizedBox(height: 8),
                       Text(
                         'Tap "AI Random" to draw your AI avatar cards.',
-                        style: theme.textTheme.bodySmall?.copyWith(
+                        style:
+                            theme.textTheme.bodySmall?.copyWith(
                               color: colorScheme.onSurfaceVariant.withValues(
                                 alpha: 0.9,
                               ),
@@ -893,7 +920,8 @@ class _OnboardingWizardState extends State<OnboardingWizard>
         const SizedBox(height: 24),
         Text(
           '设置完成！',
-          style: theme.textTheme.headlineSmall?.copyWith(
+          style:
+              theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w900,
               ) ??
               const TextStyle(fontWeight: FontWeight.w900, fontSize: 22),
@@ -901,7 +929,8 @@ class _OnboardingWizardState extends State<OnboardingWizard>
         const SizedBox(height: 8),
         Text(
           '欢迎加入 d1vai，您即将进入应用',
-          style: theme.textTheme.bodyMedium?.copyWith(
+          style:
+              theme.textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
               ) ??
               TextStyle(

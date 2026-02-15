@@ -113,7 +113,8 @@ GoRouter createAppRouter() {
       final isLoginPage = state.matchedLocation == '/login';
       final isSplashPage = state.matchedLocation == '/';
       final isOnboardingPage = state.matchedLocation == '/onboarding';
-      final isMainTab = state.matchedLocation == '/dashboard' ||
+      final isMainTab =
+          state.matchedLocation == '/dashboard' ||
           state.matchedLocation == '/community' ||
           state.matchedLocation == '/docs' ||
           state.matchedLocation == '/orders' ||
@@ -166,12 +167,13 @@ GoRouter createAppRouter() {
       GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
       GoRoute(
         path: '/login',
-        pageBuilder: (context, state) =>
-            _buildPageWithTransition(
-              context,
-              state,
-              LoginScreen(sessionExpired: state.uri.queryParameters['expired'] == '1'),
-            ),
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          LoginScreen(
+            sessionExpired: state.uri.queryParameters['expired'] == '1',
+          ),
+        ),
       ),
       GoRoute(
         path: '/onboarding',
@@ -270,19 +272,13 @@ GoRouter createAppRouter() {
       ),
       GoRoute(
         path: '/settings/api',
-        pageBuilder: (context, state) => _buildPageWithTransition(
-          context,
-          state,
-          const ApiSettingsScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            _buildPageWithTransition(context, state, const ApiSettingsScreen()),
       ),
       GoRoute(
         path: '/settings/account-data',
-        pageBuilder: (context, state) => _buildPageWithTransition(
-          context,
-          state,
-          const AccountDataScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            _buildPageWithTransition(context, state, const AccountDataScreen()),
       ),
       GoRoute(
         path: '/settings/github',
@@ -357,11 +353,8 @@ GoRouter createAppRouter() {
       ),
       GoRoute(
         path: '/api-docs',
-        pageBuilder: (context, state) => _buildPageWithTransition(
-          context,
-          state,
-          const ApiDocsScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            _buildPageWithTransition(context, state, const ApiDocsScreen()),
       ),
     ],
   );

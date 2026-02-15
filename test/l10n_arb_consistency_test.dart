@@ -8,12 +8,13 @@ void main() {
     final dir = Directory('lib/l10n/arb');
     expect(dir.existsSync(), isTrue, reason: 'Missing ${dir.path}');
 
-    final files = dir
-        .listSync()
-        .whereType<File>()
-        .where((f) => f.path.endsWith('.arb'))
-        .toList()
-      ..sort((a, b) => a.path.compareTo(b.path));
+    final files =
+        dir
+            .listSync()
+            .whereType<File>()
+            .where((f) => f.path.endsWith('.arb'))
+            .toList()
+          ..sort((a, b) => a.path.compareTo(b.path));
 
     expect(files, isNotEmpty, reason: 'No .arb files found in ${dir.path}');
 

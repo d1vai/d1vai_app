@@ -258,10 +258,7 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
                 const SizedBox(width: 12),
                 const Text(
                   'Storage Usage',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -272,10 +269,7 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
               decoration: BoxDecoration(
                 color: Colors.deepPurple.shade50,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: Colors.deepPurple.shade200,
-                  width: 1,
-                ),
+                border: Border.all(color: Colors.deepPurple.shade200, width: 1),
               ),
               child: Row(
                 children: [
@@ -327,13 +321,13 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
             subtitle: Text(_formatBytes(_chatCacheSize)),
             trailing: _chatCacheSize > 0
                 ? TextButton(
-                    onPressed: _isClearing ? null : () => _clearCacheType('chat'),
+                    onPressed: _isClearing
+                        ? null
+                        : () => _clearCacheType('chat'),
                     child: const Text('Clear'),
                   )
                 : const Text('Clean', style: TextStyle(color: Colors.grey)),
-            onTap: _chatCacheSize > 0
-                ? () => _clearCacheType('chat')
-                : null,
+            onTap: _chatCacheSize > 0 ? () => _clearCacheType('chat') : null,
           ),
           const Divider(height: 1),
           ListTile(
@@ -342,13 +336,13 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
             subtitle: Text(_formatBytes(_imageCacheSize)),
             trailing: _imageCacheSize > 0
                 ? TextButton(
-                    onPressed: _isClearing ? null : () => _clearCacheType('image'),
+                    onPressed: _isClearing
+                        ? null
+                        : () => _clearCacheType('image'),
                     child: const Text('Clear'),
                   )
                 : const Text('Clean', style: TextStyle(color: Colors.grey)),
-            onTap: _imageCacheSize > 0
-                ? () => _clearCacheType('image')
-                : null,
+            onTap: _imageCacheSize > 0 ? () => _clearCacheType('image') : null,
           ),
           const Divider(height: 1),
           ListTile(
@@ -357,13 +351,13 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
             subtitle: Text(_formatBytes(_tempFileSize)),
             trailing: _tempFileSize > 0
                 ? TextButton(
-                    onPressed: _isClearing ? null : () => _clearCacheType('temp'),
+                    onPressed: _isClearing
+                        ? null
+                        : () => _clearCacheType('temp'),
                     child: const Text('Clear'),
                   )
                 : const Text('Clean', style: TextStyle(color: Colors.grey)),
-            onTap: _tempFileSize > 0
-                ? () => _clearCacheType('temp')
-                : null,
+            onTap: _tempFileSize > 0 ? () => _clearCacheType('temp') : null,
           ),
         ],
       ),
@@ -375,9 +369,7 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
-        onPressed: _isClearing || _totalCacheSize == 0
-            ? null
-            : _clearAllCache,
+        onPressed: _isClearing || _totalCacheSize == 0 ? null : _clearAllCache,
         icon: _isClearing
             ? const SizedBox(
                 width: 20,

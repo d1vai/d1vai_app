@@ -25,7 +25,9 @@ class ProjectOverviewStatsCard extends StatelessWidget {
             child: _StatBlock(
               label: 'Created',
               value: project.createdAt.isNotEmpty
-                  ? DateFormat('MMM d, yyyy').format(DateTime.parse(project.createdAt))
+                  ? DateFormat(
+                      'MMM d, yyyy',
+                    ).format(DateTime.parse(project.createdAt))
                   : 'Unknown',
             ),
           ),
@@ -106,10 +108,7 @@ class _StatBlock extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
-          ),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -154,11 +153,7 @@ class ProjectDeploymentLink extends StatelessWidget {
           ),
           if (url != null && url!.isNotEmpty) ...[
             const SizedBox(width: 4),
-            Icon(
-              Icons.open_in_new,
-              size: 14,
-              color: theme.colorScheme.primary,
-            ),
+            Icon(Icons.open_in_new, size: 14, color: theme.colorScheme.primary),
           ],
         ],
       ),

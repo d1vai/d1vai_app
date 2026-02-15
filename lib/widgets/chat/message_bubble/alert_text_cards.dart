@@ -35,10 +35,7 @@ class ChatAlertTextCard extends StatelessWidget {
               Container(
                 width: 8,
                 height: 8,
-                decoration: BoxDecoration(
-                  color: tint,
-                  shape: BoxShape.circle,
-                ),
+                decoration: BoxDecoration(color: tint, shape: BoxShape.circle),
               ),
               const SizedBox(width: 8),
               Text(
@@ -81,8 +78,9 @@ class ChatCompletionTextCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final Color tint =
-        success ? chatSuccessTint(theme) : theme.colorScheme.error;
+    final Color tint = success
+        ? chatSuccessTint(theme)
+        : theme.colorScheme.error;
 
     return ChatMessageCard(
       backgroundColor: tint.withValues(alpha: 0.10),
@@ -93,10 +91,7 @@ class ChatCompletionTextCard extends StatelessWidget {
             width: 8,
             height: 8,
             margin: const EdgeInsets.only(top: 4),
-            decoration: BoxDecoration(
-              color: tint,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: tint, shape: BoxShape.circle),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -117,4 +112,3 @@ class ChatCompletionTextCard extends StatelessWidget {
     );
   }
 }
-

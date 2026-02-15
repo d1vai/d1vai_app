@@ -58,7 +58,8 @@ class _MarkdownTextState extends State<MarkdownText> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final baseStyle = widget.style ??
+    final baseStyle =
+        widget.style ??
         theme.textTheme.bodyMedium?.copyWith(
           color: theme.colorScheme.onSurface,
           fontSize: 13,
@@ -199,68 +200,122 @@ class _MarkdownTextState extends State<MarkdownText> {
     final widgets = <Widget>[];
     for (final b in blocks) {
       switch (b.kind) {
-        case _BlockKind.heading: {
-          final scale = switch (b.headingLevel) {
-            1 => 1.16,
-            2 => 1.10,
-            3 => 1.06,
-            _ => 1.01,
-          };
-          widgets.add(
-            Padding(
-              padding: const EdgeInsets.only(top: 4, bottom: 2),
-              child: Text(
-                b.text,
-                style: baseStyle.copyWith(
-                  fontSize: (baseStyle.fontSize ?? 14) * scale,
-                  fontWeight: FontWeight.w800,
-                  height: 1.15,
-                ),
-              ),
-            ),
-          );
-          break;
-        }
-        case _BlockKind.paragraph: {
-          widgets.add(
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: RichText(
-                text: TextSpan(
-                  style: baseStyle,
-                  children: _parseInline(context, b.text, baseStyle),
-                ),
-              ),
-            ),
-          );
-          break;
-        }
-        case _BlockKind.list: {
-          final bulletStyle = baseStyle.copyWith(
-            color: baseStyle.color?.withValues(alpha: 0.9) ??
-                theme.colorScheme.onSurface.withValues(alpha: 0.9),
-            fontWeight: FontWeight.w700,
-          );
-          for (var idx = 0; idx < b.items.length; idx++) {
-            final marker = b.ordered ? '${idx + 1}.' : '•';
+        case _BlockKind.heading:
+          {
+            final scale = switch (b.headingLevel) {
+              1 => 1.16,
+              2 => 1.10,
+              3 => 1.06,
+              _ => 1.01,
+            };
             widgets.add(
               Padding(
-                padding: const EdgeInsets.only(bottom: 2),
+                padding: const EdgeInsets.only(top: 4, bottom: 2),
+                child: Text(
+                  b.text,
+                  style: baseStyle.copyWith(
+                    fontSize: (baseStyle.fontSize ?? 14) * scale,
+                    fontWeight: FontWeight.w800,
+                    height: 1.15,
+                  ),
+                ),
+              ),
+            );
+            break;
+          }
+        case _BlockKind.paragraph:
+          {
+            widgets.add(
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: RichText(
+                  text: TextSpan(
+                    style: baseStyle,
+                    children: _parseInline(context, b.text, baseStyle),
+                  ),
+                ),
+              ),
+            );
+            break;
+          }
+        case _BlockKind.list:
+          {
+            final bulletStyle = baseStyle.copyWith(
+              color:
+                  baseStyle.color?.withValues(alpha: 0.9) ??
+                  theme.colorScheme.onSurface.withValues(alpha: 0.9),
+              fontWeight: FontWeight.w700,
+            );
+            for (var idx = 0; idx < b.items.length; idx++) {
+              final marker = b.ordered ? '${idx + 1}.' : '•';
+              widgets.add(
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: b.ordered ? 22 : 14,
+                        child: Text(marker, style: bulletStyle),
+                      ),
+                      Expanded(
+                        child: RichText(
+                          text: TextSpan(
+                            style: baseStyle,
+                            children: _parseInline(
+                              context,
+                              b.items[idx],
+                              baseStyle,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+            widgets.add(const SizedBox(height: 1));
+            break;
+          }
+        case _BlockKind.quote:
+          {
+            final quoteBg = theme.colorScheme.surfaceContainerHighest
+                .withValues(
+                  alpha: theme.brightness == Brightness.dark ? 0.22 : 0.30,
+                );
+            widgets.add(
+              Container(
+                margin: const EdgeInsets.only(bottom: 6),
+                padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
+                decoration: BoxDecoration(
+                  color: quoteBg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(
-                      width: b.ordered ? 22 : 14,
-                      child: Text(marker, style: bulletStyle),
+                    Container(
+                      width: 3,
+                      height: 16,
+                      margin: const EdgeInsets.only(top: 2),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(
+                          alpha: 0.55,
+                        ),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     Expanded(
-                      child: RichText(
-                        text: TextSpan(
-                          style: baseStyle,
-                          children: _parseInline(
-                            context,
-                            b.items[idx],
-                            baseStyle,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: _buildBlocks(
+                          context,
+                          b.text,
+                          baseStyle.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant
+                                .withValues(alpha: 0.9),
                           ),
                         ),
                       ),
@@ -269,118 +324,74 @@ class _MarkdownTextState extends State<MarkdownText> {
                 ),
               ),
             );
+            break;
           }
-          widgets.add(const SizedBox(height: 1));
-          break;
-        }
-        case _BlockKind.quote: {
-          final quoteBg = theme.colorScheme.surfaceContainerHighest.withValues(
-            alpha: theme.brightness == Brightness.dark ? 0.22 : 0.30,
-          );
-          widgets.add(
-            Container(
-              margin: const EdgeInsets.only(bottom: 6),
-              padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
-              decoration: BoxDecoration(
-                color: quoteBg,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 3,
-                    height: 16,
-                    margin: const EdgeInsets.only(top: 2),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.55),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: _buildBlocks(
-                        context,
-                        b.text,
-                        baseStyle.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant.withValues(
-                            alpha: 0.9,
+        case _BlockKind.code:
+          {
+            final lang = b.lang.trim();
+            widgets.add(
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        left: 2,
+                        right: 2,
+                        bottom: 6,
+                      ),
+                      child: Row(
+                        children: [
+                          if (lang.isNotEmpty)
+                            Text(
+                              lang,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant
+                                    .withValues(alpha: 0.85),
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                          const Spacer(),
+                          InkWell(
+                            onTap: () async {
+                              await Clipboard.setData(
+                                ClipboardData(text: b.code),
+                              );
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Copied code'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            },
+                            borderRadius: BorderRadius.circular(8),
+                            child: Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: Icon(
+                                Icons.copy,
+                                size: 14,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-          );
-          break;
-        }
-        case _BlockKind.code: {
-          final lang = b.lang.trim();
-          widgets.add(
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 2, right: 2, bottom: 6),
-                    child: Row(
-                      children: [
-                        if (lang.isNotEmpty)
-                          Text(
-                            lang,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color:
-                                  theme.colorScheme.onSurfaceVariant.withValues(
-                                alpha: 0.85,
-                              ),
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.2,
-                            ),
-                          ),
-                        const Spacer(),
-                        InkWell(
-                          onTap: () async {
-                            await Clipboard.setData(
-                              ClipboardData(text: b.code),
-                            );
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Copied code'),
-                                  duration: Duration(seconds: 2),
-                                ),
-                              );
-                            }
-                          },
-                          borderRadius: BorderRadius.circular(8),
-                          child: Padding(
-                            padding: const EdgeInsets.all(4),
-                            child: Icon(
-                              Icons.copy,
-                              size: 14,
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ),
-                      ],
+                    CodeHighlightBlock(
+                      text: b.code,
+                      language: lang.isNotEmpty ? lang : null,
+                      maxVisibleLines: 18,
                     ),
-                  ),
-                  CodeHighlightBlock(
-                    text: b.code,
-                    language: lang.isNotEmpty ? lang : null,
-                    maxVisibleLines: 18,
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          );
-          break;
-        }
+            );
+            break;
+          }
       }
     }
     return widgets;
@@ -448,8 +459,8 @@ class _MarkdownTextState extends State<MarkdownText> {
             text: code,
             style: baseStyle.copyWith(
               fontFamily: 'monospace',
-              backgroundColor:
-                  theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.7),
+              backgroundColor: theme.colorScheme.surfaceContainerHighest
+                  .withValues(alpha: 0.7),
             ),
           ),
         );

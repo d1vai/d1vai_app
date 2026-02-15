@@ -111,10 +111,7 @@ class DialogTrigger extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (child is! DialogContent || child is! DialogOverlay) {
-      return GestureDetector(
-        onTap: onOpenChange,
-        child: child,
-      );
+      return GestureDetector(onTap: onOpenChange, child: child);
     }
     return child;
   }
@@ -124,10 +121,7 @@ class DialogTrigger extends StatelessWidget {
 class DialogPortal extends StatelessWidget {
   final Widget child;
 
-  const DialogPortal({
-    super.key,
-    required this.child,
-  });
+  const DialogPortal({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -157,13 +151,12 @@ class DialogOverlay extends StatelessWidget {
     if (!open) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
-    final overlayColor = color ?? theme.colorScheme.scrim.withValues(alpha: 0.5);
+    final overlayColor =
+        color ?? theme.colorScheme.scrim.withValues(alpha: 0.5);
 
     Widget overlay = GestureDetector(
       onTap: onClose,
-      child: Container(
-        color: overlayColor,
-      ),
+      child: Container(color: overlayColor),
     );
 
     if (blur) {
@@ -229,10 +222,10 @@ class _DialogContentState extends State<DialogContent> {
       return widget.child ?? const SizedBox.shrink();
     }
 
-    final effectiveWidth = widget.width ?? MediaQuery.of(context).size.width * 0.9;
+    final effectiveWidth =
+        widget.width ?? MediaQuery.of(context).size.width * 0.9;
     final effectiveHeight = widget.height;
-    final effectivePadding =
-        widget.padding ?? const EdgeInsets.all(24.0);
+    final effectivePadding = widget.padding ?? const EdgeInsets.all(24.0);
     final effectiveBorderRadius =
         widget.borderRadius ?? BorderRadius.circular(12.0);
 
@@ -240,18 +233,20 @@ class _DialogContentState extends State<DialogContent> {
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: effectiveWidth,
-          maxHeight: effectiveHeight ?? MediaQuery.of(context).size.height * 0.8,
+          maxHeight:
+              effectiveHeight ?? MediaQuery.of(context).size.height * 0.8,
         ),
         child: Material(
-          color: widget.backgroundColor ??
-              Theme.of(context).colorScheme.surface,
+          color:
+              widget.backgroundColor ?? Theme.of(context).colorScheme.surface,
           elevation: 8,
           borderRadius: effectiveBorderRadius,
           child: Container(
             margin: widget.margin,
             padding: effectivePadding,
             decoration: BoxDecoration(
-              color: widget.backgroundColor ??
+              color:
+                  widget.backgroundColor ??
                   Theme.of(context).colorScheme.surface,
               borderRadius: effectiveBorderRadius,
             ),
@@ -306,10 +301,7 @@ class DialogHeader extends StatelessWidget {
             onPressed: onClose,
             icon: const Icon(Icons.close),
             iconSize: 20,
-            constraints: const BoxConstraints(
-              minWidth: 32,
-              minHeight: 32,
-            ),
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
           ),
       ],
     );
@@ -322,24 +314,15 @@ class DialogTitle extends StatelessWidget {
   final String? text;
   final TextStyle? style;
 
-  const DialogTitle({
-    super.key,
-    this.child,
-    this.text,
-    this.style,
-  });
+  const DialogTitle({super.key, this.child, this.text, this.style});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final effectiveStyle = style ??
-        theme.textTheme.titleLarge?.copyWith(
-          fontWeight: FontWeight.bold,
-        ) ??
-        const TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-        );
+    final effectiveStyle =
+        style ??
+        theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold) ??
+        const TextStyle(fontSize: 20, fontWeight: FontWeight.bold);
 
     if (child != null) {
       return child!;
@@ -348,10 +331,7 @@ class DialogTitle extends StatelessWidget {
     if (text != null) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 8),
-        child: Text(
-          text!,
-          style: effectiveStyle,
-        ),
+        child: Text(text!, style: effectiveStyle),
       );
     }
 
@@ -377,7 +357,8 @@ class DialogDescription extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final effectiveStyle = style ??
+    final effectiveStyle =
+        style ??
         theme.textTheme.bodyMedium?.copyWith(
           color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
         ) ??
@@ -387,10 +368,7 @@ class DialogDescription extends StatelessWidget {
         );
 
     if (child != null) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: child!,
-      );
+      return Padding(padding: const EdgeInsets.only(bottom: 8), child: child!);
     }
 
     if (text != null) {
@@ -432,13 +410,11 @@ class DialogFooter extends StatelessWidget {
       padding: padding ?? const EdgeInsets.only(top: 16),
       child: Row(
         mainAxisAlignment: alignment,
-        children: children!
-            .expand((child) => [
-                  child,
-                  const SizedBox(width: 8),
-                ])
-            .toList()
-          ..removeLast(),
+        children:
+            children!
+                .expand((child) => [child, const SizedBox(width: 8)])
+                .toList()
+              ..removeLast(),
       ),
     );
   }
@@ -469,14 +445,8 @@ class SimpleDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final footerWidgets = <Widget>[
       if (cancelText != null && showCancel)
-        OutlinedButton(
-          onPressed: onCancel,
-          child: Text(cancelText!),
-        ),
-      ElevatedButton(
-        onPressed: onConfirm,
-        child: Text(confirmText!),
-      ),
+        OutlinedButton(onPressed: onCancel, child: Text(cancelText!)),
+      ElevatedButton(onPressed: onConfirm, child: Text(confirmText!)),
     ];
 
     return DialogContent(

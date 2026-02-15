@@ -240,13 +240,12 @@ class SnackBarHelper {
         message: message,
         visual: visual,
         actionLabel: actionLabel,
-        onActionPressed:
-            actionLabel != null && onActionPressed != null
-                ? () {
-                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                    onActionPressed();
-                  }
-                : null,
+        onActionPressed: actionLabel != null && onActionPressed != null
+            ? () {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                onActionPressed();
+              }
+            : null,
       ),
     );
 
@@ -356,7 +355,8 @@ class _SnackBarCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: theme.textTheme.titleSmall?.copyWith(
+                  style:
+                      theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                       ) ??
                       const TextStyle(fontWeight: FontWeight.w800),
@@ -364,7 +364,8 @@ class _SnackBarCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   message,
-                  style: theme.textTheme.bodySmall?.copyWith(
+                  style:
+                      theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                         height: 1.25,
                       ) ??
@@ -382,7 +383,10 @@ class _SnackBarCard extends StatelessWidget {
               onPressed: onActionPressed,
               style: TextButton.styleFrom(
                 foregroundColor: visual.accent,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 minimumSize: const Size(0, 0),
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 visualDensity: VisualDensity.compact,
@@ -466,7 +470,8 @@ class _ToastCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: theme.textTheme.titleSmall?.copyWith(
+                  style:
+                      theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                       ) ??
                       const TextStyle(fontWeight: FontWeight.w800),
@@ -474,7 +479,8 @@ class _ToastCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   message,
-                  style: theme.textTheme.bodySmall?.copyWith(
+                  style:
+                      theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                         height: 1.25,
                       ) ??
