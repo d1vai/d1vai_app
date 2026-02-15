@@ -5,6 +5,7 @@ import '../models/message.dart';
 import '../models/model_config.dart';
 import '../models/outbox.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../services/chat_service.dart';
 import '../services/model_config_service.dart';
 import '../services/workspace_service.dart';
@@ -28,7 +29,17 @@ class _OutboxAborted implements Exception {
   String toString() => 'outbox_aborted';
 }
 
-enum _ChatAppBarAction { workspaceStatus, refresh, clearChat }
+enum _ChatAppBarAction {
+  openOverview,
+  openEnvironment,
+  openDatabase,
+  openPayment,
+  openDeployHistory,
+  openAnalytics,
+  workspaceStatus,
+  refresh,
+  clearChat,
+}
 
 /// Main chat screen for AI conversations
 class ChatScreen extends StatefulWidget {
@@ -1564,6 +1575,24 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _handleAppBarAction(_ChatAppBarAction action) {
     switch (action) {
+      case _ChatAppBarAction.openOverview:
+        context.push('/projects/${widget.projectId}?tab=overview');
+        break;
+      case _ChatAppBarAction.openEnvironment:
+        context.push('/projects/${widget.projectId}?tab=environment');
+        break;
+      case _ChatAppBarAction.openDatabase:
+        context.push('/projects/${widget.projectId}?tab=database');
+        break;
+      case _ChatAppBarAction.openPayment:
+        context.push('/projects/${widget.projectId}?tab=payment');
+        break;
+      case _ChatAppBarAction.openDeployHistory:
+        context.push('/projects/${widget.projectId}?tab=deployment');
+        break;
+      case _ChatAppBarAction.openAnalytics:
+        context.push('/projects/${widget.projectId}?tab=analytics');
+        break;
       case _ChatAppBarAction.workspaceStatus:
         unawaited(_refreshWorkspaceStatus(bypassCache: true));
         break;
@@ -1688,6 +1717,67 @@ class _ChatScreenState extends State<ChatScreen> {
             icon: const Icon(Icons.more_vert),
             onSelected: _handleAppBarAction,
             itemBuilder: (context) => [
+              const PopupMenuItem<_ChatAppBarAction>(
+                value: _ChatAppBarAction.openOverview,
+                child: Row(
+                  children: [
+                    Icon(Icons.dashboard_outlined, size: 18),
+                    SizedBox(width: 10),
+                    Text('Overview'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<_ChatAppBarAction>(
+                value: _ChatAppBarAction.openEnvironment,
+                child: Row(
+                  children: [
+                    Icon(Icons.key_outlined, size: 18),
+                    SizedBox(width: 10),
+                    Text('Environment'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<_ChatAppBarAction>(
+                value: _ChatAppBarAction.openDatabase,
+                child: Row(
+                  children: [
+                    Icon(Icons.storage_outlined, size: 18),
+                    SizedBox(width: 10),
+                    Text('Database'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<_ChatAppBarAction>(
+                value: _ChatAppBarAction.openPayment,
+                child: Row(
+                  children: [
+                    Icon(Icons.payment_outlined, size: 18),
+                    SizedBox(width: 10),
+                    Text('Payment'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<_ChatAppBarAction>(
+                value: _ChatAppBarAction.openDeployHistory,
+                child: Row(
+                  children: [
+                    Icon(Icons.history_outlined, size: 18),
+                    SizedBox(width: 10),
+                    Text('Deploy History'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<_ChatAppBarAction>(
+                value: _ChatAppBarAction.openAnalytics,
+                child: Row(
+                  children: [
+                    Icon(Icons.analytics_outlined, size: 18),
+                    SizedBox(width: 10),
+                    Text('Analytics'),
+                  ],
+                ),
+              ),
+              const PopupMenuDivider(),
               PopupMenuItem<_ChatAppBarAction>(
                 value: _ChatAppBarAction.workspaceStatus,
                 child: Row(
