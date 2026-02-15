@@ -109,11 +109,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
             Expanded(
               child: IndexedStack(
                 index: _currentChatTabIndex,
-                children: [
-                  _buildChatPreviewTabMobile(),
-                  _buildChatCodeTab(),
-                  _buildChatEnvTab(),
-                ],
+                children: [_buildChatPreviewTabMobile(), _buildChatCodeTab()],
               ),
             ),
           ],
@@ -249,11 +245,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
             Expanded(
               child: IndexedStack(
                 index: _currentChatTabIndex,
-                children: [
-                  _buildChatPreviewTab(),
-                  _buildChatCodeTab(),
-                  _buildChatEnvTab(),
-                ],
+                children: [_buildChatPreviewTab(), _buildChatCodeTab()],
               ),
             ),
           ],
@@ -421,23 +413,6 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
         setState(() {
           _currentChatTabIndex = 0;
         });
-      },
-    );
-  }
-
-  Widget _buildChatEnvTab() {
-    if (_envVars.isEmpty && !_isLoadingEnvVars) {
-      _loadEnvVars();
-    }
-
-    return ProjectChatEnvTab(
-      envVars: _envVars,
-      isLoading: _isLoadingEnvVars,
-      onAskAboutEnvVar: (envVar) {
-        final question =
-            'Can you explain what the environment variable "${envVar.key}" is for and how it should be configured?';
-        _sendFirstMessage(question);
-        _currentChatTabIndex = 0;
       },
     );
   }

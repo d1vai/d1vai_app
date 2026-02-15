@@ -26,7 +26,11 @@ class ProjectDetailScreen extends StatefulWidget {
   final String projectId;
   final String? initialTab;
 
-  const ProjectDetailScreen({super.key, required this.projectId, this.initialTab});
+  const ProjectDetailScreen({
+    super.key,
+    required this.projectId,
+    this.initialTab,
+  });
 
   @override
   State<ProjectDetailScreen> createState() => _ProjectDetailScreenState();
@@ -45,8 +49,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   final List<_TabItem> _tabs = const [
     _TabItem('Overview', Icons.dashboard),
     _TabItem('Chat', Icons.chat),
+    _TabItem('Environment', Icons.key),
     _TabItem('Database', Icons.storage),
-    _TabItem('API', Icons.api),
     _TabItem('GitHub', Icons.code),
     _TabItem('Payment', Icons.payment),
     _TabItem('Deploy', Icons.cloud_upload),
@@ -71,7 +75,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     }
 
     // Populate immediately (enables Hero on first frame), then refresh async.
-    final projectProvider = Provider.of<ProjectProvider>(context, listen: false);
+    final projectProvider = Provider.of<ProjectProvider>(
+      context,
+      listen: false,
+    );
     final cached = projectProvider.getProjectById(widget.projectId);
     if (cached != null) {
       _project = cached;
@@ -91,10 +98,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         return 0;
       case 'chat':
         return 1;
+      case 'environment':
+      case 'env':
+      case 'variables':
+      case 'api':
+        return 2;
       case 'database':
       case 'db':
-        return 2;
-      case 'api':
         return 3;
       case 'github':
         return 4;
@@ -216,10 +226,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
       context,
       url: uri,
       title: project.projectName,
-      message:
-          project.projectDescription.trim().isNotEmpty
-              ? project.projectDescription.trim()
-              : (prod.isNotEmpty ? 'Production link' : 'Preview link'),
+      message: project.projectDescription.trim().isNotEmpty
+          ? project.projectDescription.trim()
+          : (prod.isNotEmpty ? 'Production link' : 'Preview link'),
     );
   }
 
@@ -274,12 +283,12 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
             projectId: project.id,
             previewUrl: project.latestPreviewUrl,
           ),
+          ProjectApiTab(projectId: project.id),
           ProjectDatabaseTab(
             project: project,
             onAskAi: _handleAskAi,
             onRefreshProject: _loadProject,
           ),
-          ProjectApiTab(projectId: project.id),
           ProjectGithubTab(project: project),
           ProjectPaymentTab(projectId: project.id, onAskAi: _handleAskAi),
           ProjectDeployTab(
@@ -351,10 +360,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
-                  tabs:
-                      _tabs
-                          .map((tab) => D1VTab(icon: tab.icon, text: tab.label))
-                          .toList(),
+                  tabs: _tabs
+                      .map((tab) => D1VTab(icon: tab.icon, text: tab.label))
+                      .toList(),
                 ),
               ),
             ),

@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../models/env_var.dart';
 import '../../models/message.dart';
 import '../../models/model_config.dart';
 import '../../models/outbox.dart';
@@ -21,7 +20,6 @@ import '../chat/floating_chat_button.dart';
 import '../chat/message_list.dart';
 import '../chat/project_chat/no_preview_available_view.dart';
 import '../chat/project_chat/project_chat_code_tab.dart';
-import '../chat/project_chat/project_chat_env_tab.dart';
 import '../chat/project_chat/project_chat_preview_header.dart';
 import '../chat/project_chat/project_chat_top_bar.dart';
 import '../chat/project_chat/project_chat_web_view.dart';

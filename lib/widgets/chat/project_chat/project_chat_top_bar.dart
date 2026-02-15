@@ -66,13 +66,6 @@ class ProjectChatTopBar extends StatelessWidget {
                   icon: Icons.code,
                   onTap: () => onTabSelected(1),
                 ),
-                const SizedBox(width: 8),
-                _TabButton(
-                  isSelected: currentIndex == 2,
-                  label: null,
-                  icon: Icons.settings,
-                  onTap: () => onTabSelected(2),
-                ),
               ],
             ),
           ),

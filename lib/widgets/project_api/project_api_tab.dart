@@ -1,25 +1,19 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../models/env_var.dart';
-import '../../screens/project_api_keys_screen.dart';
 import '../../services/d1vai_service.dart';
 import '../../core/auth_expiry_bus.dart';
 import '../../utils/error_utils.dart';
 import '../snackbar_helper.dart';
 import 'env_var_editor_dialog.dart';
 
-/// 项目详情页 - API Tab（环境变量 + API 工具）
+/// 项目详情页 - Environment Tab（环境变量）
 class ProjectApiTab extends StatefulWidget {
   final String projectId;
 
-  const ProjectApiTab({
-    super.key,
-    required this.projectId,
-  });
+  const ProjectApiTab({super.key, required this.projectId});
 
   @override
   State<ProjectApiTab> createState() => _ProjectApiTabState();
@@ -31,9 +25,6 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
   bool _isInitialized = false;
   String? _loadError;
   bool _showValues = false;
-  bool _exporting = false;
-  bool _importing = false;
-  bool _syncingVercel = false;
 
   @override
   void didChangeDependencies() {
@@ -78,14 +69,12 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
       });
       final authExpired = isAuthExpiredText(msg);
       if (authExpired) {
-        AuthExpiryBus.trigger(endpoint: '/api/projects/${widget.projectId}/env-vars');
+        AuthExpiryBus.trigger(
+          endpoint: '/api/projects/${widget.projectId}/env-vars',
+        );
         return;
       }
-      SnackBarHelper.showError(
-        context,
-        title: 'Error',
-        message: msg,
-      );
+      SnackBarHelper.showError(context, title: 'Error', message: msg);
     }
   }
 
@@ -114,11 +103,7 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
     } catch (e) {
       final msg = humanizeError(e);
       if (!mounted) return;
-      SnackBarHelper.showError(
-        context,
-        title: 'Create failed',
-        message: msg,
-      );
+      SnackBarHelper.showError(context, title: 'Create failed', message: msg);
     }
   }
 
@@ -129,7 +114,10 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
 
     try {
       final service = D1vaiService();
-      final data = await service.listEnvVars(widget.projectId, showValues: true);
+      final data = await service.listEnvVars(
+        widget.projectId,
+        showValues: true,
+      );
       final vars = data
           .map((item) => EnvVar.fromJson(item as Map<String, dynamic>))
           .toList();
@@ -148,10 +136,8 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
     if (!mounted) return;
     final result = await showDialog<EnvVarEditorResult>(
       context: context,
-      builder: (context) => EnvVarEditorDialog(
-        initial: hydrated,
-        allowEditKey: false,
-      ),
+      builder: (context) =>
+          EnvVarEditorDialog(initial: hydrated, allowEditKey: false),
     );
     if (result == null) return;
     if (envVar.id == null) return;
@@ -172,11 +158,7 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
     } catch (e) {
       final msg = humanizeError(e);
       if (!mounted) return;
-      SnackBarHelper.showError(
-        context,
-        title: 'Update failed',
-        message: msg,
-      );
+      SnackBarHelper.showError(context, title: 'Update failed', message: msg);
     }
   }
 
@@ -219,149 +201,7 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
     } catch (e) {
       final msg = humanizeError(e);
       if (!mounted) return;
-      SnackBarHelper.showError(
-        context,
-        title: 'Delete failed',
-        message: msg,
-      );
-    }
-  }
-
-  Future<void> _exportEnvVars() async {
-    if (_exporting) return;
-    setState(() => _exporting = true);
-    try {
-      final service = D1vaiService();
-      final res = await service.exportEnvVars(widget.projectId);
-      final content =
-          (res['content'] ?? res['env'] ?? res['data'] ?? '').toString();
-      if (content.trim().isEmpty) {
-        throw Exception('Empty export content');
-      }
-      await Clipboard.setData(ClipboardData(text: content));
-      if (!mounted) return;
-      SnackBarHelper.showSuccess(
-        context,
-        title: 'Exported',
-        message: 'Copied .env to clipboard',
-        actionLabel: 'Share',
-        onActionPressed: () {
-          Share.share(content, subject: '${widget.projectId}.env');
-        },
-      );
-    } catch (e) {
-      if (!mounted) return;
-      SnackBarHelper.showError(
-        context,
-        title: 'Export failed',
-        message: humanizeError(e),
-      );
-    } finally {
-      if (mounted) setState(() => _exporting = false);
-    }
-  }
-
-  Future<void> _importEnvVars() async {
-    if (_importing) return;
-    final controller = TextEditingController();
-    var overwrite = true;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setStateDialog) {
-            return AlertDialog(
-              title: const Text('Import .env'),
-              content: SizedBox(
-                width: 560,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: controller,
-                      decoration: const InputDecoration(
-                        hintText: 'Paste .env content here…',
-                      ),
-                      maxLines: 10,
-                    ),
-                    const SizedBox(height: 8),
-                    SwitchListTile.adaptive(
-                      value: overwrite,
-                      onChanged: (v) => setStateDialog(() => overwrite = v),
-                      title: const Text('Overwrite existing'),
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  child: const Text('Import'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-    if (ok != true) return;
-
-    final content = controller.text;
-    controller.dispose();
-    if (content.trim().isEmpty) return;
-
-    setState(() => _importing = true);
-    try {
-      final service = D1vaiService();
-      final res = await service.batchImportEnvVars(widget.projectId, {
-        'env_content': content,
-        'overwrite': overwrite,
-      });
-      if (!mounted) return;
-      SnackBarHelper.showSuccess(
-        context,
-        title: 'Imported',
-        message: (res['message'] ?? 'Import completed').toString(),
-      );
-      await _loadEnvVars();
-    } catch (e) {
-      if (!mounted) return;
-      SnackBarHelper.showError(
-        context,
-        title: 'Import failed',
-        message: humanizeError(e),
-      );
-    } finally {
-      if (mounted) setState(() => _importing = false);
-    }
-  }
-
-  Future<void> _syncToVercel() async {
-    if (_syncingVercel) return;
-    setState(() => _syncingVercel = true);
-    try {
-      final service = D1vaiService();
-      final res = await service.syncEnvToVercel(widget.projectId);
-      if (!mounted) return;
-      SnackBarHelper.showSuccess(
-        context,
-        title: 'Synced',
-        message: (res['message'] ?? 'Synced to Vercel').toString(),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      SnackBarHelper.showError(
-        context,
-        title: 'Sync failed',
-        message: humanizeError(e),
-      );
-    } finally {
-      if (mounted) setState(() => _syncingVercel = false);
+      SnackBarHelper.showError(context, title: 'Delete failed', message: msg);
     }
   }
 
@@ -393,9 +233,14 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
                         ),
                       ),
                       ElevatedButton.icon(
-                        onPressed: _isLoadingEnvVars ? null : _showCreateEnvVarDialog,
+                        onPressed: _isLoadingEnvVars
+                            ? null
+                            : _showCreateEnvVarDialog,
                         icon: const Icon(Icons.add, size: 18),
-                        label: const Text('Add', style: TextStyle(fontSize: 12)),
+                        label: const Text(
+                          'Add',
+                          style: TextStyle(fontSize: 12),
+                        ),
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
@@ -421,38 +266,40 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
                       ),
                       Switch.adaptive(
                         value: _showValues,
-                        onChanged:
-                            _isLoadingEnvVars
-                                ? null
-                                : (v) async {
-                                    final shouldShow = v;
-                                    if (shouldShow) {
-                                      final ok = await showDialog<bool>(
-                                        context: context,
-                                        builder: (context) {
-                                          return AlertDialog(
-                                            title: const Text('Show values?'),
-                                            content: const Text(
-                                              'This will reveal sensitive environment values on screen.',
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () => Navigator.of(context).pop(false),
-                                                child: const Text('Cancel'),
-                                              ),
-                                              ElevatedButton(
-                                                onPressed: () => Navigator.of(context).pop(true),
-                                                child: const Text('Show'),
-                                              ),
-                                            ],
-                                          );
-                                        },
+                        onChanged: _isLoadingEnvVars
+                            ? null
+                            : (v) async {
+                                final shouldShow = v;
+                                if (shouldShow) {
+                                  final ok = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) {
+                                      return AlertDialog(
+                                        title: const Text('Show values?'),
+                                        content: const Text(
+                                          'This will reveal sensitive environment values on screen.',
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.of(
+                                              context,
+                                            ).pop(false),
+                                            child: const Text('Cancel'),
+                                          ),
+                                          ElevatedButton(
+                                            onPressed: () =>
+                                                Navigator.of(context).pop(true),
+                                            child: const Text('Show'),
+                                          ),
+                                        ],
                                       );
-                                      if (ok != true) return;
-                                    }
-                                    setState(() => _showValues = v);
-                                    await _loadEnvVars();
-                                  },
+                                    },
+                                  );
+                                  if (ok != true) return;
+                                }
+                                setState(() => _showValues = v);
+                                await _loadEnvVars();
+                              },
                       ),
                     ],
                   ),
@@ -517,79 +364,6 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
                         onDelete: () => _confirmAndDeleteEnvVar(envVar),
                       ),
                     ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // API Tools
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'API Tools',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  ListTile(
-                    leading: Icon(Icons.key, color: theme.colorScheme.tertiary),
-                    title: const Text('API Keys'),
-                    subtitle: const Text('Manage your API keys'),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => ProjectApiKeysScreen(
-                            projectId: widget.projectId,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  const Divider(),
-                  ListTile(
-                    leading: Icon(Icons.description, color: theme.colorScheme.secondary),
-                    title: const Text('API Documentation'),
-                    subtitle: const Text('View API documentation'),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () {
-                      context.push('/api-docs');
-                    },
-                  ),
-                  const Divider(),
-                  ListTile(
-                    leading: Icon(Icons.download, color: theme.colorScheme.primary),
-                    title: const Text('Export Variables'),
-                    subtitle: const Text('Download all environment variables'),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: _exporting ? null : _exportEnvVars,
-                  ),
-                  const Divider(),
-                  ListTile(
-                    leading: Icon(Icons.upload, color: theme.colorScheme.primary),
-                    title: const Text('Import Variables'),
-                    subtitle: const Text('Bulk import from .env file'),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: _importing ? null : _importEnvVars,
-                  ),
-                  const Divider(),
-                  ListTile(
-                    leading: Icon(Icons.sync, color: theme.colorScheme.tertiary),
-                    title: const Text('Sync to Vercel'),
-                    subtitle: const Text('Push env vars to Vercel preview/production'),
-                    trailing: _syncingVercel
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: _syncingVercel ? null : _syncToVercel,
-                  ),
                 ],
               ),
             ),
@@ -669,8 +443,11 @@ class _EnvVarItem extends StatelessWidget {
                     value: 'delete',
                     child: Row(
                       children: [
-                        Icon(Icons.delete,
-                            size: 18, color: theme.colorScheme.error),
+                        Icon(
+                          Icons.delete,
+                          size: 18,
+                          color: theme.colorScheme.error,
+                        ),
                         SizedBox(width: 8),
                         Text(
                           'Delete',

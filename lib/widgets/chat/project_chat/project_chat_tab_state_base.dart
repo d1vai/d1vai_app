@@ -67,7 +67,7 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   final StreamController<void> _outboxSignals =
       StreamController<void>.broadcast(sync: true);
 
-  // Sub-tab state (Preview / Code / Env)
+  // Sub-tab state (Preview / Code)
   int _currentChatTabIndex = 0;
 
   // Preview runtime
@@ -80,10 +80,6 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   Timer? _deployAutoClearTimer;
   DateTime? _lastDeployCompletedAt;
 
-  // Environment variables for Env sub-tab
-  List<EnvVar> _envVars = [];
-  bool _isLoadingEnvVars = false;
-
   @override
   bool get wantKeepAlive => true;
 
@@ -94,7 +90,6 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   }
 
   Future<void> _initializeChat();
-  Future<void> _loadEnvVars();
   void _sendChatMessage(String text);
   void _sendFirstMessage(String text);
 

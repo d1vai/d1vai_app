@@ -727,35 +727,6 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     }
   }
 
-  @override
-  Future<void> _loadEnvVars() async {
-    if (_isLoadingEnvVars) return;
-    setState(() {
-      _isLoadingEnvVars = true;
-    });
-
-    try {
-      final service = D1vaiService();
-      final data = await service.listEnvVars(
-        widget.projectId,
-        showValues: false,
-      );
-      if (!mounted) return;
-      final vars = data
-          .map((e) => EnvVar.fromJson(e as Map<String, dynamic>))
-          .toList();
-      setState(() {
-        _envVars = List<EnvVar>.from(vars);
-        _isLoadingEnvVars = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _isLoadingEnvVars = false;
-      });
-    }
-  }
-
   /// 加载聊天历史
   Future<void> _loadChatHistory() async {
     final disableAutoConnect = _autoConnectDisabled;
