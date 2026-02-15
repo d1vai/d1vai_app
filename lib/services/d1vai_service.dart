@@ -318,8 +318,10 @@ class D1vaiService {
         if (enableDatabase != null) 'enable_database': enableDatabase,
         if (enableResend != null) 'enable_resend': enableResend,
       },
-      retries: 0,
-      timeout: const Duration(minutes: 4),
+      // Project bootstrap may involve remote template/git/bootstrap work.
+      // Give it more headroom and retry transient network disconnects.
+      retries: 2,
+      timeout: const Duration(minutes: 8),
     );
   }
 

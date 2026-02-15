@@ -8,6 +8,7 @@ class ProgressWidget extends StatefulWidget {
   final bool completed;
   final VoidCallback? onDone;
   final double width;
+  final Duration preCompleteDuration;
 
   const ProgressWidget({
     super.key,
@@ -15,6 +16,7 @@ class ProgressWidget extends StatefulWidget {
     this.completed = false,
     this.onDone,
     this.width = double.infinity,
+    this.preCompleteDuration = const Duration(seconds: 9),
   });
 
   @override
@@ -62,11 +64,24 @@ class _ProgressWidgetState extends State<ProgressWidget>
   }
 
   void _startProgressAnimation() {
-    // Animate progress through different phases
-    _animateProgress(0, 30, const Duration(seconds: 6));
+    // Animate progress through different phases until completion signal arrives.
+    final totalMs = widget.preCompleteDuration.inMilliseconds;
+    final firstPhaseMs = math.max(1, (totalMs * 2 / 3).round());
+    final secondPhaseMs = math.max(1, totalMs - firstPhaseMs);
+    _animateProgress(
+      0,
+      30,
+      Duration(milliseconds: firstPhaseMs),
+      secondPhaseMs,
+    );
   }
 
-  void _animateProgress(double from, double to, Duration duration) {
+  void _animateProgress(
+    double from,
+    double to,
+    Duration duration,
+    int secondPhaseMs,
+  ) {
     _progressTimer?.cancel();
     _progressTimer = Timer.periodic(const Duration(milliseconds: 16), (timer) {
       if (!mounted || widget.completed) {
@@ -104,9 +119,19 @@ class _ProgressWidgetState extends State<ProgressWidget>
 
         // Continue to next phase or hold at 89%
         if (to == 30) {
-          _animateProgress(30, 89, const Duration(seconds: 3));
+          _animateProgress(
+            30,
+            89,
+            Duration(milliseconds: secondPhaseMs),
+            secondPhaseMs,
+          );
         } else if (to < 89) {
-          _animateProgress(to, 89, const Duration(seconds: 3));
+          _animateProgress(
+            to,
+            89,
+            Duration(milliseconds: secondPhaseMs),
+            secondPhaseMs,
+          );
         }
         // If we reached 89%, stop here until completed
       }
@@ -124,7 +149,7 @@ class _ProgressWidgetState extends State<ProgressWidget>
 
     // First animate to 89% if not already there
     if (_progress < 89) {
-      _animateProgress(_progress, 89, const Duration(milliseconds: 500));
+      _animateProgress(_progress, 89, const Duration(milliseconds: 500), 500);
       _delayedTimer = Timer(const Duration(milliseconds: 500), () {
         if (!mounted) return;
         _animateTo100();

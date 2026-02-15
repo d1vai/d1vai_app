@@ -18,11 +18,12 @@ class CreateProjectLoadingView extends StatelessWidget {
             'Finalizing setup...',
           ],
           completed: false,
+          preCompleteDuration: Duration(seconds: 100),
           width: double.infinity,
         ),
         const SizedBox(height: 12),
         Text(
-          'Creating your project. This may take a few seconds...',
+          'Creating your project. This can take up to a couple of minutes...',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
           ),
