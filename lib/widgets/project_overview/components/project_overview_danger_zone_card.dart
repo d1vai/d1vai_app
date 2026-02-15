@@ -156,10 +156,12 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
                           const SizedBox(height: 10),
                           Text(
                             'Deleting ${project.projectName}…',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color:
-                                  Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
                           ),
                         ],
                       )
@@ -169,10 +171,12 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
                         children: [
                           Text(
                             'This action cannot be undone. Please type the project name to confirm deletion.',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color:
-                                  Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
                           ),
                           const SizedBox(height: 10),
                           Text(
@@ -323,13 +327,6 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Transfer ownership to another user. You will lose access.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -351,7 +348,9 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
               ),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: colorScheme.error.withValues(alpha: isDark ? 0.26 : 0.20),
+                color: colorScheme.error.withValues(
+                  alpha: isDark ? 0.26 : 0.20,
+                ),
               ),
             ),
             child: Row(
@@ -367,13 +366,6 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
                         style: theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w800,
                           color: colorScheme.error,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Permanently delete this project and its resources.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],

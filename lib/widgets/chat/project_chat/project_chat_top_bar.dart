@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../../models/model_config.dart';
+import '../../compact_selector.dart';
 import 'status_dot.dart';
 
 class ProjectChatTopBar extends StatelessWidget {
@@ -9,6 +12,11 @@ class ProjectChatTopBar extends StatelessWidget {
   final Color? workspaceDotColor;
   final String? workspaceTooltip;
   final VoidCallback? onWorkspacePressed;
+  final List<ModelInfo> models;
+  final String selectedModelId;
+  final ValueChanged<String>? onModelChanged;
+  final bool isModelLoading;
+  final bool isModelSwitching;
 
   const ProjectChatTopBar({
     super.key,
@@ -19,6 +27,11 @@ class ProjectChatTopBar extends StatelessWidget {
     this.workspaceDotColor,
     this.workspaceTooltip,
     this.onWorkspacePressed,
+    this.models = const <ModelInfo>[],
+    this.selectedModelId = '',
+    this.onModelChanged,
+    this.isModelLoading = false,
+    this.isModelSwitching = false,
   });
 
   @override
@@ -65,6 +78,34 @@ class ProjectChatTopBar extends StatelessWidget {
           ),
           Row(
             children: [
+              SizedBox(
+                width: 156,
+                child: CompactSelector(
+                  options: models
+                      .map(
+                        (m) =>
+                            CompactSelectorOption(value: m.id, label: m.name),
+                      )
+                      .toList(),
+                  value: selectedModelId.trim().isEmpty
+                      ? null
+                      : selectedModelId.trim(),
+                  placeholder: 'Model',
+                  tooltip: 'Select model',
+                  leadingIcon: Icons.auto_awesome_rounded,
+                  minWidth: 120,
+                  maxWidth: 156,
+                  isLoading: isModelLoading || isModelSwitching,
+                  onChanged:
+                      (isModelLoading ||
+                          isModelSwitching ||
+                          onModelChanged == null ||
+                          models.isEmpty)
+                      ? null
+                      : (v) => onModelChanged!(v),
+                ),
+              ),
+              const SizedBox(width: 8),
               if (workspaceDotColor != null)
                 _ActionIconButton(
                   iconWidget: ProjectChatStatusDot(
@@ -163,11 +204,8 @@ class _ActionIconButton extends StatelessWidget {
   final Widget? iconWidget;
   final VoidCallback onPressed;
 
-  const _ActionIconButton({
-    this.icon,
-    this.iconWidget,
-    required this.onPressed,
-  }) : assert(icon != null || iconWidget != null);
+  const _ActionIconButton({this.icon, this.iconWidget, required this.onPressed})
+    : assert(icon != null || iconWidget != null);
 
   @override
   Widget build(BuildContext context) {
@@ -189,12 +227,9 @@ class _ActionIconButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           child: Padding(
             padding: const EdgeInsets.all(10),
-            child: iconWidget ??
-                Icon(
-                  icon,
-                  size: 20,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+            child:
+                iconWidget ??
+                Icon(icon, size: 20, color: theme.colorScheme.onSurfaceVariant),
           ),
         ),
       ),

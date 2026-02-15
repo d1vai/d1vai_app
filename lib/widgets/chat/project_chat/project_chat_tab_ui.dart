@@ -97,6 +97,14 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
               onWorkspacePressed: () {
                 unawaited(_refreshWorkspaceStatus(bypassCache: true));
               },
+              models: _availableModels,
+              selectedModelId: _selectedModelId,
+              isModelLoading:
+                  _isLoadingModels ||
+                  _workspacePhase != WorkspacePhase.ready ||
+                  !_hasLoadedModelConfig,
+              isModelSwitching: _isSwitchingModel,
+              onModelChanged: (v) => unawaited(_handleModelChanged(v)),
             ),
             Expanded(
               child: IndexedStack(
@@ -190,6 +198,12 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
                               _showMobileChat = false;
                             });
                           },
+                          isModelReady: _selectedModelId.trim().isNotEmpty,
+                          isModelLoading:
+                              _isLoadingModels ||
+                              _isSwitchingModel ||
+                              _workspacePhase != WorkspacePhase.ready ||
+                              !_hasLoadedModelConfig,
                         ),
                       );
                     },
@@ -223,6 +237,14 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
               onWorkspacePressed: () {
                 unawaited(_refreshWorkspaceStatus(bypassCache: true));
               },
+              models: _availableModels,
+              selectedModelId: _selectedModelId,
+              isModelLoading:
+                  _isLoadingModels ||
+                  _workspacePhase != WorkspacePhase.ready ||
+                  !_hasLoadedModelConfig,
+              isModelSwitching: _isSwitchingModel,
+              onModelChanged: (v) => unawaited(_handleModelChanged(v)),
             ),
             Expanded(
               child: IndexedStack(
@@ -322,6 +344,12 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
                                   _showMobileChat = false;
                                 });
                               },
+                              isModelReady: _selectedModelId.trim().isNotEmpty,
+                              isModelLoading:
+                                  _isLoadingModels ||
+                                  _isSwitchingModel ||
+                                  _workspacePhase != WorkspacePhase.ready ||
+                                  !_hasLoadedModelConfig,
                             ),
                           );
                         },

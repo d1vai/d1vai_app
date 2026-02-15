@@ -29,8 +29,8 @@ class ProjectOverviewHealthMetricsCard extends StatelessWidget {
             title: 'Branch',
             status:
                 (project.workspaceCurrentBranch ??
-                    project.repositoryCurrentBranch ??
-                    '—'),
+                project.repositoryCurrentBranch ??
+                '—'),
             description: 'Active workspace/repository branch',
             icon: Icons.alt_route,
             isEnabled:
@@ -49,25 +49,26 @@ class ProjectOverviewHealthMetricsCard extends StatelessWidget {
                   ? project.latestProdDeploymentUrl
                   : project.vercelProdDomain,
             ),
-            description: project.latestProdDeploymentUrl != null &&
-                    project.latestProdDeploymentUrl!.isNotEmpty
-                ? 'Primary public endpoint'
-                : 'No domain configured',
+            description: null,
             icon: Icons.language,
-            isEnabled: project.latestProdDeploymentUrl != null &&
+            isEnabled:
+                project.latestProdDeploymentUrl != null &&
                 project.latestProdDeploymentUrl!.isNotEmpty,
+            statusOnNewLine: true,
           ),
           const Divider(height: 32),
           _HealthMetricItem(
             title: 'Analytics status',
-            status: (project.analyticsId != null &&
+            status:
+                (project.analyticsId != null &&
                         project.analyticsId!.trim().isNotEmpty) ||
                     project.analyticsEnabled == true
                 ? 'Enabled'
                 : 'Disabled',
             description: 'Traffic instrumentation',
             icon: Icons.analytics,
-            isEnabled: (project.analyticsId != null &&
+            isEnabled:
+                (project.analyticsId != null &&
                     project.analyticsId!.trim().isNotEmpty) ||
                 project.analyticsEnabled == true,
           ),
@@ -76,13 +77,14 @@ class ProjectOverviewHealthMetricsCard extends StatelessWidget {
             title: 'Database',
             status:
                 (project.projectDatabaseId != null &&
-                        project.projectDatabaseId! > 0)
-                    ? 'Enabled'
-                    : 'Disabled',
+                    project.projectDatabaseId! > 0)
+                ? 'Enabled'
+                : 'Disabled',
             description: 'Neon integration',
             icon: Icons.storage,
             isEnabled:
-                project.projectDatabaseId != null && project.projectDatabaseId! > 0,
+                project.projectDatabaseId != null &&
+                project.projectDatabaseId! > 0,
           ),
           const Divider(height: 32),
           _HealthMetricItem(
@@ -101,18 +103,20 @@ class ProjectOverviewHealthMetricsCard extends StatelessWidget {
 class _HealthMetricItem extends StatelessWidget {
   final String title;
   final String status;
-  final String description;
+  final String? description;
   final IconData icon;
   final bool isEnabled;
   final bool badgeMonospace;
+  final bool statusOnNewLine;
 
   const _HealthMetricItem({
     required this.title,
     required this.status,
-    required this.description,
+    this.description,
     required this.icon,
     required this.isEnabled,
     this.badgeMonospace = false,
+    this.statusOnNewLine = false,
   });
 
   @override
@@ -136,60 +140,123 @@ class _HealthMetricItem extends StatelessWidget {
     final badgeFg = isEnabled
         ? theme.colorScheme.onSurface.withValues(alpha: 0.92)
         : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.92);
+    final hasDescription =
+        description != null && description!.trim().isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(icon, size: 18, color: theme.colorScheme.primary),
-                      const SizedBox(width: 8),
+        if (!statusOnNewLine)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(icon, size: 18, color: theme.colorScheme.primary),
+                        const SizedBox(width: 8),
+                        Text(
+                          title,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (hasDescription) ...[
+                      const SizedBox(height: 4),
                       Text(
-                        title,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
+                        description!,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: badgeBg,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: badgeBorder),
+                ),
+                child: Text(
+                  status,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: badgeFg,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: badgeMonospace ? 'monospace' : null,
+                    height: 1.1,
                   ),
-                  const SizedBox(height: 4),
+                ),
+              ),
+            ],
+          )
+        else
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, size: 18, color: theme.colorScheme.primary),
+                  const SizedBox(width: 8),
                   Text(
-                    description,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: theme.colorScheme.onSurfaceVariant,
+                    title,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: badgeBg,
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: badgeBorder),
-              ),
-              child: Text(
-                status,
-                style: TextStyle(
-                  color: badgeFg,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: badgeMonospace ? 'monospace' : null,
-                  height: 1.1,
+              if (hasDescription) ...[
+                const SizedBox(height: 4),
+                Text(
+                  description!,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: badgeBg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: badgeBorder),
+                ),
+                child: Text(
+                  status,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: badgeFg,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: badgeMonospace ? 'monospace' : null,
+                    height: 1.2,
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
       ],
     );
   }

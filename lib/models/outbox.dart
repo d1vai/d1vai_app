@@ -27,7 +27,8 @@ class OutboxItem {
       id: id ?? this.id,
       prompt: prompt ?? this.prompt,
       enqueuedAt: enqueuedAt ?? this.enqueuedAt,
-      needsCooldownAfterIdle: needsCooldownAfterIdle ?? this.needsCooldownAfterIdle,
+      needsCooldownAfterIdle:
+          needsCooldownAfterIdle ?? this.needsCooldownAfterIdle,
       status: status ?? this.status,
       error: error ?? this.error,
     );
@@ -36,5 +37,11 @@ class OutboxItem {
 
 enum OutboxItemStatus { queued, running, failed }
 
-enum OutboxMode { idle, waitingWorkspace, waitingTask, dispatching, pausedError }
-
+enum OutboxMode {
+  idle,
+  waitingModel,
+  waitingWorkspace,
+  waitingTask,
+  dispatching,
+  pausedError,
+}

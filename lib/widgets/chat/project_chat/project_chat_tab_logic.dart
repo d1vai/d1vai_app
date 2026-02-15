@@ -28,6 +28,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     if (_isDeploying) return false;
     if (_isChatLoading) return false;
     if (_sessionThinking) return false;
+    if (_isSwitchingModel) return false;
     if (_wsConnState == WsConnectionState.connecting) return false;
     final activeSid = (_activeWsSessionId ?? '').trim();
     final hasActiveStreaming =
@@ -38,6 +39,20 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         activeSid.isNotEmpty;
     if (hasActiveStreaming) return false;
     return true;
+  }
+
+  bool _isModelReadyForSend() {
+    return _selectedModelId.trim().isNotEmpty &&
+        !_isLoadingModels &&
+        !_isSwitchingModel;
+  }
+
+  bool _isAuthError(Object err) {
+    final s = err.toString().toLowerCase();
+    return s.contains('401') ||
+        s.contains('auth') ||
+        s.contains('unauthenticated') ||
+        s.contains('expired');
   }
 
   Future<void> _sleepAbortable(Duration d, int token) async {
@@ -71,6 +86,30 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       try {
         await Future.any<void>([
           Future<void>.delayed(const Duration(milliseconds: 700)),
+          _outboxSignals.stream.first,
+        ]);
+      } catch (_) {
+        throw const _OutboxAborted();
+      }
+    }
+  }
+
+  Future<void> _waitForModelReady(int token) async {
+    if (_isModelReadyForSend()) return;
+    _setOutboxMode(OutboxMode.waitingModel);
+    while (!_isModelReadyForSend()) {
+      if (_outboxAbortToken != token) throw const _OutboxAborted();
+      if (_modelConfigError != null && _isAuthError(_modelConfigError!)) {
+        throw Exception('Model loading failed due to authentication.');
+      }
+      if (_workspacePhase == WorkspacePhase.ready &&
+          !_isLoadingModels &&
+          !_hasLoadedModelConfig) {
+        unawaited(_loadModelConfigIfPossible());
+      }
+      try {
+        await Future.any<void>([
+          Future<void>.delayed(const Duration(milliseconds: 450)),
           _outboxSignals.stream.first,
         ]);
       } catch (_) {
@@ -210,12 +249,14 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     _outboxDrainInFlight = true;
     final token = _outboxAbortToken;
     try {
-      final nextIndex =
-          _outboxItems.indexWhere((x) => x.status == OutboxItemStatus.queued);
+      final nextIndex = _outboxItems.indexWhere(
+        (x) => x.status == OutboxItemStatus.queued,
+      );
       if (nextIndex == -1) return;
       final next = _outboxItems[nextIndex];
 
       try {
+        await _waitForModelReady(token);
         await _waitForWorkspaceReady(token);
         final waited = await _waitForTaskIdle(token);
         if (waited || next.needsCooldownAfterIdle) {
@@ -309,12 +350,20 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     }
     if (oldWidget.projectId != widget.projectId) {
       _deployAutoClearTimer?.cancel();
+      _modelConfigRetryTimer?.cancel();
       setState(() {
         _previewUrl = widget.previewUrl;
         _previewKey += 1;
         _isDeploying = false;
         _deployFramework = null;
+        _availableModels = <ModelInfo>[];
+        _selectedModelId = '';
+        _isLoadingModels = false;
+        _isSwitchingModel = false;
+        _hasLoadedModelConfig = false;
+        _modelConfigError = null;
       });
+      unawaited(_bootstrapWorkspace());
     }
   }
 
@@ -323,6 +372,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     _assistantDeltaFlushTimer?.cancel();
     _reconnectTimer?.cancel();
     _workspacePollTimer?.cancel();
+    _modelConfigRetryTimer?.cancel();
     _deployAutoClearTimer?.cancel();
     _thinkingClearTimer?.cancel();
     _webSocketSubscription?.cancel();
@@ -389,7 +439,9 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     });
   }
 
-  void _scheduleDeployAutoClear([Duration duration = const Duration(minutes: 3)]) {
+  void _scheduleDeployAutoClear([
+    Duration duration = const Duration(minutes: 3),
+  ]) {
     _deployAutoClearTimer?.cancel();
     _deployAutoClearTimer = Timer(duration, () {
       if (!mounted) return;
@@ -448,6 +500,9 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _workspacePhase = phase;
         _workspaceError = null;
       });
+      if (phase == WorkspacePhase.ready && !_hasLoadedModelConfig) {
+        unawaited(_loadModelConfigIfPossible());
+      }
       _signalOutbox();
       unawaited(_drainOutbox());
       _workspacePollErrorStreak = 0;
@@ -490,6 +545,9 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _workspacePhase = WorkspacePhase.ready;
         _workspaceError = null;
       });
+      if (!_hasLoadedModelConfig) {
+        unawaited(_loadModelConfigIfPossible());
+      }
       _signalOutbox();
       unawaited(_drainOutbox());
       _workspacePollErrorStreak = 0;
@@ -515,6 +573,122 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     await _maybeWarmupWorkspace();
     if (_workspacePhase != WorkspacePhase.ready) {
       throw Exception(_workspaceError ?? 'Workspace is not ready');
+    }
+  }
+
+  void _scheduleModelConfigRetry() {
+    _modelConfigRetryTimer?.cancel();
+    _modelConfigRetryTimer = Timer(const Duration(seconds: 3), () {
+      if (!mounted) return;
+      if (_workspacePhase != WorkspacePhase.ready) return;
+      if (_hasLoadedModelConfig || _isLoadingModels) return;
+      unawaited(_loadModelConfigIfPossible());
+    });
+  }
+
+  Future<void> _loadModelConfigIfPossible() async {
+    if (!mounted) return;
+    if (_workspacePhase != WorkspacePhase.ready) return;
+    if (_hasLoadedModelConfig || _isLoadingModels) return;
+
+    setState(() {
+      _isLoadingModels = true;
+      _modelConfigError = null;
+    });
+
+    try {
+      final config = await _modelConfigService.getModelConfig(retries: 0);
+      if (!mounted) return;
+      final models = config.availableModels;
+      final firstModel = models.isNotEmpty ? models.first.id.trim() : '';
+      final cachedModel =
+          (await _modelConfigService.getCachedModel())?.trim() ?? '';
+      final modelExists =
+          cachedModel.isNotEmpty &&
+          models.any((m) => m.id.trim() == cachedModel);
+      final selected = modelExists ? cachedModel : firstModel;
+
+      setState(() {
+        _availableModels = models;
+        _selectedModelId = selected;
+        _isLoadingModels = false;
+        _hasLoadedModelConfig = true;
+        _modelConfigError = null;
+      });
+
+      if (selected.isNotEmpty) {
+        await _modelConfigService.setCachedModel(selected);
+        if (config.model.trim() != selected) {
+          try {
+            await _modelConfigService.setModelConfig(selected, retries: 0);
+          } catch (_) {
+            // Non-fatal: UI local selection still takes effect for sends.
+          }
+        }
+      }
+      _modelConfigRetryTimer?.cancel();
+      _signalOutbox();
+      unawaited(_drainOutbox());
+    } catch (e) {
+      if (!mounted) return;
+      final authErr = _isAuthError(e);
+      setState(() {
+        _isLoadingModels = false;
+        _hasLoadedModelConfig = false;
+        _availableModels = <ModelInfo>[];
+        _selectedModelId = '';
+        _modelConfigError = e.toString();
+      });
+      _signalOutbox();
+      if (authErr) {
+        SnackBarHelper.showError(
+          context,
+          title: 'Model',
+          message: 'Login expired. Please sign in again to load models.',
+        );
+      } else {
+        _scheduleModelConfigRetry();
+      }
+    }
+  }
+
+  @override
+  Future<void> _handleModelChanged(String modelId) async {
+    final next = modelId.trim();
+    if (next.isEmpty || next == _selectedModelId || _isSwitchingModel) return;
+    if (!mounted) return;
+
+    setState(() {
+      _isSwitchingModel = true;
+      _modelConfigError = null;
+    });
+    _signalOutbox();
+
+    try {
+      await _modelConfigService.setModelConfig(next, retries: 0);
+      await _modelConfigService.setCachedModel(next);
+      if (!mounted) return;
+      setState(() {
+        _selectedModelId = next;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _modelConfigError = e.toString();
+      });
+      SnackBarHelper.showError(
+        context,
+        title: 'Model',
+        message: 'Failed to switch model: $e',
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSwitchingModel = false;
+        });
+      }
+      _signalOutbox();
+      unawaited(_drainOutbox());
     }
   }
 
@@ -626,12 +800,17 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         return t != null && t.isNotEmpty ? t : null;
       }
 
-      final terminalTypes = <String>{'complete', 'result', 'error', 'cancelled'};
+      final terminalTypes = <String>{
+        'complete',
+        'result',
+        'error',
+        'cancelled',
+      };
       final latestType = normalizeType(latest);
       nextAutoConnectDisabled =
           latestType != null && terminalTypes.contains(latestType)
-              ? true
-              : _autoConnectDisabled;
+          ? true
+          : _autoConnectDisabled;
 
       ChatHistoryEntry? newestWithSession;
       for (final e in history) {
@@ -657,10 +836,9 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _hasMoreHistory = history.length >= 30;
         _oldestMessageAt = history.isNotEmpty ? history.first.createdAt : null;
         _autoConnectDisabled = nextAutoConnectDisabled;
-        _currentSessionId =
-            (nextSessionId != null && nextSessionId.isNotEmpty)
-                ? nextSessionId
-                : _currentSessionId;
+        _currentSessionId = (nextSessionId != null && nextSessionId.isNotEmpty)
+            ? nextSessionId
+            : _currentSessionId;
       });
 
       // Find latest meaningful type timestamp (for stale guarding)
@@ -713,12 +891,17 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
             final status = active?['status']?.toString().trim();
             final wsUrl = active?['websocket_url']?.toString();
 
-            final shouldReconnect = (sid != null && sid.isNotEmpty) &&
+            final shouldReconnect =
+                (sid != null && sid.isNotEmpty) &&
                 status == 'running' &&
                 !(historyOk &&
                     lastType != null &&
-                    <String>{'complete', 'result', 'error', 'cancelled'}
-                        .contains(lastType));
+                    <String>{
+                      'complete',
+                      'result',
+                      'error',
+                      'cancelled',
+                    }.contains(lastType));
 
             if (shouldReconnect) {
               _currentSessionId = sid;
@@ -763,11 +946,11 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       }
 
       final existingIds = _chatMessages.map((m) => m.id).toSet();
-      final deduped =
-          older.where((m) => !existingIds.contains(m.id)).toList();
-      final merged = MessageParser.mergeToolResultsIntoPrevToolCalls(
-        [...deduped, ..._chatMessages],
-      );
+      final deduped = older.where((m) => !existingIds.contains(m.id)).toList();
+      final merged = MessageParser.mergeToolResultsIntoPrevToolCalls([
+        ...deduped,
+        ..._chatMessages,
+      ]);
 
       setState(() {
         _chatMessages
@@ -967,6 +1150,32 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     }
   }
 
+  void _appendCancelledNotice() {
+    const text = 'Request cancelled by user.';
+    if (!mounted) return;
+    if (_chatMessages.isNotEmpty) {
+      final last = _chatMessages.last;
+      if (last.role == 'warning' &&
+          last.contents.isNotEmpty &&
+          last.contents.first is TextMessageContent) {
+        final existing = (last.contents.first as TextMessageContent).text
+            .trim();
+        if (existing == text) return;
+      }
+    }
+    setState(() {
+      _chatMessages.add(
+        ChatMessage(
+          id: 'cancelled-${DateTime.now().millisecondsSinceEpoch}',
+          role: 'warning',
+          createdAt: DateTime.now(),
+          contents: const [TextMessageContent(text: text)],
+        ),
+      );
+    });
+    _scrollToBottom();
+  }
+
   void _handleWsPayload(Map<String, dynamic> payload) {
     final type = payload['type']?.toString();
 
@@ -1134,6 +1343,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       } else if (type == 'cancelled') {
         _markLastToolOutcome('warning');
         _markSessionError();
+        _appendCancelledNotice();
       } else {
         _finalizePrevToolDone();
       }
@@ -1472,6 +1682,15 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
   void _sendChatMessage(String text) async {
     final prompt = text.trim();
     if (prompt.isEmpty) return;
+    if (!_isModelReadyForSend()) {
+      if (!mounted) return;
+      SnackBarHelper.showInfo(
+        context,
+        title: 'Model',
+        message: 'Model is loading or switching. Please wait.',
+      );
+      return;
+    }
     // If we are busy (workspace waking / previous task running / already has queue),
     // enqueue instead of rendering immediately.
     final shouldQueue =
@@ -1523,6 +1742,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         prompt: prompt,
         sessionType: isNew ? 'new' : 'continue',
         sessionId: isNew ? null : _currentSessionId,
+        model: _selectedModelId.trim().isEmpty ? null : _selectedModelId.trim(),
         optimisticMessage: prompt,
       );
       if (!mounted) return;
@@ -1572,6 +1792,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         projectId: widget.projectId,
         prompt: prompt,
         sessionType: 'new',
+        model: _selectedModelId.trim().isEmpty ? null : _selectedModelId.trim(),
         optimisticMessage: prompt,
       );
       if (!mounted) return;

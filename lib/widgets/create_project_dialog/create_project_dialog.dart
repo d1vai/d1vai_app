@@ -8,9 +8,11 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/api_client.dart';
+import '../../models/model_config.dart';
 import '../../models/project.dart';
 import '../../providers/project_provider.dart';
 import '../../services/d1vai_service.dart';
+import '../../services/model_config_service.dart';
 import '../../services/workspace_service.dart';
 import '../snackbar_helper.dart';
 
@@ -39,10 +41,20 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _repoNameController = TextEditingController();
   final WorkspaceService _workspaceService = WorkspaceService();
+  final ModelConfigService _modelConfigService = ModelConfigService();
 
   _CreateProjectFlow _flow = _CreateProjectFlow.chooser;
   bool _isLoading = false;
   String _error = '';
+
+  // New-project model selector state (align with d1vai web behavior)
+  List<ModelInfo> _availableModels = <ModelInfo>[];
+  String _selectedModelId = '';
+  bool _isLoadingModels = false;
+  bool _hasLoadedModelConfig = false;
+  WorkspacePhase _newProjectWorkspacePhase = WorkspacePhase.unknown;
+  Timer? _newProjectWorkspacePollTimer;
+  Timer? _newProjectModelRetryTimer;
 
   // GitHub collaborator import state (align with d1vai web QuickImportSetup)
   int _ghStep = 1; // 1..3
@@ -58,6 +70,8 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
 
   @override
   void dispose() {
+    _newProjectWorkspacePollTimer?.cancel();
+    _newProjectModelRetryTimer?.cancel();
     _descriptionController.dispose();
     _urlController.dispose();
     _nameController.dispose();
@@ -88,11 +102,139 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
   }
 
   void _goBackToChooser() {
+    _newProjectWorkspacePollTimer?.cancel();
+    _newProjectModelRetryTimer?.cancel();
     setState(() {
       _flow = _CreateProjectFlow.chooser;
       _error = '';
       _ghError = '';
     });
+  }
+
+  bool _isAuthError(Object err) {
+    final s = err.toString().toLowerCase();
+    return s.contains('401') ||
+        s.contains('auth') ||
+        s.contains('unauthenticated') ||
+        s.contains('expired');
+  }
+
+  void _startNewProjectModelBootstrap() {
+    _newProjectWorkspacePollTimer?.cancel();
+    _newProjectModelRetryTimer?.cancel();
+    setState(() {
+      _hasLoadedModelConfig = false;
+      _isLoadingModels = false;
+      _availableModels = <ModelInfo>[];
+      _selectedModelId = '';
+      _newProjectWorkspacePhase = WorkspacePhase.unknown;
+    });
+
+    unawaited(_refreshNewProjectWorkspacePhase(bypassCache: true));
+    _newProjectWorkspacePollTimer = Timer.periodic(const Duration(seconds: 3), (
+      _,
+    ) {
+      if (!mounted || _flow != _CreateProjectFlow.newAi) return;
+      unawaited(_refreshNewProjectWorkspacePhase(bypassCache: true));
+    });
+  }
+
+  Future<void> _refreshNewProjectWorkspacePhase({
+    required bool bypassCache,
+  }) async {
+    if (!mounted || _flow != _CreateProjectFlow.newAi) return;
+    try {
+      final status = await _workspaceService.getWorkspaceStatus(
+        bypassCache: bypassCache,
+      );
+      if (!mounted || _flow != _CreateProjectFlow.newAi) return;
+      final phase = normalizeWorkspacePhase(status);
+      setState(() {
+        _newProjectWorkspacePhase = phase;
+      });
+
+      if (phase == WorkspacePhase.ready && !_hasLoadedModelConfig) {
+        await _loadModelConfigForNewProject();
+      }
+      if (phase == WorkspacePhase.ready && _hasLoadedModelConfig) {
+        _newProjectWorkspacePollTimer?.cancel();
+      }
+    } catch (_) {
+      if (!mounted || _flow != _CreateProjectFlow.newAi) return;
+      setState(() {
+        _newProjectWorkspacePhase = WorkspacePhase.error;
+      });
+    }
+  }
+
+  Future<void> _loadModelConfigForNewProject() async {
+    if (!mounted || _flow != _CreateProjectFlow.newAi) return;
+    if (_isLoadingModels || _hasLoadedModelConfig) return;
+    if (_newProjectWorkspacePhase != WorkspacePhase.ready) return;
+
+    setState(() {
+      _isLoadingModels = true;
+    });
+
+    try {
+      final config = await _modelConfigService.getModelConfig(retries: 0);
+      if (!mounted || _flow != _CreateProjectFlow.newAi) return;
+      final models = config.availableModels;
+      final firstModel = models.isNotEmpty ? models.first.id.trim() : '';
+      final normalizedCached =
+          (await _modelConfigService.getCachedModel())?.trim() ?? '';
+      final modelExists =
+          normalizedCached.isNotEmpty &&
+          models.any((m) => m.id.trim() == normalizedCached);
+      final selected = modelExists ? normalizedCached : firstModel;
+
+      setState(() {
+        _availableModels = models;
+        _selectedModelId = selected;
+        _hasLoadedModelConfig = true;
+        _isLoadingModels = false;
+      });
+
+      if (selected.isNotEmpty) {
+        await _modelConfigService.setCachedModel(selected);
+        final apiModel = config.model.trim();
+        if (apiModel != selected) {
+          try {
+            await _modelConfigService.setModelConfig(selected, retries: 0);
+          } catch (_) {
+            // Non-fatal: still allow project creation.
+          }
+        }
+      }
+      _newProjectModelRetryTimer?.cancel();
+    } catch (e) {
+      if (!mounted || _flow != _CreateProjectFlow.newAi) return;
+      setState(() {
+        _isLoadingModels = false;
+        _hasLoadedModelConfig = false;
+      });
+      if (_isAuthError(e)) {
+        setState(() {
+          _error = 'Login expired. Please sign in again before loading models.';
+        });
+        return;
+      }
+      _newProjectModelRetryTimer?.cancel();
+      _newProjectModelRetryTimer = Timer(const Duration(seconds: 3), () {
+        if (!mounted || _flow != _CreateProjectFlow.newAi) return;
+        if (_newProjectWorkspacePhase != WorkspacePhase.ready) return;
+        unawaited(_loadModelConfigForNewProject());
+      });
+    }
+  }
+
+  Future<void> _handleModelSelectionChanged(String modelId) async {
+    final next = modelId.trim();
+    if (next.isEmpty || next == _selectedModelId) return;
+    setState(() {
+      _selectedModelId = next;
+    });
+    await _modelConfigService.setCachedModel(next);
   }
 
   Widget _buildFlowContent() {
@@ -101,27 +243,27 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
       _CreateProjectFlow.newAi => _buildNewProjectTab(),
       _CreateProjectFlow.importPublic => _buildImportRepoTab(),
       _CreateProjectFlow.githubCollaborator => GithubCollaboratorImportView(
-          step: _ghStep,
-          loading: _ghLoading,
-          errorText: _ghError,
-          botUsername: _ghBotUsername,
-          invitationAccepted: _ghInvitationAccepted,
-          accessVerified: _ghAccessVerified,
-          repoInfo: _ghRepoInfo,
-          repoUrlController: _ghRepoUrlController,
-          projectNameController: _ghProjectNameController,
-          onRepoUrlChanged: (_) {
-            if (_ghError.isEmpty) return;
-            setState(() {
-              _ghError = '';
-            });
-          },
-          onCopyBotUsername: _copyGitHubBotUsername,
-          onOpenSettings: _handleGithubOpenSettings,
-          onAcceptInvitation: _handleGithubAcceptInvitation,
-          onVerifyAccess: _handleGithubVerifyAccess,
-          onImportProject: _handleGithubImportProject,
-        ),
+        step: _ghStep,
+        loading: _ghLoading,
+        errorText: _ghError,
+        botUsername: _ghBotUsername,
+        invitationAccepted: _ghInvitationAccepted,
+        accessVerified: _ghAccessVerified,
+        repoInfo: _ghRepoInfo,
+        repoUrlController: _ghRepoUrlController,
+        projectNameController: _ghProjectNameController,
+        onRepoUrlChanged: (_) {
+          if (_ghError.isEmpty) return;
+          setState(() {
+            _ghError = '';
+          });
+        },
+        onCopyBotUsername: _copyGitHubBotUsername,
+        onOpenSettings: _handleGithubOpenSettings,
+        onAcceptInvitation: _handleGithubAcceptInvitation,
+        onVerifyAccess: _handleGithubVerifyAccess,
+        onImportProject: _handleGithubImportProject,
+      ),
     };
   }
 
@@ -145,14 +287,19 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
           _flow = _CreateProjectFlow.newAi;
           _error = '';
         });
+        _startNewProjectModelBootstrap();
       },
       onChooseImportPublic: () {
+        _newProjectWorkspacePollTimer?.cancel();
+        _newProjectModelRetryTimer?.cancel();
         setState(() {
           _flow = _CreateProjectFlow.importPublic;
           _error = '';
         });
       },
       onChooseGithubCollaborator: () {
+        _newProjectWorkspacePollTimer?.cancel();
+        _newProjectModelRetryTimer?.cancel();
         setState(() {
           _flow = _CreateProjectFlow.githubCollaborator;
           _ghStep = 1;
@@ -180,6 +327,13 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
               });
             },
             onCreate: _handleCreateProject,
+            models: _availableModels,
+            selectedModelId: _selectedModelId,
+            onModelChanged: (modelId) {
+              unawaited(_handleModelSelectionChanged(modelId));
+            },
+            isModelLoading: _isLoadingModels,
+            isWorkspaceReady: _newProjectWorkspacePhase == WorkspacePhase.ready,
           );
   }
 
@@ -228,7 +382,8 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     final token = (prefs.getString('auth_token') ?? '').trim();
     if (token.isEmpty) {
       setState(() {
-        _error = 'Not logged in or token missing. Please login again.\n\nTip: Settings → Profile → API → Copy diagnostics.';
+        _error =
+            'Not logged in or token missing. Please login again.\n\nTip: Settings → Profile → API → Copy diagnostics.';
       });
       return;
     }
@@ -239,6 +394,24 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     });
 
     try {
+      final selectedModel = _selectedModelId.trim();
+      if (selectedModel.isNotEmpty) {
+        try {
+          await _modelConfigService.setModelConfig(selectedModel, retries: 0);
+          await _modelConfigService.setCachedModel(selectedModel);
+        } catch (e) {
+          if (mounted) {
+            SnackBarHelper.showInfo(
+              context,
+              title: 'Model',
+              message:
+                  'Failed to switch model, continuing with server default. ($e)',
+              duration: const Duration(seconds: 3),
+            );
+          }
+        }
+      }
+
       // Align with d1vai web: warm up workspace before project creation to avoid
       // opcode-manager failures on cold/archived workspaces.
       try {
@@ -247,7 +420,8 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
         if (!mounted) return;
         setState(() {
           _isLoading = false;
-          _error = 'Workspace is not ready: $e\n\nAPI Base: ${ApiClient.baseUrl}';
+          _error =
+              'Workspace is not ready: $e\n\nAPI Base: ${ApiClient.baseUrl}';
         });
         return;
       }
@@ -295,7 +469,8 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
       );
     } catch (e) {
       var errText = e.toString();
-      final mayBeOpcodeIssue = errText.contains('opcode-manager') ||
+      final mayBeOpcodeIssue =
+          errText.contains('opcode-manager') ||
           errText.contains('internal_server_error') ||
           errText.contains('HTTP Error: 500');
 
@@ -305,7 +480,8 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
           SnackBarHelper.showInfo(
             context,
             title: 'Retrying',
-            message: 'Create-with-integrations failed, retrying with fallback flow…',
+            message:
+                'Create-with-integrations failed, retrying with fallback flow…',
             duration: const Duration(seconds: 5),
           );
 
@@ -496,8 +672,9 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
   }
 
   Future<void> _handleGithubAcceptInvitation() async {
-    final repoFullName =
-        parseGithubRepoFullName(_ghRepoUrlController.text.trim());
+    final repoFullName = parseGithubRepoFullName(
+      _ghRepoUrlController.text.trim(),
+    );
     if (repoFullName == null) {
       setState(() {
         _ghError = 'Invalid repo URL';
@@ -538,8 +715,9 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
   }
 
   Future<void> _handleGithubVerifyAccess() async {
-    final repoFullName =
-        parseGithubRepoFullName(_ghRepoUrlController.text.trim());
+    final repoFullName = parseGithubRepoFullName(
+      _ghRepoUrlController.text.trim(),
+    );
     if (repoFullName == null) {
       setState(() {
         _ghError = 'Invalid repo URL';
@@ -588,8 +766,9 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
   }
 
   Future<void> _handleGithubImportProject() async {
-    final repoFullName =
-        parseGithubRepoFullName(_ghRepoUrlController.text.trim());
+    final repoFullName = parseGithubRepoFullName(
+      _ghRepoUrlController.text.trim(),
+    );
     final repoInfo = _ghRepoInfo;
     if (repoFullName == null || repoInfo == null) return;
 
@@ -650,7 +829,6 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
       }
     }
   }
-
 }
 
 enum _CreateProjectFlow { chooser, newAi, importPublic, githubCollaborator }

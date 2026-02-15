@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +10,7 @@ import '../models/user.dart';
 import '../models/project.dart';
 import '../models/prompt_activity.dart';
 import '../services/d1vai_service.dart';
+import '../services/workspace_service.dart';
 import '../widgets/create_project_dialog.dart';
 import '../widgets/card.dart';
 import '../core/theme/app_colors.dart';
@@ -15,6 +18,7 @@ import '../utils/error_utils.dart';
 import '../core/auth_expiry_bus.dart';
 import '../widgets/login_required_view.dart';
 import '../l10n/app_localizations.dart';
+import '../widgets/compact_selector.dart';
 import '../widgets/prompt_activity_heatmap.dart';
 import '../widgets/snackbar_helper.dart';
 import 'projects/widgets/project_card_tile.dart';
@@ -27,7 +31,9 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
+  static const String _allProjectsOptionValue = '__all_projects__';
+
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   List<UserProject> _searchResults = [];
@@ -35,8 +41,19 @@ class _DashboardScreenState extends State<DashboardScreen>
   Future<PromptDailyActivity>? _promptActivityFuture;
   String? _promptActivityProjectId;
   final D1vaiService _service = D1vaiService();
+  final WorkspaceService _workspaceService = WorkspaceService();
+
+  WorkspaceStateInfo? _workspaceState;
+  WorkspacePhase _workspacePhase = WorkspacePhase.unknown;
+  bool _workspaceChecking = true;
+  String? _workspaceError;
+  bool _workspacePollInFlight = false;
+  bool _workspaceActiveInFlight = false;
+  Timer? _workspacePollTimer;
+  bool _didInitWorkspaceStatus = false;
 
   late AnimationController _animationController;
+  late AnimationController _workspaceBreathController;
 
   @override
   void initState() {
@@ -45,6 +62,10 @@ class _DashboardScreenState extends State<DashboardScreen>
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
+    _workspaceBreathController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1300),
+    )..repeat(reverse: true);
 
     // 加载项目数据
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -57,7 +78,276 @@ class _DashboardScreenState extends State<DashboardScreen>
     if (auth.isAuthenticated) {
       _didAutoLoadAfterLogin = true;
       _loadData();
+      _ensureWorkspaceStatusBootstrap();
     }
+  }
+
+  void _ensureWorkspaceStatusBootstrap() {
+    if (_didInitWorkspaceStatus) return;
+    _didInitWorkspaceStatus = true;
+    unawaited(_bootstrapWorkspaceStatus());
+  }
+
+  void _scheduleWorkspacePoll() {
+    _workspacePollTimer?.cancel();
+    if (!_didInitWorkspaceStatus || !mounted) return;
+    final delay =
+        (!_workspaceChecking && _workspacePhase == WorkspacePhase.ready)
+        ? const Duration(seconds: 30)
+        : const Duration(seconds: 5);
+    _workspacePollTimer = Timer(delay, () {
+      if (!mounted || !_didInitWorkspaceStatus) return;
+      unawaited(_refreshWorkspaceStatus(bypassCache: true));
+    });
+  }
+
+  Future<void> _refreshWorkspaceStatus({required bool bypassCache}) async {
+    if (!_didInitWorkspaceStatus || _workspacePollInFlight) return;
+    _workspacePollInFlight = true;
+    try {
+      final st = await _workspaceService.getWorkspaceStatus(
+        bypassCache: bypassCache,
+      );
+      if (!mounted || !_didInitWorkspaceStatus) return;
+      setState(() {
+        _workspaceState = st;
+        _workspacePhase = normalizeWorkspacePhase(st);
+        _workspaceChecking = false;
+        _workspaceError = null;
+      });
+    } catch (e) {
+      if (!mounted || !_didInitWorkspaceStatus) return;
+      setState(() {
+        _workspaceChecking = false;
+        _workspacePhase = WorkspacePhase.error;
+        _workspaceError = e.toString();
+      });
+    } finally {
+      _workspacePollInFlight = false;
+      _scheduleWorkspacePoll();
+    }
+  }
+
+  Future<void> _requestWorkspaceActive({
+    bool silent = false,
+    bool fromTap = false,
+  }) async {
+    if (!_didInitWorkspaceStatus || _workspaceActiveInFlight) return;
+    final phase = _workspacePhase;
+    if (fromTap &&
+        (_workspaceChecking ||
+            phase == WorkspacePhase.ready ||
+            phase == WorkspacePhase.starting)) {
+      await _refreshWorkspaceStatus(bypassCache: true);
+      return;
+    }
+
+    setState(() {
+      _workspaceActiveInFlight = true;
+      _workspaceError = null;
+      if (!_workspaceChecking && _workspacePhase != WorkspacePhase.ready) {
+        _workspacePhase = WorkspacePhase.starting;
+      }
+    });
+
+    try {
+      final discovered = await _workspaceService.discoverWorkspace();
+      if (!mounted || !_didInitWorkspaceStatus) return;
+      setState(() {
+        _workspaceState = discovered;
+        _workspacePhase = normalizeWorkspacePhase(discovered);
+        _workspaceChecking = false;
+        _workspaceError = null;
+      });
+      await _refreshWorkspaceStatus(bypassCache: true);
+    } catch (e) {
+      if (!mounted || !_didInitWorkspaceStatus) return;
+      setState(() {
+        _workspaceChecking = false;
+        _workspacePhase = WorkspacePhase.error;
+        _workspaceError = e.toString();
+      });
+      if (!silent) {
+        SnackBarHelper.showError(
+          context,
+          title: 'Workspace',
+          message: 'Failed to start workspace: $e',
+        );
+      }
+    } finally {
+      if (mounted && _didInitWorkspaceStatus) {
+        setState(() {
+          _workspaceActiveInFlight = false;
+        });
+      }
+      _scheduleWorkspacePoll();
+    }
+  }
+
+  Future<void> _bootstrapWorkspaceStatus() async {
+    await _refreshWorkspaceStatus(bypassCache: true);
+    if (!mounted || !_didInitWorkspaceStatus) return;
+    if (_workspacePhase != WorkspacePhase.ready) {
+      await _requestWorkspaceActive(silent: true);
+    }
+  }
+
+  String _workspaceStatusLabel() {
+    if (_workspaceActiveInFlight) return 'Starting';
+    if (_workspaceChecking) return 'Checking';
+    switch (_workspacePhase) {
+      case WorkspacePhase.ready:
+        return 'Ready';
+      case WorkspacePhase.starting:
+        return 'Starting';
+      case WorkspacePhase.syncing:
+        return 'Syncing';
+      case WorkspacePhase.standby:
+        return 'Standby';
+      case WorkspacePhase.archived:
+        return 'Archived';
+      case WorkspacePhase.error:
+        return 'Error';
+      case WorkspacePhase.unknown:
+        return 'Unknown';
+    }
+  }
+
+  Color _workspaceDotColor() {
+    if (_workspaceChecking) return Colors.amber;
+    switch (_workspacePhase) {
+      case WorkspacePhase.ready:
+        return Colors.green;
+      case WorkspacePhase.starting:
+        return Colors.amber;
+      case WorkspacePhase.syncing:
+        return Colors.purple;
+      case WorkspacePhase.standby:
+      case WorkspacePhase.archived:
+        return Colors.grey;
+      case WorkspacePhase.error:
+        return Colors.red;
+      case WorkspacePhase.unknown:
+        return Colors.grey;
+    }
+  }
+
+  String _workspaceTooltip() {
+    final parts = <String>['Workspace ${_workspaceStatusLabel()}'];
+    final raw = _workspaceState?.status;
+    if (raw != null && raw.trim().isNotEmpty) {
+      parts.add('status=$raw');
+    }
+    final ip = _workspaceState?.ip;
+    final port = _workspaceState?.port;
+    if (ip != null && ip.trim().isNotEmpty && port != null) {
+      parts.add('$ip:$port');
+    }
+    if (_workspaceError != null && _workspaceError!.trim().isNotEmpty) {
+      parts.add(_workspaceError!);
+    }
+    return parts.join(' · ');
+  }
+
+  bool _workspaceIsLoadingVisual() {
+    return _workspaceActiveInFlight ||
+        _workspaceChecking ||
+        _workspacePhase == WorkspacePhase.starting ||
+        _workspacePhase == WorkspacePhase.syncing;
+  }
+
+  Widget _buildWorkspaceDot({
+    required Color color,
+    required bool breathing,
+    double size = 10,
+  }) {
+    if (!breathing) {
+      return Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      );
+    }
+    return AnimatedBuilder(
+      animation: _workspaceBreathController,
+      builder: (context, child) {
+        final t = Curves.easeInOut.transform(_workspaceBreathController.value);
+        final scale = 1.0 + (0.18 * t);
+        final glow = 0.15 + (0.35 * t);
+        return Transform.scale(
+          scale: scale,
+          child: Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.75 + (0.25 * t)),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: color.withValues(alpha: glow),
+                  blurRadius: 10,
+                  spreadRadius: 1.5,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildWorkspaceStatusWidget({bool inAppBar = false}) {
+    final theme = Theme.of(context);
+    final dotColor = _workspaceDotColor();
+    final loadingVisual = _workspaceIsLoadingVisual();
+    final bg = inAppBar
+        ? Colors.white.withValues(alpha: 0.12)
+        : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.45);
+    final borderColor = inAppBar
+        ? Colors.white.withValues(alpha: 0.26)
+        : theme.colorScheme.outlineVariant.withValues(alpha: 0.8);
+    final textColor = inAppBar
+        ? Colors.white.withValues(alpha: 0.94)
+        : theme.colorScheme.onSurface;
+    final statusText = _workspaceStatusLabel();
+    return Tooltip(
+      message: _workspaceTooltip(),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: _workspaceActiveInFlight
+            ? null
+            : () => unawaited(_requestWorkspaceActive(fromTap: true)),
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: inAppBar ? 8 : 10,
+            vertical: inAppBar ? 6 : 8,
+          ),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: borderColor),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildWorkspaceDot(
+                color: dotColor,
+                breathing: loadingVisual,
+                size: inAppBar ? 9 : 10,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                inAppBar ? 'WS $statusText' : 'Workspace $statusText',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: textColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   /// 加载数据
@@ -91,70 +381,95 @@ class _DashboardScreenState extends State<DashboardScreen>
     });
   }
 
+  String _projectDisplayName(UserProject p) {
+    final name = p.projectName.trim();
+    return name.isEmpty ? p.id : name;
+  }
+
+  bool _isChineseLocale(BuildContext context) {
+    final code = Localizations.localeOf(context).languageCode.toLowerCase();
+    return code == 'zh';
+  }
+
+  String _allProjectsLabel(BuildContext context) {
+    return _isChineseLocale(context) ? '全部项目' : 'All projects';
+  }
+
   Widget _buildPromptActivityHeaderTrailing(ProjectProvider projectProvider) {
     final projects = projectProvider.projects;
     final isLoading = projectProvider.isLoading;
-    final items = <DropdownMenuItem<String?>>[
-      const DropdownMenuItem<String?>(
-        value: null,
-        child: Text('All projects'),
+    final projectsForMenu = projects.take(80).toList(growable: false);
+    UserProject? selectedProject;
+    final selectedId = _promptActivityProjectId;
+    if (selectedId != null) {
+      for (final p in projectsForMenu) {
+        if (p.id == selectedId) {
+          selectedProject = p;
+          break;
+        }
+      }
+    }
+
+    final pickerLabel = selectedProject == null
+        ? _allProjectsLabel(context)
+        : _projectDisplayName(selectedProject);
+    final options = <CompactSelectorOption>[
+      CompactSelectorOption(
+        value: _allProjectsOptionValue,
+        label: _allProjectsLabel(context),
       ),
-      ...projects.take(50).map((p) {
-        final name = p.projectName.trim().isEmpty ? p.id : p.projectName.trim();
-        return DropdownMenuItem<String?>(
-          value: p.id,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 170),
-            child: Text(
-              name,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        );
-      }),
+      ...projectsForMenu.map(
+        (p) =>
+            CompactSelectorOption(value: p.id, label: _projectDisplayName(p)),
+      ),
     ];
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (isLoading) ...[
-          const SizedBox(
-            width: 14,
-            height: 14,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-          const SizedBox(width: 8),
-        ],
-        DropdownButtonHideUnderline(
-          child: DropdownButton<String?>(
-            value: _promptActivityProjectId,
-            items: items,
-            onChanged: isLoading
-                ? null
-                : (value) {
-                    setState(() {
-                      _promptActivityProjectId = value;
-                    });
-                    _reloadPromptActivity();
-                  },
-          ),
+        CompactSelector(
+          options: options,
+          value: _promptActivityProjectId ?? _allProjectsOptionValue,
+          displayLabel: pickerLabel,
+          placeholder: _allProjectsLabel(context),
+          tooltip: _isChineseLocale(context) ? '切换项目' : 'Switch project',
+          leadingIcon: Icons.folder_open_rounded,
+          minWidth: 112,
+          maxWidth: 156,
+          isLoading: isLoading,
+          onChanged: isLoading
+              ? null
+              : (value) {
+                  setState(() {
+                    _promptActivityProjectId = value == _allProjectsOptionValue
+                        ? null
+                        : value;
+                  });
+                  _reloadPromptActivity();
+                },
         ),
-        if (_promptActivityProjectId != null)
+        if (selectedProject != null)
           IconButton(
-            tooltip: 'Open project',
-            icon: const Icon(Icons.open_in_new, size: 18),
+            tooltip: _isChineseLocale(context) ? '打开项目' : 'Open project',
+            visualDensity: VisualDensity.compact,
+            constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
+            padding: const EdgeInsets.all(4),
+            icon: const Icon(Icons.open_in_new_rounded, size: 17),
             onPressed: () {
               final pid = _promptActivityProjectId;
               if (pid == null) return;
               context.push('/projects/$pid');
             },
           ),
+        if (selectedProject != null && isLoading) ...[const SizedBox(width: 2)],
       ],
     );
   }
 
   @override
   void dispose() {
+    _workspacePollTimer?.cancel();
+    _workspaceBreathController.dispose();
     _animationController.dispose();
     _searchController.dispose();
     super.dispose();
@@ -179,6 +494,13 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget build(BuildContext context) {
     final user = Provider.of<AuthProvider>(context).user;
     final projectProvider = Provider.of<ProjectProvider>(context);
+
+    if (user != null && !_didInitWorkspaceStatus) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _ensureWorkspaceStatusBootstrap();
+      });
+    }
 
     if (user != null &&
         !_didAutoLoadAfterLogin &&
@@ -208,7 +530,20 @@ class _DashboardScreenState extends State<DashboardScreen>
                   _performSearch(query);
                 },
               )
-            : const Text('Dashboard'),
+            : Row(
+                children: [
+                  const Text('Dashboard'),
+                  if (user != null) ...[
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: _buildWorkspaceStatusWidget(inAppBar: true),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
         actions: [
           IconButton(
             tooltip: 'Chat',
@@ -443,7 +778,8 @@ class _DashboardScreenState extends State<DashboardScreen>
             _buildProjectList(
               context,
               projectProvider,
-              isSearchResults: _isSearching && _searchController.text.isNotEmpty,
+              isSearchResults:
+                  _isSearching && _searchController.text.isNotEmpty,
             ),
           const SizedBox(height: 80), // Bottom padding for FAB
         ],
@@ -459,6 +795,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             projectId: _promptActivityProjectId,
           );
         });
+        await _refreshWorkspaceStatus(bypassCache: true);
         await projectProvider.refresh();
       },
       child: content,

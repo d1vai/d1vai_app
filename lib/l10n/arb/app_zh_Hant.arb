@@ -1,165 +1,165 @@
 {
   "@@locale": "zh_Hant",
-  "about": "éæ¼",
-  "about_description": "ä¸å AI é©åçæç¨ç¨å¼éç¼å¹³å°ã",
-  "about_subtitle": "æç¨çæ¬åè³è¨",
-  "about_title": "éæ¼",
-  "activity": "åæ",
-  "agree_terms": "ç»å¥å³è¡¨ç¤ºæ¨åææåçæåæ¢æ¬¾åé±ç§æ¿ç­",
+  "about": "關於",
+  "about_description": "一個 AI 驅動的應用程式開發平台。",
+  "about_subtitle": "應用版本和資訊",
+  "about_title": "關於",
+  "activity": "動態",
+  "agree_terms": "登入即表示您同意我們的服務條款和隱私政策",
   "api_settings": "API",
-  "appearance": "å¤è§",
-  "basic_information": "åºæ¬è³è¨",
-  "be_first_to_share": "æ¶åç¼ä½ç¬¬ä¸ååæ",
-  "bind_email": "ç¶å®é»å­éµä»¶",
-  "bind_email_subtitle": "ç¶å®é»å­éµä»¶å°æ¨çå¸³æ¶",
-  "cancel": "åæ¶",
-  "choose_theme": "é¸æä¸»é¡",
-  "code_sent_success": "é©è­ç¢¼å·²ç¼éï¼è«æ¥æ¶éµä»¶",
-  "code_sent_to": "é©è­ç¢¼å·²ç¼éè³",
-  "community": "ç¤¾ç¾¤",
-  "company_name": "å¬å¸åç¨±",
-  "company_website": "å¬å¸ç¶²ç«",
-  "confirm": "ç¢ºèª",
-  "confirm_password": "ç¢ºèªå¯ç¢¼",
-  "connect_github": "é£æ¥ GitHub",
-  "contact_support": "è¯çµ¡å®¢æ",
-  "copied": "å·²è¤è£½",
-  "create_project": "å»ºç«å°æ¡",
-  "dark_mode": "æ·±è²æ¨¡å¼",
-  "dashboard": "å·¥ä½å°",
-  "delete": "åªé¤",
-  "docs": "æä»¶",
-  "edit": "ç·¨è¼¯",
-  "edit_profile": "ç·¨è¼¯è³æ",
-  "email": "é»å­éµä»¶",
-  "email_address": "é»å­éµä»¶å°å",
-  "email_bound_success": "é»å­éµä»¶ç¶å®æå",
-  "email_invalid": "è«è¼¸å¥ææçé»å­éµä»¶å°å",
-  "email_required": "è«è¼¸å¥é»å­éµä»¶å°å",
-  "enter_code_and_new_password": "è¼¸å¥é©è­ç¢¼åæ°å¯ç¢¼",
-  "enter_code_sent": "è¼¸å¥ç¼éå°æ¨é»å­éµä»¶ç6ä½é©è­ç¢¼",
-  "enter_email": "è«è¼¸å¥æ¨çé»å­éµä»¶",
-  "enter_email_for_code": "è¼¸å¥é»å­éµä»¶å°åä»¥æ¥æ¶é©è­ç¢¼",
-  "enter_new_password": "è«è¼¸å¥æ°å¯ç¢¼",
-  "enter_password": "è«è¼¸å¥å¯ç¢¼",
-  "enter_verify_code": "è«è¼¸å¥é©è­ç¢¼",
-  "error": "é¯èª¤",
-  "error_network": "ç¶²è·¯é£ç·å¤±æï¼è«æª¢æ¥ç¶²è·¯å¾éè©¦",
-  "error_request_failed": "è«æ±å¤±æï¼è«ç¨å¾éè©¦",
-  "error_timeout": "è«æ±é¾æï¼è«ç¨å¾éè©¦",
-  "failed_to_load": "è¼å¥å¤±æ",
-  "failed_to_load_posts": "å§å®¹è¼å¥å¤±æ",
-  "failed_to_reset_password": "éç½®å¯ç¢¼å¤±æ",
-  "failed_to_send_code": "ç¼éé©è­ç¢¼å¤±æ",
-  "failed_to_verify": "é©è­å¤±æ",
-  "filter": "ç¯©é¸",
-  "friends_count": "ä½å¥½å",
-  "friends_referred": "æ¨è¦çå¥½å",
+  "appearance": "外觀",
+  "basic_information": "基本資訊",
+  "be_first_to_share": "搶先發佈第一則動態",
+  "bind_email": "綁定電子郵件",
+  "bind_email_subtitle": "綁定電子郵件到您的帳戶",
+  "cancel": "取消",
+  "choose_theme": "選擇主題",
+  "code_sent_success": "驗證碼已發送，請查收郵件",
+  "code_sent_to": "驗證碼已發送至",
+  "community": "社群",
+  "company_name": "公司名稱",
+  "company_website": "公司網站",
+  "confirm": "確認",
+  "confirm_password": "確認密碼",
+  "connect_github": "連接 GitHub",
+  "contact_support": "聯絡客服",
+  "copied": "已複製",
+  "create_project": "建立專案",
+  "dark_mode": "深色模式",
+  "dashboard": "工作台",
+  "delete": "刪除",
+  "docs": "文件",
+  "edit": "編輯",
+  "edit_profile": "編輯資料",
+  "email": "電子郵件",
+  "email_address": "電子郵件地址",
+  "email_bound_success": "電子郵件綁定成功",
+  "email_invalid": "請輸入有效的電子郵件地址",
+  "email_required": "請輸入電子郵件地址",
+  "enter_code_and_new_password": "輸入驗證碼和新密碼",
+  "enter_code_sent": "輸入發送到您電子郵件的6位驗證碼",
+  "enter_email": "請輸入您的電子郵件",
+  "enter_email_for_code": "輸入電子郵件地址以接收驗證碼",
+  "enter_new_password": "請輸入新密碼",
+  "enter_password": "請輸入密碼",
+  "enter_verify_code": "請輸入驗證碼",
+  "error": "錯誤",
+  "error_network": "網路連線失敗，請檢查網路後重試",
+  "error_request_failed": "請求失敗，請稍後重試",
+  "error_timeout": "請求逾時，請稍後重試",
+  "failed_to_load": "載入失敗",
+  "failed_to_load_posts": "內容載入失敗",
+  "failed_to_reset_password": "重置密碼失敗",
+  "failed_to_send_code": "發送驗證碼失敗",
+  "failed_to_verify": "驗證失敗",
+  "filter": "篩選",
+  "friends_count": "位好友",
+  "friends_referred": "推薦的好友",
   "github": "GitHub",
-  "github_connect_description": "é£æ¥æ¨ç GitHub å¸³æ¶ä»¥å¯å¥å²å­åº«",
-  "github_integration": "GitHub æ´å",
-  "help_support": "å¹«å©èæ¯æ´",
-  "help_support_subtitle": "ç²åå¹«å©èæ¯æ´",
-  "import_action": "å¯å¥",
-  "import_dialog_description": "è¼¸å¥æ¨è¦å¯å¥çå²å­åº«è³è¨",
-  "import_dialog_title": "å¯å¥å¬å±å²å­åº«",
-  "import_failed": "å¯å¥å²å­åº«å¤±æ",
-  "import_repository": "å¯å¥å²å­åº«",
-  "import_subtitle": "å¯å¥å¬å±å²å­åº«",
-  "import_success": "å²å­åº«å¯å¥æå",
-  "importing": "å¯å¥ä¸­...",
-  "industry": "ç¢æ¥­",
-  "input_error_owner_repo": "è«è¼¸å¥ææèåå²å­åº«åç¨±",
-  "invite_code_copied": "éè«ç¢¼å·²è¤è£½å°åªè²¼ç°¿",
-  "invite_code_unavailable": "éè«ç¢¼ä¸å¯ç¨",
-  "invite_description": "éè«å¥½åå å¥ d1v.ai ä¸¦ç²å¾çåµ",
-  "invite_friends": "éè«å¥½å",
-  "invites": "éè«",
-  "just_now": "åå",
-  "language": "èªè¨",
-  "legend_less": "å°",
-  "legend_more": "å¤",
-  "light_mode": "æ·ºè²æ¨¡å¼",
-  "loading": "è¼å¥ä¸­...",
-  "login": "ç»å¥",
-  "login_failed": "ç»å¥å¤±æ",
-  "login_first": "è«åç»å¥",
-  "login_required_button": "åå¾ç»å¥",
-  "login_required_create_post_message": "ä½ éè¦åç»å¥æè½ç¼ä½è²¼æ",
-  "login_required_dashboard_message": "ä½ éè¦åç»å¥æè½æ¥çå°æ¡åè¡¨",
-  "login_required_github_message": "ä½ éè¦åç»å¥æè½è¨­å® GitHub æ´å",
-  "login_required_invites_message": "ä½ éè¦åç»å¥æè½æ¥çéè«èçåµ",
-  "login_required_orders_message": "ä½ éè¦åç»å¥æè½æ¥çè¨å®èè¨è²»è³è¨",
-  "login_required_settings_message": "ä½ éè¦åç»å¥æè½ç®¡çå¸³èè¨­å®",
-  "login_required_title": "éè¦ç»å¥",
-  "login_success": "ç»å¥æå",
-  "login_with_code": "ä½¿ç¨é©è­ç¢¼ç»å¥",
-  "login_with_password": "ä½¿ç¨å¯ç¢¼ç»å¥",
-  "logout": "ç»åº",
-  "my_invites": "æçéè«",
-  "my_invites_subtitle": "æ¥çæ¨çéè«è¨é",
-  "new_password": "æ°å¯ç¢¼",
-  "no_posts_yet": "æ«ç¡å§å®¹",
-  "notifications": "éç¥",
-  "notifications_subtitle": "ç®¡çéç¥",
-  "other": "å¶ä»",
-  "owner_hint": "ä½¿ç¨èåç¨±æçµç¹",
-  "owner_label": "ææè",
-  "password": "å¯ç¢¼",
-  "password_length_error": "å¯ç¢¼é·åº¦è³å°çº6åå­å",
-  "password_required": "è«è¼¸å¥å¯ç¢¼",
-  "password_reset_success": "å¯ç¢¼éç½®æå",
-  "passwords_do_not_match": "å©æ¬¡è¼¸å¥çå¯ç¢¼ä¸ä¸è´",
-  "pricing": "æ¹æ¡å¹æ ¼",
-  "privacy": "é±ç§",
-  "profile": "åäººä¸­å¿",
-  "project_name_hint": "çç©ºä½¿ç¨å²å­åº«åç¨±",
-  "project_name_optional": "å°æ¡åç¨± (å¯é¸)",
-  "prompt_activity_title": "æç¤ºè©æ´»èºåº¦",
-  "prompt_activity_total": "ç¸½è¨ï¼",
-  "prompts_unit": "æ¬¡",
-  "re_enter_new_password": "è«åæ¬¡è¼¸å¥æ°å¯ç¢¼",
-  "recent_projects": "è¿æå°æ¡",
-  "refresh": "éæ°æ´ç",
-  "repo_hint": "å²å­åº«åç¨±",
-  "repo_label": "å²å­åº«",
-  "resend_after": "ç§å¾éç¼",
-  "resend_code": "éæ°ç¼éé©è­ç¢¼",
-  "reset_password": "éç½®å¯ç¢¼",
-  "reset_password_subtitle": "éç½®æ¨çç»å¥å¯ç¢¼",
-  "resetting": "éç½®ä¸­...",
-  "retry": "éè©¦",
-  "save": "å²å­",
-  "save_changes": "å²å­è®æ´",
-  "search": "æå°",
-  "send_code": "ç¼éé©è­ç¢¼",
-  "sending": "ç¼éä¸­...",
-  "session_expired_message": "ç»å¥å·²éæï¼è«éæ°ç»å¥",
-  "session_expired_title": "ç»å¥å·²éæ",
-  "settings": "è¨­å®",
-  "share_failed": "åäº«å¤±æ",
-  "share_invite_code": "åäº«éè«ç¢¼",
-  "share_message_subject": "å å¥ d1v.ai",
-  "share_success": "éè«ç¢¼åäº«æå",
-  "sort": "æåº",
-  "success": "æå",
-  "sync_failed": "åæ­¥å²å­åº«å¤±æ",
-  "sync_repositories": "åæ­¥å²å­åº«",
-  "sync_subtitle": "æ´æ°æ¨çå²å­åº«åè¡¨",
-  "sync_success": "å²å­åº«åæ­¥æå",
-  "syncing": "åæ­¥ä¸­",
-  "syncing_message": "æ­£å¨åæ­¥å²å­åº«...",
-  "system_mode": "è·é¨ç³»çµ±",
-  "theme_subtitle": "æäº®ææ·±è²æ¨¡å¼",
-  "theme_switched": "å·²åæè³",
-  "theme_title": "ä¸»é¡",
-  "theme_updated": "ä¸»é¡å·²æ´æ°",
-  "verify_code": "é©è­ç¢¼",
-  "verify_code_complete": "è«è¼¸å¥å®æ´çé©è­ç¢¼",
-  "verify_code_required": "è«è¼¸å¥é©è­ç¢¼",
-  "verify_login": "é©è­ç»å¥",
-  "verifying": "é©è­ä¸­...",
-  "wallet_addresses": "é¢åå°å",
-  "welcome": "æ­¡è¿",
-  "your_invite_code": "æ¨çéè«ç¢¼"
+  "github_connect_description": "連接您的 GitHub 帳戶以匯入儲存庫",
+  "github_integration": "GitHub 整合",
+  "help_support": "幫助與支援",
+  "help_support_subtitle": "獲取幫助與支援",
+  "import_action": "匯入",
+  "import_dialog_description": "輸入您要匯入的儲存庫資訊",
+  "import_dialog_title": "匯入公共儲存庫",
+  "import_failed": "匯入儲存庫失敗",
+  "import_repository": "匯入儲存庫",
+  "import_subtitle": "匯入公共儲存庫",
+  "import_success": "儲存庫匯入成功",
+  "importing": "匯入中...",
+  "industry": "產業",
+  "input_error_owner_repo": "請輸入擁有者和儲存庫名稱",
+  "invite_code_copied": "邀請碼已複製到剪貼簿",
+  "invite_code_unavailable": "邀請碼不可用",
+  "invite_description": "邀請好友加入 d1v.ai 並獲得獎勵",
+  "invite_friends": "邀請好友",
+  "invites": "邀請",
+  "just_now": "剛剛",
+  "language": "語言",
+  "legend_less": "少",
+  "legend_more": "多",
+  "light_mode": "淺色模式",
+  "loading": "載入中...",
+  "login": "登入",
+  "login_failed": "登入失敗",
+  "login_first": "請先登入",
+  "login_required_button": "前往登入",
+  "login_required_create_post_message": "你需要先登入才能發佈貼文",
+  "login_required_dashboard_message": "你需要先登入才能查看專案列表",
+  "login_required_github_message": "你需要先登入才能設定 GitHub 整合",
+  "login_required_invites_message": "你需要先登入才能查看邀請與獎勵",
+  "login_required_orders_message": "你需要先登入才能查看訂單與計費資訊",
+  "login_required_settings_message": "你需要先登入才能管理帳號設定",
+  "login_required_title": "需要登入",
+  "login_success": "登入成功",
+  "login_with_code": "使用驗證碼登入",
+  "login_with_password": "使用密碼登入",
+  "logout": "登出",
+  "my_invites": "我的邀請",
+  "my_invites_subtitle": "查看您的邀請記錄",
+  "new_password": "新密碼",
+  "no_posts_yet": "暫無內容",
+  "notifications": "通知",
+  "notifications_subtitle": "管理通知",
+  "other": "其他",
+  "owner_hint": "使用者名稱或組織",
+  "owner_label": "擁有者",
+  "password": "密碼",
+  "password_length_error": "密碼長度至少為6個字元",
+  "password_required": "請輸入密碼",
+  "password_reset_success": "密碼重置成功",
+  "passwords_do_not_match": "兩次輸入的密碼不一致",
+  "pricing": "方案價格",
+  "privacy": "隱私",
+  "profile": "個人中心",
+  "project_name_hint": "留空使用儲存庫名稱",
+  "project_name_optional": "專案名稱 (可選)",
+  "prompt_activity_title": "提示詞活躍度",
+  "prompt_activity_total": "總計：",
+  "prompts_unit": "次",
+  "re_enter_new_password": "請再次輸入新密碼",
+  "recent_projects": "近期專案",
+  "refresh": "重新整理",
+  "repo_hint": "儲存庫名稱",
+  "repo_label": "儲存庫",
+  "resend_after": "秒後重發",
+  "resend_code": "重新發送驗證碼",
+  "reset_password": "重置密碼",
+  "reset_password_subtitle": "重置您的登入密碼",
+  "resetting": "重置中...",
+  "retry": "重試",
+  "save": "儲存",
+  "save_changes": "儲存變更",
+  "search": "搜尋",
+  "send_code": "發送驗證碼",
+  "sending": "發送中...",
+  "session_expired_message": "登入已過期，請重新登入",
+  "session_expired_title": "登入已過期",
+  "settings": "設定",
+  "share_failed": "分享失敗",
+  "share_invite_code": "分享邀請碼",
+  "share_message_subject": "加入 d1v.ai",
+  "share_success": "邀請碼分享成功",
+  "sort": "排序",
+  "success": "成功",
+  "sync_failed": "同步儲存庫失敗",
+  "sync_repositories": "同步儲存庫",
+  "sync_subtitle": "更新您的儲存庫列表",
+  "sync_success": "儲存庫同步成功",
+  "syncing": "同步中",
+  "syncing_message": "正在同步儲存庫...",
+  "system_mode": "跟隨系統",
+  "theme_subtitle": "明亮或深色模式",
+  "theme_switched": "已切換至",
+  "theme_title": "主題",
+  "theme_updated": "主題已更新",
+  "verify_code": "驗證碼",
+  "verify_code_complete": "請輸入完整的驗證碼",
+  "verify_code_required": "請輸入驗證碼",
+  "verify_login": "驗證登入",
+  "verifying": "驗證中...",
+  "wallet_addresses": "錢包地址",
+  "welcome": "歡迎",
+  "your_invite_code": "您的邀請碼"
 }

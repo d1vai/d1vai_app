@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../models/model_config.dart';
 import '../button.dart';
 import '../input.dart';
 
@@ -8,6 +9,11 @@ class CreateProjectNewAiView extends StatelessWidget {
   final String? errorText;
   final ValueChanged<String> onChanged;
   final VoidCallback onCreate;
+  final List<ModelInfo> models;
+  final String selectedModelId;
+  final ValueChanged<String>? onModelChanged;
+  final bool isModelLoading;
+  final bool isWorkspaceReady;
 
   const CreateProjectNewAiView({
     super.key,
@@ -15,6 +21,11 @@ class CreateProjectNewAiView extends StatelessWidget {
     required this.errorText,
     required this.onChanged,
     required this.onCreate,
+    this.models = const <ModelInfo>[],
+    this.selectedModelId = '',
+    this.onModelChanged,
+    this.isModelLoading = false,
+    this.isWorkspaceReady = false,
   });
 
   bool _canCreate(String text) {
@@ -76,6 +87,65 @@ class CreateProjectNewAiView extends StatelessWidget {
             color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
           ),
         ),
+        const SizedBox(height: 16),
+        Text(
+          'Model',
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Stack(
+          alignment: Alignment.centerRight,
+          children: [
+            DropdownButtonFormField<String>(
+              key: ValueKey('create-project-model-$selectedModelId'),
+              initialValue: selectedModelId.trim().isEmpty
+                  ? null
+                  : selectedModelId,
+              items: models
+                  .map(
+                    (m) => DropdownMenuItem<String>(
+                      value: m.id,
+                      child: Text(m.name, overflow: TextOverflow.ellipsis),
+                    ),
+                  )
+                  .toList(),
+              onChanged:
+                  (!isWorkspaceReady ||
+                      isModelLoading ||
+                      onModelChanged == null)
+                  ? null
+                  : (v) {
+                      if (v == null) return;
+                      onModelChanged!(v);
+                    },
+              decoration: InputDecoration(
+                hintText: isWorkspaceReady
+                    ? (isModelLoading ? 'Loading models…' : 'Select model')
+                    : 'Waiting workspace ready…',
+                border: const OutlineInputBorder(),
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+              ),
+            ),
+            if (isModelLoading)
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ),
+          ],
+        ),
         const SizedBox(height: 24),
         ListenableBuilder(
           listenable: descriptionController,
@@ -101,4 +171,3 @@ class CreateProjectNewAiView extends StatelessWidget {
     );
   }
 }
-

@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import '../models/message.dart';
+import '../models/model_config.dart';
 import '../models/outbox.dart';
 import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
+import '../services/model_config_service.dart';
 import '../services/workspace_service.dart';
 import '../utils/error_utils.dart';
 import '../utils/message_parser.dart';
@@ -14,6 +16,7 @@ import '../widgets/chat/outbox/outbox_widgets.dart';
 import '../widgets/chat/message_skeleton.dart';
 import '../widgets/chat/quick_actions.dart';
 import '../widgets/chat/status_pill.dart';
+import '../widgets/compact_selector.dart';
 import '../widgets/alert.dart';
 
 class _OutboxAborted implements Exception {
@@ -28,20 +31,16 @@ class ChatScreen extends StatefulWidget {
   final String projectId;
   final String? autoprompt;
 
-  const ChatScreen({
-    super.key,
-    required this.projectId,
-    this.autoprompt,
-  });
+  const ChatScreen({super.key, required this.projectId, this.autoprompt});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen>
-    {
+class _ChatScreenState extends State<ChatScreen> {
   final ChatService _chatService = ChatService();
   final WorkspaceService _workspaceService = WorkspaceService();
+  final ModelConfigService _modelConfigService = ModelConfigService();
   final ScrollController _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
   final Map<String, MessageStatus> _messageStatuses = {};
@@ -94,6 +93,13 @@ class _ChatScreenState extends State<ChatScreen>
   bool _workspaceWarmupInFlight = false;
   int _workspacePollErrorStreak = 0;
 
+  List<ModelInfo> _availableModels = <ModelInfo>[];
+  String _selectedModelId = '';
+  bool _isLoadingModels = false;
+  bool _isSwitchingModel = false;
+  bool _hasLoadedModelConfig = false;
+  Timer? _modelConfigRetryTimer;
+
   @override
   void initState() {
     super.initState();
@@ -106,6 +112,7 @@ class _ChatScreenState extends State<ChatScreen>
     _assistantDeltaFlushTimer?.cancel();
     _reconnectTimer?.cancel();
     _workspacePollTimer?.cancel();
+    _modelConfigRetryTimer?.cancel();
     _webSocketSubscription?.cancel();
     _outboxSignals.close();
     _inputController.dispose();
@@ -149,7 +156,10 @@ class _ChatScreenState extends State<ChatScreen>
   }
 
   bool _isTaskIdleForQueue() {
-    final working = _isLoading || _wsConnState == _WsConnectionState.connecting || _hasActiveStreaming();
+    final working =
+        _isLoading ||
+        _wsConnState == _WsConnectionState.connecting ||
+        _hasActiveStreaming();
     return !working;
   }
 
@@ -405,6 +415,9 @@ class _ChatScreenState extends State<ChatScreen>
         _workspacePhase = phase;
         _workspaceError = null;
       });
+      if (phase == WorkspacePhase.ready) {
+        unawaited(_loadModelConfigIfPossible());
+      }
       _signalOutbox();
       unawaited(_drainOutbox());
       _workspacePollErrorStreak = 0;
@@ -447,6 +460,7 @@ class _ChatScreenState extends State<ChatScreen>
         _workspacePhase = WorkspacePhase.ready;
         _workspaceError = null;
       });
+      unawaited(_loadModelConfigIfPossible());
       _signalOutbox();
       unawaited(_drainOutbox());
       _workspacePollErrorStreak = 0;
@@ -474,6 +488,108 @@ class _ChatScreenState extends State<ChatScreen>
     if (_workspacePhase != WorkspacePhase.ready) {
       throw Exception(_workspaceError ?? 'Workspace is not ready');
     }
+    unawaited(_loadModelConfigIfPossible());
+  }
+
+  void _scheduleModelConfigRetry() {
+    _modelConfigRetryTimer?.cancel();
+    _modelConfigRetryTimer = Timer(const Duration(seconds: 3), () {
+      if (!mounted) return;
+      if (_workspacePhase != WorkspacePhase.ready) return;
+      if (_hasLoadedModelConfig || _isLoadingModels) return;
+      unawaited(_loadModelConfigIfPossible());
+    });
+  }
+
+  Future<void> _loadModelConfigIfPossible() async {
+    if (!mounted) return;
+    if (_workspacePhase != WorkspacePhase.ready) return;
+    if (_hasLoadedModelConfig || _isLoadingModels) return;
+
+    setState(() {
+      _isLoadingModels = true;
+    });
+
+    try {
+      final config = await _modelConfigService.getModelConfig(retries: 0);
+      if (!mounted) return;
+      final models = config.availableModels;
+      final firstModel = models.isNotEmpty ? models.first.id.trim() : '';
+      final apiModel = config.model.trim();
+      final cached = (await _modelConfigService.getCachedModel())?.trim() ?? '';
+      final preferred = cached.isNotEmpty ? cached : apiModel;
+      final exists =
+          preferred.isNotEmpty && models.any((m) => m.id.trim() == preferred);
+      final selected = exists ? preferred : firstModel;
+
+      setState(() {
+        _availableModels = models;
+        _selectedModelId = selected;
+        _hasLoadedModelConfig = true;
+        _isLoadingModels = false;
+      });
+
+      if (selected.isNotEmpty) {
+        await _modelConfigService.setCachedModel(selected);
+        if (apiModel != selected) {
+          try {
+            await _modelConfigService.setModelConfig(selected, retries: 0);
+          } catch (_) {}
+        }
+      }
+      _modelConfigRetryTimer?.cancel();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _availableModels = <ModelInfo>[];
+        _selectedModelId = '';
+        _hasLoadedModelConfig = false;
+        _isLoadingModels = false;
+      });
+      _scheduleModelConfigRetry();
+    }
+  }
+
+  Future<void> _handleModelChanged(String modelId) async {
+    final next = modelId.trim();
+    if (next.isEmpty || next == _selectedModelId || _isSwitchingModel) return;
+    if (!mounted) return;
+
+    setState(() {
+      _isSwitchingModel = true;
+    });
+
+    try {
+      await _modelConfigService.setModelConfig(next, retries: 0);
+      await _modelConfigService.setCachedModel(next);
+      if (!mounted) return;
+      setState(() {
+        _selectedModelId = next;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to switch model: $e')));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSwitchingModel = false;
+        });
+      }
+    }
+  }
+
+  String _selectedModelLabel() {
+    final id = _selectedModelId.trim();
+    if (id.isEmpty) return 'Model';
+    for (final model in _availableModels) {
+      if (model.id.trim() == id) {
+        final name = model.name.trim();
+        return name.isEmpty ? id : name;
+      }
+    }
+    return id;
   }
 
   Future<void> _maybeRunAutoprompt() async {
@@ -551,13 +667,19 @@ class _ChatScreenState extends State<ChatScreen>
         return t != null && t.isNotEmpty ? t : null;
       }
 
-      final terminalTypes = <String>{'complete', 'result', 'error', 'cancelled'};
+      final terminalTypes = <String>{
+        'complete',
+        'result',
+        'error',
+        'cancelled',
+      };
       final latestType = normalizeType(latest);
       nextAutoConnectDisabled =
           latestType != null && terminalTypes.contains(latestType)
-              ? true
-              : _autoConnectDisabled;
-      final nextSessionDone = latestType == 'complete' ||
+          ? true
+          : _autoConnectDisabled;
+      final nextSessionDone =
+          latestType == 'complete' ||
           latestType == 'result' ||
           latestType == 'cancelled';
       final nextSessionError = latestType == 'error';
@@ -583,15 +705,13 @@ class _ChatScreenState extends State<ChatScreen>
         _messageStatuses.clear();
         _isLoadingHistory = false;
         _hasMoreHistory = history.length >= limit;
-        _oldestMessageAt =
-            history.isNotEmpty ? history.first.createdAt : null;
+        _oldestMessageAt = history.isNotEmpty ? history.first.createdAt : null;
         _autoConnectDisabled = nextAutoConnectDisabled;
         _sessionDone = nextSessionDone;
         _sessionError = nextSessionError;
-        _currentSessionId =
-            (nextSessionId != null && nextSessionId.isNotEmpty)
-                ? nextSessionId
-                : _currentSessionId;
+        _currentSessionId = (nextSessionId != null && nextSessionId.isNotEmpty)
+            ? nextSessionId
+            : _currentSessionId;
       });
 
       ChatHistoryEntry? newestNonIgnorable;
@@ -634,7 +754,8 @@ class _ChatScreenState extends State<ChatScreen>
         ),
       );
     } finally {
-      final canAttemptReconnect = attemptReconnect &&
+      final canAttemptReconnect =
+          attemptReconnect &&
           mounted &&
           !(disableAutoConnect || nextAutoConnectDisabled);
       final last = lastAt;
@@ -651,12 +772,17 @@ class _ChatScreenState extends State<ChatScreen>
             final status = active?['status']?.toString().trim();
             final wsUrl = active?['websocket_url']?.toString();
 
-            final shouldReconnect = (sid != null && sid.isNotEmpty) &&
+            final shouldReconnect =
+                (sid != null && sid.isNotEmpty) &&
                 status == 'running' &&
                 !(historyOk &&
                     lastType != null &&
-                    <String>{'complete', 'result', 'error', 'cancelled'}
-                        .contains(lastType));
+                    <String>{
+                      'complete',
+                      'result',
+                      'error',
+                      'cancelled',
+                    }.contains(lastType));
 
             if (shouldReconnect) {
               _currentSessionId = sid;
@@ -700,11 +826,11 @@ class _ChatScreenState extends State<ChatScreen>
       }
 
       final existingIds = _messages.map((m) => m.id).toSet();
-      final deduped =
-          older.where((m) => !existingIds.contains(m.id)).toList();
-      final merged = MessageParser.mergeToolResultsIntoPrevToolCalls(
-        [...deduped, ..._messages],
-      );
+      final deduped = older.where((m) => !existingIds.contains(m.id)).toList();
+      final merged = MessageParser.mergeToolResultsIntoPrevToolCalls([
+        ...deduped,
+        ..._messages,
+      ]);
 
       setState(() {
         _messages
@@ -712,8 +838,9 @@ class _ChatScreenState extends State<ChatScreen>
           ..addAll(merged);
         _isLoadingMoreHistory = false;
         _hasMoreHistory = history.length >= limit;
-        _oldestMessageAt =
-            history.isNotEmpty ? history.first.createdAt : _oldestMessageAt;
+        _oldestMessageAt = history.isNotEmpty
+            ? history.first.createdAt
+            : _oldestMessageAt;
       });
     } catch (_) {
       if (!mounted) return;
@@ -843,8 +970,8 @@ class _ChatScreenState extends State<ChatScreen>
         final shouldUpdate = next == 'error'
             ? cur != 'error'
             : next == 'warning'
-                ? cur != 'warning' && cur != 'error'
-                : cur != 'done' && cur != 'error' && cur != 'warning';
+            ? cur != 'warning' && cur != 'error'
+            : cur != 'done' && cur != 'error' && cur != 'warning';
         if (!shouldUpdate) return;
         final nextContents = List<MessageContent>.from(contents);
         nextContents[ci] = c.copyWith(status: next);
@@ -887,6 +1014,32 @@ class _ChatScreenState extends State<ChatScreen>
     } catch (_) {
       return false;
     }
+  }
+
+  void _appendCancelledNotice() {
+    const text = 'Request cancelled by user.';
+    if (!mounted) return;
+    if (_messages.isNotEmpty) {
+      final last = _messages.last;
+      if (last.role == 'warning' &&
+          last.contents.isNotEmpty &&
+          last.contents.first is TextMessageContent) {
+        final existing = (last.contents.first as TextMessageContent).text
+            .trim();
+        if (existing == text) return;
+      }
+    }
+    setState(() {
+      _messages.add(
+        ChatMessage(
+          id: 'cancelled-${DateTime.now().millisecondsSinceEpoch}',
+          role: 'warning',
+          createdAt: DateTime.now(),
+          contents: const [TextMessageContent(text: text)],
+        ),
+      );
+    });
+    _scrollToBottom();
   }
 
   void _handleWsPayload(Map<String, dynamic> payload) {
@@ -1019,6 +1172,7 @@ class _ChatScreenState extends State<ChatScreen>
         _markLastToolOutcome('warning');
         _sessionDone = true;
         _sessionError = false;
+        _appendCancelledNotice();
       } else {
         _finalizePrevToolDone();
         _sessionDone = true;
@@ -1202,10 +1356,7 @@ class _ChatScreenState extends State<ChatScreen>
   }
 
   /// Send a message
-  Future<void> _sendMessage(
-    String text, {
-      bool forceNewSession = false,
-  }) async {
+  Future<void> _sendMessage(String text, {bool forceNewSession = false}) async {
     final prompt = text.trim();
     if (prompt.isEmpty) return;
 
@@ -1258,6 +1409,7 @@ class _ChatScreenState extends State<ChatScreen>
         prompt: prompt,
         sessionType: isNew ? 'new' : 'continue',
         sessionId: isNew ? null : _currentSessionId,
+        model: _selectedModelId.trim().isEmpty ? null : _selectedModelId.trim(),
         optimisticMessage: prompt,
       );
 
@@ -1280,9 +1432,9 @@ class _ChatScreenState extends State<ChatScreen>
         _isLoading = false;
         _messageStatuses[tempId] = MessageStatus.failed;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to send message: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to send message: $e')));
       _signalOutbox();
       unawaited(_drainOutbox());
     }
@@ -1309,6 +1461,7 @@ class _ChatScreenState extends State<ChatScreen>
         projectId: widget.projectId,
         prompt: prompt,
         sessionType: 'new',
+        model: _selectedModelId.trim().isEmpty ? null : _selectedModelId.trim(),
         optimisticMessage: prompt,
       );
       if (!mounted) return;
@@ -1326,9 +1479,9 @@ class _ChatScreenState extends State<ChatScreen>
         _isLoading = false;
         _messageStatuses[message.id] = MessageStatus.failed;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Retry failed: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Retry failed: $e')));
     }
   }
 
@@ -1386,8 +1539,9 @@ class _ChatScreenState extends State<ChatScreen>
     if (_workspaceError != null && _workspaceError!.trim().isNotEmpty) {
       wsLabelParts.add(_workspaceError!);
     }
-    final wsTooltip =
-        wsLabelParts.isEmpty ? 'Workspace' : wsLabelParts.join(' · ');
+    final wsTooltip = wsLabelParts.isEmpty
+        ? 'Workspace'
+        : wsLabelParts.join(' · ');
 
     return Scaffold(
       appBar: AppBar(
@@ -1423,6 +1577,34 @@ class _ChatScreenState extends State<ChatScreen>
           ],
         ),
         actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: Center(
+              child: CompactSelector(
+                options: _availableModels
+                    .map(
+                      (m) => CompactSelectorOption(value: m.id, label: m.name),
+                    )
+                    .toList(),
+                value: _selectedModelId.trim().isEmpty
+                    ? null
+                    : _selectedModelId.trim(),
+                displayLabel: _selectedModelLabel(),
+                placeholder: 'Model',
+                tooltip: 'Select model',
+                leadingIcon: Icons.auto_awesome_rounded,
+                minWidth: 108,
+                maxWidth: 142,
+                isLoading: _isLoadingModels || _isSwitchingModel,
+                onChanged:
+                    (_isLoadingModels ||
+                        _isSwitchingModel ||
+                        _availableModels.isEmpty)
+                    ? null
+                    : (value) => unawaited(_handleModelChanged(value)),
+              ),
+            ),
+          ),
           Tooltip(
             message: wsTooltip,
             child: IconButton(
@@ -1454,7 +1636,9 @@ class _ChatScreenState extends State<ChatScreen>
                 context: context,
                 builder: (context) => AlertDialog(
                   title: const Text('Clear Chat'),
-                  content: const Text('Are you sure you want to clear all messages?'),
+                  content: const Text(
+                    'Are you sure you want to clear all messages?',
+                  ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
@@ -1488,8 +1672,8 @@ class _ChatScreenState extends State<ChatScreen>
                 color: theme.colorScheme.surface,
                 child: _messages.isEmpty
                     ? _isLoadingHistory
-                        ? _buildLoadingState()
-                        : _buildEmptyState()
+                          ? _buildLoadingState()
+                          : _buildEmptyState()
                     : MessageList(
                         messages: _messages,
                         scrollController: _scrollController,

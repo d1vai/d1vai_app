@@ -32,6 +32,8 @@ class ChatBottomSheet extends StatefulWidget {
   final String? heroTag;
   final String? statusLabel;
   final bool statusIsError;
+  final bool isModelReady;
+  final bool isModelLoading;
 
   const ChatBottomSheet({
     super.key,
@@ -57,6 +59,8 @@ class ChatBottomSheet extends StatefulWidget {
     this.heroTag,
     this.statusLabel,
     this.statusIsError = false,
+    this.isModelReady = true,
+    this.isModelLoading = false,
   });
 
   @override
@@ -279,8 +283,15 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
           // Input field
           MessageInput(
             onSend: _handleSubmitted,
-            isEnabled: !widget.isLoading,
-            hintText: 'Ask about your project...',
+            isEnabled:
+                !widget.isLoading &&
+                widget.isModelReady &&
+                !widget.isModelLoading,
+            hintText: widget.isModelLoading
+                ? 'Model is loading…'
+                : (widget.isModelReady
+                      ? 'Ask about your project...'
+                      : 'Model is not ready…'),
             controller: _inputController,
             focusNode: _inputFocusNode,
             queueCount: widget.outboxItems.length,

@@ -8,11 +8,7 @@ class OutboxBubbles extends StatefulWidget {
   final Color color;
   final double dotSize;
 
-  const OutboxBubbles({
-    super.key,
-    required this.color,
-    this.dotSize = 4,
-  });
+  const OutboxBubbles({super.key, required this.color, this.dotSize = 4});
 
   @override
   State<OutboxBubbles> createState() => _OutboxBubblesState();
@@ -225,7 +221,10 @@ class _OutboxCountBadgeState extends State<OutboxCountBadge>
       animation: _controller,
       builder: (context, _) {
         final t = Curves.easeOut.transform(_controller.value);
-        final popScale = 1.0 + (_vanishing ? 0.06 : 0.12) * (1.0 - (t - 0.35).clamp(0.0, 0.65) / 0.65);
+        final popScale =
+            1.0 +
+            (_vanishing ? 0.06 : 0.12) *
+                (1.0 - (t - 0.35).clamp(0.0, 0.65) / 0.65);
         final vanishScale = _vanishing ? (1.0 - 0.30 * t) : 1.0;
         final vanishOpacity = _vanishing ? (1.0 - t) : 1.0;
 
@@ -318,7 +317,9 @@ class OutboxBar extends StatelessWidget {
       dotColor = theme.colorScheme.error;
     } else if (mode == OutboxMode.dispatching) {
       dotColor = theme.colorScheme.primary;
-    } else if (mode == OutboxMode.waitingTask || mode == OutboxMode.waitingWorkspace) {
+    } else if (mode == OutboxMode.waitingTask ||
+        mode == OutboxMode.waitingWorkspace ||
+        mode == OutboxMode.waitingModel) {
       dotColor = theme.colorScheme.tertiary;
     } else {
       dotColor = theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6);
@@ -334,11 +335,17 @@ class OutboxBar extends StatelessWidget {
           ),
         );
       }
-      if (mode == OutboxMode.waitingWorkspace || mode == OutboxMode.waitingTask) {
+      if (mode == OutboxMode.waitingWorkspace ||
+          mode == OutboxMode.waitingTask ||
+          mode == OutboxMode.waitingModel) {
         return OutboxBubbles(color: theme.colorScheme.onSurfaceVariant);
       }
       if (mode == OutboxMode.pausedError) {
-        return Icon(Icons.error_outline, size: 18, color: theme.colorScheme.error);
+        return Icon(
+          Icons.error_outline,
+          size: 18,
+          color: theme.colorScheme.error,
+        );
       }
       return const SizedBox(width: 18, height: 18);
     }
@@ -493,6 +500,7 @@ class _OutboxSheetState extends State<_OutboxSheet> {
 
   String _hint() {
     final mode = widget.mode;
+    if (mode == OutboxMode.waitingModel) return 'Waiting for model…';
     if (mode == OutboxMode.waitingWorkspace) return 'Waiting for workspace…';
     if (mode == OutboxMode.waitingTask) return 'Waiting for previous task…';
     if (mode == OutboxMode.dispatching) return 'Sending…';
@@ -522,7 +530,9 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                 width: 44,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.25),
+                  color: theme.colorScheme.onSurfaceVariant.withValues(
+                    alpha: 0.25,
+                  ),
                   borderRadius: BorderRadius.circular(999),
                 ),
               ),
@@ -558,7 +568,9 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                     alignment: Alignment.centerLeft,
                     child: Text(
                       _hint(),
-                      style: theme.textTheme.bodySmall?.copyWith(color: fgMuted),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: fgMuted,
+                      ),
                     ),
                   ),
                 ),
@@ -567,7 +579,9 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                     ? Center(
                         child: Text(
                           'No queued messages.',
-                          style: theme.textTheme.bodyMedium?.copyWith(color: fgMuted),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: fgMuted,
+                          ),
                         ),
                       )
                     : ListView.builder(
@@ -575,15 +589,22 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                         itemCount: items.length,
                         itemBuilder: (context, idx) {
                           final item = items[idx];
-                          final isRunning = item.status == OutboxItemStatus.running;
+                          final isRunning =
+                              item.status == OutboxItemStatus.running;
                           final canEdit = !isRunning;
                           final isEditing = _editingId == item.id;
 
                           Widget trailingIcons() {
-                            final iconFg = theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.75);
-                            final iconBg = theme.colorScheme.surfaceContainerHighest.withValues(
-                              alpha: theme.brightness == Brightness.dark ? 0.55 : 0.85,
-                            );
+                            final iconFg = theme.colorScheme.onSurfaceVariant
+                                .withValues(alpha: 0.75);
+                            final iconBg = theme
+                                .colorScheme
+                                .surfaceContainerHighest
+                                .withValues(
+                                  alpha: theme.brightness == Brightness.dark
+                                      ? 0.55
+                                      : 0.85,
+                                );
 
                             Widget iconBtn({
                               required IconData icon,
@@ -604,7 +625,10 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                                         color: iconBg,
                                         borderRadius: BorderRadius.circular(10),
                                         border: Border.all(
-                                          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.55),
+                                          color: theme
+                                              .colorScheme
+                                              .outlineVariant
+                                              .withValues(alpha: 0.55),
                                         ),
                                       ),
                                       child: Icon(
@@ -629,7 +653,9 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                             }
 
                             if (isEditing) {
-                              final canSave = _controller.text.trim().isNotEmpty;
+                              final canSave = _controller.text
+                                  .trim()
+                                  .isNotEmpty;
                               return Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -642,10 +668,13 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                                   iconBtn(
                                     icon: Icons.check,
                                     tooltip: 'Save',
-                                    onTap: canSave ? () => _saveEdit(item) : null,
+                                    onTap: canSave
+                                        ? () => _saveEdit(item)
+                                        : null,
                                     color: canSave
                                         ? theme.colorScheme.primary
-                                        : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.35),
+                                        : theme.colorScheme.onSurfaceVariant
+                                              .withValues(alpha: 0.35),
                                   ),
                                 ],
                               );
@@ -657,7 +686,9 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                                 iconBtn(
                                   icon: Icons.edit,
                                   tooltip: 'Edit',
-                                  onTap: canEdit ? () => _startEdit(item) : null,
+                                  onTap: canEdit
+                                      ? () => _startEdit(item)
+                                      : null,
                                 ),
                                 const SizedBox(width: 8),
                                 iconBtn(
@@ -673,7 +704,9 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                                           setState(() {});
                                         }
                                       : null,
-                                  color: theme.colorScheme.error.withValues(alpha: 0.9),
+                                  color: theme.colorScheme.error.withValues(
+                                    alpha: 0.9,
+                                  ),
                                 ),
                               ],
                             );
@@ -689,17 +722,19 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                   ),
-                                  if (item.error != null && item.error!.trim().isNotEmpty)
+                                  if (item.error != null &&
+                                      item.error!.trim().isNotEmpty)
                                     Padding(
                                       padding: const EdgeInsets.only(top: 4),
                                       child: Text(
                                         item.error!.trim(),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                        style: theme.textTheme.bodySmall?.copyWith(
-                                          color: theme.colorScheme.error,
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color: theme.colorScheme.error,
+                                              fontWeight: FontWeight.w600,
+                                            ),
                                       ),
                                     ),
                                 ],
@@ -750,12 +785,19 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                               return false;
                             },
                             background: Container(
-                              color: theme.colorScheme.primary.withValues(alpha: 0.12),
-                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              color: theme.colorScheme.primary.withValues(
+                                alpha: 0.12,
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                              ),
                               alignment: Alignment.centerLeft,
                               child: Row(
                                 children: [
-                                  Icon(Icons.edit, color: theme.colorScheme.primary),
+                                  Icon(
+                                    Icons.edit,
+                                    color: theme.colorScheme.primary,
+                                  ),
                                   const SizedBox(width: 8),
                                   Text(
                                     'Edit',
@@ -768,8 +810,12 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                               ),
                             ),
                             secondaryBackground: Container(
-                              color: theme.colorScheme.error.withValues(alpha: 0.12),
-                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              color: theme.colorScheme.error.withValues(
+                                alpha: 0.12,
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                              ),
                               alignment: Alignment.centerRight,
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
@@ -782,19 +828,25 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                                     ),
                                   ),
                                   const SizedBox(width: 8),
-                                  Icon(Icons.delete, color: theme.colorScheme.error),
+                                  Icon(
+                                    Icons.delete,
+                                    color: theme.colorScheme.error,
+                                  ),
                                 ],
                               ),
                             ),
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
                               child: Card(
                                 elevation: 0,
                                 color: theme.colorScheme.surface,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
                                   side: BorderSide(
-                                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.55),
+                                    color: theme.colorScheme.outlineVariant
+                                        .withValues(alpha: 0.55),
                                   ),
                                 ),
                                 child: InkWell(
@@ -805,45 +857,69 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                                           await showModalBottomSheet<void>(
                                             context: context,
                                             useSafeArea: true,
-                                            backgroundColor: theme.colorScheme.surface,
+                                            backgroundColor:
+                                                theme.colorScheme.surface,
                                             shape: const RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.vertical(
-                                                top: Radius.circular(18),
-                                              ),
+                                              borderRadius:
+                                                  BorderRadius.vertical(
+                                                    top: Radius.circular(18),
+                                                  ),
                                             ),
                                             builder: (context) {
                                               return SafeArea(
                                                 child: Column(
-                                                  mainAxisSize: MainAxisSize.min,
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
                                                   children: [
                                                     ListTile(
-                                                      leading: const Icon(Icons.edit),
+                                                      leading: const Icon(
+                                                        Icons.edit,
+                                                      ),
                                                       title: const Text('Edit'),
                                                       enabled: canEdit,
                                                       onTap: !canEdit
                                                           ? null
                                                           : () {
-                                                              Navigator.pop(context);
+                                                              Navigator.pop(
+                                                                context,
+                                                              );
                                                               _startEdit(item);
                                                             },
                                                     ),
                                                     ListTile(
-                                                      leading: const Icon(Icons.delete),
-                                                      title: const Text('Delete'),
+                                                      leading: const Icon(
+                                                        Icons.delete,
+                                                      ),
+                                                      title: const Text(
+                                                        'Delete',
+                                                      ),
                                                       enabled: canEdit,
                                                       onTap: !canEdit
                                                           ? null
                                                           : () {
-                                                              widget.onDelete(item);
-                                                              Navigator.pop(context);
-                                                              if (mounted) setState(() {});
+                                                              widget.onDelete(
+                                                                item,
+                                                              );
+                                                              Navigator.pop(
+                                                                context,
+                                                              );
+                                                              if (mounted) {
+                                                                setState(() {});
+                                                              }
                                                             },
                                                     ),
                                                     const SizedBox(height: 6),
                                                     ListTile(
-                                                      leading: const Icon(Icons.close),
-                                                      title: const Text('Cancel'),
-                                                      onTap: () => Navigator.pop(context),
+                                                      leading: const Icon(
+                                                        Icons.close,
+                                                      ),
+                                                      title: const Text(
+                                                        'Cancel',
+                                                      ),
+                                                      onTap: () =>
+                                                          Navigator.pop(
+                                                            context,
+                                                          ),
                                                     ),
                                                   ],
                                                 ),
@@ -852,9 +928,15 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                                           );
                                         },
                                   child: Padding(
-                                    padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+                                    padding: const EdgeInsets.fromLTRB(
+                                      14,
+                                      12,
+                                      12,
+                                      12,
+                                    ),
                                     child: Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Expanded(child: content()),
                                         const SizedBox(width: 10),

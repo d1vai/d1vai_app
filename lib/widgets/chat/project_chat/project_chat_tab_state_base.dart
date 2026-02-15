@@ -6,6 +6,7 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
     with AutomaticKeepAliveClientMixin {
   final ChatService _chatService = ChatService();
   final WorkspaceService _workspaceService = WorkspaceService();
+  final ModelConfigService _modelConfigService = ModelConfigService();
   final List<ChatMessage> _chatMessages = [];
   final ScrollController _chatScrollController = ScrollController();
   final Map<String, MessageStatus> _messageStatuses = {};
@@ -33,6 +34,15 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   bool _workspacePollInFlight = false;
   bool _workspaceWarmupInFlight = false;
   int _workspacePollErrorStreak = 0;
+
+  // Model selection state (align with web BigChat/create flow)
+  List<ModelInfo> _availableModels = <ModelInfo>[];
+  String _selectedModelId = '';
+  bool _isLoadingModels = false;
+  bool _isSwitchingModel = false;
+  bool _hasLoadedModelConfig = false;
+  String? _modelConfigError;
+  Timer? _modelConfigRetryTimer;
 
   // WebSocket runtime (similar responsibilities to web's wsManager + useWebSocket)
   String? _activeWsSessionId;
@@ -92,6 +102,7 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   Future<void> _refreshWorkspaceStatus({required bool bypassCache});
   Future<void> _loadMoreHistory();
   Future<void> _retryMessage(ChatMessage message);
+  Future<void> _handleModelChanged(String modelId);
 
   // Outbox actions (implemented by logic mixin; UI passes these into widgets).
   void _outboxClear();
