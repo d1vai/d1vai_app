@@ -158,6 +158,8 @@
   "wallet_addresses": "عناوين المحفظة",
   "welcome": "مرحباً",
   "your_invite_code": "رمز الدعوة الخاص بك",
+  "model_switch_title": "النموذج",
+  "model_switch_success": "تم التبديل إلى {model}",
   "prompt_activity_title": "نشاط البرومبت",
   "prompt_activity_total": "الإجمالي:",
   "prompts_unit": "برومبت",

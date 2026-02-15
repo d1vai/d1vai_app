@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../utils/link_navigator.dart';
 import '../widgets/share_sheet.dart';
 import '../widgets/snackbar_helper.dart';
+import '../widgets/web_subpage_app_bar.dart';
 
 class DocDetailScreen extends StatefulWidget {
   final String slug;
@@ -28,10 +29,11 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
   double _progress = 0;
 
   Uri get _docUrl {
-    if (widget.slug == 'legal-restrictions') {
-      return Uri.parse('https://www.d1v.ai/docs/legal-restrictions');
+    final slug = widget.slug.trim();
+    if (slug.isEmpty) {
+      return Uri.parse('https://www.d1v.ai/docs/overview');
     }
-    return Uri.parse('https://docs.d1v.ai/docs/${widget.slug}');
+    return Uri.parse('https://www.d1v.ai/docs/$slug');
   }
 
   static const _jsHandlerCopyCode = 'd1vCopyCode';
@@ -213,12 +215,7 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          tooltip: 'Close',
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
+      appBar: WebSubPageAppBar(
         title: Text('Docs: ${widget.slug}'),
         actions: [
           IconButton(

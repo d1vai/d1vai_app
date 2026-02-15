@@ -158,6 +158,8 @@
   "wallet_addresses": "ウォレットアドレス",
   "welcome": "ようこそ",
   "your_invite_code": "招待コード",
+  "model_switch_title": "モデル",
+  "model_switch_success": "{model} に切り替えました",
   "prompt_activity_title": "プロンプトのアクティビティ",
   "prompt_activity_total": "合計:",
   "prompts_unit": "件",

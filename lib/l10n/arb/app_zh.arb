@@ -115,6 +115,8 @@
   "profile": "个人中心",
   "project_name_hint": "留空使用仓库名称",
   "project_name_optional": "项目名称 (可选)",
+  "model_switch_title": "模型",
+  "model_switch_success": "已切换到 {model}",
   "prompt_activity_title": "提示词活跃度",
   "prompt_activity_total": "总计：",
   "prompts_unit": "次",

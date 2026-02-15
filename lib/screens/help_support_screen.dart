@@ -54,10 +54,10 @@ class HelpSupportScreen extends StatelessWidget {
   static const String supportEmail = 'support@d1v.ai';
 
   // 文档链接
-  static const String docsUrl = 'https://docs.d1v.ai';
+  static const String docsUrl = 'https://www.d1v.ai/docs/overview';
 
   // 用户指南链接
-  static const String userGuideUrl = 'https://docs.d1v.ai/user-guide';
+  static const String userGuideUrl = 'https://www.d1v.ai/docs/getting-started';
 
   Future<void> _launchEmail(BuildContext context) async {
     final Uri emailUri = Uri(
@@ -74,7 +74,8 @@ class HelpSupportScreen extends StatelessWidget {
           SnackBarHelper.showError(
             context,
             title: 'Error',
-            message: 'Could not open email app. Please email us at $supportEmail',
+            message:
+                'Could not open email app. Please email us at $supportEmail',
           );
         }
       }
@@ -120,10 +121,7 @@ class HelpSupportScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Help & Support'),
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Help & Support'), elevation: 0),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -282,9 +280,9 @@ class HelpSupportScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Text(
         title,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+        style: Theme.of(
+          context,
+        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -298,9 +296,7 @@ class HelpSupportScreen extends StatelessWidget {
   }) {
     return Card(
       elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         leading: Container(
           padding: const EdgeInsets.all(8),
@@ -308,15 +304,9 @@ class HelpSupportScreen extends StatelessWidget {
             color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(
-            icon,
-            color: Theme.of(context).primaryColor,
-          ),
+          child: Icon(icon, color: Theme.of(context).primaryColor),
         ),
-        title: Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text(subtitle),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: onTap,
@@ -330,9 +320,7 @@ class HelpSupportScreen extends StatelessWidget {
     required String answer,
   }) {
     return Theme(
-      data: Theme.of(context).copyWith(
-        dividerColor: Colors.transparent,
-      ),
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         childrenPadding: const EdgeInsets.symmetric(
@@ -341,10 +329,7 @@ class HelpSupportScreen extends StatelessWidget {
         ),
         title: Text(
           question,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 15,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
         ),
         children: [
           Align(

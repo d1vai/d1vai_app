@@ -33,6 +33,8 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen>
     with TickerProviderStateMixin {
   static const String _allProjectsOptionValue = '__all_projects__';
+  static const int _promptActivityDays =
+      161; // 23 weeks, denser timeline while staying readable on mobile.
 
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
@@ -356,13 +358,13 @@ class _DashboardScreenState extends State<DashboardScreen>
     if (mounted) {
       setState(() {
         _promptActivityFuture = _service.getPromptDailyActivity(
-          days: 90,
+          days: _promptActivityDays,
           projectId: _promptActivityProjectId,
         );
       });
     } else {
       _promptActivityFuture = _service.getPromptDailyActivity(
-        days: 90,
+        days: _promptActivityDays,
         projectId: _promptActivityProjectId,
       );
     }
@@ -375,7 +377,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   void _reloadPromptActivity() {
     setState(() {
       _promptActivityFuture = _service.getPromptDailyActivity(
-        days: 90,
+        days: _promptActivityDays,
         projectId: _promptActivityProjectId,
       );
     });
@@ -719,19 +721,16 @@ class _DashboardScreenState extends State<DashboardScreen>
                     projectProvider,
                   ),
                   onDayTap: (isoDate, count) {
-                    final pid = _promptActivityProjectId;
-                    if (pid == null) {
-                      SnackBarHelper.showInfo(
-                        context,
-                        title: 'Activity',
-                        message: 'Select a project to jump from the heatmap.',
-                      );
-                      return;
-                    }
-                    final prompt =
-                        'On $isoDate I sent $count prompts. Please summarize what I was doing and suggest next steps.';
-                    context.push(
-                      '/projects/$pid/chat?autoprompt=${Uri.encodeQueryComponent(prompt)}',
+                    final isZh = _isChineseLocale(context);
+                    final message = isZh
+                        ? '$isoDate 发出了 $count 个 prompt'
+                        : '$count prompts on $isoDate';
+                    SnackBarHelper.showInfo(
+                      context,
+                      title: isZh ? '提示词活跃度' : 'Prompt activity',
+                      message: message,
+                      position: SnackBarPosition.top,
+                      duration: const Duration(seconds: 2),
                     );
                   },
                 );
@@ -791,7 +790,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       onRefresh: () async {
         setState(() {
           _promptActivityFuture = _service.getPromptDailyActivity(
-            days: 90,
+            days: _promptActivityDays,
             projectId: _promptActivityProjectId,
           );
         });

@@ -158,6 +158,8 @@
   "wallet_addresses": "Adresses de portefeuille",
   "welcome": "Bienvenue",
   "your_invite_code": "Votre code d'invitation",
+  "model_switch_title": "Modèle",
+  "model_switch_success": "Basculé vers {model}",
   "prompt_activity_title": "Activité des prompts",
   "prompt_activity_total": "Total :",
   "prompts_unit": "prompts",

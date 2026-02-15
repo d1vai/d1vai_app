@@ -158,6 +158,8 @@
   "wallet_addresses": "Адреса кошельков",
   "welcome": "Добро пожаловать",
   "your_invite_code": "Ваш код приглашения",
+  "model_switch_title": "Модель",
+  "model_switch_success": "Переключено на {model}",
   "prompt_activity_title": "Активность промптов",
   "prompt_activity_total": "Итого:",
   "prompts_unit": "промптов",

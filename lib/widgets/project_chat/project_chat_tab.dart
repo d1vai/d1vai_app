@@ -10,6 +10,7 @@ import '../../models/env_var.dart';
 import '../../models/message.dart';
 import '../../models/model_config.dart';
 import '../../models/outbox.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/chat_service.dart';
 import '../../services/d1vai_service.dart';
 import '../../services/model_config_service.dart';

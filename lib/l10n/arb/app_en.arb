@@ -115,6 +115,8 @@
   "profile": "Profile",
   "project_name_hint": "Leave empty to use repository name",
   "project_name_optional": "Project Name (Optional)",
+  "model_switch_title": "Model",
+  "model_switch_success": "Switched to {model}",
   "prompt_activity_title": "Prompt activity",
   "prompt_activity_total": "Total:",
   "prompts_unit": "prompts",

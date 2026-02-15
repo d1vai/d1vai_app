@@ -158,6 +158,8 @@
   "wallet_addresses": "Direcciones de billetera",
   "welcome": "Bienvenido",
   "your_invite_code": "Su código de invitación",
+  "model_switch_title": "Modelo",
+  "model_switch_success": "Cambiado a {model}",
   "prompt_activity_title": "Actividad de prompts",
   "prompt_activity_total": "Total:",
   "prompts_unit": "prompts",

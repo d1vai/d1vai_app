@@ -55,6 +55,18 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         s.contains('expired');
   }
 
+  String _modelLabelFor(String modelId) {
+    final id = modelId.trim();
+    if (id.isEmpty) return 'Model';
+    for (final model in _availableModels) {
+      if (model.id.trim() == id) {
+        final name = model.name.trim();
+        return name.isEmpty ? id : name;
+      }
+    }
+    return id;
+  }
+
   Future<void> _sleepAbortable(Duration d, int token) async {
     final deadline = DateTime.now().add(d);
     while (DateTime.now().isBefore(deadline)) {
@@ -668,9 +680,20 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       await _modelConfigService.setModelConfig(next, retries: 0);
       await _modelConfigService.setCachedModel(next);
       if (!mounted) return;
+      final switchedLabel = _modelLabelFor(next);
+      final loc = AppLocalizations.of(context);
+      final template =
+          loc?.translate('model_switch_success') ?? 'Switched to {model}';
       setState(() {
         _selectedModelId = next;
       });
+      SnackBarHelper.showSuccess(
+        context,
+        title: loc?.translate('model_switch_title') ?? 'Model',
+        message: template.replaceAll('{model}', switchedLabel),
+        position: SnackBarPosition.top,
+        duration: const Duration(seconds: 2),
+      );
     } catch (e) {
       if (!mounted) return;
       setState(() {

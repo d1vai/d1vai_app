@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../utils/link_navigator.dart';
 import '../widgets/share_sheet.dart';
 import '../widgets/snackbar_helper.dart';
+import '../widgets/web_subpage_app_bar.dart';
 
 class AppDetailScreen extends StatefulWidget {
   final String slug;
@@ -84,12 +85,7 @@ class _AppDetailScreenState extends State<AppDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          tooltip: 'Close',
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
+      appBar: WebSubPageAppBar(
         title: Text('App: ${widget.slug}'),
         actions: [
           IconButton(

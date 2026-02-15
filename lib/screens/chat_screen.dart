@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
 import '../services/model_config_service.dart';
 import '../services/workspace_service.dart';
+import '../l10n/app_localizations.dart';
 import '../utils/error_utils.dart';
 import '../utils/message_parser.dart';
 import '../widgets/chat/message_list.dart';
@@ -18,6 +19,7 @@ import '../widgets/chat/quick_actions.dart';
 import '../widgets/chat/status_pill.dart';
 import '../widgets/compact_selector.dart';
 import '../widgets/alert.dart';
+import '../widgets/snackbar_helper.dart';
 
 class _OutboxAborted implements Exception {
   const _OutboxAborted();
@@ -563,9 +565,20 @@ class _ChatScreenState extends State<ChatScreen> {
       await _modelConfigService.setModelConfig(next, retries: 0);
       await _modelConfigService.setCachedModel(next);
       if (!mounted) return;
+      final switchedLabel = _modelLabelFor(next);
+      final loc = AppLocalizations.of(context);
+      final template =
+          loc?.translate('model_switch_success') ?? 'Switched to {model}';
       setState(() {
         _selectedModelId = next;
       });
+      SnackBarHelper.showSuccess(
+        context,
+        title: loc?.translate('model_switch_title') ?? 'Model',
+        message: template.replaceAll('{model}', switchedLabel),
+        position: SnackBarPosition.top,
+        duration: const Duration(seconds: 2),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -582,6 +595,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
   String _selectedModelLabel() {
     final id = _selectedModelId.trim();
+    if (id.isEmpty) return 'Model';
+    return _modelLabelFor(id);
+  }
+
+  String _modelLabelFor(String modelId) {
+    final id = modelId.trim();
     if (id.isEmpty) return 'Model';
     for (final model in _availableModels) {
       if (model.id.trim() == id) {

@@ -6,6 +6,7 @@ import '../core/api_client.dart';
 import '../utils/link_navigator.dart';
 import '../widgets/share_sheet.dart';
 import '../widgets/snackbar_helper.dart';
+import '../widgets/web_subpage_app_bar.dart';
 
 class ApiDocsScreen extends StatefulWidget {
   const ApiDocsScreen({super.key});
@@ -67,12 +68,7 @@ class _ApiDocsScreenState extends State<ApiDocsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          tooltip: 'Close',
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
+      appBar: WebSubPageAppBar(
         title: const Text('API Documentation'),
         actions: [
           IconButton(

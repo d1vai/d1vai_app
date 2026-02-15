@@ -14,8 +14,13 @@ class LinkNavigator {
     if (seg.isEmpty) return null;
 
     // Docs.
-    if (host == 'docs.d1v.ai' && seg.first == 'docs' && seg.length >= 2) {
-      return '/docs/${seg[1]}';
+    final isDocsHost =
+        host == 'www.d1v.ai' || host == 'd1v.ai' || host == 'docs.d1v.ai';
+    if (isDocsHost && seg.first == 'docs') {
+      if (seg.length >= 2) {
+        return '/docs/${seg[1]}';
+      }
+      return '/docs';
     }
 
     // Marketplace apps (d1vai.com/apps/:slug).
@@ -32,19 +37,18 @@ class LinkNavigator {
       return '/c/${seg[1]}';
     }
 
-    // In-app docs routes when sharing an app link to itself.
-    if ((host == 'www.d1v.ai' || host == 'd1v.ai') &&
-        seg.first == 'docs' &&
-        seg.length >= 2) {
-      return '/docs/${seg[1]}';
-    }
-
     return null;
   }
 
   static Future<bool> tryNavigate(BuildContext context, Uri uri) async {
     final route = routeFor(uri);
     if (route == null) return false;
+    final current = GoRouterState.of(context).matchedLocation;
+    if (current == route) {
+      // Keep the current webview navigation when it already points to
+      // the same in-app route (prevents blank page from canceled initial load).
+      return false;
+    }
     context.go(route);
     return true;
   }
@@ -53,4 +57,3 @@ class LinkNavigator {
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 }
-

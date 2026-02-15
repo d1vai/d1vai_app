@@ -21,43 +21,50 @@ class _DocsScreenState extends State<DocsScreen> {
     DocItem(
       href: '/docs/overview',
       title: 'Overview',
-      desc: 'What the product is and why it matters.',
+      desc: 'What the platform is and how the workflow fits together.',
       icon: Icons.info_outline,
     ),
     DocItem(
       href: '/docs/product',
       title: 'Product',
-      desc: 'Value for PMs, business, and developers.',
+      desc: 'Outcomes by role (PM / Business / Developers).',
       icon: Icons.apps,
     ),
     DocItem(
       href: '/docs/getting-started',
       title: 'Getting Started',
-      desc: 'Ten steps from idea to live.',
+      desc: 'Prompt → preview → production, with verification steps.',
       icon: Icons.play_circle_outline,
+    ),
+    DocItem(
+      href: '/docs/workspace',
+      title: 'Workspace Guide',
+      desc:
+          'Where to go in the Project workspace (Chat, Deploy, Pay, Analytics).',
+      icon: Icons.workspaces_outline,
     ),
     DocItem(
       href: '/docs/use-cases',
       title: 'Use Cases',
-      desc: 'Common indie-site scenarios.',
+      desc: 'Playbooks: prompts + acceptance criteria for common products.',
       icon: Icons.lightbulb_outline,
     ),
     DocItem(
       href: '/docs/architecture',
       title: 'Architecture',
-      desc: 'Layers, data flow, deployment model.',
+      desc: 'Environments, promotion model, and failure modes.',
       icon: Icons.architecture,
     ),
     DocItem(
       href: '/docs/integrations',
       title: 'Integrations',
-      desc: 'Auth, Payments, Analytics.',
+      desc: 'GitHub/Auth/Payments/Analytics: setup and verification.',
       icon: Icons.integration_instructions,
     ),
     DocItem(
       href: '/docs/api',
       title: 'API',
-      desc: 'OpenAPI viewer, auth, examples.',
+      desc: 'OpenAPI, auth, errors, pagination, webhooks.',
       icon: Icons.api,
     ),
     DocItem(
@@ -69,25 +76,25 @@ class _DocsScreenState extends State<DocsScreen> {
     DocItem(
       href: '/docs/roadmap',
       title: 'Roadmap',
-      desc: 'Near-, mid-, and long-term plans.',
+      desc: 'Now / Next priorities (subject to change).',
       icon: Icons.map,
     ),
     DocItem(
       href: '/docs/pricing',
       title: 'Pricing & Plans',
-      desc: 'Plans and billing information.',
+      desc: 'Plan selection guidance and billing expectations.',
       icon: Icons.attach_money,
     ),
     DocItem(
       href: '/docs/refund-policy',
-      title: 'Refund Policy',
-      desc: 'Refund requests and dispute process.',
+      title: 'Refund and Dispute Policy',
+      desc: 'Refund/dispute process and timelines.',
       icon: Icons.money_off,
     ),
     DocItem(
       href: '/docs/legal-restrictions',
-      title: 'Legal Restrictions',
-      desc: 'Compliance obligations and export controls.',
+      title: 'Legal and Export Restrictions',
+      desc: 'Compliance and export restrictions (high-level).',
       icon: Icons.gavel,
     ),
   ];
@@ -142,7 +149,7 @@ class _DocsScreenState extends State<DocsScreen> {
           preferredSize: const Size.fromHeight(60),
           child: Padding(
             padding: const EdgeInsets.all(16),
-              child: TextField(
+            child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Search docs...',
@@ -181,7 +188,9 @@ class _DocsScreenState extends State<DocsScreen> {
                   Icon(
                     Icons.search,
                     size: 64,
-                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                    color: theme.colorScheme.onSurfaceVariant.withValues(
+                      alpha: 0.6,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -196,7 +205,8 @@ class _DocsScreenState extends State<DocsScreen> {
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                if (showRecent && _recentSlugs.isNotEmpty) _buildRecent(context),
+                if (showRecent && _recentSlugs.isNotEmpty)
+                  _buildRecent(context),
                 ..._filteredPages.map((page) => _buildDocCard(context, page)),
               ],
             ),
@@ -237,10 +247,7 @@ class _DocsScreenState extends State<DocsScreen> {
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
                 ),
                 const Spacer(),
-                TextButton(
-                  onPressed: _clearRecent,
-                  child: const Text('Clear'),
-                ),
+                TextButton(onPressed: _clearRecent, child: const Text('Clear')),
               ],
             ),
             const SizedBox(height: 12),

@@ -16,8 +16,12 @@ class ChatGitCommitCard extends StatelessWidget {
     final theme = Theme.of(context);
     final files = content.files ?? const <String>[];
     final projectId = (content.projectId ?? '').trim();
-    final sqlFiles = files.where((f) => f.toLowerCase().endsWith('.sql')).toList();
-    final otherFiles = files.where((f) => !f.toLowerCase().endsWith('.sql')).toList();
+    final sqlFiles = files
+        .where((f) => f.toLowerCase().endsWith('.sql'))
+        .toList();
+    final otherFiles = files
+        .where((f) => !f.toLowerCase().endsWith('.sql'))
+        .toList();
     const fileTextStyle = TextStyle(
       fontFamily: 'monospace',
       fontSize: 11.5,
@@ -66,8 +70,9 @@ class ChatGitCommitCard extends StatelessWidget {
     }
 
     return ChatMessageCard(
-      backgroundColor:
-          theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+      backgroundColor: theme.colorScheme.surfaceContainerHighest.withValues(
+        alpha: 0.35,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -81,7 +86,9 @@ class ChatGitCommitCard extends StatelessWidget {
             Text(
               '${files.length} changed file${files.length == 1 ? '' : 's'}',
               style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.8,
+                ),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -100,7 +107,9 @@ class ChatGitCommitCard extends StatelessWidget {
                       alignment: Alignment.centerLeft,
                       child: Container(
                         width: 3,
-                        color: theme.colorScheme.primary.withValues(alpha: 0.35),
+                        color: theme.colorScheme.primary.withValues(
+                          alpha: 0.35,
+                        ),
                       ),
                     ),
                   ),
@@ -131,10 +140,8 @@ class ChatGitCommitCard extends StatelessWidget {
                                       color: Colors.amber.shade700,
                                     ),
                                     tooltip: 'Run SQL migration',
-                                    onPressed: () => openFile(
-                                      f,
-                                      autoOpenMigration: true,
-                                    ),
+                                    onPressed: () =>
+                                        openFile(f, autoOpenMigration: true),
                                   ),
                                 ),
                               if (otherFiles.isNotEmpty)
@@ -193,10 +200,8 @@ class _FileRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final visual = fileTypeVisual(theme, filePath);
-    final iconColor =
-        (visual.color ?? theme.colorScheme.onSurfaceVariant).withValues(
-          alpha: 0.85,
-        );
+    final iconColor = (visual.color ?? theme.colorScheme.onSurfaceVariant)
+        .withValues(alpha: 0.85);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
@@ -283,30 +288,42 @@ class ChatGitPushRow extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
-                fontWeight: FontWeight.w600,
+      child: Padding(
+        padding: const EdgeInsets.only(left: 8),
+        child: Row(
+          children: [
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Icon(icon, size: 14, color: color),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-          ),
-          if (content.branch.isNotEmpty)
-            Text(
-              content.branch,
-              style: theme.textTheme.labelSmall?.copyWith(
-                fontFamily: 'monospace',
-                color:
-                    theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.85),
-                fontWeight: FontWeight.w600,
+            if (content.branch.isNotEmpty)
+              Text(
+                content.branch,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontFamily: 'monospace',
+                  color: theme.colorScheme.onSurfaceVariant.withValues(
+                    alpha: 0.85,
+                  ),
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
