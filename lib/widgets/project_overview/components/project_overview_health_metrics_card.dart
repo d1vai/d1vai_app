@@ -59,18 +59,14 @@ class ProjectOverviewHealthMetricsCard extends StatelessWidget {
           const Divider(height: 32),
           _HealthMetricItem(
             title: 'Analytics status',
-            status:
-                (project.analyticsId != null &&
-                        project.analyticsId!.trim().isNotEmpty) ||
-                    project.analyticsEnabled == true
+            status: project.hasAnalyticsId
                 ? 'Enabled'
+                : project.analyticsEnabled == true
+                ? 'Initializing'
                 : 'Disabled',
             description: 'Traffic instrumentation',
             icon: Icons.analytics,
-            isEnabled:
-                (project.analyticsId != null &&
-                    project.analyticsId!.trim().isNotEmpty) ||
-                project.analyticsEnabled == true,
+            isEnabled: project.hasAnalyticsId,
           ),
           const Divider(height: 32),
           _HealthMetricItem(

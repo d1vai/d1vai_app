@@ -62,6 +62,8 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
   String? _installError;
   List<ChatMessage> _installMessages = [];
   WebSocket? _installWs;
+  bool _showInstallerView = false;
+  bool _sharingAccess = false;
 
   @override
   void didChangeDependencies() {
@@ -93,6 +95,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       _installMessages = [];
       _websiteId = null;
       _installError = null;
+      _showInstallerView = false;
       _closeInstallerWebSocket();
       if (_hasAnalyticsEnabled) {
         _loadAnalytics();
@@ -106,9 +109,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
     super.dispose();
   }
 
-  bool get _hasAnalyticsEnabled =>
-      widget.project.analyticsId != null &&
-      widget.project.analyticsId!.trim().isNotEmpty;
+  bool get _hasAnalyticsEnabled => widget.project.hasAnalyticsId;
 
   String? _hostFromUrl(String? raw) {
     final s = (raw ?? '').trim();
@@ -327,24 +328,23 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       _installError = null;
       _installMessages = [];
       _websiteId = null;
+      _showInstallerView = true;
     });
 
     try {
       final service = D1vaiService();
       final initRes = await service.initProjectAnalytics(widget.project.id);
+      // Keep project snapshot in sync with backend state right after init.
+      try {
+        await widget.onRefreshProject?.call();
+      } catch (_) {}
       final tracking = await service.getProjectAnalyticsTrackingCode(
         widget.project.id,
       );
 
-      final data = tracking['data'] is Map<String, dynamic>
-          ? tracking['data'] as Map<String, dynamic>
-          : <String, dynamic>{};
-      final initData = initRes['data'] is Map<String, dynamic>
-          ? initRes['data'] as Map<String, dynamic>
-          : <String, dynamic>{};
       final websiteId =
-          data['website_id']?.toString() ??
-          initData['analytics_id']?.toString();
+          tracking['website_id']?.toString() ??
+          initRes['analytics_id']?.toString();
       if (websiteId == null || websiteId.trim().isEmpty) {
         throw Exception('Missing website ID after initialization');
       }
@@ -478,6 +478,112 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
     );
   }
 
+  Future<void> _copyFieldValue(String value, String label) async {
+    if (value.trim().isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: value));
+    if (!mounted) return;
+    SnackBarHelper.showSuccess(
+      context,
+      title: 'Copied',
+      message: '$label copied',
+    );
+  }
+
+  Future<void> _shareAnalyticsAccess() async {
+    if (_sharingAccess) return;
+    setState(() {
+      _sharingAccess = true;
+    });
+
+    try {
+      final data = await _d1vaiService.bindAnalyticsUser(widget.project.id);
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) {
+          final loginUrl = (data['analytics_login_url'] ?? '').toString();
+          final username = (data['analytics_username'] ?? '').toString();
+          final password = (data['analytics_password'] ?? '').toString();
+          final teamCode = (data['analytics_team_code'] ?? '').toString();
+
+          Widget row(String title, String value) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Expanded(
+                      child: SelectableText(
+                        value.isEmpty ? '—' : value,
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: value.trim().isEmpty
+                          ? null
+                          : () => _copyFieldValue(value, title),
+                      icon: const Icon(Icons.copy, size: 18),
+                      tooltip: 'Copy $title',
+                    ),
+                  ],
+                ),
+              ],
+            );
+          }
+
+          return AlertDialog(
+            title: const Text('Share Analytics Access'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  row('Login URL', loginUrl),
+                  const SizedBox(height: 12),
+                  row('Username', username),
+                  const SizedBox(height: 12),
+                  row('Password', password),
+                  const SizedBox(height: 12),
+                  row('Team Access Code', teamCode),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Close'),
+              ),
+            ],
+          );
+        },
+      );
+      if (!mounted) return;
+      SnackBarHelper.showSuccess(
+        context,
+        title: 'Success',
+        message: 'Analytics access is ready to share.',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      SnackBarHelper.showError(
+        context,
+        title: 'Error',
+        message: humanizeError(e),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _sharingAccess = false;
+        });
+      }
+    }
+  }
+
   List<ChartSeries> _createTrafficSeries(Map<String, dynamic> data) {
     List<MetricDataPoint> parseSeries(dynamic raw) {
       if (raw is! List) return const [];
@@ -525,34 +631,133 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
 
   @override
   Widget build(BuildContext context) {
+    final shouldShowInstaller =
+        _showInstallerView ||
+        (!_hasAnalyticsEnabled &&
+            (_installing ||
+                _installMessages.isNotEmpty ||
+                _installError != null));
+
+    if (shouldShowInstaller) {
+      return _AnalyticsInstallerView(
+        installing: _installing,
+        isTyping: _installTyping,
+        websiteId: _websiteId,
+        error: _installError,
+        messages: _installMessages,
+        onCopyWebsiteId: _copyWebsiteId,
+        onRetry: _enableAndInstallAnalytics,
+        onReset: () {
+          _closeInstallerWebSocket();
+          setState(() {
+            _installing = false;
+            _installTyping = false;
+            _installError = null;
+            _installMessages = [];
+            _websiteId = null;
+            _showInstallerView = false;
+          });
+        },
+      );
+    }
+
     if (!_hasAnalyticsEnabled) {
-      if (_installing || _installMessages.isNotEmpty || _installError != null) {
-        return _AnalyticsInstallerView(
-          installing: _installing,
-          isTyping: _installTyping,
-          websiteId: _websiteId,
-          error: _installError,
-          messages: _installMessages,
-          onCopyWebsiteId: _copyWebsiteId,
-          onRetry: _enableAndInstallAnalytics,
-          onReset: () {
-            _closeInstallerWebSocket();
-            setState(() {
-              _installing = false;
-              _installTyping = false;
-              _installError = null;
-              _installMessages = [];
-              _websiteId = null;
-            });
-          },
-        );
-      }
       return _EnableAnalyticsCard(
         enabling: _installing,
         onEnable: _enableAndInstallAnalytics,
       );
     }
 
+    return _buildEnabledTabsView();
+  }
+
+  Map<String, int> _timeBoundsMs() {
+    final now = DateTime.now();
+    final endAt = now.millisecondsSinceEpoch;
+    final startAt = endAt - _timeRange.duration.inMilliseconds;
+    return {'startAt': startAt, 'endAt': endAt};
+  }
+
+  double _percentChange(int current, int previous) {
+    if (previous <= 0) return current > 0 ? 100 : 0;
+    return ((current - previous) / previous) * 100;
+  }
+
+  int _sumPoints(dynamic raw) {
+    if (raw is! List) return 0;
+    var sum = 0;
+    for (final it in raw) {
+      if (it is! Map) continue;
+      sum += _asInt(it['y'] ?? it['value']);
+    }
+    return sum;
+  }
+
+  List<MetricDataPoint> _toMetricPoints(dynamic raw) {
+    if (raw is! List) return const [];
+    final points = <MetricDataPoint>[];
+    for (final it in raw) {
+      if (it is! Map) continue;
+      final x = it['x'] ?? it['t'];
+      final y = it['y'] ?? it['value'];
+      DateTime? ts;
+      if (x is int) {
+        ts = DateTime.fromMillisecondsSinceEpoch(x);
+      } else if (x is num) {
+        ts = DateTime.fromMillisecondsSinceEpoch(x.toInt());
+      } else if (x is String && x.trim().isNotEmpty) {
+        ts = DateTime.tryParse(x.trim());
+      }
+      points.add(
+        MetricDataPoint(
+          timestamp: ts ?? DateTime.now(),
+          value: y is num ? y.toDouble() : double.tryParse('$y') ?? 0,
+          label: x?.toString(),
+        ),
+      );
+    }
+    return points;
+  }
+
+  Widget _buildEnabledTabsView() {
+    return DefaultTabController(
+      length: 7,
+      child: Column(
+        children: [
+          Material(
+            color: Theme.of(context).colorScheme.surface,
+            child: const TabBar(
+              isScrollable: true,
+              tabs: [
+                Tab(text: 'Data'),
+                Tab(text: 'Events'),
+                Tab(text: 'Sessions'),
+                Tab(text: 'Realtime'),
+                Tab(text: 'Compare'),
+                Tab(text: 'Reports'),
+                Tab(text: 'Setting'),
+              ],
+            ),
+          ),
+          Expanded(
+            child: TabBarView(
+              children: [
+                _buildDataTabView(),
+                _buildEventsTabView(),
+                _buildSessionsTabView(),
+                _buildRealtimeTabView(),
+                _buildCompareTabView(),
+                _buildReportsTabView(),
+                _buildSettingsTabView(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDataTabView() {
     final hasAnyData =
         _values != null ||
         _pageviews != null ||
@@ -635,6 +840,544 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
             _buildStatusCard(),
             const SizedBox(height: 16),
             _buildActionsCard(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> _fetchEventsSnapshot() async {
+    final bounds = _timeBoundsMs();
+    final startAt = bounds['startAt']!;
+    final endAt = bounds['endAt']!;
+    final filters = _buildEnvFilters();
+    final results = await Future.wait([
+      _d1vaiService.getUmamiEvents(
+        widget.project.id,
+        startAt: startAt,
+        endAt: endAt,
+        filters: filters,
+      ),
+      _d1vaiService.getUmamiEventDataStats(
+        widget.project.id,
+        startAt: startAt,
+        endAt: endAt,
+        filters: filters,
+      ),
+      _d1vaiService.getUmamiEventMetrics(widget.project.id, {
+        'startAt': startAt,
+        'endAt': endAt,
+        'unit': 'day',
+        'timezone': 'UTC',
+      }, filters: filters),
+    ]);
+    return {
+      'events': results[0] as List<dynamic>,
+      'stats': results[1] as Map<String, dynamic>,
+      'series': results[2] as List<dynamic>,
+    };
+  }
+
+  Widget _buildEventsTabView() {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _fetchEventsSnapshot(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.error_outline, size: 42),
+                  const SizedBox(height: 8),
+                  Text(humanizeError(snapshot.error ?? 'Unknown error')),
+                  const SizedBox(height: 12),
+                  OutlinedButton(
+                    onPressed: () => setState(() {}),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        final payload = snapshot.data ?? const <String, dynamic>{};
+        final events = payload['events'] as List<dynamic>? ?? const [];
+        final stats =
+            payload['stats'] as Map<String, dynamic>? ??
+            const <String, dynamic>{};
+        final points = _toMetricPoints(payload['series']);
+        final uniqueEvents = stats['events'] is List
+            ? (stats['events'] as List).length
+            : _asInt(stats['unique']);
+
+        return RefreshIndicator(
+          onRefresh: () async => setState(() {}),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: _simpleMetricCard(
+                      title: 'Total Events',
+                      value: events.length.toString(),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _simpleMetricCard(
+                      title: 'Unique Events',
+                      value: uniqueEvents.toString(),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (points.isNotEmpty)
+                RealtimeChart(
+                  title: 'Events Trend',
+                  series: [
+                    ChartSeries(
+                      name: 'Events',
+                      data: points,
+                      color: Colors.orange,
+                    ),
+                  ],
+                  timeRange: _timeRange,
+                  height: 230,
+                  showLegend: false,
+                  onTimeRangeChanged: (range) {
+                    setState(() {
+                      _timeRange = range;
+                    });
+                  },
+                ),
+              const SizedBox(height: 16),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Recent Events',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      if (events.isEmpty)
+                        const Text('No events in current range')
+                      else
+                        ...events.take(12).map((e) {
+                          final item = e is Map ? e : const {};
+                          final name =
+                              (item['x'] ??
+                                      item['eventName'] ??
+                                      item['name'] ??
+                                      '—')
+                                  .toString();
+                          final count = _asInt(item['y'] ?? item['value']);
+                          return ListTile(
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(name),
+                            trailing: Text(count.toString()),
+                          );
+                        }),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<Map<String, dynamic>> _fetchSessionsSnapshot() async {
+    final bounds = _timeBoundsMs();
+    final startAt = bounds['startAt']!;
+    final endAt = bounds['endAt']!;
+    return _d1vaiService.getUmamiSessions(widget.project.id, {
+      'startAt': startAt,
+      'endAt': endAt,
+      'page': 1,
+      'pageSize': 20,
+    }, filters: _buildEnvFilters());
+  }
+
+  Widget _buildSessionsTabView() {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _fetchSessionsSnapshot(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(humanizeError(snapshot.error ?? 'Unknown error')),
+          );
+        }
+        final payload = snapshot.data ?? const <String, dynamic>{};
+        final sessions = payload['data'] is List
+            ? payload['data'] as List<dynamic>
+            : const <dynamic>[];
+        final count = _asInt(payload['count']);
+
+        return RefreshIndicator(
+          onRefresh: () async => setState(() {}),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              _simpleMetricCard(
+                title: 'Total Sessions',
+                value: count.toString(),
+              ),
+              const SizedBox(height: 16),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Session List',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      if (sessions.isEmpty)
+                        const Text('No sessions in current range')
+                      else
+                        ...sessions.take(12).map((s) {
+                          final item = s is Map ? s : const {};
+                          final title =
+                              (item['url'] ??
+                                      item['hostname'] ??
+                                      item['sessionId'] ??
+                                      'Session')
+                                  .toString();
+                          final subtitle =
+                              (item['browser'] ??
+                                      item['os'] ??
+                                      item['device'] ??
+                                      '')
+                                  .toString();
+                          return ListTile(
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(title),
+                            subtitle: subtitle.trim().isEmpty
+                                ? null
+                                : Text(subtitle),
+                          );
+                        }),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<Map<String, dynamic>> _fetchRealtimeSnapshot() async {
+    final results = await Future.wait([
+      _d1vaiService.getUmamiRealtime(widget.project.id),
+      _d1vaiService.getUmamiActiveVisitors(widget.project.id),
+    ]);
+    return {'realtime': results[0], 'active': results[1]};
+  }
+
+  Widget _buildRealtimeTabView() {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _fetchRealtimeSnapshot(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(humanizeError(snapshot.error ?? 'Unknown error')),
+          );
+        }
+        final payload = snapshot.data ?? const <String, dynamic>{};
+        final realtime =
+            payload['realtime'] as Map<String, dynamic>? ??
+            const <String, dynamic>{};
+        final active =
+            payload['active'] as Map<String, dynamic>? ??
+            const <String, dynamic>{};
+        final activeNow = _asInt(active['x'] ?? realtime['visitors']);
+        final urlMap = realtime['urls'];
+        final topUrls = urlMap is Map
+            ? urlMap.entries
+                  .map(
+                    (e) => {'url': e.key.toString(), 'count': _asInt(e.value)},
+                  )
+                  .toList()
+            : const <Map<String, dynamic>>[];
+
+        return RefreshIndicator(
+          onRefresh: () async => setState(() {}),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              _simpleMetricCard(
+                title: 'Active Visitors',
+                value: activeNow.toString(),
+              ),
+              const SizedBox(height: 16),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Top URLs (Realtime)',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      if (topUrls.isEmpty)
+                        const Text('No realtime URL data yet')
+                      else
+                        ...topUrls
+                            .take(10)
+                            .map(
+                              (it) => ListTile(
+                                dense: true,
+                                contentPadding: EdgeInsets.zero,
+                                title: Text((it['url'] ?? '—').toString()),
+                                trailing: Text(_asInt(it['count']).toString()),
+                              ),
+                            ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<Map<String, dynamic>> _fetchCompareSnapshot() async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final span = _timeRange.duration.inMilliseconds;
+    final currentStart = now - span;
+    final previousStart = now - span * 2;
+    final previousEnd = now - span;
+    final filters = _buildEnvFilters();
+    final results = await Future.wait([
+      _d1vaiService.getUmamiPageviews(widget.project.id, {
+        'unit': 'day',
+        'timezone': 'UTC',
+        'startAt': currentStart,
+        'endAt': now,
+      }, filters: filters),
+      _d1vaiService.getUmamiPageviews(widget.project.id, {
+        'unit': 'day',
+        'timezone': 'UTC',
+        'startAt': previousStart,
+        'endAt': previousEnd,
+      }, filters: filters),
+    ]);
+    return {'current': results[0], 'previous': results[1]};
+  }
+
+  Widget _buildCompareTabView() {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _fetchCompareSnapshot(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(humanizeError(snapshot.error ?? 'Unknown error')),
+          );
+        }
+        final payload = snapshot.data ?? const <String, dynamic>{};
+        final current =
+            payload['current'] as Map<String, dynamic>? ??
+            const <String, dynamic>{};
+        final previous =
+            payload['previous'] as Map<String, dynamic>? ??
+            const <String, dynamic>{};
+        final currentPv = _sumPoints(current['pageviews']);
+        final prevPv = _sumPoints(previous['pageviews']);
+        final currentSessions = _sumPoints(current['sessions']);
+        final prevSessions = _sumPoints(previous['sessions']);
+
+        final pvDelta = _percentChange(currentPv, prevPv);
+        final sessionDelta = _percentChange(currentSessions, prevSessions);
+
+        return RefreshIndicator(
+          onRefresh: () async => setState(() {}),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: _simpleMetricCard(
+                      title: 'Pageviews',
+                      value: '$currentPv (${pvDelta.toStringAsFixed(1)}%)',
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _simpleMetricCard(
+                      title: 'Sessions',
+                      value:
+                          '$currentSessions (${sessionDelta.toStringAsFixed(1)}%)',
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Comparison Notes',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text('Current window: ${_timeRange.label}'),
+                      const SizedBox(height: 4),
+                      Text('Previous window: previous ${_timeRange.label}'),
+                      const SizedBox(height: 8),
+                      Text('Pageviews: $currentPv vs $prevPv'),
+                      Text('Sessions: $currentSessions vs $prevSessions'),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildReportsTabView() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: const [
+        Card(
+          child: Padding(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Reports',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Custom reports are coming soon. This keeps parity with the current web placeholder state.',
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSettingsTabView() {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _d1vaiService.getProjectAnalyticsTrackingCode(widget.project.id),
+      builder: (context, snapshot) {
+        final tracking = snapshot.data ?? const <String, dynamic>{};
+        final websiteId = (tracking['website_id'] ?? widget.project.analyticsId)
+            .toString();
+        final trackingCode = (tracking['tracking_code'] ?? '').toString();
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Analytics Tracking',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Website ID: ${websiteId.trim().isEmpty ? '—' : websiteId}',
+                    ),
+                    const SizedBox(height: 10),
+                    if (trackingCode.trim().isNotEmpty)
+                      SelectableText(
+                        trackingCode,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontFamily: 'monospace',
+                        ),
+                      )
+                    else
+                      const Text('Tracking code unavailable'),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildActionsCard(),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _simpleMetricCard({required String title, required String value}) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
           ],
         ),
       ),
@@ -1185,6 +1928,31 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
             ),
             const SizedBox(height: 12),
             ListTile(
+              leading: const Icon(Icons.refresh, color: Colors.indigo),
+              title: const Text('Re-enable Analytics'),
+              subtitle: const Text('Re-run script installation flow'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: _installing ? null : _reEnableAnalytics,
+            ),
+            const Divider(),
+            ListTile(
+              leading: Icon(
+                Icons.share,
+                color: _sharingAccess ? Colors.grey : Colors.teal,
+              ),
+              title: const Text('Share Access'),
+              subtitle: const Text('Create credentials for Umami login'),
+              trailing: _sharingAccess
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: _sharingAccess ? null : _shareAnalyticsAccess,
+            ),
+            const Divider(),
+            ListTile(
               leading: const Icon(Icons.copy_all, color: Colors.green),
               title: const Text('Copy Summary'),
               subtitle: const Text('Copy a shareable analytics snapshot'),
@@ -1312,6 +2080,37 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
         message: humanizeError(e),
       );
     }
+  }
+
+  Future<void> _reEnableAnalytics() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Re-enable Analytics'),
+        content: const Text(
+          'This will re-run analytics setup and re-insert the tracking script via workspace session. Continue?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Continue'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+    if (!mounted) return;
+    SnackBarHelper.showInfo(
+      context,
+      title: 'Started',
+      message: 'Re-enable process started.',
+    );
+    await _enableAndInstallAnalytics();
   }
 }
 

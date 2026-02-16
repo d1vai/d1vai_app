@@ -150,6 +150,10 @@ class UserProject {
     };
   }
 
+  /// True only when analytics has a usable website id.
+  bool get hasAnalyticsId =>
+      analyticsId != null && analyticsId!.trim().isNotEmpty;
+
   /// 创建副本
   UserProject copyWith({
     String? id,

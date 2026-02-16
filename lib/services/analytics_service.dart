@@ -11,6 +11,7 @@ class AnalyticsService {
       StreamController.broadcast();
   final StreamController<StreamData> _streamController =
       StreamController.broadcast();
+  Timer? _realtimeTimer;
 
   AnalyticsService({ApiClient? apiClient})
     : _apiClient = apiClient ?? ApiClient();
@@ -21,17 +22,163 @@ class AnalyticsService {
   /// Stream of real-time metric data
   Stream<StreamData> get streamData => _streamController.stream;
 
+  Map<String, int> _rangeBounds(TimeRange range) {
+    final end = DateTime.now();
+    final start = end.subtract(range.duration);
+    return {
+      'startAt': start.millisecondsSinceEpoch,
+      'endAt': end.millisecondsSinceEpoch,
+    };
+  }
+
+  int _asInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value.toString()) ?? 0;
+  }
+
+  double _asDouble(dynamic value) {
+    if (value == null) return 0;
+    if (value is double) return value;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString()) ?? 0;
+  }
+
+  List<MetricDataPoint> _parseSeries(dynamic raw) {
+    if (raw is! List) return const [];
+    final out = <MetricDataPoint>[];
+    for (final it in raw) {
+      if (it is! Map) continue;
+      final x = it['x'] ?? it['t'];
+      final y = it['y'] ?? it['value'];
+      DateTime? ts;
+      if (x is int) {
+        ts = DateTime.fromMillisecondsSinceEpoch(x);
+      } else if (x is num) {
+        ts = DateTime.fromMillisecondsSinceEpoch(x.toInt());
+      } else if (x is String && x.trim().isNotEmpty) {
+        ts = DateTime.tryParse(x.trim());
+      }
+      out.add(
+        MetricDataPoint(
+          timestamp: ts ?? DateTime.now(),
+          value: _asDouble(y),
+          label: x?.toString(),
+        ),
+      );
+    }
+    return out;
+  }
+
   /// Get analytics summary for a project
   Future<AnalyticsSummary> getAnalyticsSummary({
     required String projectId,
     TimeRange timeRange = TimeRange.last24Hours,
   }) async {
     try {
-      final response = await _apiClient.get(
-        '/api/projects/$projectId/analytics/summary?period=${timeRange.name}',
-      );
+      final range = _rangeBounds(timeRange);
+      final startAt = range['startAt']!;
+      final endAt = range['endAt']!;
 
-      return AnalyticsSummary.fromJson(response);
+      final results = await Future.wait([
+        _apiClient.get<Map<String, dynamic>>(
+          '/api/analytics/data/$projectId/website/values',
+          queryParams: {
+            'startAt': startAt.toString(),
+            'endAt': endAt.toString(),
+          },
+        ),
+        _apiClient.get<Map<String, dynamic>>(
+          '/api/analytics/data/$projectId/website/active',
+        ),
+        _apiClient.get<Map<String, dynamic>>(
+          '/api/analytics/data/$projectId/pageviews',
+          queryParams: {
+            'unit': 'hour',
+            'timezone': 'UTC',
+            'startAt': startAt.toString(),
+            'endAt': endAt.toString(),
+          },
+        ),
+      ]);
+
+      final values = results[0];
+      final active = results[1];
+      final pageviews = results[2];
+      final pageviewsSeries = _parseSeries(pageviews['pageviews']);
+      final sessionsSeries = _parseSeries(pageviews['sessions']);
+      final totalPageviews = pageviewsSeries.fold<double>(
+        0,
+        (sum, p) => sum + p.value,
+      );
+      final totalSessions = sessionsSeries.fold<double>(
+        0,
+        (sum, p) => sum + p.value,
+      );
+      final activeUsers = _asInt(active['x'] ?? active['visitors']);
+
+      final metrics = <RealtimeMetric>[
+        RealtimeMetric(
+          id: 'pageviews',
+          name: 'Pageviews',
+          description: 'Total pageviews in selected range',
+          unit: 'count',
+          currentValue: totalPageviews,
+          previousValue: 0,
+          data: pageviewsSeries,
+          type: MetricType.counter,
+          lastUpdated: DateTime.now(),
+        ),
+        RealtimeMetric(
+          id: 'sessions',
+          name: 'Sessions',
+          description: 'Total sessions in selected range',
+          unit: 'count',
+          currentValue: totalSessions,
+          previousValue: 0,
+          data: sessionsSeries,
+          type: MetricType.counter,
+          lastUpdated: DateTime.now(),
+        ),
+        RealtimeMetric(
+          id: 'active_users',
+          name: 'Active Users',
+          description: 'Current active users',
+          unit: 'count',
+          currentValue: activeUsers.toDouble(),
+          previousValue: 0,
+          data: [
+            MetricDataPoint(
+              timestamp: DateTime.now(),
+              value: activeUsers.toDouble(),
+              label: 'now',
+            ),
+          ],
+          type: MetricType.gauge,
+          lastUpdated: DateTime.now(),
+        ),
+      ];
+
+      return AnalyticsSummary(
+        projectId: projectId,
+        period: timeRange.name,
+        startDate: DateTime.fromMillisecondsSinceEpoch(startAt),
+        endDate: DateTime.fromMillisecondsSinceEpoch(endAt),
+        totalUsers: _asInt(values['visitors'] ?? values['users']),
+        activeUsers: activeUsers,
+        totalRequests: totalPageviews.toInt(),
+        successfulRequests: totalPageviews.toInt(),
+        failedRequests: 0,
+        averageResponseTime: 0,
+        uptime: 100,
+        customMetrics: {
+          'sessions': totalSessions.toInt(),
+          'bounces': _asInt(values['bounces']),
+          'totaltime': _asInt(values['totaltime'] ?? values['totalTime']),
+        },
+        metrics: metrics,
+      );
     } catch (e) {
       throw AnalyticsException('Failed to get analytics summary: $e');
     }
@@ -43,17 +190,81 @@ class AnalyticsService {
     List<String>? metricIds,
   }) async {
     try {
-      final queryParams = <String, String>{};
-      if (metricIds != null && metricIds.isNotEmpty) {
-        queryParams['metric_ids'] = metricIds.join(',');
-      }
+      final range = _rangeBounds(TimeRange.last24Hours);
+      final startAt = range['startAt']!;
+      final endAt = range['endAt']!;
+      final results = await Future.wait([
+        _apiClient.get<Map<String, dynamic>>(
+          '/api/analytics/data/$projectId/pageviews',
+          queryParams: {
+            'unit': 'hour',
+            'timezone': 'UTC',
+            'startAt': startAt.toString(),
+            'endAt': endAt.toString(),
+          },
+        ),
+        _apiClient.get<Map<String, dynamic>>(
+          '/api/analytics/data/$projectId/website/active',
+        ),
+      ]);
 
-      final response = await _apiClient.get(
-        '/api/projects/$projectId/analytics/metrics?${Uri(queryParameters: queryParams).query}',
-      );
+      final pageviews = results[0];
+      final active = results[1];
+      final pageviewsSeries = _parseSeries(pageviews['pageviews']);
+      final sessionsSeries = _parseSeries(pageviews['sessions']);
+      final activeNow = _asInt(active['x'] ?? active['visitors']).toDouble();
 
-      final List<dynamic> data = response['metrics'] ?? response;
-      return data.map((json) => RealtimeMetric.fromJson(json)).toList();
+      final allMetrics = <RealtimeMetric>[
+        RealtimeMetric(
+          id: 'pageviews',
+          name: 'Pageviews',
+          description: 'Pageviews trend',
+          unit: 'count',
+          currentValue: pageviewsSeries.fold<double>(
+            0,
+            (sum, p) => sum + p.value,
+          ),
+          previousValue: 0,
+          data: pageviewsSeries,
+          type: MetricType.counter,
+          lastUpdated: DateTime.now(),
+        ),
+        RealtimeMetric(
+          id: 'sessions',
+          name: 'Sessions',
+          description: 'Sessions trend',
+          unit: 'count',
+          currentValue: sessionsSeries.fold<double>(
+            0,
+            (sum, p) => sum + p.value,
+          ),
+          previousValue: 0,
+          data: sessionsSeries,
+          type: MetricType.counter,
+          lastUpdated: DateTime.now(),
+        ),
+        RealtimeMetric(
+          id: 'active_users',
+          name: 'Active Users',
+          description: 'Current active visitors',
+          unit: 'count',
+          currentValue: activeNow,
+          previousValue: 0,
+          data: [
+            MetricDataPoint(
+              timestamp: DateTime.now(),
+              value: activeNow,
+              label: 'now',
+            ),
+          ],
+          type: MetricType.gauge,
+          lastUpdated: DateTime.now(),
+        ),
+      ];
+
+      if (metricIds == null || metricIds.isEmpty) return allMetrics;
+      final idSet = metricIds.toSet();
+      return allMetrics.where((m) => idSet.contains(m.id)).toList();
     } catch (e) {
       throw AnalyticsException('Failed to get real-time metrics: $e');
     }
@@ -66,12 +277,20 @@ class AnalyticsService {
     TimeRange timeRange = TimeRange.last24Hours,
   }) async {
     try {
-      final response = await _apiClient.get(
-        '/api/projects/$projectId/analytics/metrics/$metricId/history?period=${timeRange.name}',
+      final range = _rangeBounds(timeRange);
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/api/analytics/data/$projectId/pageviews',
+        queryParams: {
+          'unit': 'hour',
+          'timezone': 'UTC',
+          'startAt': range['startAt']!.toString(),
+          'endAt': range['endAt']!.toString(),
+        },
       );
-
-      final List<dynamic> data = response['data'] ?? response;
-      return data.map((json) => MetricDataPoint.fromJson(json)).toList();
+      if (metricId == 'sessions') {
+        return _parseSeries(response['sessions']);
+      }
+      return _parseSeries(response['pageviews']);
     } catch (e) {
       throw AnalyticsException('Failed to get metric history: $e');
     }
@@ -83,12 +302,31 @@ class AnalyticsService {
     TimeRange timeRange = TimeRange.last24Hours,
   }) async {
     try {
-      final response = await _apiClient.get(
-        '/api/projects/$projectId/analytics/geographic?period=${timeRange.name}',
+      final range = _rangeBounds(timeRange);
+      final response = await _apiClient.get<List<dynamic>>(
+        '/api/analytics/data/$projectId/metrics',
+        queryParams: {
+          'type': 'country',
+          'limit': '20',
+          'startAt': range['startAt']!.toString(),
+          'endAt': range['endAt']!.toString(),
+        },
       );
 
-      final List<dynamic> data = response['data'] ?? response;
-      return data.map((json) => GeographicData.fromJson(json)).toList();
+      return response.map((json) {
+        final item = json is Map<String, dynamic> ? json : <String, dynamic>{};
+        final country = (item['x'] ?? item['name'] ?? 'Unknown').toString();
+        final code = country.length >= 2
+            ? country.substring(0, 2).toUpperCase()
+            : 'UN';
+        return GeographicData(
+          country: country,
+          countryCode: code,
+          latitude: 0,
+          longitude: 0,
+          value: _asInt(item['y'] ?? item['value']),
+        );
+      }).toList();
     } catch (e) {
       throw AnalyticsException('Failed to get geographic data: $e');
     }
@@ -102,23 +340,30 @@ class AnalyticsService {
     TimeRange timeRange = TimeRange.last24Hours,
   }) async {
     try {
-      final response = await _apiClient
-          .post('/api/projects/$projectId/analytics/compare', {
-            'primary_metric': primaryMetric,
-            'compare_with': compareWith ?? [],
-            'period': timeRange.name,
-          });
+      final range = _rangeBounds(timeRange);
+      final type = (primaryMetric == 'events' || primaryMetric == 'event')
+          ? 'event'
+          : primaryMetric == 'referrer'
+          ? 'referrer'
+          : 'url';
+      final response = await _apiClient.get<List<dynamic>>(
+        '/api/analytics/data/$projectId/metrics',
+        queryParams: {
+          'type': type,
+          'limit': '10',
+          'startAt': range['startAt']!.toString(),
+          'endAt': range['endAt']!.toString(),
+        },
+      );
 
-      final List<dynamic> data = response['data'] ?? response;
-      return data
-          .map(
-            (json) => ComparisonData(
-              label: json['label'] as String,
-              value: (json['value'] as num).toDouble(),
-              color: const Color(0xFF000000),
-            ),
-          )
-          .toList();
+      return response.map((json) {
+        final item = json is Map<String, dynamic> ? json : <String, dynamic>{};
+        return ComparisonData(
+          label: (item['x'] ?? item['name'] ?? 'Unknown').toString(),
+          value: _asDouble(item['y'] ?? item['value']),
+          color: const Color(0xFF000000),
+        );
+      }).toList();
     } catch (e) {
       throw AnalyticsException('Failed to get comparison data: $e');
     }
@@ -130,17 +375,25 @@ class AnalyticsService {
     List<String>? metricIds,
     Duration interval = const Duration(seconds: 5),
   }) {
+    _realtimeTimer?.cancel();
     // Emit initial data
     _loadInitialMetrics(projectId, metricIds);
 
     // Set up periodic updates
-    Timer.periodic(interval, (_) {
+    _realtimeTimer = Timer.periodic(interval, (_) {
       _updateMetrics(projectId, metricIds);
     });
   }
 
   /// Stop real-time data stream
   void stopRealtimeStream() {
+    _realtimeTimer?.cancel();
+    _realtimeTimer = null;
+  }
+
+  /// Release resources when service instance is no longer needed.
+  void dispose() {
+    _realtimeTimer?.cancel();
     _metricsController.close();
     _streamController.close();
   }
@@ -197,19 +450,9 @@ class AnalyticsService {
     required String format,
     TimeRange timeRange = TimeRange.last24Hours,
   }) async {
-    try {
-      final response = await _apiClient.post(
-        '/api/projects/$projectId/analytics/export',
-        {
-          'format': format, // 'csv', 'json', 'pdf'
-          'period': timeRange.name,
-        },
-      );
-
-      return response['download_url'] as String;
-    } catch (e) {
-      throw AnalyticsException('Failed to export analytics: $e');
-    }
+    throw const AnalyticsException(
+      'Export endpoint is not available on the current /api/analytics/data routes.',
+    );
   }
 
   /// Get custom metrics
@@ -217,15 +460,7 @@ class AnalyticsService {
     required String projectId,
     TimeRange timeRange = TimeRange.last24Hours,
   }) async {
-    try {
-      final response = await _apiClient.get(
-        '/api/projects/$projectId/analytics/custom?period=${timeRange.name}',
-      );
-
-      return response as Map<String, dynamic>;
-    } catch (e) {
-      throw AnalyticsException('Failed to get custom metrics: $e');
-    }
+    throw const AnalyticsException('Custom metrics are not supported yet.');
   }
 
   /// Create custom metric
@@ -236,16 +471,9 @@ class AnalyticsService {
     required String unit,
     required String type,
   }) async {
-    try {
-      final response = await _apiClient.post(
-        '/api/projects/$projectId/analytics/custom-metrics',
-        {'name': name, 'description': description, 'unit': unit, 'type': type},
-      );
-
-      return RealtimeMetric.fromJson(response['metric'] ?? response);
-    } catch (e) {
-      throw AnalyticsException('Failed to create custom metric: $e');
-    }
+    throw const AnalyticsException(
+      'Creating custom metrics is not supported yet.',
+    );
   }
 }
 
