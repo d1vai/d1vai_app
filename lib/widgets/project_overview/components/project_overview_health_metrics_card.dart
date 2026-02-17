@@ -71,16 +71,10 @@ class ProjectOverviewHealthMetricsCard extends StatelessWidget {
           const Divider(height: 32),
           _HealthMetricItem(
             title: 'Database',
-            status:
-                (project.projectDatabaseId != null &&
-                    project.projectDatabaseId! > 0)
-                ? 'Enabled'
-                : 'Disabled',
+            status: project.hasDatabaseEnabled ? 'Enabled' : 'Disabled',
             description: 'Neon integration',
             icon: Icons.storage,
-            isEnabled:
-                project.projectDatabaseId != null &&
-                project.projectDatabaseId! > 0,
+            isEnabled: project.hasDatabaseEnabled,
           ),
           const Divider(height: 32),
           _HealthMetricItem(

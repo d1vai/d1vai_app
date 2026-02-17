@@ -1,5 +1,7 @@
-import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
 
 import '../../models/database_table.dart';
 import '../../models/project.dart';
@@ -8,6 +10,8 @@ import '../../core/auth_expiry_bus.dart';
 import '../../utils/error_utils.dart';
 import '../snackbar_helper.dart';
 import '../table_detail_dialog.dart';
+import '../../widgets/select.dart';
+import 'package:d1vai_app/widgets/skeletons/project_database_skeleton.dart';
 
 /// 项目详情页 - Database Tab
 class ProjectDatabaseTab extends StatefulWidget {
@@ -29,14 +33,26 @@ class ProjectDatabaseTab extends StatefulWidget {
 class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
   final D1vaiService _service = D1vaiService();
   final List<DatabaseTable> _tables = [];
+  final Map<String, _DbTableMeta> _tableMetaByKey = {};
+  final List<Map<String, dynamic>> _rows = [];
   bool _isLoading = false;
   bool _isInitialized = false;
   bool _enabling = false;
   bool _isLoadingBranches = false;
+  bool _isLoadingRows = false;
+  bool _isRefreshingRows = false;
+  bool _isMutatingRows = false;
+  bool _isLoadingMigrations = false;
+  bool _hasNextRowsPage = false;
+  int _rowsPageSize = 50;
+  int _rowsPageIndex = 0;
+  String _selectedTableKey = '';
+  final List<_DbMigrationPlan> _migrationPlans = [];
   _DbPrimaryTab _activeTab = _DbPrimaryTab.schema;
   _DbViewMode _viewMode = _DbViewMode.tables;
   final List<_DbBranchItem> _branches = [];
   String _selectedBranch = '';
+  bool _showActivationGuide = false;
 
   @override
   void didChangeDependencies() {
@@ -53,14 +69,21 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
   void didUpdateWidget(covariant ProjectDatabaseTab oldWidget) {
     super.didUpdateWidget(oldWidget);
     final enabledChanged =
-        oldWidget.project.projectDatabaseId != widget.project.projectDatabaseId;
+        oldWidget.project.hasDatabaseEnabled !=
+        widget.project.hasDatabaseEnabled;
     if (enabledChanged && _hasDatabaseEnabled) {
       unawaited(_bootstrapDatabaseView());
     }
     if (oldWidget.project.id != widget.project.id) {
       _tables.clear();
+      _tableMetaByKey.clear();
+      _rows.clear();
+      _migrationPlans.clear();
       _branches.clear();
       _selectedBranch = '';
+      _selectedTableKey = '';
+      _rowsPageIndex = 0;
+      _hasNextRowsPage = false;
       _activeTab = _DbPrimaryTab.schema;
       _viewMode = _DbViewMode.tables;
       if (_hasDatabaseEnabled) {
@@ -69,13 +92,35 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
     }
   }
 
-  bool get _hasDatabaseEnabled =>
-      widget.project.projectDatabaseId != null &&
-      widget.project.projectDatabaseId! > 0;
+  bool get _hasDatabaseEnabled => widget.project.hasDatabaseEnabled;
+
+  _DbTableMeta? get _selectedTableMeta {
+    if (_selectedTableKey.trim().isEmpty) return null;
+    return _tableMetaByKey[_selectedTableKey];
+  }
 
   Future<void> _bootstrapDatabaseView() async {
+    setState(() {
+      _isLoading = true;
+      _showActivationGuide = false;
+    });
+
     await _loadBranches();
-    await _loadTables();
+    if (_showActivationGuide) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
+    await _refreshActiveTab();
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _loadBranches() async {
@@ -102,9 +147,7 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
       }
       final fallback = branches.isNotEmpty
           ? branches
-          : const [
-              _DbBranchItem(id: 'main', name: 'main', primary: true),
-            ];
+          : const [_DbBranchItem(id: 'main', name: 'main', primary: true)];
       final primary = fallback.firstWhere(
         (e) => e.primary,
         orElse: () => fallback.first,
@@ -129,6 +172,15 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
         }
       });
       final msg = humanizeError(e);
+      if (msg.contains('404') || msg.toLowerCase().contains('not found')) {
+        if (mounted) {
+          setState(() {
+            _showActivationGuide = true;
+            _isLoadingBranches = false;
+          });
+        }
+        return;
+      }
       if (isAuthExpiredText(msg)) {
         AuthExpiryBus.trigger(
           endpoint: '/api/projects/${widget.project.id}/db/branches',
@@ -140,10 +192,6 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
   }
 
   Future<void> _loadTables() async {
-    setState(() {
-      _isLoading = true;
-    });
-
     try {
       final schemaData = await _service.getProjectDbSchema(
         widget.project.id,
@@ -152,35 +200,18 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
         includeViews: true,
       );
 
-      final List<DatabaseTable> tables = [];
-      // Backend returns either:
-      // - { tables: [...] } (new introspect)
-      // - { schemas: [{ tables: [...] }] } (legacy)
-      final rawTables = schemaData['tables'];
-      if (rawTables is List) {
-        for (final t in rawTables) {
-          if (t is Map<String, dynamic>) {
-            tables.add(DatabaseTable.fromJson(t));
-          } else if (t is Map) {
-            tables.add(DatabaseTable.fromJson(Map<String, dynamic>.from(t)));
-          }
-        }
-      } else if (schemaData['schemas'] is List) {
-        for (final schema in (schemaData['schemas'] as List)) {
-          if (schema is! Map) continue;
-          final st = schema['tables'];
-          if (st is! List) continue;
-          for (final table in st) {
-            if (table is Map<String, dynamic>) {
-              tables.add(DatabaseTable.fromJson(table));
-            } else if (table is Map) {
-              tables.add(
-                DatabaseTable.fromJson(Map<String, dynamic>.from(table)),
-              );
-            }
-          }
-        }
+      final rawTables = _extractSchemaTables(schemaData);
+      final metaByKey = <String, _DbTableMeta>{};
+      for (final raw in rawTables) {
+        final meta = _DbTableMeta.fromJson(raw);
+        metaByKey[meta.fullName] = meta;
       }
+      final tables =
+          metaByKey.values
+              .map((meta) => meta.toDatabaseTable())
+              .toList(growable: false)
+            ..sort((a, b) => a.fullName.compareTo(b.fullName));
+      final selectedKey = _resolveSelectedTableKey(metaByKey.keys);
 
       if (!mounted) return;
 
@@ -188,14 +219,33 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
         _tables
           ..clear()
           ..addAll(tables);
+        _tableMetaByKey
+          ..clear()
+          ..addAll(metaByKey);
+        _selectedTableKey = selectedKey;
         _isLoading = false;
       });
+
+      if (_activeTab == _DbPrimaryTab.data &&
+          _selectedTableMeta != null &&
+          mounted) {
+        await _loadRows(isRefresh: false);
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
       final msg = humanizeError(e);
+      if (msg.contains('404') || msg.toLowerCase().contains('not found')) {
+        if (mounted) {
+          setState(() {
+            _showActivationGuide = true;
+            _isLoading = false;
+          });
+        }
+        return;
+      }
       final authExpired = isAuthExpiredText(msg);
       if (authExpired) {
         AuthExpiryBus.trigger(
@@ -205,6 +255,50 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
       }
       SnackBarHelper.showError(context, title: 'Error', message: msg);
     }
+  }
+
+  List<Map<String, dynamic>> _extractSchemaTables(Map<String, dynamic> schema) {
+    final out = <Map<String, dynamic>>[];
+    final rawTables = schema['tables'];
+    if (rawTables is List) {
+      for (final t in rawTables) {
+        if (t is Map<String, dynamic>) {
+          out.add(t);
+        } else if (t is Map) {
+          out.add(Map<String, dynamic>.from(t));
+        }
+      }
+      return out;
+    }
+
+    final schemas = schema['schemas'];
+    if (schemas is List) {
+      for (final schemaEntry in schemas) {
+        if (schemaEntry is! Map) continue;
+        final schemaMap = Map<String, dynamic>.from(schemaEntry);
+        final st = schemaMap['tables'];
+        if (st is! List) continue;
+        final schemaName =
+            (schemaMap['schema_name'] ?? schemaMap['name'] ?? 'public')
+                .toString();
+        for (final table in st) {
+          if (table is! Map) continue;
+          final row = Map<String, dynamic>.from(table);
+          row.putIfAbsent('schema', () => schemaName);
+          row.putIfAbsent('schema_name', () => schemaName);
+          out.add(row);
+        }
+      }
+    }
+    return out;
+  }
+
+  String _resolveSelectedTableKey(Iterable<String> available) {
+    if (available.isEmpty) return '';
+    if (_selectedTableKey.isNotEmpty && available.contains(_selectedTableKey)) {
+      return _selectedTableKey;
+    }
+    return available.first;
   }
 
   Future<void> _enableDatabase() async {
@@ -225,7 +319,10 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
       await widget.onRefreshProject?.call();
       if (!mounted) return;
       if (_hasDatabaseEnabled) {
-        await _loadTables();
+        setState(() {
+          _activeTab = _DbPrimaryTab.schema;
+        });
+        await _bootstrapDatabaseView();
       }
     } catch (e) {
       if (!mounted) return;
@@ -248,11 +345,434 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
     }
   }
 
+  Future<void> _loadRows({required bool isRefresh}) async {
+    final selected = _selectedTableMeta;
+    if (selected == null) {
+      setState(() {
+        _rows.clear();
+        _hasNextRowsPage = false;
+      });
+      return;
+    }
+
+    setState(() {
+      if (isRefresh) {
+        _isRefreshingRows = true;
+      } else {
+        _isLoadingRows = true;
+      }
+    });
+
+    try {
+      final data = await _service.listDbRows(
+        widget.project.id,
+        selected.schema,
+        selected.name,
+        branch: _selectedBranch.trim().isEmpty ? null : _selectedBranch.trim(),
+        limit: _rowsPageSize,
+        offset: _rowsPageIndex * _rowsPageSize,
+      );
+      final rows = <Map<String, dynamic>>[];
+      for (final row in data) {
+        if (row is Map<String, dynamic>) {
+          rows.add(row);
+        } else if (row is Map) {
+          rows.add(Map<String, dynamic>.from(row));
+        }
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _rows
+          ..clear()
+          ..addAll(rows);
+        _hasNextRowsPage = rows.length >= _rowsPageSize;
+        _isLoadingRows = false;
+        _isRefreshingRows = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingRows = false;
+        _isRefreshingRows = false;
+      });
+      final msg = humanizeError(e);
+      if (isAuthExpiredText(msg)) {
+        AuthExpiryBus.trigger(
+          endpoint:
+              '/api/projects/${widget.project.id}/db/tables/${selected.schema}/${selected.name}/rows',
+        );
+        return;
+      }
+      SnackBarHelper.showError(context, title: 'Error', message: msg);
+    }
+  }
+
+  Future<void> _openTableInData(_DbTableMeta table) async {
+    setState(() {
+      _selectedTableKey = table.fullName;
+      _rowsPageIndex = 0;
+      _activeTab = _DbPrimaryTab.data;
+    });
+    await _loadRows(isRefresh: false);
+  }
+
+  Future<void> _onSelectTableInData(String key) async {
+    if (_selectedTableKey == key) return;
+    setState(() {
+      _selectedTableKey = key;
+      _rowsPageIndex = 0;
+    });
+    await _loadRows(isRefresh: false);
+  }
+
+  Future<void> _onRowsPageSizeChanged(int next) async {
+    if (next == _rowsPageSize) return;
+    setState(() {
+      _rowsPageSize = next;
+      _rowsPageIndex = 0;
+    });
+    await _loadRows(isRefresh: false);
+  }
+
+  Future<void> _goPrevRowsPage() async {
+    if (_rowsPageIndex <= 0) return;
+    setState(() {
+      _rowsPageIndex -= 1;
+    });
+    await _loadRows(isRefresh: false);
+  }
+
+  Future<void> _goNextRowsPage() async {
+    if (!_hasNextRowsPage) return;
+    setState(() {
+      _rowsPageIndex += 1;
+    });
+    await _loadRows(isRefresh: false);
+  }
+
+  String _formatCellValue(dynamic value) {
+    if (value == null) return 'null';
+    if (value is String) {
+      return value.isEmpty ? '""' : value;
+    }
+    if (value is num || value is bool) return value.toString();
+    try {
+      return jsonEncode(value);
+    } catch (_) {
+      return value.toString();
+    }
+  }
+
+  dynamic _coerceInputValue(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.toLowerCase() == 'null') return null;
+    if (trimmed.toLowerCase() == 'true') return true;
+    if (trimmed.toLowerCase() == 'false') return false;
+    final asInt = int.tryParse(trimmed);
+    if (asInt != null) return asInt;
+    final asDouble = double.tryParse(trimmed);
+    if (asDouble != null) return asDouble;
+    return raw;
+  }
+
+  Map<String, dynamic> _buildRowWhere(
+    _DbTableMeta table,
+    Map<String, dynamic> row,
+  ) {
+    final where = <String, dynamic>{};
+    final pkNames = table.columns
+        .where((col) => col.isPrimaryKey)
+        .map((col) => col.name)
+        .toList(growable: false);
+    final targetCols = pkNames.isNotEmpty
+        ? pkNames
+        : table.columns.map((col) => col.name).toList(growable: false);
+    for (final col in targetCols) {
+      where[col] = row[col];
+    }
+    return where;
+  }
+
+  Future<void> _openRowEditor(
+    _DbTableMeta table, {
+    required bool isInsert,
+    Map<String, dynamic>? sourceRow,
+  }) async {
+    final editable = table.columns
+        .where((col) => !col.isPrimaryKey)
+        .toList(growable: false);
+    if (editable.isEmpty) {
+      SnackBarHelper.showInfo(
+        context,
+        title: 'No editable columns',
+        message: 'This table has no editable non-primary-key columns.',
+      );
+      return;
+    }
+
+    final controllers = <String, TextEditingController>{
+      for (final col in editable)
+        col.name: TextEditingController(
+          text: sourceRow == null ? '' : _formatCellValue(sourceRow[col.name]),
+        ),
+    };
+    var submitting = false;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text(isInsert ? 'Insert row' : 'Edit row'),
+              content: SizedBox(
+                width: 480,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: editable.map((col) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: TextField(
+                          controller: controllers[col.name],
+                          decoration: InputDecoration(
+                            labelText: col.name,
+                            helperText: col.dataType.isEmpty
+                                ? null
+                                : '${col.dataType}${col.isNullable ? '' : ' • required'}',
+                            border: const OutlineInputBorder(),
+                            isDense: true,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: submitting
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: submitting
+                      ? null
+                      : () async {
+                          setDialogState(() {
+                            submitting = true;
+                          });
+                          setState(() {
+                            _isMutatingRows = true;
+                          });
+                          try {
+                            final values = <String, dynamic>{};
+                            for (final col in editable) {
+                              final raw = controllers[col.name]?.text ?? '';
+                              values[col.name] = _coerceInputValue(raw);
+                            }
+
+                            if (isInsert) {
+                              await _service.insertDbRow(
+                                widget.project.id,
+                                table.schema,
+                                table.name,
+                                branch: _selectedBranch.trim().isEmpty
+                                    ? null
+                                    : _selectedBranch.trim(),
+                                values: values,
+                              );
+                            } else {
+                              if (sourceRow == null) return;
+                              await _service.updateDbRows(
+                                widget.project.id,
+                                table.schema,
+                                table.name,
+                                branch: _selectedBranch.trim().isEmpty
+                                    ? null
+                                    : _selectedBranch.trim(),
+                                where: _buildRowWhere(table, sourceRow),
+                                values: values,
+                              );
+                            }
+                            if (!mounted) return;
+                            if (!dialogContext.mounted) return;
+                            Navigator.of(dialogContext).pop(true);
+                          } catch (e) {
+                            if (!mounted) return;
+                            final msg = humanizeError(e);
+                            if (isAuthExpiredText(msg)) {
+                              AuthExpiryBus.trigger(
+                                endpoint:
+                                    '/api/projects/${widget.project.id}/db/tables/${table.schema}/${table.name}/rows',
+                              );
+                              return;
+                            }
+                            SnackBarHelper.showError(
+                              this.context,
+                              title: 'Error',
+                              message: msg,
+                            );
+                            setDialogState(() {
+                              submitting = false;
+                            });
+                          } finally {
+                            if (mounted) {
+                              setState(() {
+                                _isMutatingRows = false;
+                              });
+                            }
+                          }
+                        },
+                  child: Text(
+                    submitting
+                        ? (isInsert ? 'Inserting...' : 'Saving...')
+                        : (isInsert ? 'Insert' : 'Save'),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    for (final controller in controllers.values) {
+      controller.dispose();
+    }
+
+    if (ok == true && mounted) {
+      SnackBarHelper.showSuccess(
+        context,
+        title: 'Success',
+        message: isInsert ? 'Row inserted.' : 'Row updated.',
+      );
+      await _loadRows(isRefresh: true);
+    }
+  }
+
+  Future<void> _deleteRow(_DbTableMeta table, Map<String, dynamic> row) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Delete row'),
+          content: Text(
+            'Delete this row from ${table.fullName}? This action cannot be undone.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+
+    setState(() {
+      _isMutatingRows = true;
+    });
+    try {
+      await _service.deleteDbRows(
+        widget.project.id,
+        table.schema,
+        table.name,
+        branch: _selectedBranch.trim().isEmpty ? null : _selectedBranch.trim(),
+        where: _buildRowWhere(table, row),
+      );
+      if (!mounted) return;
+      SnackBarHelper.showSuccess(
+        context,
+        title: 'Success',
+        message: 'Row deleted.',
+      );
+      await _loadRows(isRefresh: true);
+    } catch (e) {
+      if (!mounted) return;
+      final msg = humanizeError(e);
+      if (isAuthExpiredText(msg)) {
+        AuthExpiryBus.trigger(
+          endpoint:
+              '/api/projects/${widget.project.id}/db/tables/${table.schema}/${table.name}/rows/delete',
+        );
+        return;
+      }
+      SnackBarHelper.showError(context, title: 'Error', message: msg);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isMutatingRows = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadMigrationHistory() async {
+    setState(() {
+      _isLoadingMigrations = true;
+    });
+    try {
+      final data = await _service.getProjectMigrationHistory(
+        widget.project.id,
+        limit: 50,
+        offset: 0,
+      );
+      dynamic rawPlans = data['plans'];
+      if (rawPlans is! List && data['data'] is Map) {
+        rawPlans = (data['data'] as Map)['plans'];
+      }
+      if (rawPlans is! List && data['data'] is List) {
+        rawPlans = data['data'];
+      }
+      final plans = <_DbMigrationPlan>[];
+      if (rawPlans is List) {
+        for (final item in rawPlans) {
+          if (item is Map<String, dynamic>) {
+            plans.add(_DbMigrationPlan.fromJson(item));
+          } else if (item is Map) {
+            plans.add(
+              _DbMigrationPlan.fromJson(Map<String, dynamic>.from(item)),
+            );
+          }
+        }
+      }
+      plans.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      if (!mounted) return;
+      setState(() {
+        _migrationPlans
+          ..clear()
+          ..addAll(plans);
+        _isLoadingMigrations = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingMigrations = false;
+      });
+      final msg = humanizeError(e);
+      if (isAuthExpiredText(msg)) {
+        AuthExpiryBus.trigger(
+          endpoint: '/api/migrations/history/${widget.project.id}',
+        );
+        return;
+      }
+      SnackBarHelper.showError(context, title: 'Error', message: msg);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    if (!_hasDatabaseEnabled) {
+    if (!_hasDatabaseEnabled || _showActivationGuide) {
       return _EnableDatabaseCard(
         enabling: _enabling,
         onEnable: _enableDatabase,
@@ -260,12 +780,16 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
     }
 
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const ProjectDatabaseSkeleton();
     }
 
     return Column(
       children: [
         _buildDatabaseTopBar(theme),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: const SizedBox.shrink(), // Hints removed
+        ),
         Expanded(
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 220),
@@ -285,8 +809,8 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
             },
             child: switch (_activeTab) {
               _DbPrimaryTab.schema => _buildSchemaTab(theme),
-              _DbPrimaryTab.data => _buildDataComingSoon(theme),
-              _DbPrimaryTab.migration => _buildMigrationComingSoon(theme),
+              _DbPrimaryTab.data => _buildDataTab(theme),
+              _DbPrimaryTab.migration => _buildMigrationTab(theme),
             },
           ),
         ),
@@ -332,26 +856,24 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
           Row(
             children: [
               Expanded(
-                child: DropdownButtonFormField<String>(
-                  initialValue: selected.isEmpty ? null : selected,
-                  isDense: true,
-                  decoration: InputDecoration(
-                    labelText: 'Branch',
-                    helperText: _isLoadingBranches
+                child: Select<String>(
+                  value: selected.isEmpty ? null : selected,
+                  label: 'Branch',
+                  hint: Text(
+                    _isLoadingBranches
                         ? 'Loading branches...'
                         : 'Current Neon branch context',
-                    border: const OutlineInputBorder(),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
                     ),
                   ),
                   items: _branches
                       .map(
-                        (b) => DropdownMenuItem<String>(
+                        (b) => SelectItem<String>(
                           value: b.name,
                           child: Text(
                             b.primary ? '${b.name} (primary)' : b.name,
+                            style: theme.textTheme.bodyMedium,
                           ),
                         ),
                       )
@@ -427,23 +949,439 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
     );
   }
 
-  Widget _buildDataComingSoon(ThemeData theme) {
-    return _buildEmptyState(
-      key: const ValueKey('db_data_soon'),
-      icon: Icons.table_view,
-      title: 'Data workflow is being aligned',
-      subtitle:
-          'Next step: table browsing, filtering and row operations will be added here.',
+  Widget _buildDataTab(ThemeData theme) {
+    if (_tables.isEmpty || _tableMetaByKey.isEmpty) {
+      return _buildEmptyState(
+        key: const ValueKey('db_data_empty'),
+        icon: Icons.table_view,
+        title: 'No database tables',
+        subtitle: 'Create tables first, then browse rows here.',
+      );
+    }
+
+    final options = _tableMetaByKey.values.toList(growable: false)
+      ..sort((a, b) => a.fullName.compareTo(b.fullName));
+    final selected = _selectedTableMeta ?? options.first;
+    final hasEditableColumns = selected.columns.any((col) => !col.isPrimaryKey);
+    final canMutateRows = !selected.isView && hasEditableColumns;
+
+    return Padding(
+      key: const ValueKey('db_data_ready'),
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
+      child: Column(
+        children: [
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: theme.colorScheme.outlineVariant),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Select<String>(
+                          value: selected.fullName,
+                          label: 'Table',
+                          hint: const Text('Select Table'),
+                          isDense: true,
+                          items: options
+                              .map(
+                                (meta) => SelectItem<String>(
+                                  value: meta.fullName,
+                                  child: Text(
+                                    meta.isView
+                                        ? '${meta.fullName} (view)'
+                                        : meta.fullName,
+                                    style: theme.textTheme.bodyMedium,
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) {
+                            if (value == null) return;
+                            unawaited(_onSelectTableInData(value));
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton.filledTonal(
+                                tooltip: 'Refresh rows',
+                                onPressed:
+                                    (_isLoadingRows ||
+                                        _isRefreshingRows ||
+                                        _isMutatingRows)
+                                    ? null
+                                    : () =>
+                                          unawaited(_loadRows(isRefresh: true)),
+                                icon: _isRefreshingRows
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Icon(Icons.refresh, size: 20),
+                              ),
+                              const SizedBox(width: 8),
+                              FilledButton.icon(
+                                onPressed:
+                                    (_isMutatingRows ||
+                                        _isLoadingRows ||
+                                        !canMutateRows)
+                                    ? null
+                                    : () => unawaited(
+                                        _openRowEditor(
+                                          selected,
+                                          isInsert: true,
+                                        ),
+                                      ),
+                                icon: const Icon(Icons.add, size: 18),
+                                label: const Text('Insert'),
+                                style: FilledButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      '${selected.columns.length} columns • ${selected.schema} schema',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          const SizedBox(height: 10),
+          Expanded(
+            child: Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: theme.colorScheme.outlineVariant),
+              ),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: _isLoadingRows
+                    ? const Center(child: CircularProgressIndicator())
+                    : _rows.isEmpty
+                    ? _buildEmptyState(
+                        key: const ValueKey('db_data_no_rows'),
+                        icon: Icons.inbox_outlined,
+                        title: 'No rows found',
+                        subtitle:
+                            'Try another table or insert data from your application flow.',
+                      )
+                    : Padding(
+                        padding: const EdgeInsets.all(1),
+                        child: _buildRowsTable(theme, selected),
+                      ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Text(
+                'Page ${_rowsPageIndex + 1}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const Spacer(),
+              DropdownButton<int>(
+                value: _rowsPageSize,
+                items: const [20, 50, 100]
+                    .map(
+                      (size) => DropdownMenuItem<int>(
+                        value: size,
+                        child: Text('$size / page'),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  if (value == null) return;
+                  unawaited(_onRowsPageSizeChanged(value));
+                },
+              ),
+              const SizedBox(width: 6),
+              OutlinedButton(
+                onPressed: (_rowsPageIndex > 0 && !_isMutatingRows)
+                    ? () => unawaited(_goPrevRowsPage())
+                    : null,
+                child: const Text('Previous'),
+              ),
+              const SizedBox(width: 6),
+              OutlinedButton(
+                onPressed: (_hasNextRowsPage && !_isMutatingRows)
+                    ? () => unawaited(_goNextRowsPage())
+                    : null,
+                child: const Text('Next'),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildMigrationComingSoon(ThemeData theme) {
-    return _buildEmptyState(
-      key: const ValueKey('db_migration_soon'),
-      icon: Icons.history,
-      title: 'Migration history is being aligned',
-      subtitle: 'Execution records and status timeline will appear here.',
+  Widget _buildRowsTable(ThemeData theme, _DbTableMeta selected) {
+    if (selected.columns.isEmpty) {
+      return _buildEmptyState(
+        key: const ValueKey('db_data_no_columns'),
+        icon: Icons.view_column_outlined,
+        title: 'No visible columns',
+        subtitle: 'This table currently has no browsable columns.',
+      );
+    }
+
+    return Scrollbar(
+      thumbVisibility: true,
+      child: SingleChildScrollView(
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: DataTable(
+            columnSpacing: 20,
+            columns: [
+              ...selected.columns.map(
+                (col) => DataColumn(
+                  label: Text(col.isPrimaryKey ? '${col.name} (PK)' : col.name),
+                  tooltip: col.dataType,
+                ),
+              ),
+              const DataColumn(label: Text('Actions')),
+            ],
+            rows: _rows
+                .map(
+                  (row) => DataRow(
+                    cells: [
+                      ...selected.columns.map(
+                        (col) => DataCell(
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 240),
+                            child: Text(
+                              _formatCellValue(row[col.name]),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall,
+                            ),
+                          ),
+                        ),
+                      ),
+                      DataCell(
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              tooltip: 'Edit row',
+                              onPressed: (_isMutatingRows || selected.isView)
+                                  ? null
+                                  : () => unawaited(
+                                      _openRowEditor(
+                                        selected,
+                                        isInsert: false,
+                                        sourceRow: row,
+                                      ),
+                                    ),
+                              icon: const Icon(Icons.edit_outlined, size: 18),
+                            ),
+                            IconButton(
+                              tooltip: 'Delete row',
+                              onPressed: (_isMutatingRows || selected.isView)
+                                  ? null
+                                  : () => unawaited(_deleteRow(selected, row)),
+                              icon: const Icon(Icons.delete_outline, size: 18),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+                .toList(),
+          ),
+        ),
+      ),
     );
+  }
+
+  Widget _buildMigrationTab(ThemeData theme) {
+    if (_isLoadingMigrations) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_migrationPlans.isEmpty) {
+      return _buildEmptyState(
+        key: const ValueKey('db_migration_empty'),
+        icon: Icons.history,
+        title: 'No migration history',
+        subtitle: 'Migration plans and execution records will appear here.',
+      );
+    }
+
+    return Padding(
+      key: const ValueKey('db_migration_ready'),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${_migrationPlans.length} plans',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: _isLoadingMigrations
+                    ? null
+                    : () => unawaited(_loadMigrationHistory()),
+                icon: const Icon(Icons.refresh, size: 16),
+                label: const Text('Refresh'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: ListView.separated(
+              itemCount: _migrationPlans.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 10),
+              itemBuilder: (context, index) {
+                final plan = _migrationPlans[index];
+                return Card(
+                  child: ExpansionTile(
+                    leading: Icon(
+                      _migrationStatusIcon(plan.status),
+                      color: _migrationStatusColor(theme, plan.status),
+                    ),
+                    title: Text(
+                      plan.intent.isEmpty ? 'Migration plan' : plan.intent,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    subtitle: Text(
+                      '${_formatDateTime(plan.createdAt)} • ${plan.jobCount} jobs',
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _migrationStatusColor(
+                          theme,
+                          plan.status,
+                        ).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        plan.status,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: _migrationStatusColor(theme, plan.status),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    children: [
+                      if (plan.jobs.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'No job details available yet.',
+                              style: TextStyle(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        ...plan.jobs.map((job) {
+                          return ListTile(
+                            leading: Icon(
+                              _migrationStatusIcon(job.status),
+                              color: _migrationStatusColor(theme, job.status),
+                              size: 18,
+                            ),
+                            title: Text(
+                              '${job.stage.toUpperCase()} • ${job.status}',
+                            ),
+                            subtitle: Text(
+                              '${_formatDateTime(job.createdAt)} • ${job.statementCount ?? 0} statements',
+                            ),
+                          );
+                        }),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _migrationStatusIcon(String status) {
+    switch (status.toLowerCase()) {
+      case 'success':
+        return Icons.check_circle_outline;
+      case 'failed':
+        return Icons.error_outline;
+      case 'partial':
+        return Icons.warning_amber_outlined;
+      default:
+        return Icons.schedule;
+    }
+  }
+
+  Color _migrationStatusColor(ThemeData theme, String status) {
+    switch (status.toLowerCase()) {
+      case 'success':
+        return Colors.green.shade600;
+      case 'failed':
+        return theme.colorScheme.error;
+      case 'partial':
+        return Colors.orange.shade700;
+      default:
+        return theme.colorScheme.tertiary;
+    }
+  }
+
+  String _formatDateTime(String raw) {
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) return raw;
+    final local = parsed.toLocal();
+    String two(int v) => v.toString().padLeft(2, '0');
+    return '${local.year}-${two(local.month)}-${two(local.day)} ${two(local.hour)}:${two(local.minute)}';
   }
 
   Widget _buildEmptyState({
@@ -484,13 +1422,26 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
     if (_activeTab == next) return;
     setState(() {
       _activeTab = next;
+      if (next == _DbPrimaryTab.data) {
+        _rowsPageIndex = 0;
+        if (_selectedTableKey.isEmpty && _tableMetaByKey.isNotEmpty) {
+          _selectedTableKey = _tableMetaByKey.keys.first;
+        }
+      }
     });
+    if (next == _DbPrimaryTab.data) {
+      unawaited(_loadRows(isRefresh: false));
+    }
+    if (next == _DbPrimaryTab.migration && _migrationPlans.isEmpty) {
+      unawaited(_loadMigrationHistory());
+    }
   }
 
   Future<void> _handleBranchChanged(String branchName) async {
     if (branchName == _selectedBranch) return;
     setState(() {
       _selectedBranch = branchName;
+      _rowsPageIndex = 0;
     });
     await _refreshActiveTab();
   }
@@ -504,7 +1455,7 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
         await _loadTables();
         break;
       case _DbPrimaryTab.migration:
-        await _loadTables();
+        await _loadMigrationHistory();
         break;
     }
   }
@@ -516,28 +1467,76 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final table = _tables[index];
+        IconData tableIcon;
+        final name = table.displayName.toLowerCase();
+        if (name.contains('user') ||
+            name.contains('account') ||
+            name.contains('profile')) {
+          tableIcon = Icons.person_outline;
+        } else if (name.contains('order') ||
+            name.contains('transaction') ||
+            name.contains('payment') ||
+            name.contains('bill')) {
+          tableIcon = Icons.receipt_long;
+        } else if (name.contains('product') ||
+            name.contains('item') ||
+            name.contains('sku')) {
+          tableIcon = Icons.inventory_2_outlined;
+        } else if (name.contains('msg') ||
+            name.contains('message') ||
+            name.contains('chat')) {
+          tableIcon = Icons.chat_bubble_outline;
+        } else if (name.contains('log') ||
+            name.contains('history') ||
+            name.contains('audit')) {
+          tableIcon = Icons.history;
+        } else if (name.contains('auth') ||
+            name.contains('verify') ||
+            name.contains('token') ||
+            name.contains('session')) {
+          tableIcon = Icons.verified_user_outlined;
+        } else if (name.contains('setting') || name.contains('config')) {
+          tableIcon = Icons.settings_outlined;
+        } else {
+          tableIcon = Icons.table_chart_outlined;
+        }
+
         return Card(
+          elevation: 0,
+          margin: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+            ),
+          ),
           child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ),
             leading: Container(
-              width: 40,
-              height: 40,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
                 color: table.type == 'view'
-                    ? theme.colorScheme.tertiaryContainer
-                    : theme.colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(8),
+                    ? theme.colorScheme.tertiaryContainer.withValues(alpha: 0.5)
+                    : theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
-                table.type == 'view' ? Icons.visibility : Icons.table_chart,
+                table.type == 'view' ? Icons.visibility : tableIcon,
                 color: table.type == 'view'
                     ? theme.colorScheme.tertiary
                     : theme.colorScheme.primary,
-                size: 20,
+                size: 24,
               ),
             ),
             title: Text(
               table.displayName,
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -572,11 +1571,25 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                 ],
               ],
             ),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  tooltip: 'Ask AI about this table',
+                  onPressed: () {
+                    final question =
+                        'Can you analyze the database table "${table.displayName}" and explain its purpose, structure, and any suggestions for optimization or best practices?';
+                    widget.onAskAi?.call(question);
+                  },
+                  icon: const Icon(Icons.auto_awesome_outlined, size: 18),
+                ),
+                const Icon(Icons.arrow_forward_ios, size: 16),
+              ],
+            ),
             onTap: () {
-              final question =
-                  'Can you analyze the database table "${table.displayName}" and explain its purpose, structure, and any suggestions for optimization or best practices?';
-              widget.onAskAi?.call(question);
+              final meta = _tableMetaByKey[table.fullName];
+              if (meta == null) return;
+              unawaited(_openTableInData(meta));
             },
             onLongPress: () {
               showDialog(
@@ -735,6 +1748,209 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _DbTableMeta {
+  final String schema;
+  final String name;
+  final String kind;
+  final int? rowCount;
+  final List<_DbColumnMeta> columns;
+  final List<String> primaryKey;
+  final List<DatabaseForeignKey> foreignKeys;
+
+  const _DbTableMeta({
+    required this.schema,
+    required this.name,
+    required this.kind,
+    required this.rowCount,
+    required this.columns,
+    required this.primaryKey,
+    required this.foreignKeys,
+  });
+
+  factory _DbTableMeta.fromJson(Map<String, dynamic> json) {
+    final schema = (json['schema'] ?? json['schema_name'] ?? 'public')
+        .toString();
+    final name = (json['name'] ?? json['table_name'] ?? '').toString();
+    final kind = (json['kind'] ?? json['table_type'] ?? json['type'] ?? 'table')
+        .toString();
+    final rawPk = json['primary_key'];
+    final primaryKey = <String>[];
+    if (rawPk is List) {
+      for (final pk in rawPk) {
+        final text = pk.toString().trim();
+        if (text.isNotEmpty) primaryKey.add(text);
+      }
+    }
+
+    final columns = <_DbColumnMeta>[];
+    final rawColumns = json['columns'];
+    if (rawColumns is List) {
+      for (final col in rawColumns) {
+        if (col is Map<String, dynamic>) {
+          columns.add(_DbColumnMeta.fromJson(col, primaryKey));
+        } else if (col is Map) {
+          columns.add(
+            _DbColumnMeta.fromJson(Map<String, dynamic>.from(col), primaryKey),
+          );
+        } else {
+          final colName = col.toString();
+          columns.add(
+            _DbColumnMeta(
+              name: colName,
+              dataType: '',
+              isNullable: true,
+              isPrimaryKey: primaryKey.contains(colName),
+            ),
+          );
+        }
+      }
+    }
+
+    final fkListRaw = json['foreign_keys'];
+    final foreignKeys = (fkListRaw is List)
+        ? fkListRaw
+              .whereType<Map>()
+              .map(
+                (entry) => DatabaseForeignKey.fromJson(
+                  Map<String, dynamic>.from(entry),
+                ),
+              )
+              .toList()
+        : const <DatabaseForeignKey>[];
+
+    return _DbTableMeta(
+      schema: schema,
+      name: name,
+      kind: kind,
+      rowCount: json['row_count'] is num
+          ? (json['row_count'] as num).toInt()
+          : (json['count'] is num ? (json['count'] as num).toInt() : null),
+      columns: columns,
+      primaryKey: primaryKey,
+      foreignKeys: foreignKeys,
+    );
+  }
+
+  String get fullName => '$schema.$name';
+
+  bool get isView {
+    final lower = kind.toLowerCase();
+    return lower == 'view' ||
+        lower == 'view table' ||
+        lower == 'v' ||
+        lower.contains('view');
+  }
+
+  DatabaseTable toDatabaseTable() {
+    return DatabaseTable(
+      name: name,
+      schema: schema,
+      rowCount: rowCount,
+      columns: columns.map((col) => col.name).toList(growable: false),
+      foreignKeys: foreignKeys,
+      type: isView ? 'view' : 'table',
+    );
+  }
+}
+
+class _DbColumnMeta {
+  final String name;
+  final String dataType;
+  final bool isNullable;
+  final bool isPrimaryKey;
+
+  const _DbColumnMeta({
+    required this.name,
+    required this.dataType,
+    required this.isNullable,
+    required this.isPrimaryKey,
+  });
+
+  factory _DbColumnMeta.fromJson(
+    Map<String, dynamic> json,
+    List<String> primaryKey,
+  ) {
+    final name = (json['name'] ?? '').toString();
+    final isPk = json['is_primary_key'] == true || primaryKey.contains(name);
+    return _DbColumnMeta(
+      name: name,
+      dataType: (json['data_type'] ?? json['type'] ?? '').toString(),
+      isNullable: json['is_nullable'] != false,
+      isPrimaryKey: isPk,
+    );
+  }
+}
+
+class _DbMigrationPlan {
+  final String id;
+  final String intent;
+  final String status;
+  final String createdAt;
+  final int jobCount;
+  final List<_DbMigrationJob> jobs;
+
+  const _DbMigrationPlan({
+    required this.id,
+    required this.intent,
+    required this.status,
+    required this.createdAt,
+    required this.jobCount,
+    required this.jobs,
+  });
+
+  factory _DbMigrationPlan.fromJson(Map<String, dynamic> json) {
+    final rawJobs = json['jobs'];
+    final jobs = <_DbMigrationJob>[];
+    if (rawJobs is List) {
+      for (final job in rawJobs) {
+        if (job is Map<String, dynamic>) {
+          jobs.add(_DbMigrationJob.fromJson(job));
+        } else if (job is Map) {
+          jobs.add(_DbMigrationJob.fromJson(Map<String, dynamic>.from(job)));
+        }
+      }
+    }
+    return _DbMigrationPlan(
+      id: (json['id'] ?? '').toString(),
+      intent: (json['intent'] ?? '').toString(),
+      status: (json['status'] ?? 'pending').toString(),
+      createdAt: (json['created_at'] ?? '').toString(),
+      jobCount: json['job_count'] is num
+          ? (json['job_count'] as num).toInt()
+          : jobs.length,
+      jobs: jobs,
+    );
+  }
+}
+
+class _DbMigrationJob {
+  final String id;
+  final String stage;
+  final String status;
+  final String createdAt;
+  final int? statementCount;
+
+  const _DbMigrationJob({
+    required this.id,
+    required this.stage,
+    required this.status,
+    required this.createdAt,
+    required this.statementCount,
+  });
+
+  factory _DbMigrationJob.fromJson(Map<String, dynamic> json) {
+    return _DbMigrationJob(
+      id: (json['id'] ?? '').toString(),
+      stage: (json['stage'] ?? 'shadow').toString(),
+      status: (json['status'] ?? 'pending').toString(),
+      createdAt: (json['created_at'] ?? '').toString(),
+      statementCount: json['statement_count'] is num
+          ? (json['statement_count'] as num).toInt()
+          : null,
     );
   }
 }

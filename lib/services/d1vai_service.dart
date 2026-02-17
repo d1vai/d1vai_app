@@ -64,6 +64,19 @@ class D1vaiService {
     }
   }
 
+  List<dynamic> _normalizeListPayload(dynamic payload) {
+    if (payload is List) return payload;
+    if (payload is Map) {
+      final data = payload['data'];
+      if (data is List) return data;
+      final events = payload['events'];
+      if (events is List) return events;
+      final results = payload['results'];
+      if (results is List) return results;
+    }
+    return const <dynamic>[];
+  }
+
   // ============================================
   // Auth Methods - 认证相关方法
   // ============================================
@@ -941,10 +954,11 @@ class D1vaiService {
     }
 
     try {
-      return await _apiClient.get<List<dynamic>>(
+      final payload = await _apiClient.get<dynamic>(
         '/api/analytics/data/$projectId/events',
         queryParams: queryParams,
       );
+      return _normalizeListPayload(payload);
     } catch (e) {
       final recoverable = _isRecoverableUmamiEndpointError(
         e,
@@ -988,10 +1002,11 @@ class D1vaiService {
     }
 
     try {
-      return await _apiClient.get<List<dynamic>>(
+      final payload = await _apiClient.get<dynamic>(
         '/api/analytics/data/$projectId/events/series',
         queryParams: queryParams,
       );
+      return _normalizeListPayload(payload);
     } catch (e) {
       final recoverable = _isRecoverableUmamiEndpointError(
         e,

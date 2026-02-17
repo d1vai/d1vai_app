@@ -14,6 +14,8 @@ class UserProject {
   final bool? analyticsEnabled;
   final String? analyticsId;
   final int? projectDatabaseId;
+  final String? projectDatabaseIdRaw;
+  final bool hasProjectDatabase;
   final int? projectPayId;
   final String? vercelProdDomain;
   final String? latestProdDeploymentUrl;
@@ -48,6 +50,8 @@ class UserProject {
     this.analyticsEnabled,
     this.analyticsId,
     this.projectDatabaseId,
+    this.projectDatabaseIdRaw,
+    this.hasProjectDatabase = false,
     this.projectPayId,
     this.vercelProdDomain,
     this.latestProdDeploymentUrl,
@@ -79,6 +83,16 @@ class UserProject {
       return null;
     }
 
+    bool parseJsTruthy(dynamic value) {
+      if (value == null) return false;
+      if (value is bool) return value;
+      if (value is num) return value != 0;
+      if (value is String) return value.isNotEmpty;
+      return true;
+    }
+
+    final rawProjectDatabaseId = json['project_database_id'];
+
     return UserProject(
       id: json['id']?.toString() ?? '',
       projectName: json['project_name']?.toString() ?? '',
@@ -95,7 +109,9 @@ class UserProject {
           ? json['analytics_enabled']
           : null,
       analyticsId: json['analytics_id']?.toString(),
-      projectDatabaseId: parseInt(json['project_database_id']),
+      projectDatabaseId: parseInt(rawProjectDatabaseId),
+      projectDatabaseIdRaw: rawProjectDatabaseId?.toString(),
+      hasProjectDatabase: parseJsTruthy(rawProjectDatabaseId),
       projectPayId: parseInt(json['project_pay_id']),
       vercelProdDomain: json['vercel_prod_domain']?.toString(),
       latestProdDeploymentUrl: json['latest_prod_deployment_url']?.toString(),
@@ -131,7 +147,7 @@ class UserProject {
       'status': status,
       'analytics_enabled': analyticsEnabled,
       'analytics_id': analyticsId,
-      'project_database_id': projectDatabaseId,
+      'project_database_id': projectDatabaseId ?? projectDatabaseIdRaw,
       'project_pay_id': projectPayId,
       'vercel_prod_domain': vercelProdDomain,
       'latest_prod_deployment_url': latestProdDeploymentUrl,
@@ -154,6 +170,9 @@ class UserProject {
   bool get hasAnalyticsId =>
       analyticsId != null && analyticsId!.trim().isNotEmpty;
 
+  /// Keep parity with Web's truthy check on `project_database_id`.
+  bool get hasDatabaseEnabled => hasProjectDatabase;
+
   /// 创建副本
   UserProject copyWith({
     String? id,
@@ -170,6 +189,8 @@ class UserProject {
     bool? analyticsEnabled,
     String? analyticsId,
     int? projectDatabaseId,
+    String? projectDatabaseIdRaw,
+    bool? hasProjectDatabase,
     int? projectPayId,
     String? vercelProdDomain,
     String? latestProdDeploymentUrl,
@@ -201,6 +222,8 @@ class UserProject {
       analyticsEnabled: analyticsEnabled ?? this.analyticsEnabled,
       analyticsId: analyticsId ?? this.analyticsId,
       projectDatabaseId: projectDatabaseId ?? this.projectDatabaseId,
+      projectDatabaseIdRaw: projectDatabaseIdRaw ?? this.projectDatabaseIdRaw,
+      hasProjectDatabase: hasProjectDatabase ?? this.hasProjectDatabase,
       projectPayId: projectPayId ?? this.projectPayId,
       vercelProdDomain: vercelProdDomain ?? this.vercelProdDomain,
       latestProdDeploymentUrl:

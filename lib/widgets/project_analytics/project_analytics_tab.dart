@@ -16,6 +16,9 @@ import '../../utils/message_parser.dart';
 import '../chat/message_list.dart';
 import '../snackbar_helper.dart';
 import '../analytics/realtime_chart.dart';
+import '../skeletons/analytics_data_skeleton.dart';
+import '../skeletons/analytics_events_skeleton.dart';
+import '../skeletons/analytics_sessions_skeleton.dart';
 
 /// 项目详情页 - Analytics Tab
 enum AnalyticsEnvScope { all, preview, prod }
@@ -72,6 +75,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
   bool _isLoading = false;
   bool _isInitialized = false;
   TimeRange _timeRange = TimeRange.last24Hours;
+  TimeRange _eventsTimeRange = TimeRange.last7Days;
   AnalyticsEnvScope _envScope = AnalyticsEnvScope.all;
   AnalyticsCompareMode _compareMode = AnalyticsCompareMode.days7;
   String _compareDimension = 'pages';
@@ -124,6 +128,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       _installError = null;
       _showInstallerView = false;
       _analyticsTabIndex = 0;
+      _eventsTimeRange = TimeRange.last7Days;
       _compareMode = AnalyticsCompareMode.days7;
       _compareDimension = 'pages';
       _installSucceeded = false;
@@ -789,6 +794,16 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
     return {'startAt': startAt, 'endAt': endAt};
   }
 
+  Map<String, int> _eventsBoundsMs() {
+    final now = DateTime.now();
+    final endAt = now.millisecondsSinceEpoch;
+    final duration = _eventsTimeRange == TimeRange.last30Days
+        ? TimeRange.last30Days.duration
+        : TimeRange.last7Days.duration;
+    final startAt = endAt - duration.inMilliseconds;
+    return {'startAt': startAt, 'endAt': endAt};
+  }
+
   double _percentChange(int current, int previous) {
     if (previous <= 0) return current > 0 ? 100 : 0;
     return ((current - previous) / previous) * 100;
@@ -908,7 +923,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
         _topReferrers.isNotEmpty;
 
     if (_isLoading && !hasAnyData) {
-      return const Center(child: CircularProgressIndicator());
+      return const AnalyticsDataSkeleton();
     }
 
     if (!hasAnyData) {
@@ -1024,7 +1039,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
   }
 
   Future<Map<String, dynamic>> _fetchEventsSnapshot() async {
-    final bounds = _timeBoundsMs();
+    final bounds = _eventsBoundsMs();
     final startAt = bounds['startAt']!;
     final endAt = bounds['endAt']!;
     final filters = _buildEnvFilters();
@@ -1092,7 +1107,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       future: _fetchEventsSnapshot(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const AnalyticsEventsSkeleton();
         }
         if (snapshot.hasError) {
           return Center(
@@ -1130,6 +1145,33 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  ChoiceChip(
+                    label: const Text('7D'),
+                    selected: _eventsTimeRange == TimeRange.last7Days,
+                    onSelected: (v) {
+                      if (!v || _eventsTimeRange == TimeRange.last7Days) {
+                        return;
+                      }
+                      setState(() => _eventsTimeRange = TimeRange.last7Days);
+                    },
+                  ),
+                  ChoiceChip(
+                    label: const Text('30D'),
+                    selected: _eventsTimeRange == TimeRange.last30Days,
+                    onSelected: (v) {
+                      if (!v || _eventsTimeRange == TimeRange.last30Days) {
+                        return;
+                      }
+                      setState(() => _eventsTimeRange = TimeRange.last30Days);
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
@@ -1158,12 +1200,16 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                       color: Colors.orange,
                     ),
                   ],
-                  timeRange: _timeRange,
+                  timeRange: _eventsTimeRange,
                   height: 230,
                   showLegend: false,
                   onTimeRangeChanged: (range) {
+                    final normalized = range == TimeRange.last30Days
+                        ? TimeRange.last30Days
+                        : TimeRange.last7Days;
+                    if (normalized == _eventsTimeRange) return;
                     setState(() {
-                      _timeRange = range;
+                      _eventsTimeRange = normalized;
                     });
                   },
                 ),
@@ -1236,7 +1282,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       future: _fetchSessionsSnapshot(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const AnalyticsSessionsSkeleton();
         }
         if (snapshot.hasError) {
           return Center(
@@ -1883,6 +1929,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                       : () {
                           setState(() {
                             _timeRange = TimeRange.last24Hours;
+                            _eventsTimeRange = TimeRange.last7Days;
                             _envScope = AnalyticsEnvScope.all;
                             _showPageviewsSeries = true;
                             _showSessionsSeries = true;
