@@ -20,6 +20,8 @@ import '../analytics/realtime_chart.dart';
 /// 项目详情页 - Analytics Tab
 enum AnalyticsEnvScope { all, preview, prod }
 
+enum AnalyticsCompareMode { days7, days30 }
+
 class ProjectAnalyticsTab extends StatefulWidget {
   final UserProject project;
   final void Function(String prompt)? onAskAi;
@@ -37,6 +39,24 @@ class ProjectAnalyticsTab extends StatefulWidget {
 }
 
 class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
+  static const Map<String, String> _compareDimToApiType = {
+    'pages': 'path',
+    'referrers': 'referrer',
+    'browsers': 'browser',
+    'os': 'os',
+    'devices': 'device',
+    'screen': 'screen',
+    'countries': 'country',
+    'regions': 'region',
+    'cities': 'city',
+    'languages': 'language',
+    'events': 'event',
+    'query': 'query',
+    'tag': 'tag',
+    'channel': 'channel',
+    'host': 'hostname',
+  };
+
   final D1vaiService _d1vaiService = D1vaiService();
   final ChatService _chatService = ChatService();
   final WorkspaceService _workspaceService = WorkspaceService();
@@ -53,6 +73,8 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
   bool _isInitialized = false;
   TimeRange _timeRange = TimeRange.last24Hours;
   AnalyticsEnvScope _envScope = AnalyticsEnvScope.all;
+  AnalyticsCompareMode _compareMode = AnalyticsCompareMode.days7;
+  String _compareDimension = 'pages';
   bool _showPageviewsSeries = true;
   bool _showSessionsSeries = true;
 
@@ -64,6 +86,10 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
   WebSocket? _installWs;
   bool _showInstallerView = false;
   bool _sharingAccess = false;
+  int _analyticsTabIndex = 0;
+  bool _installSucceeded = false;
+  int _autoEnterCountdown = 0;
+  Timer? _autoEnterTimer;
 
   @override
   void didChangeDependencies() {
@@ -85,6 +111,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       _loadAnalytics();
     }
     if (oldWidget.project.id != widget.project.id) {
+      _autoEnterTimer?.cancel();
       _values = null;
       _activeVisitors = null;
       _pageviews = null;
@@ -96,6 +123,11 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       _websiteId = null;
       _installError = null;
       _showInstallerView = false;
+      _analyticsTabIndex = 0;
+      _compareMode = AnalyticsCompareMode.days7;
+      _compareDimension = 'pages';
+      _installSucceeded = false;
+      _autoEnterCountdown = 0;
       _closeInstallerWebSocket();
       if (_hasAnalyticsEnabled) {
         _loadAnalytics();
@@ -105,6 +137,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
 
   @override
   void dispose() {
+    _autoEnterTimer?.cancel();
     _closeInstallerWebSocket();
     super.dispose();
   }
@@ -134,10 +167,9 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       AnalyticsEnvScope.all => null,
     };
     if (host == null || host.trim().isEmpty) return const [];
-    // Backend/web allow filtering by `url`. If `url` contains the hostname (full URL),
-    // this becomes a simple environment scope filter. If it doesn't, it's a no-op.
+    // Umami v3 metrics/filter field for host is `hostname`.
     return [
-      {'column': 'url', 'operator': 'c', 'value': host.trim()},
+      {'column': 'hostname', 'operator': 'eq', 'value': host.trim()},
     ];
   }
 
@@ -155,11 +187,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       const timezone = 'UTC';
 
       final results = await Future.wait([
-        _d1vaiService.getUmamiWebsiteValues(
-          widget.project.id,
-          startAt: startAt,
-          endAt: endAt,
-        ),
+        _d1vaiService.getUmamiWebsite(widget.project.id),
         _d1vaiService.getUmamiActiveVisitors(widget.project.id),
         _d1vaiService.getUmamiPageviews(widget.project.id, {
           'unit': unit,
@@ -168,7 +196,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
           'endAt': endAt,
         }, filters: _buildEnvFilters()),
         _d1vaiService.getUmamiMetrics(widget.project.id, {
-          'type': 'url',
+          'type': 'path',
           'startAt': startAt,
           'endAt': endAt,
           'limit': 5,
@@ -183,11 +211,15 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
 
       if (!mounted) return;
 
-      final values = results[0] as Map<String, dynamic>;
+      final website = results[0] as Map<String, dynamic>;
       final active = results[1] as Map<String, dynamic>;
       final pageviews = results[2] as Map<String, dynamic>;
       final topPages = results[3] as List<dynamic>;
       final topReferrers = results[4] as List<dynamic>;
+      final values = _buildOverviewValues(
+        website: website,
+        pageviews: pageviews,
+      );
 
       setState(() {
         _values = values;
@@ -215,6 +247,36 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       }
       SnackBarHelper.showError(context, title: 'Error', message: msg);
     }
+  }
+
+  Map<String, dynamic> _buildOverviewValues({
+    required Map<String, dynamic> website,
+    required Map<String, dynamic> pageviews,
+  }) {
+    final pageviewsTotal = _sumPoints(pageviews['pageviews']);
+    final sessionsTotal = _sumPoints(pageviews['sessions']);
+    final visitors = _asInt(
+      website['visitors'] ??
+          website['uniqueVisitors'] ??
+          website['users'] ??
+          sessionsTotal,
+    );
+
+    return {
+      ...website,
+      'pageviews': _asInt(website['pageviews'] ?? website['views']) > 0
+          ? _asInt(website['pageviews'] ?? website['views'])
+          : pageviewsTotal,
+      'sessions': _asInt(website['sessions'] ?? website['visits']) > 0
+          ? _asInt(website['sessions'] ?? website['visits'])
+          : sessionsTotal,
+      'visitors': visitors,
+      'visits': _asInt(website['visits']) > 0
+          ? _asInt(website['visits'])
+          : sessionsTotal,
+      'bounces': _asInt(website['bounces']),
+      'totaltime': _asInt(website['totaltime'] ?? website['totalTime']),
+    };
   }
 
   String _buildInstallPrompt(String websiteId) {
@@ -321,6 +383,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
 
   Future<void> _enableAndInstallAnalytics() async {
     if (_installing) return;
+    _autoEnterTimer?.cancel();
 
     setState(() {
       _installing = true;
@@ -329,6 +392,8 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       _installMessages = [];
       _websiteId = null;
       _showInstallerView = true;
+      _installSucceeded = false;
+      _autoEnterCountdown = 0;
     });
 
     try {
@@ -405,6 +470,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                 _closeInstallerWebSocket();
 
                 if (ok) {
+                  _startAutoEnterDataCountdown();
                   SnackBarHelper.showSuccess(
                     context,
                     title: 'Success',
@@ -417,6 +483,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                   }
                 } else {
                   setState(() {
+                    _installSucceeded = false;
                     _installError =
                         'Analytics install did not complete successfully.';
                   });
@@ -433,6 +500,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
           setState(() {
             _installTyping = false;
             _installing = false;
+            _installSucceeded = false;
             _installError = humanizeError(e);
           });
           _closeInstallerWebSocket();
@@ -453,6 +521,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       setState(() {
         _installTyping = false;
         _installing = false;
+        _installSucceeded = false;
         _installError = msg;
       });
       final authExpired = isAuthExpiredText(msg);
@@ -476,6 +545,42 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       title: 'Copied',
       message: 'Website ID copied',
     );
+  }
+
+  void _startAutoEnterDataCountdown() {
+    _autoEnterTimer?.cancel();
+    if (!mounted) return;
+    setState(() {
+      _installSucceeded = true;
+      _installError = null;
+      _autoEnterCountdown = 3;
+    });
+    _autoEnterTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_autoEnterCountdown <= 1) {
+        timer.cancel();
+        _enterDataView();
+        return;
+      }
+      setState(() {
+        _autoEnterCountdown -= 1;
+      });
+    });
+  }
+
+  void _enterDataView() {
+    _autoEnterTimer?.cancel();
+    if (!mounted) return;
+    if (!_hasAnalyticsEnabled) return;
+    setState(() {
+      _showInstallerView = false;
+      _installSucceeded = false;
+      _autoEnterCountdown = 0;
+      _analyticsTabIndex = 0;
+    });
   }
 
   Future<void> _copyFieldValue(String value, String label) async {
@@ -641,13 +746,17 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
     if (shouldShowInstaller) {
       return _AnalyticsInstallerView(
         installing: _installing,
+        installSucceeded: _installSucceeded,
+        autoEnterCountdown: _autoEnterCountdown,
         isTyping: _installTyping,
         websiteId: _websiteId,
         error: _installError,
         messages: _installMessages,
         onCopyWebsiteId: _copyWebsiteId,
         onRetry: _enableAndInstallAnalytics,
+        onSeeData: _enterDataView,
         onReset: () {
+          _autoEnterTimer?.cancel();
           _closeInstallerWebSocket();
           setState(() {
             _installing = false;
@@ -656,6 +765,8 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
             _installMessages = [];
             _websiteId = null;
             _showInstallerView = false;
+            _installSucceeded = false;
+            _autoEnterCountdown = 0;
           });
         },
       );
@@ -726,8 +837,14 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
         children: [
           Material(
             color: Theme.of(context).colorScheme.surface,
-            child: const TabBar(
+            child: TabBar(
               isScrollable: true,
+              onTap: (index) {
+                if (_analyticsTabIndex == index) return;
+                setState(() {
+                  _analyticsTabIndex = index;
+                });
+              },
               tabs: [
                 Tab(text: 'Data'),
                 Tab(text: 'Events'),
@@ -741,14 +858,29 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
           ),
           Expanded(
             child: TabBarView(
+              physics: const NeverScrollableScrollPhysics(),
               children: [
-                _buildDataTabView(),
-                _buildEventsTabView(),
-                _buildSessionsTabView(),
-                _buildRealtimeTabView(),
-                _buildCompareTabView(),
-                _buildReportsTabView(),
-                _buildSettingsTabView(),
+                _analyticsTabIndex == 0
+                    ? _buildDataTabView()
+                    : _inactiveTabPlaceholder('Data'),
+                _analyticsTabIndex == 1
+                    ? _buildEventsTabView()
+                    : _inactiveTabPlaceholder('Events'),
+                _analyticsTabIndex == 2
+                    ? _buildSessionsTabView()
+                    : _inactiveTabPlaceholder('Sessions'),
+                _analyticsTabIndex == 3
+                    ? _buildRealtimeTabView()
+                    : _inactiveTabPlaceholder('Realtime'),
+                _analyticsTabIndex == 4
+                    ? _buildCompareTabView()
+                    : _inactiveTabPlaceholder('Compare'),
+                _analyticsTabIndex == 5
+                    ? _buildReportsTabView()
+                    : _inactiveTabPlaceholder('Reports'),
+                _analyticsTabIndex == 6
+                    ? _buildSettingsTabView()
+                    : _inactiveTabPlaceholder('Setting'),
               ],
             ),
           ),
@@ -757,7 +889,17 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
     );
   }
 
+  Widget _inactiveTabPlaceholder(String title) {
+    return Center(
+      child: Text(
+        '$title tab',
+        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+      ),
+    );
+  }
+
   Widget _buildDataTabView() {
+    final theme = Theme.of(context);
     final hasAnyData =
         _values != null ||
         _pageviews != null ||
@@ -779,16 +921,19 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.analytics, size: 64, color: Colors.grey.shade400),
-              const SizedBox(height: 16),
-              Text(
-                'No analytics data yet',
-                style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
+              Icon(
+                Icons.analytics,
+                size: 64,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
+              const SizedBox(height: 16),
+              Text('No analytics data yet', style: theme.textTheme.titleMedium),
               const SizedBox(height: 8),
               Text(
                 msg,
-                style: TextStyle(color: Colors.grey.shade500),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
@@ -838,12 +983,44 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
             _buildTopListsCard(),
             const SizedBox(height: 16),
             _buildStatusCard(),
-            const SizedBox(height: 16),
-            _buildActionsCard(),
           ],
         ),
       ),
     );
+  }
+
+  Map<String, dynamic> _asMap(dynamic raw) {
+    if (raw is Map<String, dynamic>) return raw;
+    if (raw is Map) {
+      return raw.map((key, value) => MapEntry(key.toString(), value));
+    }
+    return const <String, dynamic>{};
+  }
+
+  List<dynamic> _asList(dynamic raw) {
+    if (raw is List) return raw;
+    if (raw is Map) {
+      final data = raw['data'];
+      if (data is List) return data;
+      final events = raw['events'];
+      if (events is List) return events;
+      final results = raw['results'];
+      if (results is List) return results;
+    }
+    return const <dynamic>[];
+  }
+
+  bool _isRecoverableAnalyticsFetchError(Object error) {
+    final msg = error.toString();
+    if (isAuthExpiredText(msg)) return false;
+    final m = msg.toLowerCase();
+    if (m.contains('401') || m.contains('unauthorized')) return false;
+    return m.contains('400') ||
+        m.contains('404') ||
+        m.contains('500') ||
+        m.contains('502') ||
+        m.contains('http error') ||
+        m.contains('internal error');
   }
 
   Future<Map<String, dynamic>> _fetchEventsSnapshot() async {
@@ -851,31 +1028,63 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
     final startAt = bounds['startAt']!;
     final endAt = bounds['endAt']!;
     final filters = _buildEnvFilters();
-    final results = await Future.wait([
-      _d1vaiService.getUmamiEvents(
+    List<dynamic> events = const <dynamic>[];
+    Map<String, dynamic> stats = const <String, dynamic>{};
+    List<dynamic> series = const <dynamic>[];
+
+    try {
+      final rawEvents = await _d1vaiService.getUmamiEvents(
         widget.project.id,
         startAt: startAt,
         endAt: endAt,
         filters: filters,
-      ),
-      _d1vaiService.getUmamiEventDataStats(
+      );
+      events = _asList(rawEvents);
+    } catch (e) {
+      if (!_isRecoverableAnalyticsFetchError(e)) rethrow;
+      debugPrint('Events API fallback: $e');
+    }
+
+    try {
+      final rawStats = await _d1vaiService.getUmamiEventDataStats(
         widget.project.id,
         startAt: startAt,
         endAt: endAt,
         filters: filters,
-      ),
-      _d1vaiService.getUmamiEventMetrics(widget.project.id, {
-        'startAt': startAt,
-        'endAt': endAt,
-        'unit': 'day',
-        'timezone': 'UTC',
-      }, filters: filters),
-    ]);
-    return {
-      'events': results[0] as List<dynamic>,
-      'stats': results[1] as Map<String, dynamic>,
-      'series': results[2] as List<dynamic>,
-    };
+      );
+      stats = _asMap(rawStats);
+    } catch (e) {
+      if (!_isRecoverableAnalyticsFetchError(e)) rethrow;
+      debugPrint('Event stats API fallback: $e');
+    }
+
+    try {
+      final rawSeries = await _d1vaiService.getUmamiEventMetrics(
+        widget.project.id,
+        {'startAt': startAt, 'endAt': endAt, 'unit': 'day', 'timezone': 'UTC'},
+        filters: filters,
+      );
+      series = _asList(rawSeries);
+    } catch (e) {
+      if (!_isRecoverableAnalyticsFetchError(e)) rethrow;
+      debugPrint('Events series API fallback: $e');
+    }
+
+    if (events.isEmpty) {
+      try {
+        final fallbackMetrics = await _d1vaiService.getUmamiMetrics(
+          widget.project.id,
+          {'type': 'event', 'startAt': startAt, 'endAt': endAt, 'limit': 20},
+          filters: filters,
+        );
+        events = _asList(fallbackMetrics);
+      } catch (e) {
+        if (!_isRecoverableAnalyticsFetchError(e)) rethrow;
+        debugPrint('Events metrics fallback failed: $e');
+      }
+    }
+
+    return {'events': events, 'stats': stats, 'series': series};
   }
 
   Widget _buildEventsTabView() {
@@ -1007,12 +1216,19 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
     final bounds = _timeBoundsMs();
     final startAt = bounds['startAt']!;
     final endAt = bounds['endAt']!;
-    return _d1vaiService.getUmamiSessions(widget.project.id, {
-      'startAt': startAt,
-      'endAt': endAt,
-      'page': 1,
-      'pageSize': 20,
-    }, filters: _buildEnvFilters());
+    try {
+      final payload = await _d1vaiService.getUmamiSessions(widget.project.id, {
+        'startAt': startAt,
+        'endAt': endAt,
+        'page': 1,
+        'pageSize': 20,
+      }, filters: _buildEnvFilters());
+      return _asMap(payload);
+    } catch (e) {
+      if (!_isRecoverableAnalyticsFetchError(e)) rethrow;
+      debugPrint('Sessions API fallback: $e');
+      return const <String, dynamic>{'data': <dynamic>[], 'count': 0};
+    }
   }
 
   Widget _buildSessionsTabView() {
@@ -1063,7 +1279,8 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                         ...sessions.take(12).map((s) {
                           final item = s is Map ? s : const {};
                           final title =
-                              (item['url'] ??
+                              (item['path'] ??
+                                      item['url'] ??
                                       item['hostname'] ??
                                       item['sessionId'] ??
                                       'Session')
@@ -1095,11 +1312,32 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
   }
 
   Future<Map<String, dynamic>> _fetchRealtimeSnapshot() async {
-    final results = await Future.wait([
-      _d1vaiService.getUmamiRealtime(widget.project.id),
-      _d1vaiService.getUmamiActiveVisitors(widget.project.id),
-    ]);
-    return {'realtime': results[0], 'active': results[1]};
+    Map<String, dynamic> realtime = const <String, dynamic>{};
+    Map<String, dynamic> active = const <String, dynamic>{};
+
+    try {
+      final payload = await _d1vaiService.getUmamiRealtime(widget.project.id);
+      realtime = _asMap(payload);
+    } catch (e) {
+      if (!_isRecoverableAnalyticsFetchError(e)) rethrow;
+      debugPrint('Realtime API fallback: $e');
+    }
+
+    try {
+      final payload = await _d1vaiService.getUmamiActiveVisitors(
+        widget.project.id,
+      );
+      active = _asMap(payload);
+    } catch (e) {
+      if (!_isRecoverableAnalyticsFetchError(e)) rethrow;
+      debugPrint('Active visitors API fallback: $e');
+    }
+
+    if (realtime.isEmpty && active.isNotEmpty) {
+      realtime = {'visitors': _asInt(active['x'] ?? active['visitors'])};
+    }
+
+    return {'realtime': realtime, 'active': active};
   }
 
   Widget _buildRealtimeTabView() {
@@ -1181,26 +1419,69 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
 
   Future<Map<String, dynamic>> _fetchCompareSnapshot() async {
     final now = DateTime.now().millisecondsSinceEpoch;
-    final span = _timeRange.duration.inMilliseconds;
+    final days = _compareMode == AnalyticsCompareMode.days7 ? 7 : 30;
+    final span = Duration(days: days).inMilliseconds;
+    final compareMetricType = _compareDimToApiType[_compareDimension] ?? 'path';
     final currentStart = now - span;
     final previousStart = now - span * 2;
     final previousEnd = now - span;
     final filters = _buildEnvFilters();
-    final results = await Future.wait([
-      _d1vaiService.getUmamiPageviews(widget.project.id, {
-        'unit': 'day',
-        'timezone': 'UTC',
-        'startAt': currentStart,
-        'endAt': now,
-      }, filters: filters),
-      _d1vaiService.getUmamiPageviews(widget.project.id, {
-        'unit': 'day',
-        'timezone': 'UTC',
-        'startAt': previousStart,
-        'endAt': previousEnd,
-      }, filters: filters),
+
+    Future<Map<String, dynamic>> fetchRange({
+      required int startAt,
+      required int endAt,
+    }) async {
+      try {
+        final payload = await _d1vaiService.getUmamiPageviews(
+          widget.project.id,
+          {
+            'unit': 'day',
+            'timezone': 'UTC',
+            'startAt': startAt,
+            'endAt': endAt,
+          },
+          filters: filters,
+        );
+        return _asMap(payload);
+      } catch (e) {
+        if (!_isRecoverableAnalyticsFetchError(e)) rethrow;
+        debugPrint('Compare pageviews API fallback: $e');
+        return const <String, dynamic>{};
+      }
+    }
+
+    Future<List<dynamic>> fetchMetricsRange({
+      required int startAt,
+      required int endAt,
+    }) async {
+      try {
+        final payload = await _d1vaiService.getUmamiMetrics(widget.project.id, {
+          'type': compareMetricType,
+          'startAt': startAt,
+          'endAt': endAt,
+          'limit': 20,
+        }, filters: filters);
+        return payload;
+      } catch (e) {
+        if (!_isRecoverableAnalyticsFetchError(e)) rethrow;
+        debugPrint('Compare metrics API fallback: $e');
+        return const <dynamic>[];
+      }
+    }
+
+    final results = await Future.wait<dynamic>([
+      fetchRange(startAt: currentStart, endAt: now),
+      fetchRange(startAt: previousStart, endAt: previousEnd),
+      fetchMetricsRange(startAt: currentStart, endAt: now),
+      fetchMetricsRange(startAt: previousStart, endAt: previousEnd),
     ]);
-    return {'current': results[0], 'previous': results[1]};
+
+    return {
+      'current': results[0],
+      'previous': results[1],
+      'currentMetrics': results[2],
+      'previousMetrics': results[3],
+    };
   }
 
   Widget _buildCompareTabView() {
@@ -1222,6 +1503,12 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
         final previous =
             payload['previous'] as Map<String, dynamic>? ??
             const <String, dynamic>{};
+        final currentMetrics = payload['currentMetrics'] is List
+            ? payload['currentMetrics'] as List<dynamic>
+            : const <dynamic>[];
+        final previousMetrics = payload['previousMetrics'] is List
+            ? payload['previousMetrics'] as List<dynamic>
+            : const <dynamic>[];
         final currentPv = _sumPoints(current['pageviews']);
         final prevPv = _sumPoints(previous['pageviews']);
         final currentSessions = _sumPoints(current['sessions']);
@@ -1235,6 +1522,55 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  ChoiceChip(
+                    label: const Text('7D vs Prev 7D'),
+                    selected: _compareMode == AnalyticsCompareMode.days7,
+                    onSelected: (v) {
+                      if (!v || _compareMode == AnalyticsCompareMode.days7) {
+                        return;
+                      }
+                      setState(() => _compareMode = AnalyticsCompareMode.days7);
+                    },
+                  ),
+                  ChoiceChip(
+                    label: const Text('30D vs Prev 30D'),
+                    selected: _compareMode == AnalyticsCompareMode.days30,
+                    onSelected: (v) {
+                      if (!v || _compareMode == AnalyticsCompareMode.days30) {
+                        return;
+                      }
+                      setState(
+                        () => _compareMode = AnalyticsCompareMode.days30,
+                      );
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: _compareDimToApiType.keys.map((dim) {
+                    final selected = _compareDimension == dim;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(dim),
+                        selected: selected,
+                        onSelected: (v) {
+                          if (!v || selected) return;
+                          setState(() => _compareDimension = dim);
+                        },
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
@@ -1268,12 +1604,29 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Text('Current window: ${_timeRange.label}'),
+                      Text(
+                        'Current window: ${_compareMode == AnalyticsCompareMode.days7 ? 'Last 7 Days' : 'Last 30 Days'}',
+                      ),
                       const SizedBox(height: 4),
-                      Text('Previous window: previous ${_timeRange.label}'),
+                      Text(
+                        'Previous window: previous ${_compareMode == AnalyticsCompareMode.days7 ? 'Last 7 Days' : 'Last 30 Days'}',
+                      ),
                       const SizedBox(height: 8),
                       Text('Pageviews: $currentPv vs $prevPv'),
                       Text('Sessions: $currentSessions vs $prevSessions'),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Top $_compareDimension (Current vs Previous)',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 6),
+                      if (currentMetrics.isEmpty && previousMetrics.isEmpty)
+                        const Text('No top-page comparison data')
+                      else
+                        ..._buildCompareMetricRows(
+                          currentMetrics,
+                          previousMetrics,
+                        ),
                     ],
                   ),
                 ),
@@ -1283,6 +1636,44 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
         );
       },
     );
+  }
+
+  List<Widget> _buildCompareMetricRows(
+    List<dynamic> currentMetrics,
+    List<dynamic> previousMetrics,
+  ) {
+    final previousMap = <String, int>{};
+    for (final item in previousMetrics) {
+      if (item is! Map) continue;
+      final name =
+          (item['x'] ?? item['name'] ?? item['path'] ?? item['url'] ?? '')
+              .toString()
+              .trim();
+      if (name.isEmpty) continue;
+      previousMap[name] = _asInt(item['y'] ?? item['value']);
+    }
+
+    final rows = <Widget>[];
+    for (final item in currentMetrics.take(8)) {
+      if (item is! Map) continue;
+      final name =
+          (item['x'] ?? item['name'] ?? item['path'] ?? item['url'] ?? '—')
+              .toString()
+              .trim();
+      final current = _asInt(item['y'] ?? item['value']);
+      final previous = previousMap[name] ?? 0;
+      final delta = _percentChange(current, previous);
+      rows.add(
+        ListTile(
+          dense: true,
+          contentPadding: EdgeInsets.zero,
+          title: Text(name.isEmpty ? '—' : name),
+          subtitle: Text('Prev: $previous'),
+          trailing: Text('$current (${delta.toStringAsFixed(1)}%)'),
+        ),
+      );
+    }
+    return rows;
   }
 
   Widget _buildReportsTabView() {
@@ -1621,7 +2012,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
             if (_envScope != AnalyticsEnvScope.all) ...[
               const SizedBox(height: 10),
               Text(
-                'Note: environment filter uses URL contains-host matching.',
+                'Note: environment filter uses hostname exact matching.',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -1659,7 +2050,10 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                   const SizedBox(height: 4),
                   Text(
                     _formatTimeRangeLabel(),
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -1842,6 +2236,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
     }
 
     Widget buildList(String title, List<dynamic> items) {
+      final theme = Theme.of(context);
       return Expanded(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1854,7 +2249,10 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
             if (items.isEmpty)
               Text(
                 'No data',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               )
             else
               ...items.map((it) {
@@ -1877,7 +2275,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                         val,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey.shade700,
+                          color: theme.colorScheme.onSurfaceVariant,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -2020,7 +2418,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
         buf.writeln('Top pages:');
         for (final p in _topPages.take(5)) {
           final m = (p is Map) ? p : null;
-          final x = (m?['x'] ?? m?['url'] ?? '').toString();
+          final x = (m?['x'] ?? m?['path'] ?? m?['url'] ?? '').toString();
           final y = _asInt(m?['y'] ?? m?['count']);
           if (x.trim().isEmpty) continue;
           buf.writeln('- $x (${y > 0 ? y : '?'})');
@@ -2131,12 +2529,13 @@ class _AnalyticsMetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final card = Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2145,12 +2544,16 @@ class _AnalyticsMetricCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             title,
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -2292,22 +2695,28 @@ class _EnableAnalyticsCard extends StatelessWidget {
 
 class _AnalyticsInstallerView extends StatelessWidget {
   final bool installing;
+  final bool installSucceeded;
+  final int autoEnterCountdown;
   final bool isTyping;
   final String? websiteId;
   final String? error;
   final List<ChatMessage> messages;
   final Future<void> Function() onCopyWebsiteId;
   final VoidCallback onRetry;
+  final VoidCallback onSeeData;
   final VoidCallback onReset;
 
   const _AnalyticsInstallerView({
     required this.installing,
+    required this.installSucceeded,
+    required this.autoEnterCountdown,
     required this.isTyping,
     required this.websiteId,
     required this.error,
     required this.messages,
     required this.onCopyWebsiteId,
     required this.onRetry,
+    required this.onSeeData,
     required this.onReset,
   });
 
@@ -2315,6 +2724,8 @@ class _AnalyticsInstallerView extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
+    final showSuccess =
+        installSucceeded && (error == null || error!.trim().isEmpty);
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -2339,14 +2750,18 @@ class _AnalyticsInstallerView extends StatelessWidget {
                         height: 40,
                         width: 40,
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: 0.10,
-                          ),
+                          color: showSuccess
+                              ? Colors.green.withValues(alpha: 0.12)
+                              : theme.colorScheme.primary.withValues(
+                                  alpha: 0.10,
+                                ),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                          Icons.analytics,
-                          color: theme.colorScheme.primary,
+                          showSuccess ? Icons.check_circle : Icons.analytics,
+                          color: showSuccess
+                              ? Colors.green
+                              : theme.colorScheme.primary,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -2355,7 +2770,9 @@ class _AnalyticsInstallerView extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              installing
+                              showSuccess
+                                  ? 'Analytics Ready'
+                                  : installing
                                   ? 'Installing Analytics…'
                                   : 'Analytics Installer',
                               style: theme.textTheme.titleMedium?.copyWith(
@@ -2364,7 +2781,11 @@ class _AnalyticsInstallerView extends StatelessWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              installing
+                              showSuccess
+                                  ? (autoEnterCountdown > 0
+                                        ? 'Installation completed. Auto-opening Data in ${autoEnterCountdown}s.'
+                                        : 'Installation completed. You can open the analytics tabs now.')
+                                  : installing
                                   ? 'We are initializing Umami and inserting the tracking script via a chat session.'
                                   : 'Review the session output or retry the install.',
                               style: theme.textTheme.bodySmall?.copyWith(
@@ -2443,25 +2864,42 @@ class _AnalyticsInstallerView extends StatelessWidget {
                     ),
                   ],
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: installing ? null : onReset,
-                          child: const Text('Back'),
+                  if (showSuccess)
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: onSeeData,
+                        icon: const Icon(Icons.arrow_forward),
+                        label: Text(
+                          autoEnterCountdown > 0
+                              ? 'See data → (${autoEnterCountdown}s)'
+                              : 'See data →',
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: installing ? null : onRetry,
-                          child: Text(
-                            installing ? 'Running…' : 'Retry Install',
+                    )
+                  else
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: installing ? null : onReset,
+                            child: const Text('Back'),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: installing ? null : onRetry,
+                            child: Text(
+                              installing ? 'Running…' : 'Retry Install',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                 ],
               ),
             ),

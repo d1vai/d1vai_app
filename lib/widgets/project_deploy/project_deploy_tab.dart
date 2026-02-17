@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:async';
 
@@ -31,6 +32,29 @@ class ProjectDeployTab extends StatefulWidget {
 }
 
 enum _DeploymentEnvFilter { all, dev, prod }
+
+enum _ProductionReleasePhase { idle, checking, merging, deploying }
+
+class _ReleaseCommit {
+  final String sha;
+  final String message;
+  final String authorName;
+  final String authoredAt;
+
+  const _ReleaseCommit({
+    required this.sha,
+    required this.message,
+    required this.authorName,
+    required this.authoredAt,
+  });
+}
+
+class _ReleaseGroup {
+  final _ReleaseCommit merge;
+  final List<_ReleaseCommit> items;
+
+  const _ReleaseGroup({required this.merge, required this.items});
+}
 
 class _TroubleRow extends StatelessWidget {
   final IconData icon;
@@ -67,6 +91,13 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
   bool _deployingPreview = false;
   bool _deployingProduction = false;
   bool _retryingLast = false;
+  bool _revertingCommit = false;
+  String? _revertingCommitSha;
+  bool _isLoadingReleases = false;
+  String? _releaseError;
+  final List<_ReleaseCommit> _releaseCommits = [];
+  _ProductionReleasePhase _productionReleasePhase =
+      _ProductionReleasePhase.idle;
   _DeploymentEnvFilter _envFilter = _DeploymentEnvFilter.all;
   late final AnimationController _ambientController;
 
@@ -76,6 +107,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
     if (!_isInitialized) {
       _isInitialized = true;
       _loadDeployments();
+      _loadReleases();
     }
   }
 
@@ -84,6 +116,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.project.id != widget.project.id) {
       _loadDeployments();
+      _loadReleases();
     }
   }
 
@@ -145,26 +178,167 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
     }
   }
 
+  String get _productionPhaseLabel {
+    switch (_productionReleasePhase) {
+      case _ProductionReleasePhase.checking:
+        return 'Checking dev/main diff…';
+      case _ProductionReleasePhase.merging:
+        return 'Merging dev into main…';
+      case _ProductionReleasePhase.deploying:
+        return 'Triggering production deploy…';
+      case _ProductionReleasePhase.idle:
+        return 'Deploy production';
+    }
+  }
+
+  String _resolveDevBranch() {
+    final value =
+        (widget.project.workspaceCurrentBranch ??
+                widget.project.repositoryCurrentBranch ??
+                'dev')
+            .trim();
+    return value.isEmpty ? 'dev' : value;
+  }
+
+  String _resolveMainBranch() {
+    final value = (widget.project.repositoryDefaultBranch ?? 'main').trim();
+    return value.isEmpty ? 'main' : value;
+  }
+
+  String? _extractCommitSha(dynamic commit) {
+    if (commit is! Map) return null;
+    final sha = commit['sha']?.toString().trim();
+    if (sha == null || sha.isEmpty) return null;
+    return sha;
+  }
+
+  _ReleaseCommit? _parseReleaseCommit(dynamic raw) {
+    if (raw is! Map) return null;
+    final sha = raw['sha']?.toString().trim() ?? '';
+    if (sha.isEmpty) return null;
+    final message = (raw['message'] ?? '').toString().trim();
+    final author = raw['author'];
+    final authorName = author is Map
+        ? (author['name'] ?? '').toString().trim()
+        : '';
+    final authoredAt = author is Map
+        ? (author['date'] ?? '').toString().trim()
+        : '';
+    return _ReleaseCommit(
+      sha: sha,
+      message: message.isEmpty ? '(no message)' : message,
+      authorName: authorName,
+      authoredAt: authoredAt,
+    );
+  }
+
+  Future<void> _loadReleases() async {
+    if (_isLoadingReleases) return;
+    setState(() {
+      _isLoadingReleases = true;
+      _releaseError = null;
+    });
+    try {
+      final service = D1vaiService();
+      final commits = await service.getGitHubBranchCommits(
+        widget.project.id,
+        branch: _resolveMainBranch(),
+        limit: 50,
+      );
+      final parsed = commits
+          .map(_parseReleaseCommit)
+          .whereType<_ReleaseCommit>()
+          .toList();
+      if (!mounted) return;
+      setState(() {
+        _releaseCommits
+          ..clear()
+          ..addAll(parsed);
+        _isLoadingReleases = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      final msg = humanizeError(e);
+      if (isAuthExpiredText(msg)) {
+        AuthExpiryBus.trigger(
+          endpoint: '/api/github-ops/${widget.project.id}/commits',
+        );
+        setState(() {
+          _isLoadingReleases = false;
+          _releaseError = null;
+        });
+        return;
+      }
+      setState(() {
+        _isLoadingReleases = false;
+        _releaseError = msg;
+      });
+    }
+  }
+
+  bool _isMergeCommitMessage(String msg) {
+    final m = msg.trim();
+    if (m.isEmpty) return false;
+    return RegExp(r'Merge .* into main', caseSensitive: false).hasMatch(m) ||
+        RegExp(
+          r"Merge branch '.*' into main",
+          caseSensitive: false,
+        ).hasMatch(m) ||
+        RegExp(r'Merge pull request #\d+', caseSensitive: false).hasMatch(m);
+  }
+
+  List<_ReleaseGroup> _buildReleaseGroups(List<_ReleaseCommit> commits) {
+    final groups = <_ReleaseGroup>[];
+    _ReleaseCommit? currentMerge;
+    final currentItems = <_ReleaseCommit>[];
+
+    for (final c in commits) {
+      if (_isMergeCommitMessage(c.message)) {
+        if (currentMerge != null) {
+          groups.add(
+            _ReleaseGroup(merge: currentMerge, items: List.of(currentItems)),
+          );
+        }
+        currentMerge = c;
+        currentItems.clear();
+      } else if (currentMerge != null) {
+        currentItems.add(c);
+      }
+    }
+
+    if (currentMerge != null) {
+      groups.add(
+        _ReleaseGroup(merge: currentMerge, items: List.of(currentItems)),
+      );
+    }
+    return groups;
+  }
+
   Future<void> _triggerPreviewDeploy() async {
     if (_deployingPreview) return;
     setState(() => _deployingPreview = true);
     try {
       final service = D1vaiService();
       final res = await service.deployProjectPreview(widget.project.id);
-      final url = (res['vercel_url'] ?? res['production_url'] ?? '')
-          .toString()
-          .trim();
+      final url = _normalizeHttpUrl(
+        (res['vercel_url'] ?? res['production_url'] ?? '').toString(),
+      );
       final msg = (res['message'] ?? '').toString().trim();
       if (!mounted) return;
       SnackBarHelper.showSuccess(
         context,
         title: 'Preview deploy triggered',
-        message: url.isNotEmpty ? url : (msg.isNotEmpty ? msg : 'OK'),
-        actionLabel: url.isNotEmpty ? 'Open' : null,
-        onActionPressed: url.isNotEmpty ? () => _openUrl(url) : null,
+        message: (url != null && url.isNotEmpty)
+            ? url
+            : (msg.isNotEmpty ? msg : 'OK'),
+        actionLabel: (url != null && url.isNotEmpty) ? 'Open' : null,
+        onActionPressed: (url != null && url.isNotEmpty)
+            ? () => _openUrl(url)
+            : null,
       );
       await widget.onRefreshProject?.call();
       await _loadDeployments();
+      await _loadReleases();
     } catch (e) {
       if (!mounted) return;
       final msg = humanizeError(e);
@@ -189,31 +363,79 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
 
   Future<void> _triggerProductionDeploy() async {
     if (_deployingProduction) return;
-    setState(() => _deployingProduction = true);
+    setState(() {
+      _deployingProduction = true;
+      _productionReleasePhase = _ProductionReleasePhase.checking;
+    });
     try {
       final service = D1vaiService();
+      final headBranch = _resolveDevBranch();
+      final baseBranch = _resolveMainBranch();
+      final latestDev = await service.getGitHubBranchCommits(
+        widget.project.id,
+        branch: headBranch,
+        limit: 1,
+      );
+      final latestMain = await service.getGitHubBranchCommits(
+        widget.project.id,
+        branch: baseBranch,
+        limit: 1,
+      );
+      final devSha = latestDev.isEmpty
+          ? null
+          : _extractCommitSha(latestDev.first);
+      final mainSha = latestMain.isEmpty
+          ? null
+          : _extractCommitSha(latestMain.first);
+      final shouldMerge =
+          devSha == null || mainSha == null || devSha != mainSha;
+
+      if (shouldMerge) {
+        if (!mounted) return;
+        setState(
+          () => _productionReleasePhase = _ProductionReleasePhase.merging,
+        );
+        await service.mergeGitHubBranches(
+          widget.project.id,
+          baseBranch: baseBranch,
+          headBranch: headBranch,
+          commitMessage: 'Merge $headBranch into $baseBranch',
+        );
+      }
+
+      if (!mounted) return;
+      setState(
+        () => _productionReleasePhase = _ProductionReleasePhase.deploying,
+      );
       final res = await service.deployProjectToProduction(widget.project.id);
-      final url = (res['production_url'] ?? res['vercel_url'] ?? '')
-          .toString()
-          .trim();
+      final url = _normalizeHttpUrl(
+        (res['production_url'] ?? res['vercel_url'] ?? '').toString(),
+      );
       final msg = (res['message'] ?? '').toString().trim();
       if (!mounted) return;
       SnackBarHelper.showSuccess(
         context,
-        title: 'Production deploy triggered',
-        message: url.isNotEmpty ? url : (msg.isNotEmpty ? msg : 'OK'),
-        actionLabel: url.isNotEmpty ? 'Open' : null,
-        onActionPressed: url.isNotEmpty ? () => _openUrl(url) : null,
+        title: shouldMerge
+            ? 'Merged and deployed to production'
+            : 'Production deploy triggered',
+        message: (url != null && url.isNotEmpty)
+            ? url
+            : (msg.isNotEmpty ? msg : 'OK'),
+        actionLabel: (url != null && url.isNotEmpty) ? 'Open' : null,
+        onActionPressed: (url != null && url.isNotEmpty)
+            ? () => _openUrl(url)
+            : null,
       );
       await widget.onRefreshProject?.call();
       await _loadDeployments();
+      await _loadReleases();
     } catch (e) {
       if (!mounted) return;
       final msg = humanizeError(e);
       final authExpired = isAuthExpiredText(msg);
       if (authExpired) {
         AuthExpiryBus.trigger(
-          endpoint: '/api/projects/${widget.project.id}/deploy/production',
+          endpoint: '/api/deployment/${widget.project.id}/production',
         );
         return;
       }
@@ -225,7 +447,103 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
         onActionPressed: () => _showNextStepsDialog(msg),
       );
     } finally {
-      if (mounted) setState(() => _deployingProduction = false);
+      if (mounted) {
+        setState(() {
+          _deployingProduction = false;
+          _productionReleasePhase = _ProductionReleasePhase.idle;
+        });
+      }
+    }
+  }
+
+  Future<void> _confirmRevertDeployment(DeploymentHistory deployment) async {
+    final sha = deployment.primaryCommitSha?.trim();
+    if (sha == null || sha.isEmpty) {
+      SnackBarHelper.showInfo(
+        context,
+        title: 'Revert unavailable',
+        message: 'No commit SHA found for this deployment.',
+      );
+      return;
+    }
+    if (_revertingCommit) return;
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Revert this commit?'),
+          content: Text(
+            'This will run git revert on commit ${sha.substring(0, 7)} and trigger a new preview deployment.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Confirm revert'),
+            ),
+          ],
+        );
+      },
+    );
+    if (ok != true) return;
+    await _revertCommitAndPreviewRedeploy(sha);
+  }
+
+  Future<void> _revertCommitAndPreviewRedeploy(String sha) async {
+    if (_revertingCommit) return;
+    setState(() {
+      _revertingCommit = true;
+      _revertingCommitSha = sha;
+    });
+    try {
+      final service = D1vaiService();
+      await service.revertGitCommit(widget.project.id, commitHash: sha);
+      final deployRes = await service.deployProjectPreview(widget.project.id);
+      final url = _normalizeHttpUrl(
+        (deployRes['vercel_url'] ?? deployRes['production_url'] ?? '')
+            .toString(),
+      );
+
+      if (!mounted) return;
+      SnackBarHelper.showSuccess(
+        context,
+        title: 'Commit reverted',
+        message: (url != null && url.isNotEmpty)
+            ? 'Preview redeploy started: $url'
+            : 'Preview redeploy started',
+        actionLabel: (url != null && url.isNotEmpty) ? 'Open' : null,
+        onActionPressed: (url != null && url.isNotEmpty)
+            ? () => _openUrl(url)
+            : null,
+      );
+      await widget.onRefreshProject?.call();
+      await _loadDeployments();
+    } catch (e) {
+      if (!mounted) return;
+      final msg = humanizeError(e);
+      final authExpired = isAuthExpiredText(msg);
+      if (authExpired) {
+        AuthExpiryBus.trigger(endpoint: '/api/git/${widget.project.id}/revert');
+        return;
+      }
+      SnackBarHelper.showError(
+        context,
+        title: 'Revert failed',
+        message: msg,
+        actionLabel: 'Next steps',
+        onActionPressed: () => _showNextStepsDialog(msg),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _revertingCommit = false;
+          _revertingCommitSha = null;
+        });
+      }
     }
   }
 
@@ -351,7 +669,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
       await _confirmAndDeploy(
         title: isProd ? 'Retry production deploy?' : 'Retry preview deploy?',
         message: isProd
-            ? 'This will trigger a new production deployment.'
+            ? 'This will compare dev/main, merge if needed, then trigger a new production deployment.'
             : 'This will trigger a new preview (dev) deployment.',
         action: isProd ? _triggerProductionDeploy : _triggerPreviewDeploy,
       );
@@ -388,12 +706,103 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
     await action();
   }
 
+  String? _activeFlowHint() {
+    if (_revertingCommit) {
+      final shortSha = (_revertingCommitSha ?? '').trim();
+      final suffix = shortSha.isEmpty ? '' : ' (${shortSha.substring(0, 7)})';
+      return 'Rolling back commit$suffix and triggering preview deploy…';
+    }
+    if (_deployingProduction) {
+      return 'Production release in progress: ${_productionPhaseLabel.replaceAll('…', '')}';
+    }
+    if (_deployingPreview) {
+      return 'Preview deployment in progress…';
+    }
+    return null;
+  }
+
+  Widget _buildRetentionCoachCard(UserProject project) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final activeHint = _activeFlowHint();
+    final hasPreview = (project.latestPreviewUrl ?? '').trim().isNotEmpty;
+    final hasProd = (project.latestProdDeploymentUrl ?? '').trim().isNotEmpty;
+
+    return CustomCard(
+      padding: const EdgeInsets.all(14),
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 220),
+        child: activeHint != null
+            ? Row(
+                key: ValueKey('flow-$activeHint'),
+                children: [
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      activeHint,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            : Row(
+                key: ValueKey('coach-$hasPreview-$hasProd'),
+                children: [
+                  Icon(
+                    hasProd
+                        ? Icons.rocket_launch_outlined
+                        : Icons.trending_up_outlined,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      hasProd
+                          ? 'Production is live. Keep shipping with small preview iterations.'
+                          : hasPreview
+                          ? 'Preview is ready. Recommended next step: release to production.'
+                          : 'No preview yet. Start with a preview deploy to reduce release risk.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                  if (!hasProd && hasPreview)
+                    TextButton(
+                      onPressed: _deployingProduction
+                          ? null
+                          : () => _confirmAndDeploy(
+                              title: 'Deploy to production?',
+                              message:
+                                  'This will compare dev/main, merge if needed, then trigger a production deployment.',
+                              action: _triggerProductionDeploy,
+                            ),
+                      child: const Text('Release now'),
+                    ),
+                ],
+              ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final project = widget.project;
 
     return RefreshIndicator(
-      onRefresh: _loadDeployments,
+      onRefresh: () async {
+        await _loadDeployments();
+        await _loadReleases();
+      },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16),
@@ -402,9 +811,13 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
           children: [
             _buildActionsCard(project),
             const SizedBox(height: 16),
+            _buildRetentionCoachCard(project),
+            const SizedBox(height: 16),
             _buildTroubleshootingCard(project),
             const SizedBox(height: 16),
             _buildCurrentDeploymentsCard(project),
+            const SizedBox(height: 16),
+            _buildReleasesCard(project),
             const SizedBox(height: 16),
             _buildDeploymentHistoryCard(),
           ],
@@ -455,7 +868,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                         : () => _confirmAndDeploy(
                             title: 'Deploy to production?',
                             message:
-                                'This will promote dev to main and trigger a production deployment.',
+                                'This will compare dev/main, merge if needed, then trigger a production deployment.',
                             action: _triggerProductionDeploy,
                           ),
                     icon: _deployingProduction
@@ -465,11 +878,37 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.cloud_upload),
-                    label: const Text('Deploy production'),
+                    label: Text(
+                      _deployingProduction
+                          ? _productionPhaseLabel
+                          : 'Deploy production',
+                    ),
                   ),
                 ),
               ],
             ),
+            if (_deployingProduction) ...[
+              const SizedBox(height: 8),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                child: Row(
+                  key: ValueKey(_productionReleasePhase),
+                  children: [
+                    const Icon(Icons.sync, size: 14),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Release flow: ${_productionPhaseLabel.replaceAll('…', '')}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
@@ -719,6 +1158,237 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildReleasesCard(UserProject project) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final groups = _buildReleaseGroups(_releaseCommits);
+    final productionUrl = _normalizeHttpUrl(
+      project.latestProdDeploymentUrl ?? project.vercelProdDomain,
+    );
+    final productionHost = _getDeploymentLabel(productionUrl);
+
+    return CustomCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Releases',
+                style:
+                    theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ) ??
+                    const TextStyle(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '(main)',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                tooltip: 'Refresh releases',
+                onPressed: _isLoadingReleases ? null : _loadReleases,
+                icon: _isLoadingReleases
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.refresh),
+              ),
+            ],
+          ),
+          if (productionUrl != null && productionUrl.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: colorScheme.outlineVariant),
+                color: colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.45,
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.public, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      productionHost,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => _openUrl(productionUrl),
+                    child: const Text('Open'),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      await Clipboard.setData(
+                        ClipboardData(text: productionUrl),
+                      );
+                      if (!mounted) return;
+                      SnackBarHelper.showSuccess(
+                        context,
+                        title: 'Copied',
+                        message: productionUrl,
+                      );
+                    },
+                    child: const Text('Copy'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          if (_isLoadingReleases)
+            const Column(
+              children: [
+                SkeletonListTile(hasLeading: false, hasThreeLines: true),
+                SizedBox(height: 8),
+                SkeletonListTile(hasLeading: false, hasThreeLines: true),
+              ],
+            )
+          else if (_releaseError != null)
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _releaseError!,
+                    style: TextStyle(fontSize: 12, color: colorScheme.error),
+                  ),
+                ),
+                TextButton(
+                  onPressed: _loadReleases,
+                  child: const Text('Retry'),
+                ),
+              ],
+            )
+          else if (groups.isEmpty && _releaseCommits.isEmpty)
+            Text(
+              'No releases detected on main yet.',
+              style: TextStyle(
+                fontSize: 13,
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
+              ),
+            )
+          else if (groups.isEmpty)
+            Column(
+              children: _releaseCommits.take(8).map((c) {
+                final title = c.message.split('\n').first.trim();
+                return ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    title.isEmpty ? '(no message)' : title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  subtitle: Text(
+                    '${c.sha.substring(0, 7)} • ${_formatTimeAgo(c.authoredAt)}',
+                  ),
+                );
+              }).toList(),
+            )
+          else
+            Column(
+              children: groups.map((group) {
+                final mergeTitle = group.merge.message.split('\n').first.trim();
+                return Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: colorScheme.outlineVariant.withValues(alpha: 0.9),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        mergeTitle.isEmpty ? 'Merge into main' : mergeTitle,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${group.merge.sha.substring(0, 7)} • ${group.merge.authorName.isEmpty ? 'unknown' : group.merge.authorName} • ${_formatTimeAgo(group.merge.authoredAt)}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.85,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      if (group.items.isEmpty)
+                        Text(
+                          'No change commits between adjacent releases.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        )
+                      else
+                        Column(
+                          children: group.items.take(8).map((item) {
+                            final itemTitle = item.message
+                                .split('\n')
+                                .first
+                                .trim();
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 6),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      itemTitle.isEmpty
+                                          ? '(no message)'
+                                          : itemTitle,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    item.sha.substring(0, 7),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+        ],
       ),
     );
   }
@@ -1059,6 +1729,9 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
     final canViewLogs =
         deployment.vercelDeploymentId != null &&
         deployment.vercelDeploymentId!.trim().isNotEmpty;
+    final canRevert =
+        deployment.primaryCommitSha != null &&
+        deployment.primaryCommitSha!.trim().isNotEmpty;
 
     await showModalBottomSheet<void>(
       context: context,
@@ -1115,6 +1788,28 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                       label: const Text('Build logs'),
                     ),
                     OutlinedButton.icon(
+                      onPressed: (canRevert && !_revertingCommit)
+                          ? () {
+                              Navigator.of(context).pop();
+                              _confirmRevertDeployment(deployment);
+                            }
+                          : null,
+                      icon: _revertingCommit
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.rotate_left),
+                      label: Text(
+                        _revertingCommit &&
+                                _revertingCommitSha ==
+                                    deployment.primaryCommitSha?.trim()
+                            ? 'Reverting…'
+                            : 'Revert + Preview',
+                      ),
+                    ),
+                    OutlinedButton.icon(
                       onPressed: widget.onAskAi == null
                           ? null
                           : () {
@@ -1137,7 +1832,8 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
   }
 
   Future<void> _openUrl(String url) async {
-    final uri = Uri.tryParse(url);
+    final normalized = _normalizeHttpUrl(url);
+    final uri = normalized == null ? null : Uri.tryParse(normalized);
     if (uri == null) return;
 
     if (await canLaunchUrl(uri)) {
@@ -1147,7 +1843,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
       SnackBarHelper.showError(
         context,
         title: 'Cannot Open URL',
-        message: 'Could not open $url',
+        message: 'Could not open ${uri.toString()}',
       );
     }
   }
@@ -1207,14 +1903,25 @@ String _formatTimeAgo(String isoString) {
   }
 }
 
+String? _normalizeHttpUrl(String? raw) {
+  final value = (raw ?? '').trim();
+  if (value.isEmpty) return null;
+  if (value.startsWith('http://') || value.startsWith('https://')) {
+    return value;
+  }
+  if (value.startsWith('//')) return 'https:$value';
+  return 'https://$value';
+}
+
 String _getDeploymentLabel(String? url) {
-  if (url == null || url.isEmpty) {
+  final normalized = _normalizeHttpUrl(url);
+  if (normalized == null || normalized.isEmpty) {
     return 'Configure later';
   }
   try {
-    final uri = Uri.parse(url);
+    final uri = Uri.parse(normalized);
     return uri.host;
   } catch (e) {
-    return url;
+    return normalized;
   }
 }

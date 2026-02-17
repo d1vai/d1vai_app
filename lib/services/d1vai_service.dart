@@ -9,12 +9,60 @@ import '../models/deployment.dart';
 import 'cache_service.dart';
 
 class D1vaiService {
+  static final Set<String> _sessionsEndpointUnavailableProjects = <String>{};
+
   final ApiClient _apiClient;
   final CacheService _cacheService;
 
   D1vaiService({ApiClient? apiClient})
     : _apiClient = apiClient ?? ApiClient(),
       _cacheService = CacheService();
+
+  bool _isRecoverableUmamiEndpointError(
+    Object error, {
+    required String endpointHint,
+  }) {
+    final msg = error.toString().toLowerCase();
+    final mentionsEndpoint = msg.contains(endpointHint.toLowerCase());
+    final mentionsUmamiProxyPath =
+        msg.contains('/api/websites/') || msg.contains('/api/analytics/data/');
+    final isEndpointOrParamIssue =
+        msg.contains('400') ||
+        msg.contains('404') ||
+        msg.contains('500') ||
+        msg.contains('502') ||
+        msg.contains('http error') ||
+        msg.contains('internal error') ||
+        msg.contains('not found') ||
+        msg.contains('required field');
+    final isAuthError = msg.contains('401') || msg.contains('unauthorized');
+    return (mentionsEndpoint || mentionsUmamiProxyPath) &&
+        isEndpointOrParamIssue &&
+        !isAuthError;
+  }
+
+  String _normalizeMetricType(String? type) {
+    final normalized = (type ?? '').trim();
+    switch (normalized) {
+      case 'url':
+        return 'path';
+      case 'host':
+        return 'hostname';
+      default:
+        return normalized.isEmpty ? 'path' : normalized;
+    }
+  }
+
+  String _normalizeFilterColumn(String? column) {
+    switch ((column ?? '').trim()) {
+      case 'url':
+        return 'path';
+      case 'host':
+        return 'hostname';
+      default:
+        return (column ?? '').trim();
+    }
+  }
 
   // ============================================
   // Auth Methods - 认证相关方法
@@ -764,8 +812,11 @@ class D1vaiService {
     String projectId, {
     required int startAt,
     required int endAt,
+    String type = 'path',
   }) async {
+    final metricType = _normalizeMetricType(type);
     final queryParams = <String, String>{
+      'type': metricType,
       'startAt': startAt.toString(),
       'endAt': endAt.toString(),
     };
@@ -782,8 +833,9 @@ class D1vaiService {
     Map<String, dynamic> params, {
     List<Map<String, dynamic>>? filters,
   }) async {
+    final metricType = _normalizeMetricType(params['type']?.toString());
     final queryParams = <String, String>{
-      'type': params['type'],
+      'type': metricType,
       'startAt': params['startAt'].toString(),
       'endAt': params['endAt'].toString(),
       if (params['limit'] != null) 'limit': params['limit'].toString(),
@@ -791,7 +843,8 @@ class D1vaiService {
 
     if (filters != null && filters.isNotEmpty) {
       for (var filter in filters) {
-        final key = filter['column'];
+        final key = _normalizeFilterColumn(filter['column']?.toString());
+        if (key.isEmpty) continue;
         final value = filter['value'];
         final operator = filter['operator'] ?? 'eq';
         final prefix = operator == 'eq'
@@ -826,7 +879,8 @@ class D1vaiService {
 
     if (filters != null && filters.isNotEmpty) {
       for (var filter in filters) {
-        final key = filter['column'];
+        final key = _normalizeFilterColumn(filter['column']?.toString());
+        if (key.isEmpty) continue;
         final value = filter['value'];
         final operator = filter['operator'] ?? 'eq';
         final prefix = operator == 'eq'
@@ -840,10 +894,21 @@ class D1vaiService {
       }
     }
 
-    return _apiClient.get<Map<String, dynamic>>(
-      '/api/analytics/data/$projectId/pageviews',
-      queryParams: queryParams,
-    );
+    try {
+      return await _apiClient.get<Map<String, dynamic>>(
+        '/api/analytics/data/$projectId/pageviews',
+        queryParams: queryParams,
+      );
+    } catch (e) {
+      final recoverable = _isRecoverableUmamiEndpointError(
+        e,
+        endpointHint: '/pageviews',
+      );
+      if (recoverable) {
+        return const {'pageviews': <dynamic>[], 'sessions': <dynamic>[]};
+      }
+      rethrow;
+    }
   }
 
   /// 获取 Umami 事件
@@ -860,7 +925,8 @@ class D1vaiService {
 
     if (filters != null && filters.isNotEmpty) {
       for (var filter in filters) {
-        final key = filter['column'];
+        final key = _normalizeFilterColumn(filter['column']?.toString());
+        if (key.isEmpty) continue;
         final value = filter['value'];
         final operator = filter['operator'] ?? 'eq';
         final prefix = operator == 'eq'
@@ -874,10 +940,21 @@ class D1vaiService {
       }
     }
 
-    return _apiClient.get<List<dynamic>>(
-      '/api/analytics/data/$projectId/events',
-      queryParams: queryParams,
-    );
+    try {
+      return await _apiClient.get<List<dynamic>>(
+        '/api/analytics/data/$projectId/events',
+        queryParams: queryParams,
+      );
+    } catch (e) {
+      final recoverable = _isRecoverableUmamiEndpointError(
+        e,
+        endpointHint: '/events',
+      );
+      if (recoverable) {
+        return const [];
+      }
+      rethrow;
+    }
   }
 
   /// 获取 Umami 事件指标
@@ -895,7 +972,8 @@ class D1vaiService {
 
     if (filters != null && filters.isNotEmpty) {
       for (var filter in filters) {
-        final key = filter['column'];
+        final key = _normalizeFilterColumn(filter['column']?.toString());
+        if (key.isEmpty) continue;
         final value = filter['value'];
         final operator = filter['operator'] ?? 'eq';
         final prefix = operator == 'eq'
@@ -909,10 +987,22 @@ class D1vaiService {
       }
     }
 
-    return _apiClient.get<List<dynamic>>(
-      '/api/analytics/data/$projectId/events/series',
-      queryParams: queryParams,
-    );
+    try {
+      return await _apiClient.get<List<dynamic>>(
+        '/api/analytics/data/$projectId/events/series',
+        queryParams: queryParams,
+      );
+    } catch (e) {
+      final recoverable = _isRecoverableUmamiEndpointError(
+        e,
+        endpointHint: '/events/series',
+      );
+      if (recoverable) {
+        // Keep events tab functional when upstream Umami does not expose /events/series.
+        return const [];
+      }
+      rethrow;
+    }
   }
 
   /// 获取 Umami 事件数据统计
@@ -929,7 +1019,8 @@ class D1vaiService {
 
     if (filters != null && filters.isNotEmpty) {
       for (var filter in filters) {
-        final key = filter['column'];
+        final key = _normalizeFilterColumn(filter['column']?.toString());
+        if (key.isEmpty) continue;
         final value = filter['value'];
         final operator = filter['operator'] ?? 'eq';
         final prefix = operator == 'eq'
@@ -955,6 +1046,10 @@ class D1vaiService {
     Map<String, dynamic> params, {
     List<Map<String, dynamic>>? filters,
   }) async {
+    if (_sessionsEndpointUnavailableProjects.contains(projectId)) {
+      return const {'data': <dynamic>[], 'count': 0};
+    }
+
     final queryParams = <String, String>{
       'startAt': params['startAt'].toString(),
       'endAt': params['endAt'].toString(),
@@ -964,7 +1059,8 @@ class D1vaiService {
 
     if (filters != null && filters.isNotEmpty) {
       for (var filter in filters) {
-        final key = filter['column'];
+        final key = _normalizeFilterColumn(filter['column']?.toString());
+        if (key.isEmpty) continue;
         final value = filter['value'];
         final operator = filter['operator'] ?? 'eq';
         final prefix = operator == 'eq'
@@ -978,17 +1074,48 @@ class D1vaiService {
       }
     }
 
-    return _apiClient.get<Map<String, dynamic>>(
-      '/api/analytics/data/$projectId/sessions',
-      queryParams: queryParams,
-    );
+    try {
+      return await _apiClient.get<Map<String, dynamic>>(
+        '/api/analytics/data/$projectId/sessions',
+        queryParams: queryParams,
+        retries: 1,
+      );
+    } catch (e) {
+      final recoverable = _isRecoverableUmamiEndpointError(
+        e,
+        endpointHint: '/sessions',
+      );
+      if (recoverable) {
+        final msg = e.toString().toLowerCase();
+        if (msg.contains('/api/websites/') && msg.contains('/sessions')) {
+          _sessionsEndpointUnavailableProjects.add(projectId);
+        }
+        return const {'data': <dynamic>[], 'count': 0};
+      }
+      rethrow;
+    }
   }
 
   /// 获取 Umami 实时数据
-  Future<Map<String, dynamic>> getUmamiRealtime(String projectId) async {
-    return _apiClient.get<Map<String, dynamic>>(
-      '/api/analytics/data/$projectId/realtime',
-    );
+  Future<Map<String, dynamic>> getUmamiRealtime(
+    String projectId, {
+    String timezone = 'UTC',
+  }) async {
+    try {
+      return await _apiClient.get<Map<String, dynamic>>(
+        '/api/analytics/data/$projectId/realtime',
+        queryParams: {'timezone': timezone},
+      );
+    } catch (e) {
+      final recoverable = _isRecoverableUmamiEndpointError(
+        e,
+        endpointHint: '/realtime',
+      );
+      if (recoverable) {
+        return const {};
+      }
+      rethrow;
+    }
   }
 
   // ============================================
@@ -1259,9 +1386,13 @@ class D1vaiService {
   Future<Map<String, dynamic>> getDeploymentLogs(
     String vercelDeploymentId,
   ) async {
-    return _apiClient.get<Map<String, dynamic>>(
+    final response = await _apiClient.get<Map<String, dynamic>>(
       '/api/deployment/logs/$vercelDeploymentId',
     );
+    final nested = response['data'];
+    if (nested is Map<String, dynamic>) return nested;
+    if (nested is Map) return nested.cast<String, dynamic>();
+    return response;
   }
 
   /// 获取项目部署历史（带类型转换）
@@ -1280,8 +1411,14 @@ class D1vaiService {
     List<dynamic> deploymentsList = [];
     if (response['data'] != null && response['data'] is List) {
       deploymentsList = response['data'] as List;
+    } else if (response['data'] is Map &&
+        (response['data'] as Map)['deployments'] is List) {
+      deploymentsList = (response['data'] as Map)['deployments'] as List;
     } else if (response['items'] != null && response['items'] is List) {
       deploymentsList = response['items'] as List;
+    } else if (response['data'] is Map &&
+        (response['data'] as Map)['items'] is List) {
+      deploymentsList = (response['data'] as Map)['items'] as List;
     } else if (response['deployments'] != null &&
         response['deployments'] is List) {
       deploymentsList = response['deployments'] as List;
@@ -1296,18 +1433,26 @@ class D1vaiService {
   Future<Map<String, dynamic>> deployProjectToProduction(
     String projectId,
   ) async {
-    return _apiClient.post<Map<String, dynamic>>(
+    final response = await _apiClient.post<Map<String, dynamic>>(
       '/api/deployment/$projectId/production',
       {},
     );
+    final nested = response['data'];
+    if (nested is Map<String, dynamic>) return nested;
+    if (nested is Map) return nested.cast<String, dynamic>();
+    return response;
   }
 
   /// 部署预览版本
   Future<Map<String, dynamic>> deployProjectPreview(String projectId) async {
-    return _apiClient.post<Map<String, dynamic>>(
+    final response = await _apiClient.post<Map<String, dynamic>>(
       '/api/deployment/$projectId/preview',
       {},
     );
+    final nested = response['data'];
+    if (nested is Map<String, dynamic>) return nested;
+    if (nested is Map) return nested.cast<String, dynamic>();
+    return response;
   }
 
   // ============================================
@@ -1404,6 +1549,16 @@ class D1vaiService {
           'head_branch': headBranch,
           if (commitMessage != null) 'commit_message': commitMessage,
         });
+  }
+
+  /// 回滚指定提交（对齐 Web: `POST /api/git/{projectId}/revert`）
+  Future<Map<String, dynamic>> revertGitCommit(
+    String projectId, {
+    required String commitHash,
+  }) async {
+    return _apiClient.post<Map<String, dynamic>>('/api/git/$projectId/revert', {
+      'commit_hash': commitHash,
+    });
   }
 
   // ============================================

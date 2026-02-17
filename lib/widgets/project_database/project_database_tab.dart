@@ -27,11 +27,16 @@ class ProjectDatabaseTab extends StatefulWidget {
 }
 
 class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
+  final D1vaiService _service = D1vaiService();
   final List<DatabaseTable> _tables = [];
   bool _isLoading = false;
   bool _isInitialized = false;
   bool _enabling = false;
+  bool _isLoadingBranches = false;
+  _DbPrimaryTab _activeTab = _DbPrimaryTab.schema;
   _DbViewMode _viewMode = _DbViewMode.tables;
+  final List<_DbBranchItem> _branches = [];
+  String _selectedBranch = '';
 
   @override
   void didChangeDependencies() {
@@ -39,7 +44,7 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
     if (!_isInitialized) {
       _isInitialized = true;
       if (_hasDatabaseEnabled) {
-        _loadTables();
+        unawaited(_bootstrapDatabaseView());
       }
     }
   }
@@ -50,10 +55,17 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
     final enabledChanged =
         oldWidget.project.projectDatabaseId != widget.project.projectDatabaseId;
     if (enabledChanged && _hasDatabaseEnabled) {
-      _loadTables();
+      unawaited(_bootstrapDatabaseView());
     }
-    if (oldWidget.project.id != widget.project.id && _hasDatabaseEnabled) {
-      _loadTables();
+    if (oldWidget.project.id != widget.project.id) {
+      _tables.clear();
+      _branches.clear();
+      _selectedBranch = '';
+      _activeTab = _DbPrimaryTab.schema;
+      _viewMode = _DbViewMode.tables;
+      if (_hasDatabaseEnabled) {
+        unawaited(_bootstrapDatabaseView());
+      }
     }
   }
 
@@ -61,15 +73,81 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
       widget.project.projectDatabaseId != null &&
       widget.project.projectDatabaseId! > 0;
 
+  Future<void> _bootstrapDatabaseView() async {
+    await _loadBranches();
+    await _loadTables();
+  }
+
+  Future<void> _loadBranches() async {
+    setState(() {
+      _isLoadingBranches = true;
+    });
+
+    try {
+      final branchData = await _service.getProjectDbBranches(widget.project.id);
+      final branches = <_DbBranchItem>[];
+      for (final b in branchData) {
+        if (b is! Map) continue;
+        final map = Map<String, dynamic>.from(b);
+        final id = (map['id'] ?? '').toString().trim();
+        final name = (map['name'] ?? id).toString().trim();
+        if (name.isEmpty) continue;
+        branches.add(
+          _DbBranchItem(
+            id: id.isEmpty ? name : id,
+            name: name,
+            primary: map['primary'] == true,
+          ),
+        );
+      }
+      final fallback = branches.isNotEmpty
+          ? branches
+          : const [
+              _DbBranchItem(id: 'main', name: 'main', primary: true),
+            ];
+      final primary = fallback.firstWhere(
+        (e) => e.primary,
+        orElse: () => fallback.first,
+      );
+      final keepCurrent =
+          _selectedBranch.isNotEmpty &&
+          fallback.any((e) => e.name == _selectedBranch);
+      if (!mounted) return;
+      setState(() {
+        _branches
+          ..clear()
+          ..addAll(fallback);
+        _selectedBranch = keepCurrent ? _selectedBranch : primary.name;
+        _isLoadingBranches = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingBranches = false;
+        if (_selectedBranch.isEmpty) {
+          _selectedBranch = 'main';
+        }
+      });
+      final msg = humanizeError(e);
+      if (isAuthExpiredText(msg)) {
+        AuthExpiryBus.trigger(
+          endpoint: '/api/projects/${widget.project.id}/db/branches',
+        );
+        return;
+      }
+      SnackBarHelper.showError(context, title: 'Error', message: msg);
+    }
+  }
+
   Future<void> _loadTables() async {
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final service = D1vaiService();
-      final schemaData = await service.getProjectDbSchema(
+      final schemaData = await _service.getProjectDbSchema(
         widget.project.id,
+        branch: _selectedBranch.trim().isEmpty ? null : _selectedBranch.trim(),
         withRowCounts: true,
         includeViews: true,
       );
@@ -156,7 +234,7 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
       if (authExpired) {
         AuthExpiryBus.trigger(
           endpoint:
-              '/api/projects/${widget.project.id}/integrations/database/activate',
+              '/api/projects/${widget.project.id}/integrations/activate-database',
         );
         return;
       }
@@ -185,38 +263,133 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_tables.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.storage,
-              size: 64,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No database tables',
-              style: TextStyle(
-                fontSize: 18,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Database tables will appear here once they are created',
-              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
-            ),
-          ],
-        ),
-      );
-    }
-
     return Column(
       children: [
+        _buildDatabaseTopBar(theme),
+        Expanded(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (child, animation) {
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0.02, 0),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                ),
+              );
+            },
+            child: switch (_activeTab) {
+              _DbPrimaryTab.schema => _buildSchemaTab(theme),
+              _DbPrimaryTab.data => _buildDataComingSoon(theme),
+              _DbPrimaryTab.migration => _buildMigrationComingSoon(theme),
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDatabaseTopBar(ThemeData theme) {
+    final selected = _selectedBranch.trim();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: SegmentedButton<_DbPrimaryTab>(
+                  segments: const [
+                    ButtonSegment(
+                      value: _DbPrimaryTab.schema,
+                      icon: Icon(Icons.account_tree_outlined),
+                      label: Text('Schema'),
+                    ),
+                    ButtonSegment(
+                      value: _DbPrimaryTab.data,
+                      icon: Icon(Icons.table_view_outlined),
+                      label: Text('Data'),
+                    ),
+                    ButtonSegment(
+                      value: _DbPrimaryTab.migration,
+                      icon: Icon(Icons.history_toggle_off),
+                      label: Text('Migration'),
+                    ),
+                  ],
+                  selected: <_DbPrimaryTab>{_activeTab},
+                  onSelectionChanged: (set) =>
+                      _handleActiveTabChanged(set.first),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  initialValue: selected.isEmpty ? null : selected,
+                  isDense: true,
+                  decoration: InputDecoration(
+                    labelText: 'Branch',
+                    helperText: _isLoadingBranches
+                        ? 'Loading branches...'
+                        : 'Current Neon branch context',
+                    border: const OutlineInputBorder(),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                  ),
+                  items: _branches
+                      .map(
+                        (b) => DropdownMenuItem<String>(
+                          value: b.name,
+                          child: Text(
+                            b.primary ? '${b.name} (primary)' : b.name,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: _isLoadingBranches
+                      ? null
+                      : (value) {
+                          if (value == null) return;
+                          unawaited(_handleBranchChanged(value));
+                        },
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                tooltip: 'Refresh',
+                onPressed: () => unawaited(_refreshActiveTab()),
+                icon: const Icon(Icons.refresh),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSchemaTab(ThemeData theme) {
+    if (_tables.isEmpty) {
+      return _buildEmptyState(
+        icon: Icons.storage,
+        title: 'No database tables',
+        subtitle: 'Database tables will appear here once they are created.',
+      );
+    }
+    return Column(
+      key: const ValueKey('db_schema'),
+      children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
           child: SegmentedButton<_DbViewMode>(
             segments: const [
               ButtonSegment(
@@ -252,6 +425,88 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
         ),
       ],
     );
+  }
+
+  Widget _buildDataComingSoon(ThemeData theme) {
+    return _buildEmptyState(
+      key: const ValueKey('db_data_soon'),
+      icon: Icons.table_view,
+      title: 'Data workflow is being aligned',
+      subtitle:
+          'Next step: table browsing, filtering and row operations will be added here.',
+    );
+  }
+
+  Widget _buildMigrationComingSoon(ThemeData theme) {
+    return _buildEmptyState(
+      key: const ValueKey('db_migration_soon'),
+      icon: Icons.history,
+      title: 'Migration history is being aligned',
+      subtitle: 'Execution records and status timeline will appear here.',
+    );
+  }
+
+  Widget _buildEmptyState({
+    Key? key,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    final theme = Theme.of(context);
+    return Center(
+      key: key,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 56, color: theme.colorScheme.onSurfaceVariant),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            subtitle,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handleActiveTabChanged(_DbPrimaryTab next) {
+    if (_activeTab == next) return;
+    setState(() {
+      _activeTab = next;
+    });
+  }
+
+  Future<void> _handleBranchChanged(String branchName) async {
+    if (branchName == _selectedBranch) return;
+    setState(() {
+      _selectedBranch = branchName;
+    });
+    await _refreshActiveTab();
+  }
+
+  Future<void> _refreshActiveTab() async {
+    switch (_activeTab) {
+      case _DbPrimaryTab.schema:
+        await _loadTables();
+        break;
+      case _DbPrimaryTab.data:
+        await _loadTables();
+        break;
+      case _DbPrimaryTab.migration:
+        await _loadTables();
+        break;
+    }
   }
 
   Widget _buildTablesList(ThemeData theme) {
@@ -484,7 +739,21 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
   }
 }
 
+enum _DbPrimaryTab { schema, data, migration }
+
 enum _DbViewMode { tables, relations, graph }
+
+class _DbBranchItem {
+  final String id;
+  final String name;
+  final bool primary;
+
+  const _DbBranchItem({
+    required this.id,
+    required this.name,
+    required this.primary,
+  });
+}
 
 class _DbGraphNode extends StatelessWidget {
   final DatabaseTable table;

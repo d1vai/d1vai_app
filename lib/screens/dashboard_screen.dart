@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:d1vai_app/providers/auth_provider.dart';
 import 'package:d1vai_app/providers/project_provider.dart';
 import 'package:d1vai_app/models/user.dart';
@@ -23,6 +22,8 @@ import 'package:d1vai_app/widgets/dashboard/workspace_status_badge.dart';
 import 'package:d1vai_app/widgets/prompt_activity_heatmap.dart';
 import 'package:d1vai_app/widgets/snackbar_helper.dart';
 import 'package:d1vai_app/screens/projects/widgets/project_card_tile.dart';
+import 'package:d1vai_app/widgets/skeletons/dashboard_skeleton.dart';
+import 'package:d1vai_app/widgets/skeletons/prompt_activity_skeleton.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -510,66 +511,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Widget _buildShimmer() {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Shimmer.fromColors(
-      baseColor: isDark ? Colors.grey[700]! : Colors.grey[300]!,
-      highlightColor: isDark ? Colors.grey[600]! : Colors.grey[100]!,
-      child: ListView.builder(
-        itemCount: 6,
-        itemBuilder: (context, index) => Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 48.0,
-                height: 48.0,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              const Padding(padding: EdgeInsets.symmetric(horizontal: 8.0)),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      height: 8.0,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surface,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                    const Padding(padding: EdgeInsets.symmetric(vertical: 2.0)),
-                    Container(
-                      width: double.infinity,
-                      height: 8.0,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surface,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                    const Padding(padding: EdgeInsets.symmetric(vertical: 2.0)),
-                    Container(
-                      width: 40.0,
-                      height: 8.0,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surface,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    return const DashboardSkeleton();
   }
 
   Widget _buildContent(
@@ -612,18 +554,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   return const SizedBox.shrink();
                 }
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return CustomCard(
-                    glass: true,
-                    child: Container(
-                      height: 140,
-                      padding: const EdgeInsets.all(16),
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        loc?.translate('activity') ?? 'Activity',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                    ),
-                  );
+                  return const PromptActivitySkeleton();
                 }
                 if (snapshot.hasError || !snapshot.hasData) {
                   return CustomCard(

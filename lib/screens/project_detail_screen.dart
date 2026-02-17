@@ -21,6 +21,7 @@ import '../widgets/snackbar_helper.dart';
 import '../theme/d1v_theme_colors.dart';
 import '../core/auth_expiry_bus.dart';
 import 'dart:ui';
+import '../widgets/skeletons/project_overview_skeleton.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   final String projectId;
@@ -237,7 +238,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     final theme = Theme.of(context);
 
     if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          child: _buildGlassmorphicAppBar(context),
+        ),
+        body: const ProjectOverviewSkeleton(),
+      );
     }
 
     if (_error != null) {

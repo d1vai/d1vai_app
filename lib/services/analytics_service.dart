@@ -83,11 +83,7 @@ class AnalyticsService {
 
       final results = await Future.wait([
         _apiClient.get<Map<String, dynamic>>(
-          '/api/analytics/data/$projectId/website/values',
-          queryParams: {
-            'startAt': startAt.toString(),
-            'endAt': endAt.toString(),
-          },
+          '/api/analytics/data/$projectId/website',
         ),
         _apiClient.get<Map<String, dynamic>>(
           '/api/analytics/data/$projectId/website/active',
@@ -103,7 +99,7 @@ class AnalyticsService {
         ),
       ]);
 
-      final values = results[0];
+      final website = results[0];
       final active = results[1];
       final pageviews = results[2];
       final pageviewsSeries = _parseSeries(pageviews['pageviews']);
@@ -117,6 +113,18 @@ class AnalyticsService {
         (sum, p) => sum + p.value,
       );
       final activeUsers = _asInt(active['x'] ?? active['visitors']);
+      final visitors = _asInt(
+        website['visitors'] ??
+            website['uniqueVisitors'] ??
+            website['users'] ??
+            totalSessions,
+      );
+      final pageviewsCount = _asInt(
+        website['pageviews'] ?? website['views'] ?? totalPageviews,
+      );
+      final sessionsCount = _asInt(
+        website['sessions'] ?? website['visits'] ?? totalSessions,
+      );
 
       final metrics = <RealtimeMetric>[
         RealtimeMetric(
@@ -165,17 +173,17 @@ class AnalyticsService {
         period: timeRange.name,
         startDate: DateTime.fromMillisecondsSinceEpoch(startAt),
         endDate: DateTime.fromMillisecondsSinceEpoch(endAt),
-        totalUsers: _asInt(values['visitors'] ?? values['users']),
+        totalUsers: visitors,
         activeUsers: activeUsers,
-        totalRequests: totalPageviews.toInt(),
-        successfulRequests: totalPageviews.toInt(),
+        totalRequests: pageviewsCount,
+        successfulRequests: pageviewsCount,
         failedRequests: 0,
         averageResponseTime: 0,
         uptime: 100,
         customMetrics: {
-          'sessions': totalSessions.toInt(),
-          'bounces': _asInt(values['bounces']),
-          'totaltime': _asInt(values['totaltime'] ?? values['totalTime']),
+          'sessions': sessionsCount,
+          'bounces': _asInt(website['bounces']),
+          'totaltime': _asInt(website['totaltime'] ?? website['totalTime']),
         },
         metrics: metrics,
       );
@@ -345,7 +353,7 @@ class AnalyticsService {
           ? 'event'
           : primaryMetric == 'referrer'
           ? 'referrer'
-          : 'url';
+          : 'path';
       final response = await _apiClient.get<List<dynamic>>(
         '/api/analytics/data/$projectId/metrics',
         queryParams: {

@@ -21,6 +21,8 @@ class ProjectApiTab extends StatefulWidget {
 }
 
 class _ProjectApiTabState extends State<ProjectApiTab> {
+  static const Duration _minSkeletonDuration = Duration(milliseconds: 550);
+
   final List<EnvVar> _envVars = [];
   bool _isLoadingEnvVars = false;
   bool _isInitialized = false;
@@ -37,6 +39,7 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
   }
 
   Future<void> _loadEnvVars() async {
+    final startedAt = DateTime.now();
     setState(() {
       _isLoadingEnvVars = true;
       _loadError = null;
@@ -53,6 +56,12 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
       final vars = data
           .map((item) => EnvVar.fromJson(item as Map<String, dynamic>))
           .toList();
+
+      final elapsed = DateTime.now().difference(startedAt);
+      if (elapsed < _minSkeletonDuration) {
+        await Future.delayed(_minSkeletonDuration - elapsed);
+      }
+      if (!mounted) return;
 
       setState(() {
         _envVars
@@ -209,6 +218,11 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final skeletonItemCount = _envVars.isEmpty
+        ? 4
+        : (_envVars.length < 3
+              ? 3
+              : (_envVars.length > 8 ? 8 : _envVars.length));
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -339,21 +353,40 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
                     ),
                     const SizedBox(height: 12),
                   ],
-                  if (_isLoadingEnvVars)
-                    const EnvVarLoadingSkeleton()
-                  else if (_envVars.isEmpty)
-                    _EnvVarEmptyState(
-                      onAdd: _showCreateEnvVarDialog,
-                      canAdd: !_isLoadingEnvVars,
-                    )
-                  else
-                    ..._envVars.map(
-                      (envVar) => _EnvVarItem(
-                        envVar: envVar,
-                        onEdit: () => _showEditEnvVarDialog(envVar),
-                        onDelete: () => _confirmAndDeleteEnvVar(envVar),
-                      ),
-                    ),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 220),
+                    switchInCurve: Curves.easeOutCubic,
+                    switchOutCurve: Curves.easeInCubic,
+                    child: _isLoadingEnvVars
+                        ? EnvVarLoadingSkeleton(
+                            key: const ValueKey('loading'),
+                            itemCount: skeletonItemCount,
+                          )
+                        : _envVars.isEmpty
+                        ? KeyedSubtree(
+                            key: const ValueKey('empty'),
+                            child: _EnvVarEmptyState(
+                              onAdd: _showCreateEnvVarDialog,
+                              canAdd: !_isLoadingEnvVars,
+                            ),
+                          )
+                        : KeyedSubtree(
+                            key: const ValueKey('list'),
+                            child: Column(
+                              children: _envVars
+                                  .map(
+                                    (envVar) => _EnvVarItem(
+                                      envVar: envVar,
+                                      onEdit: () =>
+                                          _showEditEnvVarDialog(envVar),
+                                      onDelete: () =>
+                                          _confirmAndDeleteEnvVar(envVar),
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+                          ),
+                  ),
                 ],
               ),
             ),
