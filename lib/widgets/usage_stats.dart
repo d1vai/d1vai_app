@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/usage_service.dart';
 import '../models/llm_usage.dart';
 import '../models/db_usage.dart';
+import 'skeletons/usage_stats_skeleton.dart';
 
 class UsageStats extends StatefulWidget {
   const UsageStats({super.key});
@@ -167,12 +168,7 @@ class _UsageStatsState extends State<UsageStats>
   Widget build(BuildContext context) {
     super.build(context); // 必须调用 super.build 来保持状态
     if (_isLoading) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(32),
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const UsageStatsSkeleton();
     }
 
     return RefreshIndicator(

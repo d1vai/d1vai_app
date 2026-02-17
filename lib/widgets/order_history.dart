@@ -4,6 +4,7 @@ import '../services/wallet_service.dart';
 import 'order_detail_dialog.dart';
 import 'snackbar_helper.dart';
 import 'card.dart';
+import 'skeletons/order_history_skeleton.dart';
 
 class OrderHistory extends StatefulWidget {
   const OrderHistory({super.key});
@@ -62,12 +63,7 @@ class _OrderHistoryState extends State<OrderHistory> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(32),
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const OrderHistorySkeleton();
     }
 
     if (_orders.isEmpty) {

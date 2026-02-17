@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/wallet_service.dart';
+import 'skeletons/credit_history_skeleton.dart';
 
 /// Animated CountUp widget for dollar amounts
 class CountUp extends StatefulWidget {
@@ -225,12 +226,7 @@ class _CreditHistoryState extends State<CreditHistory> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(32),
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const CreditHistorySkeleton();
     }
 
     if (_credits.isEmpty) {
