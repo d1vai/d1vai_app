@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../models/project.dart';
 import '../../../providers/project_provider.dart';
 import '../../../services/d1vai_service.dart';
@@ -13,6 +14,12 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
   final UserProject project;
 
   const ProjectOverviewDangerZoneCard({super.key, required this.project});
+
+  String _t(BuildContext context, String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
 
   bool _isValidEmail(String email) {
     final e = email.trim();
@@ -30,7 +37,13 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: const Text('Transfer project'),
+              title: Text(
+                _t(
+                  context,
+                  'project_overview_danger_transfer_title',
+                  'Transfer project',
+                ),
+              ),
               content: SizedBox(
                 width: 520,
                 child: Column(
@@ -38,7 +51,11 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Enter the recipient email to transfer ownership. You will lose access after transfer.',
+                      _t(
+                        context,
+                        'project_overview_danger_transfer_desc',
+                        'Enter the recipient email to transfer ownership. You will lose access after transfer.',
+                      ),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
@@ -48,9 +65,13 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
                       controller: controller,
                       keyboardType: TextInputType.emailAddress,
                       enabled: !transferring,
-                      decoration: const InputDecoration(
-                        labelText: 'Recipient email',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: _t(
+                          context,
+                          'project_overview_danger_transfer_recipient',
+                          'Recipient email',
+                        ),
+                        border: const OutlineInputBorder(),
                       ),
                       onChanged: (_) => setDialogState(() {}),
                     ),
@@ -62,7 +83,7 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
                   onPressed: transferring
                       ? null
                       : () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Cancel'),
+                  child: Text(_t(context, 'cancel', 'Cancel')),
                 ),
                 ElevatedButton(
                   onPressed: transferring || !_isValidEmail(controller.text)
@@ -80,8 +101,12 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
                             if (!dialogContext.mounted) return;
                             SnackBarHelper.showSuccess(
                               dialogContext,
-                              title: 'Success',
-                              message: 'Project transferred',
+                              title: _t(dialogContext, 'success', 'Success'),
+                              message: _t(
+                                dialogContext,
+                                'project_overview_danger_transfer_success',
+                                'Project transferred',
+                              ),
                             );
                             await Provider.of<ProjectProvider>(
                               dialogContext,
@@ -94,8 +119,12 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
                             if (!dialogContext.mounted) return;
                             SnackBarHelper.showError(
                               dialogContext,
-                              title: 'Error',
-                              message: 'Failed to transfer project',
+                              title: _t(dialogContext, 'error', 'Error'),
+                              message: _t(
+                                dialogContext,
+                                'project_overview_danger_transfer_failed',
+                                'Failed to transfer project',
+                              ),
                             );
                             setDialogState(() {
                               transferring = false;
@@ -108,7 +137,13 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
                           height: 18,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Transfer'),
+                      : Text(
+                          _t(
+                            context,
+                            'project_overview_danger_transfer_action',
+                            'Transfer',
+                          ),
+                        ),
                 ),
               ],
             );
@@ -131,7 +166,13 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: const Text('Delete project'),
+              title: Text(
+                _t(
+                  context,
+                  'project_overview_danger_delete_title',
+                  'Delete project',
+                ),
+              ),
               content: SizedBox(
                 width: 520,
                 child: deleting
@@ -140,10 +181,22 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           ProgressWidget(
-                            tipList: const [
-                              'Submitting delete request…',
-                              'Removing project resources…',
-                              'Final cleanup…',
+                            tipList: [
+                              _t(
+                                context,
+                                'project_overview_danger_delete_progress_submit',
+                                'Submitting delete request...',
+                              ),
+                              _t(
+                                context,
+                                'project_overview_danger_delete_progress_remove',
+                                'Removing project resources...',
+                              ),
+                              _t(
+                                context,
+                                'project_overview_danger_delete_progress_cleanup',
+                                'Final cleanup...',
+                              ),
                             ],
                             completed: completed,
                             width: 420,
@@ -155,7 +208,11 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 10),
                           Text(
-                            'Deleting ${project.projectName}…',
+                            _t(
+                              context,
+                              'project_overview_danger_delete_in_progress',
+                              'Deleting {name}...',
+                            ).replaceAll('{name}', project.projectName),
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
                                   color: Theme.of(
@@ -170,7 +227,11 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'This action cannot be undone. Please type the project name to confirm deletion.',
+                            _t(
+                              context,
+                              'project_overview_danger_delete_desc',
+                              'This action cannot be undone. Please type the project name to confirm deletion.',
+                            ),
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
                                   color: Theme.of(
@@ -180,16 +241,24 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 10),
                           Text(
-                            'Project: ${project.projectName}',
+                            _t(
+                              context,
+                              'project_overview_danger_project_name',
+                              'Project: {name}',
+                            ).replaceAll('{name}', project.projectName),
                             style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
                           const SizedBox(height: 10),
                           TextField(
                             controller: controller,
                             enabled: !deleting,
-                            decoration: const InputDecoration(
-                              labelText: 'Type project name to confirm',
-                              border: OutlineInputBorder(),
+                            decoration: InputDecoration(
+                              labelText: _t(
+                                context,
+                                'project_overview_danger_delete_confirm_label',
+                                'Type project name to confirm',
+                              ),
+                              border: const OutlineInputBorder(),
                             ),
                             onChanged: (_) => setDialogState(() {}),
                           ),
@@ -197,7 +266,11 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
                               controller.text != project.projectName) ...[
                             const SizedBox(height: 8),
                             Text(
-                              'Name does not match.',
+                              _t(
+                                context,
+                                'project_overview_danger_delete_name_mismatch',
+                                'Name does not match.',
+                              ),
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Theme.of(context).colorScheme.error,
@@ -212,7 +285,7 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
                   onPressed: deleting
                       ? null
                       : () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Cancel'),
+                  child: Text(_t(context, 'cancel', 'Cancel')),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -232,8 +305,12 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
                             if (!dialogContext.mounted) return;
                             SnackBarHelper.showSuccess(
                               dialogContext,
-                              title: 'Success',
-                              message: 'Deleted ${project.projectName}',
+                              title: _t(dialogContext, 'success', 'Success'),
+                              message: _t(
+                                dialogContext,
+                                'project_overview_danger_delete_success',
+                                'Deleted {name}',
+                              ).replaceAll('{name}', project.projectName),
                             );
                             await Provider.of<ProjectProvider>(
                               dialogContext,
@@ -247,8 +324,12 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
                             if (!dialogContext.mounted) return;
                             SnackBarHelper.showError(
                               dialogContext,
-                              title: 'Error',
-                              message: 'Failed to delete project',
+                              title: _t(dialogContext, 'error', 'Error'),
+                              message: _t(
+                                dialogContext,
+                                'project_overview_danger_delete_failed',
+                                'Failed to delete project',
+                              ),
                             );
                             setDialogState(() {
                               deleting = false;
@@ -262,7 +343,7 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
                           height: 18,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Delete'),
+                      : Text(_t(context, 'delete', 'Delete')),
                 ),
               ],
             );
@@ -290,7 +371,7 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
               Icon(Icons.warning_amber_rounded, color: colorScheme.error),
               const SizedBox(width: 8),
               Text(
-                'Danger zone',
+                _t(context, 'project_overview_danger_title', 'Danger zone'),
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w900,
                   color: colorScheme.error,
@@ -322,7 +403,11 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Transfer project',
+                        _t(
+                          context,
+                          'project_overview_danger_transfer_title',
+                          'Transfer project',
+                        ),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w800,
                         ),
@@ -333,7 +418,13 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
                 OutlinedButton.icon(
                   onPressed: () => _showTransferDialog(context),
                   icon: const Icon(Icons.arrow_right_alt),
-                  label: const Text('Transfer'),
+                  label: Text(
+                    _t(
+                      context,
+                      'project_overview_danger_transfer_action',
+                      'Transfer',
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -362,7 +453,11 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Delete project',
+                        _t(
+                          context,
+                          'project_overview_danger_delete_title',
+                          'Delete project',
+                        ),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w800,
                           color: colorScheme.error,
@@ -378,7 +473,7 @@ class ProjectOverviewDangerZoneCard extends StatelessWidget {
                     foregroundColor: colorScheme.onError,
                   ),
                   icon: const Icon(Icons.delete),
-                  label: const Text('Delete'),
+                  label: Text(_t(context, 'delete', 'Delete')),
                 ),
               ],
             ),

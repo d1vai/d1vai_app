@@ -3,15 +3,34 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../models/project.dart';
 import '../../../providers/auth_provider.dart';
-import 'project_overview_utils.dart';
 import 'project_overview_card_shell.dart';
+import 'project_overview_utils.dart';
 
 class ProjectOverviewStatsCard extends StatelessWidget {
   final UserProject project;
 
   const ProjectOverviewStatsCard({super.key, required this.project});
+
+  String _t(BuildContext context, String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
+
+  String _formatCreatedAt(BuildContext context, String value) {
+    if (value.isEmpty) {
+      return _t(context, 'project_overview_stats_unknown', 'Unknown');
+    }
+    try {
+      final localeTag = Localizations.localeOf(context).toLanguageTag();
+      return DateFormat.yMMMd(localeTag).format(DateTime.parse(value));
+    } catch (_) {
+      return _t(context, 'project_overview_stats_unknown', 'Unknown');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,12 +42,8 @@ class ProjectOverviewStatsCard extends StatelessWidget {
         children: [
           Expanded(
             child: _StatBlock(
-              label: 'Created',
-              value: project.createdAt.isNotEmpty
-                  ? DateFormat(
-                      'MMM d, yyyy',
-                    ).format(DateTime.parse(project.createdAt))
-                  : 'Unknown',
+              label: _t(context, 'project_overview_stats_created', 'Created'),
+              value: _formatCreatedAt(context, project.createdAt),
             ),
           ),
           Expanded(
@@ -36,7 +51,7 @@ class ProjectOverviewStatsCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Owner',
+                  _t(context, 'project_overview_stats_owner', 'Owner'),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -46,7 +61,8 @@ class ProjectOverviewStatsCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Selector<AuthProvider, String>(
                   selector: (context, authProvider) =>
-                      authProvider.user?.email ?? 'Unknown',
+                      authProvider.user?.email ??
+                      _t(context, 'project_overview_stats_unknown', 'Unknown'),
                   builder: (context, email, child) {
                     return Text(
                       email,
@@ -67,7 +83,11 @@ class ProjectOverviewStatsCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Deployment',
+                  _t(
+                    context,
+                    'project_overview_stats_deployment',
+                    'Deployment',
+                  ),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -139,7 +159,7 @@ class ProjectDeploymentLink extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              getDeploymentLabel(url),
+              getDeploymentLabel(context, url),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../models/project.dart';
-import 'project_overview_utils.dart';
 import 'project_overview_card_shell.dart';
+import 'project_overview_utils.dart';
 
 class ProjectOverviewHeaderCard extends StatelessWidget {
   final UserProject project;
@@ -10,6 +11,12 @@ class ProjectOverviewHeaderCard extends StatelessWidget {
   const ProjectOverviewHeaderCard({super.key, required this.project});
 
   String _heroTag(String projectId) => 'project-emoji-$projectId';
+
+  String _t(BuildContext context, String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +103,14 @@ class ProjectOverviewHeaderCard extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                'Updated ${formatTimeAgo(project.updatedAt)}',
+                _t(
+                  context,
+                  'project_overview_header_updated',
+                  'Updated {time}',
+                ).replaceAll(
+                  '{time}',
+                  formatTimeAgo(context, project.updatedAt),
+                ),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: colorScheme.onSurfaceVariant.withValues(alpha: 0.90),
                 ),
@@ -114,14 +128,32 @@ class ProjectStatusChip extends StatelessWidget {
 
   const ProjectStatusChip({super.key, required this.status});
 
-  ({Color color, String label}) _style(ColorScheme colorScheme) {
+  String _t(BuildContext context, String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
+
+  ({Color color, String label}) _style(
+    BuildContext context,
+    ColorScheme colorScheme,
+  ) {
     switch (status) {
       case 'active':
-        return (color: colorScheme.primary, label: 'Active');
+        return (
+          color: colorScheme.primary,
+          label: _t(context, 'project_overview_status_active', 'Active'),
+        );
       case 'archived':
-        return (color: colorScheme.tertiary, label: 'Archived');
+        return (
+          color: colorScheme.tertiary,
+          label: _t(context, 'project_overview_status_archived', 'Archived'),
+        );
       case 'draft':
-        return (color: colorScheme.onSurfaceVariant, label: 'Draft');
+        return (
+          color: colorScheme.onSurfaceVariant,
+          label: _t(context, 'project_overview_status_draft', 'Draft'),
+        );
       default:
         return (color: colorScheme.onSurfaceVariant, label: status);
     }
@@ -131,7 +163,7 @@ class ProjectStatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final s = _style(colorScheme);
+    final s = _style(context, colorScheme);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

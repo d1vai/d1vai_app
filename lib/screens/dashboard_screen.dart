@@ -59,6 +59,12 @@ class _DashboardScreenState extends State<DashboardScreen>
   late AnimationController _animationController;
   late AnimationController _workspaceBreathController;
 
+  String _t(String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -175,8 +181,11 @@ class _DashboardScreenState extends State<DashboardScreen>
       if (!silent) {
         SnackBarHelper.showError(
           context,
-          title: 'Workspace',
-          message: 'Failed to start workspace: $e',
+          title: _t('dashboard_workspace_title', 'Workspace'),
+          message: _t(
+            'dashboard_workspace_start_failed',
+            'Failed to start workspace: {error}',
+          ).replaceAll('{error}', e.toString()),
         );
       }
     } finally {
@@ -198,23 +207,27 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   String _workspaceStatusLabel() {
-    if (_workspaceActiveInFlight) return 'Starting';
-    if (_workspaceChecking) return 'Checking';
+    if (_workspaceActiveInFlight) {
+      return _t('dashboard_workspace_status_starting', 'Starting');
+    }
+    if (_workspaceChecking) {
+      return _t('dashboard_workspace_status_checking', 'Checking');
+    }
     switch (_workspacePhase) {
       case WorkspacePhase.ready:
-        return 'Ready';
+        return _t('dashboard_workspace_status_ready', 'Ready');
       case WorkspacePhase.starting:
-        return 'Starting';
+        return _t('dashboard_workspace_status_starting', 'Starting');
       case WorkspacePhase.syncing:
-        return 'Syncing';
+        return _t('dashboard_workspace_status_syncing', 'Syncing');
       case WorkspacePhase.standby:
-        return 'Standby';
+        return _t('dashboard_workspace_status_standby', 'Standby');
       case WorkspacePhase.archived:
-        return 'Archived';
+        return _t('dashboard_workspace_status_archived', 'Archived');
       case WorkspacePhase.error:
-        return 'Error';
+        return _t('dashboard_workspace_status_error', 'Error');
       case WorkspacePhase.unknown:
-        return 'Unknown';
+        return _t('dashboard_workspace_status_unknown', 'Unknown');
     }
   }
 
@@ -238,7 +251,12 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   String _workspaceTooltip() {
-    final parts = <String>['Workspace ${_workspaceStatusLabel()}'];
+    final parts = <String>[
+      _t(
+        'dashboard_workspace_tooltip',
+        'Workspace {status}',
+      ).replaceAll('{status}', _workspaceStatusLabel()),
+    ];
     final raw = _workspaceState?.status;
     if (raw != null && raw.trim().isNotEmpty) {
       parts.add('status=$raw');
@@ -314,13 +332,8 @@ class _DashboardScreenState extends State<DashboardScreen>
     return name.isEmpty ? p.id : name;
   }
 
-  bool _isChineseLocale(BuildContext context) {
-    final code = Localizations.localeOf(context).languageCode.toLowerCase();
-    return code == 'zh';
-  }
-
   String _allProjectsLabel(BuildContext context) {
-    return _isChineseLocale(context) ? '全部项目' : 'All projects';
+    return _t('dashboard_all_projects', 'All projects');
   }
 
   Widget _buildPromptActivityHeaderTrailing(ProjectProvider projectProvider) {
@@ -360,7 +373,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           value: _promptActivityProjectId ?? _allProjectsOptionValue,
           displayLabel: pickerLabel,
           placeholder: _allProjectsLabel(context),
-          tooltip: _isChineseLocale(context) ? '切换项目' : 'Switch project',
+          tooltip: _t('dashboard_switch_project', 'Switch project'),
           leadingIcon: Icons.folder_open_rounded,
           minWidth: 112,
           maxWidth: 156,
@@ -378,7 +391,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         ),
         if (selectedProject != null)
           IconButton(
-            tooltip: _isChineseLocale(context) ? '打开项目' : 'Open project',
+            tooltip: _t('dashboard_open_project', 'Open project'),
             visualDensity: VisualDensity.compact,
             constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
             padding: const EdgeInsets.all(4),
@@ -450,10 +463,10 @@ class _DashboardScreenState extends State<DashboardScreen>
             ? TextField(
                 controller: _searchController,
                 autofocus: true,
-                decoration: const InputDecoration(
-                  hintText: 'Search projects...',
+                decoration: InputDecoration(
+                  hintText: _t('projects_search_hint', 'Search projects...'),
                   border: InputBorder.none,
-                  hintStyle: TextStyle(color: Colors.white70),
+                  hintStyle: const TextStyle(color: Colors.white70),
                 ),
                 style: const TextStyle(color: Colors.white),
                 onChanged: (query) {
@@ -462,7 +475,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               )
             : Row(
                 children: [
-                  const Text('Dashboard'),
+                  Text(_t('dashboard', 'Dashboard')),
                   if (user != null) ...[
                     const SizedBox(width: 10),
                     Flexible(
@@ -476,7 +489,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               ),
         actions: [
           IconButton(
-            tooltip: 'Chat',
+            tooltip: _t('dashboard_action_chat', 'Chat'),
             icon: const Icon(Icons.chat_bubble_outline),
             onPressed: () {
               context.push('/chat');
@@ -537,7 +550,10 @@ class _DashboardScreenState extends State<DashboardScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Welcome, ${user?.email ?? "User"}!',
+            _t('dashboard_welcome', 'Welcome, {user}!').replaceAll(
+              '{user}',
+              user?.email ?? _t('dashboard_user_fallback', 'User'),
+            ),
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 20),
@@ -579,13 +595,19 @@ class _DashboardScreenState extends State<DashboardScreen>
                     projectProvider,
                   ),
                   onDayTap: (isoDate, count) {
-                    final isZh = _isChineseLocale(context);
-                    final message = isZh
-                        ? '$isoDate 发出了 $count 个 prompt'
-                        : '$count prompts on $isoDate';
+                    final message =
+                        _t(
+                              'dashboard_prompt_activity_day_message',
+                              '{count} prompts on {date}',
+                            )
+                            .replaceAll('{count}', count.toString())
+                            .replaceAll('{date}', isoDate);
                     SnackBarHelper.showInfo(
                       context,
-                      title: isZh ? '提示词活跃度' : 'Prompt activity',
+                      title: _t(
+                        'dashboard_prompt_activity_title',
+                        'Prompt activity',
+                      ),
                       message: message,
                       position: SnackBarPosition.top,
                       duration: const Duration(seconds: 2),
@@ -602,8 +624,11 @@ class _DashboardScreenState extends State<DashboardScreen>
             children: [
               Text(
                 _isSearching && _searchController.text.isNotEmpty
-                    ? 'Search Results (${_searchResults.length})'
-                    : 'Recent Projects',
+                    ? _t(
+                        'dashboard_search_results',
+                        'Search Results ({count})',
+                      ).replaceAll('{count}', _searchResults.length.toString())
+                    : (_t('recent_projects', 'Recent Projects')),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               TextButton(
@@ -618,7 +643,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                             : '/projects?q=${Uri.encodeQueryComponent(q)}';
                         context.push(location);
                       },
-                child: const Text('View All'),
+                child: Text(_t('dashboard_view_all', 'View All')),
               ),
             ],
           ),
@@ -665,7 +690,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       children: [
         Expanded(
           child: _buildStatCard(
-            'Total',
+            _t('dashboard_stats_total', 'Total'),
             stats['total'].toString(),
             Icons.folder,
             AppColors.info,
@@ -674,7 +699,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         const SizedBox(width: 12),
         Expanded(
           child: _buildStatCard(
-            'Active',
+            _t('dashboard_stats_active', 'Active'),
             stats['active'].toString(),
             Icons.play_circle_outline,
             AppColors.success,
@@ -683,7 +708,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         const SizedBox(width: 12),
         Expanded(
           child: _buildStatCard(
-            'Archived',
+            _t('dashboard_stats_archived', 'Archived'),
             stats['archived'].toString(),
             Icons.archive,
             AppColors.warning,
@@ -727,12 +752,15 @@ class _DashboardScreenState extends State<DashboardScreen>
               Icon(Icons.folder_open, size: 48, color: Colors.grey.shade400),
               const SizedBox(height: 16),
               Text(
-                'No projects yet',
+                _t('dashboard_no_projects_title', 'No projects yet'),
                 style: TextStyle(color: Colors.grey.shade600),
               ),
               const SizedBox(height: 8),
               Text(
-                'Create your first project to get started',
+                _t(
+                  'dashboard_no_projects_hint',
+                  'Create your first project to get started',
+                ),
                 style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
               ),
               const SizedBox(height: 16),
@@ -744,7 +772,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   );
                 },
                 icon: const Icon(Icons.add),
-                label: const Text('Create Project'),
+                label: Text(_t('create_project', 'Create Project')),
               ),
             ],
           ),
@@ -804,15 +832,27 @@ class _DashboardScreenState extends State<DashboardScreen>
       final difference = now.difference(dateTime);
 
       if (difference.inMinutes < 1) {
-        return 'just now';
+        return _t('just_now', 'Just now');
       } else if (difference.inMinutes < 60) {
-        return '${difference.inMinutes}m ago';
+        return _t(
+          'projects_time_minutes_ago',
+          '{value}m ago',
+        ).replaceAll('{value}', difference.inMinutes.toString());
       } else if (difference.inHours < 24) {
-        return '${difference.inHours}h ago';
+        return _t(
+          'projects_time_hours_ago',
+          '{value}h ago',
+        ).replaceAll('{value}', difference.inHours.toString());
       } else if (difference.inDays < 7) {
-        return '${difference.inDays}d ago';
+        return _t(
+          'projects_time_days_ago',
+          '{value}d ago',
+        ).replaceAll('{value}', difference.inDays.toString());
       } else {
-        return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+        return _t('projects_time_date', '{day}/{month}/{year}')
+            .replaceAll('{day}', dateTime.day.toString())
+            .replaceAll('{month}', dateTime.month.toString())
+            .replaceAll('{year}', dateTime.year.toString());
       }
     } catch (e) {
       return '';
@@ -824,7 +864,8 @@ class _DashboardScreenState extends State<DashboardScreen>
     BuildContext context,
     ProjectProvider projectProvider,
   ) {
-    final errText = projectProvider.error ?? 'Unknown error';
+    final errText =
+        projectProvider.error ?? _t('dashboard_unknown_error', 'Unknown error');
     final authExpired = isAuthExpiredText(errText);
     return RefreshIndicator(
       onRefresh: () async => await projectProvider.refresh(),
@@ -837,7 +878,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             Icon(Icons.error_outline, size: 64, color: Colors.red.shade400),
             const SizedBox(height: 16),
             Text(
-              'Failed to load projects',
+              _t('dashboard_projects_load_failed', 'Failed to load projects'),
               style: Theme.of(
                 context,
               ).textTheme.headlineSmall?.copyWith(color: Colors.red.shade400),
@@ -861,7 +902,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                     await projectProvider.refresh();
                   },
                   icon: const Icon(Icons.refresh),
-                  label: const Text('Retry'),
+                  label: Text(_t('retry', 'Retry')),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryBrand,
                     foregroundColor: Colors.white,
@@ -873,7 +914,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                       AuthExpiryBus.trigger(endpoint: '/api/projects');
                     },
                     icon: const Icon(Icons.login),
-                    label: const Text('Re-login'),
+                    label: Text(_t('projects_action_relogin', 'Re-login')),
                   ),
               ],
             ),

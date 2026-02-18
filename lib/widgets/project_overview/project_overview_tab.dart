@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../models/deployment.dart';
 import '../../models/project.dart';
 import '../../providers/project_provider.dart';
@@ -36,6 +37,12 @@ class ProjectOverviewTab extends StatefulWidget {
 class _ProjectOverviewTabState extends State<ProjectOverviewTab> {
   final List<DeploymentHistory> _deployments = [];
   bool _isLoadingDeployments = false;
+
+  String _t(String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
 
   @override
   void initState() {
@@ -136,8 +143,11 @@ class _ProjectOverviewTabState extends State<ProjectOverviewTab> {
     } else if (mounted) {
       SnackBarHelper.showError(
         context,
-        title: 'Error',
-        message: 'Could not open preview URL',
+        title: _t('error', 'Error'),
+        message: _t(
+          'project_overview_links_open_preview_failed',
+          'Could not open preview URL',
+        ),
       );
     }
   }
@@ -158,8 +168,11 @@ class _ProjectOverviewTabState extends State<ProjectOverviewTab> {
     } else {
       SnackBarHelper.showError(
         context,
-        title: 'Error',
-        message: 'Could not open GitHub repository',
+        title: _t('error', 'Error'),
+        message: _t(
+          'project_overview_links_open_github_failed',
+          'Could not open GitHub repository',
+        ),
       );
     }
   }
@@ -184,6 +197,12 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
   bool _isLoading = false;
   String? _loadingAction; // 'publish' | 'update' | 'unpublish'
   Map<String, dynamic>? _post;
+
+  String _t(String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
 
   @override
   void initState() {
@@ -295,8 +314,11 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
           if (!mounted) return true;
           SnackBarHelper.showSuccess(
             context,
-            title: 'Success',
-            message: 'Published to community',
+            title: _t('success', 'Success'),
+            message: _t(
+              'project_overview_community_publish_success',
+              'Published to community',
+            ),
           );
           await _loadPost();
           await widget.onRefreshProject?.call();
@@ -317,8 +339,11 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
       if (!mounted) return false;
       SnackBarHelper.showError(
         context,
-        title: 'Error',
-        message: 'Failed to publish to community',
+        title: _t('error', 'Error'),
+        message: _t(
+          'project_overview_community_publish_failed',
+          'Failed to publish to community',
+        ),
       );
       return false;
     } finally {
@@ -347,16 +372,22 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
       if (!mounted) return;
       SnackBarHelper.showSuccess(
         context,
-        title: 'Success',
-        message: 'Post updated',
+        title: _t('success', 'Success'),
+        message: _t(
+          'project_overview_community_update_success',
+          'Post updated',
+        ),
       );
       await _loadPost();
     } catch (_) {
       if (!mounted) return;
       SnackBarHelper.showError(
         context,
-        title: 'Error',
-        message: 'Failed to update post',
+        title: _t('error', 'Error'),
+        message: _t(
+          'project_overview_community_update_failed',
+          'Failed to update post',
+        ),
       );
     } finally {
       if (mounted) {
@@ -385,16 +416,22 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
       if (!mounted) return;
       SnackBarHelper.showSuccess(
         context,
-        title: 'Success',
-        message: 'Unpublished',
+        title: _t('success', 'Success'),
+        message: _t(
+          'project_overview_community_unpublish_success',
+          'Unpublished',
+        ),
       );
       await _loadPost();
     } catch (_) {
       if (!mounted) return;
       SnackBarHelper.showError(
         context,
-        title: 'Error',
-        message: 'Failed to unpublish',
+        title: _t('error', 'Error'),
+        message: _t(
+          'project_overview_community_unpublish_failed',
+          'Failed to unpublish',
+        ),
       );
     } finally {
       if (mounted) {
@@ -442,7 +479,10 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
             if (!ok) {
               setDialogState(() {
                 releaseRunning = false;
-                releaseError = 'Failed to publish to community.';
+                releaseError = _t(
+                  'project_overview_community_publish_failed_sentence',
+                  'Failed to publish to community.',
+                );
               });
               return;
             }
@@ -502,7 +542,12 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
             } catch (_) {}
 
             if (headSha == null || headSha.trim().isEmpty) {
-              throw Exception('No commits found on development branch');
+              throw Exception(
+                _t(
+                  'project_overview_community_release_no_commits',
+                  'No commits found on development branch',
+                ),
+              );
             }
 
             if (baseSha == null || baseSha != headSha) {
@@ -510,7 +555,10 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
                 project.id,
                 baseBranch: base,
                 headBranch: head,
-                commitMessage: 'Merge $head into $base',
+                commitMessage: _t(
+                  'project_overview_community_release_merge_message',
+                  'Merge {head} into {base}',
+                ).replaceAll('{head}', head).replaceAll('{base}', base),
               );
             }
 
@@ -519,7 +567,10 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
             final ok = await _publish();
             if (!ok) {
               throw Exception(
-                'Production deploy succeeded, but failed to publish to community',
+                _t(
+                  'project_overview_community_release_publish_failed',
+                  'Production deploy succeeded, but failed to publish to community',
+                ),
               );
             }
 
@@ -553,7 +604,12 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
                 releaseCompleted ||
                 (releaseError != null && releaseError!.trim().isNotEmpty);
             return AlertDialog(
-              title: const Text('Publish to community'),
+              title: Text(
+                _t(
+                  'project_overview_community_publish_dialog_title',
+                  'Publish to community',
+                ),
+              ),
               content: SizedBox(
                 width: 520,
                 child: Column(
@@ -562,39 +618,84 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
                   children: [
                     if (!showProgress) ...[
                       if (hasProdDomain) ...[
-                        const Text(
-                          'This project already has a production deployment. Publishing will create or update a community post linked to your project overview.',
+                        Text(
+                          _t(
+                            'project_overview_community_publish_dialog_has_prod',
+                            'This project already has a production deployment. Publishing will create or update a community post linked to your project overview.',
+                          ),
                         ),
                         if (prodLabel.isNotEmpty) ...[
                           const SizedBox(height: 10),
                           Text(
-                            'Current domain: $prodLabel',
+                            _t(
+                              'project_overview_community_publish_dialog_current_domain',
+                              'Current domain: {domain}',
+                            ).replaceAll('{domain}', prodLabel),
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(fontFamily: 'monospace'),
                           ),
                         ],
                       ] else ...[
-                        const Text(
-                          "To publish this project to the community, we first need to release it to production. We'll merge your dev branch into main, trigger a production deploy, then publish the post.",
+                        Text(
+                          _t(
+                            'project_overview_community_publish_dialog_need_release',
+                            "To publish this project to the community, we first need to release it to production. We'll merge your dev branch into main, trigger a production deploy, then publish the post.",
+                          ),
                         ),
                         const SizedBox(height: 10),
-                        const Text(
-                          'Steps:',
+                        Text(
+                          _t(
+                            'project_overview_community_publish_dialog_steps',
+                            'Steps:',
+                          ),
                           style: TextStyle(fontWeight: FontWeight.w600),
                         ),
                         const SizedBox(height: 6),
-                        const Text('• Merge dev → main'),
-                        const Text('• Trigger production deploy'),
-                        const Text('• Publish to community'),
+                        Text(
+                          _t(
+                            'project_overview_community_publish_dialog_step_merge',
+                            '• Merge dev → main',
+                          ),
+                        ),
+                        Text(
+                          _t(
+                            'project_overview_community_publish_dialog_step_deploy',
+                            '• Trigger production deploy',
+                          ),
+                        ),
+                        Text(
+                          _t(
+                            'project_overview_community_publish_dialog_step_publish',
+                            '• Publish to community',
+                          ),
+                        ),
                       ],
                     ] else ...[
                       ProgressWidget(
                         tipList: hasProdDomain
-                            ? const ['Publishing to community…', 'Finalizing…']
-                            : const [
-                                'Merging branches…',
-                                'Triggering production deploy…',
-                                'Publishing to community…',
+                            ? [
+                                _t(
+                                  'project_overview_community_progress_publish',
+                                  'Publishing to community…',
+                                ),
+                                _t(
+                                  'project_overview_community_progress_finalizing',
+                                  'Finalizing…',
+                                ),
+                              ]
+                            : [
+                                _t(
+                                  'project_overview_community_progress_merge',
+                                  'Merging branches…',
+                                ),
+                                _t(
+                                  'project_overview_community_progress_deploy',
+                                  'Triggering production deploy…',
+                                ),
+                                _t(
+                                  'project_overview_community_progress_publish',
+                                  'Publishing to community…',
+                                ),
                               ],
                         completed: releaseCompleted,
                         width: 420,
@@ -632,7 +733,7 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
                   onPressed: releaseRunning
                       ? null
                       : () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Cancel'),
+                  child: Text(_t('cancel', 'Cancel')),
                 ),
                 ElevatedButton(
                   onPressed: releaseRunning || _loadingAction == 'publish'
@@ -644,7 +745,17 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
                             await releaseAndPublish(setDialogState);
                           }
                         },
-                  child: Text(hasProdDomain ? 'Publish' : 'Release & Publish'),
+                  child: Text(
+                    hasProdDomain
+                        ? _t(
+                            'project_overview_community_action_publish',
+                            'Publish',
+                          )
+                        : _t(
+                            'project_overview_community_action_release_publish',
+                            'Release & Publish',
+                          ),
+                  ),
                 ),
               ],
             );
@@ -659,9 +770,12 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
     final theme = Theme.of(context);
 
     final statusLabel = switch (_status) {
-      'published' => 'Published',
-      'draft' => 'Draft',
-      _ => 'Not published',
+      'published' => _t(
+        'project_overview_community_status_published',
+        'Published',
+      ),
+      'draft' => _t('project_overview_community_status_draft', 'Draft'),
+      _ => _t('project_overview_community_status_none', 'Not published'),
     };
 
     final canInteract = !_isLoading && _loadingAction == null;
@@ -676,8 +790,8 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
               children: [
                 const Icon(Icons.public, size: 18),
                 const SizedBox(width: 8),
-                const Text(
-                  'Community',
+                Text(
+                  _t('project_overview_community_title', 'Community'),
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
@@ -724,7 +838,12 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.send, size: 18),
-                    label: const Text('Publish'),
+                    label: Text(
+                      _t(
+                        'project_overview_community_action_publish',
+                        'Publish',
+                      ),
+                    ),
                   ),
                   OutlinedButton.icon(
                     onPressed: canInteract && _status != 'none'
@@ -737,7 +856,9 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.refresh, size: 18),
-                    label: const Text('Update'),
+                    label: Text(
+                      _t('project_overview_community_action_update', 'Update'),
+                    ),
                   ),
                   OutlinedButton.icon(
                     onPressed: canInteract && _status == 'published'
@@ -750,20 +871,30 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.visibility_off, size: 18),
-                    label: const Text('Unpublish'),
+                    label: Text(
+                      _t(
+                        'project_overview_community_action_unpublish',
+                        'Unpublish',
+                      ),
+                    ),
                   ),
                   OutlinedButton.icon(
                     onPressed: canInteract && _status == 'published'
                         ? _openCommunityPost
                         : null,
                     icon: const Icon(Icons.open_in_new, size: 18),
-                    label: const Text('View'),
+                    label: Text(
+                      _t('project_overview_community_action_view', 'View'),
+                    ),
                   ),
                 ],
               ),
             const SizedBox(height: 10),
             Text(
-              'Publish a community post linked to this project (auto-release to production if needed).',
+              _t(
+                'project_overview_community_hint',
+                'Publish a community post linked to this project (auto-release to production if needed).',
+              ),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),

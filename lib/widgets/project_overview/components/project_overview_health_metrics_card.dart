@@ -1,24 +1,47 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../models/project.dart';
-import 'project_overview_utils.dart';
 import 'project_overview_card_shell.dart';
+import 'project_overview_utils.dart';
 
 class ProjectOverviewHealthMetricsCard extends StatelessWidget {
   final UserProject project;
 
   const ProjectOverviewHealthMetricsCard({super.key, required this.project});
 
+  String _t(BuildContext context, String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final enabledLabel = _t(
+      context,
+      'project_overview_health_status_enabled',
+      'Enabled',
+    );
+    final disabledLabel = _t(
+      context,
+      'project_overview_health_status_disabled',
+      'Disabled',
+    );
+    final initializingLabel = _t(
+      context,
+      'project_overview_health_status_initializing',
+      'Initializing',
+    );
+
     return ProjectOverviewCardShell(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Health metrics',
+            _t(context, 'project_overview_health_title', 'Health metrics'),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w900,
               letterSpacing: 0.2,
@@ -26,12 +49,16 @@ class ProjectOverviewHealthMetricsCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           _HealthMetricItem(
-            title: 'Branch',
+            title: _t(context, 'project_overview_health_branch', 'Branch'),
             status:
                 (project.workspaceCurrentBranch ??
                 project.repositoryCurrentBranch ??
                 '—'),
-            description: 'Active workspace/repository branch',
+            description: _t(
+              context,
+              'project_overview_health_branch_desc',
+              'Active workspace/repository branch',
+            ),
             icon: Icons.alt_route,
             isEnabled:
                 (project.workspaceCurrentBranch ??
@@ -43,8 +70,13 @@ class ProjectOverviewHealthMetricsCard extends StatelessWidget {
           ),
           const Divider(height: 32),
           _HealthMetricItem(
-            title: 'Production domain',
+            title: _t(
+              context,
+              'project_overview_health_prod_domain',
+              'Production domain',
+            ),
             status: getDeploymentLabel(
+              context,
               project.latestProdDeploymentUrl?.trim().isNotEmpty == true
                   ? project.latestProdDeploymentUrl
                   : project.vercelProdDomain,
@@ -58,29 +90,45 @@ class ProjectOverviewHealthMetricsCard extends StatelessWidget {
           ),
           const Divider(height: 32),
           _HealthMetricItem(
-            title: 'Analytics status',
+            title: _t(
+              context,
+              'project_overview_health_analytics',
+              'Analytics status',
+            ),
             status: project.hasAnalyticsId
-                ? 'Enabled'
+                ? enabledLabel
                 : project.analyticsEnabled == true
-                ? 'Initializing'
-                : 'Disabled',
-            description: 'Traffic instrumentation',
+                ? initializingLabel
+                : disabledLabel,
+            description: _t(
+              context,
+              'project_overview_health_analytics_desc',
+              'Traffic instrumentation',
+            ),
             icon: Icons.analytics,
             isEnabled: project.hasAnalyticsId,
           ),
           const Divider(height: 32),
           _HealthMetricItem(
-            title: 'Database',
-            status: project.hasDatabaseEnabled ? 'Enabled' : 'Disabled',
-            description: 'Neon integration',
+            title: _t(context, 'project_overview_health_database', 'Database'),
+            status: project.hasDatabaseEnabled ? enabledLabel : disabledLabel,
+            description: _t(
+              context,
+              'project_overview_health_database_desc',
+              'Neon integration',
+            ),
             icon: Icons.storage,
             isEnabled: project.hasDatabaseEnabled,
           ),
           const Divider(height: 32),
           _HealthMetricItem(
-            title: 'Payments',
-            status: project.projectPayId != null ? 'Enabled' : 'Disabled',
-            description: 'User-scoped Pay API',
+            title: _t(context, 'project_overview_health_payments', 'Payments'),
+            status: project.projectPayId != null ? enabledLabel : disabledLabel,
+            description: _t(
+              context,
+              'project_overview_health_payments_desc',
+              'User-scoped Pay API',
+            ),
             icon: Icons.payment,
             isEnabled: project.projectPayId != null,
           ),

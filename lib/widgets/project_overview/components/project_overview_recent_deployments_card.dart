@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../models/deployment.dart';
-import 'project_overview_utils.dart';
 import 'project_overview_card_shell.dart';
+import 'project_overview_utils.dart';
 
 class ProjectOverviewRecentDeploymentsCard extends StatelessWidget {
   final List<DeploymentHistory> deployments;
@@ -13,6 +14,12 @@ class ProjectOverviewRecentDeploymentsCard extends StatelessWidget {
     required this.deployments,
     required this.isLoading,
   });
+
+  String _t(BuildContext context, String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +41,11 @@ class ProjectOverviewRecentDeploymentsCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'Recent deployments',
+                _t(
+                  context,
+                  'project_overview_recent_deployments_title',
+                  'Recent deployments',
+                ),
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w900,
                 ),
@@ -58,7 +69,11 @@ class ProjectOverviewRecentDeploymentsCard extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  'Activity feed',
+                  _t(
+                    context,
+                    'project_overview_recent_deployments_feed',
+                    'Activity feed',
+                  ),
                   style: TextStyle(
                     fontSize: 11,
                     color: colorScheme.primary,
@@ -81,7 +96,11 @@ class ProjectOverviewRecentDeploymentsCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(
-                'No recent deployments — ship a new build to see activity here.',
+                _t(
+                  context,
+                  'project_overview_recent_deployments_empty',
+                  'No recent deployments — ship a new build to see activity here.',
+                ),
                 style: TextStyle(
                   fontSize: 13,
                   color: colorScheme.onSurfaceVariant,
@@ -159,14 +178,18 @@ class ProjectOverviewRecentDeploymentsCard extends StatelessWidget {
                             children: [
                               Expanded(
                                 child: Text(
-                                  '${deployment.environment} deployment',
+                                  _t(
+                                    context,
+                                    'project_overview_recent_deployments_env',
+                                    '{env} deployment',
+                                  ).replaceAll('{env}', deployment.environment),
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),
                               ),
                               Text(
-                                formatTimeAgo(timestamp),
+                                formatTimeAgo(context, timestamp),
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: colorScheme.onSurfaceVariant,
                                 ),

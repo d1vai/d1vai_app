@@ -20,6 +20,7 @@ import '../widgets/share_sheet.dart';
 import '../widgets/snackbar_helper.dart';
 import '../theme/d1v_theme_colors.dart';
 import '../core/auth_expiry_bus.dart';
+import '../l10n/app_localizations.dart';
 import 'dart:ui';
 import '../widgets/skeletons/project_overview_skeleton.dart';
 
@@ -48,15 +49,21 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   String? _error;
 
   final List<_TabItem> _tabs = const [
-    _TabItem('Overview', Icons.dashboard),
-    _TabItem('Chat', Icons.chat),
-    _TabItem('Environment', Icons.key),
-    _TabItem('Database', Icons.storage),
-    _TabItem('GitHub', Icons.code),
-    _TabItem('Payment', Icons.payment),
-    _TabItem('Deploy', Icons.cloud_upload),
-    _TabItem('Analytics', Icons.analytics),
+    _TabItem('project_detail_tab_overview', 'Overview', Icons.dashboard),
+    _TabItem('project_detail_tab_chat', 'Chat', Icons.chat),
+    _TabItem('project_detail_tab_environment', 'Environment', Icons.key),
+    _TabItem('project_detail_tab_database', 'Database', Icons.storage),
+    _TabItem('project_detail_tab_github', 'GitHub', Icons.code),
+    _TabItem('project_detail_tab_payment', 'Payment', Icons.payment),
+    _TabItem('project_detail_tab_deploy', 'Deploy', Icons.cloud_upload),
+    _TabItem('project_detail_tab_analytics', 'Analytics', Icons.analytics),
   ];
+
+  String _t(String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
 
   @override
   void initState() {
@@ -209,8 +216,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     if (raw.isEmpty) {
       SnackBarHelper.showInfo(
         context,
-        title: 'Share',
-        message: 'No preview/production URL available yet.',
+        title: _t('project_detail_share_title', 'Share'),
+        message: _t(
+          'project_detail_share_no_url',
+          'No preview/production URL available yet.',
+        ),
       );
       return;
     }
@@ -218,8 +228,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     if (uri == null || (!uri.isScheme('http') && !uri.isScheme('https'))) {
       SnackBarHelper.showError(
         context,
-        title: 'Share',
-        message: 'Invalid URL: $raw',
+        title: _t('project_detail_share_title', 'Share'),
+        message: _t(
+          'project_detail_share_invalid_url',
+          'Invalid URL: {url}',
+        ).replaceAll('{url}', raw),
       );
       return;
     }
@@ -229,7 +242,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
       title: project.projectName,
       message: project.projectDescription.trim().isNotEmpty
           ? project.projectDescription.trim()
-          : (prod.isNotEmpty ? 'Production link' : 'Preview link'),
+          : (prod.isNotEmpty
+                ? _t('project_detail_share_production_link', 'Production link')
+                : _t('project_detail_share_preview_link', 'Preview link')),
     );
   }
 
@@ -259,11 +274,16 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                 color: theme.colorScheme.error,
               ),
               const SizedBox(height: 16),
-              Text('Error: $_error'),
+              Text(
+                _t(
+                  'project_detail_error_text',
+                  'Error: {error}',
+                ).replaceAll('{error}', _error ?? ''),
+              ),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _loadProject,
-                child: const Text('Retry'),
+                child: Text(_t('retry', 'Retry')),
               ),
             ],
           ),
@@ -273,7 +293,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
 
     final project = _project;
     if (project == null) {
-      return const Scaffold(body: Center(child: Text('Project not found')));
+      return Scaffold(
+        body: Center(
+          child: Text(_t('project_detail_not_found', 'Project not found')),
+        ),
+      );
     }
 
     return Scaffold(
@@ -347,7 +371,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
               foregroundColor: activeText,
               actions: [
                 IconButton(
-                  tooltip: 'Share',
+                  tooltip: _t('project_detail_share_title', 'Share'),
                   icon: const Icon(Icons.share),
                   onPressed: _shareProject,
                 ),
@@ -368,7 +392,12 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                     fontWeight: FontWeight.w500,
                   ),
                   tabs: _tabs
-                      .map((tab) => D1VTab(icon: tab.icon, text: tab.label))
+                      .map(
+                        (tab) => D1VTab(
+                          icon: tab.icon,
+                          text: _t(tab.labelKey, tab.fallback),
+                        ),
+                      )
                       .toList(),
                 ),
               ),
@@ -381,8 +410,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
 }
 
 class _TabItem {
-  final String label;
+  final String labelKey;
+  final String fallback;
   final IconData icon;
 
-  const _TabItem(this.label, this.icon);
+  const _TabItem(this.labelKey, this.fallback, this.icon);
 }

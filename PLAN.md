@@ -51,3 +51,28 @@
 - T3：`flutter analyze lib/utils/billing_errors.dart lib/widgets/insufficient_balance_dialog.dart lib/core/api_client.dart lib/services/chat_service.dart lib/widgets/create_project_dialog/create_project_dialog.dart lib/screens/chat_screen.dart lib/widgets/project_chat/project_chat_tab.dart lib/widgets/chat/project_chat/project_chat_tab_logic.dart` ✅
 - T4：`flutter analyze lib/router/app_router.dart lib/screens/main_screen.dart lib/screens/order_screen.dart lib/l10n/generated_localizations.dart lib/widgets/usage_stats.dart lib/widgets/wallet_usage_history.dart lib/widgets/insufficient_balance_dialog.dart` ✅
 - T5：`flutter analyze lib/core/api_client.dart lib/router/app_router.dart lib/screens/chat_screen.dart lib/screens/main_screen.dart lib/screens/order_screen.dart lib/services/chat_service.dart lib/services/usage_service.dart lib/services/wallet_service.dart lib/widgets/chat/project_chat/project_chat_tab_logic.dart lib/widgets/create_project_dialog/create_project_dialog.dart lib/widgets/project_chat/project_chat_tab.dart lib/widgets/usage_stats.dart lib/models/balance.dart lib/models/builder_usage.dart lib/utils/billing_errors.dart lib/widgets/insufficient_balance_dialog.dart lib/widgets/wallet_usage_history.dart lib/l10n/generated_localizations.dart` ✅
+
+---
+
+## 第二阶段：用户体验优化 + 多语言（Dashboard / Project Detail）
+
+### 设计思考（最小改动，但体验必须可感知）
+- 优先改“用户最常见路径”：Dashboard → Project Detail → Overview，先把高频页面的硬编码文案清掉。
+- 保持低风险：沿用页面内 `_t(key, fallback)`，避免大规模状态/组件重构，缺词时也不会展示 raw key。
+- 体验先行：发布、删除、转移等高风险交互统一补齐加载态、进度提示、失败反馈；时间文案与日期格式按 locale 展示。
+- 国际化策略：`en/zh/zh_Hant` 给出可读翻译，其它语种先落英文兜底，保证多语言不破 UI。
+
+### TODO（逐项检查后勾选）
+- [x] P1：Dashboard 页面核心状态/提示/空态/错误文案国际化（含搜索与 workspace 状态）。
+- [x] P2：Project Detail 主页面（tab/share/error/not found）国际化。
+- [x] P3：Project Overview 全量国际化（Header/Stats/Links/Recent Deployments/Health Metrics/Community/Danger Zone），并补齐关键流程加载与提示文案。
+- [ ] P4：Project Deploy 页面国际化 + 加载态/空态/失败提示优化。
+- [ ] P5：Project API / Env / Database / Analytics 页面继续国际化补齐。
+
+### P3 差异复核（本次）
+- 已清理 Project Overview 下仍残留的硬编码英文，覆盖发布流程弹窗、进度文本、危险操作确认、链接错误提示、状态标签与时间文案。
+- `formatTimeAgo` 改为按当前 locale 展示日期格式，减少跨语言阅读负担。
+- 新增 `project_overview_*` 多语言键并重新生成 `generated_localizations.dart`。
+
+### 第二阶段代码检查记录
+- P3：`flutter analyze lib/widgets/project_overview/project_overview_tab.dart lib/widgets/project_overview/components/project_overview_utils.dart lib/widgets/project_overview/components/project_overview_header_card.dart lib/widgets/project_overview/components/project_overview_health_metrics_card.dart lib/widgets/project_overview/components/project_overview_recent_deployments_card.dart lib/widgets/project_overview/components/project_overview_links_card.dart lib/widgets/project_overview/components/project_overview_stats_card.dart lib/widgets/project_overview/components/project_overview_danger_zone_card.dart lib/l10n/generated_localizations.dart` ✅
