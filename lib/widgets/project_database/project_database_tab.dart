@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../models/database_table.dart';
 import '../../models/project.dart';
 import '../../services/d1vai_service.dart';
@@ -53,6 +55,12 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
   final List<_DbBranchItem> _branches = [];
   String _selectedBranch = '';
   bool _showActivationGuide = false;
+
+  String _t(String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
 
   @override
   void didChangeDependencies() {
@@ -187,7 +195,11 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
         );
         return;
       }
-      SnackBarHelper.showError(context, title: 'Error', message: msg);
+      SnackBarHelper.showError(
+        context,
+        title: _t('error', 'Error'),
+        message: msg,
+      );
     }
   }
 
@@ -253,7 +265,11 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
         );
         return;
       }
-      SnackBarHelper.showError(context, title: 'Error', message: msg);
+      SnackBarHelper.showError(
+        context,
+        title: _t('error', 'Error'),
+        message: msg,
+      );
     }
   }
 
@@ -313,8 +329,11 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
       if (!mounted) return;
       SnackBarHelper.showSuccess(
         context,
-        title: 'Success',
-        message: 'Database enabled successfully!',
+        title: _t('success', 'Success'),
+        message: _t(
+          'project_database_enabled_success',
+          'Database enabled successfully!',
+        ),
       );
       await widget.onRefreshProject?.call();
       if (!mounted) return;
@@ -335,7 +354,11 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
         );
         return;
       }
-      SnackBarHelper.showError(context, title: 'Error', message: msg);
+      SnackBarHelper.showError(
+        context,
+        title: _t('error', 'Error'),
+        message: msg,
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -404,7 +427,11 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
         );
         return;
       }
-      SnackBarHelper.showError(context, title: 'Error', message: msg);
+      SnackBarHelper.showError(
+        context,
+        title: _t('error', 'Error'),
+        message: msg,
+      );
     }
   }
 
@@ -505,8 +532,14 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
     if (editable.isEmpty) {
       SnackBarHelper.showInfo(
         context,
-        title: 'No editable columns',
-        message: 'This table has no editable non-primary-key columns.',
+        title: _t(
+          'project_database_no_editable_columns',
+          'No editable columns',
+        ),
+        message: _t(
+          'project_database_no_editable_columns_hint',
+          'This table has no editable non-primary-key columns.',
+        ),
       );
       return;
     }
@@ -524,7 +557,11 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: Text(isInsert ? 'Insert row' : 'Edit row'),
+              title: Text(
+                isInsert
+                    ? _t('project_database_insert_row', 'Insert row')
+                    : _t('project_database_edit_row', 'Edit row'),
+              ),
               content: SizedBox(
                 width: 480,
                 child: SingleChildScrollView(
@@ -539,7 +576,9 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                             labelText: col.name,
                             helperText: col.dataType.isEmpty
                                 ? null
-                                : '${col.dataType}${col.isNullable ? '' : ' • required'}',
+                                : col.isNullable
+                                ? col.dataType
+                                : '${col.dataType}${_t('project_database_required_suffix', ' • required')}',
                             border: const OutlineInputBorder(),
                             isDense: true,
                           ),
@@ -554,7 +593,7 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                   onPressed: submitting
                       ? null
                       : () => Navigator.of(dialogContext).pop(false),
-                  child: const Text('Cancel'),
+                  child: Text(_t('cancel', 'Cancel')),
                 ),
                 FilledButton(
                   onPressed: submitting
@@ -611,7 +650,7 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                             }
                             SnackBarHelper.showError(
                               this.context,
-                              title: 'Error',
+                              title: _t('error', 'Error'),
                               message: msg,
                             );
                             setDialogState(() {
@@ -627,8 +666,12 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                         },
                   child: Text(
                     submitting
-                        ? (isInsert ? 'Inserting...' : 'Saving...')
-                        : (isInsert ? 'Insert' : 'Save'),
+                        ? (isInsert
+                              ? _t('project_database_inserting', 'Inserting...')
+                              : _t('project_database_saving', 'Saving...'))
+                        : (isInsert
+                              ? _t('project_database_insert', 'Insert')
+                              : _t('save', 'Save')),
                   ),
                 ),
               ],
@@ -645,8 +688,10 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
     if (ok == true && mounted) {
       SnackBarHelper.showSuccess(
         context,
-        title: 'Success',
-        message: isInsert ? 'Row inserted.' : 'Row updated.',
+        title: _t('success', 'Success'),
+        message: isInsert
+            ? _t('project_database_row_inserted', 'Row inserted.')
+            : _t('project_database_row_updated', 'Row updated.'),
       );
       await _loadRows(isRefresh: true);
     }
@@ -657,18 +702,21 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Delete row'),
+          title: Text(_t('project_database_delete_row', 'Delete row')),
           content: Text(
-            'Delete this row from ${table.fullName}? This action cannot be undone.',
+            _t(
+              'project_database_delete_row_confirm',
+              'Delete this row from {table}? This action cannot be undone.',
+            ).replaceAll('{table}', table.fullName),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancel'),
+              child: Text(_t('cancel', 'Cancel')),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Delete'),
+              child: Text(_t('delete', 'Delete')),
             ),
           ],
         );
@@ -691,8 +739,8 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
       if (!mounted) return;
       SnackBarHelper.showSuccess(
         context,
-        title: 'Success',
-        message: 'Row deleted.',
+        title: _t('success', 'Success'),
+        message: _t('project_database_row_deleted', 'Row deleted.'),
       );
       await _loadRows(isRefresh: true);
     } catch (e) {
@@ -705,7 +753,11 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
         );
         return;
       }
-      SnackBarHelper.showError(context, title: 'Error', message: msg);
+      SnackBarHelper.showError(
+        context,
+        title: _t('error', 'Error'),
+        message: msg,
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -764,7 +816,11 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
         );
         return;
       }
-      SnackBarHelper.showError(context, title: 'Error', message: msg);
+      SnackBarHelper.showError(
+        context,
+        title: _t('error', 'Error'),
+        message: msg,
+      );
     }
   }
 
@@ -828,21 +884,23 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
             children: [
               Expanded(
                 child: SegmentedButton<_DbPrimaryTab>(
-                  segments: const [
+                  segments: [
                     ButtonSegment(
                       value: _DbPrimaryTab.schema,
                       icon: Icon(Icons.account_tree_outlined),
-                      label: Text('Schema'),
+                      label: Text(_t('project_database_tab_schema', 'Schema')),
                     ),
                     ButtonSegment(
                       value: _DbPrimaryTab.data,
                       icon: Icon(Icons.table_view_outlined),
-                      label: Text('Data'),
+                      label: Text(_t('project_database_tab_data', 'Data')),
                     ),
                     ButtonSegment(
                       value: _DbPrimaryTab.migration,
                       icon: Icon(Icons.history_toggle_off),
-                      label: Text('Migration'),
+                      label: Text(
+                        _t('project_database_tab_migration', 'Migration'),
+                      ),
                     ),
                   ],
                   selected: <_DbPrimaryTab>{_activeTab},
@@ -858,13 +916,19 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
               Expanded(
                 child: Select<String>(
                   value: selected.isEmpty ? null : selected,
-                  label: 'Branch',
+                  label: _t('project_database_branch', 'Branch'),
                   hint: Text(
                     _isLoadingBranches
-                        ? 'Loading branches...'
-                        : 'Current Neon branch context',
+                        ? _t(
+                            'project_database_loading_branches',
+                            'Loading branches...',
+                          )
+                        : _t(
+                            'project_database_branch_hint',
+                            'Current Neon branch context',
+                          ),
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
                   items: _branches
@@ -872,7 +936,12 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                         (b) => SelectItem<String>(
                           value: b.name,
                           child: Text(
-                            b.primary ? '${b.name} (primary)' : b.name,
+                            b.primary
+                                ? _t(
+                                    'project_database_branch_primary',
+                                    '{name} (primary)',
+                                  ).replaceAll('{name}', b.name)
+                                : b.name,
                             style: theme.textTheme.bodyMedium,
                           ),
                         ),
@@ -888,7 +957,7 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
               ),
               const SizedBox(width: 8),
               IconButton(
-                tooltip: 'Refresh',
+                tooltip: _t('refresh', 'Refresh'),
                 onPressed: () => unawaited(_refreshActiveTab()),
                 icon: const Icon(Icons.refresh),
               ),
@@ -903,8 +972,11 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
     if (_tables.isEmpty) {
       return _buildEmptyState(
         icon: Icons.storage,
-        title: 'No database tables',
-        subtitle: 'Database tables will appear here once they are created.',
+        title: _t('project_database_no_tables', 'No database tables'),
+        subtitle: _t(
+          'project_database_no_tables_hint',
+          'Database tables will appear here once they are created.',
+        ),
       );
     }
     return Column(
@@ -913,21 +985,21 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
           child: SegmentedButton<_DbViewMode>(
-            segments: const [
+            segments: [
               ButtonSegment(
                 value: _DbViewMode.tables,
                 icon: Icon(Icons.table_chart),
-                label: Text('Tables'),
+                label: Text(_t('project_database_view_tables', 'Tables')),
               ),
               ButtonSegment(
                 value: _DbViewMode.relations,
                 icon: Icon(Icons.account_tree),
-                label: Text('Relations'),
+                label: Text(_t('project_database_view_relations', 'Relations')),
               ),
               ButtonSegment(
                 value: _DbViewMode.graph,
                 icon: Icon(Icons.hub),
-                label: Text('Graph'),
+                label: Text(_t('project_database_view_graph', 'Graph')),
               ),
             ],
             selected: <_DbViewMode>{_viewMode},
@@ -954,8 +1026,11 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
       return _buildEmptyState(
         key: const ValueKey('db_data_empty'),
         icon: Icons.table_view,
-        title: 'No database tables',
-        subtitle: 'Create tables first, then browse rows here.',
+        title: _t('project_database_no_tables', 'No database tables'),
+        subtitle: _t(
+          'project_database_data_empty_hint',
+          'Create tables first, then browse rows here.',
+        ),
       );
     }
 
@@ -985,8 +1060,10 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                       Expanded(
                         child: Select<String>(
                           value: selected.fullName,
-                          label: 'Table',
-                          hint: const Text('Select Table'),
+                          label: _t('project_database_table', 'Table'),
+                          hint: Text(
+                            _t('project_database_select_table', 'Select Table'),
+                          ),
                           isDense: true,
                           items: options
                               .map(
@@ -994,7 +1071,10 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                                   value: meta.fullName,
                                   child: Text(
                                     meta.isView
-                                        ? '${meta.fullName} (view)'
+                                        ? _t(
+                                            'project_database_table_view',
+                                            '{name} (view)',
+                                          ).replaceAll('{name}', meta.fullName)
                                         : meta.fullName,
                                     style: theme.textTheme.bodyMedium,
                                   ),
@@ -1015,7 +1095,10 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton.filledTonal(
-                                tooltip: 'Refresh rows',
+                                tooltip: _t(
+                                  'project_database_refresh_rows',
+                                  'Refresh rows',
+                                ),
                                 onPressed:
                                     (_isLoadingRows ||
                                         _isRefreshingRows ||
@@ -1047,7 +1130,9 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                                         ),
                                       ),
                                 icon: const Icon(Icons.add, size: 18),
-                                label: const Text('Insert'),
+                                label: Text(
+                                  _t('project_database_insert', 'Insert'),
+                                ),
                                 style: FilledButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 16,
@@ -1065,7 +1150,15 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      '${selected.columns.length} columns • ${selected.schema} schema',
+                      _t(
+                            'project_database_columns_schema',
+                            '{columns} columns • {schema} schema',
+                          )
+                          .replaceAll(
+                            '{columns}',
+                            selected.columns.length.toString(),
+                          )
+                          .replaceAll('{schema}', selected.schema),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -1092,9 +1185,11 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                     ? _buildEmptyState(
                         key: const ValueKey('db_data_no_rows'),
                         icon: Icons.inbox_outlined,
-                        title: 'No rows found',
-                        subtitle:
-                            'Try another table or insert data from your application flow.',
+                        title: _t('project_database_no_rows', 'No rows found'),
+                        subtitle: _t(
+                          'project_database_no_rows_hint',
+                          'Try another table or insert data from your application flow.',
+                        ),
                       )
                     : Padding(
                         padding: const EdgeInsets.all(1),
@@ -1107,7 +1202,10 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
           Row(
             children: [
               Text(
-                'Page ${_rowsPageIndex + 1}',
+                _t(
+                  'project_database_page',
+                  'Page {index}',
+                ).replaceAll('{index}', (_rowsPageIndex + 1).toString()),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -1119,7 +1217,12 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                     .map(
                       (size) => DropdownMenuItem<int>(
                         value: size,
-                        child: Text('$size / page'),
+                        child: Text(
+                          _t(
+                            'project_database_page_size',
+                            '{size} / page',
+                          ).replaceAll('{size}', size.toString()),
+                        ),
                       ),
                     )
                     .toList(),
@@ -1133,14 +1236,14 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                 onPressed: (_rowsPageIndex > 0 && !_isMutatingRows)
                     ? () => unawaited(_goPrevRowsPage())
                     : null,
-                child: const Text('Previous'),
+                child: Text(_t('project_database_previous', 'Previous')),
               ),
               const SizedBox(width: 6),
               OutlinedButton(
                 onPressed: (_hasNextRowsPage && !_isMutatingRows)
                     ? () => unawaited(_goNextRowsPage())
                     : null,
-                child: const Text('Next'),
+                child: Text(_t('project_database_next', 'Next')),
               ),
             ],
           ),
@@ -1154,8 +1257,11 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
       return _buildEmptyState(
         key: const ValueKey('db_data_no_columns'),
         icon: Icons.view_column_outlined,
-        title: 'No visible columns',
-        subtitle: 'This table currently has no browsable columns.',
+        title: _t('project_database_no_columns', 'No visible columns'),
+        subtitle: _t(
+          'project_database_no_columns_hint',
+          'This table currently has no browsable columns.',
+        ),
       );
     }
 
@@ -1169,11 +1275,20 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
             columns: [
               ...selected.columns.map(
                 (col) => DataColumn(
-                  label: Text(col.isPrimaryKey ? '${col.name} (PK)' : col.name),
+                  label: Text(
+                    col.isPrimaryKey
+                        ? _t(
+                            'project_database_column_pk',
+                            '{name} (PK)',
+                          ).replaceAll('{name}', col.name)
+                        : col.name,
+                  ),
                   tooltip: col.dataType,
                 ),
               ),
-              const DataColumn(label: Text('Actions')),
+              DataColumn(
+                label: Text(_t('project_database_actions', 'Actions')),
+              ),
             ],
             rows: _rows
                 .map(
@@ -1197,7 +1312,10 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              tooltip: 'Edit row',
+                              tooltip: _t(
+                                'project_database_edit_row',
+                                'Edit row',
+                              ),
                               onPressed: (_isMutatingRows || selected.isView)
                                   ? null
                                   : () => unawaited(
@@ -1210,7 +1328,10 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                               icon: const Icon(Icons.edit_outlined, size: 18),
                             ),
                             IconButton(
-                              tooltip: 'Delete row',
+                              tooltip: _t(
+                                'project_database_delete_row',
+                                'Delete row',
+                              ),
                               onPressed: (_isMutatingRows || selected.isView)
                                   ? null
                                   : () => unawaited(_deleteRow(selected, row)),
@@ -1237,8 +1358,11 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
       return _buildEmptyState(
         key: const ValueKey('db_migration_empty'),
         icon: Icons.history,
-        title: 'No migration history',
-        subtitle: 'Migration plans and execution records will appear here.',
+        title: _t('project_database_no_migration', 'No migration history'),
+        subtitle: _t(
+          'project_database_no_migration_hint',
+          'Migration plans and execution records will appear here.',
+        ),
       );
     }
 
@@ -1251,7 +1375,10 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
             children: [
               Expanded(
                 child: Text(
-                  '${_migrationPlans.length} plans',
+                  _t(
+                    'project_database_migration_plans',
+                    '{count} plans',
+                  ).replaceAll('{count}', _migrationPlans.length.toString()),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -1262,7 +1389,7 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                     ? null
                     : () => unawaited(_loadMigrationHistory()),
                 icon: const Icon(Icons.refresh, size: 16),
-                label: const Text('Refresh'),
+                label: Text(_t('refresh', 'Refresh')),
               ),
             ],
           ),
@@ -1280,11 +1407,21 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                       color: _migrationStatusColor(theme, plan.status),
                     ),
                     title: Text(
-                      plan.intent.isEmpty ? 'Migration plan' : plan.intent,
+                      plan.intent.isEmpty
+                          ? _t(
+                              'project_database_migration_plan',
+                              'Migration plan',
+                            )
+                          : plan.intent,
                       style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                     subtitle: Text(
-                      '${_formatDateTime(plan.createdAt)} • ${plan.jobCount} jobs',
+                      _t(
+                            'project_database_migration_job_count',
+                            '{time} • {count} jobs',
+                          )
+                          .replaceAll('{time}', _formatDateTime(plan.createdAt))
+                          .replaceAll('{count}', plan.jobCount.toString()),
                       style: TextStyle(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -1316,7 +1453,10 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                           child: Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              'No job details available yet.',
+                              _t(
+                                'project_database_no_job_details',
+                                'No job details available yet.',
+                              ),
                               style: TextStyle(
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
@@ -1335,7 +1475,18 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                               '${job.stage.toUpperCase()} • ${job.status}',
                             ),
                             subtitle: Text(
-                              '${_formatDateTime(job.createdAt)} • ${job.statementCount ?? 0} statements',
+                              _t(
+                                    'project_database_statement_count',
+                                    '{time} • {count} statements',
+                                  )
+                                  .replaceAll(
+                                    '{time}',
+                                    _formatDateTime(job.createdAt),
+                                  )
+                                  .replaceAll(
+                                    '{count}',
+                                    (job.statementCount ?? 0).toString(),
+                                  ),
                             ),
                           );
                         }),
@@ -1380,8 +1531,8 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
     final parsed = DateTime.tryParse(raw);
     if (parsed == null) return raw;
     final local = parsed.toLocal();
-    String two(int v) => v.toString().padLeft(2, '0');
-    return '${local.year}-${two(local.month)}-${two(local.day)} ${two(local.hour)}:${two(local.minute)}';
+    final localeTag = Localizations.localeOf(context).toLanguageTag();
+    return DateFormat.yMd(localeTag).add_Hm().format(local);
   }
 
   Widget _buildEmptyState({
@@ -1543,7 +1694,12 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
               children: [
                 const SizedBox(height: 4),
                 Text(
-                  '${table.columns.length} columns • ${table.schema} schema',
+                  _t(
+                        'project_database_columns_schema',
+                        '{columns} columns • {schema} schema',
+                      )
+                      .replaceAll('{columns}', table.columns.length.toString())
+                      .replaceAll('{schema}', table.schema),
                   style: TextStyle(
                     color: theme.colorScheme.onSurfaceVariant,
                     fontSize: 13,
@@ -1552,7 +1708,13 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                 if (table.foreignKeys.isNotEmpty) ...[
                   const SizedBox(height: 2),
                   Text(
-                    '${table.foreignKeys.length} relations',
+                    _t(
+                      'project_database_relations_count',
+                      '{count} relations',
+                    ).replaceAll(
+                      '{count}',
+                      table.foreignKeys.length.toString(),
+                    ),
                     style: TextStyle(
                       color: theme.colorScheme.onSurfaceVariant,
                       fontSize: 12,
@@ -1562,7 +1724,10 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                 if (table.rowCount != null) ...[
                   const SizedBox(height: 2),
                   Text(
-                    '${table.rowCount} rows',
+                    _t(
+                      'project_database_rows_count',
+                      '{count} rows',
+                    ).replaceAll('{count}', table.rowCount.toString()),
                     style: TextStyle(
                       color: theme.colorScheme.onSurfaceVariant,
                       fontSize: 12,
@@ -1575,10 +1740,15 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
-                  tooltip: 'Ask AI about this table',
+                  tooltip: _t(
+                    'project_database_ask_ai_table',
+                    'Ask AI about this table',
+                  ),
                   onPressed: () {
-                    final question =
-                        'Can you analyze the database table "${table.displayName}" and explain its purpose, structure, and any suggestions for optimization or best practices?';
+                    final question = _t(
+                      'project_database_ai_prompt_table',
+                      'Can you analyze the database table "{table}" and explain its purpose, structure, and any suggestions for optimization or best practices?',
+                    ).replaceAll('{table}', table.displayName);
                     widget.onAskAi?.call(question);
                   },
                   icon: const Icon(Icons.auto_awesome_outlined, size: 18),
@@ -1613,7 +1783,10 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Text(
-            'No foreign-key relationships found.',
+            _t(
+              'project_database_no_relations',
+              'No foreign-key relationships found.',
+            ),
             style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
@@ -1634,7 +1807,10 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
             subtitle: Text(
-              '${table.foreignKeys.length} relations',
+              _t(
+                'project_database_relations_count',
+                '{count} relations',
+              ).replaceAll('{count}', table.foreignKeys.length.toString()),
               style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
             ),
             children: table.foreignKeys.map((fk) {
@@ -1658,8 +1834,18 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                       ),
                 onTap: () {
                   widget.onAskAi?.call(
-                    'Explain the relationship from ${table.fullName}.${fk.columnName} '
-                    'to ${fk.refFullTable}.${fk.refColumn}. Suggest indexes and common queries.',
+                    _t(
+                          'project_database_ai_prompt_relation',
+                          'Explain the relationship from {from} to {to}. Suggest indexes and common queries.',
+                        )
+                        .replaceAll(
+                          '{from}',
+                          '${table.fullName}.${fk.columnName}',
+                        )
+                        .replaceAll(
+                          '{to}',
+                          '${fk.refFullTable}.${fk.refColumn}',
+                        ),
                   );
                 },
               );
@@ -1679,7 +1865,10 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Text(
-            'Add more tables to see relationships as a graph.',
+            _t(
+              'project_database_graph_hint',
+              'Add more tables to see relationships as a graph.',
+            ),
             style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
@@ -1739,8 +1928,10 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                     );
                   },
                   onLongPress: () {
-                    final question =
-                        'Given the database schema, explain how "${t.fullName}" relates to other tables (foreign keys) and suggest improvements.';
+                    final question = _t(
+                      'project_database_ai_prompt_graph',
+                      'Given the database schema, explain how "{table}" relates to other tables (foreign keys) and suggest improvements.',
+                    ).replaceAll('{table}', t.fullName);
                     widget.onAskAi?.call(question);
                   },
                 ),
@@ -2151,6 +2342,12 @@ class _EnableDatabaseCard extends StatelessWidget {
 
   const _EnableDatabaseCard({required this.enabling, required this.onEnable});
 
+  String _t(BuildContext context, String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -2189,7 +2386,11 @@ class _EnableDatabaseCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Enable Database',
+                    _t(
+                      context,
+                      'project_database_enable_title',
+                      'Enable Database',
+                    ),
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: onSurface,
@@ -2198,26 +2399,42 @@ class _EnableDatabaseCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Provision a Neon PostgreSQL database for this project and start exploring your schema and data.',
+                    _t(
+                      context,
+                      'project_database_enable_hint',
+                      'Provision a Neon PostgreSQL database for this project and start exploring your schema and data.',
+                    ),
                     style: theme.textTheme.bodyMedium?.copyWith(color: muted),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
                   _FeatureRow(
                     icon: Icons.cloud_outlined,
-                    text: 'Serverless Postgres on Neon',
+                    text: _t(
+                      context,
+                      'project_database_feature_serverless',
+                      'Serverless Postgres on Neon',
+                    ),
                     color: theme.colorScheme.primary,
                   ),
                   const SizedBox(height: 8),
                   _FeatureRow(
                     icon: Icons.lock_outline,
-                    text: 'Secure SSL connections',
+                    text: _t(
+                      context,
+                      'project_database_feature_ssl',
+                      'Secure SSL connections',
+                    ),
                     color: theme.colorScheme.primary,
                   ),
                   const SizedBox(height: 8),
                   _FeatureRow(
                     icon: Icons.alt_route_outlined,
-                    text: 'Branching support',
+                    text: _t(
+                      context,
+                      'project_database_feature_branching',
+                      'Branching support',
+                    ),
                     color: theme.colorScheme.primary,
                   ),
                   const SizedBox(height: 18),
@@ -2232,7 +2449,19 @@ class _EnableDatabaseCard extends StatelessWidget {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.bolt),
-                      label: Text(enabling ? 'Enabling...' : 'Enable Database'),
+                      label: Text(
+                        enabling
+                            ? _t(
+                                context,
+                                'project_database_enabling',
+                                'Enabling...',
+                              )
+                            : _t(
+                                context,
+                                'project_database_enable_action',
+                                'Enable Database',
+                              ),
+                      ),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../models/env_var.dart';
 import '../../services/d1vai_service.dart';
 import '../../core/auth_expiry_bus.dart';
@@ -28,6 +29,12 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
   bool _isInitialized = false;
   String? _loadError;
   bool _showValues = false;
+
+  String _t(String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
 
   @override
   void didChangeDependencies() {
@@ -84,7 +91,11 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
         );
         return;
       }
-      SnackBarHelper.showError(context, title: 'Error', message: msg);
+      SnackBarHelper.showError(
+        context,
+        title: _t('error', 'Error'),
+        message: msg,
+      );
     }
   }
 
@@ -106,14 +117,21 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
       if (!mounted) return;
       SnackBarHelper.showSuccess(
         context,
-        title: 'Added',
-        message: 'Environment variable created',
+        title: _t('project_api_added', 'Added'),
+        message: _t(
+          'project_api_variable_created',
+          'Environment variable created',
+        ),
       );
       await _loadEnvVars();
     } catch (e) {
       final msg = humanizeError(e);
       if (!mounted) return;
-      SnackBarHelper.showError(context, title: 'Create failed', message: msg);
+      SnackBarHelper.showError(
+        context,
+        title: _t('project_api_create_failed', 'Create failed'),
+        message: msg,
+      );
     }
   }
 
@@ -161,14 +179,21 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
       if (!mounted) return;
       SnackBarHelper.showSuccess(
         context,
-        title: 'Saved',
-        message: 'Environment variable updated',
+        title: _t('project_api_saved', 'Saved'),
+        message: _t(
+          'project_api_variable_updated',
+          'Environment variable updated',
+        ),
       );
       await _loadEnvVars();
     } catch (e) {
       final msg = humanizeError(e);
       if (!mounted) return;
-      SnackBarHelper.showError(context, title: 'Update failed', message: msg);
+      SnackBarHelper.showError(
+        context,
+        title: _t('project_api_update_failed', 'Update failed'),
+        message: msg,
+      );
     }
   }
 
@@ -178,12 +203,17 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Delete variable'),
-          content: Text('Delete ${envVar.key}? This cannot be undone.'),
+          title: Text(_t('project_api_delete_variable', 'Delete variable')),
+          content: Text(
+            _t(
+              'project_api_delete_confirm',
+              'Delete {key}? This cannot be undone.',
+            ).replaceAll('{key}', envVar.key),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
+              child: Text(_t('cancel', 'Cancel')),
             ),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),
@@ -191,7 +221,7 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
                 backgroundColor: Theme.of(context).colorScheme.error,
                 foregroundColor: Theme.of(context).colorScheme.onError,
               ),
-              child: const Text('Delete'),
+              child: Text(_t('delete', 'Delete')),
             ),
           ],
         );
@@ -204,14 +234,18 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
       if (!mounted) return;
       SnackBarHelper.showSuccess(
         context,
-        title: 'Deleted',
+        title: _t('project_api_deleted', 'Deleted'),
         message: envVar.key,
       );
       await _loadEnvVars();
     } catch (e) {
       final msg = humanizeError(e);
       if (!mounted) return;
-      SnackBarHelper.showError(context, title: 'Delete failed', message: msg);
+      SnackBarHelper.showError(
+        context,
+        title: _t('project_api_delete_failed', 'Delete failed'),
+        message: msg,
+      );
     }
   }
 
@@ -238,9 +272,12 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
                 children: [
                   Row(
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          'Environment Variables',
+                          _t(
+                            'project_api_environment_variables',
+                            'Environment Variables',
+                          ),
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -252,8 +289,8 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
                             ? null
                             : _showCreateEnvVarDialog,
                         icon: const Icon(Icons.add, size: 18),
-                        label: const Text(
-                          'Add',
+                        label: Text(
+                          _t('project_api_add', 'Add'),
                           style: TextStyle(fontSize: 12),
                         ),
                         style: ElevatedButton.styleFrom(
@@ -272,7 +309,15 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
                     children: [
                       Expanded(
                         child: Text(
-                          _showValues ? 'Values visible' : 'Values masked',
+                          _showValues
+                              ? _t(
+                                  'project_api_values_visible',
+                                  'Values visible',
+                                )
+                              : _t(
+                                  'project_api_values_masked',
+                                  'Values masked',
+                                ),
                           style: TextStyle(
                             fontSize: 12,
                             color: theme.colorScheme.onSurfaceVariant,
@@ -290,21 +335,31 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
                                     context: context,
                                     builder: (context) {
                                       return AlertDialog(
-                                        title: const Text('Show values?'),
-                                        content: const Text(
-                                          'This will reveal sensitive environment values on screen.',
+                                        title: Text(
+                                          _t(
+                                            'project_api_show_values_title',
+                                            'Show values?',
+                                          ),
+                                        ),
+                                        content: Text(
+                                          _t(
+                                            'project_api_show_values_message',
+                                            'This will reveal sensitive environment values on screen.',
+                                          ),
                                         ),
                                         actions: [
                                           TextButton(
                                             onPressed: () => Navigator.of(
                                               context,
                                             ).pop(false),
-                                            child: const Text('Cancel'),
+                                            child: Text(_t('cancel', 'Cancel')),
                                           ),
                                           ElevatedButton(
                                             onPressed: () =>
                                                 Navigator.of(context).pop(true),
-                                            child: const Text('Show'),
+                                            child: Text(
+                                              _t('project_api_show', 'Show'),
+                                            ),
                                           ),
                                         ],
                                       );
@@ -346,7 +401,7 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
                           ),
                           TextButton(
                             onPressed: _isLoadingEnvVars ? null : _loadEnvVars,
-                            child: const Text('Retry'),
+                            child: Text(_t('retry', 'Retry')),
                           ),
                         ],
                       ),
@@ -403,6 +458,12 @@ class _EnvVarEmptyState extends StatelessWidget {
 
   const _EnvVarEmptyState({required this.onAdd, required this.canAdd});
 
+  String _t(BuildContext context, String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -444,14 +505,18 @@ class _EnvVarEmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            'No environment variables',
+            _t(context, 'project_api_empty_title', 'No environment variables'),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Create your first key-value pair to configure\nruntime behavior for this project.',
+            _t(
+              context,
+              'project_api_empty_hint',
+              'Create your first key-value pair to configure\nruntime behavior for this project.',
+            ),
             textAlign: TextAlign.center,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
@@ -462,7 +527,9 @@ class _EnvVarEmptyState extends StatelessWidget {
           FilledButton.icon(
             onPressed: canAdd ? onAdd : null,
             icon: const Icon(Icons.add, size: 16),
-            label: const Text('Add variable'),
+            label: Text(
+              _t(context, 'project_api_add_variable', 'Add variable'),
+            ),
           ),
         ],
       ),
@@ -480,6 +547,12 @@ class _EnvVarItem extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
   });
+
+  String _t(BuildContext context, String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -525,13 +598,13 @@ class _EnvVarItem extends StatelessWidget {
               PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert, size: 20),
                 itemBuilder: (context) => [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'edit',
                     child: Row(
                       children: [
-                        Icon(Icons.edit, size: 18),
-                        SizedBox(width: 8),
-                        Text('Edit'),
+                        const Icon(Icons.edit, size: 18),
+                        const SizedBox(width: 8),
+                        Text(_t(context, 'edit', 'Edit')),
                       ],
                     ),
                   ),
@@ -546,7 +619,7 @@ class _EnvVarItem extends StatelessWidget {
                         ),
                         SizedBox(width: 8),
                         Text(
-                          'Delete',
+                          _t(context, 'delete', 'Delete'),
                           style: TextStyle(color: theme.colorScheme.error),
                         ),
                       ],
@@ -575,7 +648,9 @@ class _EnvVarItem extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                envVar.isSensitive ? 'Sensitive' : 'Not sensitive',
+                envVar.isSensitive
+                    ? _t(context, 'project_api_sensitive', 'Sensitive')
+                    : _t(context, 'project_api_not_sensitive', 'Not sensitive'),
                 style: TextStyle(
                   fontSize: 11,
                   color: envVar.isSensitive
@@ -593,12 +668,15 @@ class _EnvVarItem extends StatelessWidget {
                     if (!context.mounted) return;
                     SnackBarHelper.showSuccess(
                       context,
-                      title: 'Copied',
+                      title: _t(context, 'copied', 'Copied'),
                       message: envVar.key,
                     );
                   },
                   icon: const Icon(Icons.copy, size: 16),
-                  label: const Text('Copy', style: TextStyle(fontSize: 12)),
+                  label: Text(
+                    _t(context, 'project_api_copy', 'Copy'),
+                    style: const TextStyle(fontSize: 12),
+                  ),
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,

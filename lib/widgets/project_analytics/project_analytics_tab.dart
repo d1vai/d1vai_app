@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
 
+import '../../l10n/app_localizations.dart';
 import '../../models/analytics.dart';
 import '../../models/message.dart';
 import '../../models/project.dart';
@@ -24,6 +26,12 @@ import '../skeletons/analytics_sessions_skeleton.dart';
 enum AnalyticsEnvScope { all, preview, prod }
 
 enum AnalyticsCompareMode { days7, days30 }
+
+String _tr(BuildContext context, String key, String fallback) {
+  final value = AppLocalizations.of(context)?.translate(key);
+  if (value == null || value == key) return fallback;
+  return value;
+}
 
 class ProjectAnalyticsTab extends StatefulWidget {
   final UserProject project;
@@ -94,6 +102,8 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
   bool _installSucceeded = false;
   int _autoEnterCountdown = 0;
   Timer? _autoEnterTimer;
+
+  String _t(String key, String fallback) => _tr(context, key, fallback);
 
   @override
   void didChangeDependencies() {
@@ -250,7 +260,11 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
         );
         return;
       }
-      SnackBarHelper.showError(context, title: 'Error', message: msg);
+      SnackBarHelper.showError(
+        context,
+        title: _t('error', 'Error'),
+        message: msg,
+      );
     }
   }
 
@@ -478,8 +492,11 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                   _startAutoEnterDataCountdown();
                   SnackBarHelper.showSuccess(
                     context,
-                    title: 'Success',
-                    message: 'Analytics successfully installed and activated.',
+                    title: _t('success', 'Success'),
+                    message: _t(
+                      'project_analytics_install_success',
+                      'Analytics successfully installed and activated.',
+                    ),
                   );
                   await widget.onRefreshProject?.call();
                   if (!mounted) return;
@@ -489,8 +506,10 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                 } else {
                   setState(() {
                     _installSucceeded = false;
-                    _installError =
-                        'Analytics install did not complete successfully.';
+                    _installError = _t(
+                      'project_analytics_install_incomplete',
+                      'Analytics install did not complete successfully.',
+                    );
                   });
                 }
                 return;
@@ -536,7 +555,11 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
         );
         return;
       }
-      SnackBarHelper.showError(context, title: 'Error', message: msg);
+      SnackBarHelper.showError(
+        context,
+        title: _t('error', 'Error'),
+        message: msg,
+      );
     }
   }
 
@@ -547,8 +570,8 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
     if (!mounted) return;
     SnackBarHelper.showSuccess(
       context,
-      title: 'Copied',
-      message: 'Website ID copied',
+      title: _t('copied', 'Copied'),
+      message: _t('project_analytics_website_id_copied', 'Website ID copied'),
     );
   }
 
@@ -594,8 +617,11 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
     if (!mounted) return;
     SnackBarHelper.showSuccess(
       context,
-      title: 'Copied',
-      message: '$label copied',
+      title: _t('copied', 'Copied'),
+      message: _t(
+        'project_analytics_field_copied',
+        '{label} copied',
+      ).replaceAll('{label}', label),
     );
   }
 
@@ -638,7 +664,10 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                           ? null
                           : () => _copyFieldValue(value, title),
                       icon: const Icon(Icons.copy, size: 18),
-                      tooltip: 'Copy $title',
+                      tooltip: _t(
+                        'project_analytics_copy_field',
+                        'Copy {title}',
+                      ).replaceAll('{title}', title),
                     ),
                   ],
                 ),
@@ -647,26 +676,37 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
           }
 
           return AlertDialog(
-            title: const Text('Share Analytics Access'),
+            title: Text(
+              _t(
+                'project_analytics_share_access_dialog',
+                'Share Analytics Access',
+              ),
+            ),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  row('Login URL', loginUrl),
+                  row(_t('project_analytics_login_url', 'Login URL'), loginUrl),
                   const SizedBox(height: 12),
-                  row('Username', username),
+                  row(_t('project_analytics_username', 'Username'), username),
                   const SizedBox(height: 12),
-                  row('Password', password),
+                  row(_t('project_analytics_password', 'Password'), password),
                   const SizedBox(height: 12),
-                  row('Team Access Code', teamCode),
+                  row(
+                    _t(
+                      'project_analytics_team_access_code',
+                      'Team Access Code',
+                    ),
+                    teamCode,
+                  ),
                 ],
               ),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Close'),
+                child: Text(_t('close', 'Close')),
               ),
             ],
           );
@@ -675,14 +715,17 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       if (!mounted) return;
       SnackBarHelper.showSuccess(
         context,
-        title: 'Success',
-        message: 'Analytics access is ready to share.',
+        title: _t('success', 'Success'),
+        message: _t(
+          'project_analytics_access_ready',
+          'Analytics access is ready to share.',
+        ),
       );
     } catch (e) {
       if (!mounted) return;
       SnackBarHelper.showError(
         context,
-        title: 'Error',
+        title: _t('error', 'Error'),
         message: humanizeError(e),
       );
     } finally {
@@ -728,15 +771,67 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
     final series = <ChartSeries>[];
     if (_showPageviewsSeries && pageviews.isNotEmpty) {
       series.add(
-        ChartSeries(name: 'Pageviews', data: pageviews, color: Colors.blue),
+        ChartSeries(
+          name: _t('project_analytics_pageviews', 'Pageviews'),
+          data: pageviews,
+          color: Colors.blue,
+        ),
       );
     }
     if (_showSessionsSeries && sessions.isNotEmpty) {
       series.add(
-        ChartSeries(name: 'Sessions', data: sessions, color: Colors.green),
+        ChartSeries(
+          name: _t('project_analytics_sessions', 'Sessions'),
+          data: sessions,
+          color: Colors.green,
+        ),
       );
     }
     return series;
+  }
+
+  String _timeRangeLabel(TimeRange range) {
+    return switch (range) {
+      TimeRange.lastHour => _t('project_analytics_last_hour', 'Last Hour'),
+      TimeRange.last6Hours => _t(
+        'project_analytics_last_6_hours',
+        'Last 6 Hours',
+      ),
+      TimeRange.last24Hours => _t(
+        'project_analytics_last_24_hours',
+        'Last 24 Hours',
+      ),
+      TimeRange.last7Days => _t('project_analytics_last_7_days', 'Last 7 Days'),
+      TimeRange.last30Days => _t(
+        'project_analytics_last_30_days',
+        'Last 30 Days',
+      ),
+      TimeRange.last90Days => _t(
+        'project_analytics_last_90_days',
+        'Last 90 Days',
+      ),
+    };
+  }
+
+  String _compareDimLabel(String dim) {
+    return switch (dim) {
+      'pages' => _t('project_analytics_dim_pages', 'Pages'),
+      'referrers' => _t('project_analytics_dim_referrers', 'Referrers'),
+      'browsers' => _t('project_analytics_dim_browsers', 'Browsers'),
+      'os' => _t('project_analytics_dim_os', 'OS'),
+      'devices' => _t('project_analytics_dim_devices', 'Devices'),
+      'screen' => _t('project_analytics_dim_screen', 'Screen'),
+      'countries' => _t('project_analytics_dim_countries', 'Countries'),
+      'regions' => _t('project_analytics_dim_regions', 'Regions'),
+      'cities' => _t('project_analytics_dim_cities', 'Cities'),
+      'languages' => _t('project_analytics_dim_languages', 'Languages'),
+      'events' => _t('project_analytics_dim_events', 'Events'),
+      'query' => _t('project_analytics_dim_query', 'Query'),
+      'tag' => _t('project_analytics_dim_tag', 'Tag'),
+      'channel' => _t('project_analytics_dim_channel', 'Channel'),
+      'host' => _t('project_analytics_dim_host', 'Host'),
+      _ => dim,
+    };
   }
 
   @override
@@ -861,13 +956,13 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                 });
               },
               tabs: [
-                Tab(text: 'Data'),
-                Tab(text: 'Events'),
-                Tab(text: 'Sessions'),
-                Tab(text: 'Realtime'),
-                Tab(text: 'Compare'),
-                Tab(text: 'Reports'),
-                Tab(text: 'Setting'),
+                Tab(text: _t('project_analytics_tab_data', 'Data')),
+                Tab(text: _t('project_analytics_tab_events', 'Events')),
+                Tab(text: _t('project_analytics_tab_sessions', 'Sessions')),
+                Tab(text: _t('project_analytics_tab_realtime', 'Realtime')),
+                Tab(text: _t('project_analytics_tab_compare', 'Compare')),
+                Tab(text: _t('project_analytics_tab_reports', 'Reports')),
+                Tab(text: _t('project_analytics_tab_setting', 'Setting')),
               ],
             ),
           ),
@@ -877,25 +972,39 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
               children: [
                 _analyticsTabIndex == 0
                     ? _buildDataTabView()
-                    : _inactiveTabPlaceholder('Data'),
+                    : _inactiveTabPlaceholder(
+                        _t('project_analytics_tab_data', 'Data'),
+                      ),
                 _analyticsTabIndex == 1
                     ? _buildEventsTabView()
-                    : _inactiveTabPlaceholder('Events'),
+                    : _inactiveTabPlaceholder(
+                        _t('project_analytics_tab_events', 'Events'),
+                      ),
                 _analyticsTabIndex == 2
                     ? _buildSessionsTabView()
-                    : _inactiveTabPlaceholder('Sessions'),
+                    : _inactiveTabPlaceholder(
+                        _t('project_analytics_tab_sessions', 'Sessions'),
+                      ),
                 _analyticsTabIndex == 3
                     ? _buildRealtimeTabView()
-                    : _inactiveTabPlaceholder('Realtime'),
+                    : _inactiveTabPlaceholder(
+                        _t('project_analytics_tab_realtime', 'Realtime'),
+                      ),
                 _analyticsTabIndex == 4
                     ? _buildCompareTabView()
-                    : _inactiveTabPlaceholder('Compare'),
+                    : _inactiveTabPlaceholder(
+                        _t('project_analytics_tab_compare', 'Compare'),
+                      ),
                 _analyticsTabIndex == 5
                     ? _buildReportsTabView()
-                    : _inactiveTabPlaceholder('Reports'),
+                    : _inactiveTabPlaceholder(
+                        _t('project_analytics_tab_reports', 'Reports'),
+                      ),
                 _analyticsTabIndex == 6
                     ? _buildSettingsTabView()
-                    : _inactiveTabPlaceholder('Setting'),
+                    : _inactiveTabPlaceholder(
+                        _t('project_analytics_tab_setting', 'Setting'),
+                      ),
               ],
             ),
           ),
@@ -907,7 +1016,10 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
   Widget _inactiveTabPlaceholder(String title) {
     return Center(
       child: Text(
-        '$title tab',
+        _t(
+          'project_analytics_inactive_tab',
+          '{title} tab',
+        ).replaceAll('{title}', title),
         style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
       ),
     );
@@ -929,7 +1041,10 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
     if (!hasAnyData) {
       final msg = (_loadError ?? '').trim().isNotEmpty
           ? _loadError!.trim()
-          : 'Analytics data will appear once your project is live and receiving traffic.';
+          : _t(
+              'project_analytics_no_data_hint',
+              'Analytics data will appear once your project is live and receiving traffic.',
+            );
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -942,7 +1057,10 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
               const SizedBox(height: 16),
-              Text('No analytics data yet', style: theme.textTheme.titleMedium),
+              Text(
+                _t('project_analytics_no_data', 'No analytics data yet'),
+                style: theme.textTheme.titleMedium,
+              ),
               const SizedBox(height: 8),
               Text(
                 msg,
@@ -954,7 +1072,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _loadAnalytics,
-                child: const Text('Retry'),
+                child: Text(_t('retry', 'Retry')),
               ),
             ],
           ),
@@ -979,7 +1097,10 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
             if (_pageviews != null) ...[
               if (_trafficSeries.isNotEmpty)
                 RealtimeChart(
-                  title: 'Traffic Overview',
+                  title: _t(
+                    'project_analytics_traffic_overview',
+                    'Traffic Overview',
+                  ),
                   series: _trafficSeries,
                   timeRange: _timeRange,
                   height: 250,
@@ -1122,7 +1243,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                   const SizedBox(height: 12),
                   OutlinedButton(
                     onPressed: () => setState(() {}),
-                    child: const Text('Retry'),
+                    child: Text(_t('retry', 'Retry')),
                   ),
                 ],
               ),
@@ -1150,7 +1271,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                 runSpacing: 8,
                 children: [
                   ChoiceChip(
-                    label: const Text('7D'),
+                    label: Text(_t('project_analytics_7d', '7D')),
                     selected: _eventsTimeRange == TimeRange.last7Days,
                     onSelected: (v) {
                       if (!v || _eventsTimeRange == TimeRange.last7Days) {
@@ -1160,7 +1281,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                     },
                   ),
                   ChoiceChip(
-                    label: const Text('30D'),
+                    label: Text(_t('project_analytics_30d', '30D')),
                     selected: _eventsTimeRange == TimeRange.last30Days,
                     onSelected: (v) {
                       if (!v || _eventsTimeRange == TimeRange.last30Days) {
@@ -1176,14 +1297,20 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                 children: [
                   Expanded(
                     child: _simpleMetricCard(
-                      title: 'Total Events',
+                      title: _t(
+                        'project_analytics_total_events',
+                        'Total Events',
+                      ),
                       value: events.length.toString(),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _simpleMetricCard(
-                      title: 'Unique Events',
+                      title: _t(
+                        'project_analytics_unique_events',
+                        'Unique Events',
+                      ),
                       value: uniqueEvents.toString(),
                     ),
                   ),
@@ -1192,10 +1319,10 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
               const SizedBox(height: 16),
               if (points.isNotEmpty)
                 RealtimeChart(
-                  title: 'Events Trend',
+                  title: _t('project_analytics_events_trend', 'Events Trend'),
                   series: [
                     ChartSeries(
-                      name: 'Events',
+                      name: _t('project_analytics_events', 'Events'),
                       data: points,
                       color: Colors.orange,
                     ),
@@ -1220,8 +1347,8 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Recent Events',
+                      Text(
+                        _t('project_analytics_recent_events', 'Recent Events'),
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 16,
@@ -1229,7 +1356,12 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                       ),
                       const SizedBox(height: 12),
                       if (events.isEmpty)
-                        const Text('No events in current range')
+                        Text(
+                          _t(
+                            'project_analytics_no_events',
+                            'No events in current range',
+                          ),
+                        )
                       else
                         ...events.take(12).map((e) {
                           final item = e is Map ? e : const {};
@@ -1301,7 +1433,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
             padding: const EdgeInsets.all(16),
             children: [
               _simpleMetricCard(
-                title: 'Total Sessions',
+                title: _t('project_analytics_total_sessions', 'Total Sessions'),
                 value: count.toString(),
               ),
               const SizedBox(height: 16),
@@ -1311,8 +1443,8 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Session List',
+                      Text(
+                        _t('project_analytics_session_list', 'Session List'),
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 16,
@@ -1320,7 +1452,12 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                       ),
                       const SizedBox(height: 12),
                       if (sessions.isEmpty)
-                        const Text('No sessions in current range')
+                        Text(
+                          _t(
+                            'project_analytics_no_sessions',
+                            'No sessions in current range',
+                          ),
+                        )
                       else
                         ...sessions.take(12).map((s) {
                           final item = s is Map ? s : const {};
@@ -1329,7 +1466,10 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                                       item['url'] ??
                                       item['hostname'] ??
                                       item['sessionId'] ??
-                                      'Session')
+                                      _t(
+                                        'project_analytics_session',
+                                        'Session',
+                                      ))
                                   .toString();
                           final subtitle =
                               (item['browser'] ??
@@ -1421,7 +1561,10 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
             padding: const EdgeInsets.all(16),
             children: [
               _simpleMetricCard(
-                title: 'Active Visitors',
+                title: _t(
+                  'project_analytics_active_visitors',
+                  'Active Visitors',
+                ),
                 value: activeNow.toString(),
               ),
               const SizedBox(height: 16),
@@ -1431,8 +1574,11 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Top URLs (Realtime)',
+                      Text(
+                        _t(
+                          'project_analytics_top_urls_realtime',
+                          'Top URLs (Realtime)',
+                        ),
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 16,
@@ -1440,7 +1586,12 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                       ),
                       const SizedBox(height: 12),
                       if (topUrls.isEmpty)
-                        const Text('No realtime URL data yet')
+                        Text(
+                          _t(
+                            'project_analytics_no_realtime_urls',
+                            'No realtime URL data yet',
+                          ),
+                        )
                       else
                         ...topUrls
                             .take(10)
@@ -1573,7 +1724,9 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                 runSpacing: 8,
                 children: [
                   ChoiceChip(
-                    label: const Text('7D vs Prev 7D'),
+                    label: Text(
+                      _t('project_analytics_7d_vs_prev', '7D vs Prev 7D'),
+                    ),
                     selected: _compareMode == AnalyticsCompareMode.days7,
                     onSelected: (v) {
                       if (!v || _compareMode == AnalyticsCompareMode.days7) {
@@ -1583,7 +1736,9 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                     },
                   ),
                   ChoiceChip(
-                    label: const Text('30D vs Prev 30D'),
+                    label: Text(
+                      _t('project_analytics_30d_vs_prev', '30D vs Prev 30D'),
+                    ),
                     selected: _compareMode == AnalyticsCompareMode.days30,
                     onSelected: (v) {
                       if (!v || _compareMode == AnalyticsCompareMode.days30) {
@@ -1605,7 +1760,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: ChoiceChip(
-                        label: Text(dim),
+                        label: Text(_compareDimLabel(dim)),
                         selected: selected,
                         onSelected: (v) {
                           if (!v || selected) return;
@@ -1621,14 +1776,14 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                 children: [
                   Expanded(
                     child: _simpleMetricCard(
-                      title: 'Pageviews',
+                      title: _t('project_analytics_pageviews', 'Pageviews'),
                       value: '$currentPv (${pvDelta.toStringAsFixed(1)}%)',
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _simpleMetricCard(
-                      title: 'Sessions',
+                      title: _t('project_analytics_sessions', 'Sessions'),
                       value:
                           '$currentSessions (${sessionDelta.toStringAsFixed(1)}%)',
                     ),
@@ -1642,8 +1797,11 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Comparison Notes',
+                      Text(
+                        _t(
+                          'project_analytics_comparison_notes',
+                          'Comparison Notes',
+                        ),
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 16,
@@ -1651,23 +1809,76 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Current window: ${_compareMode == AnalyticsCompareMode.days7 ? 'Last 7 Days' : 'Last 30 Days'}',
+                        _t(
+                          'project_analytics_current_window',
+                          'Current window: {range}',
+                        ).replaceAll(
+                          '{range}',
+                          _compareMode == AnalyticsCompareMode.days7
+                              ? _t(
+                                  'project_analytics_last_7_days',
+                                  'Last 7 Days',
+                                )
+                              : _t(
+                                  'project_analytics_last_30_days',
+                                  'Last 30 Days',
+                                ),
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Previous window: previous ${_compareMode == AnalyticsCompareMode.days7 ? 'Last 7 Days' : 'Last 30 Days'}',
+                        _t(
+                          'project_analytics_previous_window',
+                          'Previous window: previous {range}',
+                        ).replaceAll(
+                          '{range}',
+                          _compareMode == AnalyticsCompareMode.days7
+                              ? _t(
+                                  'project_analytics_last_7_days',
+                                  'Last 7 Days',
+                                )
+                              : _t(
+                                  'project_analytics_last_30_days',
+                                  'Last 30 Days',
+                                ),
+                        ),
                       ),
                       const SizedBox(height: 8),
-                      Text('Pageviews: $currentPv vs $prevPv'),
-                      Text('Sessions: $currentSessions vs $prevSessions'),
+                      Text(
+                        _t(
+                              'project_analytics_pageviews_compare',
+                              'Pageviews: {current} vs {previous}',
+                            )
+                            .replaceAll('{current}', currentPv.toString())
+                            .replaceAll('{previous}', prevPv.toString()),
+                      ),
+                      Text(
+                        _t(
+                              'project_analytics_sessions_compare',
+                              'Sessions: {current} vs {previous}',
+                            )
+                            .replaceAll('{current}', currentSessions.toString())
+                            .replaceAll('{previous}', prevSessions.toString()),
+                      ),
                       const SizedBox(height: 12),
                       Text(
-                        'Top $_compareDimension (Current vs Previous)',
+                        _t(
+                          'project_analytics_top_compare',
+                          'Top {dimension} (Current vs Previous)',
+                        ).replaceAll(
+                          '{dimension}',
+                          _compareDimLabel(_compareDimension),
+                        ),
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 6),
                       if (currentMetrics.isEmpty && previousMetrics.isEmpty)
-                        const Text('No top-page comparison data')
+                        Text(
+                          _t(
+                            'project_analytics_no_compare_data',
+                            'No top-page comparison data',
+                          ),
+                        )
                       else
                         ..._buildCompareMetricRows(
                           currentMetrics,
@@ -1714,7 +1925,12 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
           dense: true,
           contentPadding: EdgeInsets.zero,
           title: Text(name.isEmpty ? '—' : name),
-          subtitle: Text('Prev: $previous'),
+          subtitle: Text(
+            _t(
+              'project_analytics_prev',
+              'Prev: {value}',
+            ).replaceAll('{value}', previous.toString()),
+          ),
           trailing: Text('$current (${delta.toStringAsFixed(1)}%)'),
         ),
       );
@@ -1725,20 +1941,26 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
   Widget _buildReportsTabView() {
     return ListView(
       padding: const EdgeInsets.all(16),
-      children: const [
+      children: [
         Card(
           child: Padding(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Reports',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  _t('project_analytics_reports', 'Reports'),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
-                  'Custom reports are coming soon. This keeps parity with the current web placeholder state.',
+                  _t(
+                    'project_analytics_reports_coming',
+                    'Custom reports are coming soon. This keeps parity with the current web placeholder state.',
+                  ),
                 ),
               ],
             ),
@@ -1765,8 +1987,8 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Analytics Tracking',
+                    Text(
+                      _t('project_analytics_tracking', 'Analytics Tracking'),
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 16,
@@ -1774,7 +1996,13 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Website ID: ${websiteId.trim().isEmpty ? '—' : websiteId}',
+                      _t(
+                        'project_analytics_website_id',
+                        'Website ID: {id}',
+                      ).replaceAll(
+                        '{id}',
+                        websiteId.trim().isEmpty ? '—' : websiteId,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     if (trackingCode.trim().isNotEmpty)
@@ -1786,7 +2014,12 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                         ),
                       )
                     else
-                      const Text('Tracking code unavailable'),
+                      Text(
+                        _t(
+                          'project_analytics_tracking_unavailable',
+                          'Tracking code unavailable',
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -1830,14 +2063,17 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Traffic Overview',
+              _t('project_analytics_traffic_overview', 'Traffic Overview'),
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'No metrics selected. Enable Pageviews/Sessions in Filters.',
+              _t(
+                'project_analytics_no_metrics_selected',
+                'No metrics selected. Enable Pageviews/Sessions in Filters.',
+              ),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -1856,7 +2092,9 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                   });
                 },
                 icon: const Icon(Icons.refresh, size: 18),
-                label: const Text('Restore defaults'),
+                label: Text(
+                  _t('project_analytics_restore_defaults', 'Restore defaults'),
+                ),
               ),
             ),
           ],
@@ -1875,7 +2113,9 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
   String _formatTimeRangeLabel() {
     final now = DateTime.now();
     final start = now.subtract(_timeRange.duration);
-    return '${start.toLocal()} → ${now.toLocal()}';
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final fmt = DateFormat.yMd(locale).add_Hm();
+    return '${fmt.format(start.toLocal())} → ${fmt.format(now.toLocal())}';
   }
 
   int _activeNow() {
@@ -1917,7 +2157,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
             Row(
               children: [
                 Text(
-                  'Filters',
+                  _t('project_analytics_filters', 'Filters'),
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -1941,7 +2181,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                           });
                           reload();
                         },
-                  child: const Text('Reset'),
+                  child: Text(_t('project_analytics_reset', 'Reset')),
                 ),
                 if (_isLoading)
                   const SizedBox(
@@ -1953,7 +2193,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Time range',
+              _t('project_analytics_time_range', 'Time range'),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w600,
@@ -1968,7 +2208,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                 TimeRange.last90Days,
               ])
                 ChoiceChip(
-                  label: Text(r.label),
+                  label: Text(_timeRangeLabel(r)),
                   selected: _timeRange == r,
                   onSelected: (v) {
                     if (!v || _timeRange == r) return;
@@ -1979,7 +2219,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
             ]),
             const SizedBox(height: 12),
             Text(
-              'Environment',
+              _t('project_analytics_environment', 'Environment'),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w600,
@@ -1988,7 +2228,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
             const SizedBox(height: 8),
             chipRow([
               ChoiceChip(
-                label: const Text('All'),
+                label: Text(_t('project_analytics_all', 'All')),
                 selected: _envScope == AnalyticsEnvScope.all,
                 onSelected: (v) {
                   if (!v || _envScope == AnalyticsEnvScope.all) return;
@@ -1997,7 +2237,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                 },
               ),
               ChoiceChip(
-                label: const Text('Preview'),
+                label: Text(_t('project_analytics_preview', 'Preview')),
                 selected: _envScope == AnalyticsEnvScope.preview,
                 onSelected: previewHost == null
                     ? null
@@ -2010,7 +2250,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                       },
               ),
               ChoiceChip(
-                label: const Text('Prod'),
+                label: Text(_t('project_analytics_prod', 'Prod')),
                 selected: _envScope == AnalyticsEnvScope.prod,
                 onSelected: prodHost == null
                     ? null
@@ -2023,7 +2263,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
             ]),
             const SizedBox(height: 12),
             Text(
-              'Metrics',
+              _t('project_analytics_metrics', 'Metrics'),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w600,
@@ -2032,7 +2272,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
             const SizedBox(height: 8),
             chipRow([
               FilterChip(
-                label: const Text('Pageviews'),
+                label: Text(_t('project_analytics_pageviews', 'Pageviews')),
                 selected: _showPageviewsSeries,
                 onSelected: (v) {
                   setState(() {
@@ -2044,7 +2284,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                 },
               ),
               FilterChip(
-                label: const Text('Sessions'),
+                label: Text(_t('project_analytics_sessions', 'Sessions')),
                 selected: _showSessionsSeries,
                 onSelected: (v) {
                   setState(() {
@@ -2059,7 +2299,10 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
             if (_envScope != AnalyticsEnvScope.all) ...[
               const SizedBox(height: 10),
               Text(
-                'Note: environment filter uses hostname exact matching.',
+                _t(
+                  'project_analytics_env_filter_note',
+                  'Note: environment filter uses hostname exact matching.',
+                ),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -2088,7 +2331,10 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Period: ${_timeRange.label}',
+                    _t(
+                      'project_analytics_period',
+                      'Period: {range}',
+                    ).replaceAll('{range}', _timeRangeLabel(_timeRange)),
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -2130,13 +2376,16 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
           children: [
             Expanded(
               child: _AnalyticsMetricCard(
-                title: 'Pageviews',
+                title: _t('project_analytics_pageviews', 'Pageviews'),
                 value: pageviews.toString(),
                 icon: Icons.visibility,
                 color: Colors.blue,
                 onTap: () {
                   widget.onAskAi?.call(
-                    'Can you analyze my pageviews trend and suggest ways to increase traffic and retention?',
+                    _t(
+                      'project_analytics_ai_prompt_pageviews',
+                      'Can you analyze my pageviews trend and suggest ways to increase traffic and retention?',
+                    ),
                   );
                 },
               ),
@@ -2144,13 +2393,16 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
             const SizedBox(width: 12),
             Expanded(
               child: _AnalyticsMetricCard(
-                title: 'Visitors',
+                title: _t('project_analytics_visitors', 'Visitors'),
                 value: visitors.toString(),
                 icon: Icons.people,
                 color: Colors.purple,
                 onTap: () {
                   widget.onAskAi?.call(
-                    'Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?',
+                    _t(
+                      'project_analytics_ai_prompt_visitors',
+                      'Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?',
+                    ),
                   );
                 },
               ),
@@ -2162,13 +2414,16 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
           children: [
             Expanded(
               child: _AnalyticsMetricCard(
-                title: 'Sessions',
+                title: _t('project_analytics_sessions', 'Sessions'),
                 value: sessions.toString(),
                 icon: Icons.timeline,
                 color: Colors.teal,
                 onTap: () {
                   widget.onAskAi?.call(
-                    'Can you analyze my sessions and suggest how to increase engagement and session duration?',
+                    _t(
+                      'project_analytics_ai_prompt_sessions',
+                      'Can you analyze my sessions and suggest how to increase engagement and session duration?',
+                    ),
                   );
                 },
               ),
@@ -2176,13 +2431,16 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
             const SizedBox(width: 12),
             Expanded(
               child: _AnalyticsMetricCard(
-                title: 'Active Now',
+                title: _t('project_analytics_active_now', 'Active Now'),
                 value: activeNow.toString(),
                 icon: Icons.bolt,
                 color: Colors.indigo,
                 onTap: () {
                   widget.onAskAi?.call(
-                    'Can you help me interpret my real-time active users and recommend actions to improve conversion?',
+                    _t(
+                      'project_analytics_ai_prompt_active_now',
+                      'Can you help me interpret my real-time active users and recommend actions to improve conversion?',
+                    ),
                   );
                 },
               ),
@@ -2205,9 +2463,9 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Status Summary',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            Text(
+              _t('project_analytics_status_summary', 'Status Summary'),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             Row(
@@ -2216,8 +2474,8 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Bounces',
+                      Text(
+                        _t('project_analytics_bounces', 'Bounces'),
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
@@ -2238,8 +2496,8 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Total time',
+                      Text(
+                        _t('project_analytics_total_time', 'Total time'),
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
@@ -2248,8 +2506,19 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                       const SizedBox(height: 4),
                       Text(
                         totalTimeSeconds > 0
-                            ? '${(totalTimeSeconds / 60).toStringAsFixed(1)} min'
-                            : (visits > 0 ? '$visits visits' : '—'),
+                            ? _t(
+                                'project_analytics_total_minutes',
+                                '{minutes} min',
+                              ).replaceAll(
+                                '{minutes}',
+                                (totalTimeSeconds / 60).toStringAsFixed(1),
+                              )
+                            : (visits > 0
+                                  ? _t(
+                                      'project_analytics_visits_count',
+                                      '{count} visits',
+                                    ).replaceAll('{count}', visits.toString())
+                                  : '—'),
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -2295,7 +2564,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
             const SizedBox(height: 8),
             if (items.isEmpty)
               Text(
-                'No data',
+                _t('project_analytics_no_data_short', 'No data'),
                 style: TextStyle(
                   fontSize: 12,
                   color: theme.colorScheme.onSurfaceVariant,
@@ -2341,17 +2610,26 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Top Traffic Sources',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            Text(
+              _t(
+                'project_analytics_top_traffic_sources',
+                'Top Traffic Sources',
+              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                buildList('Top pages', pages),
+                buildList(
+                  _t('project_analytics_top_pages', 'Top pages'),
+                  pages,
+                ),
                 const SizedBox(width: 16),
-                buildList('Top referrers', refs),
+                buildList(
+                  _t('project_analytics_top_referrers', 'Top referrers'),
+                  refs,
+                ),
               ],
             ),
           ],
@@ -2367,15 +2645,22 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Actions',
+            Text(
+              _t('project_analytics_actions', 'Actions'),
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             ListTile(
               leading: const Icon(Icons.refresh, color: Colors.indigo),
-              title: const Text('Re-enable Analytics'),
-              subtitle: const Text('Re-run script installation flow'),
+              title: Text(
+                _t('project_analytics_reenable', 'Re-enable Analytics'),
+              ),
+              subtitle: Text(
+                _t(
+                  'project_analytics_reenable_hint',
+                  'Re-run script installation flow',
+                ),
+              ),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               onTap: _installing ? null : _reEnableAnalytics,
             ),
@@ -2385,8 +2670,13 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                 Icons.share,
                 color: _sharingAccess ? Colors.grey : Colors.teal,
               ),
-              title: const Text('Share Access'),
-              subtitle: const Text('Create credentials for Umami login'),
+              title: Text(_t('project_analytics_share_access', 'Share Access')),
+              subtitle: Text(
+                _t(
+                  'project_analytics_share_access_hint',
+                  'Create credentials for Umami login',
+                ),
+              ),
               trailing: _sharingAccess
                   ? const SizedBox(
                       width: 18,
@@ -2399,40 +2689,81 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
             const Divider(),
             ListTile(
               leading: const Icon(Icons.copy_all, color: Colors.green),
-              title: const Text('Copy Summary'),
-              subtitle: const Text('Copy a shareable analytics snapshot'),
+              title: Text(_t('project_analytics_copy_summary', 'Copy Summary')),
+              subtitle: Text(
+                _t(
+                  'project_analytics_copy_summary_hint',
+                  'Copy a shareable analytics snapshot',
+                ),
+              ),
               trailing: const Icon(Icons.copy, size: 18),
               onTap: _copyAnalyticsSummary,
             ),
             const Divider(),
             ListTile(
               leading: const Icon(Icons.code, color: Colors.deepPurple),
-              title: const Text('Copy Tracking Code'),
-              subtitle: const Text('Copy Umami script snippet'),
+              title: Text(
+                _t(
+                  'project_analytics_copy_tracking_code',
+                  'Copy Tracking Code',
+                ),
+              ),
+              subtitle: Text(
+                _t(
+                  'project_analytics_copy_tracking_code_hint',
+                  'Copy Umami script snippet',
+                ),
+              ),
               trailing: const Icon(Icons.copy, size: 18),
               onTap: _copyTrackingCode,
             ),
             const Divider(),
             ListTile(
               leading: const Icon(Icons.dashboard, color: Colors.blue),
-              title: const Text('View Detailed Dashboard'),
-              subtitle: const Text('See comprehensive analytics'),
+              title: Text(
+                _t(
+                  'project_analytics_view_dashboard',
+                  'View Detailed Dashboard',
+                ),
+              ),
+              subtitle: Text(
+                _t(
+                  'project_analytics_view_dashboard_hint',
+                  'See comprehensive analytics',
+                ),
+              ),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               onTap: () {
                 widget.onAskAi?.call(
-                  'Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?',
+                  _t(
+                    'project_analytics_ai_prompt_dashboard',
+                    'Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?',
+                  ),
                 );
               },
             ),
             const Divider(),
             ListTile(
               leading: const Icon(Icons.track_changes, color: Colors.orange),
-              title: const Text('Track Custom Events'),
-              subtitle: const Text('Add custom tracking'),
+              title: Text(
+                _t(
+                  'project_analytics_track_custom_events',
+                  'Track Custom Events',
+                ),
+              ),
+              subtitle: Text(
+                _t(
+                  'project_analytics_track_custom_events_hint',
+                  'Add custom tracking',
+                ),
+              ),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               onTap: () {
                 widget.onAskAi?.call(
-                  'Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?',
+                  _t(
+                    'project_analytics_ai_prompt_custom_events',
+                    'Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?',
+                  ),
                 );
               },
             ),
@@ -2447,22 +2778,53 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       final now = DateTime.now();
       final start = now.subtract(_timeRange.duration);
       final buf = StringBuffer();
-      buf.writeln('Analytics summary');
-      buf.writeln('Project: ${widget.project.projectName}');
-      buf.writeln('Range: ${_timeRange.label}');
+      buf.writeln(_t('project_analytics_summary_title', 'Analytics summary'));
       buf.writeln(
-        'Window: ${start.toLocal().toIso8601String()} → ${now.toLocal().toIso8601String()}',
+        _t(
+          'project_analytics_summary_project',
+          'Project: {name}',
+        ).replaceAll('{name}', widget.project.projectName),
       );
-      buf.writeln('Active now: ${_activeNow()}');
+      buf.writeln(
+        _t(
+          'project_analytics_summary_range',
+          'Range: {range}',
+        ).replaceAll('{range}', _timeRangeLabel(_timeRange)),
+      );
+      buf.writeln(
+        _t('project_analytics_summary_window', 'Window: {start} → {end}')
+            .replaceAll('{start}', start.toLocal().toIso8601String())
+            .replaceAll('{end}', now.toLocal().toIso8601String()),
+      );
+      buf.writeln(
+        _t(
+          'project_analytics_summary_active_now',
+          'Active now: {count}',
+        ).replaceAll('{count}', _activeNow().toString()),
+      );
       if (_values != null) {
         final visitors = _asInt(_values!['visitors'] ?? _values!['users']);
         final pageviews = _asInt(_values!['pageviews']);
-        if (visitors > 0) buf.writeln('Visitors: $visitors');
-        if (pageviews > 0) buf.writeln('Pageviews: $pageviews');
+        if (visitors > 0) {
+          buf.writeln(
+            _t(
+              'project_analytics_summary_visitors',
+              'Visitors: {count}',
+            ).replaceAll('{count}', visitors.toString()),
+          );
+        }
+        if (pageviews > 0) {
+          buf.writeln(
+            _t(
+              'project_analytics_summary_pageviews',
+              'Pageviews: {count}',
+            ).replaceAll('{count}', pageviews.toString()),
+          );
+        }
       }
       if (_topPages.isNotEmpty) {
         buf.writeln('');
-        buf.writeln('Top pages:');
+        buf.writeln(_t('project_analytics_top_pages_colon', 'Top pages:'));
         for (final p in _topPages.take(5)) {
           final m = (p is Map) ? p : null;
           final x = (m?['x'] ?? m?['path'] ?? m?['url'] ?? '').toString();
@@ -2473,7 +2835,9 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       }
       if (_topReferrers.isNotEmpty) {
         buf.writeln('');
-        buf.writeln('Top referrers:');
+        buf.writeln(
+          _t('project_analytics_top_referrers_colon', 'Top referrers:'),
+        );
         for (final p in _topReferrers.take(5)) {
           final m = (p is Map) ? p : null;
           final x = (m?['x'] ?? m?['referrer'] ?? '').toString();
@@ -2488,14 +2852,17 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       if (!mounted) return;
       SnackBarHelper.showSuccess(
         context,
-        title: 'Copied',
-        message: 'Analytics summary copied',
+        title: _t('copied', 'Copied'),
+        message: _t(
+          'project_analytics_summary_copied',
+          'Analytics summary copied',
+        ),
       );
     } catch (e) {
       if (!mounted) return;
       SnackBarHelper.showError(
         context,
-        title: 'Copy failed',
+        title: _t('project_analytics_copy_failed', 'Copy failed'),
         message: humanizeError(e),
       );
     }
@@ -2508,20 +2875,25 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       );
       final code = (tracking['tracking_code'] ?? '').toString();
       if (code.trim().isEmpty) {
-        throw Exception('Tracking code is empty');
+        throw Exception(
+          _t('project_analytics_tracking_empty', 'Tracking code is empty'),
+        );
       }
       await Clipboard.setData(ClipboardData(text: code));
       if (!mounted) return;
       SnackBarHelper.showSuccess(
         context,
-        title: 'Copied',
-        message: 'Tracking code copied',
+        title: _t('copied', 'Copied'),
+        message: _t(
+          'project_analytics_tracking_copied',
+          'Tracking code copied',
+        ),
       );
     } catch (e) {
       if (!mounted) return;
       SnackBarHelper.showError(
         context,
-        title: 'Copy failed',
+        title: _t('project_analytics_copy_failed', 'Copy failed'),
         message: humanizeError(e),
       );
     }
@@ -2531,18 +2903,21 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Re-enable Analytics'),
-        content: const Text(
-          'This will re-run analytics setup and re-insert the tracking script via workspace session. Continue?',
+        title: Text(_t('project_analytics_reenable', 'Re-enable Analytics')),
+        content: Text(
+          _t(
+            'project_analytics_reenable_confirm',
+            'This will re-run analytics setup and re-insert the tracking script via workspace session. Continue?',
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(_t('cancel', 'Cancel')),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Continue'),
+            child: Text(_t('project_analytics_continue', 'Continue')),
           ),
         ],
       ),
@@ -2552,8 +2927,11 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
     if (!mounted) return;
     SnackBarHelper.showInfo(
       context,
-      title: 'Started',
-      message: 'Re-enable process started.',
+      title: _t('project_analytics_started', 'Started'),
+      message: _t(
+        'project_analytics_reenable_started',
+        'Re-enable process started.',
+      ),
     );
     await _enableAndInstallAnalytics();
   }
@@ -2628,6 +3006,7 @@ class _EnableAnalyticsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
+    String t(String key, String fallback) => _tr(context, key, fallback);
 
     return Center(
       child: ConstrainedBox(
@@ -2661,7 +3040,7 @@ class _EnableAnalyticsCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Enable Analytics',
+                    t('project_analytics_enable_title', 'Enable Analytics'),
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -2669,7 +3048,10 @@ class _EnableAnalyticsCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    "Track your website's visitors, page views, and custom events with Umami Analytics",
+                    t(
+                      'project_analytics_enable_hint',
+                      "Track your website's visitors, page views, and custom events with Umami Analytics",
+                    ),
                     style: theme.textTheme.bodyMedium?.copyWith(color: muted),
                     textAlign: TextAlign.center,
                   ),
@@ -2677,7 +3059,10 @@ class _EnableAnalyticsCard extends StatelessWidget {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'Features included:',
+                      t(
+                        'project_analytics_features_included',
+                        'Features included:',
+                      ),
                       style: theme.textTheme.labelLarge?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -2686,25 +3071,37 @@ class _EnableAnalyticsCard extends StatelessWidget {
                   const SizedBox(height: 10),
                   _FeatureRow(
                     icon: Icons.visibility_outlined,
-                    text: 'Real-time visitor tracking',
+                    text: t(
+                      'project_analytics_feature_realtime_visitors',
+                      'Real-time visitor tracking',
+                    ),
                     color: theme.colorScheme.primary,
                   ),
                   const SizedBox(height: 8),
                   _FeatureRow(
                     icon: Icons.mouse_outlined,
-                    text: 'Page views and events',
+                    text: t(
+                      'project_analytics_feature_pageviews_events',
+                      'Page views and events',
+                    ),
                     color: theme.colorScheme.primary,
                   ),
                   const SizedBox(height: 8),
                   _FeatureRow(
                     icon: Icons.people_outline,
-                    text: 'Unique visitors analytics',
+                    text: t(
+                      'project_analytics_feature_unique_visitors',
+                      'Unique visitors analytics',
+                    ),
                     color: theme.colorScheme.primary,
                   ),
                   const SizedBox(height: 8),
                   _FeatureRow(
                     icon: Icons.trending_up,
-                    text: 'Traffic trends over time',
+                    text: t(
+                      'project_analytics_feature_traffic_trends',
+                      'Traffic trends over time',
+                    ),
                     color: theme.colorScheme.primary,
                   ),
                   const SizedBox(height: 18),
@@ -2720,7 +3117,15 @@ class _EnableAnalyticsCard extends StatelessWidget {
                             )
                           : const Icon(Icons.bolt),
                       label: Text(
-                        enabling ? 'Initializing...' : 'Enable Analytics',
+                        enabling
+                            ? t(
+                                'project_analytics_initializing',
+                                'Initializing...',
+                              )
+                            : t(
+                                'project_analytics_enable_action',
+                                'Enable Analytics',
+                              ),
                       ),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
@@ -2771,6 +3176,7 @@ class _AnalyticsInstallerView extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
+    String t(String key, String fallback) => _tr(context, key, fallback);
     final showSuccess =
         installSucceeded && (error == null || error!.trim().isEmpty);
 
@@ -2818,10 +3224,19 @@ class _AnalyticsInstallerView extends StatelessWidget {
                           children: [
                             Text(
                               showSuccess
-                                  ? 'Analytics Ready'
+                                  ? t(
+                                      'project_analytics_ready',
+                                      'Analytics Ready',
+                                    )
                                   : installing
-                                  ? 'Installing Analytics…'
-                                  : 'Analytics Installer',
+                                  ? t(
+                                      'project_analytics_installing',
+                                      'Installing Analytics…',
+                                    )
+                                  : t(
+                                      'project_analytics_installer',
+                                      'Analytics Installer',
+                                    ),
                               style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w700,
                               ),
@@ -2830,11 +3245,26 @@ class _AnalyticsInstallerView extends StatelessWidget {
                             Text(
                               showSuccess
                                   ? (autoEnterCountdown > 0
-                                        ? 'Installation completed. Auto-opening Data in ${autoEnterCountdown}s.'
-                                        : 'Installation completed. You can open the analytics tabs now.')
+                                        ? t(
+                                            'project_analytics_install_done_autojump',
+                                            'Installation completed. Auto-opening Data in {seconds}s.',
+                                          ).replaceAll(
+                                            '{seconds}',
+                                            autoEnterCountdown.toString(),
+                                          )
+                                        : t(
+                                            'project_analytics_install_done_open',
+                                            'Installation completed. You can open the analytics tabs now.',
+                                          ))
                                   : installing
-                                  ? 'We are initializing Umami and inserting the tracking script via a chat session.'
-                                  : 'Review the session output or retry the install.',
+                                  ? t(
+                                      'project_analytics_installing_hint',
+                                      'We are initializing Umami and inserting the tracking script via a chat session.',
+                                    )
+                                  : t(
+                                      'project_analytics_installer_hint',
+                                      'Review the session output or retry the install.',
+                                    ),
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: muted,
                               ),
@@ -2844,7 +3274,7 @@ class _AnalyticsInstallerView extends StatelessWidget {
                       ),
                       IconButton(
                         onPressed: onReset,
-                        tooltip: 'Close',
+                        tooltip: t('close', 'Close'),
                         icon: const Icon(Icons.close),
                       ),
                     ],
@@ -2865,7 +3295,10 @@ class _AnalyticsInstallerView extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Website ID',
+                                  t(
+                                    'project_analytics_website_id_title',
+                                    'Website ID',
+                                  ),
                                   style: theme.textTheme.labelLarge?.copyWith(
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -2885,7 +3318,7 @@ class _AnalyticsInstallerView extends StatelessWidget {
                           OutlinedButton.icon(
                             onPressed: onCopyWebsiteId,
                             icon: const Icon(Icons.copy, size: 18),
-                            label: const Text('Copy'),
+                            label: Text(t('copy', 'Copy')),
                           ),
                         ],
                       ),
@@ -2919,8 +3352,14 @@ class _AnalyticsInstallerView extends StatelessWidget {
                         icon: const Icon(Icons.arrow_forward),
                         label: Text(
                           autoEnterCountdown > 0
-                              ? 'See data → (${autoEnterCountdown}s)'
-                              : 'See data →',
+                              ? t(
+                                  'project_analytics_see_data_countdown',
+                                  'See data → ({seconds}s)',
+                                ).replaceAll(
+                                  '{seconds}',
+                                  autoEnterCountdown.toString(),
+                                )
+                              : t('project_analytics_see_data', 'See data →'),
                         ),
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -2933,7 +3372,7 @@ class _AnalyticsInstallerView extends StatelessWidget {
                         Expanded(
                           child: OutlinedButton(
                             onPressed: installing ? null : onReset,
-                            child: const Text('Back'),
+                            child: Text(t('back', 'Back')),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -2941,7 +3380,12 @@ class _AnalyticsInstallerView extends StatelessWidget {
                           child: ElevatedButton(
                             onPressed: installing ? null : onRetry,
                             child: Text(
-                              installing ? 'Running…' : 'Retry Install',
+                              installing
+                                  ? t('project_analytics_running', 'Running…')
+                                  : t(
+                                      'project_analytics_retry_install',
+                                      'Retry Install',
+                                    ),
                             ),
                           ),
                         ),

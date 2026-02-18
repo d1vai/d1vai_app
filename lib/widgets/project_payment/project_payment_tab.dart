@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
+import '../../l10n/app_localizations.dart';
 import '../../models/payment.dart';
 import '../../services/d1vai_service.dart';
 import '../../core/auth_expiry_bus.dart';
@@ -26,6 +27,12 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
   bool _isLoading = false;
   bool _isInitialized = false;
   String? _loadError;
+
+  String _t(String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
 
   @override
   void didChangeDependencies() {
@@ -90,7 +97,11 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
         );
         return;
       }
-      SnackBarHelper.showError(context, title: 'Load failed', message: msg);
+      SnackBarHelper.showError(
+        context,
+        title: _t('project_payment_load_failed', 'Load failed'),
+        message: msg,
+      );
     }
   }
 
@@ -125,7 +136,7 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                   ElevatedButton.icon(
                     onPressed: _loadPaymentData,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Retry'),
+                    label: Text(_t('retry', 'Retry')),
                   ),
                   if (authExpired)
                     OutlinedButton.icon(
@@ -135,7 +146,7 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                         );
                       },
                       icon: const Icon(Icons.login),
-                      label: const Text('Re-login'),
+                      label: Text(_t('project_payment_relogin', 'Re-login')),
                     ),
                 ],
               ),
@@ -171,9 +182,9 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Payment Overview',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              _t('project_payment_overview', 'Payment Overview'),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             if (_payMetrics != null) ...[
@@ -181,7 +192,10 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                 children: [
                   Expanded(
                     child: _PayMetricCard(
-                      title: 'Total Revenue',
+                      title: _t(
+                        'project_payment_total_revenue',
+                        'Total Revenue',
+                      ),
                       value: _payMetrics!.formattedRevenue,
                       icon: Icons.attach_money,
                       color: Colors.green,
@@ -190,7 +204,7 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _PayMetricCard(
-                      title: 'Transactions',
+                      title: _t('project_payment_transactions', 'Transactions'),
                       value: _payMetrics!.totalTransactions.toString(),
                       icon: Icons.receipt,
                       color: Colors.blue,
@@ -203,7 +217,10 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                 children: [
                   Expanded(
                     child: _PayMetricCard(
-                      title: 'Conversion Rate',
+                      title: _t(
+                        'project_payment_conversion_rate',
+                        'Conversion Rate',
+                      ),
                       value: _payMetrics!.formattedConversionRate,
                       icon: Icons.trending_up,
                       color: Colors.purple,
@@ -212,7 +229,10 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _PayMetricCard(
-                      title: 'Active Customers',
+                      title: _t(
+                        'project_payment_active_customers',
+                        'Active Customers',
+                      ),
                       value: _payMetrics!.activeCustomers.toString(),
                       icon: Icons.people,
                       color: Colors.orange,
@@ -222,7 +242,10 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
               ),
             ] else
               Text(
-                'Payment not activated yet',
+                _t(
+                  'project_payment_not_activated',
+                  'Payment not activated yet',
+                ),
                 style: TextStyle(color: Colors.grey.shade600),
               ),
           ],
@@ -240,16 +263,22 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
           children: [
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Payment Products',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    _t('project_payment_products', 'Payment Products'),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 ElevatedButton.icon(
                   onPressed: () => _showAddPayProductDialog(context),
                   icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Add', style: TextStyle(fontSize: 12)),
+                  label: Text(
+                    _t('project_payment_add', 'Add'),
+                    style: const TextStyle(fontSize: 12),
+                  ),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -266,7 +295,7 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Text(
-                  'No payment products yet',
+                  _t('project_payment_no_products', 'No payment products yet'),
                   style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                 ),
               )
@@ -274,8 +303,10 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
               ..._payProducts.map((product) {
                 return InkWell(
                   onTap: () {
-                    final question =
-                        'Can you analyze the payment product "${product.name}" and provide suggestions on pricing strategy, configuration, or marketing improvements?';
+                    final question = _t(
+                      'project_payment_ai_prompt_product',
+                      'Can you analyze the payment product "{name}" and provide suggestions on pricing strategy, configuration, or marketing improvements?',
+                    ).replaceAll('{name}', product.name);
                     widget.onAskAi?.call(question);
                   },
                   borderRadius: BorderRadius.circular(8),
@@ -326,14 +357,14 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                         const SizedBox(width: 8),
                         PopupMenuButton<String>(
                           icon: const Icon(Icons.more_vert, size: 20),
-                          itemBuilder: (context) => const [
+                          itemBuilder: (context) => [
                             PopupMenuItem(
                               value: 'edit',
                               child: Row(
                                 children: [
-                                  Icon(Icons.edit, size: 18),
-                                  SizedBox(width: 8),
-                                  Text('Edit'),
+                                  const Icon(Icons.edit, size: 18),
+                                  const SizedBox(width: 8),
+                                  Text(_t('project_payment_edit', 'Edit')),
                                 ],
                               ),
                             ),
@@ -341,9 +372,11 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                               value: 'link',
                               child: Row(
                                 children: [
-                                  Icon(Icons.link, size: 18),
-                                  SizedBox(width: 8),
-                                  Text('Get Link'),
+                                  const Icon(Icons.link, size: 18),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _t('project_payment_get_link', 'Get Link'),
+                                  ),
                                 ],
                               ),
                             ),
@@ -354,8 +387,14 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                             } else if (value == 'link') {
                               SnackBarHelper.showInfo(
                                 context,
-                                title: 'Payment Link',
-                                message: 'Getting payment link...',
+                                title: _t(
+                                  'project_payment_link',
+                                  'Payment Link',
+                                ),
+                                message: _t(
+                                  'project_payment_getting_link',
+                                  'Getting payment link...',
+                                ),
                               );
                             }
                           },
@@ -380,9 +419,15 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
           children: [
             Row(
               children: [
-                const Text(
-                  'Recent Transactions',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                Text(
+                  _t(
+                    'project_payment_recent_transactions',
+                    'Recent Transactions',
+                  ),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const Spacer(),
                 Container(
@@ -410,7 +455,7 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Text(
-                  'No transactions yet',
+                  _t('project_payment_no_transactions', 'No transactions yet'),
                   style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                 ),
               )
@@ -419,7 +464,12 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                 return InkWell(
                   onTap: () {
                     final question =
-                        'Can you analyze this payment transaction (${tx.formattedAmount}, ${tx.statusLabel}) and provide insights about payment patterns or recommendations?';
+                        _t(
+                              'project_payment_ai_prompt_transaction',
+                              'Can you analyze this payment transaction ({amount}, {status}) and provide insights about payment patterns or recommendations?',
+                            )
+                            .replaceAll('{amount}', tx.formattedAmount)
+                            .replaceAll('{status}', tx.statusLabel);
                     widget.onAskAi?.call(question);
                   },
                   borderRadius: BorderRadius.circular(8),
@@ -440,7 +490,11 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                tx.productName ?? 'Unknown Product',
+                                tx.productName ??
+                                    _t(
+                                      'project_payment_unknown_product',
+                                      'Unknown Product',
+                                    ),
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
@@ -448,7 +502,11 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                tx.customerEmail ?? 'Anonymous',
+                                tx.customerEmail ??
+                                    _t(
+                                      'project_payment_anonymous',
+                                      'Anonymous',
+                                    ),
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey.shade600,
@@ -502,7 +560,9 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Add Payment Product'),
+          title: Text(
+            _t('project_payment_add_product_title', 'Add Payment Product'),
+          ),
           content: SizedBox(
             width: double.maxFinite,
             child: Column(
@@ -527,19 +587,31 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                 ],
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Product Name',
-                    hintText: 'e.g., Premium Plan',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: _t(
+                      'project_payment_product_name',
+                      'Product Name',
+                    ),
+                    hintText: _t(
+                      'project_payment_product_name_hint',
+                      'e.g., Premium Plan',
+                    ),
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: descriptionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Description (Optional)',
-                    hintText: 'Describe your product',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: _t(
+                      'project_payment_description_optional',
+                      'Description (Optional)',
+                    ),
+                    hintText: _t(
+                      'project_payment_description_hint',
+                      'Describe your product',
+                    ),
+                    border: const OutlineInputBorder(),
                   ),
                   maxLines: 2,
                 ),
@@ -550,10 +622,10 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                       flex: 2,
                       child: TextField(
                         controller: priceController,
-                        decoration: const InputDecoration(
-                          labelText: 'Price',
+                        decoration: InputDecoration(
+                          labelText: _t('project_payment_price', 'Price'),
                           hintText: '0.00',
-                          border: OutlineInputBorder(),
+                          border: const OutlineInputBorder(),
                         ),
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
@@ -582,8 +654,13 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                 ),
                 const SizedBox(height: 16),
                 SwitchListTile(
-                  title: const Text('Active'),
-                  subtitle: const Text('Product is available for purchase'),
+                  title: Text(_t('project_payment_active', 'Active')),
+                  subtitle: Text(
+                    _t(
+                      'project_payment_available_for_purchase',
+                      'Product is available for purchase',
+                    ),
+                  ),
                   value: isActive,
                   onChanged: (value) {
                     setDialogState(() {
@@ -599,7 +676,7 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
           actions: [
             TextButton(
               onPressed: isLoading ? null : () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(_t('cancel', 'Cancel')),
             ),
             ElevatedButton(
               onPressed: isLoading
@@ -611,14 +688,20 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
 
                       if (name.isEmpty) {
                         setDialogState(() {
-                          error = 'Product name is required';
+                          error = _t(
+                            'project_payment_product_name_required',
+                            'Product name is required',
+                          );
                         });
                         return;
                       }
 
                       if (priceText.isEmpty) {
                         setDialogState(() {
-                          error = 'Price is required';
+                          error = _t(
+                            'project_payment_price_required',
+                            'Price is required',
+                          );
                         });
                         return;
                       }
@@ -626,7 +709,10 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                       final price = double.tryParse(priceText);
                       if (price == null || price <= 0) {
                         setDialogState(() {
-                          error = 'Please enter a valid price';
+                          error = _t(
+                            'project_payment_price_invalid',
+                            'Please enter a valid price',
+                          );
                         });
                         return;
                       }
@@ -661,7 +747,10 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                       } catch (e) {
                         setDialogState(() {
                           isLoading = false;
-                          error = 'Failed to add product: $e';
+                          error = _t(
+                            'project_payment_add_product_failed',
+                            'Failed to add product: {error}',
+                          ).replaceAll('{error}', '$e');
                         });
                       }
                     },
@@ -671,7 +760,7 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                       height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Add Product'),
+                  : Text(_t('project_payment_add_product', 'Add Product')),
             ),
           ],
         ),
@@ -696,7 +785,9 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Edit Payment Product'),
+          title: Text(
+            _t('project_payment_edit_product_title', 'Edit Payment Product'),
+          ),
           content: SizedBox(
             width: double.maxFinite,
             child: Column(
@@ -721,19 +812,31 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                 ],
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Product Name',
-                    hintText: 'e.g., Premium Plan',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: _t(
+                      'project_payment_product_name',
+                      'Product Name',
+                    ),
+                    hintText: _t(
+                      'project_payment_product_name_hint',
+                      'e.g., Premium Plan',
+                    ),
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: descriptionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Description (Optional)',
-                    hintText: 'Describe your product',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: _t(
+                      'project_payment_description_optional',
+                      'Description (Optional)',
+                    ),
+                    hintText: _t(
+                      'project_payment_description_hint',
+                      'Describe your product',
+                    ),
+                    border: const OutlineInputBorder(),
                   ),
                   maxLines: 2,
                 ),
@@ -744,10 +847,10 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                       flex: 2,
                       child: TextField(
                         controller: priceController,
-                        decoration: const InputDecoration(
-                          labelText: 'Price',
+                        decoration: InputDecoration(
+                          labelText: _t('project_payment_price', 'Price'),
                           hintText: '0.00',
-                          border: OutlineInputBorder(),
+                          border: const OutlineInputBorder(),
                         ),
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
@@ -776,8 +879,13 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                 ),
                 const SizedBox(height: 16),
                 SwitchListTile(
-                  title: const Text('Active'),
-                  subtitle: const Text('Product is available for purchase'),
+                  title: Text(_t('project_payment_active', 'Active')),
+                  subtitle: Text(
+                    _t(
+                      'project_payment_available_for_purchase',
+                      'Product is available for purchase',
+                    ),
+                  ),
                   value: isActive,
                   onChanged: (value) {
                     setDialogState(() {
@@ -793,7 +901,7 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
           actions: [
             TextButton(
               onPressed: isLoading ? null : () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(_t('cancel', 'Cancel')),
             ),
             ElevatedButton(
               onPressed: isLoading
@@ -805,14 +913,20 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
 
                       if (name.isEmpty) {
                         setDialogState(() {
-                          error = 'Product name is required';
+                          error = _t(
+                            'project_payment_product_name_required',
+                            'Product name is required',
+                          );
                         });
                         return;
                       }
 
                       if (priceText.isEmpty) {
                         setDialogState(() {
-                          error = 'Price is required';
+                          error = _t(
+                            'project_payment_price_required',
+                            'Price is required',
+                          );
                         });
                         return;
                       }
@@ -820,7 +934,10 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                       final price = double.tryParse(priceText);
                       if (price == null || price <= 0) {
                         setDialogState(() {
-                          error = 'Please enter a valid price';
+                          error = _t(
+                            'project_payment_price_invalid',
+                            'Please enter a valid price',
+                          );
                         });
                         return;
                       }
@@ -858,7 +975,10 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                       } catch (e) {
                         setDialogState(() {
                           isLoading = false;
-                          error = 'Failed to update product: $e';
+                          error = _t(
+                            'project_payment_update_product_failed',
+                            'Failed to update product: {error}',
+                          ).replaceAll('{error}', '$e');
                         });
                       }
                     },
@@ -868,7 +988,7 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                       height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Save Changes'),
+                  : Text(_t('project_payment_save_changes', 'Save Changes')),
             ),
           ],
         ),

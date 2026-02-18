@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../services/d1vai_service.dart';
 import '../../utils/error_utils.dart';
 import 'deployment_log_viewer.dart';
@@ -26,6 +27,12 @@ class _DeploymentLogScreenState extends State<DeploymentLogScreen> {
   String? _error;
   String _log = '';
   bool? _fromCache;
+
+  String _t(String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
 
   @override
   void initState() {
@@ -67,14 +74,14 @@ class _DeploymentLogScreenState extends State<DeploymentLogScreen> {
       if (!mounted) return;
       SnackBarHelper.showSuccess(
         context,
-        title: 'Copied',
-        message: 'Deployment logs copied to clipboard',
+        title: _t('copied', 'Copied'),
+        message: _t('project_deploy_logs_copied', 'Logs copied to clipboard'),
       );
     } catch (e) {
       if (!mounted) return;
       SnackBarHelper.showError(
         context,
-        title: 'Copy failed',
+        title: _t('project_deploy_copy_failed', 'Copy failed'),
         message: humanizeError(e),
       );
     }
@@ -121,14 +128,17 @@ class _DeploymentLogScreenState extends State<DeploymentLogScreen> {
       if (!mounted) return;
       SnackBarHelper.showSuccess(
         context,
-        title: 'Copied',
-        message: 'Error snippet copied',
+        title: _t('copied', 'Copied'),
+        message: _t(
+          'project_deploy_error_snippet_copied',
+          'Error snippet copied',
+        ),
       );
     } catch (e) {
       if (!mounted) return;
       SnackBarHelper.showError(
         context,
-        title: 'Copy failed',
+        title: _t('project_deploy_copy_failed', 'Copy failed'),
         message: humanizeError(e),
       );
     }
@@ -140,13 +150,18 @@ class _DeploymentLogScreenState extends State<DeploymentLogScreen> {
     try {
       await Share.share(
         text,
-        subject: errorsOnly ? '${widget.title} (errors)' : widget.title,
+        subject: errorsOnly
+            ? _t(
+                'project_deploy_logs_share_errors',
+                '{title} (errors)',
+              ).replaceAll('{title}', widget.title)
+            : widget.title,
       );
     } catch (e) {
       if (!mounted) return;
       SnackBarHelper.showError(
         context,
-        title: 'Share failed',
+        title: _t('share_failed', 'Failed to share'),
         message: humanizeError(e),
       );
     }
@@ -161,7 +176,7 @@ class _DeploymentLogScreenState extends State<DeploymentLogScreen> {
         title: Text(widget.title),
         actions: [
           IconButton(
-            tooltip: 'Refresh',
+            tooltip: _t('refresh', 'Refresh'),
             onPressed: _loading ? null : _load,
             icon: _loading
                 ? const SizedBox(
@@ -172,7 +187,7 @@ class _DeploymentLogScreenState extends State<DeploymentLogScreen> {
                 : const Icon(Icons.refresh),
           ),
           PopupMenuButton<String>(
-            tooltip: 'More',
+            tooltip: _t('project_deploy_more', 'More'),
             onSelected: (value) {
               switch (value) {
                 case 'copy_all':
@@ -195,22 +210,22 @@ class _DeploymentLogScreenState extends State<DeploymentLogScreen> {
                 PopupMenuItem(
                   value: 'copy_all',
                   enabled: !disabled,
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.copy, size: 18),
-                      SizedBox(width: 10),
-                      Text('Copy all'),
+                      const Icon(Icons.copy, size: 18),
+                      const SizedBox(width: 10),
+                      Text(_t('project_deploy_copy_all', 'Copy all')),
                     ],
                   ),
                 ),
                 PopupMenuItem(
                   value: 'copy_errors',
                   enabled: !disabled,
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.warning_amber, size: 18),
-                      SizedBox(width: 10),
-                      Text('Copy errors'),
+                      const Icon(Icons.warning_amber, size: 18),
+                      const SizedBox(width: 10),
+                      Text(_t('project_deploy_copy_errors', 'Copy errors')),
                     ],
                   ),
                 ),
@@ -218,22 +233,22 @@ class _DeploymentLogScreenState extends State<DeploymentLogScreen> {
                 PopupMenuItem(
                   value: 'share_all',
                   enabled: !disabled,
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.share, size: 18),
-                      SizedBox(width: 10),
-                      Text('Share all'),
+                      const Icon(Icons.share, size: 18),
+                      const SizedBox(width: 10),
+                      Text(_t('project_deploy_share_all', 'Share all')),
                     ],
                   ),
                 ),
                 PopupMenuItem(
                   value: 'share_errors',
                   enabled: !disabled,
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.report, size: 18),
-                      SizedBox(width: 10),
-                      Text('Share errors'),
+                      const Icon(Icons.report, size: 18),
+                      const SizedBox(width: 10),
+                      Text(_t('project_deploy_share_errors', 'Share errors')),
                     ],
                   ),
                 ),
@@ -258,7 +273,10 @@ class _DeploymentLogScreenState extends State<DeploymentLogScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Failed to load logs',
+                      _t(
+                        'project_deploy_logs_load_failed',
+                        'Failed to load logs',
+                      ),
                       style: theme.textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
@@ -273,7 +291,7 @@ class _DeploymentLogScreenState extends State<DeploymentLogScreen> {
                     ElevatedButton.icon(
                       onPressed: _load,
                       icon: const Icon(Icons.refresh),
-                      label: const Text('Retry'),
+                      label: Text(_t('retry', 'Retry')),
                     ),
                   ],
                 ),

@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../utils/error_utils.dart';
 import '../snackbar_helper.dart';
 
@@ -29,6 +30,12 @@ class _DeploymentLogViewerState extends State<DeploymentLogViewer>
   bool _errorsOnly = false;
   Timer? _copiedTimer;
   late final AnimationController _ambientController;
+
+  String _t(String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
 
   @override
   void dispose() {
@@ -80,15 +87,15 @@ class _DeploymentLogViewerState extends State<DeploymentLogViewer>
       });
       SnackBarHelper.showSuccess(
         context,
-        title: 'Copied',
-        message: 'Logs copied to clipboard',
+        title: _t('copied', 'Copied'),
+        message: _t('project_deploy_logs_copied', 'Logs copied to clipboard'),
         duration: const Duration(seconds: 2),
       );
     } catch (e) {
       if (!mounted) return;
       SnackBarHelper.showError(
         context,
-        title: 'Copy failed',
+        title: _t('project_deploy_copy_failed', 'Copy failed'),
         message: humanizeError(e),
       );
     }
@@ -151,7 +158,9 @@ class _DeploymentLogViewerState extends State<DeploymentLogViewer>
 
     final String cacheLabel = widget.fromCache == null
         ? ''
-        : (widget.fromCache! ? 'Cached' : 'Live');
+        : (widget.fromCache!
+              ? _t('project_deploy_log_cached', 'Cached')
+              : _t('project_deploy_log_live', 'Live'));
 
     final titleStyle = theme.textTheme.labelSmall?.copyWith(
       fontWeight: FontWeight.w700,
@@ -252,10 +261,19 @@ class _DeploymentLogViewerState extends State<DeploymentLogViewer>
                                   ),
                                   const SizedBox(width: 8),
                                 ],
-                                Text('Build log', style: titleStyle),
+                                Text(
+                                  _t('project_deploy_build_log', 'Build log'),
+                                  style: titleStyle,
+                                ),
                                 const SizedBox(width: 10),
                                 Text(
-                                  '${allLines.length} lines',
+                                  _t(
+                                    'project_deploy_log_lines',
+                                    '{count} lines',
+                                  ).replaceAll(
+                                    '{count}',
+                                    allLines.length.toString(),
+                                  ),
                                   style: theme.textTheme.labelSmall?.copyWith(
                                     color: muted,
                                     fontFeatures: const [
@@ -265,7 +283,13 @@ class _DeploymentLogViewerState extends State<DeploymentLogViewer>
                                 ),
                                 if (errorLineCount > 0) ...[
                                   Text(
-                                    ' · $errorLineCount errors',
+                                    _t(
+                                      'project_deploy_log_errors_count',
+                                      ' · {count} errors',
+                                    ).replaceAll(
+                                      '{count}',
+                                      errorLineCount.toString(),
+                                    ),
                                     style: theme.textTheme.labelSmall?.copyWith(
                                       color: stderrText,
                                       fontFeatures: const [
@@ -278,7 +302,13 @@ class _DeploymentLogViewerState extends State<DeploymentLogViewer>
                                 if (allLines.length > maxRenderLines) ...[
                                   const SizedBox(width: 8),
                                   Text(
-                                    '(showing last $maxRenderLines)',
+                                    _t(
+                                      'project_deploy_log_showing_last',
+                                      '(showing last {count})',
+                                    ).replaceAll(
+                                      '{count}',
+                                      maxRenderLines.toString(),
+                                    ),
                                     style: theme.textTheme.labelSmall?.copyWith(
                                       color: muted,
                                     ),
@@ -286,7 +316,13 @@ class _DeploymentLogViewerState extends State<DeploymentLogViewer>
                                 ],
                                 if (stderrCount > 0) ...[
                                   Text(
-                                    ' · $stderrCount stderr',
+                                    _t(
+                                      'project_deploy_log_stderr_count',
+                                      ' · {count} stderr',
+                                    ).replaceAll(
+                                      '{count}',
+                                      stderrCount.toString(),
+                                    ),
                                     style: theme.textTheme.labelSmall?.copyWith(
                                       color: stderrText,
                                       fontFeatures: const [
@@ -325,7 +361,9 @@ class _DeploymentLogViewerState extends State<DeploymentLogViewer>
                           ),
                           const SizedBox(width: 10),
                           FilterChip(
-                            label: const Text('Errors'),
+                            label: Text(
+                              _t('project_deploy_log_errors', 'Errors'),
+                            ),
                             selected: _errorsOnly,
                             onSelected: (value) {
                               setState(() {
@@ -361,7 +399,9 @@ class _DeploymentLogViewerState extends State<DeploymentLogViewer>
                             label: AnimatedSwitcher(
                               duration: const Duration(milliseconds: 180),
                               child: Text(
-                                _copied ? 'Copied' : 'Copy',
+                                _copied
+                                    ? _t('copied', 'Copied')
+                                    : _t('project_deploy_copy', 'Copy'),
                                 key: ValueKey(_copied ? 'copied' : 'copy'),
                               ),
                             ),
@@ -398,7 +438,10 @@ class _DeploymentLogViewerState extends State<DeploymentLogViewer>
                                   ? [
                                       TextSpan(
                                         text: widget.log.trim().isEmpty
-                                            ? 'No logs available for this deployment.'
+                                            ? _t(
+                                                'project_deploy_log_empty',
+                                                'No logs available for this deployment.',
+                                              )
                                             : widget.log,
                                         style: baseText.copyWith(
                                           color: unknownText,

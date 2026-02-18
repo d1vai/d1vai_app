@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../models/env_var.dart';
 
 class EnvVarEditorResult {
@@ -31,6 +32,12 @@ class _EnvVarEditorDialogState extends State<EnvVarEditorDialog> {
   late final TextEditingController _valueController;
   late final TextEditingController _descController;
   bool _isSensitive = true;
+
+  String _t(String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
 
   @override
   void initState() {
@@ -82,7 +89,11 @@ class _EnvVarEditorDialogState extends State<EnvVarEditorDialog> {
     final canSubmit = _validKey && _validValue;
 
     return AlertDialog(
-      title: Text(isEdit ? 'Edit variable' : 'Add variable'),
+      title: Text(
+        isEdit
+            ? _t('project_api_edit_variable', 'Edit variable')
+            : _t('project_api_add_variable', 'Add variable'),
+      ),
       content: SizedBox(
         width: 520,
         child: Column(
@@ -93,20 +104,26 @@ class _EnvVarEditorDialogState extends State<EnvVarEditorDialog> {
               enabled: widget.allowEditKey,
               textCapitalization: TextCapitalization.characters,
               decoration: InputDecoration(
-                labelText: 'Key',
-                hintText: 'EXAMPLE_API_KEY',
+                labelText: _t('project_api_key', 'Key'),
+                hintText: _t('project_api_key_example', 'EXAMPLE_API_KEY'),
                 errorText: _keyController.text.trim().isEmpty || _validKey
                     ? null
-                    : 'Use only letters, numbers, _ and -',
+                    : _t(
+                        'project_api_key_error',
+                        'Use only letters, numbers, _ and -',
+                      ),
               ),
               onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _valueController,
-              decoration: const InputDecoration(
-                labelText: 'Value',
-                hintText: 'Paste the secret value…',
+              decoration: InputDecoration(
+                labelText: _t('project_api_value', 'Value'),
+                hintText: _t(
+                  'project_api_value_hint',
+                  'Paste the secret value...',
+                ),
               ),
               maxLines: 3,
               onChanged: (_) => setState(() {}),
@@ -114,8 +131,11 @@ class _EnvVarEditorDialogState extends State<EnvVarEditorDialog> {
             const SizedBox(height: 12),
             TextField(
               controller: _descController,
-              decoration: const InputDecoration(
-                labelText: 'Description (optional)',
+              decoration: InputDecoration(
+                labelText: _t(
+                  'project_api_description_optional',
+                  'Description (optional)',
+                ),
               ),
               maxLines: 2,
             ),
@@ -123,11 +143,14 @@ class _EnvVarEditorDialogState extends State<EnvVarEditorDialog> {
             SwitchListTile.adaptive(
               value: _isSensitive,
               onChanged: (v) => setState(() => _isSensitive = v),
-              title: const Text('Sensitive'),
+              title: Text(_t('project_api_sensitive', 'Sensitive')),
               subtitle: Text(
                 _isSensitive
-                    ? 'Masked in lists by default'
-                    : 'Visible in lists',
+                    ? _t(
+                        'project_api_sensitive_masked',
+                        'Masked in lists by default',
+                      )
+                    : _t('project_api_sensitive_visible', 'Visible in lists'),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -140,11 +163,13 @@ class _EnvVarEditorDialogState extends State<EnvVarEditorDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(_t('cancel', 'Cancel')),
         ),
         ElevatedButton(
           onPressed: canSubmit ? _submit : null,
-          child: Text(isEdit ? 'Save' : 'Add'),
+          child: Text(
+            isEdit ? _t('save', 'Save') : _t('project_api_add', 'Add'),
+          ),
         ),
       ],
     );

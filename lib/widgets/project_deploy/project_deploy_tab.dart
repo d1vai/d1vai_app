@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:async';
+import 'package:intl/intl.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../models/deployment.dart';
 import '../../models/project.dart';
 import '../../services/d1vai_service.dart';
@@ -101,6 +103,12 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
   _DeploymentEnvFilter _envFilter = _DeploymentEnvFilter.all;
   late final AnimationController _ambientController;
 
+  String _t(String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -174,20 +182,27 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
         );
         return;
       }
-      SnackBarHelper.showError(context, title: 'Load failed', message: msg);
+      SnackBarHelper.showError(
+        context,
+        title: _t('failed_to_load', 'Failed to load'),
+        message: msg,
+      );
     }
   }
 
   String get _productionPhaseLabel {
     switch (_productionReleasePhase) {
       case _ProductionReleasePhase.checking:
-        return 'Checking dev/main diff…';
+        return _t('project_deploy_phase_checking', 'Checking dev/main diff...');
       case _ProductionReleasePhase.merging:
-        return 'Merging dev into main…';
+        return _t('project_deploy_phase_merging', 'Merging dev into main...');
       case _ProductionReleasePhase.deploying:
-        return 'Triggering production deploy…';
+        return _t(
+          'project_deploy_phase_deploying',
+          'Triggering production deploy...',
+        );
       case _ProductionReleasePhase.idle:
-        return 'Deploy production';
+        return _t('project_deploy_action_deploy_prod', 'Deploy production');
     }
   }
 
@@ -226,7 +241,9 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
         : '';
     return _ReleaseCommit(
       sha: sha,
-      message: message.isEmpty ? '(no message)' : message,
+      message: message.isEmpty
+          ? _t('project_deploy_no_message', '(no message)')
+          : message,
       authorName: authorName,
       authoredAt: authoredAt,
     );
@@ -327,11 +344,16 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
       if (!mounted) return;
       SnackBarHelper.showSuccess(
         context,
-        title: 'Preview deploy triggered',
+        title: _t(
+          'project_deploy_preview_triggered',
+          'Preview deploy triggered',
+        ),
         message: (url != null && url.isNotEmpty)
             ? url
-            : (msg.isNotEmpty ? msg : 'OK'),
-        actionLabel: (url != null && url.isNotEmpty) ? 'Open' : null,
+            : (msg.isNotEmpty ? msg : _t('project_deploy_ok', 'OK')),
+        actionLabel: (url != null && url.isNotEmpty)
+            ? _t('project_deploy_open', 'Open')
+            : null,
         onActionPressed: (url != null && url.isNotEmpty)
             ? () => _openUrl(url)
             : null,
@@ -351,9 +373,9 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
       }
       SnackBarHelper.showError(
         context,
-        title: 'Preview deploy failed',
+        title: _t('project_deploy_preview_failed', 'Preview deploy failed'),
         message: msg,
-        actionLabel: 'Next steps',
+        actionLabel: _t('project_deploy_next_steps', 'Next steps'),
         onActionPressed: () => _showNextStepsDialog(msg),
       );
     } finally {
@@ -416,12 +438,20 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
       SnackBarHelper.showSuccess(
         context,
         title: shouldMerge
-            ? 'Merged and deployed to production'
-            : 'Production deploy triggered',
+            ? _t(
+                'project_deploy_prod_merged_triggered',
+                'Merged and deployed to production',
+              )
+            : _t(
+                'project_deploy_prod_triggered',
+                'Production deploy triggered',
+              ),
         message: (url != null && url.isNotEmpty)
             ? url
-            : (msg.isNotEmpty ? msg : 'OK'),
-        actionLabel: (url != null && url.isNotEmpty) ? 'Open' : null,
+            : (msg.isNotEmpty ? msg : _t('project_deploy_ok', 'OK')),
+        actionLabel: (url != null && url.isNotEmpty)
+            ? _t('project_deploy_open', 'Open')
+            : null,
         onActionPressed: (url != null && url.isNotEmpty)
             ? () => _openUrl(url)
             : null,
@@ -441,9 +471,9 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
       }
       SnackBarHelper.showError(
         context,
-        title: 'Production deploy failed',
+        title: _t('project_deploy_prod_failed', 'Production deploy failed'),
         message: msg,
-        actionLabel: 'Next steps',
+        actionLabel: _t('project_deploy_next_steps', 'Next steps'),
         onActionPressed: () => _showNextStepsDialog(msg),
       );
     } finally {
@@ -461,8 +491,11 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
     if (sha == null || sha.isEmpty) {
       SnackBarHelper.showInfo(
         context,
-        title: 'Revert unavailable',
-        message: 'No commit SHA found for this deployment.',
+        title: _t('project_deploy_revert_unavailable', 'Revert unavailable'),
+        message: _t(
+          'project_deploy_revert_no_sha',
+          'No commit SHA found for this deployment.',
+        ),
       );
       return;
     }
@@ -472,18 +505,25 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Revert this commit?'),
+          title: Text(
+            _t('project_deploy_revert_confirm_title', 'Revert this commit?'),
+          ),
           content: Text(
-            'This will run git revert on commit ${sha.substring(0, 7)} and trigger a new preview deployment.',
+            _t(
+              'project_deploy_revert_confirm_message',
+              'This will run git revert on commit {sha} and trigger a new preview deployment.',
+            ).replaceAll('{sha}', sha.substring(0, 7)),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
+              child: Text(_t('cancel', 'Cancel')),
             ),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Confirm revert'),
+              child: Text(
+                _t('project_deploy_revert_confirm_action', 'Confirm revert'),
+              ),
             ),
           ],
         );
@@ -511,11 +551,16 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
       if (!mounted) return;
       SnackBarHelper.showSuccess(
         context,
-        title: 'Commit reverted',
+        title: _t('project_deploy_revert_success_title', 'Commit reverted'),
         message: (url != null && url.isNotEmpty)
-            ? 'Preview redeploy started: $url'
-            : 'Preview redeploy started',
-        actionLabel: (url != null && url.isNotEmpty) ? 'Open' : null,
+            ? _t(
+                'project_deploy_revert_success_with_url',
+                'Preview redeploy started: {url}',
+              ).replaceAll('{url}', url)
+            : _t('project_deploy_revert_success', 'Preview redeploy started'),
+        actionLabel: (url != null && url.isNotEmpty)
+            ? _t('project_deploy_open', 'Open')
+            : null,
         onActionPressed: (url != null && url.isNotEmpty)
             ? () => _openUrl(url)
             : null,
@@ -532,9 +577,9 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
       }
       SnackBarHelper.showError(
         context,
-        title: 'Revert failed',
+        title: _t('project_deploy_revert_failed', 'Revert failed'),
         message: msg,
-        actionLabel: 'Next steps',
+        actionLabel: _t('project_deploy_next_steps', 'Next steps'),
         onActionPressed: () => _showNextStepsDialog(msg),
       );
     } finally {
@@ -554,7 +599,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
         final theme = Theme.of(context);
         final tips = _suggestNextSteps(errorText);
         return AlertDialog(
-          title: const Text('Next steps'),
+          title: Text(_t('project_deploy_next_steps', 'Next steps')),
           content: SizedBox(
             width: 560,
             child: Column(
@@ -562,7 +607,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Common fixes:',
+                  _t('project_deploy_common_fixes', 'Common fixes:'),
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -598,19 +643,19 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
+              child: Text(_t('project_deploy_close', 'Close')),
             ),
             if (widget.onAskAi != null)
               ElevatedButton.icon(
                 onPressed: () {
                   Navigator.of(context).pop();
                   widget.onAskAi!(
-                    'My deploy failed with this error:\n$errorText\n\n'
-                    'Give me the most likely root cause and a step-by-step fix.',
+                    '${_t('project_deploy_ai_prompt_prefix', 'My deploy failed with this error:')}\n$errorText\n\n'
+                    '${_t('project_deploy_ai_prompt_suffix', 'Give me the most likely root cause and a step-by-step fix.')}',
                   );
                 },
                 icon: const Icon(Icons.auto_awesome),
-                label: const Text('Ask AI'),
+                label: Text(_t('project_deploy_ask_ai', 'Ask AI')),
               ),
           ],
         );
@@ -621,15 +666,30 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
   List<String> _suggestNextSteps(String msg) {
     final lower = msg.toLowerCase();
     final tips = <String>[
-      'Open the latest build logs and copy/share the error snippet.',
-      'Retry preview deploy first (then production).',
-      'Check GitHub collaborator/bot access to the repo.',
-      'Check environment variables (and sync to Vercel).',
+      _t(
+        'project_deploy_tip_open_logs',
+        'Open the latest build logs and copy/share the error snippet.',
+      ),
+      _t(
+        'project_deploy_tip_retry_preview_first',
+        'Retry preview deploy first (then production).',
+      ),
+      _t(
+        'project_deploy_tip_check_github_access',
+        'Check GitHub collaborator/bot access to the repo.',
+      ),
+      _t(
+        'project_deploy_tip_check_env_vars',
+        'Check environment variables (and sync to Vercel).',
+      ),
     ];
     if (lower.contains('permission') || lower.contains('access denied')) {
       tips.insert(
         0,
-        'This looks like a permission issue — verify GitHub access and tokens.',
+        _t(
+          'project_deploy_tip_permission',
+          'This looks like a permission issue — verify GitHub access and tokens.',
+        ),
       );
     }
     if (lower.contains('env') ||
@@ -637,7 +697,10 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
         lower.contains('key')) {
       tips.insert(
         0,
-        'This looks like an env var issue — verify required secrets are set.',
+        _t(
+          'project_deploy_tip_env_issue',
+          'This looks like an env var issue — verify required secrets are set.',
+        ),
       );
     }
     if (lower.contains('build') ||
@@ -645,7 +708,10 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
         lower.contains('typescript')) {
       tips.insert(
         0,
-        'This looks like a build failure — check compilation errors in logs.',
+        _t(
+          'project_deploy_tip_build_issue',
+          'This looks like a build failure — check compilation errors in logs.',
+        ),
       );
     }
     return tips.toSet().toList();
@@ -656,8 +722,8 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
     if (_deployments.isEmpty) {
       SnackBarHelper.showInfo(
         context,
-        title: 'Retry',
-        message: 'No deployment history yet.',
+        title: _t('retry', 'Retry'),
+        message: _t('project_deploy_no_history', 'No deployment history yet.'),
       );
       return;
     }
@@ -667,10 +733,18 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
     setState(() => _retryingLast = true);
     try {
       await _confirmAndDeploy(
-        title: isProd ? 'Retry production deploy?' : 'Retry preview deploy?',
+        title: isProd
+            ? _t('project_deploy_retry_prod_title', 'Retry production deploy?')
+            : _t('project_deploy_retry_preview_title', 'Retry preview deploy?'),
         message: isProd
-            ? 'This will compare dev/main, merge if needed, then trigger a new production deployment.'
-            : 'This will trigger a new preview (dev) deployment.',
+            ? _t(
+                'project_deploy_retry_prod_message',
+                'This will compare dev/main, merge if needed, then trigger a new production deployment.',
+              )
+            : _t(
+                'project_deploy_retry_preview_message',
+                'This will trigger a new preview (dev) deployment.',
+              ),
         action: isProd ? _triggerProductionDeploy : _triggerPreviewDeploy,
       );
     } finally {
@@ -692,11 +766,11 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
+              child: Text(_t('cancel', 'Cancel')),
             ),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Confirm'),
+              child: Text(_t('confirm', 'Confirm')),
             ),
           ],
         );
@@ -706,17 +780,73 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
     await action();
   }
 
+  String _formatTimeAgo(String isoString) {
+    try {
+      final dateTime = DateTime.parse(isoString);
+      final now = DateTime.now();
+      final difference = now.difference(dateTime);
+
+      if (difference.inMinutes < 1) {
+        return _t('project_deploy_time_just_now', 'just now');
+      }
+      if (difference.inMinutes < 60) {
+        return _t(
+          'project_deploy_time_minutes_ago',
+          '{minutes}m ago',
+        ).replaceAll('{minutes}', difference.inMinutes.toString());
+      }
+      if (difference.inHours < 24) {
+        return _t(
+          'project_deploy_time_hours_ago',
+          '{hours}h ago',
+        ).replaceAll('{hours}', difference.inHours.toString());
+      }
+      if (difference.inDays < 7) {
+        return _t(
+          'project_deploy_time_days_ago',
+          '{days}d ago',
+        ).replaceAll('{days}', difference.inDays.toString());
+      }
+      final localeTag = Localizations.localeOf(context).toLanguageTag();
+      return DateFormat.yMd(localeTag).format(dateTime);
+    } catch (_) {
+      return '';
+    }
+  }
+
+  String _getDeploymentLabel(String? url) {
+    final normalized = _normalizeHttpUrl(url);
+    if (normalized == null || normalized.isEmpty) {
+      return _t('project_deploy_configure_later', 'Configure later');
+    }
+    try {
+      final uri = Uri.parse(normalized);
+      return uri.host;
+    } catch (_) {
+      return normalized;
+    }
+  }
+
   String? _activeFlowHint() {
     if (_revertingCommit) {
       final shortSha = (_revertingCommitSha ?? '').trim();
       final suffix = shortSha.isEmpty ? '' : ' (${shortSha.substring(0, 7)})';
-      return 'Rolling back commit$suffix and triggering preview deploy…';
+      return _t(
+        'project_deploy_active_reverting',
+        'Rolling back commit{suffix} and triggering preview deploy...',
+      ).replaceAll('{suffix}', suffix);
     }
     if (_deployingProduction) {
-      return 'Production release in progress: ${_productionPhaseLabel.replaceAll('…', '')}';
+      return _t(
+        'project_deploy_active_prod',
+        'Production release in progress: {phase}',
+      ).replaceAll('{phase}', _productionPhaseLabel.replaceAll('...', ''));
     }
     if (_deployingPreview) {
-      return 'Preview deployment in progress…';
+      return _t(
+        'project_deploy_active_preview',
+        'Preview deployment in progress...',
+      );
     }
     return null;
   }
@@ -766,10 +896,19 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                   Expanded(
                     child: Text(
                       hasProd
-                          ? 'Production is live. Keep shipping with small preview iterations.'
+                          ? _t(
+                              'project_deploy_coach_prod_live',
+                              'Production is live. Keep shipping with small preview iterations.',
+                            )
                           : hasPreview
-                          ? 'Preview is ready. Recommended next step: release to production.'
-                          : 'No preview yet. Start with a preview deploy to reduce release risk.',
+                          ? _t(
+                              'project_deploy_coach_preview_ready',
+                              'Preview is ready. Recommended next step: release to production.',
+                            )
+                          : _t(
+                              'project_deploy_coach_no_preview',
+                              'No preview yet. Start with a preview deploy to reduce release risk.',
+                            ),
                       style: TextStyle(
                         fontSize: 13,
                         color: colorScheme.onSurfaceVariant,
@@ -781,12 +920,19 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                       onPressed: _deployingProduction
                           ? null
                           : () => _confirmAndDeploy(
-                              title: 'Deploy to production?',
-                              message:
-                                  'This will compare dev/main, merge if needed, then trigger a production deployment.',
+                              title: _t(
+                                'project_deploy_confirm_prod_title',
+                                'Deploy to production?',
+                              ),
+                              message: _t(
+                                'project_deploy_confirm_prod_message',
+                                'This will compare dev/main, merge if needed, then trigger a production deployment.',
+                              ),
                               action: _triggerProductionDeploy,
                             ),
-                      child: const Text('Release now'),
+                      child: Text(
+                        _t('project_deploy_release_now', 'Release now'),
+                      ),
                     ),
                 ],
               ),
@@ -833,8 +979,8 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Actions',
+            Text(
+              _t('project_deploy_actions', 'Actions'),
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
@@ -845,9 +991,14 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                     onPressed: _deployingPreview
                         ? null
                         : () => _confirmAndDeploy(
-                            title: 'Redeploy preview?',
-                            message:
-                                'This will trigger a new preview (dev) deployment on Vercel.',
+                            title: _t(
+                              'project_deploy_confirm_preview_title',
+                              'Redeploy preview?',
+                            ),
+                            message: _t(
+                              'project_deploy_confirm_preview_message',
+                              'This will trigger a new preview (dev) deployment on Vercel.',
+                            ),
                             action: _triggerPreviewDeploy,
                           ),
                     icon: _deployingPreview
@@ -857,7 +1008,12 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.refresh),
-                    label: const Text('Redeploy preview'),
+                    label: Text(
+                      _t(
+                        'project_deploy_action_redeploy_preview',
+                        'Redeploy preview',
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -866,9 +1022,14 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                     onPressed: _deployingProduction
                         ? null
                         : () => _confirmAndDeploy(
-                            title: 'Deploy to production?',
-                            message:
-                                'This will compare dev/main, merge if needed, then trigger a production deployment.',
+                            title: _t(
+                              'project_deploy_confirm_prod_title',
+                              'Deploy to production?',
+                            ),
+                            message: _t(
+                              'project_deploy_confirm_prod_message',
+                              'This will compare dev/main, merge if needed, then trigger a production deployment.',
+                            ),
                             action: _triggerProductionDeploy,
                           ),
                     icon: _deployingProduction
@@ -881,7 +1042,10 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                     label: Text(
                       _deployingProduction
                           ? _productionPhaseLabel
-                          : 'Deploy production',
+                          : _t(
+                              'project_deploy_action_deploy_prod',
+                              'Deploy production',
+                            ),
                     ),
                   ),
                 ),
@@ -898,7 +1062,13 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        'Release flow: ${_productionPhaseLabel.replaceAll('…', '')}',
+                        _t(
+                          'project_deploy_release_flow',
+                          'Release flow: {phase}',
+                        ).replaceAll(
+                          '{phase}',
+                          _productionPhaseLabel.replaceAll('...', ''),
+                        ),
                         style: TextStyle(
                           fontSize: 12,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -924,14 +1094,16 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.replay),
-                label: const Text('Retry last deployment'),
+                label: Text(
+                  _t('project_deploy_retry_last', 'Retry last deployment'),
+                ),
               ),
             ),
             const SizedBox(height: 12),
             Row(
               children: [
-                const Text(
-                  'History',
+                Text(
+                  _t('project_deploy_history', 'History'),
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(width: 10),
@@ -942,24 +1114,28 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                     setState(() => _envFilter = v);
                     await _loadDeployments();
                   },
-                  items: const [
+                  items: [
                     DropdownMenuItem(
                       value: _DeploymentEnvFilter.all,
-                      child: Text('All'),
+                      child: Text(_t('project_deploy_filter_all', 'All')),
                     ),
                     DropdownMenuItem(
                       value: _DeploymentEnvFilter.dev,
-                      child: Text('Preview'),
+                      child: Text(
+                        _t('project_deploy_filter_preview', 'Preview'),
+                      ),
                     ),
                     DropdownMenuItem(
                       value: _DeploymentEnvFilter.prod,
-                      child: Text('Production'),
+                      child: Text(
+                        _t('project_deploy_filter_production', 'Production'),
+                      ),
                     ),
                   ],
                 ),
                 const Spacer(),
                 IconButton(
-                  tooltip: 'Refresh',
+                  tooltip: _t('refresh', 'Refresh'),
                   onPressed: _isLoading ? null : _loadDeployments,
                   icon: _isLoading
                       ? const SizedBox(
@@ -985,34 +1161,49 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Troubleshooting',
+            Text(
+              _t('project_deploy_troubleshooting', 'Troubleshooting'),
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
             Text(
-              'If deploy fails, try these quick checks:',
+              _t(
+                'project_deploy_troubleshooting_hint',
+                'If deploy fails, try these quick checks:',
+              ),
               style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 10),
-            const _TroubleRow(
+            _TroubleRow(
               icon: Icons.code,
-              text: 'GitHub access / repo permissions',
+              text: _t(
+                'project_deploy_tip_short_github',
+                'GitHub access / repo permissions',
+              ),
             ),
             const SizedBox(height: 6),
-            const _TroubleRow(
+            _TroubleRow(
               icon: Icons.key,
-              text: 'Env vars configured (and synced to Vercel)',
+              text: _t(
+                'project_deploy_tip_short_env',
+                'Env vars configured (and synced to Vercel)',
+              ),
             ),
             const SizedBox(height: 6),
-            const _TroubleRow(
+            _TroubleRow(
               icon: Icons.cloud,
-              text: 'Retry preview deploy first',
+              text: _t(
+                'project_deploy_tip_short_retry_preview',
+                'Retry preview deploy first',
+              ),
             ),
             const SizedBox(height: 6),
-            const _TroubleRow(
+            _TroubleRow(
               icon: Icons.receipt_long,
-              text: 'Open build logs and share error snippet',
+              text: _t(
+                'project_deploy_tip_short_logs',
+                'Open build logs and share error snippet',
+              ),
             ),
             const SizedBox(height: 12),
             Row(
@@ -1023,13 +1214,13 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                         ? null
                         : () {
                             widget.onAskAi!(
-                              'My Vercel deployment failed for project "${project.projectName}". '
-                              'Give a step-by-step debugging checklist based on common Vercel/Remix issues. '
-                              'Also suggest what logs/env vars to check first.',
+                              '${_t('project_deploy_ai_prompt_vercel_prefix', 'My Vercel deployment failed for project')} "${project.projectName}". '
+                              '${_t('project_deploy_ai_prompt_vercel_middle', 'Give a step-by-step debugging checklist based on common Vercel/Remix issues.')} '
+                              '${_t('project_deploy_ai_prompt_vercel_suffix', 'Also suggest what logs/env vars to check first.')}',
                             );
                           },
                     icon: const Icon(Icons.auto_awesome, size: 18),
-                    label: const Text('Ask AI'),
+                    label: Text(_t('project_deploy_ask_ai', 'Ask AI')),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -1037,7 +1228,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                   child: ElevatedButton.icon(
                     onPressed: _retryingLast ? null : _retryLastDeployment,
                     icon: const Icon(Icons.replay, size: 18),
-                    label: const Text('Retry'),
+                    label: Text(_t('retry', 'Retry')),
                   ),
                 ),
               ],
@@ -1055,8 +1246,8 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Current Deployments',
+            Text(
+              _t('project_deploy_current_deployments', 'Current Deployments'),
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
@@ -1077,7 +1268,9 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                     size: 24,
                   ),
                 ),
-                title: const Text('Production'),
+                title: Text(
+                  _t('project_deploy_filter_production', 'Production'),
+                ),
                 subtitle: Text(
                   _getDeploymentLabel(project.latestProdDeploymentUrl),
                   style: TextStyle(color: Colors.grey.shade600),
@@ -1088,14 +1281,16 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                     TextButton(
                       onPressed: () =>
                           _openUrl(project.latestProdDeploymentUrl!),
-                      child: const Text('Open'),
+                      child: Text(_t('project_deploy_open', 'Open')),
                     ),
                     const Icon(Icons.arrow_forward_ios, size: 14),
                   ],
                 ),
                 onTap: () {
-                  final question =
-                      'Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?';
+                  final question = _t(
+                    'project_deploy_ai_prompt_prod',
+                    'Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?',
+                  );
                   widget.onAskAi?.call(question);
                 },
               )
@@ -1112,8 +1307,15 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                   ),
                   child: const Icon(Icons.cancel, color: Colors.grey, size: 24),
                 ),
-                title: const Text('Production'),
-                subtitle: const Text('No production deployment'),
+                title: Text(
+                  _t('project_deploy_filter_production', 'Production'),
+                ),
+                subtitle: Text(
+                  _t(
+                    'project_deploy_no_production',
+                    'No production deployment',
+                  ),
+                ),
                 onTap: () {},
               ),
             // Preview deployment
@@ -1134,7 +1336,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                     size: 24,
                   ),
                 ),
-                title: const Text('Preview'),
+                title: Text(_t('project_deploy_filter_preview', 'Preview')),
                 subtitle: Text(
                   _getDeploymentLabel(project.latestPreviewUrl),
                   style: TextStyle(color: Colors.grey.shade600),
@@ -1144,14 +1346,16 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                   children: [
                     TextButton(
                       onPressed: () => _openUrl(project.latestPreviewUrl!),
-                      child: const Text('Open'),
+                      child: Text(_t('project_deploy_open', 'Open')),
                     ),
                     const Icon(Icons.arrow_forward_ios, size: 14),
                   ],
                 ),
                 onTap: () {
-                  final question =
-                      'Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?';
+                  final question = _t(
+                    'project_deploy_ai_prompt_preview',
+                    'Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?',
+                  );
                   widget.onAskAi?.call(question);
                 },
               ),
@@ -1179,7 +1383,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
           Row(
             children: [
               Text(
-                'Releases',
+                _t('project_deploy_releases', 'Releases'),
                 style:
                     theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
@@ -1188,7 +1392,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
               ),
               const SizedBox(width: 8),
               Text(
-                '(main)',
+                _t('project_deploy_releases_main', '(main)'),
                 style: TextStyle(
                   fontSize: 12,
                   color: colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
@@ -1196,7 +1400,10 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
               ),
               const Spacer(),
               IconButton(
-                tooltip: 'Refresh releases',
+                tooltip: _t(
+                  'project_deploy_refresh_releases',
+                  'Refresh releases',
+                ),
                 onPressed: _isLoadingReleases ? null : _loadReleases,
                 icon: _isLoadingReleases
                     ? const SizedBox(
@@ -1237,7 +1444,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                   ),
                   TextButton(
                     onPressed: () => _openUrl(productionUrl),
-                    child: const Text('Open'),
+                    child: Text(_t('project_deploy_open', 'Open')),
                   ),
                   TextButton(
                     onPressed: () async {
@@ -1247,11 +1454,11 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                       if (!mounted) return;
                       SnackBarHelper.showSuccess(
                         context,
-                        title: 'Copied',
+                        title: _t('copied', 'Copied'),
                         message: productionUrl,
                       );
                     },
-                    child: const Text('Copy'),
+                    child: Text(_t('project_deploy_copy', 'Copy')),
                   ),
                 ],
               ),
@@ -1277,13 +1484,16 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                 ),
                 TextButton(
                   onPressed: _loadReleases,
-                  child: const Text('Retry'),
+                  child: Text(_t('retry', 'Retry')),
                 ),
               ],
             )
           else if (groups.isEmpty && _releaseCommits.isEmpty)
             Text(
-              'No releases detected on main yet.',
+              _t(
+                'project_deploy_no_releases',
+                'No releases detected on main yet.',
+              ),
               style: TextStyle(
                 fontSize: 13,
                 color: colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
@@ -1297,7 +1507,9 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                   dense: true,
                   contentPadding: EdgeInsets.zero,
                   title: Text(
-                    title.isEmpty ? '(no message)' : title,
+                    title.isEmpty
+                        ? _t('project_deploy_no_message', '(no message)')
+                        : title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1325,14 +1537,19 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        mergeTitle.isEmpty ? 'Merge into main' : mergeTitle,
+                        mergeTitle.isEmpty
+                            ? _t(
+                                'project_deploy_merge_into_main',
+                                'Merge into main',
+                              )
+                            : mergeTitle,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${group.merge.sha.substring(0, 7)} • ${group.merge.authorName.isEmpty ? 'unknown' : group.merge.authorName} • ${_formatTimeAgo(group.merge.authoredAt)}',
+                        '${group.merge.sha.substring(0, 7)} • ${group.merge.authorName.isEmpty ? _t('project_deploy_unknown', 'unknown') : group.merge.authorName} • ${_formatTimeAgo(group.merge.authoredAt)}',
                         style: TextStyle(
                           fontSize: 12,
                           color: colorScheme.onSurfaceVariant.withValues(
@@ -1343,7 +1560,10 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                       const SizedBox(height: 8),
                       if (group.items.isEmpty)
                         Text(
-                          'No change commits between adjacent releases.',
+                          _t(
+                            'project_deploy_no_change_commits',
+                            'No change commits between adjacent releases.',
+                          ),
                           style: TextStyle(
                             fontSize: 12,
                             color: colorScheme.onSurfaceVariant,
@@ -1363,7 +1583,10 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                                   Expanded(
                                     child: Text(
                                       itemTitle.isEmpty
-                                          ? '(no message)'
+                                          ? _t(
+                                              'project_deploy_no_message',
+                                              '(no message)',
+                                            )
                                           : itemTitle,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -1462,7 +1685,10 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
               key: const ValueKey('deploy-history-empty'),
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(
-                'No deployments yet — deploy your project to see history here.',
+                _t(
+                  'project_deploy_history_empty',
+                  'No deployments yet — deploy your project to see history here.',
+                ),
                 style:
                     theme.textTheme.bodyMedium?.copyWith(
                       color: colorScheme.onSurfaceVariant.withValues(
@@ -1502,7 +1728,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
           Row(
             children: [
               Text(
-                'Deployment History',
+                _t('project_deploy_history_title', 'Deployment History'),
                 style:
                     theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
@@ -1673,14 +1899,14 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                         TextButton.icon(
                           onPressed: () => _openUrl(url),
                           icon: const Icon(Icons.open_in_new, size: 16),
-                          label: const Text('Open'),
+                          label: Text(_t('project_deploy_open', 'Open')),
                         ),
                       if (deployment.vercelDeploymentId != null &&
                           deployment.vercelDeploymentId!.trim().isNotEmpty)
                         TextButton.icon(
                           onPressed: () => _openLog(deployment),
                           icon: const Icon(Icons.subject, size: 16),
-                          label: const Text('Logs'),
+                          label: Text(_t('project_deploy_logs', 'Logs')),
                         ),
                       const Spacer(),
                       Text(
@@ -1708,8 +1934,11 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
     if (id == null || id.isEmpty) {
       SnackBarHelper.showInfo(
         context,
-        title: 'No logs',
-        message: 'This deployment has no Vercel deployment id.',
+        title: _t('project_deploy_no_logs', 'No logs'),
+        message: _t(
+          'project_deploy_no_logs_message',
+          'This deployment has no Vercel deployment id.',
+        ),
       );
       return;
     }
@@ -1717,7 +1946,10 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
       MaterialPageRoute(
         builder: (_) => DeploymentLogScreen(
           vercelDeploymentId: id,
-          title: '${deployment.environmentLabel} logs',
+          title: _t(
+            'project_deploy_logs_title',
+            '{env} logs',
+          ).replaceAll('{env}', deployment.environmentLabel),
         ),
       ),
     );
@@ -1744,7 +1976,10 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${deployment.environmentLabel} deployment',
+                  _t(
+                    'project_deploy_environment_deployment',
+                    '{env} deployment',
+                  ).replaceAll('{env}', deployment.environmentLabel),
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -1775,7 +2010,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                     ElevatedButton.icon(
                       onPressed: canOpenUrl ? () => _openUrl(url) : null,
                       icon: const Icon(Icons.open_in_new),
-                      label: const Text('Open'),
+                      label: Text(_t('project_deploy_open', 'Open')),
                     ),
                     OutlinedButton.icon(
                       onPressed: canViewLogs
@@ -1785,7 +2020,9 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                             }
                           : null,
                       icon: const Icon(Icons.subject),
-                      label: const Text('Build logs'),
+                      label: Text(
+                        _t('project_deploy_build_logs', 'Build logs'),
+                      ),
                     ),
                     OutlinedButton.icon(
                       onPressed: (canRevert && !_revertingCommit)
@@ -1805,8 +2042,11 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                         _revertingCommit &&
                                 _revertingCommitSha ==
                                     deployment.primaryCommitSha?.trim()
-                            ? 'Reverting…'
-                            : 'Revert + Preview',
+                            ? _t('project_deploy_reverting', 'Reverting...')
+                            : _t(
+                                'project_deploy_revert_preview',
+                                'Revert + Preview',
+                              ),
                       ),
                     ),
                     OutlinedButton.icon(
@@ -1814,12 +2054,14 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                           ? null
                           : () {
                               Navigator.of(context).pop();
-                              final question =
-                                  'Can you provide insights and recommendations about the ${deployment.environmentLabel} deployment, including performance optimization, troubleshooting, and best practices?';
+                              final question = _t(
+                                'project_deploy_ai_prompt_environment',
+                                'Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?',
+                              ).replaceAll('{env}', deployment.environmentLabel);
                               widget.onAskAi?.call(question);
                             },
                       icon: const Icon(Icons.smart_toy),
-                      label: const Text('Ask AI'),
+                      label: Text(_t('project_deploy_ask_ai', 'Ask AI')),
                     ),
                   ],
                 ),
@@ -1842,8 +2084,11 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
       if (!mounted) return;
       SnackBarHelper.showError(
         context,
-        title: 'Cannot Open URL',
-        message: 'Could not open ${uri.toString()}',
+        title: _t('project_deploy_open_url_failed', 'Cannot open URL'),
+        message: _t(
+          'project_deploy_open_url_failed_message',
+          'Could not open {url}',
+        ).replaceAll('{url}', uri.toString()),
       );
     }
   }
@@ -1881,28 +2126,6 @@ class _StaggeredIn extends StatelessWidget {
   }
 }
 
-String _formatTimeAgo(String isoString) {
-  try {
-    final dateTime = DateTime.parse(isoString);
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
-
-    if (difference.inMinutes < 1) {
-      return 'just now';
-    } else if (difference.inMinutes < 60) {
-      return '${difference.inMinutes}m ago';
-    } else if (difference.inHours < 24) {
-      return '${difference.inHours}h ago';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays}d ago';
-    } else {
-      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
-    }
-  } catch (e) {
-    return '';
-  }
-}
-
 String? _normalizeHttpUrl(String? raw) {
   final value = (raw ?? '').trim();
   if (value.isEmpty) return null;
@@ -1911,17 +2134,4 @@ String? _normalizeHttpUrl(String? raw) {
   }
   if (value.startsWith('//')) return 'https:$value';
   return 'https://$value';
-}
-
-String _getDeploymentLabel(String? url) {
-  final normalized = _normalizeHttpUrl(url);
-  if (normalized == null || normalized.isEmpty) {
-    return 'Configure later';
-  }
-  try {
-    final uri = Uri.parse(normalized);
-    return uri.host;
-  } catch (e) {
-    return normalized;
-  }
 }

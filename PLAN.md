@@ -66,13 +66,57 @@
 - [x] P1：Dashboard 页面核心状态/提示/空态/错误文案国际化（含搜索与 workspace 状态）。
 - [x] P2：Project Detail 主页面（tab/share/error/not found）国际化。
 - [x] P3：Project Overview 全量国际化（Header/Stats/Links/Recent Deployments/Health Metrics/Community/Danger Zone），并补齐关键流程加载与提示文案。
-- [ ] P4：Project Deploy 页面国际化 + 加载态/空态/失败提示优化。
-- [ ] P5：Project API / Env / Database / Analytics 页面继续国际化补齐。
+- [x] P4：Project Deploy 页面国际化 + 加载态/空态/失败提示优化。
+- [x] P5：Project API / Env / Database / Analytics 页面继续国际化补齐。
 
 ### P3 差异复核（本次）
 - 已清理 Project Overview 下仍残留的硬编码英文，覆盖发布流程弹窗、进度文本、危险操作确认、链接错误提示、状态标签与时间文案。
 - `formatTimeAgo` 改为按当前 locale 展示日期格式，减少跨语言阅读负担。
 - 新增 `project_overview_*` 多语言键并重新生成 `generated_localizations.dart`。
 
+### P4 差异复核（本次）
+- 已完成 Deploy 主页面国际化：Actions / Troubleshooting / Current Deployments / Releases / Deployment History / BottomSheet 操作项。
+- 关键流程体验对齐：预览/生产部署、回滚、重试、下一步建议、日志打开失败等提示均已本地化并保持原加载态交互。
+- 部署日志页（`DeploymentLogScreen` + `DeploymentLogViewer`）完成菜单、复制、分享、错误态、统计标签国际化。
+- 时间文案与空态文案统一本地化，避免中英文混杂。
+
+### P5 差异复核（本次）
+- 已完成 `Database / Analytics` 国际化补齐：`project_database_tab.dart` + `project_analytics_tab.dart`。
+- Analytics 新增完整交互文案覆盖：安装引导、分享访问、筛选器、对比维度、状态卡片、摘要复制、失败重试、按钮反馈；并按 locale 格式化时间范围显示。
+- Database 补齐 AI 说明提示词的中文/繁中文案，避免中英文混杂。
+- 已将 `project_analytics_*` 新增键同步到 `lib/l10n/arb/*.arb`，并重新生成 `generated_localizations.dart`，保证多语言 key 一致。
+
 ### 第二阶段代码检查记录
 - P3：`flutter analyze lib/widgets/project_overview/project_overview_tab.dart lib/widgets/project_overview/components/project_overview_utils.dart lib/widgets/project_overview/components/project_overview_header_card.dart lib/widgets/project_overview/components/project_overview_health_metrics_card.dart lib/widgets/project_overview/components/project_overview_recent_deployments_card.dart lib/widgets/project_overview/components/project_overview_links_card.dart lib/widgets/project_overview/components/project_overview_stats_card.dart lib/widgets/project_overview/components/project_overview_danger_zone_card.dart lib/l10n/generated_localizations.dart` ✅
+- P4：`flutter analyze lib/widgets/project_deploy/project_deploy_tab.dart lib/widgets/project_deploy/deployment_log_screen.dart lib/widgets/project_deploy/deployment_log_viewer.dart lib/l10n/generated_localizations.dart` ✅
+- P5（API/Env 子批次）：`flutter analyze lib/widgets/project_api/project_api_tab.dart lib/widgets/project_api/env_var_editor_dialog.dart lib/l10n/generated_localizations.dart` ✅
+- P4+P5（联检）：`flutter analyze lib/widgets/project_deploy/project_deploy_tab.dart lib/widgets/project_deploy/deployment_log_screen.dart lib/widgets/project_deploy/deployment_log_viewer.dart lib/widgets/project_api/project_api_tab.dart lib/widgets/project_api/env_var_editor_dialog.dart lib/l10n/generated_localizations.dart` ✅
+- P5（Database/Analytics 子批次）：`flutter analyze lib/widgets/project_analytics/project_analytics_tab.dart lib/widgets/project_database/project_database_tab.dart lib/l10n/generated_localizations.dart` ✅
+- P5（全量联检）：`flutter analyze lib/widgets/project_deploy/project_deploy_tab.dart lib/widgets/project_deploy/deployment_log_screen.dart lib/widgets/project_deploy/deployment_log_viewer.dart lib/widgets/project_api/project_api_tab.dart lib/widgets/project_api/env_var_editor_dialog.dart lib/widgets/project_database/project_database_tab.dart lib/widgets/project_analytics/project_analytics_tab.dart lib/l10n/generated_localizations.dart` ✅
+
+---
+
+## 第三阶段：Project Detail 深化（GitHub / Payment）
+
+### 设计思考（继续最小改动 + 强化操作可感知）
+- GitHub Tab 是“高风险操作路径”（邀请、验权、导入），优先补齐步骤反馈文案，避免用户不知道当前卡在哪一步。
+- Payment Tab 是“经营类信息页”，优先保证空态/错误态/编辑弹窗文案清晰，减少新增/编辑失败时的理解成本。
+- 仍采用页面内 `_t(key, fallback)`，只替换可见文案和提示，不改动原接口与流程，降低回归风险。
+- 新增 key 同步到多语言 ARB，保持 `en/zh/zh_Hant` 可读，其它语种走英文兜底。
+
+### TODO（逐项检查后勾选）
+- [x] P6.1：Project GitHub 页面国际化补齐（连接仓库、邀请验权、导入流程、复制提示、错误提示）。
+- [x] P6.2：Project Payment 页面国际化补齐（概览指标、商品区、交易区、新增/编辑弹窗、失败提示、AI 提示词）。
+- [x] P6.3：补齐 `project_github_*` / `project_payment_*` ARB 键并重新生成本地化文件。
+- [x] P6.4：做联检并确认新旧页面无分析错误。
+
+### P6 差异复核（本次）
+- `project_github_tab.dart`：已覆盖连接仓库卡片、GitHub Import 流程、邀请/验权/导入反馈、复制与失败提示，并保留原交互顺序与按钮禁用逻辑。
+- `project_payment_tab.dart`：已覆盖 Payment Overview / Products / Transactions 以及新增/编辑商品弹窗的全部关键文案，补齐字段校验错误、加载态按钮文本与 AI 提示词国际化。
+- 新增键值已同步到 `lib/l10n/arb/*.arb` 并重新生成 `lib/l10n/generated_localizations.dart`，保证多语言 key 集合一致。
+
+### 第三阶段代码检查记录
+- P6.1：`flutter analyze lib/widgets/project_github/project_github_tab.dart` ✅
+- P6.2：`flutter analyze lib/widgets/project_github/project_github_tab.dart lib/widgets/project_payment/project_payment_tab.dart` ✅
+- P6.3：`flutter analyze lib/widgets/project_github/project_github_tab.dart lib/widgets/project_payment/project_payment_tab.dart lib/l10n/generated_localizations.dart` ✅
+- P6.4（联检）：`flutter analyze lib/widgets/project_github/project_github_tab.dart lib/widgets/project_payment/project_payment_tab.dart lib/widgets/project_analytics/project_analytics_tab.dart lib/widgets/project_database/project_database_tab.dart lib/l10n/generated_localizations.dart` ✅
