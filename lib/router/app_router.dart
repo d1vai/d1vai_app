@@ -233,7 +233,10 @@ GoRouter createAppRouter() {
         pageBuilder: (context, state) => _buildPageWithTransition(
           context,
           state,
-          const MainScreen(initialIndex: 3),
+          MainScreen(
+            initialIndex: 3,
+            ordersInitialTab: state.uri.queryParameters['tab'],
+          ),
         ),
       ),
       GoRoute(

@@ -1700,6 +1700,10 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       await _dispatchPrompt(prompt);
     } catch (e) {
       if (!mounted) return;
+      if (isInsufficientBalanceError(e)) {
+        await showInsufficientBalanceDialog(context);
+        return;
+      }
       SnackBarHelper.showError(
         context,
         title: 'Error',
@@ -1805,6 +1809,10 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _messageStatuses[message.id] = MessageStatus.failed;
       });
       _markSessionError();
+      if (isInsufficientBalanceError(e)) {
+        await showInsufficientBalanceDialog(context);
+        return;
+      }
       SnackBarHelper.showError(
         context,
         title: 'Retry',

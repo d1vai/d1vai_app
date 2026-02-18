@@ -1,6 +1,7 @@
 import '../core/api_client.dart';
 import '../models/llm_usage.dart';
 import '../models/db_usage.dart';
+import '../models/builder_usage.dart';
 
 class UsageService {
   final ApiClient _apiClient;
@@ -32,6 +33,14 @@ class UsageService {
         'to_iso': toIso,
         'granularity': granularity,
       },
+    );
+  }
+
+  /// 获取 Builder 构建时长与费用汇总
+  Future<BuilderUsageSummary> getBuilderDurationSummary() async {
+    return _apiClient.get<BuilderUsageSummary>(
+      '/api/deployment/builder/summary',
+      fromJsonT: (json) => BuilderUsageSummary.fromJson(json),
     );
   }
 }

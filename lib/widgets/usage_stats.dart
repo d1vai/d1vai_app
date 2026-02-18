@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/usage_service.dart';
 import '../models/llm_usage.dart';
 import '../models/db_usage.dart';
+import '../models/builder_usage.dart';
+import '../l10n/app_localizations.dart';
 import 'skeletons/usage_stats_skeleton.dart';
 
 class UsageStats extends StatefulWidget {
@@ -16,6 +18,7 @@ class _UsageStatsState extends State<UsageStats>
   final UsageService _usageService = UsageService();
   bool _isLoading = true;
   bool _isLoadingLlm = false;
+  bool _isLoadingBuilder = false;
 
   // Real database usage data (Neon consumption)
   DbUsageResponse? _dbUsage;
@@ -24,6 +27,7 @@ class _UsageStatsState extends State<UsageStats>
 
   // Real LLM usage data
   List<ProjectMonthlyUsage> _projectUsage = [];
+  BuilderUsageSummary? _builderSummary;
 
   // LLM usage month selector
   int _selectedMonths = 12;
@@ -61,6 +65,9 @@ class _UsageStatsState extends State<UsageStats>
 
       // Load LLM usage from API with selected months
       await _reloadLlmUsage();
+
+      // Load builder usage summary (optional section)
+      await _reloadBuilderUsage();
     } finally {
       if (mounted) {
         setState(() {
@@ -96,6 +103,32 @@ class _UsageStatsState extends State<UsageStats>
         );
         setState(() {
           _isLoadingLlm = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _reloadBuilderUsage() async {
+    if (mounted) {
+      setState(() {
+        _isLoadingBuilder = true;
+      });
+    }
+
+    try {
+      final summary = await _usageService.getBuilderDurationSummary();
+      if (mounted) {
+        setState(() {
+          _builderSummary = summary;
+          _isLoadingBuilder = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Failed to load builder usage: $e');
+      if (mounted) {
+        setState(() {
+          _builderSummary = null;
+          _isLoadingBuilder = false;
         });
       }
     }
@@ -164,6 +197,9 @@ class _UsageStatsState extends State<UsageStats>
   @override
   bool get wantKeepAlive => true;
 
+  String _t(String key, String fallback) =>
+      AppLocalizations.of(context)?.translate(key) ?? fallback;
+
   @override
   Widget build(BuildContext context) {
     super.build(context); // 必须调用 super.build 来保持状态
@@ -176,17 +212,33 @@ class _UsageStatsState extends State<UsageStats>
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _buildSectionHeader('Database Usage'),
+          _buildSectionHeader(
+            _t('orders_usage_db_title', 'Database Usage'),
+            icon: Icons.storage_rounded,
+          ),
           const SizedBox(height: 12),
           _buildDatabaseStatsCard(),
           const SizedBox(height: 24),
-          _buildSectionHeader('LLM Usage'),
+          _buildSectionHeader(
+            _t('orders_usage_llm_title', 'LLM Usage'),
+            icon: Icons.auto_awesome_rounded,
+          ),
           const SizedBox(height: 12),
           _buildMonthSelector(),
           const SizedBox(height: 12),
           _buildLLMStatsCard(),
           const SizedBox(height: 24),
-          _buildSectionHeader('Project Breakdown'),
+          _buildSectionHeader(
+            _t('orders_usage_builder_title', 'Builder Time'),
+            icon: Icons.timer_outlined,
+          ),
+          const SizedBox(height: 12),
+          _buildBuilderStatsCard(),
+          const SizedBox(height: 24),
+          _buildSectionHeader(
+            _t('orders_usage_project_breakdown_title', 'Project Breakdown'),
+            icon: Icons.widgets_outlined,
+          ),
           const SizedBox(height: 12),
           _buildProjectBreakdown(),
         ],
@@ -194,10 +246,10 @@ class _UsageStatsState extends State<UsageStats>
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(String title, {required IconData icon}) {
     return Row(
       children: [
-        Icon(Icons.analytics, color: Colors.deepPurple, size: 20),
+        Icon(icon, color: Colors.deepPurple, size: 20),
         const SizedBox(width: 8),
         Text(
           title,
@@ -219,10 +271,13 @@ class _UsageStatsState extends State<UsageStats>
             children: [
               _buildStatRow(
                 icon: Icons.storage,
-                label: 'Database Usage',
-                value: 'N/A',
+                label: _t('orders_usage_db_title', 'Database Usage'),
+                value: _t('orders_usage_na', 'N/A'),
                 color: Colors.blue,
-                subtitle: 'No database usage data available yet',
+                subtitle: _t(
+                  'orders_usage_db_empty_hint',
+                  'No database usage data available yet',
+                ),
               ),
             ],
           ),
@@ -242,26 +297,35 @@ class _UsageStatsState extends State<UsageStats>
           children: [
             _buildStatRow(
               icon: Icons.timer,
-              label: 'Compute Time',
+              label: _t('orders_usage_db_compute_time', 'Compute Time'),
               value: "${computeHours.toStringAsFixed(2)} h",
               color: Colors.blue,
-              subtitle: 'Total compute time (all projects)',
+              subtitle: _t(
+                'orders_usage_db_compute_time_hint',
+                'Total compute time (all projects)',
+              ),
             ),
             const Divider(),
             _buildStatRow(
               icon: Icons.storage,
-              label: 'Written Data',
+              label: _t('orders_usage_db_written_data', 'Written Data'),
               value: "${writtenGb.toStringAsFixed(2)} GB",
               color: Colors.green,
-              subtitle: 'Total written data',
+              subtitle: _t(
+                'orders_usage_db_written_data_hint',
+                'Total written data',
+              ),
             ),
             const Divider(),
             _buildStatRow(
               icon: Icons.swap_horiz,
-              label: 'Data Transfer',
+              label: _t('orders_usage_db_transfer', 'Data Transfer'),
               value: "${transferGb.toStringAsFixed(2)} GB",
               color: Colors.orange,
-              subtitle: 'Total data transfer',
+              subtitle: _t(
+                'orders_usage_db_transfer_hint',
+                'Total data transfer',
+              ),
             ),
           ],
         ),
@@ -297,27 +361,193 @@ class _UsageStatsState extends State<UsageStats>
           children: [
             _buildStatRow(
               icon: Icons.token,
-              label: 'Input Tokens',
+              label: _t('orders_usage_llm_input_tokens', 'Input Tokens'),
               value: _formatNumber(usage['totalInput']),
               color: Colors.purple,
-              subtitle: 'total input tokens',
+              subtitle: _t(
+                'orders_usage_llm_input_tokens_hint',
+                'Total input tokens',
+              ),
             ),
             const Divider(),
             _buildStatRow(
               icon: Icons.arrow_forward,
-              label: 'Output Tokens',
+              label: _t('orders_usage_llm_output_tokens', 'Output Tokens'),
               value: _formatNumber(usage['totalOutput']),
               color: Colors.teal,
-              subtitle: 'total output tokens',
+              subtitle: _t(
+                'orders_usage_llm_output_tokens_hint',
+                'Total output tokens',
+              ),
             ),
             const Divider(),
             _buildStatRow(
               icon: Icons.attach_money,
-              label: 'Total Cost',
+              label: _t('orders_usage_llm_total_cost', 'Total Cost'),
               value: '\$${usage['totalCost'].toStringAsFixed(4)}',
               color: Colors.red,
-              subtitle: 'estimated cost',
+              subtitle: _t(
+                'orders_usage_llm_total_cost_hint',
+                'Estimated cost',
+              ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatDuration(double totalSeconds) {
+    final sec = totalSeconds.isFinite ? totalSeconds.round() : 0;
+    final clamped = sec < 0 ? 0 : sec;
+    final h = clamped ~/ 3600;
+    final m = (clamped % 3600) ~/ 60;
+    final s = clamped % 60;
+    if (h > 0) return '${h}h ${m}m ${s}s';
+    if (m > 0) return '${m}m ${s}s';
+    return '${s}s';
+  }
+
+  Widget _buildBuilderStatsCard() {
+    if (_isLoadingBuilder) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final summary = _builderSummary;
+    if (summary == null) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _t(
+                  'orders_usage_builder_load_failed',
+                  'Unable to load builder usage data.',
+                ),
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: _reloadBuilderUsage,
+                icon: const Icon(Icons.refresh),
+                label: Text(_t('retry', 'Retry')),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final rateText = summary.billingRateUsdPerMinute.toStringAsFixed(2);
+    final projects = summary.projects.take(5).toList();
+    final costText = summary.totalEstimatedCostUsd.toStringAsFixed(2);
+    final totalDuration = _formatDuration(summary.totalBuildSeconds);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              _t(
+                'orders_usage_builder_billing_rule',
+                'Billing rule: {rate}/min',
+              ).replaceAll('{rate}', '\$$rateText'),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 10),
+            _buildStatRow(
+              icon: Icons.schedule,
+              label: _t('orders_usage_builder_overall', 'Overall Build Time'),
+              value: totalDuration,
+              color: Colors.indigo,
+            ),
+            const Divider(),
+            _buildStatRow(
+              icon: Icons.attach_money_rounded,
+              label: _t(
+                'orders_usage_builder_estimated_cost',
+                'Estimated Cost',
+              ),
+              value: '\$$costText',
+              color: Colors.deepOrange,
+              subtitle: _t(
+                'orders_usage_builder_estimated_cost_hint',
+                'Estimated from deployment build durations',
+              ),
+            ),
+            if (projects.isEmpty) ...[
+              const Divider(),
+              Text(
+                _t('orders_usage_builder_empty', 'No deployment records yet.'),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ] else ...[
+              const Divider(),
+              Text(
+                _t('orders_usage_builder_projects_title', 'Top Projects'),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              ...projects.map((project) {
+                final emoji = (project.projectEmoji ?? '').trim();
+                final prefix = emoji.isEmpty ? '📦' : emoji;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      Text(prefix),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          project.projectName.isEmpty
+                              ? project.projectId
+                              : project.projectName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        _formatDuration(project.totalBuildSeconds),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        '\$${project.estimatedCostUsd.toStringAsFixed(2)}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: Colors.deepOrange,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
           ],
         ),
       ),
@@ -395,7 +625,7 @@ class _UsageStatsState extends State<UsageStats>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Time Range',
+              _t('orders_usage_time_range', 'Time Range'),
               style: Theme.of(
                 context,
               ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
@@ -439,7 +669,10 @@ class _UsageStatsState extends State<UsageStats>
                           ),
                         ),
                         child: Text(
-                          '$months months',
+                          _t(
+                            'orders_usage_time_range_months',
+                            '{months} months',
+                          ).replaceAll('{months}', months.toString()),
                           style: TextStyle(
                             color: isSelected
                                 ? theme.colorScheme.onPrimary
@@ -473,14 +706,20 @@ class _UsageStatsState extends State<UsageStats>
                 Icon(Icons.inbox, size: 48, color: Colors.grey.shade400),
                 const SizedBox(height: 16),
                 Text(
-                  'No usage data available',
+                  _t(
+                    'orders_usage_project_breakdown_empty',
+                    'No usage data available',
+                  ),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Your LLM usage will appear here',
+                  _t(
+                    'orders_usage_project_breakdown_empty_hint',
+                    'Your LLM usage will appear here',
+                  ),
                   style: Theme.of(
                     context,
                   ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
@@ -528,7 +767,7 @@ class _UsageStatsState extends State<UsageStats>
                               border: Border.all(color: Colors.red.shade200),
                             ),
                             child: Text(
-                              'Deleted',
+                              _t('orders_usage_project_deleted', 'Deleted'),
                               style: TextStyle(
                                 color: Colors.red.shade700,
                                 fontSize: 10,

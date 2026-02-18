@@ -16,10 +16,17 @@ class WalletService {
   }
 
   /// 获取信用卡记录
-  Future<List<CreditIssuance>> getCreditIssuances({int limit = 50}) async {
+  Future<List<CreditIssuance>> getCreditIssuances({
+    int limit = 50,
+    String? direction,
+  }) async {
+    final queryParams = <String, String>{'limit': limit.toString()};
+    if (direction != null && direction.trim().isNotEmpty) {
+      queryParams['direction'] = direction.trim();
+    }
     final response = _apiClient.get<List<dynamic>>(
       '/api/wallet/credit-issuances',
-      queryParams: {'limit': limit.toString()},
+      queryParams: queryParams,
     );
 
     // 将 List<dynamic> 转换为 List<CreditIssuance>

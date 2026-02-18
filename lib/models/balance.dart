@@ -34,6 +34,7 @@ class BalanceResponse {
 class CreditIssuance {
   final String id;
   final double amountUsd;
+  final String direction;
   final String issuedAt;
   final String? bucket;
   final String? expiresAt;
@@ -42,6 +43,7 @@ class CreditIssuance {
   CreditIssuance({
     required this.id,
     required this.amountUsd,
+    required this.direction,
     required this.issuedAt,
     this.bucket,
     this.expiresAt,
@@ -52,6 +54,7 @@ class CreditIssuance {
     return CreditIssuance(
       id: json['id'].toString(),
       amountUsd: (json['amount_usd'] ?? 0.0).toDouble(),
+      direction: (json['direction'] ?? 'credit').toString(),
       issuedAt: json['issued_at'] ?? '',
       bucket: json['bucket'],
       expiresAt: json['expires_at'],
@@ -63,6 +66,7 @@ class CreditIssuance {
     return {
       'id': id,
       'amount_usd': amountUsd,
+      'direction': direction,
       'issued_at': issuedAt,
       'bucket': bucket,
       'expires_at': expiresAt,

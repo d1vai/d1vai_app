@@ -43,6 +43,28 @@ class ApiResponse<T> {
   bool get isSuccess => code == 0;
 }
 
+class ApiClientException implements Exception {
+  final String message;
+  final int? statusCode;
+  final int? code;
+  final dynamic data;
+
+  const ApiClientException(
+    this.message, {
+    this.statusCode,
+    this.code,
+    this.data,
+  });
+
+  @override
+  String toString() {
+    if (statusCode != null) {
+      return 'HTTP Error: $statusCode $message';
+    }
+    return 'ApiClientException: $message';
+  }
+}
+
 class ApiClient {
   static const String _envBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
@@ -725,7 +747,12 @@ class ApiClient {
           statusCode: response.statusCode,
           message: apiResponse.msg,
         );
-        throw Exception(apiResponse.msg);
+        throw ApiClientException(
+          apiResponse.msg,
+          statusCode: response.statusCode,
+          code: apiResponse.code,
+          data: json,
+        );
       }
     } else {
       // 打印 HTTP 错误
@@ -740,6 +767,8 @@ class ApiClient {
 
       // 解析响应体
       String responseBodyForException = '';
+      int? parsedCode;
+      Map<String, dynamic>? parsedErrorData;
       try {
         final responseBody = utf8.decode(response.bodyBytes);
         responseBodyForException = responseBody;
@@ -754,6 +783,7 @@ class ApiClient {
 
           // Prefer backend error message fields when present.
           if (json is Map<String, dynamic>) {
+            parsedErrorData = json;
             final msg =
                 json['msg'] ??
                 json['detail'] ??
@@ -761,6 +791,12 @@ class ApiClient {
                 json['error'];
             if (msg is String && msg.trim().isNotEmpty) {
               responseBodyForException = msg.trim();
+            }
+            final rawCode = json['code'];
+            if (rawCode is num) {
+              parsedCode = rawCode.toInt();
+            } else if (rawCode is String) {
+              parsedCode = int.tryParse(rawCode.trim());
             }
             if (json['code'] == 401 && !_isPublicEndpoint(endpoint)) {
               if (!hasAuthToken) {
@@ -823,8 +859,13 @@ class ApiClient {
             ? responseBodyForException
             : response.body,
       );
-      throw Exception(
-        'HTTP Error: ${response.statusCode} ${responseBodyForException.isNotEmpty ? responseBodyForException : response.body}',
+      throw ApiClientException(
+        responseBodyForException.isNotEmpty
+            ? responseBodyForException
+            : response.body,
+        statusCode: response.statusCode,
+        code: parsedCode,
+        data: parsedErrorData,
       );
     }
   }

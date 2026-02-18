@@ -10,8 +10,9 @@ import 'order_screen.dart';
 
 class MainScreen extends StatefulWidget {
   final int initialIndex;
+  final String? ordersInitialTab;
 
-  const MainScreen({super.key, this.initialIndex = 0});
+  const MainScreen({super.key, this.initialIndex = 0, this.ordersInitialTab});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -31,7 +32,7 @@ class _MainScreenState extends State<MainScreen> {
       const DashboardScreen(),
       const CommunityScreen(),
       const DocsScreen(),
-      const OrderScreen(),
+      OrderScreen(initialTab: widget.ordersInitialTab),
       const SettingsScreen(),
     ];
   }
@@ -66,7 +67,7 @@ class _MainScreenState extends State<MainScreen> {
       ),
       PersistentBottomNavBarItem(
         icon: Icon(PhosphorIcons.receipt()),
-        title: 'Orders',
+        title: (loc?.translate('orders_title') ?? 'Orders'),
         activeColorPrimary: theme.colorScheme.primary,
         inactiveColorPrimary: theme.colorScheme.onSurface.withValues(
           alpha: 0.6,

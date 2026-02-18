@@ -5,6 +5,7 @@ import '../widgets/balance_card.dart';
 import '../widgets/order_history.dart';
 import '../widgets/usage_stats.dart';
 import '../widgets/credit_history.dart';
+import '../widgets/wallet_usage_history.dart';
 import '../screens/pricing_screen.dart';
 import '../widgets/d1v_tab_bar_view.dart';
 import '../widgets/d1v_app_bar.dart';
@@ -13,7 +14,9 @@ import '../l10n/app_localizations.dart';
 import '../widgets/login_required_view.dart';
 
 class OrderScreen extends StatefulWidget {
-  const OrderScreen({super.key});
+  final String? initialTab;
+
+  const OrderScreen({super.key, this.initialTab});
 
   @override
   State<OrderScreen> createState() => _OrderScreenState();
@@ -26,7 +29,31 @@ class _OrderScreenState extends State<OrderScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(
+      length: 4,
+      vsync: this,
+      initialIndex: _initialIndexFromTab(widget.initialTab),
+    );
+  }
+
+  int _initialIndexFromTab(String? tab) {
+    switch ((tab ?? '').trim().toLowerCase()) {
+      case 'balance':
+        return 0;
+      case 'orders':
+      case 'orderhistory':
+        return 1;
+      case 'usage':
+      case 'dbusage':
+      case 'llmusage':
+      case 'builderusage':
+        return 2;
+      case 'price':
+      case 'pricing':
+        return 3;
+      default:
+        return 0;
+    }
   }
 
   @override
@@ -53,13 +80,13 @@ class _OrderScreenState extends State<OrderScreen>
 
     return Scaffold(
       appBar: D1VAppBar(
-        title: const Text('Orders'),
+        title: Text(loc?.translate('orders_title') ?? 'Orders'),
         controller: _tabController,
-        tabs: const [
-          D1VTab(text: 'Balance'),
-          D1VTab(text: 'Orders'),
-          D1VTab(text: 'Usage'),
-          D1VTab(text: 'Price'),
+        tabs: [
+          D1VTab(text: loc?.translate('orders_tab_balance') ?? 'Balance'),
+          D1VTab(text: loc?.translate('orders_tab_orders') ?? 'Orders'),
+          D1VTab(text: loc?.translate('orders_tab_usage') ?? 'Usage'),
+          D1VTab(text: loc?.translate('orders_tab_price') ?? 'Price'),
         ],
       ),
       body: D1VTabBarView(
@@ -89,7 +116,7 @@ class _OrdersTabContentState extends State<OrdersTabContent>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -100,22 +127,34 @@ class _OrdersTabContentState extends State<OrdersTabContent>
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     return Column(
       children: [
         Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: D1VTabBar(
             controller: _tabController,
-            tabs: const [
-              D1VTab(text: 'Purchases'),
-              D1VTab(text: 'Credit History'),
+            tabs: [
+              D1VTab(
+                text: loc?.translate('orders_subtab_purchases') ?? 'Purchases',
+              ),
+              D1VTab(
+                text:
+                    loc?.translate('orders_subtab_credit_history') ??
+                    'Credit History',
+              ),
+              D1VTab(text: loc?.translate('orders_subtab_usage') ?? 'Usage'),
             ],
           ),
         ),
         Expanded(
           child: D1VTabBarView(
             controller: _tabController,
-            children: const [OrderHistory(), CreditHistory()],
+            children: const [
+              OrderHistory(),
+              CreditHistory(),
+              WalletUsageHistory(),
+            ],
           ),
         ),
       ],

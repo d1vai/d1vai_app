@@ -14,7 +14,9 @@ import '../../providers/project_provider.dart';
 import '../../services/d1vai_service.dart';
 import '../../services/model_config_service.dart';
 import '../../services/workspace_service.dart';
+import '../../utils/billing_errors.dart';
 import '../snackbar_helper.dart';
+import '../insufficient_balance_dialog.dart';
 
 import 'create_project_chooser_view.dart';
 import 'create_project_dialog_shell.dart';
@@ -468,6 +470,17 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
         '/projects/$projectId/chat?autoprompt=${Uri.encodeQueryComponent(autoprompt)}',
       );
     } catch (e) {
+      if (isInsufficientBalanceError(e)) {
+        if (mounted) {
+          await showInsufficientBalanceDialog(context);
+          setState(() {
+            _isLoading = false;
+            _error = '';
+          });
+        }
+        return;
+      }
+
       var errText = e.toString();
       final mayBeOpcodeIssue =
           errText.contains('opcode-manager') ||
@@ -522,6 +535,16 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
           );
           return;
         } catch (retryErr) {
+          if (isInsufficientBalanceError(retryErr)) {
+            if (mounted) {
+              await showInsufficientBalanceDialog(context);
+              setState(() {
+                _isLoading = false;
+                _error = '';
+              });
+            }
+            return;
+          }
           // fallthrough to show combined error below
           errText = 'primary=$errText; retry=$retryErr';
         }

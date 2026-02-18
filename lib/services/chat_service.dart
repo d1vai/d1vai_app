@@ -39,7 +39,7 @@ class ChatService {
 
       return ExecuteSessionResponse.fromJson(response);
     } catch (e) {
-      throw ChatException('Failed to execute session: $e');
+      throw ChatException('Failed to execute session', cause: e);
     }
   }
 
@@ -304,11 +304,14 @@ class ExecuteSessionResponse {
 /// Custom exception for chat operations
 class ChatException implements Exception {
   final String message;
+  final Object? cause;
 
-  const ChatException(this.message);
+  const ChatException(this.message, {this.cause});
 
   @override
-  String toString() => 'ChatException: $message';
+  String toString() => cause == null
+      ? 'ChatException: $message'
+      : 'ChatException: $message ($cause)';
 }
 
 /// WebSocket event types

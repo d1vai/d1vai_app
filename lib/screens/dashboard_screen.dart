@@ -79,6 +79,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   void _maybeLoadData() {
     final auth = Provider.of<AuthProvider>(context, listen: false);
+    if (_didAutoLoadAfterLogin) return;
     if (auth.isAuthenticated) {
       _didAutoLoadAfterLogin = true;
       _loadData();
@@ -429,12 +430,14 @@ class _DashboardScreenState extends State<DashboardScreen>
       });
     }
 
+    bool pendingLoad = false;
     if (user != null &&
         !_didAutoLoadAfterLogin &&
         !projectProvider.isLoading &&
         projectProvider.projects.isEmpty &&
         projectProvider.error == null) {
       _didAutoLoadAfterLogin = true;
+      pendingLoad = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         _loadData();
@@ -493,7 +496,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
         ],
       ),
-      body: projectProvider.isInitialLoading
+      body: (projectProvider.isInitialLoading || pendingLoad)
           ? _buildShimmer()
           : _buildContent(user, context, projectProvider),
       floatingActionButton: user == null

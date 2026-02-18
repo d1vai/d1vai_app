@@ -11,6 +11,7 @@ import 'package:d1vai_app/services/d1vai_service.dart';
 import 'package:d1vai_app/services/model_config_service.dart';
 import 'package:d1vai_app/services/workspace_service.dart';
 import 'package:d1vai_app/l10n/app_localizations.dart';
+import 'package:d1vai_app/utils/billing_errors.dart';
 import 'package:d1vai_app/utils/error_utils.dart';
 import 'package:d1vai_app/utils/message_parser.dart';
 import 'package:d1vai_app/widgets/chat/message_list.dart';
@@ -18,6 +19,7 @@ import 'package:d1vai_app/widgets/chat/message_input.dart';
 import 'package:d1vai_app/widgets/chat/outbox/outbox_widgets.dart';
 import 'package:d1vai_app/widgets/chat/chat_screen_states.dart';
 import 'package:d1vai_app/widgets/chat/floating_preview_dock.dart';
+import 'package:d1vai_app/widgets/insufficient_balance_dialog.dart';
 import 'package:d1vai_app/widgets/chat/status_pill.dart';
 import 'package:d1vai_app/widgets/compact_selector.dart';
 import 'package:d1vai_app/widgets/alert.dart';
@@ -1551,9 +1553,13 @@ class _ChatScreenState extends State<ChatScreen> {
         _isLoading = false;
         _messageStatuses[tempId] = MessageStatus.failed;
       });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to send message: $e')));
+      if (isInsufficientBalanceError(e)) {
+        await showInsufficientBalanceDialog(context);
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to send message: $e')));
+      }
       _signalOutbox();
       unawaited(_drainOutbox());
     }
@@ -1598,9 +1604,13 @@ class _ChatScreenState extends State<ChatScreen> {
         _isLoading = false;
         _messageStatuses[message.id] = MessageStatus.failed;
       });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Retry failed: $e')));
+      if (isInsufficientBalanceError(e)) {
+        await showInsufficientBalanceDialog(context);
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Retry failed: $e')));
+      }
     }
   }
 
