@@ -1,53 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../l10n/app_localizations.dart';
 import '../widgets/snackbar_helper.dart';
 
 class HelpSupportScreen extends StatelessWidget {
   const HelpSupportScreen({super.key});
 
-  // FAQ 数据
-  static const List<Map<String, String>> faqs = [
-    {
-      'question': 'How do I create a new project?',
-      'answer':
-          'Navigate to the Projects tab and tap the "+" button. You can either create a new project from scratch or import from GitHub.',
-    },
-    {
-      'question': 'How do I connect my GitHub account?',
-      'answer':
-          'Go to Settings > GitHub tab. Enter your Personal Access Token with the required permissions (repo, read:user, user:email, read:org, workflow).',
-    },
-    {
-      'question': 'What payment methods are supported?',
-      'answer':
-          'We currently support credit/debit cards through Stripe. More payment methods will be added in future updates.',
-    },
-    {
-      'question': 'How do I invite friends?',
-      'answer':
-          'Go to Settings > Invites tab. You can share your unique invite code or invitation link. You can invite up to 3 users within a 7-day window.',
-    },
-    {
-      'question': 'Can I change my email address?',
-      'answer':
-          'Yes! Go to Settings > Profile tab and tap on the email field. You\'ll need to verify your new email address.',
-    },
-    {
-      'question': 'How do I reset my password?',
-      'answer':
-          'In Settings > Profile tab, tap on "Reset Password". You\'ll receive a verification code via email to complete the process.',
-    },
-    {
-      'question': 'What is the difference between Light and Dark mode?',
-      'answer':
-          'Light mode uses a bright theme ideal for daytime use. Dark mode uses a darker theme that\'s easier on the eyes in low-light conditions. You can also set it to follow your system settings.',
-    },
-    {
-      'question': 'How do I delete my account?',
-      'answer':
-          'Please contact our support team at support@d1v.ai to request account deletion. We\'ll process your request within 48 hours.',
-    },
+  static const List<String> _faqIds = [
+    'create_project',
+    'connect_github',
+    'payment_methods',
+    'invite_friends',
+    'change_email',
+    'reset_password',
+    'light_dark_mode',
+    'delete_account',
   ];
 
   // 联系支持邮箱
@@ -58,6 +26,69 @@ class HelpSupportScreen extends StatelessWidget {
 
   // 用户指南链接
   static const String userGuideUrl = 'https://www.d1v.ai/docs/getting-started';
+
+  String _t(BuildContext context, String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
+
+  List<Map<String, String>> _faqs(BuildContext context) {
+    final fallback = <String, Map<String, String>>{
+      'create_project': {
+        'question': 'How do I create a new project?',
+        'answer':
+            'Navigate to the Projects tab and tap the "+" button. You can either create a new project from scratch or import from GitHub.',
+      },
+      'connect_github': {
+        'question': 'How do I connect my GitHub account?',
+        'answer':
+            'Go to Settings > GitHub tab. Enter your Personal Access Token with the required permissions (repo, read:user, user:email, read:org, workflow).',
+      },
+      'payment_methods': {
+        'question': 'What payment methods are supported?',
+        'answer':
+            'We currently support credit/debit cards through Stripe. More payment methods will be added in future updates.',
+      },
+      'invite_friends': {
+        'question': 'How do I invite friends?',
+        'answer':
+            'Go to Settings > Invites tab. You can share your unique invite code or invitation link. You can invite up to 3 users within a 7-day window.',
+      },
+      'change_email': {
+        'question': 'Can I change my email address?',
+        'answer':
+            'Yes! Go to Settings > Profile tab and tap on the email field. You\'ll need to verify your new email address.',
+      },
+      'reset_password': {
+        'question': 'How do I reset my password?',
+        'answer':
+            'In Settings > Profile tab, tap on "Reset Password". You\'ll receive a verification code via email to complete the process.',
+      },
+      'light_dark_mode': {
+        'question': 'What is the difference between Light and Dark mode?',
+        'answer':
+            'Light mode uses a bright theme ideal for daytime use. Dark mode uses a darker theme that\'s easier on the eyes in low-light conditions. You can also set it to follow your system settings.',
+      },
+      'delete_account': {
+        'question': 'How do I delete my account?',
+        'answer':
+            'Please contact our support team at support@d1v.ai to request account deletion. We\'ll process your request within 48 hours.',
+      },
+    };
+
+    return _faqIds.map((id) {
+      final item = fallback[id]!;
+      return {
+        'question': _t(
+          context,
+          'help_support_faq_${id}_question',
+          item['question']!,
+        ),
+        'answer': _t(context, 'help_support_faq_${id}_answer', item['answer']!),
+      };
+    }).toList();
+  }
 
   Future<void> _launchEmail(BuildContext context) async {
     final Uri emailUri = Uri(
@@ -73,9 +104,12 @@ class HelpSupportScreen extends StatelessWidget {
         if (context.mounted) {
           SnackBarHelper.showError(
             context,
-            title: 'Error',
-            message:
-                'Could not open email app. Please email us at $supportEmail',
+            title: _t(context, 'error', 'Error'),
+            message: _t(
+              context,
+              'help_support_email_open_failed',
+              'Could not open email app. Please email us at {email}',
+            ).replaceAll('{email}', supportEmail),
           );
         }
       }
@@ -83,8 +117,12 @@ class HelpSupportScreen extends StatelessWidget {
       if (context.mounted) {
         SnackBarHelper.showError(
           context,
-          title: 'Error',
-          message: 'Failed to open email: $e',
+          title: _t(context, 'error', 'Error'),
+          message: _t(
+            context,
+            'help_support_email_open_error',
+            'Failed to open email: {error}',
+          ).replaceAll('{error}', e.toString()),
         );
       }
     }
@@ -100,8 +138,12 @@ class HelpSupportScreen extends StatelessWidget {
         if (context.mounted) {
           SnackBarHelper.showError(
             context,
-            title: 'Error',
-            message: 'Could not open $name',
+            title: _t(context, 'error', 'Error'),
+            message: _t(
+              context,
+              'help_support_link_open_failed',
+              'Could not open {name}',
+            ).replaceAll('{name}', name),
           );
         }
       }
@@ -109,8 +151,12 @@ class HelpSupportScreen extends StatelessWidget {
       if (context.mounted) {
         SnackBarHelper.showError(
           context,
-          title: 'Error',
-          message: 'Failed to open $name: $e',
+          title: _t(context, 'error', 'Error'),
+          message: _t(
+            context,
+            'help_support_link_open_error',
+            'Failed to open {name}: {error}',
+          ).replaceAll('{name}', name).replaceAll('{error}', e.toString()),
         );
       }
     }
@@ -119,9 +165,13 @@ class HelpSupportScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final faqs = _faqs(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Help & Support'), elevation: 0),
+      appBar: AppBar(
+        title: Text(_t(context, 'help_support', 'Help & Support')),
+        elevation: 0,
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -149,14 +199,22 @@ class HelpSupportScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'How can we help you?',
+                              _t(
+                                context,
+                                'help_support_hero_title',
+                                'How can we help you?',
+                              ),
                               style: theme.textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Find answers or contact our support team',
+                              _t(
+                                context,
+                                'help_support_hero_subtitle',
+                                'Find answers or contact our support team',
+                              ),
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: Colors.grey[600],
                               ),
@@ -174,14 +232,21 @@ class HelpSupportScreen extends StatelessWidget {
           const SizedBox(height: 24),
 
           // 快速操作
-          _buildSectionTitle(context, 'Quick Actions'),
+          _buildSectionTitle(
+            context,
+            _t(context, 'help_support_quick_actions', 'Quick Actions'),
+          ),
           const SizedBox(height: 12),
 
           _buildActionCard(
             context,
             icon: Icons.email,
-            title: 'Contact Support',
-            subtitle: 'Email us at $supportEmail',
+            title: _t(context, 'contact_support', 'Contact Support'),
+            subtitle: _t(
+              context,
+              'help_support_contact_subtitle',
+              'Email us at {email}',
+            ).replaceAll('{email}', supportEmail),
             onTap: () => _launchEmail(context),
           ),
 
@@ -190,9 +255,17 @@ class HelpSupportScreen extends StatelessWidget {
           _buildActionCard(
             context,
             icon: Icons.menu_book,
-            title: 'User Guide',
-            subtitle: 'Learn how to use all features',
-            onTap: () => _launchUrl(context, userGuideUrl, 'User Guide'),
+            title: _t(context, 'help_support_user_guide_title', 'User Guide'),
+            subtitle: _t(
+              context,
+              'help_support_user_guide_subtitle',
+              'Learn how to use all features',
+            ),
+            onTap: () => _launchUrl(
+              context,
+              userGuideUrl,
+              _t(context, 'help_support_user_guide_title', 'User Guide'),
+            ),
           ),
 
           const SizedBox(height: 8),
@@ -200,15 +273,26 @@ class HelpSupportScreen extends StatelessWidget {
           _buildActionCard(
             context,
             icon: Icons.description,
-            title: 'Documentation',
-            subtitle: 'Technical documentation and API reference',
-            onTap: () => _launchUrl(context, docsUrl, 'Documentation'),
+            title: _t(context, 'docs', 'Documentation'),
+            subtitle: _t(
+              context,
+              'help_support_docs_subtitle',
+              'Technical documentation and API reference',
+            ),
+            onTap: () => _launchUrl(
+              context,
+              docsUrl,
+              _t(context, 'docs', 'Documentation'),
+            ),
           ),
 
           const SizedBox(height: 24),
 
           // FAQ 部分
-          _buildSectionTitle(context, 'Frequently Asked Questions'),
+          _buildSectionTitle(
+            context,
+            _t(context, 'help_support_faq_title', 'Frequently Asked Questions'),
+          ),
           const SizedBox(height: 12),
 
           Card(
@@ -241,14 +325,18 @@ class HelpSupportScreen extends StatelessWidget {
             child: Column(
               children: [
                 Text(
-                  'Still need help?',
+                  _t(context, 'help_support_cta_title', 'Still need help?'),
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Our support team is here to assist you',
+                  _t(
+                    context,
+                    'help_support_cta_subtitle',
+                    'Our support team is here to assist you',
+                  ),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: Colors.grey[600],
                   ),
@@ -257,7 +345,9 @@ class HelpSupportScreen extends StatelessWidget {
                 ElevatedButton.icon(
                   onPressed: () => _launchEmail(context),
                   icon: const Icon(Icons.email),
-                  label: const Text('Contact Support'),
+                  label: Text(
+                    _t(context, 'contact_support', 'Contact Support'),
+                  ),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 32,

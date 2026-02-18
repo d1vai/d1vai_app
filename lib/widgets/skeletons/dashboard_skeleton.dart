@@ -136,7 +136,7 @@ class DashboardSkeleton extends StatelessWidget {
 
   Widget _buildStatCardPlaceholder(Color bgColor, Color borderColor) {
     return Container(
-      height: 100,
+      height: 110,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: bgColor,

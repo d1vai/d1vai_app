@@ -10,6 +10,7 @@ import '../widgets/snackbar_helper.dart';
 import '../widgets/search_field.dart';
 import '../utils/error_utils.dart';
 import '../core/auth_expiry_bus.dart';
+import '../l10n/app_localizations.dart';
 import 'projects/widgets/project_card_tile.dart';
 
 class ProjectsScreen extends StatefulWidget {
@@ -30,6 +31,12 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
   Timer? _searchDebounce;
   String? _lastErrorShown;
   bool _didOpenCreate = false;
+
+  String _t(String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
 
   @override
   void initState() {
@@ -92,14 +99,14 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
   Widget build(BuildContext context) {
     final provider = Provider.of<ProjectProvider>(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Projects')),
+      appBar: AppBar(title: Text(_t('projects_title', 'Projects'))),
       body: Column(
         children: [
           // 搜索栏
           Padding(
             padding: const EdgeInsets.all(16),
             child: SearchField(
-              hintText: 'Search projects...',
+              hintText: _t('projects_search_hint', 'Search projects...'),
               initialValue: provider.searchQuery,
               onChanged: _onSearchChanged,
               onSubmitted: _handleSearch,
@@ -132,7 +139,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                     }
                     SnackBarHelper.showError(
                       context,
-                      title: 'Sync failed',
+                      title: _t('projects_sync_failed_title', 'Sync failed'),
                       message: provider.error!,
                     );
                   });
@@ -166,7 +173,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                           children: [
                             ElevatedButton(
                               onPressed: _refreshData,
-                              child: const Text('Retry'),
+                              child: Text(_t('retry', 'Retry')),
                             ),
                             if (authExpired)
                               OutlinedButton(
@@ -175,7 +182,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                                     endpoint: '/api/projects',
                                   );
                                 },
-                                child: const Text('Re-login'),
+                                child: Text(
+                                  _t('projects_action_relogin', 'Re-login'),
+                                ),
                               ),
                           ],
                         ),
@@ -200,8 +209,11 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                         const SizedBox(height: 16),
                         Text(
                           hasSearchQuery
-                              ? 'No projects match your search'
-                              : 'No projects found',
+                              ? _t(
+                                  'projects_empty_filtered',
+                                  'No projects match your search',
+                                )
+                              : _t('projects_empty', 'No projects found'),
                           style: TextStyle(
                             fontSize: 18,
                             color: theme.colorScheme.onSurfaceVariant,
@@ -218,7 +230,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                               );
                             },
                             icon: const Icon(Icons.add),
-                            label: const Text('Create Project'),
+                            label: Text(_t('create_project', 'Create Project')),
                           ),
                         ],
                       ],
@@ -246,7 +258,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                             child: Center(
                               child: ElevatedButton(
                                 onPressed: _loadMore,
-                                child: const Text('Load More'),
+                                child: Text(
+                                  _t('projects_action_load_more', 'Load More'),
+                                ),
                               ),
                             ),
                           );
@@ -293,15 +307,27 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       final difference = now.difference(dateTime);
 
       if (difference.inMinutes < 1) {
-        return 'just now';
+        return _t('just_now', 'Just now');
       } else if (difference.inMinutes < 60) {
-        return '${difference.inMinutes}m ago';
+        return _t(
+          'projects_time_minutes_ago',
+          '{value}m ago',
+        ).replaceAll('{value}', difference.inMinutes.toString());
       } else if (difference.inHours < 24) {
-        return '${difference.inHours}h ago';
+        return _t(
+          'projects_time_hours_ago',
+          '{value}h ago',
+        ).replaceAll('{value}', difference.inHours.toString());
       } else if (difference.inDays < 7) {
-        return '${difference.inDays}d ago';
+        return _t(
+          'projects_time_days_ago',
+          '{value}d ago',
+        ).replaceAll('{value}', difference.inDays.toString());
       } else {
-        return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+        return _t('projects_time_date', '{day}/{month}/{year}')
+            .replaceAll('{day}', dateTime.day.toString())
+            .replaceAll('{month}', dateTime.month.toString())
+            .replaceAll('{year}', dateTime.year.toString());
       }
     } catch (e) {
       return '';

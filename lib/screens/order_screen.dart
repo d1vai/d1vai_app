@@ -68,7 +68,7 @@ class _OrderScreenState extends State<OrderScreen>
     final loc = AppLocalizations.of(context);
     if (user == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Orders')),
+        appBar: AppBar(title: Text(loc?.translate('orders_title') ?? 'Orders')),
         body: LoginRequiredView(
           message:
               loc?.translate('login_required_orders_message') ??

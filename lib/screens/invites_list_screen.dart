@@ -4,6 +4,7 @@ import '../widgets/snackbar_helper.dart';
 import '../widgets/empty_state_widget.dart';
 import '../widgets/avatar_image.dart';
 import '../utils/error_utils.dart';
+import '../l10n/app_localizations.dart';
 
 class InvitesListScreen extends StatefulWidget {
   const InvitesListScreen({super.key});
@@ -17,6 +18,12 @@ class _InvitesListScreenState extends State<InvitesListScreen> {
   bool _isLoading = false;
   List<dynamic> _invitedUsers = [];
   String? _error;
+
+  String _t(String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
 
   @override
   void initState() {
@@ -43,7 +50,11 @@ class _InvitesListScreenState extends State<InvitesListScreen> {
         _isLoading = false;
       });
       if (mounted) {
-        SnackBarHelper.showError(context, title: 'Error', message: message);
+        SnackBarHelper.showError(
+          context,
+          title: _t('error', 'Error'),
+          message: message,
+        );
       }
     }
   }
@@ -52,7 +63,7 @@ class _InvitesListScreenState extends State<InvitesListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Invites'),
+        title: Text(_t('my_invites', 'My Invites')),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -77,7 +88,7 @@ class _InvitesListScreenState extends State<InvitesListScreen> {
             Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
             const SizedBox(height: 16),
             Text(
-              'Failed to load invited users',
+              _t('invites_load_failed_title', 'Failed to load invited users'),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -94,7 +105,7 @@ class _InvitesListScreenState extends State<InvitesListScreen> {
             ElevatedButton.icon(
               onPressed: _loadInvitedUsers,
               icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+              label: Text(_t('retry', 'Retry')),
             ),
           ],
         ),
@@ -104,9 +115,11 @@ class _InvitesListScreenState extends State<InvitesListScreen> {
     if (_invitedUsers.isEmpty) {
       return EmptyStateWidget(
         icon: Icons.group_add_outlined,
-        title: 'No Invites Yet',
-        message:
-            'You haven\'t invited any friends yet.\nShare your invite code to get started!',
+        title: _t('invites_empty_title', 'No Invites Yet'),
+        message: _t(
+          'invites_empty_message',
+          'You haven\'t invited any friends yet.\nShare your invite code to get started!',
+        ),
       );
     }
 
@@ -124,7 +137,7 @@ class _InvitesListScreenState extends State<InvitesListScreen> {
   }
 
   Widget _buildUserCard(dynamic user) {
-    final email = user['email'] as String? ?? 'Unknown';
+    final email = user['email'] as String? ?? _t('invites_unknown', 'Unknown');
     final joinedAt = user['joined_at'] as String?;
     final companyName = user['company_name'] as String?;
     final avatarUrl = user['picture'] as String?;
@@ -167,7 +180,10 @@ class _InvitesListScreenState extends State<InvitesListScreen> {
                   const SizedBox(height: 8),
                   if (joinedAt != null) ...[
                     Text(
-                      'Joined ${_formatDate(joinedAt)}',
+                      _t(
+                        'invites_joined_at',
+                        'Joined {time}',
+                      ).replaceAll('{time}', _formatDate(joinedAt)),
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey.shade600,
@@ -192,13 +208,31 @@ class _InvitesListScreenState extends State<InvitesListScreen> {
       if (difference.inDays > 7) {
         return '${date.month}/${date.day}/${date.year}';
       } else if (difference.inDays > 0) {
-        return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
+        final key = difference.inDays > 1
+            ? 'invites_time_days_ago_plural'
+            : 'invites_time_days_ago_singular';
+        return _t(
+          key,
+          '{value} day${difference.inDays > 1 ? 's' : ''} ago',
+        ).replaceAll('{value}', difference.inDays.toString());
       } else if (difference.inHours > 0) {
-        return '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
+        final key = difference.inHours > 1
+            ? 'invites_time_hours_ago_plural'
+            : 'invites_time_hours_ago_singular';
+        return _t(
+          key,
+          '{value} hour${difference.inHours > 1 ? 's' : ''} ago',
+        ).replaceAll('{value}', difference.inHours.toString());
       } else if (difference.inMinutes > 0) {
-        return '${difference.inMinutes} minute${difference.inMinutes > 1 ? 's' : ''} ago';
+        final key = difference.inMinutes > 1
+            ? 'invites_time_minutes_ago_plural'
+            : 'invites_time_minutes_ago_singular';
+        return _t(
+          key,
+          '{value} minute${difference.inMinutes > 1 ? 's' : ''} ago',
+        ).replaceAll('{value}', difference.inMinutes.toString());
       } else {
-        return 'Just now';
+        return _t('just_now', 'Just now');
       }
     } catch (e) {
       return dateString;
