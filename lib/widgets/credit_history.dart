@@ -586,7 +586,7 @@ class _CreditHistoryState extends State<CreditHistory> {
                   Icon(Icons.person, size: 16, color: Colors.grey.shade600),
                   const SizedBox(width: 8),
                   Text(
-                    'Source: ${_formatSource(credit.source)}',
+                    '${_formatSource(credit.source).replaceAll('admin ', '')}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   if (credit.expiresAt != null) ...[
