@@ -158,19 +158,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         const SizedBox(height: 24),
 
-        // 钱包地址
-        _buildSectionTitle('Wallet Addresses'),
-        const SizedBox(height: 12),
-        _buildWalletCard('SOL Wallet', user.solWallet, Icons.currency_bitcoin),
-        _buildWalletCard('SUI Wallet', user.suiWallet, Icons.wallet),
-        _buildWalletCard(
-          'EVM Wallet',
-          user.evmWallet,
-          Icons.account_balance_wallet,
-        ),
-
-        const SizedBox(height: 24),
-
         // 其他信息
         _buildSectionTitle('Other'),
         const SizedBox(height: 12),
@@ -299,41 +286,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             hintText: 'Enter your industry',
             border: OutlineInputBorder(),
             prefixIcon: Icon(Icons.work),
-          ),
-        ),
-
-        const SizedBox(height: 24),
-
-        // 钱包地址
-        _buildSectionTitle('Wallet Addresses'),
-        const SizedBox(height: 12),
-        TextField(
-          controller: profileProvider.solWalletController,
-          decoration: const InputDecoration(
-            labelText: 'SOL Wallet',
-            hintText: 'Enter your SOL wallet address',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.currency_bitcoin),
-          ),
-        ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: profileProvider.suiWalletController,
-          decoration: const InputDecoration(
-            labelText: 'SUI Wallet',
-            hintText: 'Enter your SUI wallet address',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.wallet),
-          ),
-        ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: profileProvider.evmWalletController,
-          decoration: const InputDecoration(
-            labelText: 'EVM Wallet',
-            hintText: 'Enter your EVM wallet address',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.account_balance_wallet),
           ),
         ),
 
@@ -628,23 +580,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               )
             : Text(value),
         trailing: isLink ? const Icon(Icons.open_in_new, size: 16) : null,
-      ),
-    );
-  }
-
-  /// 构建钱包卡片
-  Widget _buildWalletCard(String label, String address, IconData icon) {
-    return CustomCard(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: Icon(icon, color: AppColors.primaryBrand),
-        title: Text(label),
-        subtitle: Text(
-          address.isNotEmpty ? address : 'Not set',
-          style: TextStyle(
-            color: address.isNotEmpty ? null : Colors.grey.shade500,
-          ),
-        ),
       ),
     );
   }
