@@ -525,6 +525,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // ─── 密码模式内容 ──────────────────────────────────────────────────────────
   Widget _buildPasswordModeContent(AppLocalizations? loc) {
+    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -547,10 +548,13 @@ class _LoginScreenState extends State<LoginScreen> {
           onPressed: _isLoading ? null : _loginWithPassword,
           style: _primaryButtonStyle(context),
           child: _isLoading
-              ? const SizedBox(
+              ? SizedBox(
                   width: 24,
                   height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(cs.onPrimary),
+                  ),
                 )
               : Text(
                   loc?.translate('login') ?? '登录',
