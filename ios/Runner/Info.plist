@@ -32,17 +32,17 @@
 		<true/>
 	</dict>
 
-	<!-- 存储访问权限描述 -->
+	<!-- 用户跟踪权限描述 (ATT) -->
 	<key>NSUserTrackingUsageDescription</key>
-	<string>此应用需要访问设备存储以保存用户数据和缓存</string>
+	<string>With your permission, we use data to provide personalized content and ads.</string>
 
 	<!-- 摄像头权限描述 (拍照修改头像) -->
 	<key>NSCameraUsageDescription</key>
-	<string>此应用需要访问相机以拍摄头像照片</string>
+	<string>This app needs camera access to take your profile photo.</string>
 
 	<!-- 相册访问权限描述 (选择头像照片) -->
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>此应用需要访问相册以选择头像照片</string>
+	<string>This app needs photo library access to choose your profile photo.</string>
 
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>

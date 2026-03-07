@@ -1,0 +1,3 @@
+"NSUserTrackingUsageDescription" = "在获得你的授权后，我们会使用数据提供个性化内容与广告体验。";
+"NSCameraUsageDescription" = "此应用需要访问相机以拍摄头像照片。";
+"NSPhotoLibraryUsageDescription" = "此应用需要访问相册以选择头像照片。";
