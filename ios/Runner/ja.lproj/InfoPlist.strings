@@ -1,0 +1,3 @@
+"NSUserTrackingUsageDescription" = "許可をいただいた場合、パーソナライズされたコンテンツと広告を提供するためにデータを使用します。";
+"NSCameraUsageDescription" = "プロフィール写真を撮影するために、カメラへのアクセスが必要です。";
+"NSPhotoLibraryUsageDescription" = "プロフィール写真を選択するために、写真ライブラリへのアクセスが必要です。";
