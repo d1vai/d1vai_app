@@ -1,0 +1,121 @@
+name: Build Android APK Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-release-main
+  cancel-in-progress: true
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Resolve Android SDK version
+        id: android-meta
+        shell: bash
+        run: |
+          flutter_root="$(python3 - <<'PY'
+          import json
+          import subprocess
+
+          data = json.loads(subprocess.check_output(["flutter", "--version", "--machine"], text=True))
+          print(data["flutterRoot"])
+          PY
+          )"
+          flutter_extension_file="${flutter_root}/packages/flutter_tools/gradle/src/main/kotlin/FlutterExtension.kt"
+          compile_sdk="$(awk '/compileSdkVersion:/ { print $NF; exit }' "${flutter_extension_file}")"
+          build_tools_version="${compile_sdk}.0.0"
+
+          {
+            echo "flutter_root=${flutter_root}"
+            echo "compile_sdk=${compile_sdk}"
+            echo "build_tools_version=${build_tools_version}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-${{ steps.android-meta.outputs.compile_sdk }}" \
+            "build-tools;${{ steps.android-meta.outputs.build_tools_version }}"
+
+      - name: Resolve release metadata
+        id: meta
+        shell: bash
+        run: |
+          raw_version="$(awk '/^version:/ { print $2; exit }' pubspec.yaml)"
+          version_name="${raw_version%%+*}"
+          build_number="${GITHUB_RUN_NUMBER}"
+          short_sha="${GITHUB_SHA::7}"
+          artifact_name="d1vai-app-${version_name}+${build_number}-${short_sha}.apk"
+          release_tag="android-main-v${version_name}-build.${build_number}"
+          release_name="Android APK ${version_name} (build ${build_number})"
+
+          {
+            echo "raw_version=${raw_version}"
+            echo "version_name=${version_name}"
+            echo "build_number=${build_number}"
+            echo "short_sha=${short_sha}"
+            echo "artifact_name=${artifact_name}"
+            echo "release_tag=${release_tag}"
+            echo "release_name=${release_name}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build release APK
+        run: >
+          flutter build apk --release
+          --build-name="${{ steps.meta.outputs.version_name }}"
+          --build-number="${{ steps.meta.outputs.build_number }}"
+
+      - name: Rename APK asset
+        run: >
+          mv build/app/outputs/flutter-apk/app-release.apk
+          build/app/outputs/flutter-apk/${{ steps.meta.outputs.artifact_name }}
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.release_tag }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ steps.meta.outputs.release_name }}
+          prerelease: true
+          fail_on_unmatched_files: true
+          body: |
+            Automated APK build from the `main` branch.
+
+            Version: `${{ steps.meta.outputs.version_name }}`
+            Build: `${{ steps.meta.outputs.build_number }}`
+            Commit: `${{ github.sha }}`
+          files: build/app/outputs/flutter-apk/${{ steps.meta.outputs.artifact_name }}
