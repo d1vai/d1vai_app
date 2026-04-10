@@ -62,7 +62,16 @@ jobs:
       - name: Install Android SDK packages
         shell: bash
         run: |
+          # sdkmanager exits after all licenses are accepted, which closes the pipe
+          # and causes `yes` to receive SIGPIPE under GitHub's default `-o pipefail`.
+          set +e
           yes | sdkmanager --licenses >/dev/null
+          sdkmanager_licenses_status="${PIPESTATUS[1]}"
+          set -e
+          if [ "${sdkmanager_licenses_status}" -ne 0 ]; then
+            exit "${sdkmanager_licenses_status}"
+          fi
+
           sdkmanager \
             "platform-tools" \
             "platforms;android-${{ steps.android-meta.outputs.compile_sdk }}" \
