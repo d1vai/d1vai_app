@@ -26,6 +26,17 @@ import 'create_project_new_ai_view.dart';
 import 'github_import/github_collaborator_import_view.dart';
 import 'github_import/github_import_utils.dart';
 
+const String _autoTemplateRepo = 'auto';
+const ProjectTemplateInfo _autoTemplateInfo = ProjectTemplateInfo(
+  templateRepo: _autoTemplateRepo,
+  name: 'Auto',
+  description: 'Let D1V choose the best template based on your prompt.',
+  category: 'system',
+  kind: 'smart',
+  featured: true,
+  rank: -1,
+);
+
 /// 项目创建对话框
 class CreateProjectDialog extends StatefulWidget {
   final Widget? trigger;
@@ -54,6 +65,9 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
   String _selectedModelId = '';
   bool _isLoadingModels = false;
   bool _hasLoadedModelConfig = false;
+  List<ProjectTemplateInfo> _availableTemplates = const <ProjectTemplateInfo>[];
+  String _selectedTemplateRepo = _autoTemplateRepo;
+  bool _isLoadingTemplates = false;
   WorkspacePhase _newProjectWorkspacePhase = WorkspacePhase.unknown;
   Timer? _newProjectWorkspacePollTimer;
   Timer? _newProjectModelRetryTimer;
@@ -119,6 +133,15 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
         s.contains('auth') ||
         s.contains('unauthenticated') ||
         s.contains('expired');
+  }
+
+  List<ProjectTemplateInfo> get _templateOptions {
+    return <ProjectTemplateInfo>[
+      _autoTemplateInfo,
+      ..._availableTemplates.where(
+        (template) => template.templateRepo != _autoTemplateRepo,
+      ),
+    ];
   }
 
   void _startNewProjectModelBootstrap() {
@@ -230,6 +253,46 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     }
   }
 
+  Future<void> _loadProjectTemplates() async {
+    if (!mounted || _flow != _CreateProjectFlow.newAi) return;
+    if (_isLoadingTemplates) return;
+
+    setState(() {
+      _isLoadingTemplates = true;
+    });
+
+    try {
+      final templates = await D1vaiService().getProjectTemplates();
+      if (!mounted || _flow != _CreateProjectFlow.newAi) return;
+
+      final available = templates
+          .where((template) => template.templateRepo.trim().isNotEmpty)
+          .toList();
+      final hasSelectedTemplate =
+          _selectedTemplateRepo == _autoTemplateRepo ||
+          available.any(
+            (template) => template.templateRepo == _selectedTemplateRepo,
+          );
+
+      setState(() {
+        _availableTemplates = available;
+        _isLoadingTemplates = false;
+        if (!hasSelectedTemplate) {
+          _selectedTemplateRepo = _autoTemplateRepo;
+        }
+      });
+    } catch (e) {
+      if (!mounted || _flow != _CreateProjectFlow.newAi) return;
+      setState(() {
+        _availableTemplates = const <ProjectTemplateInfo>[];
+        _isLoadingTemplates = false;
+        if (_isAuthError(e)) {
+          _error = 'Login expired. Please sign in again before loading templates.';
+        }
+      });
+    }
+  }
+
   Future<void> _handleModelSelectionChanged(String modelId) async {
     final next = modelId.trim();
     if (next.isEmpty || next == _selectedModelId) return;
@@ -237,6 +300,14 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
       _selectedModelId = next;
     });
     await _modelConfigService.setCachedModel(next);
+  }
+
+  void _handleTemplateSelectionChanged(String templateRepo) {
+    final next = templateRepo.trim();
+    if (next.isEmpty || next == _selectedTemplateRepo) return;
+    setState(() {
+      _selectedTemplateRepo = next;
+    });
   }
 
   Widget _buildFlowContent() {
@@ -288,7 +359,9 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
         setState(() {
           _flow = _CreateProjectFlow.newAi;
           _error = '';
+          _selectedTemplateRepo = _autoTemplateRepo;
         });
+        unawaited(_loadProjectTemplates());
         _startNewProjectModelBootstrap();
       },
       onChooseImportPublic: () {
@@ -336,6 +409,10 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
             },
             isModelLoading: _isLoadingModels,
             isWorkspaceReady: _newProjectWorkspacePhase == WorkspacePhase.ready,
+            templateOptions: _templateOptions,
+            selectedTemplateRepo: _selectedTemplateRepo,
+            onTemplateChanged: _handleTemplateSelectionChanged,
+            isTemplateLoading: _isLoadingTemplates,
           );
   }
 
@@ -434,6 +511,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
       final result = await d1vaiService.createProjectWithIntegrations(
         prompt: description,
         maxDescLen: 120,
+        templateRepo: _selectedTemplateRepo,
         enablePay: false,
         enableDatabase: true,
       );
@@ -503,6 +581,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
           final retryResult = await d1vaiService.createProjectWithIntegrations(
             prompt: description,
             maxDescLen: 120,
+            templateRepo: _selectedTemplateRepo,
             enablePay: false,
             enableDatabase: true,
           );

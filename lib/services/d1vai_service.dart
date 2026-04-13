@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import '../core/api_client.dart';
+import '../core/locale_bus.dart';
 import '../models/user.dart';
 import '../models/project.dart';
 import '../models/community_post.dart';
@@ -17,6 +18,23 @@ class D1vaiService {
   D1vaiService({ApiClient? apiClient})
     : _apiClient = apiClient ?? ApiClient(),
       _cacheService = CacheService();
+
+  String? _resolveLocaleTag([String? locale]) {
+    final next = (locale ?? '').trim();
+    if (next.isNotEmpty) return next;
+
+    final current = LocaleBus.locale;
+    if (current.languageCode == 'zh') {
+      final isTraditional =
+          current.scriptCode == 'Hant' ||
+          current.countryCode == 'TW' ||
+          current.countryCode == 'HK' ||
+          current.countryCode == 'MO';
+      return isTraditional ? 'zh-TW' : 'zh-CN';
+    }
+
+    return current.languageCode.trim().isEmpty ? null : current.languageCode;
+  }
 
   bool _isRecoverableUmamiEndpointError(
     Object error, {
@@ -82,13 +100,20 @@ class D1vaiService {
   // ============================================
 
   /// 发送验证码到邮箱
-  Future<Map<String, dynamic>?> postUserVerifyCode(String email) async {
+  Future<Map<String, dynamic>?> postUserVerifyCode(
+    String email, {
+    String? locale,
+  }) async {
+    final localeTag = _resolveLocaleTag(locale);
     // 使用 POST 方法 + 查询参数（与 web 端完全一致）
     // 验证码发送成功后返回 data: null，所以我们检查状态即可
     await _apiClient.postWithQuery<void>(
       '/api/user/verify-code',
-      {'email': email}, // 查询参数
-      {'email': email}, // 请求体（与 web 端一致）
+      {'email': email, if (localeTag != null) 'locale': localeTag}, // 查询参数
+      {
+        'email': email,
+        if (localeTag != null) 'locale': localeTag,
+      }, // 请求体（与 web 端一致）
     );
     // 返回空 map 表示发送成功（与 Web 端逻辑一致）
     return {};
@@ -181,8 +206,12 @@ class D1vaiService {
   }
 
   /// 发送绑定邮箱验证码
-  Future<void> postUserBindEmailSend(String email) async {
-    return _apiClient.post<void>('/api/user/bind-email/send', {'email': email});
+  Future<void> postUserBindEmailSend(String email, {String? locale}) async {
+    final localeTag = _resolveLocaleTag(locale);
+    return _apiClient.post<void>('/api/user/bind-email/send', {
+      'email': email,
+      if (localeTag != null) 'locale': localeTag,
+    });
   }
 
   /// 确认绑定邮箱
@@ -194,9 +223,14 @@ class D1vaiService {
   }
 
   /// 发送更改邮箱验证码
-  Future<void> postUserChangeEmailSend(String newEmail) async {
+  Future<void> postUserChangeEmailSend(
+    String newEmail, {
+    String? locale,
+  }) async {
+    final localeTag = _resolveLocaleTag(locale);
     return _apiClient.post<void>('/api/user/email/change/send', {
       'new_email': newEmail,
+      if (localeTag != null) 'locale': localeTag,
     });
   }
 
@@ -216,9 +250,14 @@ class D1vaiService {
   }
 
   /// 发送忘记密码验证码
-  Future<void> postUserPasswordForgotSend(String email) async {
+  Future<void> postUserPasswordForgotSend(
+    String email, {
+    String? locale,
+  }) async {
+    final localeTag = _resolveLocaleTag(locale);
     return _apiClient.post<void>('/api/user/password/forgot/send', {
       'email': email,
+      if (localeTag != null) 'locale': localeTag,
     });
   }
 
@@ -362,10 +401,20 @@ class D1vaiService {
     );
   }
 
+  Future<List<ProjectTemplateInfo>> getProjectTemplates() async {
+    return _apiClient.get<List<ProjectTemplateInfo>>(
+      '/api/projects/templates',
+      fromJsonT: (json) => (json as List)
+          .map((item) => ProjectTemplateInfo.fromJson(item))
+          .toList(),
+    );
+  }
+
   /// 创建带集成的项目
   Future<dynamic> createProjectWithIntegrations({
     required String prompt,
     int? maxDescLen,
+    String? templateRepo,
     bool? enablePay,
     bool? enableDatabase,
     bool? enableResend,
@@ -375,6 +424,8 @@ class D1vaiService {
       {
         'prompt': prompt,
         if (maxDescLen != null) 'max_desc_len': maxDescLen,
+        if (templateRepo != null && templateRepo.trim().isNotEmpty)
+          'template_repo': templateRepo.trim(),
         if (enablePay != null) 'enable_pay': enablePay,
         if (enableDatabase != null) 'enable_database': enableDatabase,
         if (enableResend != null) 'enable_resend': enableResend,

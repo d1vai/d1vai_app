@@ -343,3 +343,37 @@ class CreateProjectResponse {
     );
   }
 }
+
+class ProjectTemplateInfo {
+  final String templateRepo;
+  final String name;
+  final String description;
+  final String category;
+  final String kind;
+  final bool featured;
+  final int rank;
+
+  const ProjectTemplateInfo({
+    required this.templateRepo,
+    required this.name,
+    required this.description,
+    this.category = 'foundation',
+    this.kind = 'foundation',
+    this.featured = false,
+    this.rank = 9999,
+  });
+
+  factory ProjectTemplateInfo.fromJson(Map<String, dynamic> json) {
+    return ProjectTemplateInfo(
+      templateRepo: (json['template_repo'] ?? '').toString(),
+      name: (json['name'] ?? '').toString(),
+      description: (json['description'] ?? '').toString(),
+      category: (json['category'] ?? 'foundation').toString(),
+      kind: (json['kind'] ?? 'foundation').toString(),
+      featured: json['featured'] == true,
+      rank: json['rank'] is int
+          ? json['rank'] as int
+          : int.tryParse('${json['rank'] ?? 9999}') ?? 9999,
+    );
+  }
+}
