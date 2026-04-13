@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>D1vai App</string>
+	<string>D1V</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -13,7 +13,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>d1vai_app</string>
+	<string>D1V</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -28,17 +28,26 @@
 	<!-- 网络访问配置 -->
 	<key>NSAppTransportSecurity</key>
 	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<true/>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>127.0.0.1</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+			<key>localhost</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+			</dict>
+		</dict>
 	</dict>
 
-	<!-- 用户跟踪权限描述 (ATT) -->
-	<key>NSUserTrackingUsageDescription</key>
-	<string>With your permission, we use data to provide personalized content and ads.</string>
-
-	<!-- 摄像头权限描述 (拍照修改头像) -->
-	<key>NSCameraUsageDescription</key>
-	<string>This app needs camera access to take your profile photo.</string>
+		<!-- 摄像头权限描述 (拍照修改头像) -->
+		<key>NSCameraUsageDescription</key>
+		<string>This app needs camera access to take your profile photo.</string>
 
 	<!-- 相册访问权限描述 (选择头像照片) -->
 	<key>NSPhotoLibraryUsageDescription</key>

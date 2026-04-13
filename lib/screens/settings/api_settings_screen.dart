@@ -19,6 +19,11 @@ class ApiSettingsScreen extends StatefulWidget {
 }
 
 class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
+  static const Set<String> _iosAllowedHttpHosts = <String>{
+    'localhost',
+    '127.0.0.1',
+  };
+
   final TextEditingController _controller = TextEditingController();
   final WorkspaceService _workspaceService = WorkspaceService();
 
@@ -54,6 +59,11 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
       return 'URL must start with http:// or https://';
     }
     if (uri.host.trim().isEmpty) return 'Missing host';
+    if (Platform.isIOS &&
+        uri.scheme == 'http' &&
+        !_iosAllowedHttpHosts.contains(uri.host.toLowerCase())) {
+      return 'On iOS, HTTP is only allowed for localhost development. Use HTTPS for remote APIs.';
+    }
     // We expect base like https://api.d1v.ai (no /api path).
     final path = uri.path.trim();
     if (path.isNotEmpty && path != '/') {

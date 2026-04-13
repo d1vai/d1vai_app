@@ -23,6 +23,7 @@ import '../screens/settings/account_data_screen.dart';
 import '../screens/doc_detail_screen.dart';
 import '../screens/api_docs_screen.dart';
 import '../screens/community_post_link_screen.dart';
+import '../screens/public_user_screen.dart';
 import '../providers/auth_provider.dart';
 
 Page<dynamic> _buildPageWithTransition(
@@ -113,6 +114,7 @@ GoRouter createAppRouter() {
       final isLoginPage = state.matchedLocation == '/login';
       final isSplashPage = state.matchedLocation == '/';
       final isOnboardingPage = state.matchedLocation == '/onboarding';
+      final inviteCode = state.uri.queryParameters['invite']?.trim();
       final isMainTab =
           state.matchedLocation == '/dashboard' ||
           state.matchedLocation == '/community' ||
@@ -122,8 +124,11 @@ GoRouter createAppRouter() {
 
       final isPublicStandalone =
           state.matchedLocation == '/pricing' ||
+          state.matchedLocation == '/api-docs' ||
+          state.matchedLocation == '/openapi' ||
           state.matchedLocation.startsWith('/apps/') ||
           state.matchedLocation.startsWith('/docs/') ||
+          state.matchedLocation.startsWith('/u/') ||
           state.matchedLocation.startsWith('/c/');
 
       final isPublicSettings =
@@ -148,6 +153,9 @@ GoRouter createAppRouter() {
 
       // 如果已登录且需要完成 onboarding，且不在 onboarding 页面，重定向到 onboarding
       if (isAuthenticated && needsOnboarding && !isOnboardingPage) {
+        if ((inviteCode ?? '').isNotEmpty) {
+          return '/onboarding?invite=${Uri.encodeQueryComponent(inviteCode!)}';
+        }
         return '/onboarding';
       }
 
@@ -172,13 +180,17 @@ GoRouter createAppRouter() {
           state,
           LoginScreen(
             sessionExpired: state.uri.queryParameters['expired'] == '1',
+            inviteCode: state.uri.queryParameters['invite'],
           ),
         ),
       ),
       GoRoute(
         path: '/onboarding',
-        pageBuilder: (context, state) =>
-            _buildPageWithTransition(context, state, const OnboardingScreen()),
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          OnboardingScreen(inviteCode: state.uri.queryParameters['invite']),
+        ),
       ),
       GoRoute(
         path: '/dashboard',
@@ -218,6 +230,14 @@ GoRouter createAppRouter() {
           context,
           state,
           CommunityPostLinkScreen(slug: state.pathParameters['slug']!),
+        ),
+      ),
+      GoRoute(
+        path: '/u/:slug',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          PublicUserScreen(slug: state.pathParameters['slug']!),
         ),
       ),
       GoRoute(
@@ -356,8 +376,26 @@ GoRouter createAppRouter() {
       ),
       GoRoute(
         path: '/api-docs',
-        pageBuilder: (context, state) =>
-            _buildPageWithTransition(context, state, const ApiDocsScreen()),
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          ApiDocsScreen(
+            title: state.uri.queryParameters['prompt'],
+            specUrl: state.uri.queryParameters['spec'],
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/openapi',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          ApiDocsScreen(
+            title: state.uri.queryParameters['prompt'],
+            specUrl: state.uri.queryParameters['spec'],
+            preferOpenApiShell: true,
+          ),
+        ),
       ),
     ],
   );

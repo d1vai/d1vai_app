@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -126,6 +127,12 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
           ? widget.post.summary!.trim()
           : '/c/${widget.post.slug}',
     );
+  }
+
+  void _openAuthorProfile() {
+    final slug = (widget.post.author?.slug ?? '').trim();
+    if (slug.isEmpty) return;
+    context.push('/u/$slug');
   }
 
   void _hidePost() {
@@ -375,52 +382,70 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
                                         ),
                                       ),
                                     ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Hero(
-                                          tag: communityPostAuthorHeroTag(post),
-                                          child: AvatarImage(
-                                            imageUrl:
-                                                post
-                                                        .author
-                                                        ?.picture
-                                                        ?.isNotEmpty ==
-                                                    true
-                                                ? post.author!.picture!
-                                                : 'placeholder',
-                                            size: 20,
-                                            borderRadius: BorderRadius.circular(
-                                              10,
-                                            ),
-                                            fit: BoxFit.cover,
-                                            showBorder: false,
-                                          ),
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(999),
+                                      onTap:
+                                          (post.author?.slug ?? '')
+                                              .trim()
+                                              .isEmpty
+                                          ? null
+                                          : _openAuthorProfile,
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 2,
+                                          vertical: 2,
                                         ),
-                                        const SizedBox(width: 6),
-                                        ConstrainedBox(
-                                          constraints: const BoxConstraints(
-                                            maxWidth: 120,
-                                          ),
-                                          child: Text(
-                                            post.author?.slug ?? 'Anonymous',
-                                            style:
-                                                theme.textTheme.labelMedium
-                                                    ?.copyWith(
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Hero(
+                                              tag: communityPostAuthorHeroTag(
+                                                post,
+                                              ),
+                                              child: AvatarImage(
+                                                imageUrl:
+                                                    post
+                                                            .author
+                                                            ?.picture
+                                                            ?.isNotEmpty ==
+                                                        true
+                                                    ? post.author!.picture!
+                                                    : 'placeholder',
+                                                size: 20,
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                                fit: BoxFit.cover,
+                                                showBorder: false,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            ConstrainedBox(
+                                              constraints: const BoxConstraints(
+                                                maxWidth: 120,
+                                              ),
+                                              child: Text(
+                                                post.author?.slug ??
+                                                    'Anonymous',
+                                                style:
+                                                    theme.textTheme.labelMedium
+                                                        ?.copyWith(
+                                                          fontWeight:
+                                                              FontWeight.w800,
+                                                          color: Colors.white,
+                                                          height: 1.0,
+                                                        ) ??
+                                                    const TextStyle(
                                                       fontWeight:
                                                           FontWeight.w800,
                                                       color: Colors.white,
-                                                      height: 1.0,
-                                                    ) ??
-                                                const TextStyle(
-                                                  fontWeight: FontWeight.w800,
-                                                  color: Colors.white,
-                                                ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
+                                                    ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                      ],
+                                      ),
                                     ),
                                   ),
                                   IconButton(

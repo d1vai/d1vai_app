@@ -9,13 +9,26 @@ import '../widgets/snackbar_helper.dart';
 import '../widgets/web_subpage_app_bar.dart';
 
 class ApiDocsScreen extends StatefulWidget {
-  const ApiDocsScreen({super.key});
+  final String? title;
+  final String? specUrl;
+  final bool preferOpenApiShell;
+
+  const ApiDocsScreen({
+    super.key,
+    this.title,
+    this.specUrl,
+    this.preferOpenApiShell = false,
+  });
 
   @override
   State<ApiDocsScreen> createState() => _ApiDocsScreenState();
 }
 
 class _ApiDocsScreenState extends State<ApiDocsScreen> {
+  static const String _defaultOpenApiSpecUrl =
+      'https://api.desci.cyou/api/openapi.json';
+  static const String _defaultOpenApiTitle = 'OpenAPI Docs';
+
   InAppWebViewController? _controller;
   PullToRefreshController? _pull;
 
@@ -27,6 +40,26 @@ class _ApiDocsScreenState extends State<ApiDocsScreen> {
     final base = Uri.tryParse(ApiClient.baseUrl);
     if (base == null) return Uri.parse('https://api.d1v.ai/docs');
     return base.replace(path: '${base.path}/docs');
+  }
+
+  String get _resolvedTitle {
+    final next = (widget.title ?? '').trim();
+    if (next.isNotEmpty) return next;
+    if (widget.preferOpenApiShell) return _defaultOpenApiTitle;
+    return 'API Documentation';
+  }
+
+  String? get _resolvedSpecUrl {
+    final next = (widget.specUrl ?? '').trim();
+    if (next.isNotEmpty) return next;
+    if (widget.preferOpenApiShell) return _defaultOpenApiSpecUrl;
+    return null;
+  }
+
+  Uri get _viewUrl {
+    final spec = _resolvedSpecUrl;
+    if (spec == null) return _docsUrl;
+    return ShareLinks.openApiDocs(prompt: _resolvedTitle, spec: spec);
   }
 
   @override
@@ -52,7 +85,7 @@ class _ApiDocsScreenState extends State<ApiDocsScreen> {
   }
 
   Future<void> _openExternal() async {
-    final uri = _docsUrl;
+    final uri = _viewUrl;
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
@@ -69,7 +102,7 @@ class _ApiDocsScreenState extends State<ApiDocsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: WebSubPageAppBar(
-        title: const Text('API Documentation'),
+        title: Text(_resolvedTitle),
         actions: [
           IconButton(
             tooltip: 'Share',
@@ -77,9 +110,9 @@ class _ApiDocsScreenState extends State<ApiDocsScreen> {
             onPressed: () {
               ShareSheet.show(
                 context,
-                url: _docsUrl,
-                title: 'API docs',
-                message: _docsUrl.toString(),
+                url: _viewUrl,
+                title: _resolvedTitle,
+                message: _resolvedSpecUrl ?? _viewUrl.toString(),
               );
             },
           ),
@@ -102,7 +135,7 @@ class _ApiDocsScreenState extends State<ApiDocsScreen> {
       body: Stack(
         children: [
           InAppWebView(
-            initialUrlRequest: URLRequest(url: WebUri(_docsUrl.toString())),
+            initialUrlRequest: URLRequest(url: WebUri(_viewUrl.toString())),
             pullToRefreshController: _pull,
             shouldOverrideUrlLoading: (controller, navigationAction) async {
               final webUri = navigationAction.request.url;

@@ -30,11 +30,11 @@ class _EnvVarSkeletonCard extends StatelessWidget {
 
     // Static Card Background
     // Matching the real item's decoration for consistency
-    final cardColor = theme.colorScheme.surfaceContainerHighest.withOpacity(
-      isDark ? 0.3 : 0.5,
+    final cardColor = theme.colorScheme.surfaceContainerHighest.withValues(
+      alpha: isDark ? 0.3 : 0.5,
     );
-    final borderColor = theme.colorScheme.outlineVariant.withOpacity(
-      isDark ? 0.3 : 0.5,
+    final borderColor = theme.colorScheme.outlineVariant.withValues(
+      alpha: isDark ? 0.3 : 0.5,
     );
 
     // Shimmer Colors

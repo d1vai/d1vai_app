@@ -675,27 +675,59 @@ class _ToolDetails {
       case 'todowrite':
       case 'todo_write':
         {
-          final header = todoWriteHeader(input);
-          if (header != null) {
-            lines.add((label: 'Progress', value: header.progressText));
-            if (header.state == 'in_progress' && header.taskText.isNotEmpty) {
-              lines.add((label: 'Current', value: header.taskText));
+          final todoState = inferTodoWriteState(input);
+          if (todoState != null) {
+            lines.add((label: 'Progress', value: todoState.progressText));
+            if (todoState.state == 'in_progress' &&
+                todoState.taskText.isNotEmpty) {
+              lines.add((label: 'Current', value: todoState.taskText));
+            }
+            if (todoState.state == 'partial') {
+              lines.add((label: 'State', value: 'Partially complete'));
+            } else if (todoState.state == 'pending') {
+              lines.add((label: 'State', value: 'Pending'));
             }
           }
           final todos = <_TodoItem>[];
-          if (input is Map && input['todos'] is List) {
-            for (final t in (input['todos'] as List)) {
-              if (t is! Map) continue;
-              final content = t['content']?.toString().trim() ?? '';
-              if (content.isEmpty) continue;
-              final st = t['status']?.toString().trim() ?? '';
-              todos.add(_TodoItem(content: content, status: st));
-            }
+          final todoEntries =
+              todoState?.todos ?? const <({String content, String status})>[];
+          for (final todo in todoEntries) {
+            if (todo.content.isEmpty) continue;
+            todos.add(_TodoItem(content: todo.content, status: todo.status));
           }
           return _ToolDetails(
             primaryLines: lines,
             todos: todos.isEmpty ? null : todos,
           );
+        }
+      case 'task':
+        {
+          final taskType = getStr('task_type').trim();
+          final description = getStr('description').trim();
+          final title = getStr('title').trim();
+          final goal = getStr('goal').trim();
+          final prompt = getStr('prompt').trim();
+          final context = getStr('context').trim();
+
+          if (taskType.isNotEmpty) {
+            lines.add((label: 'Type', value: taskType));
+          }
+          if (title.isNotEmpty) {
+            lines.add((label: 'Title', value: title));
+          }
+          if (description.isNotEmpty) {
+            lines.add((label: 'Description', value: description));
+          }
+          if (goal.isNotEmpty) {
+            lines.add((label: 'Goal', value: goal));
+          }
+          if (prompt.isNotEmpty) {
+            lines.add((label: 'Prompt', value: prompt));
+          }
+          if (context.isNotEmpty) {
+            lines.add((label: 'Context', value: context));
+          }
+          break;
         }
       default:
         break;

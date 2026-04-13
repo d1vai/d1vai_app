@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../services/d1vai_service.dart';
 
 class SetPasswordDialog extends StatefulWidget {
@@ -12,6 +11,7 @@ class SetPasswordDialog extends StatefulWidget {
 }
 
 class _SetPasswordDialogState extends State<SetPasswordDialog> {
+  final D1vaiService _service = D1vaiService();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
@@ -45,8 +45,7 @@ class _SetPasswordDialogState extends State<SetPasswordDialog> {
     });
 
     try {
-      final service = Provider.of<D1vaiService>(context, listen: false);
-      await service.postUserPasswordSet(password);
+      await _service.postUserPasswordSet(password);
 
       if (mounted) {
         _showSuccess('Password set successfully');

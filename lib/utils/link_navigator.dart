@@ -11,17 +11,52 @@ class LinkNavigator {
   static String? routeFor(Uri uri) {
     final host = uri.host.toLowerCase();
     final seg = uri.pathSegments;
-    if (seg.isEmpty) return null;
 
     // Docs.
     final isDocsHost =
         host == 'www.d1v.ai' || host == 'd1v.ai' || host == 'docs.d1v.ai';
-    if (isDocsHost && seg.first == 'docs') {
+    if (seg.isNotEmpty && isDocsHost && seg.first == 'docs') {
       if (seg.length >= 2) {
         return '/docs/${seg[1]}';
       }
       return '/docs';
     }
+
+    if (seg.isNotEmpty &&
+        (host == 'www.d1v.ai' || host == 'd1v.ai') &&
+        seg.first == 'u' &&
+        seg.length >= 2) {
+      return '/u/${seg[1]}';
+    }
+
+    if ((host == 'www.d1v.ai' || host == 'd1v.ai') &&
+        uri.path == '/login' &&
+        (uri.queryParameters['invite'] ?? '').trim().isNotEmpty) {
+      final invite = Uri.encodeQueryComponent(
+        uri.queryParameters['invite']!.trim(),
+      );
+      return '/login?invite=$invite';
+    }
+
+    if ((host == 'www.d1v.ai' || host == 'd1v.ai') && uri.path == '/openapi') {
+      final next = Uri(
+        path: '/openapi',
+        queryParameters: {
+          if ((uri.queryParameters['prompt'] ?? '').trim().isNotEmpty)
+            'prompt': uri.queryParameters['prompt']!.trim(),
+          if ((uri.queryParameters['spec'] ?? '').trim().isNotEmpty)
+            'spec': uri.queryParameters['spec']!.trim(),
+        },
+      );
+      return next.toString();
+    }
+
+    if ((host == 'api.d1v.ai' || host == 'api.desci.cyou') &&
+        uri.path.endsWith('/docs')) {
+      return '/api-docs';
+    }
+
+    if (seg.isEmpty) return null;
 
     // Marketplace apps (d1vai.com/apps/:slug).
     if ((host == 'd1vai.com' || host.endsWith('.d1vai.com')) &&

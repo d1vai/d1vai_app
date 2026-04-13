@@ -10,11 +10,11 @@ class ProjectOverviewSkeleton extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     // Use subtle card colors to mimic the "glass" look of the real dashboard
-    final cardColor = theme.colorScheme.surfaceContainerHighest.withOpacity(
-      isDark ? 0.3 : 0.5,
+    final cardColor = theme.colorScheme.surfaceContainerHighest.withValues(
+      alpha: isDark ? 0.3 : 0.5,
     );
-    final borderColor = theme.colorScheme.outlineVariant.withOpacity(
-      isDark ? 0.3 : 0.5,
+    final borderColor = theme.colorScheme.outlineVariant.withValues(
+      alpha: isDark ? 0.3 : 0.5,
     );
 
     // Shimmer colors
@@ -172,7 +172,7 @@ class ProjectOverviewSkeleton extends StatelessWidget {
                         width: 80,
                         height: 80,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.5),
+                          color: Colors.white.withValues(alpha: 0.5),
                           shape: BoxShape.circle,
                         ),
                       ),

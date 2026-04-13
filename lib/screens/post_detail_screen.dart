@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -150,6 +151,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       return prefix.isNotEmpty ? prefix : 'Anonymous';
     }
     return 'Anonymous';
+  }
+
+  void _openAuthorProfile() {
+    final slug = (_post.author?.slug ?? '').trim();
+    if (slug.isEmpty) return;
+    context.push('/u/$slug');
   }
 
   double _measureTextHeight({
@@ -792,60 +799,77 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         const SizedBox(height: 10),
         Row(
           children: [
-            Hero(
-              tag: communityPostAuthorHeroTag(_post),
-              child: RepaintBoundary(
-                child: AvatarImage(
-                  imageUrl: _post.author?.picture?.isNotEmpty == true
-                      ? _post.author!.picture!
-                      : 'placeholder',
-                  size: avatarSize,
-                  borderRadius: BorderRadius.circular(avatarSize / 2),
-                  fit: BoxFit.cover,
-                  showBorder: false,
-                  placeholderText: _post.author?.picture?.isNotEmpty != true
-                      ? _getAuthorDisplayName(_post.author)
-                      : null,
+            Expanded(
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: (_post.author?.slug ?? '').trim().isEmpty
+                    ? null
+                    : _openAuthorProfile,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    children: [
+                      Hero(
+                        tag: communityPostAuthorHeroTag(_post),
+                        child: RepaintBoundary(
+                          child: AvatarImage(
+                            imageUrl: _post.author?.picture?.isNotEmpty == true
+                                ? _post.author!.picture!
+                                : 'placeholder',
+                            size: avatarSize,
+                            borderRadius: BorderRadius.circular(avatarSize / 2),
+                            fit: BoxFit.cover,
+                            showBorder: false,
+                            placeholderText:
+                                _post.author?.picture?.isNotEmpty != true
+                                ? _getAuthorDisplayName(_post.author)
+                                : null,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _getAuthorDisplayName(_post.author),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style:
+                                  theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                    height: 1.0,
+                                  ) ??
+                                  const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                    height: 1.0,
+                                  ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _formatTime(_post.createdAt),
+                              style:
+                                  theme.textTheme.labelSmall?.copyWith(
+                                    color: Colors.white.withValues(alpha: 0.78),
+                                    fontWeight: FontWeight.w700,
+                                  ) ??
+                                  TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.78),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
             const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _getAuthorDisplayName(_post.author),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style:
-                        theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                          height: 1.0,
-                        ) ??
-                        const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                          height: 1.0,
-                        ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    _formatTime(_post.createdAt),
-                    style:
-                        theme.textTheme.labelSmall?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.78),
-                          fontWeight: FontWeight.w700,
-                        ) ??
-                        TextStyle(
-                          color: Colors.white.withValues(alpha: 0.78),
-                          fontWeight: FontWeight.w700,
-                        ),
-                  ),
-                ],
-              ),
-            ),
             if (authorPrefix.isNotEmpty)
               Container(
                 padding: const EdgeInsets.symmetric(

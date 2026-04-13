@@ -156,7 +156,7 @@ class AuthProvider extends ChangeNotifier {
 
     // 检查是否需要 onboarding
     if (_user != null && !_user!.isOnboarded) {
-      _onboardingData = OnboardingData();
+      _onboardingData = _storageService.getOnboardingData() ?? OnboardingData();
       await _storageService.saveOnboardingData(_onboardingData!);
     } else {
       _onboardingData = null;
@@ -171,6 +171,15 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       rethrow;
     }
+  }
+
+  Future<void> stageInvitationCode(String code) async {
+    final inviteCode = code.trim();
+    if (inviteCode.isEmpty) return;
+    _onboardingData ??= _storageService.getOnboardingData() ?? OnboardingData();
+    _onboardingData = _onboardingData!.copyWith(inviteCode: inviteCode);
+    await _storageService.saveOnboardingData(_onboardingData!);
+    notifyListeners();
   }
 
   /// 接受邀请码

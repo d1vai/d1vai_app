@@ -38,6 +38,16 @@ class ShareLinks {
       Uri.parse('$webBaseUrl/c/$slug');
 
   static Uri publicUserBySlug(String slug) => Uri.parse('$webBaseUrl/u/$slug');
+
+  static Uri openApiDocs({String? prompt, String? spec}) => Uri(
+    scheme: 'https',
+    host: 'www.d1v.ai',
+    path: '/openapi',
+    queryParameters: {
+      if ((prompt ?? '').trim().isNotEmpty) 'prompt': prompt!.trim(),
+      if ((spec ?? '').trim().isNotEmpty) 'spec': spec!.trim(),
+    },
+  );
 }
 
 class _ShareSheetBody extends StatelessWidget {

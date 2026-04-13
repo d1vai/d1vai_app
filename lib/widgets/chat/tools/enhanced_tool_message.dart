@@ -332,6 +332,12 @@ String _toolSubtitle(
             if (header.state == 'done_all') {
               return 'Done · ${header.progressText}';
             }
+            if (header.state == 'pending') {
+              return 'Pending · ${header.progressText}';
+            }
+            if (header.state == 'partial') {
+              return '${header.progressText} complete';
+            }
             return header.taskText.isNotEmpty
                 ? 'In progress · ${header.progressText} · ${header.taskText}'
                 : 'In progress · ${header.progressText}';
@@ -339,7 +345,12 @@ String _toolSubtitle(
         case 'task':
           {
             final t = input['task_type']?.toString().trim() ?? '';
-            final desc = input['description']?.toString().trim() ?? '';
+            final desc = [
+              input['description']?.toString().trim() ?? '',
+              input['goal']?.toString().trim() ?? '',
+              input['title']?.toString().trim() ?? '',
+              input['prompt']?.toString().trim() ?? '',
+            ].firstWhere((value) => value.isNotEmpty, orElse: () => '');
             final bits = <String>[
               if (t.isNotEmpty) t,
               if (desc.isNotEmpty) truncateText(desc, maxLen: 56),

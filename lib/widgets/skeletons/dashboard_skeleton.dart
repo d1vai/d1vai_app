@@ -10,11 +10,11 @@ class DashboardSkeleton extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     // Use subtle card colors to mimic the "glass" look of the real dashboard
-    final cardColor = theme.colorScheme.surfaceContainerHighest.withOpacity(
-      isDark ? 0.3 : 0.5,
+    final cardColor = theme.colorScheme.surfaceContainerHighest.withValues(
+      alpha: isDark ? 0.3 : 0.5,
     );
-    final borderColor = theme.colorScheme.outlineVariant.withOpacity(
-      isDark ? 0.3 : 0.5,
+    final borderColor = theme.colorScheme.outlineVariant.withValues(
+      alpha: isDark ? 0.3 : 0.5,
     );
 
     // Shimmer colors

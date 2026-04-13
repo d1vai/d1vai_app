@@ -23,6 +23,7 @@ class BindEmailDialog extends StatefulWidget {
 }
 
 class _BindEmailDialogState extends State<BindEmailDialog> {
+  final D1vaiService _service = D1vaiService();
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _codeController = TextEditingController();
@@ -79,12 +80,10 @@ class _BindEmailDialogState extends State<BindEmailDialog> {
     });
 
     try {
-      final service = Provider.of<D1vaiService>(context, listen: false);
-
       if (widget.mode == EmailDialogMode.change) {
-        await service.postUserChangeEmailSend(email);
+        await _service.postUserChangeEmailSend(email);
       } else {
-        await service.postUserBindEmailSend(email);
+        await _service.postUserBindEmailSend(email);
       }
 
       if (mounted) {
@@ -123,15 +122,13 @@ class _BindEmailDialogState extends State<BindEmailDialog> {
     });
 
     try {
-      final service = Provider.of<D1vaiService>(context, listen: false);
-
       if (widget.mode == EmailDialogMode.change) {
-        await service.postUserChangeEmailConfirm(email, code);
+        await _service.postUserChangeEmailConfirm(email, code);
         if (mounted) {
           _showSuccess('Email changed successfully');
         }
       } else {
-        await service.postUserBindEmailConfirm(email, code);
+        await _service.postUserBindEmailConfirm(email, code);
         if (mounted) {
           _showSuccess('Email bound successfully');
         }

@@ -7,6 +7,7 @@ import 'package:d1vai_app/widgets/snackbar_helper.dart';
 import 'package:d1vai_app/widgets/auth/login_legal_links.dart';
 import 'package:d1vai_app/widgets/auth/session_expired_banner.dart';
 import 'package:d1vai_app/widgets/auth/auth_input_fields.dart';
+import 'package:d1vai_app/widgets/auth/auth_display_controls.dart';
 import 'package:d1vai_app/l10n/app_localizations.dart';
 
 /// 登录模式枚举
@@ -147,8 +148,9 @@ class _LoginModeTabBar extends StatelessWidget {
 
 class LoginScreen extends StatefulWidget {
   final bool sessionExpired;
+  final String? inviteCode;
 
-  const LoginScreen({super.key, this.sessionExpired = false});
+  const LoginScreen({super.key, this.sessionExpired = false, this.inviteCode});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -289,10 +291,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
     try {
-      await Provider.of<AuthProvider>(
-        context,
-        listen: false,
-      ).verifyCodeAndLogin(_emailController.text.trim(), _otpCode);
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.stageInvitationCode(widget.inviteCode ?? '');
+      await authProvider.verifyCodeAndLogin(
+        _emailController.text.trim(),
+        _otpCode,
+      );
       _showSuccess(loc?.translate('login_success') ?? '登录成功');
       if (mounted) context.go('/dashboard');
     } catch (e) {
@@ -309,10 +313,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
     try {
-      await Provider.of<AuthProvider>(
-        context,
-        listen: false,
-      ).login(_emailController.text.trim(), _passwordController.text);
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.stageInvitationCode(widget.inviteCode ?? '');
+      await authProvider.login(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
       _showSuccess(loc?.translate('login_success') ?? '登录成功');
       if (mounted) context.go('/dashboard');
     } catch (e) {
@@ -581,7 +587,11 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 60),
+                const Align(
+                  alignment: Alignment.centerRight,
+                  child: AuthDisplayControls(),
+                ),
+                const SizedBox(height: 40),
                 if (_showSessionExpiredBanner) ...[
                   SessionExpiredBanner(
                     title:
@@ -594,6 +604,23 @@ class _LoginScreenState extends State<LoginScreen> {
                       if (!mounted) return;
                       setState(() => _showSessionExpiredBanner = false);
                     },
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                if ((widget.inviteCode ?? '').trim().isNotEmpty) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'Invite code ${(widget.inviteCode ?? '').trim()} will be applied after login.',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 16),
                 ],

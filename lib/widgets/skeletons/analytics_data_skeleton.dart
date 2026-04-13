@@ -9,11 +9,11 @@ class AnalyticsDataSkeleton extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final cardColor = theme.colorScheme.surfaceContainerHighest.withOpacity(
-      isDark ? 0.3 : 0.5,
+    final cardColor = theme.colorScheme.surfaceContainerHighest.withValues(
+      alpha: isDark ? 0.3 : 0.5,
     );
-    final borderColor = theme.colorScheme.outlineVariant.withOpacity(
-      isDark ? 0.3 : 0.5,
+    final borderColor = theme.colorScheme.outlineVariant.withValues(
+      alpha: isDark ? 0.3 : 0.5,
     );
     final shimmerBaseColor = isDark
         ? Colors.grey.shade800

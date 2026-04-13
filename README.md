@@ -109,3 +109,9 @@ dart run tool/gen_l10n.dart
 ```bash
 flutter test
 ```
+
+## Android 发布签名
+
+- 仓库已支持从 `android/key.properties` 读取正式签名配置。
+- 可先复制 `android/key.properties.example` 为 `android/key.properties`，再填入真实 keystore 信息。
+- 若未提供 `android/key.properties`，当前仍会回退为 debug 签名，方便本地侧载和 GitHub APK 分发；商店发布前请务必切换到正式签名。

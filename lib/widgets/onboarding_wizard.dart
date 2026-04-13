@@ -6,14 +6,16 @@ import 'package:image_picker/image_picker.dart';
 import '../providers/auth_provider.dart';
 import 'ai_avatar_selector_dialog.dart';
 import 'avatar_image.dart';
+import 'auth/auth_display_controls.dart';
 import 'button.dart' as d1v;
 import 'snackbar_helper.dart';
 
 /// Onboarding 向导组件 - 管理完整的 Onboarding 流程
 class OnboardingWizard extends StatefulWidget {
   final VoidCallback? onCompleted;
+  final String? initialInviteCode;
 
-  const OnboardingWizard({super.key, this.onCompleted});
+  const OnboardingWizard({super.key, this.onCompleted, this.initialInviteCode});
 
   @override
   State<OnboardingWizard> createState() => _OnboardingWizardState();
@@ -63,6 +65,21 @@ class _OnboardingWizardState extends State<OnboardingWizard>
       vsync: this,
       duration: const Duration(milliseconds: 2200),
     )..repeat(reverse: true);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final stagedInvite =
+          authProvider.onboardingData?.inviteCode?.trim() ?? '';
+      final initialInvite = (widget.initialInviteCode ?? '').trim();
+      final resolvedInvite = initialInvite.isNotEmpty
+          ? initialInvite
+          : stagedInvite;
+      if (resolvedInvite.isEmpty) return;
+      setState(() {
+        _inviteCode = resolvedInvite;
+      });
+    });
   }
 
   @override
@@ -531,6 +548,11 @@ class _OnboardingWizardState extends State<OnboardingWizard>
             child: Column(
               mainAxisSize: MainAxisSize.max,
               children: [
+                const Align(
+                  alignment: Alignment.centerRight,
+                  child: AuthDisplayControls(),
+                ),
+                const SizedBox(height: 10),
                 _buildStepIndicator(theme),
                 const SizedBox(height: 18),
                 _buildStepTitle(theme),

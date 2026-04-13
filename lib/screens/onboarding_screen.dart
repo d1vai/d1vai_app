@@ -6,13 +6,16 @@ import '../widgets/onboarding_wizard.dart';
 
 /// Onboarding 页面 - 用于引导用户完成初始设置
 class OnboardingScreen extends StatelessWidget {
-  const OnboardingScreen({super.key});
+  final String? inviteCode;
+
+  const OnboardingScreen({super.key, this.inviteCode});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
         child: OnboardingWizard(
+          initialInviteCode: inviteCode,
           onCompleted: () {
             // Onboarding 完成后的处理
             final authProvider = Provider.of<AuthProvider>(

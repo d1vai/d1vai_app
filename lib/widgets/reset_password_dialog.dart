@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../services/d1vai_service.dart';
 
 class ResetPasswordDialog extends StatefulWidget {
@@ -14,6 +13,7 @@ class ResetPasswordDialog extends StatefulWidget {
 }
 
 class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
+  final D1vaiService _service = D1vaiService();
   final _emailController = TextEditingController();
   final _codeController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -75,8 +75,7 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
     });
 
     try {
-      final service = Provider.of<D1vaiService>(context, listen: false);
-      await service.postUserPasswordForgotSend(email);
+      await _service.postUserPasswordForgotSend(email);
 
       if (mounted) {
         _showSuccess('Verification code sent');
@@ -126,8 +125,7 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
     });
 
     try {
-      final service = Provider.of<D1vaiService>(context, listen: false);
-      await service.postUserPasswordReset(email, code, password);
+      await _service.postUserPasswordReset(email, code, password);
 
       if (mounted) {
         _showSuccess('Password reset successfully');
