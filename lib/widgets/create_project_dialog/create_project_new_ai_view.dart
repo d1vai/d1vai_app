@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/model_config.dart';
 import '../../models/project.dart';
+import '../../utils/project_template_localizations.dart';
 import '../button.dart';
 import '../input.dart';
 
@@ -62,11 +63,15 @@ class CreateProjectNewAiView extends StatelessWidget {
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final isZh = _isChineseLocale(context);
+    final locale = Localizations.localeOf(context);
 
     final summaryText = isZh
         ? '一句话写清页面、登录、数据和关键流程（至少 8 个字），系统会自动创建项目并在聊天里继续完成。'
         : 'In one sentence, describe pages, auth, data, and key flows (min 8 chars); we will create the project and continue in chat.';
     final selectedTemplate = _selectedTemplate();
+    final localizedSelectedTemplate = selectedTemplate == null
+        ? null
+        : localizeProjectTemplate(selectedTemplate, locale);
 
     return Column(
       key: const ValueKey('new_ai'),
@@ -181,8 +186,8 @@ class CreateProjectNewAiView extends StatelessWidget {
                   .map(
                     (template) => DropdownMenuItem<String>(
                       value: template.templateRepo,
-                      child: Text(
-                        template.name,
+                child: Text(
+                        localizeProjectTemplate(template, locale).name,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -237,7 +242,7 @@ class CreateProjectNewAiView extends StatelessWidget {
               ),
           ],
         ),
-        if (selectedTemplate != null) ...[
+        if (selectedTemplate != null && localizedSelectedTemplate != null) ...[
           const SizedBox(height: 10),
           Container(
             width: double.infinity,
@@ -262,7 +267,7 @@ class CreateProjectNewAiView extends StatelessWidget {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(
-                      selectedTemplate.name,
+                      localizedSelectedTemplate.name,
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -280,7 +285,7 @@ class CreateProjectNewAiView extends StatelessWidget {
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
-                          isZh ? '推荐' : 'Featured',
+                          localizedSelectedTemplate.featuredLabel,
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
@@ -300,7 +305,7 @@ class CreateProjectNewAiView extends StatelessWidget {
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(
-                        selectedTemplate.category,
+                        localizedSelectedTemplate.category,
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -312,7 +317,7 @@ class CreateProjectNewAiView extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  selectedTemplate.description,
+                  localizedSelectedTemplate.description,
                   style: TextStyle(
                     fontSize: 12,
                     height: 1.4,
