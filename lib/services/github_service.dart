@@ -5,6 +5,63 @@ class GitHubService {
 
   GitHubService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
 
+  Future<Map<String, dynamic>> getAppStatus() async {
+    return _apiClient.get<Map<String, dynamic>>('/api/github-app/status');
+  }
+
+  Future<String> getAppConnectUrl({String? redirectTo}) async {
+    final data = await _apiClient.get<Map<String, dynamic>>(
+      '/api/github-app/connect-url',
+      queryParams: redirectTo == null || redirectTo.trim().isEmpty
+          ? null
+          : {'redirect_to': redirectTo.trim()},
+    );
+    return (data['url'] ?? '').toString();
+  }
+
+  Future<void> disconnectApp() async {
+    await _apiClient.delete<Map<String, dynamic>>('/api/github-app/disconnect');
+  }
+
+  Future<List<Map<String, dynamic>>> getAppInstallations() async {
+    final data = await _apiClient.get<List<dynamic>>(
+      '/api/github-app/installations',
+    );
+    return data
+        .whereType<Map>()
+        .map((item) => item.cast<String, dynamic>())
+        .toList();
+  }
+
+  Future<List<Map<String, dynamic>>> getAppRepositories({
+    required int installationId,
+  }) async {
+    final data = await _apiClient.get<List<dynamic>>(
+      '/api/github-app/repositories',
+      queryParams: {'installation_id': installationId.toString()},
+    );
+    return data
+        .whereType<Map>()
+        .map((item) => item.cast<String, dynamic>())
+        .toList();
+  }
+
+  Future<Map<String, dynamic>> importProjectFromGitHubApp({
+    required int installationId,
+    required int repositoryId,
+    String? projectName,
+    String? projectDescription,
+  }) async {
+    return _apiClient.post<Map<String, dynamic>>('/api/github-app/import', {
+      'installation_id': installationId,
+      'repository_id': repositoryId,
+      if (projectName != null && projectName.trim().isNotEmpty)
+        'project_name': projectName.trim(),
+      if (projectDescription != null && projectDescription.trim().isNotEmpty)
+        'project_description': projectDescription.trim(),
+    }, timeout: const Duration(minutes: 4));
+  }
+
   /// Get GitHub integration status
   Future<Map<String, dynamic>?> getIntegrationStatus() async {
     return _apiClient.get<Map<String, dynamic>>(

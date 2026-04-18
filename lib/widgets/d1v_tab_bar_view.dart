@@ -147,11 +147,12 @@ class D1VTabBar extends StatefulWidget implements PreferredSizeWidget {
   State<D1VTabBar> createState() => _D1VTabBarState();
 }
 
-class _D1VTabBarState extends State<D1VTabBar>
-    with SingleTickerProviderStateMixin {
+class _D1VTabBarState extends State<D1VTabBar> with TickerProviderStateMixin {
   late AnimationController _breathingController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _glowAnimation;
+  late AnimationController _tapPulseController;
+  late Animation<double> _tapPulseAnimation;
 
   @override
   void initState() {
@@ -179,6 +180,14 @@ class _D1VTabBarState extends State<D1VTabBar>
       ),
     );
 
+    _tapPulseController = AnimationController(
+      duration: const Duration(milliseconds: 220),
+      vsync: this,
+    );
+    _tapPulseAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _tapPulseController, curve: Curves.easeOutCubic),
+    );
+
     if (widget.enableBreathing) {
       _breathingController.repeat(reverse: true);
     }
@@ -187,6 +196,7 @@ class _D1VTabBarState extends State<D1VTabBar>
   @override
   void dispose() {
     _breathingController.dispose();
+    _tapPulseController.dispose();
     super.dispose();
   }
 
@@ -196,8 +206,12 @@ class _D1VTabBarState extends State<D1VTabBar>
     final inactiveText = D1VColors.getInactiveText(context);
 
     return AnimatedBuilder(
-      animation: _breathingController,
+      animation: Listenable.merge([_breathingController, _tapPulseController]),
       builder: (context, child) {
+        final indicatorScale =
+            _scaleAnimation.value + 0.025 * _tapPulseAnimation.value;
+        final glowRadius =
+            _glowAnimation.value + 8.0 * _tapPulseAnimation.value;
         return TabBar(
           controller: widget.controller,
           tabs: widget.tabs,
@@ -208,12 +222,18 @@ class _D1VTabBarState extends State<D1VTabBar>
           labelStyle: widget.labelStyle,
           unselectedLabelStyle: widget.unselectedLabelStyle,
           labelPadding: widget.labelPadding,
-          onTap: widget.onTap,
+          onTap: (index) {
+            if (widget.controller?.index == index) {
+              HapticFeedback.lightImpact();
+            }
+            _tapPulseController.forward(from: 0);
+            widget.onTap?.call(index);
+          },
           dividerColor: Colors.transparent, // 隐藏底部分隔线
           indicator: _GradientPillIndicator(
             gradient: D1VColors.getIndicatorGradient(context),
-            scale: _scaleAnimation.value,
-            glowRadius: _glowAnimation.value,
+            scale: indicatorScale,
+            glowRadius: glowRadius,
             context: context,
           ),
           indicatorSize: TabBarIndicatorSize.tab,

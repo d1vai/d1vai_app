@@ -1521,6 +1521,31 @@ class D1vaiService {
     return response;
   }
 
+  Future<Map<String, dynamic>> getProjectPreviewStatus(String projectId) async {
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      '/api/deployment/$projectId/preview/status',
+    );
+    final nested = response['data'];
+    if (nested is Map<String, dynamic>) return nested;
+    if (nested is Map) return nested.cast<String, dynamic>();
+    return response;
+  }
+
+  Future<Map<String, dynamic>> configureProjectRootDirectory(
+    String projectId, {
+    required String rootDirectory,
+    bool triggerDeploy = true,
+  }) async {
+    final response = await _apiClient.post<Map<String, dynamic>>(
+      '/api/deployment/$projectId/root-directory',
+      {'root_directory': rootDirectory, 'trigger_deploy': triggerDeploy},
+    );
+    final nested = response['data'];
+    if (nested is Map<String, dynamic>) return nested;
+    if (nested is Map) return nested.cast<String, dynamic>();
+    return response;
+  }
+
   // ============================================
   // Project Management Methods - 项目管理
   // ============================================

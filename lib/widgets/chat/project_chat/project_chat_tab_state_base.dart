@@ -34,6 +34,9 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   bool _workspacePollInFlight = false;
   bool _workspaceWarmupInFlight = false;
   int _workspacePollErrorStreak = 0;
+  bool _workspaceWarmupVisible = false;
+  bool _workspaceWarmupCompleted = false;
+  String? _workspaceWarmupMessage;
 
   // Model selection state (align with web BigChat/create flow)
   List<ModelInfo> _availableModels = <ModelInfo>[];
@@ -58,6 +61,8 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
 
   // Mobile chat bottom sheet state
   bool _showMobileChat = false;
+  double _mobileChatSheetExtent = 0.7;
+  int _mobileChatSheetStage = 1;
 
   // Outbox queue (mobile-friendly message queue)
   final List<OutboxItem> _outboxItems = <OutboxItem>[];

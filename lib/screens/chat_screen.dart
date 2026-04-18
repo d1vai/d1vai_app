@@ -23,6 +23,7 @@ import 'package:d1vai_app/widgets/insufficient_balance_dialog.dart';
 import 'package:d1vai_app/widgets/chat/status_pill.dart';
 import 'package:d1vai_app/widgets/compact_selector.dart';
 import 'package:d1vai_app/widgets/alert.dart';
+import 'package:d1vai_app/widgets/progress_widget.dart';
 import 'package:d1vai_app/widgets/snackbar_helper.dart';
 
 class _OutboxAborted implements Exception {
@@ -111,6 +112,9 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _workspacePollInFlight = false;
   bool _workspaceWarmupInFlight = false;
   int _workspacePollErrorStreak = 0;
+  bool _workspaceWarmupVisible = false;
+  bool _workspaceWarmupCompleted = false;
+  String? _workspaceWarmupMessage;
 
   List<ModelInfo> _availableModels = <ModelInfo>[];
   String _selectedModelId = '';
@@ -558,15 +562,106 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  List<String> _workspaceWarmupTips() {
+    switch (_workspacePhase) {
+      case WorkspacePhase.ready:
+        return const <String>[
+          'Workspace online',
+          'Syncing model settings',
+          'Ready to send',
+        ];
+      case WorkspacePhase.starting:
+        return const <String>[
+          'Checking workspace status',
+          'Starting workspace container',
+          'Preparing execution session',
+        ];
+      case WorkspacePhase.syncing:
+        return const <String>[
+          'Workspace online',
+          'Syncing files and runtime',
+          'Preparing execution session',
+        ];
+      case WorkspacePhase.standby:
+      case WorkspacePhase.archived:
+        return const <String>[
+          'Workspace sleeping',
+          'Waking workspace up',
+          'Preparing execution session',
+        ];
+      case WorkspacePhase.error:
+        return const <String>[
+          'Workspace warmup failed',
+          'Retrying workspace startup',
+          'Preparing execution session',
+        ];
+      case WorkspacePhase.unknown:
+        return const <String>[
+          'Checking workspace status',
+          'Preparing workspace',
+          'Preparing execution session',
+        ];
+    }
+  }
+
+  void _showWorkspaceWarmupUi() {
+    if (_workspaceWarmupVisible) return;
+    if (!mounted) return;
+    setState(() {
+      _workspaceWarmupVisible = true;
+      _workspaceWarmupCompleted = false;
+      _workspaceWarmupMessage =
+          'Workspace is starting. Your message will send automatically.';
+    });
+    SnackBarHelper.showInfo(
+      context,
+      title: 'Workspace',
+      message: 'Workspace is starting. Sending will continue automatically.',
+      position: SnackBarPosition.top,
+      duration: const Duration(seconds: 3),
+    );
+  }
+
+  void _completeWorkspaceWarmupUi() {
+    if (!_workspaceWarmupVisible || !mounted) return;
+    setState(() {
+      _workspaceWarmupCompleted = true;
+      _workspaceWarmupMessage = 'Workspace ready. Sending your message...';
+    });
+  }
+
+  void _hideWorkspaceWarmupUi() {
+    if (!mounted) return;
+    setState(() {
+      _workspaceWarmupVisible = false;
+      _workspaceWarmupCompleted = false;
+      _workspaceWarmupMessage = null;
+    });
+  }
+
   Future<void> _ensureWorkspaceReadyForSend() async {
     if (_workspacePhase == WorkspacePhase.ready) return;
     // Quick status check before a potentially long ensure call.
     await _refreshWorkspaceStatus(bypassCache: false);
     if (_workspacePhase == WorkspacePhase.ready) return;
-    await _maybeWarmupWorkspace();
-    if (_workspacePhase != WorkspacePhase.ready) {
-      throw Exception(_workspaceError ?? 'Workspace is not ready');
+    _showWorkspaceWarmupUi();
+    try {
+      await _maybeWarmupWorkspace();
+      if (_workspacePhase != WorkspacePhase.ready) {
+        throw Exception(_workspaceError ?? 'Workspace is not ready');
+      }
+      _completeWorkspaceWarmupUi();
+    } catch (_) {
+      _hideWorkspaceWarmupUi();
+      rethrow;
     }
+    unawaited(
+      Future<void>.delayed(const Duration(milliseconds: 700), () {
+        if (mounted && _workspacePhase == WorkspacePhase.ready) {
+          _hideWorkspaceWarmupUi();
+        }
+      }),
+    );
     unawaited(_loadModelConfigIfPossible());
   }
 
@@ -1968,6 +2063,45 @@ class _ChatScreenState extends State<ChatScreen> {
                 previewUrl: (_miniPreviewUrl ?? '').trim(),
                 reloadVersion: _miniPreviewReloadVersion,
                 topDock: 8,
+              ),
+            ),
+          if (_workspaceWarmupVisible)
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 18,
+              child: IgnorePointer(
+                ignoring: true,
+                child: Material(
+                  color: Colors.transparent,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if ((_workspaceWarmupMessage ?? '').trim().isNotEmpty)
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surface,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            _workspaceWarmupMessage!,
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ),
+                      ProgressWidget(
+                        tipList: _workspaceWarmupTips(),
+                        completed: _workspaceWarmupCompleted,
+                        preCompleteDuration: const Duration(seconds: 12),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
         ],

@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 class FloatingPreviewDock extends StatefulWidget {
@@ -21,12 +22,14 @@ class FloatingPreviewDock extends StatefulWidget {
 
 class _FloatingPreviewDockState extends State<FloatingPreviewDock> {
   static const double _margin = 12;
+  static const double _edgeHintDistance = 28;
 
   InAppWebViewController? _miniController;
   Offset? _position;
   Size _lastBounds = Size.zero;
   bool _hasAutoPlaced = false;
   bool _dragging = false;
+  _DockSnapZone _snapZone = _DockSnapZone.none;
 
   @override
   void didUpdateWidget(covariant FloatingPreviewDock oldWidget) {
@@ -97,122 +100,196 @@ class _FloatingPreviewDockState extends State<FloatingPreviewDock> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final colorScheme = theme.colorScheme;
+    final isSnapping = _snapZone != _DockSnapZone.none;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onPanStart: (_) {
-        _dragging = true;
+        setState(() {
+          _dragging = true;
+        });
       },
       onPanUpdate: (details) {
         final current = _position ?? _defaultPosition(bounds, dockSize);
+        final next = _clampOffset(current + details.delta, bounds, dockSize);
+        final nextZone = _snapZoneFor(next, bounds, dockSize);
+        if (nextZone != _snapZone && nextZone != _DockSnapZone.none) {
+          HapticFeedback.selectionClick();
+        }
         setState(() {
-          _position = _clampOffset(current + details.delta, bounds, dockSize);
+          _position = next;
+          _snapZone = nextZone;
         });
       },
       onPanEnd: (_) {
         _snapToNearestAnchor(bounds, dockSize);
-        _dragging = false;
+        HapticFeedback.lightImpact();
+        setState(() {
+          _dragging = false;
+          _snapZone = _DockSnapZone.none;
+        });
       },
       onTap: () {
         if (_dragging) return;
+        HapticFeedback.mediumImpact();
         _openExpandedPreview(context, url);
       },
       child: SizedBox(
         width: dockSize.width,
         height: dockSize.height,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            color: colorScheme.surface,
-            border: Border.all(
-              color: colorScheme.outlineVariant.withValues(
-                alpha: isDark ? 0.82 : 0.92,
+        child: AnimatedScale(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          scale: _dragging ? 1.02 : 1.0,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              color: colorScheme.surface,
+              border: Border.all(
+                color: (_dragging || isSnapping)
+                    ? colorScheme.primary.withValues(
+                        alpha: isDark ? 0.58 : 0.28,
+                      )
+                    : colorScheme.outlineVariant.withValues(
+                        alpha: isDark ? 0.82 : 0.92,
+                      ),
               ),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.28 : 0.14),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Stack(
-              children: [
-                IgnorePointer(
-                  ignoring: true,
-                  child: InAppWebView(
-                    key: ValueKey('mini-preview-$url'),
-                    contextMenu: ContextMenu(),
-                    initialUrlRequest: URLRequest(url: WebUri(url)),
-                    onWebViewCreated: (controller) {
-                      _miniController = controller;
-                    },
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(
+                    alpha: _dragging
+                        ? (isDark ? 0.34 : 0.18)
+                        : (isDark ? 0.28 : 0.14),
                   ),
+                  blurRadius: _dragging ? 28 : 20,
+                  offset: Offset(0, _dragging ? 14 : 10),
                 ),
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                        colors: [
-                          colorScheme.surface.withValues(
-                            alpha: isDark ? 0.58 : 0.42,
-                          ),
-                          colorScheme.surface.withValues(alpha: 0.08),
-                        ],
-                      ),
+                if (_dragging || isSnapping)
+                  BoxShadow(
+                    color: colorScheme.primary.withValues(
+                      alpha: isDark ? 0.2 : 0.1,
                     ),
+                    blurRadius: isDark ? 22 : 16,
+                    offset: const Offset(0, 6),
                   ),
-                ),
-                Positioned(
-                  left: 10,
-                  right: 10,
-                  top: 8,
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 7,
-                        height: 7,
-                        decoration: BoxDecoration(
-                          color: colorScheme.primary,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          'Preview',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      Icon(
-                        Icons.open_in_full_rounded,
-                        size: 14,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ],
-                  ),
-                ),
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: CustomPaint(
-                      painter: _CornerAccentPainter(
-                        color: colorScheme.primary.withValues(
-                          alpha: isDark ? 0.82 : 0.9,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
               ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Stack(
+                children: [
+                  IgnorePointer(
+                    ignoring: true,
+                    child: InAppWebView(
+                      key: ValueKey('mini-preview-$url'),
+                      contextMenu: ContextMenu(),
+                      initialUrlRequest: URLRequest(url: WebUri(url)),
+                      onWebViewCreated: (controller) {
+                        _miniController = controller;
+                      },
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                          colors: [
+                            colorScheme.surface.withValues(
+                              alpha: isDark ? 0.58 : 0.42,
+                            ),
+                            colorScheme.surface.withValues(alpha: 0.08),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (_dragging)
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                colorScheme.primary.withValues(
+                                  alpha: isDark ? 0.16 : 0.08,
+                                ),
+                                Colors.transparent,
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  Positioned(
+                    left: 10,
+                    right: 10,
+                    top: 8,
+                    child: Row(
+                      children: [
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 160),
+                          width: 7,
+                          height: 7,
+                          decoration: BoxDecoration(
+                            color: _dragging
+                                ? colorScheme.primary.withValues(alpha: 0.95)
+                                : colorScheme.primary,
+                            shape: BoxShape.circle,
+                            boxShadow: _dragging
+                                ? [
+                                    BoxShadow(
+                                      color: colorScheme.primary.withValues(
+                                        alpha: isDark ? 0.4 : 0.2,
+                                      ),
+                                      blurRadius: 10,
+                                      spreadRadius: 1,
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Preview',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        AnimatedRotation(
+                          duration: const Duration(milliseconds: 180),
+                          turns: _dragging ? 0.05 : 0,
+                          child: Icon(
+                            Icons.open_in_full_rounded,
+                            size: 14,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: CustomPaint(
+                        painter: _CornerAccentPainter(
+                          color: colorScheme.primary.withValues(
+                            alpha: isDark ? 0.82 : 0.9,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -310,7 +387,18 @@ class _FloatingPreviewDockState extends State<FloatingPreviewDock> {
       _position = _clampOffset(target, bounds, dockSize);
     });
   }
+
+  _DockSnapZone _snapZoneFor(Offset offset, Size bounds, Size dockSize) {
+    final leftDistance = (offset.dx - _margin).abs();
+    final rightX = math.max(_margin, bounds.width - dockSize.width - _margin);
+    final rightDistance = (offset.dx - rightX).abs();
+    if (leftDistance <= _edgeHintDistance) return _DockSnapZone.left;
+    if (rightDistance <= _edgeHintDistance) return _DockSnapZone.right;
+    return _DockSnapZone.none;
+  }
 }
+
+enum _DockSnapZone { none, left, right }
 
 class _PreviewExpandedDialog extends StatefulWidget {
   final String previewUrl;

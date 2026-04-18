@@ -16,7 +16,6 @@ import '../screens/realtime_analytics_screen.dart';
 import '../screens/invites_list_screen.dart';
 import '../screens/notification_settings_screen.dart';
 import '../screens/help_support_screen.dart';
-import '../screens/github_settings_screen.dart';
 import '../screens/projects_screen.dart';
 import '../screens/settings/api_settings_screen.dart';
 import '../screens/settings/account_data_screen.dart';
@@ -264,7 +263,10 @@ GoRouter createAppRouter() {
         pageBuilder: (context, state) => _buildPageWithTransition(
           context,
           state,
-          const MainScreen(initialIndex: 4),
+          MainScreen(
+            initialIndex: 4,
+            settingsInitialTab: state.uri.queryParameters['tab'],
+          ),
         ),
       ),
       GoRoute(
@@ -305,11 +307,7 @@ GoRouter createAppRouter() {
       ),
       GoRoute(
         path: '/settings/github',
-        pageBuilder: (context, state) => _buildPageWithTransition(
-          context,
-          state,
-          const GithubSettingsScreen(),
-        ),
+        redirect: (context, state) => '/settings?tab=github',
       ),
       GoRoute(
         path: '/projects',

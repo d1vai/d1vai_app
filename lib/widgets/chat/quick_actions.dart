@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Quick action buttons for chat screen
 class QuickActions extends StatefulWidget {
@@ -308,7 +309,10 @@ class _QuickActionChipState extends State<_QuickActionChip>
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: widget.onTap,
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  widget.onTap();
+                },
                 onTapDown: (_) => _pressController.forward(),
                 onTapCancel: () => _pressController.reverse(),
                 onTapUp: (_) => _pressController.reverse(),

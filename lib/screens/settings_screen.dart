@@ -13,7 +13,9 @@ import 'package:d1vai_app/screens/settings/github_tab.dart';
 import 'package:d1vai_app/screens/settings/invites_tab.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+  final String? initialTab;
+
+  const SettingsScreen({super.key, this.initialTab});
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -22,12 +24,38 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   int _currentTab = 0;
 
+  int _tabIndexFromValue(String? value) {
+    switch ((value ?? '').trim().toLowerCase()) {
+      case 'github':
+        return 1;
+      case 'invites':
+        return 2;
+      case 'profile':
+      default:
+        return 0;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    _currentTab = _tabIndexFromValue(widget.initialTab);
     // 不在这里直接根据一次性的 user 快照判断是否登录，
     // 而是在 build 中结合 AuthProvider 的 isLoading / user 状态做判断，
     // 避免刚进入页面时 Auth 还在初始化导致误弹登录弹窗。
+  }
+
+  @override
+  void didUpdateWidget(covariant SettingsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialTab != widget.initialTab) {
+      final nextTab = _tabIndexFromValue(widget.initialTab);
+      if (nextTab != _currentTab) {
+        setState(() {
+          _currentTab = nextTab;
+        });
+      }
+    }
   }
 
   @override

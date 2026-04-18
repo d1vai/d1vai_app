@@ -12,6 +12,40 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
   int _assistantDeltaChars = 0;
   Timer? _assistantDeltaFlushTimer;
 
+  void _showWorkspaceWarmupUi() {
+    if (_workspaceWarmupVisible || !mounted) return;
+    setState(() {
+      _workspaceWarmupVisible = true;
+      _workspaceWarmupCompleted = false;
+      _workspaceWarmupMessage =
+          'Workspace is starting. Your message will send automatically.';
+    });
+    SnackBarHelper.showInfo(
+      context,
+      title: 'Workspace',
+      message: 'Workspace is starting. Sending will continue automatically.',
+      position: SnackBarPosition.top,
+      duration: const Duration(seconds: 3),
+    );
+  }
+
+  void _completeWorkspaceWarmupUi() {
+    if (!_workspaceWarmupVisible || !mounted) return;
+    setState(() {
+      _workspaceWarmupCompleted = true;
+      _workspaceWarmupMessage = 'Workspace ready. Sending your message...';
+    });
+  }
+
+  void _hideWorkspaceWarmupUi() {
+    if (!mounted) return;
+    setState(() {
+      _workspaceWarmupVisible = false;
+      _workspaceWarmupCompleted = false;
+      _workspaceWarmupMessage = null;
+    });
+  }
+
   void _signalOutbox() {
     try {
       _outboxSignals.add(null);
@@ -582,10 +616,24 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     if (_workspacePhase == WorkspacePhase.ready) return;
     await _refreshWorkspaceStatus(bypassCache: false);
     if (_workspacePhase == WorkspacePhase.ready) return;
-    await _maybeWarmupWorkspace();
-    if (_workspacePhase != WorkspacePhase.ready) {
-      throw Exception(_workspaceError ?? 'Workspace is not ready');
+    _showWorkspaceWarmupUi();
+    try {
+      await _maybeWarmupWorkspace();
+      if (_workspacePhase != WorkspacePhase.ready) {
+        throw Exception(_workspaceError ?? 'Workspace is not ready');
+      }
+      _completeWorkspaceWarmupUi();
+    } catch (_) {
+      _hideWorkspaceWarmupUi();
+      rethrow;
     }
+    unawaited(
+      Future<void>.delayed(const Duration(milliseconds: 700), () {
+        if (mounted && _workspacePhase == WorkspacePhase.ready) {
+          _hideWorkspaceWarmupUi();
+        }
+      }),
+    );
   }
 
   void _scheduleModelConfigRetry() {
