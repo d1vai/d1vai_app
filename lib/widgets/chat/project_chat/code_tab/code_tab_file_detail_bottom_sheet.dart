@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../services/d1vai_service.dart';
+import '../../file_preview.dart';
+import '../../file_preview_utils.dart';
 import '../../../snackbar_helper.dart';
-import 'code_tab_code_block.dart';
 import 'code_tab_models.dart';
 import 'code_tab_run_migration_bottom_sheet.dart';
 import 'code_tab_views.dart';
@@ -131,6 +132,9 @@ class _ProjectFileDetailSheetState extends State<_ProjectFileDetailSheet> {
     final theme = Theme.of(context);
     final content = _content;
     final canRunMigration = _isSqlFile && content != null && !content.isBinary;
+    final canCopyCurrent =
+        content != null &&
+        isCopyableFilePreview(widget.filePath, content.isBinary);
 
     return Column(
       children: [
@@ -181,24 +185,23 @@ class _ProjectFileDetailSheetState extends State<_ProjectFileDetailSheet> {
                   icon: const Icon(Icons.play_arrow),
                   tooltip: 'Run SQL migration',
                 ),
-              IconButton(
-                onPressed: content == null
-                    ? null
-                    : () async {
-                        await Clipboard.setData(
-                          ClipboardData(text: content.content),
-                        );
-                        if (!context.mounted) return;
-                        SnackBarHelper.showSuccess(
-                          context,
-                          title: 'Copied',
-                          message: 'File content copied',
-                          duration: const Duration(seconds: 2),
-                        );
-                      },
-                icon: const Icon(Icons.copy),
-                tooltip: 'Copy',
-              ),
+              if (canCopyCurrent)
+                IconButton(
+                  onPressed: () async {
+                    await Clipboard.setData(
+                      ClipboardData(text: content.content),
+                    );
+                    if (!context.mounted) return;
+                    SnackBarHelper.showSuccess(
+                      context,
+                      title: 'Copied',
+                      message: 'File content copied',
+                      duration: const Duration(seconds: 2),
+                    );
+                  },
+                  icon: const Icon(Icons.copy),
+                  tooltip: 'Copy',
+                ),
               IconButton(
                 onPressed: () => Navigator.of(context).pop(),
                 icon: const Icon(Icons.close),
@@ -227,9 +230,9 @@ class _ProjectFileDetailSheetState extends State<_ProjectFileDetailSheet> {
                     )
                   : content == null
                   ? const CodeTabEmptyView(text: 'No content')
-                  : CodeTabCodeBlock(
-                      filePath: widget.filePath,
-                      text: content.content,
+                  : FilePreview(
+                      path: widget.filePath,
+                      content: content.content,
                       isBinary: content.isBinary,
                       sizeBytes: content.size,
                     ),

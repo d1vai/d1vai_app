@@ -736,6 +736,7 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       await _modelConfigService.setModelConfig(next, retries: 0);
       await _modelConfigService.setCachedModel(next);
+      await _resetExecuteSessionForModelSwitch();
       if (!mounted) return;
       final switchedLabel = _modelLabelFor(next);
       final loc = AppLocalizations.of(context);
@@ -763,6 +764,23 @@ class _ChatScreenState extends State<ChatScreen> {
         });
       }
     }
+  }
+
+  Future<void> _resetExecuteSessionForModelSwitch() async {
+    await _closeWebSocket(manual: true);
+    if (!mounted) {
+      _currentSessionId = null;
+      _sessionDone = false;
+      _sessionError = false;
+      _autoConnectDisabled = false;
+      return;
+    }
+    setState(() {
+      _currentSessionId = null;
+      _sessionDone = false;
+      _sessionError = false;
+      _autoConnectDisabled = false;
+    });
   }
 
   String _selectedModelLabel() {

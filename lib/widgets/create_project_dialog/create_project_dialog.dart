@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -20,6 +22,7 @@ import '../insufficient_balance_dialog.dart';
 
 import 'create_project_chooser_view.dart';
 import 'create_project_dialog_shell.dart';
+import 'create_project_import_local_view.dart';
 import 'create_project_import_public_view.dart';
 import 'create_project_loading_view.dart';
 import 'create_project_new_ai_view.dart';
@@ -53,6 +56,10 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
   final TextEditingController _urlController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _repoNameController = TextEditingController();
+  final TextEditingController _localProjectNameController =
+      TextEditingController();
+  final TextEditingController _localProjectDescriptionController =
+      TextEditingController();
   final WorkspaceService _workspaceService = WorkspaceService();
   final ModelConfigService _modelConfigService = ModelConfigService();
 
@@ -80,6 +87,9 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
   bool _ghInvitationAccepted = false;
   bool _ghAccessVerified = false;
   Map<String, dynamic>? _ghRepoInfo;
+  Uint8List? _localArchiveBytes;
+  String? _localArchiveFileName;
+  bool _localImportPrivate = true;
   final TextEditingController _ghRepoUrlController = TextEditingController();
   final TextEditingController _ghProjectNameController =
       TextEditingController();
@@ -92,6 +102,8 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     _urlController.dispose();
     _nameController.dispose();
     _repoNameController.dispose();
+    _localProjectNameController.dispose();
+    _localProjectDescriptionController.dispose();
     _ghRepoUrlController.dispose();
     _ghProjectNameController.dispose();
     super.dispose();
@@ -104,6 +116,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     final title = switch (_flow) {
       _CreateProjectFlow.chooser => 'Add Project',
       _CreateProjectFlow.newAi => 'New Project',
+      _CreateProjectFlow.importLocal => 'Import Local Zip',
       _CreateProjectFlow.importPublic => 'Import Public Repo',
       _CreateProjectFlow.githubCollaborator => 'GitHub Import',
     };
@@ -287,7 +300,8 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
         _availableTemplates = const <ProjectTemplateInfo>[];
         _isLoadingTemplates = false;
         if (_isAuthError(e)) {
-          _error = 'Login expired. Please sign in again before loading templates.';
+          _error =
+              'Login expired. Please sign in again before loading templates.';
         }
       });
     }
@@ -314,6 +328,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     return switch (_flow) {
       _CreateProjectFlow.chooser => _buildChooser(),
       _CreateProjectFlow.newAi => _buildNewProjectTab(),
+      _CreateProjectFlow.importLocal => _buildImportLocalTab(),
       _CreateProjectFlow.importPublic => _buildImportRepoTab(),
       _CreateProjectFlow.githubCollaborator => GithubCollaboratorImportView(
         step: _ghStep,
@@ -363,6 +378,14 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
         });
         unawaited(_loadProjectTemplates());
         _startNewProjectModelBootstrap();
+      },
+      onChooseImportLocal: () {
+        _newProjectWorkspacePollTimer?.cancel();
+        _newProjectModelRetryTimer?.cancel();
+        setState(() {
+          _flow = _CreateProjectFlow.importLocal;
+          _error = '';
+        });
       },
       onChooseImportPublic: () {
         _newProjectWorkspacePollTimer?.cancel();
@@ -432,6 +455,31 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
               });
             },
             onImport: _handleImportRepo,
+          );
+  }
+
+  Widget _buildImportLocalTab() {
+    return _isLoading
+        ? const CreateProjectLoadingView()
+        : CreateProjectImportLocalView(
+            nameController: _localProjectNameController,
+            descriptionController: _localProjectDescriptionController,
+            archiveFileName: _localArchiveFileName,
+            isPrivate: _localImportPrivate,
+            errorText: _error.isNotEmpty ? _error : null,
+            onChanged: (_) {
+              if (_error.isEmpty) return;
+              setState(() {
+                _error = '';
+              });
+            },
+            onPickArchive: _pickLocalArchive,
+            onPrivateChanged: (value) {
+              setState(() {
+                _localImportPrivate = value;
+              });
+            },
+            onImport: _handleImportLocal,
           );
   }
 
@@ -700,6 +748,120 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     }
   }
 
+  Future<void> _pickLocalArchive() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const ['zip'],
+        withData: true,
+      );
+      final file = result?.files.singleOrNull;
+      if (file == null) return;
+
+      Uint8List? bytes = file.bytes;
+      if (bytes == null && file.path != null && file.path!.trim().isNotEmpty) {
+        bytes = await File(file.path!).readAsBytes();
+      }
+      if (bytes == null || bytes.isEmpty) {
+        throw Exception('Selected archive is empty');
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _localArchiveBytes = bytes;
+        _localArchiveFileName = file.name;
+        if (_localProjectNameController.text.trim().isEmpty) {
+          final normalized = file.name.replaceAll(
+            RegExp(r'\.zip$', caseSensitive: false),
+            '',
+          );
+          _localProjectNameController.text = normalized;
+        }
+        _error = '';
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Failed to choose archive: $e';
+      });
+    }
+  }
+
+  Future<void> _handleImportLocal() async {
+    final projectName = _localProjectNameController.text.trim();
+    final archiveBytes = _localArchiveBytes;
+    final archiveFileName = (_localArchiveFileName ?? '').trim();
+
+    if (projectName.isEmpty ||
+        archiveBytes == null ||
+        archiveFileName.isEmpty) {
+      setState(() {
+        _error = 'Please choose a zip archive and fill in the project name';
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _error = '';
+    });
+
+    try {
+      final d1vaiService = D1vaiService();
+      final result = await d1vaiService.importProjectFromLocal(
+        archiveBytes: archiveBytes,
+        archiveFileName: archiveFileName,
+        projectName: projectName,
+        projectDescription: _localProjectDescriptionController.text.trim(),
+        isPrivate: _localImportPrivate,
+      );
+
+      if (!mounted) return;
+
+      final nested = result['data'];
+      final payload = nested is Map<String, dynamic>
+          ? nested
+          : nested is Map
+          ? nested.cast<String, dynamic>()
+          : result;
+      final project = payload['project'] is Map<String, dynamic>
+          ? payload['project'] as Map<String, dynamic>
+          : payload['project'] is Map
+          ? (payload['project'] as Map).cast<String, dynamic>()
+          : payload;
+      final projectId =
+          project['id']?.toString() ??
+          payload['project_id']?.toString() ??
+          payload['id']?.toString();
+      if (projectId == null || projectId.isEmpty) {
+        throw Exception('Failed to get project ID');
+      }
+
+      final projectProvider = Provider.of<ProjectProvider>(
+        context,
+        listen: false,
+      );
+      await projectProvider.refresh();
+
+      if (!mounted) return;
+      Navigator.pop(context);
+      if (!mounted) return;
+      GoRouter.of(context).push('/projects/$projectId/chat?tab=preview');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _error = 'Failed to import local zip: $e';
+      });
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
   // ===========================================================================
   // GitHub collaborator import (align with d1vai web QuickImportSetup)
   // ===========================================================================
@@ -922,4 +1084,10 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
   }
 }
 
-enum _CreateProjectFlow { chooser, newAi, importPublic, githubCollaborator }
+enum _CreateProjectFlow {
+  chooser,
+  newAi,
+  importLocal,
+  importPublic,
+  githubCollaborator,
+}

@@ -4,6 +4,61 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'code_highlight_block.dart';
 
+List<String> _splitTableRow(String row) {
+  final normalized = row
+      .trim()
+      .replaceFirst(RegExp(r'^\|'), '')
+      .replaceFirst(RegExp(r'\|$'), '');
+  final cells = <String>[];
+  final current = StringBuffer();
+  var escaped = false;
+
+  for (final rune in normalized.runes) {
+    final ch = String.fromCharCode(rune);
+    if (escaped) {
+      current.write(ch);
+      escaped = false;
+      continue;
+    }
+    if (ch == r'\') {
+      escaped = true;
+      continue;
+    }
+    if (ch == '|') {
+      cells.add(current.toString().trim());
+      current.clear();
+      continue;
+    }
+    current.write(ch);
+  }
+
+  cells.add(current.toString().trim());
+  return cells;
+}
+
+List<TextAlign>? _parseTableAlignments(String row) {
+  final cells = _splitTableRow(row);
+  if (cells.isEmpty) return null;
+
+  final aligns = <TextAlign>[];
+  for (final cell in cells) {
+    final trimmed = cell.trim();
+    if (!RegExp(r'^:?-{3,}:?$').hasMatch(trimmed)) {
+      return null;
+    }
+    final left = trimmed.startsWith(':');
+    final right = trimmed.endsWith(':');
+    if (left && right) {
+      aligns.add(TextAlign.center);
+    } else if (right) {
+      aligns.add(TextAlign.right);
+    } else {
+      aligns.add(TextAlign.left);
+    }
+  }
+  return aligns;
+}
+
 /// Lightweight Markdown renderer optimized for chat.
 ///
 /// Supports:
@@ -103,6 +158,7 @@ class _MarkdownTextState extends State<MarkdownText> {
       if (s.startsWith('>')) return true;
       if (RegExp(r'^([-*+])\s+').hasMatch(s)) return true;
       if (RegExp(r'^\d+\.\s+').hasMatch(s)) return true;
+      if (s.contains('|')) return true;
       return false;
     }
 
@@ -183,6 +239,29 @@ class _MarkdownTextState extends State<MarkdownText> {
         }
         blocks.add(_Block.list(ordered: isOrdered, items: items));
         continue;
+      }
+
+      if (trimmedLeft.contains('|') && i + 1 < lines.length) {
+        final aligns = _parseTableAlignments(lines[i + 1].trimRight());
+        if (aligns != null) {
+          final headers = _splitTableRow(line);
+          if (headers.length == aligns.length) {
+            i += 2;
+            final rows = <List<String>>[];
+            while (i < lines.length) {
+              final rowLine = lines[i].trimRight();
+              if (rowLine.trim().isEmpty || !rowLine.contains('|')) break;
+              final row = _splitTableRow(rowLine);
+              if (row.length != headers.length) break;
+              rows.add(row);
+              i += 1;
+            }
+            blocks.add(
+              _Block.table(headers: headers, aligns: aligns, rows: rows),
+            );
+            continue;
+          }
+        }
       }
 
       // Paragraph: collect until blank or new block
@@ -392,6 +471,101 @@ class _MarkdownTextState extends State<MarkdownText> {
             );
             break;
           }
+        case _BlockKind.table:
+          {
+            widgets.add(
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Table(
+                      defaultVerticalAlignment:
+                          TableCellVerticalAlignment.middle,
+                      columnWidths: {
+                        for (var i = 0; i < b.headers.length; i++)
+                          i: const IntrinsicColumnWidth(),
+                      },
+                      children: [
+                        TableRow(
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surfaceContainerHighest,
+                          ),
+                          children: [
+                            for (var i = 0; i < b.headers.length; i++)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    bottom: BorderSide(
+                                      color: theme.colorScheme.outlineVariant,
+                                    ),
+                                  ),
+                                ),
+                                child: Text.rich(
+                                  TextSpan(
+                                    style: baseStyle.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                    children: _parseInline(
+                                      context,
+                                      b.headers[i],
+                                      baseStyle.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                  textAlign: b.aligns[i],
+                                ),
+                              ),
+                          ],
+                        ),
+                        for (final row in b.rows)
+                          TableRow(
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surface,
+                            ),
+                            children: [
+                              for (var i = 0; i < row.length; i++)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    border: Border(
+                                      top: BorderSide(
+                                        color: theme.colorScheme.outlineVariant
+                                            .withValues(alpha: 0.7),
+                                      ),
+                                    ),
+                                  ),
+                                  child: Text.rich(
+                                    TextSpan(
+                                      style: baseStyle,
+                                      children: _parseInline(
+                                        context,
+                                        row[i],
+                                        baseStyle,
+                                      ),
+                                    ),
+                                    textAlign: b.aligns[i],
+                                  ),
+                                ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+            break;
+          }
       }
     }
     return widgets;
@@ -514,7 +688,7 @@ class _MarkdownTextState extends State<MarkdownText> {
   }
 }
 
-enum _BlockKind { paragraph, heading, list, quote, code }
+enum _BlockKind { paragraph, heading, list, quote, code, table }
 
 class _Block {
   final _BlockKind kind;
@@ -524,6 +698,9 @@ class _Block {
   final List<String> items;
   final String lang;
   final String code;
+  final List<String> headers;
+  final List<TextAlign> aligns;
+  final List<List<String>> rows;
 
   const _Block._({
     required this.kind,
@@ -533,6 +710,9 @@ class _Block {
     this.items = const [],
     this.lang = '',
     this.code = '',
+    this.headers = const [],
+    this.aligns = const [],
+    this.rows = const [],
   });
 
   factory _Block.paragraph({required String text}) =>
@@ -549,4 +729,15 @@ class _Block {
 
   factory _Block.code({required String lang, required String code}) =>
       _Block._(kind: _BlockKind.code, lang: lang, code: code);
+
+  factory _Block.table({
+    required List<String> headers,
+    required List<TextAlign> aligns,
+    required List<List<String>> rows,
+  }) => _Block._(
+    kind: _BlockKind.table,
+    headers: headers,
+    aligns: aligns,
+    rows: rows,
+  );
 }

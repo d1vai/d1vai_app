@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'code_tab_code_block.dart';
+import '../../file_preview.dart';
+import '../../file_preview_utils.dart';
 import 'code_tab_editor.dart';
 import 'code_tab_models.dart';
 import 'code_tab_views.dart';
@@ -44,6 +45,14 @@ class CodeTabFileViewer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = filePath;
+    final canEditCurrent =
+        p != null &&
+        content != null &&
+        isEditableFilePreview(p, content!.isBinary);
+    final canCopyCurrent =
+        p != null &&
+        content != null &&
+        isCopyableFilePreview(p, content!.isBinary);
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
@@ -76,10 +85,7 @@ class CodeTabFileViewer extends StatelessWidget {
                   icon: const Icon(Icons.auto_awesome),
                   tooltip: 'Ask AI',
                 ),
-                if (p != null &&
-                    p.isNotEmpty &&
-                    content != null &&
-                    !content!.isBinary)
+                if (p != null && p.isNotEmpty && canEditCurrent)
                   IconButton(
                     onPressed: isEditing
                         ? (saving || !hasUnsavedChanges ? null : onSave)
@@ -97,11 +103,12 @@ class CodeTabFileViewer extends StatelessWidget {
                         : const Icon(Icons.edit),
                     tooltip: isEditing ? 'Save' : 'Edit',
                   ),
-                IconButton(
-                  onPressed: onCopy,
-                  icon: const Icon(Icons.copy),
-                  tooltip: 'Copy',
-                ),
+                if (canCopyCurrent)
+                  IconButton(
+                    onPressed: onCopy,
+                    icon: const Icon(Icons.copy),
+                    tooltip: 'Copy',
+                  ),
               ],
             ),
           ),
@@ -125,9 +132,9 @@ class CodeTabFileViewer extends StatelessWidget {
                             onCancel: onCancelEdit,
                             dirty: hasUnsavedChanges,
                           )
-                        : CodeTabCodeBlock(
-                            filePath: p,
-                            text: content!.content,
+                        : FilePreview(
+                            path: p ?? content!.path,
+                            content: content!.content,
                             isBinary: content!.isBinary,
                             sizeBytes: content!.size,
                           ),

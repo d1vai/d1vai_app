@@ -1,117 +1,131 @@
 # d1vai_app
 
-`d1vai_app` 是 d1v.ai 的 Flutter 客户端，面向移动端使用场景，提供登录、项目管理、AI 聊天、部署与实时分析、文档与社区、订单与账户设置等能力。
+<p align="center">
+  <strong>AI-native mobile workspace for builders, operators, and modern product teams.</strong>
+</p>
 
-## 功能概览
+<p align="center">
+  <strong>面向下一代构建者与产品团队的 AI 原生移动工作台。</strong>
+</p>
 
-- 认证与账号：
-  - 邮箱验证码登录 / 密码登录
-  - Solana / Sui 钱包登录
-  - Onboarding 流程、邀请码、资料维护
-- 主导航模块：
-  - Dashboard（工作区状态、项目总览、活跃度热力图）
-  - Community（社区内容）
-  - Docs（文档）
-  - Orders（订单与账单）
-  - Settings（语言、API、通知、账号数据、GitHub 等）
-- 项目能力：
-  - 项目列表与搜索、项目详情多标签页
-  - 项目聊天与代码视图
-  - 实时分析与部署信息展示
-- 国际化与主题：
-  - 内置多语言（如 `en/zh/zh_Hant/ja/fr/es/ru/ar`）
-  - 明暗主题切换
+<p align="center">
+  <a href="https://github.com/d1vai/d1vai_app/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-black.svg"></a>
+  <img alt="Flutter" src="https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white">
+  <img alt="Dart" src="https://img.shields.io/badge/Dart-3.10+-0175C2?logo=dart&logoColor=white">
+  <img alt="Platforms" src="https://img.shields.io/badge/platform-iOS%20%7C%20Android-111827">
+  <img alt="Status" src="https://img.shields.io/badge/status-open%20source-16a34a">
+</p>
 
-## 技术栈
+---
 
-- Flutter / Dart（`sdk: ^3.10.0`）
-- 状态管理：`provider`
-- 路由：`go_router`
-- 网络层：`http`
-- 本地存储：`shared_preferences`
-- 图表：`fl_chart`
+## English
 
-## 项目结构
+### What It Is
 
-```text
-lib/
-  core/        # API 客户端、主题、全局事件总线
-  models/      # 数据模型
-  providers/   # 状态管理（鉴权、主题、语言、项目等）
-  services/    # 业务服务（用户、项目、分析、钱包、工作区等）
-  screens/     # 页面
-  widgets/     # 组件
-  l10n/        # 国际化资源与生成代码
-tool/
-  gen_l10n.dart  # l10n 运行时映射生成脚本
-test/
-```
+`d1vai_app` is the official Flutter mobile client for `d1v.ai`.
 
-## 环境要求
+It turns the core d1v workflow into a portable mobile experience: create projects, connect workspaces, chat with AI, inspect files, monitor deployments, review analytics, and manage your account from a single app.
 
-- Flutter SDK（建议与项目 Dart 版本匹配）
-- Xcode（iOS）
-- Android Studio / Android SDK（Android）
+This is not a lightweight companion shell. It is designed as a serious mobile surface for AI-assisted building and operational control.
 
-## 快速开始
+### Why It Matters
 
-1. 安装依赖
+- AI workflow, not just chat: move from prompt to project, deployment, and iteration inside one mobile product.
+- Mobile-first control plane: review code, inspect files, monitor status, and act fast when you are away from desktop.
+- Production-aware UX: account flows, project management, deployment visibility, analytics surfaces, and community/docs access are all integrated.
+- International by default: multilingual support is built in from the start.
 
-```bash
-flutter pub get
-```
+### Core Capabilities
 
-2. 运行项目（示例）
+- Authentication
+  Email verification login, password login, Solana login, Sui login, onboarding, invitation flows.
+- Project operations
+  Create AI projects, import repositories, import local zip archives, browse projects, inspect project details.
+- AI collaboration
+  Execute project sessions, continue chats, manage mobile chat state, switch models, and keep workspace status visible.
+- File and code workflows
+  Read project files, preview structured content, edit supported files, and sync changes back to GitHub.
+- Deployment and analytics
+  Track preview state, deployment context, operational metrics, and activity surfaces.
+- Platform experience
+  Theme support, runtime API override, diagnostics, docs, community, orders, and settings.
 
-```bash
-flutter run
-```
+### Designed For
 
-3. （可选）构建时覆盖 API 地址
+- Founders shipping from anywhere
+- Product engineers who want fast operational visibility on mobile
+- AI-native teams building with remote workspaces
+- Builders who need a polished control surface instead of raw internal tooling
 
-```bash
-flutter run --dart-define=API_BASE_URL=https://api.d1v.ai
-```
+### Open Source
 
-## API 配置
+This repository is now published as an open-source Flutter client under the MIT License.
 
-- 默认 API Base URL：`https://api.d1v.ai`
-- 支持在应用内覆盖：`Settings → Profile → API`
-- `Copy diagnostics` 会导出关键诊断信息，包括：
-  - 生效中的 Base URL
-  - Token 是否存在与后缀
-  - JWT Claims（如 `sub/type/exp`，可用时）
-  - 最近一次工作区状态与最近 API 错误
+If you are evaluating mobile architecture, AI product UX, or workspace-driven app patterns, this codebase is meant to be readable, practical, and extensible.
 
-## 常见排查：创建项目返回 500
+### Developer Docs
 
-如果 `d1vai_app` 创建项目失败，但 Web 端正常：
+The previous README content is preserved and expanded as developer-facing documentation:
 
-1. 进入 `Settings → Profile → API`，点击 `Copy diagnostics`
-2. 确认 `effective_base_url` 为 `https://api.d1v.ai`
-3. 确认 `auth_token_present=true`
-4. 对比 App 与 Web/curl 的 `jwt_sub` / `jwt_type`（或 token 后缀）
+- [Developer Guide](./docs/DEVELOPER_GUIDE.md)
 
-## 国际化（l10n）工作流
+---
 
-- 事实来源：`lib/l10n/arb/app_*.arb`
-- 修改 ARB 后生成运行时映射：
+## 中文
 
-```bash
-dart run tool/gen_l10n.dart
-```
+### 项目定位
 
-- 一致性校验：
-  - `test/l10n_arb_consistency_test.dart` 会检查各语种 key 是否与 `app_en.arb` 对齐
+`d1vai_app` 是 `d1v.ai` 的官方 Flutter 移动客户端。
 
-## 测试
+它把 d1v 的核心工作流真正带到移动端：创建项目、连接工作区、与 AI 协作、查看文件、关注部署状态、追踪分析数据，并在同一个应用中完成账户与项目管理。
 
-```bash
-flutter test
-```
+这不是一个只负责“消息通知”的配套 App，而是一个面向真实构建场景的移动工作台。
 
-## Android 发布签名
+### 为什么值得关注
 
-- 仓库已支持从 `android/key.properties` 读取正式签名配置。
-- 可先复制 `android/key.properties.example` 为 `android/key.properties`，再填入真实 keystore 信息。
-- 若未提供 `android/key.properties`，当前仍会回退为 debug 签名，方便本地侧载和 GitHub APK 分发；商店发布前请务必切换到正式签名。
+- 不只是 AI 聊天，而是完整工作流：从 prompt 到项目、部署、迭代，形成闭环。
+- 真正的移动控制面板：在离开电脑时，依然可以快速查看代码、读文件、看状态、做决策。
+- 面向生产环境的产品设计：认证、项目管理、部署视图、分析数据、社区与文档能力都已打通。
+- 天然国际化：从一开始就支持多语言与全球化使用场景。
+
+### 主要能力
+
+- 认证体系
+  邮箱验证码登录、密码登录、Solana 登录、Sui 登录、邀请与 onboarding 流程。
+- 项目工作流
+  AI 创建项目、仓库导入、本地 ZIP 导入、项目浏览与详情管理。
+- AI 协作体验
+  执行项目会话、持续聊天、移动端会话管理、模型切换、工作区状态可视化。
+- 文件与代码能力
+  浏览项目文件、预览结构化内容、编辑可编辑文件，并同步到 GitHub。
+- 部署与分析
+  查看预览状态、部署上下文、运行数据与项目活跃度。
+- 平台级体验
+  支持主题切换、运行时 API 覆盖、诊断信息导出，以及文档、社区、订单、设置等完整入口。
+
+### 适合谁
+
+- 希望随时随地推进产品的创业者
+- 需要移动端快速掌控项目状态的产品工程师
+- 基于远程工作区与 AI 协作构建产品的团队
+- 希望拥有完整移动控制台，而不是临时内部工具的构建者
+
+### 开源说明
+
+本仓库现以 MIT License 开源。
+
+如果你关注 Flutter 移动架构、AI 产品交互、远程工作区驱动的应用形态，`d1vai_app` 会是一个兼顾工程实用性与产品表达力的参考项目。
+
+### 开发者文档
+
+原有 README 中偏开发者导向的内容已迁移为独立文档：
+
+- [开发者指南 / Developer Guide](./docs/DEVELOPER_GUIDE.md)
+
+---
+
+## Quick Links
+
+- [Developer Guide](./docs/DEVELOPER_GUIDE.md)
+- [License](./LICENSE)
+

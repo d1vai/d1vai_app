@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../services/d1vai_service.dart';
+import '../../file_preview.dart';
+import '../../file_preview_utils.dart';
 import '../../../snackbar_helper.dart';
 import 'code_tab_editor.dart';
 import 'code_tab_models.dart';
 import 'code_tab_types.dart';
 import 'code_tab_views.dart';
-import 'code_tab_code_block.dart';
 import 'code_tab_run_migration_bottom_sheet.dart';
 
 class CodeTabFileViewerPage extends StatefulWidget {
@@ -88,7 +89,9 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
 
   void _enterEdit() {
     final c = _content;
-    if (c == null || c.isBinary) return;
+    if (c == null || !isEditableFilePreview(widget.filePath, c.isBinary)) {
+      return;
+    }
     if (_isEditing) return;
     setState(() {
       _isEditing = true;
@@ -100,7 +103,9 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
 
   Future<void> _save() async {
     final c = _content;
-    if (c == null || c.isBinary) return;
+    if (c == null || !isEditableFilePreview(widget.filePath, c.isBinary)) {
+      return;
+    }
     if (!_isEditing || !_hasUnsavedChanges) return;
     if (_isSaving) return;
 
@@ -208,6 +213,12 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
     final theme = Theme.of(context);
     final content = _content;
     final isSqlFile = widget.filePath.toLowerCase().trim().endsWith('.sql');
+    final canEditCurrent =
+        content != null &&
+        isEditableFilePreview(widget.filePath, content.isBinary);
+    final canCopyCurrent =
+        content != null &&
+        isCopyableFilePreview(widget.filePath, content.isBinary);
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -240,7 +251,7 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
             icon: const Icon(Icons.auto_awesome),
             tooltip: 'Ask AI',
           ),
-          if (content != null && !content.isBinary)
+          if (canEditCurrent)
             IconButton(
               onPressed: _isEditing
                   ? (_isSaving || !_hasUnsavedChanges ? null : _save)
@@ -256,24 +267,21 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
                   : const Icon(Icons.edit),
               tooltip: _isEditing ? 'Save' : 'Edit',
             ),
-          IconButton(
-            onPressed: content == null
-                ? null
-                : () async {
-                    await Clipboard.setData(
-                      ClipboardData(text: content.content),
-                    );
-                    if (!context.mounted) return;
-                    SnackBarHelper.showSuccess(
-                      context,
-                      title: 'Copied',
-                      message: 'File content copied',
-                      duration: const Duration(seconds: 2),
-                    );
-                  },
-            icon: const Icon(Icons.copy),
-            tooltip: 'Copy',
-          ),
+          if (canCopyCurrent)
+            IconButton(
+              onPressed: () async {
+                await Clipboard.setData(ClipboardData(text: content.content));
+                if (!context.mounted) return;
+                SnackBarHelper.showSuccess(
+                  context,
+                  title: 'Copied',
+                  message: 'File content copied',
+                  duration: const Duration(seconds: 2),
+                );
+              },
+              icon: const Icon(Icons.copy),
+              tooltip: 'Copy',
+            ),
         ],
       ),
       body: Padding(
@@ -324,9 +332,9 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
                             },
                             dirty: _hasUnsavedChanges,
                           )
-                        : CodeTabCodeBlock(
-                            filePath: widget.filePath,
-                            text: content.content,
+                        : FilePreview(
+                            path: widget.filePath,
+                            content: content.content,
                             isBinary: content.isBinary,
                             sizeBytes: content.size,
                           ),

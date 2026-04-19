@@ -491,6 +491,89 @@ class ApiClient {
     }
   }
 
+  Future<T> postMultipart<T>(
+    String endpoint, {
+    required Map<String, String> fields,
+    required String fileField,
+    required Uint8List fileBytes,
+    required String fileName,
+    String? contentType,
+    T Function(dynamic)? fromJsonT,
+    Duration? timeout,
+  }) async {
+    final headers = await _getHeaders();
+    final hasAuthToken = headers.containsKey('Authorization');
+    headers.remove('Content-Type');
+
+    final uri = _buildUri(endpoint);
+    final request = http.MultipartRequest('POST', uri);
+    request.headers.addAll(headers);
+    request.fields.addAll(fields);
+
+    final mediaType = contentType != null && contentType.trim().isNotEmpty
+        ? MediaType.parse(contentType)
+        : _getContentType(fileName);
+
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        fileField,
+        fileBytes,
+        filename: fileName,
+        contentType: mediaType,
+      ),
+    );
+
+    debugPrint('🌐 API Request: POST $uri');
+    debugPrint('📁 Multipart File: $fileName (${fileBytes.length} bytes)');
+
+    final sendFuture = request.send();
+    final streamed = timeout != null
+        ? await sendFuture.timeout(timeout)
+        : await sendFuture;
+    final responseBody = await streamed.stream.bytesToString();
+    final httpResponse = http.Response(responseBody, streamed.statusCode);
+
+    if (httpResponse.statusCode == 401 &&
+        hasAuthToken &&
+        !_isPublicEndpoint(endpoint)) {
+      AuthExpiryBus.trigger(endpoint: endpoint);
+    }
+
+    final dynamic decoded = responseBody.isEmpty
+        ? null
+        : jsonDecode(responseBody);
+
+    if (httpResponse.statusCode >= 200 && httpResponse.statusCode < 300) {
+      if (decoded is Map<String, dynamic>) {
+        final apiResponse = ApiResponse<T>.fromJson(decoded, fromJsonT);
+        if (apiResponse.isSuccess) {
+          return apiResponse.data as T;
+        }
+        throw ApiClientException(
+          apiResponse.msg,
+          statusCode: httpResponse.statusCode,
+          code: apiResponse.code,
+          data: decoded,
+        );
+      }
+      if (fromJsonT != null) {
+        return fromJsonT(decoded);
+      }
+      return decoded as T;
+    }
+
+    _noteLastApiError(
+      endpoint: endpoint,
+      statusCode: httpResponse.statusCode,
+      message: responseBody,
+    );
+    throw ApiClientException(
+      responseBody.isEmpty ? 'Request failed' : responseBody,
+      statusCode: httpResponse.statusCode,
+      data: decoded,
+    );
+  }
+
   /// 检查是否为图片文件
   bool _isImageFile(String fileName) {
     final extension = fileName.split('.').last.toLowerCase();

@@ -95,6 +95,15 @@ class D1vaiService {
     return const <dynamic>[];
   }
 
+  String _encodeProjectFilePath(String filePath) {
+    final cleanPath = filePath.replaceAll(RegExp(r'^/+'), '');
+    return cleanPath
+        .split('/')
+        .where((segment) => segment.isNotEmpty)
+        .map(Uri.encodeComponent)
+        .join('/');
+  }
+
   // ============================================
   // Auth Methods - 认证相关方法
   // ============================================
@@ -551,9 +560,37 @@ class D1vaiService {
     String projectId,
     String filePath,
   ) async {
-    final cleanPath = filePath.replaceAll(RegExp(r'^/+'), '');
+    final cleanPath = _encodeProjectFilePath(filePath);
     return _apiClient.get<Map<String, dynamic>>(
       '/api/projects/storage/$projectId/files/$cleanPath',
+    );
+  }
+
+  Future<Map<String, dynamic>> importProjectFromLocal({
+    required Uint8List archiveBytes,
+    required String archiveFileName,
+    required String projectName,
+    String? projectDescription,
+    bool isPrivate = true,
+  }) async {
+    return _apiClient.postMultipart<Map<String, dynamic>>(
+      '/api/projects/import-from-local',
+      fields: {
+        'project_name': projectName.trim(),
+        'private': isPrivate ? 'true' : 'false',
+        if (projectDescription != null && projectDescription.trim().isNotEmpty)
+          'project_description': projectDescription.trim(),
+      },
+      fileField: 'archive',
+      fileBytes: archiveBytes,
+      fileName: archiveFileName,
+      contentType: 'application/zip',
+      timeout: const Duration(minutes: 4),
+      fromJsonT: (json) {
+        if (json is Map<String, dynamic>) return json;
+        if (json is Map) return json.cast<String, dynamic>();
+        return <String, dynamic>{};
+      },
     );
   }
 

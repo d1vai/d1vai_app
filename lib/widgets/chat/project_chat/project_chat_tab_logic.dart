@@ -727,6 +727,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     try {
       await _modelConfigService.setModelConfig(next, retries: 0);
       await _modelConfigService.setCachedModel(next);
+      await _resetExecuteSessionForModelSwitch();
       if (!mounted) return;
       final switchedLabel = _modelLabelFor(next);
       final loc = AppLocalizations.of(context);
@@ -761,6 +762,26 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       _signalOutbox();
       unawaited(_drainOutbox());
     }
+  }
+
+  Future<void> _resetExecuteSessionForModelSwitch() async {
+    _abortOutboxDrain();
+    await _closeWebSocket(manual: true);
+    if (!mounted) {
+      _currentSessionId = null;
+      _sessionThinking = false;
+      _sessionDone = false;
+      _sessionError = false;
+      _autoConnectDisabled = false;
+      return;
+    }
+    setState(() {
+      _currentSessionId = null;
+      _sessionThinking = false;
+      _sessionDone = false;
+      _sessionError = false;
+      _autoConnectDisabled = false;
+    });
   }
 
   /// 初始化聊天会话（只加载历史记录）

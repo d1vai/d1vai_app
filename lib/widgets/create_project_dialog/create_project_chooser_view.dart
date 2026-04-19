@@ -5,6 +5,7 @@ import 'create_project_option_card.dart';
 class CreateProjectChooserView extends StatelessWidget {
   final bool disabled;
   final VoidCallback onChooseNewAi;
+  final VoidCallback onChooseImportLocal;
   final VoidCallback onChooseImportPublic;
   final VoidCallback onChooseGithubCollaborator;
 
@@ -12,6 +13,7 @@ class CreateProjectChooserView extends StatelessWidget {
     super.key,
     required this.disabled,
     required this.onChooseNewAi,
+    required this.onChooseImportLocal,
     required this.onChooseImportPublic,
     required this.onChooseGithubCollaborator,
   });
@@ -39,6 +41,14 @@ class CreateProjectChooserView extends StatelessWidget {
           badgeColor: theme.colorScheme.primary,
           attention: true,
           onTap: disabled ? null : onChooseNewAi,
+        ),
+        const SizedBox(height: 10),
+        CreateProjectOptionCard(
+          icon: Icons.archive_outlined,
+          title: 'Import local zip',
+          subtitle:
+              'Upload a local .zip project archive and import it directly.',
+          onTap: disabled ? null : onChooseImportLocal,
         ),
         const SizedBox(height: 10),
         CreateProjectOptionCard(
