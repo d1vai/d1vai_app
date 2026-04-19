@@ -329,6 +329,14 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
                             text: content.content,
                             isBinary: content.isBinary,
                             sizeBytes: content.size,
+                            projectId: widget.projectId,
+                            onAsk: () {
+                              widget.onAsk(
+                                'Please review the file "${widget.filePath}". Summarize what it does and propose improvements. '
+                                'If there are bugs or missing pieces, suggest concrete edits.',
+                              );
+                              Navigator.of(context).pop();
+                            },
                           ),
                   ),
           ),

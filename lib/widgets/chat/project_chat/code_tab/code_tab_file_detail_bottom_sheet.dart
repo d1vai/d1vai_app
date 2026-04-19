@@ -232,6 +232,7 @@ class _ProjectFileDetailSheetState extends State<_ProjectFileDetailSheet> {
                       text: content.content,
                       isBinary: content.isBinary,
                       sizeBytes: content.size,
+                      projectId: widget.projectId,
                     ),
             ),
           ),

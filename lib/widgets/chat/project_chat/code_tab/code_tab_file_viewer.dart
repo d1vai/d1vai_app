@@ -22,6 +22,11 @@ class CodeTabFileViewer extends StatelessWidget {
   final VoidCallback? onCopy;
   final VoidCallback? onAsk;
 
+  /// When provided, passed to [CodeTabCodeBlock] so that document types
+  /// (.pdf, .docx, .xmind) receive a rich preview instead of the generic
+  /// binary/code view.
+  final String? projectId;
+
   const CodeTabFileViewer({
     super.key,
     required this.theme,
@@ -39,6 +44,7 @@ class CodeTabFileViewer extends StatelessWidget {
     required this.onSave,
     required this.onCopy,
     required this.onAsk,
+    this.projectId,
   });
 
   @override
@@ -130,6 +136,8 @@ class CodeTabFileViewer extends StatelessWidget {
                             text: content!.content,
                             isBinary: content!.isBinary,
                             sizeBytes: content!.size,
+                            projectId: projectId,
+                            onAsk: onAsk,
                           ),
                   ),
           ),
