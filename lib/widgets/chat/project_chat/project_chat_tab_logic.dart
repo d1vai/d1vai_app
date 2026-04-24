@@ -17,6 +17,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
   void _loadChatDraft() {
     try {
       final saved = _storageService.getString(_chatDraftKey)?.trimRight() ?? '';
+      _lastPersistedChatDraft = saved;
       if (_chatInputController.text == saved) return;
       _chatInputController.value = TextEditingValue(
         text: saved,
@@ -27,14 +28,19 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
 
   @override
   Future<void> _persistChatDraft(String value) async {
-    try {
-      final next = value.trimRight();
-      if (next.isEmpty) {
-        await _storageService.remove(_chatDraftKey);
-        return;
-      }
-      await _storageService.setString(_chatDraftKey, next);
-    } catch (_) {}
+    final next = value.trimRight();
+    _chatDraftPersistTimer?.cancel();
+    _chatDraftPersistTimer = Timer(const Duration(milliseconds: 280), () async {
+      if (next == _lastPersistedChatDraft) return;
+      try {
+        if (next.isEmpty) {
+          await _storageService.remove(_chatDraftKey);
+        } else {
+          await _storageService.setString(_chatDraftKey, next);
+        }
+        _lastPersistedChatDraft = next;
+      } catch (_) {}
+    });
   }
 
   bool _noticeAllowed(String key, Duration cooldown) {
@@ -516,6 +522,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     _modelConfigRetryTimer?.cancel();
     _deployAutoClearTimer?.cancel();
     _thinkingClearTimer?.cancel();
+    _chatDraftPersistTimer?.cancel();
+    _scrollToBottomTimer?.cancel();
     _webSocketSubscription?.cancel();
     _outboxSignals.close();
     _manualWsClose = true;
@@ -1217,7 +1225,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         ),
       );
     });
-    if (scroll) _scrollToBottom();
+    if (scroll) _scrollToBottom(force: false);
   }
 
   void _appendAssistantDelta(String delta) {
@@ -2065,15 +2073,38 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     _sendChatMessage(text);
   }
 
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_chatScrollController.hasClients) {
+  void _scrollToBottom({bool force = true, bool animated = true}) {
+    void performScroll() {
+      if (!_chatScrollController.hasClients) return;
+      final position = _chatScrollController.position;
+      if (!force && position.pixels > 120) return;
+      final now = DateTime.now();
+      final last = _lastScrollToBottomAt;
+      if (!force &&
+          last != null &&
+          now.difference(last) < const Duration(milliseconds: 140)) {
+        _scrollToBottomTimer?.cancel();
+        _scrollToBottomTimer = Timer(const Duration(milliseconds: 140), () {
+          if (!mounted) return;
+          _scrollToBottom(force: false, animated: animated);
+        });
+        return;
+      }
+      _lastScrollToBottomAt = now;
+      if (animated) {
         _chatScrollController.animateTo(
           0,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
         );
+      } else {
+        _chatScrollController.jumpTo(0);
       }
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      performScroll();
     });
   }
 }

@@ -239,11 +239,11 @@ class _QuickActionChip extends StatefulWidget {
 }
 
 class _QuickActionChipState extends State<_QuickActionChip>
-    with TickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
   late final AnimationController _pressController;
   late final Animation<double> _pressScale;
-  late final AnimationController _breathController;
-  late final Animation<double> _breath;
+  AnimationController? _breathController;
+  Animation<double>? _breath;
 
   @override
   void initState() {
@@ -257,18 +257,20 @@ class _QuickActionChipState extends State<_QuickActionChip>
       end: 0.98,
     ).animate(CurvedAnimation(parent: _pressController, curve: Curves.easeOut));
 
-    _breathController = AnimationController(
+    if (widget.enableBreathing) {
+      _ensureBreathing();
+    }
+  }
+
+  void _ensureBreathing() {
+    _breathController ??= AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1800),
     );
-    _breath = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _breathController, curve: Curves.easeInOut),
+    _breath ??= Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _breathController!, curve: Curves.easeInOut),
     );
-    if (widget.enableBreathing) {
-      _breathController.repeat(reverse: true);
-    } else {
-      _breathController.value = 0;
-    }
+    _breathController!.repeat(reverse: true);
   }
 
   @override
@@ -276,10 +278,10 @@ class _QuickActionChipState extends State<_QuickActionChip>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.enableBreathing != widget.enableBreathing) {
       if (widget.enableBreathing) {
-        _breathController.repeat(reverse: true);
+        _ensureBreathing();
       } else {
-        _breathController.stop();
-        _breathController.value = 0;
+        _breathController?.stop();
+        _breathController?.value = 0;
       }
     }
   }
@@ -287,7 +289,7 @@ class _QuickActionChipState extends State<_QuickActionChip>
   @override
   void dispose() {
     _pressController.dispose();
-    _breathController.dispose();
+    _breathController?.dispose();
     super.dispose();
   }
 
@@ -298,7 +300,7 @@ class _QuickActionChipState extends State<_QuickActionChip>
 
     final baseBg = colorScheme.surfaceContainerHighest;
     final accent = colorScheme.primary;
-    final breatheT = widget.enableBreathing ? _breath.value : 0.0;
+    final breatheT = widget.enableBreathing ? (_breath?.value ?? 0.0) : 0.0;
     final glow = accent.withValues(alpha: 0.06 + 0.06 * breatheT);
     final border = Color.alphaBlend(
       accent.withValues(alpha: 0.10 + 0.10 * breatheT),
@@ -308,8 +310,12 @@ class _QuickActionChipState extends State<_QuickActionChip>
     final isDense = widget.dense;
     final avatarSize = isDense ? 16.0 : 18.0;
 
+    final animation = widget.enableBreathing && _breathController != null
+        ? Listenable.merge([_pressController, _breathController!])
+        : _pressController;
+
     return AnimatedBuilder(
-      animation: Listenable.merge([_pressController, _breathController]),
+      animation: animation,
       builder: (context, _) {
         return Transform.scale(
           scale: _pressScale.value,

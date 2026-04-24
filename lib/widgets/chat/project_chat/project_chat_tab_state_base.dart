@@ -29,6 +29,10 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   bool _sessionError = false;
   Timer? _thinkingClearTimer;
   DateTime? _lastSessionFinishedAt;
+  Timer? _chatDraftPersistTimer;
+  String _lastPersistedChatDraft = '';
+  Timer? _scrollToBottomTimer;
+  DateTime? _lastScrollToBottomAt;
 
   // Workspace state (align with web BigChat)
   WorkspaceStateInfo? _workspaceState;

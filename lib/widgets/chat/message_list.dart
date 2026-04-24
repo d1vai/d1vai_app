@@ -38,10 +38,7 @@ class MessageList extends StatefulWidget {
 
 class _MessageListState extends State<MessageList> {
   final ScrollController _scrollController = ScrollController();
-  final Set<String> _seenMessages = {};
-  String? _lastSeenMessageId;
   bool _isAtBottom = true;
-  int _unseenCount = 0;
   bool _loadMoreRequested = false;
   double? _loadMoreStartMaxScroll;
   double? _loadMoreStartPixels;
@@ -52,14 +49,6 @@ class _MessageListState extends State<MessageList> {
     super.initState();
     final controller = widget.scrollController ?? _scrollController;
     controller.addListener(_onScroll);
-
-    // Initialize seen messages
-    for (final message in widget.messages) {
-      _seenMessages.add(message.id);
-    }
-    _lastSeenMessageId = widget.messages.isNotEmpty
-        ? widget.messages.last.id
-        : null;
   }
 
   @override
@@ -89,21 +78,6 @@ class _MessageListState extends State<MessageList> {
           final target = (startPixels + delta).clamp(0.0, newMax);
           controller.jumpTo(target);
         });
-      }
-    }
-
-    // Update seen messages when new messages arrive
-    if (widget.messages.length > oldWidget.messages.length) {
-      // Mark new messages as unseen
-      for (int i = oldWidget.messages.length; i < widget.messages.length; i++) {
-        final newMessage = widget.messages[i];
-        _seenMessages.add(newMessage.id);
-      }
-
-      // Update last seen message if at bottom
-      if (_isAtBottom && widget.messages.isNotEmpty) {
-        _lastSeenMessageId = widget.messages.last.id;
-        _unseenCount = 0;
       }
     }
   }
@@ -146,12 +120,6 @@ class _MessageListState extends State<MessageList> {
       setState(() {
         _isAtBottom = atBottom;
       });
-
-      // Update last seen message when scrolling to bottom
-      if (atBottom && widget.messages.isNotEmpty) {
-        _lastSeenMessageId = widget.messages.last.id;
-        _unseenCount = 0;
-      }
     }
   }
 
@@ -170,10 +138,6 @@ class _MessageListState extends State<MessageList> {
         }
       }
     });
-  }
-
-  bool _isNewMessage(ChatMessage message) {
-    return _seenMessages.contains(message.id);
   }
 
   @override
@@ -209,6 +173,8 @@ class _MessageListState extends State<MessageList> {
             controller: widget.scrollController ?? _scrollController,
             reverse: true,
             physics: const AlwaysScrollableScrollPhysics(),
+            addAutomaticKeepAlives: false,
+            addRepaintBoundaries: false,
             padding: const EdgeInsets.only(bottom: 16.0),
             itemCount: widget.messages.isEmpty
                 ? 0
@@ -226,7 +192,6 @@ class _MessageListState extends State<MessageList> {
               final message =
                   widget.messages[widget.messages.length - 1 - index];
               final isUser = message.role == 'user';
-              final isNew = !_isNewMessage(message);
               final messageStatus =
                   widget.messageStatuses?[message.id] ?? MessageStatus.sent;
               final userAccessory =
@@ -241,27 +206,17 @@ class _MessageListState extends State<MessageList> {
                     )
                   : null;
 
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOut,
+              return RepaintBoundary(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Message bubble
-                    AnimatedOpacity(
-                      opacity: 1.0,
-                      duration: const Duration(milliseconds: 300),
-                      child: Transform.translate(
-                        offset: isNew ? const Offset(0, 6) : Offset.zero,
-                        child: MessageBubble(
-                          message: message,
-                          isUser: isUser,
-                          userAccessory: userAccessory,
-                          onTap: widget.onMessageTap != null
-                              ? () => widget.onMessageTap!(message)
-                              : null,
-                        ),
-                      ),
+                    MessageBubble(
+                      message: message,
+                      isUser: isUser,
+                      userAccessory: userAccessory,
+                      onTap: widget.onMessageTap != null
+                          ? () => widget.onMessageTap!(message)
+                          : null,
                     ),
                     if (widget.showTimestamps) ...[
                       const SizedBox(height: 1),
@@ -291,9 +246,6 @@ class _MessageListState extends State<MessageList> {
             child: GestureDetector(
               onTap: () {
                 _scrollToBottom();
-                _lastSeenMessageId = widget.messages.last.id;
-                _unseenCount = 0;
-                setState(() {});
               },
               child: Container(
                 padding: const EdgeInsets.symmetric(
@@ -319,17 +271,6 @@ class _MessageListState extends State<MessageList> {
                       color: Colors.white,
                       size: 16,
                     ),
-                    if (_unseenCount > 0) ...[
-                      const SizedBox(width: 4),
-                      Text(
-                        '$_unseenCount new',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),
