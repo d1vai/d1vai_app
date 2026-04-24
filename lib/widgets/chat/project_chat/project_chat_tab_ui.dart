@@ -8,42 +8,22 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
   List<String> _workspaceWarmupTips() {
     switch (_workspacePhase) {
       case WorkspacePhase.ready:
-        return const <String>[
-          'Workspace online',
-          'Syncing model settings',
-          'Ready to send',
-        ];
+        return const <String>['Online', 'Syncing model', 'Ready'];
       case WorkspacePhase.starting:
         return const <String>[
-          'Checking workspace status',
-          'Starting workspace container',
-          'Preparing execution session',
+          'Checking',
+          'Starting workspace',
+          'Opening session',
         ];
       case WorkspacePhase.syncing:
-        return const <String>[
-          'Workspace online',
-          'Syncing files and runtime',
-          'Preparing execution session',
-        ];
+        return const <String>['Online', 'Syncing files', 'Opening session'];
       case WorkspacePhase.standby:
       case WorkspacePhase.archived:
-        return const <String>[
-          'Workspace sleeping',
-          'Waking workspace up',
-          'Preparing execution session',
-        ];
+        return const <String>['Sleeping', 'Waking up', 'Opening session'];
       case WorkspacePhase.error:
-        return const <String>[
-          'Workspace warmup failed',
-          'Retrying workspace startup',
-          'Preparing execution session',
-        ];
+        return const <String>['Start failed', 'Retrying', 'Opening session'];
       case WorkspacePhase.unknown:
-        return const <String>[
-          'Checking workspace status',
-          'Preparing workspace',
-          'Preparing execution session',
-        ];
+        return const <String>['Checking', 'Preparing', 'Opening session'];
     }
   }
 
@@ -89,9 +69,9 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
     if (_outboxItems.isNotEmpty) {
       if (_outboxMode == OutboxMode.dispatching) return 'Sending';
       if (_outboxMode == OutboxMode.pausedError) return 'Queue paused';
-      if (_outboxMode == OutboxMode.waitingWorkspace) return 'Waking workspace';
+      if (_outboxMode == OutboxMode.waitingWorkspace) return 'Waking';
       if (_outboxMode == OutboxMode.waitingModel) return 'Loading model';
-      if (_outboxMode == OutboxMode.waitingTask) return 'Waiting turn';
+      if (_outboxMode == OutboxMode.waitingTask) return 'Waiting';
       return _outboxItems.length > 1
           ? 'Queued ${_outboxItems.length}'
           : 'Queued';
@@ -104,62 +84,62 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
             !_sessionDone &&
             !_sessionError &&
             (_activeWsSessionId ?? '').trim().isNotEmpty);
-    if (_sessionError) return 'Needs attention';
+    if (_sessionError) return 'Check';
     if (_sessionDone) {
       final finished = _lastSessionFinishedAt;
       if (finished != null &&
           DateTime.now().difference(finished) < const Duration(seconds: 8)) {
-        return 'Ready again';
+        return 'Ready';
       }
       return 'Done';
     }
     if (_sessionThinking) return 'Thinking';
     if (working) return 'Working';
-    if (_workspacePhase == WorkspacePhase.error) return 'Workspace error';
+    if (_workspacePhase == WorkspacePhase.error) return 'Workspace';
     if (_workspacePhase != WorkspacePhase.ready) return 'Preparing';
     if (_isLoadingModels || _isSwitchingModel) return 'Loading model';
     return 'Ready';
   }
 
   String? _statusBannerTitle() {
-    if (_isDeploying) return 'Deployment in progress';
+    if (_isDeploying) return 'Deploying';
     if (_workspaceWarmupVisible) {
       return _workspaceWarmupCompleted
           ? 'Workspace ready'
-          : 'Preparing workspace';
+          : 'Starting workspace';
     }
     if (_workspacePhase == WorkspacePhase.error) {
-      return 'Workspace needs attention';
+      return 'Workspace issue';
     }
     if (_outboxItems.isNotEmpty) {
       if (_outboxMode == OutboxMode.pausedError) return 'Queue paused';
       if (_outboxMode == OutboxMode.dispatching) {
-        return 'Sending queued instruction';
+        return 'Sending next';
       }
       if (_outboxMode == OutboxMode.waitingWorkspace) {
-        return 'Workspace wake-up';
+        return 'Waking workspace';
       }
       if (_outboxMode == OutboxMode.waitingModel) {
-        return 'Model sync in progress';
+        return 'Loading model';
       }
       if (_outboxMode == OutboxMode.waitingTask) {
         return 'Waiting for current run';
       }
       return _outboxItems.length > 1
-          ? '${_outboxItems.length} prompts queued'
-          : '1 prompt queued';
+          ? '${_outboxItems.length} queued'
+          : '1 queued';
     }
-    if (_sessionThinking) return 'Thinking through the request';
+    if (_sessionThinking) return 'Thinking';
     if (_wsConnState == WsConnectionState.connecting) {
-      return 'Reconnecting live updates';
+      return 'Reconnecting';
     }
     if (_sessionDone &&
         _lastSessionFinishedAt != null &&
         DateTime.now().difference(_lastSessionFinishedAt!) <
             const Duration(seconds: 8)) {
-      return 'Answer finished';
+      return 'Done';
     }
-    if (_isLoadingModels || _isSwitchingModel) return 'Loading models';
+    if (_isLoadingModels || _isSwitchingModel) return 'Loading model';
     switch (_workspacePhase) {
       case WorkspacePhase.ready:
         return null;
@@ -169,7 +149,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
       case WorkspacePhase.archived:
       case WorkspacePhase.unknown:
       case WorkspacePhase.error:
-        return 'Workspace status';
+        return 'Workspace';
     }
   }
 
@@ -177,65 +157,63 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
     if (_isDeploying) {
       final framework = (_deployFramework ?? '').trim();
       return framework.isEmpty
-          ? 'Preview is rebuilding. You can keep chatting while it finishes.'
-          : '$framework preview is rebuilding. You can keep chatting while it finishes.';
+          ? 'Preview is rebuilding.'
+          : '$framework preview is rebuilding.';
     }
     if (_workspaceWarmupVisible) {
       return _workspaceWarmupMessage ??
-          'Workspace is starting. Your message will send automatically.';
+          'Starting now. Your message will send next.';
     }
     if (_workspacePhase == WorkspacePhase.error) {
       final error = (_workspaceError ?? '').trim();
       return error.isEmpty
-          ? 'Workspace startup failed. The app will retry quietly in the background.'
+          ? 'Start failed. Retrying in the background.'
           : error;
     }
     if (_outboxItems.isNotEmpty) {
       final firstPrompt = _outboxItems.first.prompt.trim();
       if (_outboxMode == OutboxMode.pausedError) {
-        return 'One queued prompt failed. Edit or retry it from the queue.';
+        return 'One queued prompt failed.';
       }
       if (_outboxMode == OutboxMode.dispatching) {
-        return firstPrompt.isEmpty
-            ? 'Dispatching the next queued prompt.'
-            : firstPrompt;
+        return firstPrompt.isEmpty ? 'Sending next prompt.' : firstPrompt;
       }
       if (_outboxMode == OutboxMode.waitingWorkspace) {
-        return 'The queue will continue automatically as soon as the workspace is online.';
+        return 'Queue resumes when the workspace is ready.';
       }
       if (_outboxMode == OutboxMode.waitingModel) {
-        return 'Waiting for model configuration before sending queued prompts.';
+        return 'Queue resumes when the model is ready.';
       }
       if (_outboxMode == OutboxMode.waitingTask) {
-        return 'Another run is still active. Queued prompts will send in order.';
+        return 'Queue resumes after the current run.';
       }
-      return firstPrompt.isEmpty ? 'Your next prompt is queued.' : firstPrompt;
+      return firstPrompt.isEmpty ? 'Next prompt is queued.' : firstPrompt;
     }
     if (_sessionThinking) {
-      return 'Streaming live updates as the model reasons and calls tools.';
+      return 'Working through your request.';
     }
     if (_wsConnState == WsConnectionState.connecting) {
-      return 'Trying to restore live output for the current session.';
+      return 'Restoring live output.';
     }
     if (_sessionDone &&
         _lastSessionFinishedAt != null &&
         DateTime.now().difference(_lastSessionFinishedAt!) <
             const Duration(seconds: 8)) {
-      return 'Live output has finished. You can send the next instruction immediately.';
+      return 'You can send the next message.';
     }
     if (_isLoadingModels || _isSwitchingModel) {
-      return 'Refreshing available models and execution settings.';
+      return 'Updating model settings.';
     }
     switch (_workspacePhase) {
       case WorkspacePhase.starting:
-        return 'Starting the workspace container and runtime.';
+        return 'Starting workspace.';
       case WorkspacePhase.syncing:
-        return 'Syncing files and runtime before execution.';
+        return 'Syncing files.';
       case WorkspacePhase.standby:
       case WorkspacePhase.archived:
-        return 'Workspace is sleeping. The app will wake it up on demand.';
+        return 'Sleeping until needed.';
       case WorkspacePhase.unknown:
-        return 'Checking workspace health and availability.';
+        return 'Checking status.';
       case WorkspacePhase.ready:
       case WorkspacePhase.error:
         return null;
@@ -380,10 +358,10 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
   }
 
   String _quickActionsTitle() {
-    if (_workspacePhase == WorkspacePhase.error) return 'Recovery shortcuts';
-    if ((_previewUrl ?? '').trim().isEmpty) return 'Get to preview faster';
-    if (_outboxItems.isNotEmpty) return 'Queue shortcuts';
-    return 'Useful next prompts';
+    if (_workspacePhase == WorkspacePhase.error) return 'Recovery';
+    if ((_previewUrl ?? '').trim().isEmpty) return 'Preview';
+    if (_outboxItems.isNotEmpty) return 'Queue';
+    return 'Shortcuts';
   }
 
   void _openMobileChat() {

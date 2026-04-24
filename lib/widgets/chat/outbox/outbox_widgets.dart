@@ -354,7 +354,7 @@ class OutboxBar extends StatelessWidget {
       if (mode == OutboxMode.dispatching) return 'Sending next';
       if (mode == OutboxMode.waitingWorkspace) return 'Waiting for workspace';
       if (mode == OutboxMode.waitingModel) return 'Waiting for model';
-      if (mode == OutboxMode.waitingTask) return 'Waiting for current run';
+      if (mode == OutboxMode.waitingTask) return 'Waiting for run';
       if (mode == OutboxMode.pausedError) return 'Queue paused';
       return count > 1 ? '$count queued prompts' : '1 queued prompt';
     }
@@ -366,14 +366,14 @@ class OutboxBar extends StatelessWidget {
             : 'Dispatch in progress';
       }
       if (mode == OutboxMode.pausedError) {
-        return 'Open queue to edit or retry the failed item';
+        return 'Open queue to retry or edit';
       }
       if (mode == OutboxMode.waitingWorkspace ||
           mode == OutboxMode.waitingModel ||
           mode == OutboxMode.waitingTask) {
-        return 'Queue continues automatically';
+        return 'Resumes automatically';
       }
-      return 'Tap to review queued prompts';
+      return 'Tap to review queue';
     }
 
     final hint = detail();
@@ -572,7 +572,7 @@ class _OutboxSheetState extends State<_OutboxSheet> {
     final mode = widget.mode;
     if (mode == OutboxMode.waitingModel) return 'Waiting for model…';
     if (mode == OutboxMode.waitingWorkspace) return 'Waiting for workspace…';
-    if (mode == OutboxMode.waitingTask) return 'Waiting for previous task…';
+    if (mode == OutboxMode.waitingTask) return 'Waiting for current run…';
     if (mode == OutboxMode.dispatching) return 'Sending…';
     if (mode == OutboxMode.pausedError) return 'Paused (an item failed).';
     return '';

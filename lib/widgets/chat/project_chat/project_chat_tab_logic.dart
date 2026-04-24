@@ -117,13 +117,12 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     setState(() {
       _workspaceWarmupVisible = true;
       _workspaceWarmupCompleted = false;
-      _workspaceWarmupMessage =
-          'Workspace is starting. Your message will send automatically.';
+      _workspaceWarmupMessage = 'Starting workspace. Sending next.';
     });
     _showInfoNotice(
       key: 'workspace_warmup_started',
       title: 'Workspace',
-      message: 'Workspace is starting. Sending will continue automatically.',
+      message: 'Starting. Sending next.',
       cooldown: const Duration(seconds: 12),
     );
   }
@@ -132,7 +131,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     if (!_workspaceWarmupVisible || !mounted) return;
     setState(() {
       _workspaceWarmupCompleted = true;
-      _workspaceWarmupMessage = 'Workspace ready. Sending your message...';
+      _workspaceWarmupMessage = 'Ready. Sending now.';
     });
   }
 
@@ -1419,7 +1418,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
           _showErrorNotice(
             key: 'ws_proxy_remote_connect_failed',
             title: 'WebSocket',
-            message: 'Remote connection failed. Auto-connect disabled.',
+            message: 'Remote connect failed. Auto-connect is off.',
           );
         }
       }
@@ -1659,8 +1658,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         key: 'deployment_start',
         title: 'Deploying',
         message: _deployFramework != null && _deployFramework!.trim().isNotEmpty
-            ? 'Starting ${_deployFramework!.trim()} deployment...'
-            : 'Starting deployment...',
+            ? 'Starting ${_deployFramework!.trim()} deploy...'
+            : 'Starting deploy...',
         cooldown: const Duration(seconds: 4),
         duration: const Duration(seconds: 2),
       );
@@ -1744,8 +1743,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       }
       _showSuccessNotice(
         key: 'preview_redeploy_triggered',
-        title: 'Redeploy triggered',
-        message: url.isNotEmpty ? url : 'Preview deployment started',
+        title: 'Redeploy started',
+        message: url.isNotEmpty ? url : 'Preview deploy started',
         actionLabel: url.isNotEmpty ? 'Open' : null,
         onActionPressed: url.isNotEmpty
             ? () {
@@ -1871,7 +1870,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       _showErrorNotice(
         key: 'ws_connect_failed',
         title: 'WebSocket',
-        message: 'Failed to connect: $e',
+        message: 'Connect failed: $e',
         cooldown: const Duration(seconds: 12),
       );
     }
@@ -1907,7 +1906,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       _showInfoNotice(
         key: 'ws_no_active_session',
         title: 'WebSocket',
-        message: 'No active session to reconnect.',
+        message: 'No session to reconnect.',
       );
       return;
     }
@@ -1926,7 +1925,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       _showInfoNotice(
         key: 'model_not_ready_for_send',
         title: 'Model',
-        message: 'Model is loading or switching. Please wait.',
+        message: 'Model is still loading.',
         cooldown: const Duration(seconds: 4),
       );
       return;
@@ -1953,7 +1952,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       _showErrorNotice(
         key: 'send_message_failed',
         title: 'Error',
-        message: 'Failed to send message: $e',
+        message: 'Send failed: $e',
       );
     }
   }

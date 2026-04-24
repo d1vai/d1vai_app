@@ -329,8 +329,8 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
             hintText: widget.isModelLoading
                 ? 'Model is loading…'
                 : (widget.isModelReady
-                      ? 'Ask about your project...'
-                      : 'Model is not ready…'),
+                      ? 'Ask about this project…'
+                      : 'Model not ready'),
             controller: widget.inputController,
             focusNode: widget.inputFocusNode,
             onChanged: widget.onInputChanged,
@@ -377,14 +377,14 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Ask AI',
+                  'Ask',
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Ask about this project or paste code.',
+                  'Ask about the project or paste code.',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant.withValues(

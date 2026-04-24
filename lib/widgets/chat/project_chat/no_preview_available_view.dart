@@ -42,14 +42,14 @@ class NoPreviewAvailableView extends StatelessWidget {
               ),
               const SizedBox(height: 18),
               Text(
-                'No Preview Yet',
+                'No Preview',
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Deploy a fresh build or jump into code to keep working. Once the preview is ready it will appear here automatically.',
+                'Deploy a build or open code. The preview will appear here when ready.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant.withValues(
@@ -73,7 +73,7 @@ class NoPreviewAvailableView extends StatelessWidget {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.rocket_launch_outlined),
-                    label: Text(isDeploying ? 'Deploying…' : 'Deploy Preview'),
+                    label: Text(isDeploying ? 'Deploying…' : 'Deploy'),
                   ),
                   OutlinedButton.icon(
                     onPressed: onOpenCode,

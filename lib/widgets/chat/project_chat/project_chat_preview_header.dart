@@ -76,7 +76,7 @@ class ProjectChatPreviewHeader extends StatelessWidget {
           IconButton(
             onPressed: onRefreshPreview,
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh Preview',
+            tooltip: 'Refresh',
           ),
           IconButton(
             onPressed: () async {
@@ -84,14 +84,14 @@ class ProjectChatPreviewHeader extends StatelessWidget {
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Preview URL copied'),
+                    content: Text('Link copied'),
                     duration: Duration(seconds: 2),
                   ),
                 );
               }
             },
             icon: const Icon(Icons.copy_rounded),
-            tooltip: 'Copy Preview URL',
+            tooltip: 'Copy link',
           ),
           IconButton(
             onPressed: onOpenInNewTab,
