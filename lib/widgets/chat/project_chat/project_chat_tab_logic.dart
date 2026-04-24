@@ -12,6 +12,75 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
   int _assistantDeltaChars = 0;
   Timer? _assistantDeltaFlushTimer;
 
+  bool _noticeAllowed(String key, Duration cooldown) {
+    final now = DateTime.now();
+    final prev = _noticeCooldowns[key];
+    if (prev != null && now.difference(prev) < cooldown) return false;
+    _noticeCooldowns[key] = now;
+    if (_noticeCooldowns.length > 64) {
+      _noticeCooldowns.removeWhere(
+        (_, value) => now.difference(value) > const Duration(minutes: 10),
+      );
+    }
+    return true;
+  }
+
+  void _showInfoNotice({
+    required String key,
+    required String title,
+    required String message,
+    Duration cooldown = const Duration(seconds: 8),
+    Duration duration = const Duration(seconds: 3),
+    SnackBarPosition position = SnackBarPosition.top,
+  }) {
+    if (!mounted || !_noticeAllowed(key, cooldown)) return;
+    SnackBarHelper.showInfo(
+      context,
+      title: title,
+      message: message,
+      position: position,
+      duration: duration,
+    );
+  }
+
+  void _showSuccessNotice({
+    required String key,
+    required String title,
+    required String message,
+    Duration cooldown = const Duration(seconds: 6),
+    Duration duration = const Duration(seconds: 2),
+    SnackBarPosition position = SnackBarPosition.top,
+    String? actionLabel,
+    VoidCallback? onActionPressed,
+  }) {
+    if (!mounted || !_noticeAllowed(key, cooldown)) return;
+    SnackBarHelper.showSuccess(
+      context,
+      title: title,
+      message: message,
+      position: position,
+      duration: duration,
+      actionLabel: actionLabel,
+      onActionPressed: onActionPressed,
+    );
+  }
+
+  void _showErrorNotice({
+    required String key,
+    required String title,
+    required String message,
+    Duration cooldown = const Duration(seconds: 10),
+    SnackBarPosition position = SnackBarPosition.top,
+  }) {
+    if (!mounted || !_noticeAllowed(key, cooldown)) return;
+    SnackBarHelper.showError(
+      context,
+      title: title,
+      message: message,
+      position: position,
+    );
+  }
+
   void _showWorkspaceWarmupUi() {
     if (_workspaceWarmupVisible || !mounted) return;
     setState(() {
@@ -20,12 +89,11 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       _workspaceWarmupMessage =
           'Workspace is starting. Your message will send automatically.';
     });
-    SnackBarHelper.showInfo(
-      context,
+    _showInfoNotice(
+      key: 'workspace_warmup_started',
       title: 'Workspace',
       message: 'Workspace is starting. Sending will continue automatically.',
-      position: SnackBarPosition.top,
-      duration: const Duration(seconds: 3),
+      cooldown: const Duration(seconds: 12),
     );
   }
 
@@ -457,6 +525,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
 
   void _markSessionDone() {
     _thinkingClearTimer?.cancel();
+    _lastSessionFinishedAt = DateTime.now();
     if (!mounted) {
       _sessionDone = true;
       _sessionError = false;
@@ -472,6 +541,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
 
   void _markSessionError() {
     _thinkingClearTimer?.cancel();
+    _lastSessionFinishedAt = DateTime.now();
     if (!mounted) {
       _sessionDone = false;
       _sessionError = true;
@@ -701,8 +771,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       });
       _signalOutbox();
       if (authErr) {
-        SnackBarHelper.showError(
-          context,
+        _showErrorNotice(
+          key: 'model_auth_expired',
           title: 'Model',
           message: 'Login expired. Please sign in again to load models.',
         );
@@ -1193,8 +1263,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
           }
           final prevOutput = c.output?.text ?? '';
           final nextOutput = tool.output?.text ?? '';
-          final mergedOutput =
-              prevOutput.isNotEmpty && nextOutput.isNotEmpty
+          final mergedOutput = prevOutput.isNotEmpty && nextOutput.isNotEmpty
               ? (prevOutput.endsWith(nextOutput)
                     ? prevOutput
                     : '$prevOutput$nextOutput')
@@ -1208,8 +1277,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
                 ? c.output
                 : ToolOutput(
                     text: mergedOutput,
-                    isError:
-                        tool.output?.isError ?? c.output?.isError ?? false,
+                    isError: tool.output?.isError ?? c.output?.isError ?? false,
                   ),
           );
           setState(() {
@@ -1311,8 +1379,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
           _wsConnState = WsConnectionState.failed;
         });
         if (mounted) {
-          SnackBarHelper.showError(
-            context,
+          _showErrorNotice(
+            key: 'ws_proxy_remote_connect_failed',
             title: 'WebSocket',
             message: 'Remote connection failed. Auto-connect disabled.',
           );
@@ -1386,7 +1454,9 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
           _chatMessages.isNotEmpty &&
           _chatMessages.last.role != 'user' &&
           _chatMessages.last.contents.isNotEmpty &&
-          _chatMessages.last.contents.every((content) => content is TextMessageContent);
+          _chatMessages.last.contents.every(
+            (content) => content is TextMessageContent,
+          );
       setState(() {
         if (canReplaceLastAssistant) {
           final last = _chatMessages.last;
@@ -1548,17 +1618,15 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _deployFramework = framework?.toString();
       });
       _scheduleDeployAutoClear(const Duration(minutes: 3));
-      if (mounted) {
-        SnackBarHelper.showInfo(
-          context,
-          title: 'Deploying',
-          message:
-              _deployFramework != null && _deployFramework!.trim().isNotEmpty
-              ? 'Starting ${_deployFramework!.trim()} deployment...'
-              : 'Starting deployment...',
-          duration: const Duration(seconds: 2),
-        );
-      }
+      _showInfoNotice(
+        key: 'deployment_start',
+        title: 'Deploying',
+        message: _deployFramework != null && _deployFramework!.trim().isNotEmpty
+            ? 'Starting ${_deployFramework!.trim()} deployment...'
+            : 'Starting deployment...',
+        cooldown: const Duration(seconds: 4),
+        duration: const Duration(seconds: 2),
+      );
       return;
     }
 
@@ -1637,8 +1705,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
           _currentChatTabIndex = 0;
         });
       }
-      SnackBarHelper.showSuccess(
-        context,
+      _showSuccessNotice(
+        key: 'preview_redeploy_triggered',
         title: 'Redeploy triggered',
         message: url.isNotEmpty ? url : 'Preview deployment started',
         actionLabel: url.isNotEmpty ? 'Open' : null,
@@ -1651,7 +1719,6 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
               }
             : null,
         duration: const Duration(seconds: 3),
-        position: SnackBarPosition.top,
       );
       unawaited(_refreshPreviewUrlFromApi());
       // Align with web: treat a successful trigger response as "done" for the UI button.
@@ -1664,8 +1731,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       _deployAutoClearTimer?.cancel();
     } catch (e) {
       if (!mounted) return;
-      SnackBarHelper.showError(
-        context,
+      _showErrorNotice(
+        key: 'preview_redeploy_failed',
         title: 'Redeploy failed',
         message: e.toString(),
       );
@@ -1764,10 +1831,11 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       setState(() {
         _wsConnState = WsConnectionState.failed;
       });
-      SnackBarHelper.showError(
-        context,
+      _showErrorNotice(
+        key: 'ws_connect_failed',
         title: 'WebSocket',
         message: 'Failed to connect: $e',
+        cooldown: const Duration(seconds: 12),
       );
     }
   }
@@ -1799,8 +1867,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     final sid = _currentSessionId ?? _activeWsSessionId;
     if (sid == null || sid.trim().isEmpty) {
       if (!mounted) return;
-      SnackBarHelper.showInfo(
-        context,
+      _showInfoNotice(
+        key: 'ws_no_active_session',
         title: 'WebSocket',
         message: 'No active session to reconnect.',
       );
@@ -1818,10 +1886,11 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     if (prompt.isEmpty) return;
     if (!_isModelReadyForSend()) {
       if (!mounted) return;
-      SnackBarHelper.showInfo(
-        context,
+      _showInfoNotice(
+        key: 'model_not_ready_for_send',
         title: 'Model',
         message: 'Model is loading or switching. Please wait.',
+        cooldown: const Duration(seconds: 4),
       );
       return;
     }
@@ -1844,8 +1913,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         await showInsufficientBalanceDialog(context);
         return;
       }
-      SnackBarHelper.showError(
-        context,
+      _showErrorNotice(
+        key: 'send_message_failed',
         title: 'Error',
         message: 'Failed to send message: $e',
       );
@@ -1953,8 +2022,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         await showInsufficientBalanceDialog(context);
         return;
       }
-      SnackBarHelper.showError(
-        context,
+      _showErrorNotice(
+        key: 'retry_message_failed',
         title: 'Retry',
         message: 'Retry failed: $e',
       );

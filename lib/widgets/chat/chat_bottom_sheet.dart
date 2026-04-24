@@ -34,6 +34,11 @@ class ChatBottomSheet extends StatefulWidget {
   final bool statusIsError;
   final bool isModelReady;
   final bool isModelLoading;
+  final String? bannerTitle;
+  final String? bannerMessage;
+  final IconData bannerIcon;
+  final Color? bannerAccent;
+  final bool bannerBusy;
 
   const ChatBottomSheet({
     super.key,
@@ -61,6 +66,11 @@ class ChatBottomSheet extends StatefulWidget {
     this.statusIsError = false,
     this.isModelReady = true,
     this.isModelLoading = false,
+    this.bannerTitle,
+    this.bannerMessage,
+    this.bannerIcon = Icons.info_outline_rounded,
+    this.bannerAccent,
+    this.bannerBusy = false,
   });
 
   @override
@@ -107,6 +117,9 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
 
     final statusText = widget.statusLabel?.trim() ?? '';
     final showStatus = statusText.isNotEmpty;
+    final bannerTitle = widget.bannerTitle?.trim() ?? '';
+    final bannerMessage = widget.bannerMessage?.trim() ?? '';
+    final showBanner = bannerTitle.isNotEmpty || bannerMessage.isNotEmpty;
 
     return Container(
       decoration: BoxDecoration(
@@ -244,6 +257,31 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                 ),
               ],
             ),
+          ),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (child, animation) {
+              return FadeTransition(
+                opacity: animation,
+                child: SizeTransition(
+                  sizeFactor: animation,
+                  axisAlignment: -1,
+                  child: child,
+                ),
+              );
+            },
+            child: !showBanner
+                ? const SizedBox.shrink()
+                : _ChatStatusBanner(
+                    key: ValueKey('$bannerTitle|$bannerMessage'),
+                    title: bannerTitle,
+                    message: bannerMessage,
+                    icon: widget.bannerIcon,
+                    accent: widget.bannerAccent ?? theme.colorScheme.primary,
+                    busy: widget.bannerBusy,
+                  ),
           ),
 
           // Messages list
@@ -397,6 +435,110 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ChatStatusBanner extends StatelessWidget {
+  final String title;
+  final String message;
+  final IconData icon;
+  final Color accent;
+  final bool busy;
+
+  const _ChatStatusBanner({
+    super.key,
+    required this.title,
+    required this.message,
+    required this.icon,
+    required this.accent,
+    required this.busy,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final bg = Color.alphaBlend(
+      accent.withValues(alpha: isDark ? 0.10 : 0.08),
+      theme.colorScheme.surface,
+    );
+    final border = Color.alphaBlend(
+      accent.withValues(alpha: isDark ? 0.24 : 0.18),
+      theme.colorScheme.outlineVariant.withValues(alpha: 0.45),
+    );
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: isDark ? 0.16 : 0.12),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Icon(icon, size: 16, color: accent),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                    if (busy) ...[
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(accent),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                if (message.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    message,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      height: 1.3,
+                      color: theme.colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.9,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

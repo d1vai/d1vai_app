@@ -85,7 +85,17 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
   }
 
   String _statusLabel() {
-    // Align with d1vai mobileStatusLabel.
+    if (_isDeploying) return 'Deploying';
+    if (_outboxItems.isNotEmpty) {
+      if (_outboxMode == OutboxMode.dispatching) return 'Sending';
+      if (_outboxMode == OutboxMode.pausedError) return 'Queue paused';
+      if (_outboxMode == OutboxMode.waitingWorkspace) return 'Waking workspace';
+      if (_outboxMode == OutboxMode.waitingModel) return 'Loading model';
+      if (_outboxMode == OutboxMode.waitingTask) return 'Waiting turn';
+      return _outboxItems.length > 1
+          ? 'Queued ${_outboxItems.length}'
+          : 'Queued';
+    }
     final working =
         _isChatLoading ||
         _wsConnState == WsConnectionState.connecting ||
@@ -94,17 +104,191 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
             !_sessionDone &&
             !_sessionError &&
             (_activeWsSessionId ?? '').trim().isNotEmpty);
-    return _isDeploying
-        ? 'Deploying'
-        : _sessionError
-        ? 'Error'
-        : _sessionDone
-        ? 'Done'
-        : working
-        ? 'Working'
-        : _sessionThinking
-        ? 'Thinking'
-        : 'Ready';
+    if (_sessionError) return 'Needs attention';
+    if (_sessionDone) {
+      final finished = _lastSessionFinishedAt;
+      if (finished != null &&
+          DateTime.now().difference(finished) < const Duration(seconds: 8)) {
+        return 'Ready again';
+      }
+      return 'Done';
+    }
+    if (_sessionThinking) return 'Thinking';
+    if (working) return 'Working';
+    if (_workspacePhase == WorkspacePhase.error) return 'Workspace error';
+    if (_workspacePhase != WorkspacePhase.ready) return 'Preparing';
+    if (_isLoadingModels || _isSwitchingModel) return 'Loading model';
+    return 'Ready';
+  }
+
+  String? _statusBannerTitle() {
+    if (_isDeploying) return 'Deployment in progress';
+    if (_workspaceWarmupVisible) {
+      return _workspaceWarmupCompleted
+          ? 'Workspace ready'
+          : 'Preparing workspace';
+    }
+    if (_workspacePhase == WorkspacePhase.error) {
+      return 'Workspace needs attention';
+    }
+    if (_outboxItems.isNotEmpty) {
+      if (_outboxMode == OutboxMode.pausedError) return 'Queue paused';
+      if (_outboxMode == OutboxMode.dispatching) {
+        return 'Sending queued instruction';
+      }
+      if (_outboxMode == OutboxMode.waitingWorkspace) {
+        return 'Workspace wake-up';
+      }
+      if (_outboxMode == OutboxMode.waitingModel) {
+        return 'Model sync in progress';
+      }
+      if (_outboxMode == OutboxMode.waitingTask) {
+        return 'Waiting for current run';
+      }
+      return _outboxItems.length > 1
+          ? '${_outboxItems.length} prompts queued'
+          : '1 prompt queued';
+    }
+    if (_sessionThinking) return 'Thinking through the request';
+    if (_wsConnState == WsConnectionState.connecting) {
+      return 'Reconnecting live updates';
+    }
+    if (_sessionDone &&
+        _lastSessionFinishedAt != null &&
+        DateTime.now().difference(_lastSessionFinishedAt!) <
+            const Duration(seconds: 8)) {
+      return 'Answer finished';
+    }
+    if (_isLoadingModels || _isSwitchingModel) return 'Loading models';
+    switch (_workspacePhase) {
+      case WorkspacePhase.ready:
+        return null;
+      case WorkspacePhase.starting:
+      case WorkspacePhase.syncing:
+      case WorkspacePhase.standby:
+      case WorkspacePhase.archived:
+      case WorkspacePhase.unknown:
+      case WorkspacePhase.error:
+        return 'Workspace status';
+    }
+  }
+
+  String? _statusBannerMessage() {
+    if (_isDeploying) {
+      final framework = (_deployFramework ?? '').trim();
+      return framework.isEmpty
+          ? 'Preview is rebuilding. You can keep chatting while it finishes.'
+          : '$framework preview is rebuilding. You can keep chatting while it finishes.';
+    }
+    if (_workspaceWarmupVisible) {
+      return _workspaceWarmupMessage ??
+          'Workspace is starting. Your message will send automatically.';
+    }
+    if (_workspacePhase == WorkspacePhase.error) {
+      final error = (_workspaceError ?? '').trim();
+      return error.isEmpty
+          ? 'Workspace startup failed. The app will retry quietly in the background.'
+          : error;
+    }
+    if (_outboxItems.isNotEmpty) {
+      final firstPrompt = _outboxItems.first.prompt.trim();
+      if (_outboxMode == OutboxMode.pausedError) {
+        return 'One queued prompt failed. Edit or retry it from the queue.';
+      }
+      if (_outboxMode == OutboxMode.dispatching) {
+        return firstPrompt.isEmpty
+            ? 'Dispatching the next queued prompt.'
+            : firstPrompt;
+      }
+      if (_outboxMode == OutboxMode.waitingWorkspace) {
+        return 'The queue will continue automatically as soon as the workspace is online.';
+      }
+      if (_outboxMode == OutboxMode.waitingModel) {
+        return 'Waiting for model configuration before sending queued prompts.';
+      }
+      if (_outboxMode == OutboxMode.waitingTask) {
+        return 'Another run is still active. Queued prompts will send in order.';
+      }
+      return firstPrompt.isEmpty ? 'Your next prompt is queued.' : firstPrompt;
+    }
+    if (_sessionThinking) {
+      return 'Streaming live updates as the model reasons and calls tools.';
+    }
+    if (_wsConnState == WsConnectionState.connecting) {
+      return 'Trying to restore live output for the current session.';
+    }
+    if (_sessionDone &&
+        _lastSessionFinishedAt != null &&
+        DateTime.now().difference(_lastSessionFinishedAt!) <
+            const Duration(seconds: 8)) {
+      return 'Live output has finished. You can send the next instruction immediately.';
+    }
+    if (_isLoadingModels || _isSwitchingModel) {
+      return 'Refreshing available models and execution settings.';
+    }
+    switch (_workspacePhase) {
+      case WorkspacePhase.starting:
+        return 'Starting the workspace container and runtime.';
+      case WorkspacePhase.syncing:
+        return 'Syncing files and runtime before execution.';
+      case WorkspacePhase.standby:
+      case WorkspacePhase.archived:
+        return 'Workspace is sleeping. The app will wake it up on demand.';
+      case WorkspacePhase.unknown:
+        return 'Checking workspace health and availability.';
+      case WorkspacePhase.ready:
+      case WorkspacePhase.error:
+        return null;
+    }
+  }
+
+  IconData _statusBannerIcon() {
+    if (_isDeploying) return Icons.rocket_launch_outlined;
+    if (_workspaceWarmupVisible) return Icons.memory_rounded;
+    if (_workspacePhase == WorkspacePhase.error) {
+      return Icons.error_outline_rounded;
+    }
+    if (_outboxItems.isNotEmpty) {
+      if (_outboxMode == OutboxMode.pausedError) {
+        return Icons.pause_circle_outline_rounded;
+      }
+      if (_outboxMode == OutboxMode.dispatching) return Icons.send_rounded;
+      if (_outboxMode == OutboxMode.waitingWorkspace) {
+        return Icons.cloud_sync_outlined;
+      }
+      if (_outboxMode == OutboxMode.waitingModel) return Icons.tune_rounded;
+      if (_outboxMode == OutboxMode.waitingTask) {
+        return Icons.hourglass_top_rounded;
+      }
+      return Icons.queue_rounded;
+    }
+    if (_sessionThinking) return Icons.psychology_alt_outlined;
+    if (_wsConnState == WsConnectionState.connecting) {
+      return Icons.wifi_tethering_rounded;
+    }
+    if (_sessionDone) return Icons.check_circle_outline_rounded;
+    return Icons.info_outline_rounded;
+  }
+
+  Color _statusBannerAccent(BuildContext context) {
+    final theme = Theme.of(context);
+    if (_workspacePhase == WorkspacePhase.error || _sessionError) {
+      return theme.colorScheme.error;
+    }
+    if (_isDeploying) return theme.colorScheme.tertiary;
+    if (_sessionDone) return Colors.green;
+    return theme.colorScheme.primary;
+  }
+
+  bool _statusBannerBusy() {
+    return _isDeploying ||
+        _workspaceWarmupVisible ||
+        _sessionThinking ||
+        _wsConnState == WsConnectionState.connecting ||
+        _outboxMode == OutboxMode.dispatching ||
+        _outboxMode == OutboxMode.waitingWorkspace ||
+        _outboxMode == OutboxMode.waitingModel ||
+        _outboxMode == OutboxMode.waitingTask;
   }
 
   void _openMobileChat() {
@@ -214,6 +398,11 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
               heroTag: 'project-chat-messages-${widget.projectId}',
               statusLabel: _statusLabel(),
               statusIsError: _sessionError,
+              bannerTitle: _statusBannerTitle(),
+              bannerMessage: _statusBannerMessage(),
+              bannerIcon: _statusBannerIcon(),
+              bannerAccent: _statusBannerAccent(context),
+              bannerBusy: _statusBannerBusy(),
               messageStatuses: _messageStatuses,
               onRetry: _retryMessage,
               onLoadMore: _loadMoreHistory,
@@ -380,6 +569,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
                     (_activeWsSessionId ?? '').trim().isNotEmpty),
             isThinking: _sessionThinking,
             isDeploying: _isDeploying,
+            secondaryLabel: _statusBannerTitle(),
           ),
         ),
         if (_showMobileChat) _buildChatSheetOverlay(context),
@@ -441,6 +631,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
                     (_activeWsSessionId ?? '').trim().isNotEmpty),
             isThinking: _sessionThinking,
             isDeploying: _isDeploying,
+            secondaryLabel: _statusBannerTitle(),
           ),
         ),
         if (_showMobileChat) _buildChatSheetOverlay(context, maxWidth: 720),

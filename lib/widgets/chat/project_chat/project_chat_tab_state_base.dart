@@ -25,6 +25,7 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   bool _sessionDone = false;
   bool _sessionError = false;
   Timer? _thinkingClearTimer;
+  DateTime? _lastSessionFinishedAt;
 
   // Workspace state (align with web BigChat)
   WorkspaceStateInfo? _workspaceState;
@@ -84,6 +85,9 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   String? _deployFramework;
   Timer? _deployAutoClearTimer;
   DateTime? _lastDeployCompletedAt;
+
+  // UI notice cooldowns to avoid snackbar/error storms.
+  final Map<String, DateTime> _noticeCooldowns = <String, DateTime>{};
 
   @override
   bool get wantKeepAlive => true;

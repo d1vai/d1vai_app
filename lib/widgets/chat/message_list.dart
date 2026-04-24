@@ -179,12 +179,12 @@ class _MessageListState extends State<MessageList> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final controller = widget.scrollController ?? _scrollController;
 
     return Stack(
       children: [
         NotificationListener<ScrollNotification>(
           onNotification: (notification) {
-            final controller = widget.scrollController ?? _scrollController;
             if (widget.onLoadMore != null &&
                 widget.hasMoreHistory &&
                 !widget.isLoadingMore) {
@@ -218,6 +218,9 @@ class _MessageListState extends State<MessageList> {
                 return _HistoryHeader(
                   hasMore: widget.hasMoreHistory,
                   loading: widget.isLoadingMore,
+                  onTap: widget.hasMoreHistory && !widget.isLoadingMore
+                      ? () => _maybeRequestLoadMore(controller)
+                      : null,
                 );
               }
               final message =
@@ -340,8 +343,13 @@ class _MessageListState extends State<MessageList> {
 class _HistoryHeader extends StatelessWidget {
   final bool hasMore;
   final bool loading;
+  final VoidCallback? onTap;
 
-  const _HistoryHeader({required this.hasMore, required this.loading});
+  const _HistoryHeader({
+    required this.hasMore,
+    required this.loading,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -389,7 +397,7 @@ class _HistoryHeader extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            'Swipe up to load older',
+            'Load older messages',
             style: theme.textTheme.labelSmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
               fontWeight: FontWeight.w700,
@@ -421,14 +429,20 @@ class _HistoryHeader extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
       child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: bg,
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: border),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(999),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: border),
+            ),
+            child: child,
           ),
-          child: child,
         ),
       ),
     );

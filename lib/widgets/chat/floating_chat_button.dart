@@ -11,6 +11,7 @@ class FloatingChatButton extends StatefulWidget {
   final bool isWorking;
   final bool isThinking;
   final bool isDeploying;
+  final String? secondaryLabel;
 
   const FloatingChatButton({
     super.key,
@@ -21,6 +22,7 @@ class FloatingChatButton extends StatefulWidget {
     this.isWorking = false,
     this.isThinking = false,
     this.isDeploying = false,
+    this.secondaryLabel,
   });
 
   @override
@@ -56,6 +58,7 @@ class _FloatingChatButtonState extends State<FloatingChatButton>
     final theme = Theme.of(context);
     final isActive =
         widget.isDeploying || widget.isWorking || widget.isThinking;
+    final secondary = widget.secondaryLabel?.trim() ?? '';
 
     // Determine status dot color
     Color statusColor;
@@ -199,6 +202,22 @@ class _FloatingChatButtonState extends State<FloatingChatButton>
                               height: 1.0,
                             ),
                           ),
+                          if (secondary.isNotEmpty) ...[
+                            const SizedBox(height: 3),
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 128),
+                              child: Text(
+                                secondary,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: fg.withValues(alpha: 0.58),
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.0,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                       const SizedBox(width: 10),

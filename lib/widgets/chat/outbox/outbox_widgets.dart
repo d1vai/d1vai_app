@@ -350,7 +350,36 @@ class OutboxBar extends StatelessWidget {
       return const SizedBox(width: 18, height: 18);
     }
 
+    String label() {
+      if (mode == OutboxMode.dispatching) return 'Sending next';
+      if (mode == OutboxMode.waitingWorkspace) return 'Waiting for workspace';
+      if (mode == OutboxMode.waitingModel) return 'Waiting for model';
+      if (mode == OutboxMode.waitingTask) return 'Waiting for current run';
+      if (mode == OutboxMode.pausedError) return 'Queue paused';
+      return count > 1 ? '$count queued prompts' : '1 queued prompt';
+    }
+
+    String? detail() {
+      if (mode == OutboxMode.dispatching) {
+        return count > 1
+            ? '${count - 1} left after this'
+            : 'Dispatch in progress';
+      }
+      if (mode == OutboxMode.pausedError) {
+        return 'Open queue to edit or retry the failed item';
+      }
+      if (mode == OutboxMode.waitingWorkspace ||
+          mode == OutboxMode.waitingModel ||
+          mode == OutboxMode.waitingTask) {
+        return 'Queue continues automatically';
+      }
+      return 'Tap to review queued prompts';
+    }
+
+    final hint = detail();
+
     final body = Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
           width: 10,
@@ -358,17 +387,56 @@ class OutboxBar extends StatelessWidget {
           decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
         ),
         const SizedBox(width: 10),
-        Text(
-          '⏎',
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontFamily: 'monospace',
-            fontWeight: FontWeight.w800,
-            color: fg,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Row(
+                children: [
+                  Text(
+                    '⏎',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontFamily: 'monospace',
+                      fontWeight: FontWeight.w800,
+                      color: fg,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      label(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: fg,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  OutboxCountBadge(count: count, size: 18),
+                ],
+              ),
+              if (hint != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    hint,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.74,
+                      ),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
-        const SizedBox(width: 6),
-        OutboxCountBadge(count: count, size: 18),
-        const Spacer(),
+        const SizedBox(width: 10),
         rightGlyph(),
         const SizedBox(width: 10),
         InkWell(
@@ -394,15 +462,17 @@ class OutboxBar extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         child: Container(
           margin: const EdgeInsets.fromLTRB(14, 10, 14, 0),
-          padding: collapsed
-              ? const EdgeInsets.symmetric(horizontal: 12, vertical: 8)
-              : const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: bg,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: border),
           ),
-          child: collapsed ? SizedBox(height: 20, child: body) : body,
+          child: AnimatedSize(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+            child: collapsed ? SizedBox(height: 24, child: body) : body,
+          ),
         ),
       ),
     );
