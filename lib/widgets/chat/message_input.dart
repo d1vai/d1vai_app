@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'outbox/outbox_widgets.dart';
 
@@ -11,6 +12,7 @@ class MessageInput extends StatefulWidget {
   final FocusNode? focusNode;
   final int queueCount;
   final bool showSendPulse;
+  final ValueChanged<String>? onChanged;
 
   const MessageInput({
     super.key,
@@ -21,6 +23,7 @@ class MessageInput extends StatefulWidget {
     this.focusNode,
     this.queueCount = 0,
     this.showSendPulse = false,
+    this.onChanged,
   });
 
   @override
@@ -88,6 +91,16 @@ class _MessageInputState extends State<MessageInput> {
 
     widget.onSend(text);
     _controller.clear();
+    widget.onChanged?.call('');
+    setState(() {
+      _isComposing = false;
+    });
+  }
+
+  void _clearInput() {
+    if (_controller.text.isEmpty) return;
+    _controller.clear();
+    widget.onChanged?.call('');
     setState(() {
       _isComposing = false;
     });
@@ -136,39 +149,93 @@ class _MessageInputState extends State<MessageInput> {
                   horizontal: 12,
                   vertical: 6,
                 ),
-                child: TextField(
-                  controller: _controller,
-                  focusNode: _focusNode,
-                  enabled: enabled,
-                  minLines: 1,
-                  maxLines: 5,
-                  textCapitalization: TextCapitalization.sentences,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    height: 1.25,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.92),
-                  ),
-                  decoration: InputDecoration(
-                    hintText: widget.hintText ?? 'Ask about your project…',
-                    hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant.withValues(
-                        alpha: 0.65,
-                      ),
-                    ),
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 2,
-                      vertical: 8,
-                    ),
-                  ),
-                  onChanged: (text) {
-                    final next = text.trim().isNotEmpty;
-                    if (next == _isComposing) return;
-                    setState(() {
-                      _isComposing = next;
-                    });
+                child: Shortcuts(
+                  shortcuts: const <ShortcutActivator, Intent>{
+                    SingleActivator(LogicalKeyboardKey.enter, control: true):
+                        ActivateIntent(),
+                    SingleActivator(LogicalKeyboardKey.enter, meta: true):
+                        ActivateIntent(),
+                    SingleActivator(LogicalKeyboardKey.escape): DismissIntent(),
                   },
-                  onSubmitted: _handleSubmitted,
+                  child: Actions(
+                    actions: <Type, Action<Intent>>{
+                      ActivateIntent: CallbackAction<ActivateIntent>(
+                        onInvoke: (_) {
+                          if (canSend) {
+                            _handleSubmitted(_controller.text);
+                          }
+                          return null;
+                        },
+                      ),
+                      DismissIntent: CallbackAction<DismissIntent>(
+                        onInvoke: (_) {
+                          if (_controller.text.trim().isNotEmpty) {
+                            _clearInput();
+                          } else {
+                            _focusNode.unfocus();
+                          }
+                          return null;
+                        },
+                      ),
+                    },
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _controller,
+                            focusNode: _focusNode,
+                            enabled: enabled,
+                            minLines: 1,
+                            maxLines: 5,
+                            textCapitalization: TextCapitalization.sentences,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              height: 1.25,
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.92,
+                              ),
+                            ),
+                            decoration: InputDecoration(
+                              hintText:
+                                  widget.hintText ?? 'Ask about your project…',
+                              hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant
+                                    .withValues(alpha: 0.65),
+                              ),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 2,
+                                vertical: 8,
+                              ),
+                            ),
+                            onChanged: (text) {
+                              widget.onChanged?.call(text);
+                              final next = text.trim().isNotEmpty;
+                              if (next == _isComposing) return;
+                              setState(() {
+                                _isComposing = next;
+                              });
+                            },
+                            onSubmitted: _handleSubmitted,
+                          ),
+                        ),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 160),
+                          child: _isComposing
+                              ? IconButton(
+                                  key: const ValueKey('clear_input_button'),
+                                  onPressed: _clearInput,
+                                  icon: const Icon(Icons.close_rounded),
+                                  iconSize: 18,
+                                  tooltip: 'Clear draft',
+                                  visualDensity: VisualDensity.compact,
+                                )
+                              : const SizedBox.shrink(),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),

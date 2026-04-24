@@ -2,8 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 /// Quick action buttons for chat screen
+class QuickActionItem {
+  final String label;
+  final IconData icon;
+  final String prompt;
+
+  const QuickActionItem({
+    required this.label,
+    required this.icon,
+    required this.prompt,
+  });
+}
+
 class QuickActions extends StatefulWidget {
   final Function(String) onSelect;
+  final List<QuickActionItem>? actions;
+  final String? title;
   final bool dense;
   final bool showTitle;
   final EdgeInsetsGeometry padding;
@@ -13,6 +27,8 @@ class QuickActions extends StatefulWidget {
   const QuickActions({
     super.key,
     required this.onSelect,
+    this.actions,
+    this.title,
     this.dense = false,
     this.showTitle = true,
     this.padding = const EdgeInsets.all(16.0),
@@ -63,40 +79,46 @@ class _QuickActionsState extends State<QuickActions>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final actions = [
-      _QuickActionChip(
-        label: widget.dense ? 'Debug' : 'Help me debug',
-        icon: Icons.bug_report,
+    final items =
+        widget.actions ??
+        const <QuickActionItem>[
+          QuickActionItem(
+            label: 'Help me debug',
+            icon: Icons.bug_report,
+            prompt: 'Help me debug my code',
+          ),
+          QuickActionItem(
+            label: 'Explain code',
+            icon: Icons.code,
+            prompt: 'Explain this code to me',
+          ),
+          QuickActionItem(
+            label: 'Optimize',
+            icon: Icons.speed,
+            prompt: 'How can I optimize this?',
+          ),
+          QuickActionItem(
+            label: 'Best practices',
+            icon: Icons.star,
+            prompt: 'What are the best practices for this?',
+          ),
+        ];
+    final actions = items.map((item) {
+      final label = widget.dense
+          ? item.label.split(' ').take(2).join(' ')
+          : item.label;
+      return _QuickActionChip(
+        label: label,
+        icon: item.icon,
         dense: widget.dense,
         enableBreathing: widget.enableBreathing,
-        onTap: () => widget.onSelect('Help me debug my code'),
-      ),
-      _QuickActionChip(
-        label: widget.dense ? 'Explain' : 'Explain code',
-        icon: Icons.code,
-        dense: widget.dense,
-        enableBreathing: widget.enableBreathing,
-        onTap: () => widget.onSelect('Explain this code to me'),
-      ),
-      _QuickActionChip(
-        label: widget.dense ? 'Optimize' : 'Optimize',
-        icon: Icons.speed,
-        dense: widget.dense,
-        enableBreathing: widget.enableBreathing,
-        onTap: () => widget.onSelect('How can I optimize this?'),
-      ),
-      _QuickActionChip(
-        label: widget.dense ? 'Best' : 'Best practices',
-        icon: Icons.star,
-        dense: widget.dense,
-        enableBreathing: widget.enableBreathing,
-        onTap: () => widget.onSelect('What are the best practices for this?'),
-      ),
-    ];
+        onTap: () => widget.onSelect(item.prompt),
+      );
+    }).toList();
 
     final title = widget.showTitle
         ? Text(
-            'Quick Actions',
+            widget.title ?? 'Quick Actions',
             style: theme.textTheme.titleMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w800,

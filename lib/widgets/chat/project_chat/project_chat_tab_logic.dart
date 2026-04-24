@@ -12,6 +12,31 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
   int _assistantDeltaChars = 0;
   Timer? _assistantDeltaFlushTimer;
 
+  String get _chatDraftKey => 'project_chat_draft:${widget.projectId}';
+
+  void _loadChatDraft() {
+    try {
+      final saved = _storageService.getString(_chatDraftKey)?.trimRight() ?? '';
+      if (_chatInputController.text == saved) return;
+      _chatInputController.value = TextEditingValue(
+        text: saved,
+        selection: TextSelection.collapsed(offset: saved.length),
+      );
+    } catch (_) {}
+  }
+
+  @override
+  Future<void> _persistChatDraft(String value) async {
+    try {
+      final next = value.trimRight();
+      if (next.isEmpty) {
+        await _storageService.remove(_chatDraftKey);
+        return;
+      }
+      await _storageService.setString(_chatDraftKey, next);
+    } catch (_) {}
+  }
+
   bool _noticeAllowed(String key, Duration cooldown) {
     final now = DateTime.now();
     final prev = _noticeCooldowns[key];
@@ -447,6 +472,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
   void initState() {
     super.initState();
     _previewUrl = widget.previewUrl;
+    _loadChatDraft();
     unawaited(_bootstrapWorkspace());
   }
 
@@ -477,6 +503,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _hasLoadedModelConfig = false;
         _modelConfigError = null;
       });
+      _loadChatDraft();
       unawaited(_bootstrapWorkspace());
     }
   }
@@ -494,6 +521,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     _manualWsClose = true;
     _webSocket?.close(1000, 'dispose');
     _chatScrollController.dispose();
+    _chatInputController.dispose();
+    _chatInputFocusNode.dispose();
     super.dispose();
   }
 

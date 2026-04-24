@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class ProjectChatPreviewHeader extends StatelessWidget {
   final String previewUrl;
@@ -15,6 +16,7 @@ class ProjectChatPreviewHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final host = _getDeploymentLabel(previewUrl);
 
     return Container(
       width: double.infinity,
@@ -36,12 +38,30 @@ class ProjectChatPreviewHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Preview: ${_getDeploymentLabel(previewUrl)}',
+                  'Preview',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    host,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
                 Text(
                   previewUrl,
                   style: theme.textTheme.bodySmall?.copyWith(
@@ -57,6 +77,21 @@ class ProjectChatPreviewHeader extends StatelessWidget {
             onPressed: onRefreshPreview,
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh Preview',
+          ),
+          IconButton(
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: previewUrl));
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Preview URL copied'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+            },
+            icon: const Icon(Icons.copy_rounded),
+            tooltip: 'Copy Preview URL',
           ),
           IconButton(
             onPressed: onOpenInNewTab,

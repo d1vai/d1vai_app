@@ -7,8 +7,11 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   final ChatService _chatService = ChatService();
   final WorkspaceService _workspaceService = WorkspaceService();
   final ModelConfigService _modelConfigService = ModelConfigService();
+  final StorageService _storageService = StorageService();
   final List<ChatMessage> _chatMessages = [];
   final ScrollController _chatScrollController = ScrollController();
+  final TextEditingController _chatInputController = TextEditingController();
+  final FocusNode _chatInputFocusNode = FocusNode();
   final Map<String, MessageStatus> _messageStatuses = {};
   final D1vaiService _d1vaiService = D1vaiService();
 
@@ -107,6 +110,7 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   Future<void> _loadMoreHistory();
   Future<void> _retryMessage(ChatMessage message);
   Future<void> _handleModelChanged(String modelId);
+  Future<void> _persistChatDraft(String value);
 
   // Outbox actions (implemented by logic mixin; UI passes these into widgets).
   void _outboxClear();

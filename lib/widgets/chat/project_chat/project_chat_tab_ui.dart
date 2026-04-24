@@ -291,6 +291,101 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
         _outboxMode == OutboxMode.waitingTask;
   }
 
+  List<QuickActionItem> _quickActions() {
+    if (_workspacePhase == WorkspacePhase.error) {
+      return const <QuickActionItem>[
+        QuickActionItem(
+          label: 'Check workspace',
+          icon: Icons.memory_rounded,
+          prompt:
+              'Check the current workspace status and tell me what is wrong.',
+        ),
+        QuickActionItem(
+          label: 'Recover startup',
+          icon: Icons.build_circle_outlined,
+          prompt:
+              'Help me recover the workspace startup failure with the smallest safe fix.',
+        ),
+        QuickActionItem(
+          label: 'Summarize errors',
+          icon: Icons.error_outline_rounded,
+          prompt: 'Summarize the latest errors and what I should do next.',
+        ),
+      ];
+    }
+    if ((_previewUrl ?? '').trim().isEmpty) {
+      return const <QuickActionItem>[
+        QuickActionItem(
+          label: 'Deploy preview',
+          icon: Icons.rocket_launch_outlined,
+          prompt: 'Help me get a preview deployed for this project.',
+        ),
+        QuickActionItem(
+          label: 'Inspect project',
+          icon: Icons.search_rounded,
+          prompt:
+              'Inspect this project and tell me what it currently contains.',
+        ),
+        QuickActionItem(
+          label: 'Suggest first step',
+          icon: Icons.flag_outlined,
+          prompt: 'What is the best next step to make this project usable?',
+        ),
+      ];
+    }
+    if (_outboxItems.isNotEmpty) {
+      return const <QuickActionItem>[
+        QuickActionItem(
+          label: 'Review queue',
+          icon: Icons.queue_rounded,
+          prompt:
+              'Review the queued prompts and tell me if they can be merged.',
+        ),
+        QuickActionItem(
+          label: 'Refine request',
+          icon: Icons.edit_note_rounded,
+          prompt:
+              'Help me rewrite my next request so it is clearer and more specific.',
+        ),
+        QuickActionItem(
+          label: 'Summarize progress',
+          icon: Icons.splitscreen_rounded,
+          prompt:
+              'Summarize what has already finished and what is still queued.',
+        ),
+      ];
+    }
+    return const <QuickActionItem>[
+      QuickActionItem(
+        label: 'Debug issue',
+        icon: Icons.bug_report_outlined,
+        prompt: 'Help me debug the current issue in this project.',
+      ),
+      QuickActionItem(
+        label: 'Explain code',
+        icon: Icons.code_rounded,
+        prompt: 'Explain the relevant code in this project.',
+      ),
+      QuickActionItem(
+        label: 'Review changes',
+        icon: Icons.rate_review_outlined,
+        prompt: 'Review the current project changes and point out risks.',
+      ),
+      QuickActionItem(
+        label: 'Improve UX',
+        icon: Icons.auto_awesome_rounded,
+        prompt: 'Suggest the most valuable UX improvements for this project.',
+      ),
+    ];
+  }
+
+  String _quickActionsTitle() {
+    if (_workspacePhase == WorkspacePhase.error) return 'Recovery shortcuts';
+    if ((_previewUrl ?? '').trim().isEmpty) return 'Get to preview faster';
+    if (_outboxItems.isNotEmpty) return 'Queue shortcuts';
+    return 'Useful next prompts';
+  }
+
   void _openMobileChat() {
     HapticFeedback.lightImpact();
     setState(() {
@@ -409,6 +504,11 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
               hasMoreHistory: _hasMoreHistory,
               isLoadingMore: _isLoadingMoreHistory,
               scrollController: _chatScrollController,
+              inputController: _chatInputController,
+              inputFocusNode: _chatInputFocusNode,
+              onInputChanged: (text) => unawaited(_persistChatDraft(text)),
+              quickActions: _quickActions(),
+              quickActionsTitle: _quickActionsTitle(),
               onSendMessage: _sendChatMessage,
               onRedeploy: () => unawaited(triggerPreviewRedeploy()),
               onOpenFullScreen: () {
@@ -643,7 +743,15 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
     final theme = Theme.of(context);
     final previewUrl = _previewUrl;
     if (previewUrl == null || previewUrl.trim().isEmpty) {
-      return const NoPreviewAvailableView();
+      return NoPreviewAvailableView(
+        onRedeploy: () => unawaited(triggerPreviewRedeploy()),
+        onOpenCode: () {
+          setState(() {
+            _currentChatTabIndex = 1;
+          });
+        },
+        isDeploying: _isDeploying,
+      );
     }
 
     return Column(
@@ -665,7 +773,15 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
     final theme = Theme.of(context);
     final previewUrl = _previewUrl;
     if (previewUrl == null || previewUrl.trim().isEmpty) {
-      return const NoPreviewAvailableView();
+      return NoPreviewAvailableView(
+        onRedeploy: () => unawaited(triggerPreviewRedeploy()),
+        onOpenCode: () {
+          setState(() {
+            _currentChatTabIndex = 1;
+          });
+        },
+        isDeploying: _isDeploying,
+      );
     }
 
     return Column(

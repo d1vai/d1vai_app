@@ -34,6 +34,11 @@ class ChatBottomSheet extends StatefulWidget {
   final bool statusIsError;
   final bool isModelReady;
   final bool isModelLoading;
+  final TextEditingController? inputController;
+  final FocusNode? inputFocusNode;
+  final ValueChanged<String>? onInputChanged;
+  final List<QuickActionItem> quickActions;
+  final String? quickActionsTitle;
   final String? bannerTitle;
   final String? bannerMessage;
   final IconData bannerIcon;
@@ -66,6 +71,11 @@ class ChatBottomSheet extends StatefulWidget {
     this.statusIsError = false,
     this.isModelReady = true,
     this.isModelLoading = false,
+    this.inputController,
+    this.inputFocusNode,
+    this.onInputChanged,
+    this.quickActions = const <QuickActionItem>[],
+    this.quickActionsTitle,
     this.bannerTitle,
     this.bannerMessage,
     this.bannerIcon = Icons.info_outline_rounded,
@@ -78,16 +88,7 @@ class ChatBottomSheet extends StatefulWidget {
 }
 
 class _ChatBottomSheetState extends State<ChatBottomSheet> {
-  final TextEditingController _inputController = TextEditingController();
-  final FocusNode _inputFocusNode = FocusNode();
   bool _outboxCollapsed = false;
-
-  @override
-  void dispose() {
-    _inputController.dispose();
-    _inputFocusNode.dispose();
-    super.dispose();
-  }
 
   void _handleSubmitted(String text) {
     if (text.trim().isEmpty) return;
@@ -330,8 +331,9 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                 : (widget.isModelReady
                       ? 'Ask about your project...'
                       : 'Model is not ready…'),
-            controller: _inputController,
-            focusNode: _inputFocusNode,
+            controller: widget.inputController,
+            focusNode: widget.inputFocusNode,
+            onChanged: widget.onInputChanged,
             queueCount: widget.outboxItems.length,
             showSendPulse: widget.outboxMode == OutboxMode.dispatching,
           ),
@@ -394,6 +396,10 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                 const SizedBox(height: 12),
                 QuickActions(
                   onSelect: _handleSubmitted,
+                  actions: widget.quickActions.isEmpty
+                      ? null
+                      : widget.quickActions,
+                  title: widget.quickActionsTitle,
                   dense: true,
                   showTitle: false,
                   padding: EdgeInsets.zero,
@@ -414,6 +420,8 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
           padding: const EdgeInsets.all(16),
           child: QuickActions(
             onSelect: _handleSubmitted,
+            actions: widget.quickActions.isEmpty ? null : widget.quickActions,
+            title: widget.quickActionsTitle,
             dense: true,
             showTitle: false,
             padding: EdgeInsets.zero,
