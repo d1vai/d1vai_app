@@ -1180,6 +1180,58 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     }
   }
 
+  void _upsertToolMessage(ToolMessageContent tool) {
+    final toolId = (tool.id ?? '').trim();
+    if (toolId.isNotEmpty) {
+      for (var mi = _chatMessages.length - 1; mi >= 0; mi--) {
+        final msg = _chatMessages[mi];
+        final contents = msg.contents;
+        for (var ci = contents.length - 1; ci >= 0; ci--) {
+          final c = contents[ci];
+          if (c is! ToolMessageContent || (c.id ?? '').trim() != toolId) {
+            continue;
+          }
+          final prevOutput = c.output?.text ?? '';
+          final nextOutput = tool.output?.text ?? '';
+          final mergedOutput =
+              prevOutput.isNotEmpty && nextOutput.isNotEmpty
+              ? (prevOutput.endsWith(nextOutput)
+                    ? prevOutput
+                    : '$prevOutput$nextOutput')
+              : (nextOutput.isNotEmpty ? nextOutput : prevOutput);
+          final nextContents = List<MessageContent>.from(contents);
+          nextContents[ci] = c.copyWith(
+            name: tool.name,
+            input: tool.input,
+            status: tool.status ?? c.status,
+            output: mergedOutput.isEmpty
+                ? c.output
+                : ToolOutput(
+                    text: mergedOutput,
+                    isError:
+                        tool.output?.isError ?? c.output?.isError ?? false,
+                  ),
+          );
+          setState(() {
+            _chatMessages[mi] = msg.copyWith(contents: nextContents);
+          });
+          return;
+        }
+      }
+    }
+
+    setState(() {
+      _chatMessages.add(
+        ChatMessage(
+          id: 'tool-${DateTime.now().millisecondsSinceEpoch}',
+          role: 'assistant',
+          createdAt: DateTime.now(),
+          contents: [tool],
+        ),
+      );
+    });
+  }
+
   bool _userPayloadHasToolResult(Map<String, dynamic> payload) {
     try {
       final message = payload['message'];
@@ -1330,8 +1382,13 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       _setSessionThinking(false);
       final contents = MessageParser.createMessageContentsFromPayload(payload);
       if (contents.isEmpty) return;
+      final canReplaceLastAssistant =
+          _chatMessages.isNotEmpty &&
+          _chatMessages.last.role != 'user' &&
+          _chatMessages.last.contents.isNotEmpty &&
+          _chatMessages.last.contents.every((content) => content is TextMessageContent);
       setState(() {
-        if (_chatMessages.isNotEmpty && _chatMessages.last.role != 'user') {
+        if (canReplaceLastAssistant) {
           final last = _chatMessages.last;
           _chatMessages[_chatMessages.length - 1] = last.copyWith(
             contents: contents,
@@ -1355,6 +1412,19 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     if (type == 'assistant') {
       _finalizePrevToolDone();
       _setSessionThinking(false);
+    }
+
+    if (type == 'tool_start' ||
+        type == 'tool_output_delta' ||
+        type == 'tool_end') {
+      final contents = MessageParser.createMessageContentsFromPayload(payload);
+      final tool = contents.whereType<ToolMessageContent>().isNotEmpty
+          ? contents.whereType<ToolMessageContent>().first
+          : null;
+      if (tool == null) return;
+      _upsertToolMessage(tool);
+      _scrollToBottom();
+      return;
     }
 
     if (type == 'deployment_success') {
@@ -1395,12 +1465,13 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     if (type == 'result' ||
         type == 'complete' ||
         type == 'error' ||
+        type == 'session_failure' ||
         type == 'cancelled') {
       // Treat these as terminal signals for the current run; don't render as a chat bubble.
       if (type == 'complete') {
         _finalizePrevToolDone();
         _markSessionDone();
-      } else if (type == 'error') {
+      } else if (type == 'error' || type == 'session_failure') {
         _markLastToolOutcome('error');
         _markSessionError();
       } else if (type == 'cancelled') {

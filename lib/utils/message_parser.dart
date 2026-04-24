@@ -141,6 +141,9 @@ class MessageParser {
     if (isSystemPayload(rawPayload)) return [];
 
     final payloadType = rawPayload['type'] as String?;
+    final renderAsThinking =
+        (rawPayload['render_as']?.toString().trim().toLowerCase() ?? '') ==
+        'thinking';
 
     try {
       // Some servers wrap chat blocks in `payload.message` with a separate
@@ -162,7 +165,13 @@ class MessageParser {
           for (final item in blocks) {
             if (item is! Map<String, dynamic>) continue;
             if (item['type'] == 'text' && item['text'] != null) {
-              contents.add(TextMessageContent(text: item['text'].toString()));
+              if (renderAsThinking) {
+                contents.add(
+                  ThinkingMessageContent(text: item['text'].toString()),
+                );
+              } else {
+                contents.add(TextMessageContent(text: item['text'].toString()));
+              }
             } else if (item['type'] == 'thinking' && item['thinking'] != null) {
               contents.add(
                 ThinkingMessageContent(text: item['thinking'].toString()),
@@ -279,26 +288,90 @@ class MessageParser {
 
         case 'assistant_message':
           {
-            // Anthropic-style top-level content array
             final arr = rawPayload['content'] is List
                 ? rawPayload['content'] as List
                 : <dynamic>[];
             final contents = <MessageContent>[];
+            final toolUseTotal = arr
+                .where(
+                  (it) =>
+                      it is Map<String, dynamic> && it['type'] == 'tool_use',
+                )
+                .length;
+            var toolUseSeen = 0;
 
             for (final item in arr) {
               if (item is! Map<String, dynamic>) continue;
               if (item['type'] == 'text' && item['text'] is String) {
-                contents.add(TextMessageContent(text: item['text'] as String));
+                if (renderAsThinking) {
+                  contents.add(
+                    ThinkingMessageContent(text: item['text'] as String),
+                  );
+                } else {
+                  contents.add(TextMessageContent(text: item['text'] as String));
+                }
               } else if (item['type'] == 'thinking' &&
                   item['thinking'] is String) {
                 contents.add(
                   ThinkingMessageContent(text: item['thinking'] as String),
+                );
+              } else if (item['type'] == 'tool_use' && item['name'] != null) {
+                toolUseSeen += 1;
+                contents.add(
+                  ToolMessageContent(
+                    id: item['id']?.toString(),
+                    name: item['name'].toString(),
+                    input: item['input'],
+                    status: toolUseSeen >= toolUseTotal
+                        ? 'processing'
+                        : 'done',
+                  ),
                 );
               }
             }
             return contents.isNotEmpty
                 ? contents
                 : [const TextMessageContent(text: '')];
+          }
+
+        case 'tool_start':
+          {
+            return [
+              ToolMessageContent(
+                id: rawPayload['tool_call_id']?.toString(),
+                name: (rawPayload['tool_name'] ?? 'unknown').toString(),
+                input: rawPayload['input'],
+                status: 'processing',
+              ),
+            ];
+          }
+
+        case 'tool_end':
+          {
+            return [
+              ToolMessageContent(
+                id: rawPayload['tool_call_id']?.toString(),
+                name: (rawPayload['tool_name'] ?? 'unknown').toString(),
+                input: rawPayload['input'],
+                status: rawPayload['success'] == false ? 'error' : 'done',
+              ),
+            ];
+          }
+
+        case 'tool_output_delta':
+          {
+            final delta = rawPayload['delta']?.toString() ?? '';
+            return [
+              ToolMessageContent(
+                id: rawPayload['tool_call_id']?.toString(),
+                name: (rawPayload['tool_name'] ?? 'unknown').toString(),
+                input: rawPayload['input'],
+                status: 'processing',
+                output: delta.trim().isEmpty
+                    ? null
+                    : ToolOutput(text: delta, isError: false),
+              ),
+            ];
           }
 
         case 'deployment_checking':
@@ -382,9 +455,15 @@ class MessageParser {
               for (final item in blocks) {
                 if (item is! Map<String, dynamic>) continue;
                 if (item['type'] == 'text' && item['text'] != null) {
-                  contents.add(
-                    TextMessageContent(text: item['text'].toString()),
-                  );
+                  if (renderAsThinking) {
+                    contents.add(
+                      ThinkingMessageContent(text: item['text'].toString()),
+                    );
+                  } else {
+                    contents.add(
+                      TextMessageContent(text: item['text'].toString()),
+                    );
+                  }
                 } else if (item['type'] == 'thinking' &&
                     item['thinking'] != null) {
                   contents.add(
@@ -475,6 +554,15 @@ class MessageParser {
             // Error message handling
             final errorMsg =
                 rawPayload['message'] ?? rawPayload['error'] ?? 'Unknown error';
+            return [TextMessageContent(text: '❌ $errorMsg')];
+          }
+
+        case 'session_failure':
+          {
+            final errorMsg =
+                rawPayload['message'] ??
+                rawPayload['error']?['message'] ??
+                'Session failed';
             return [TextMessageContent(text: '❌ $errorMsg')];
           }
 
@@ -616,6 +704,10 @@ class MessageParser {
         'git_commit',
         'git_push',
         'assistant_message',
+        'tool_start',
+        'tool_end',
+        'tool_output_delta',
+        'session_failure',
         'deployment_checking',
         'deployment_success',
         'deployment_failed',

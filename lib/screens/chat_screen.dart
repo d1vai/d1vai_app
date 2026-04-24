@@ -1192,6 +1192,58 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  void _upsertToolMessage(ToolMessageContent tool) {
+    final toolId = (tool.id ?? '').trim();
+    if (toolId.isNotEmpty) {
+      for (var mi = _messages.length - 1; mi >= 0; mi--) {
+        final msg = _messages[mi];
+        final contents = msg.contents;
+        for (var ci = contents.length - 1; ci >= 0; ci--) {
+          final c = contents[ci];
+          if (c is! ToolMessageContent || (c.id ?? '').trim() != toolId) {
+            continue;
+          }
+          final prevOutput = c.output?.text ?? '';
+          final nextOutput = tool.output?.text ?? '';
+          final mergedOutput =
+              prevOutput.isNotEmpty && nextOutput.isNotEmpty
+              ? (prevOutput.endsWith(nextOutput)
+                    ? prevOutput
+                    : '$prevOutput$nextOutput')
+              : (nextOutput.isNotEmpty ? nextOutput : prevOutput);
+          final nextContents = List<MessageContent>.from(contents);
+          nextContents[ci] = c.copyWith(
+            name: tool.name,
+            input: tool.input,
+            status: tool.status ?? c.status,
+            output: mergedOutput.isEmpty
+                ? c.output
+                : ToolOutput(
+                    text: mergedOutput,
+                    isError:
+                        tool.output?.isError ?? c.output?.isError ?? false,
+                  ),
+          );
+          setState(() {
+            _messages[mi] = msg.copyWith(contents: nextContents);
+          });
+          return;
+        }
+      }
+    }
+
+    setState(() {
+      _messages.add(
+        ChatMessage(
+          id: 'tool-${DateTime.now().millisecondsSinceEpoch}',
+          role: 'assistant',
+          createdAt: DateTime.now(),
+          contents: [tool],
+        ),
+      );
+    });
+  }
+
   bool _userPayloadHasToolResult(Map<String, dynamic> payload) {
     try {
       final message = payload['message'];
@@ -1343,6 +1395,19 @@ class _ChatScreenState extends State<ChatScreen> {
       _finalizePrevToolDone();
     }
 
+    if (type == 'tool_start' ||
+        type == 'tool_output_delta' ||
+        type == 'tool_end') {
+      final contents = MessageParser.createMessageContentsFromPayload(payload);
+      final tool = contents.whereType<ToolMessageContent>().isNotEmpty
+          ? contents.whereType<ToolMessageContent>().first
+          : null;
+      if (tool == null) return;
+      _upsertToolMessage(tool);
+      _scrollToBottom();
+      return;
+    }
+
     if (type == 'tool_result' || type == 'task_update') {
       if (type == 'task_update') {
         _finalizePrevToolDone();
@@ -1375,8 +1440,9 @@ class _ChatScreenState extends State<ChatScreen> {
     if (type == 'result' ||
         type == 'complete' ||
         type == 'error' ||
+        type == 'session_failure' ||
         type == 'cancelled') {
-      if (type == 'error') {
+      if (type == 'error' || type == 'session_failure') {
         _markLastToolOutcome('error');
         _sessionError = true;
         _sessionDone = false;
