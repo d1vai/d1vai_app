@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../services/d1vai_service.dart';
 import '../services/github_service.dart';
+import 'adaptive_modal.dart';
 import 'button.dart';
 import 'card.dart';
 import 'progress_widget.dart';
@@ -298,182 +299,176 @@ class _ImportRepositoryDialogState extends State<ImportRepositoryDialog> {
             .toList() ??
         const <String>[];
 
-    return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 560),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: SingleChildScrollView(
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.download_for_offline,
-                        color: colorScheme.primary,
-                      ),
-                      const SizedBox(width: 10),
-                      const Expanded(
-                        child: Text(
-                          'Import Repository',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                          ),
+    return AdaptiveModalContainer(
+      maxWidth: 560,
+      mobileMaxHeightFactor: 0.97,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.download_for_offline,
+                      color: colorScheme.primary,
+                    ),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Text(
+                        'Import Repository',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
-                      IconButton(
+                    ),
+                    IconButton(
+                      onPressed: _isImporting || _waitingForDeploy
+                          ? null
+                          : () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                CustomCard(
+                  padding: EdgeInsets.zero,
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          fullName,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            if (language.isNotEmpty) _MetaChip(label: language),
+                            _MetaChip(label: isPrivate ? 'private' : 'public'),
+                            _MetaChip(
+                              label:
+                                  'branch ${(widget.repository['default_branch'] ?? 'main').toString()}',
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                if (_isImporting || _waitingForDeploy || _deployReady) ...[
+                  ProgressWidget(
+                    tipList: _deployTips,
+                    completed: _deployReady,
+                    preCompleteDuration: const Duration(seconds: 12),
+                  ),
+                  const SizedBox(height: 14),
+                ],
+                TextFormField(
+                  controller: _projectNameController,
+                  enabled: !_isImporting && !_waitingForDeploy,
+                  decoration: const InputDecoration(
+                    labelText: 'Project Name',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Project name is required';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _projectDescriptionController,
+                  enabled: !_isImporting && !_waitingForDeploy,
+                  minLines: 2,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Project Description',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                if (monorepoCandidates.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    'This repository looks like a monorepo. Choose the app root directory before preview deploy starts.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurface.withValues(alpha: 0.7),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: _rootDirectoryController.text.trim().isEmpty
+                        ? null
+                        : _rootDirectoryController.text.trim(),
+                    items: monorepoCandidates
+                        .map(
+                          (item) => DropdownMenuItem<String>(
+                            value: item,
+                            child: Text(item),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: _isConfiguringRootDirectory
+                        ? null
+                        : (value) {
+                            _rootDirectoryController.text = (value ?? '')
+                                .trim();
+                          },
+                    decoration: const InputDecoration(
+                      labelText: 'Root Directory',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Button(
+                        variant: ButtonVariant.secondary,
                         onPressed: _isImporting || _waitingForDeploy
                             ? null
                             : () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.close),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  CustomCard(
-                    padding: EdgeInsets.zero,
-                    child: Padding(
-                      padding: const EdgeInsets.all(14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            fullName,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              if (language.isNotEmpty)
-                                _MetaChip(label: language),
-                              _MetaChip(
-                                label: isPrivate ? 'private' : 'public',
-                              ),
-                              _MetaChip(
-                                label:
-                                    'branch ${(widget.repository['default_branch'] ?? 'main').toString()}',
-                              ),
-                            ],
-                          ),
-                        ],
+                        text: 'Cancel',
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  if (_isImporting || _waitingForDeploy || _deployReady) ...[
-                    ProgressWidget(
-                      tipList: _deployTips,
-                      completed: _deployReady,
-                      preCompleteDuration: const Duration(seconds: 12),
-                    ),
-                    const SizedBox(height: 14),
-                  ],
-                  TextFormField(
-                    controller: _projectNameController,
-                    enabled: !_isImporting && !_waitingForDeploy,
-                    decoration: const InputDecoration(
-                      labelText: 'Project Name',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Project name is required';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _projectDescriptionController,
-                    enabled: !_isImporting && !_waitingForDeploy,
-                    minLines: 2,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      labelText: 'Project Description',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  if (monorepoCandidates.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    Text(
-                      'This repository looks like a monorepo. Choose the app root directory before preview deploy starts.',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurface.withValues(alpha: 0.7),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      initialValue: _rootDirectoryController.text.trim().isEmpty
-                          ? null
-                          : _rootDirectoryController.text.trim(),
-                      items: monorepoCandidates
-                          .map(
-                            (item) => DropdownMenuItem<String>(
-                              value: item,
-                              child: Text(item),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: _isConfiguringRootDirectory
-                          ? null
-                          : (value) {
-                              _rootDirectoryController.text = (value ?? '')
-                                  .trim();
-                            },
-                      decoration: const InputDecoration(
-                        labelText: 'Root Directory',
-                        border: OutlineInputBorder(),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Button(
+                        onPressed: monorepoCandidates.isNotEmpty
+                            ? (_isConfiguringRootDirectory
+                                  ? null
+                                  : _handleConfigureRootDirectory)
+                            : (_isImporting || _waitingForDeploy
+                                  ? null
+                                  : _handleImport),
+                        icon: Icon(
+                          monorepoCandidates.isNotEmpty
+                              ? Icons.rocket_launch
+                              : Icons.download,
+                          size: 18,
+                        ),
+                        text: monorepoCandidates.isNotEmpty
+                            ? 'Start Preview Deploy'
+                            : 'Import Project',
                       ),
                     ),
                   ],
-                  const SizedBox(height: 18),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Button(
-                          variant: ButtonVariant.secondary,
-                          onPressed: _isImporting || _waitingForDeploy
-                              ? null
-                              : () => Navigator.of(context).pop(),
-                          text: 'Cancel',
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Button(
-                          onPressed: monorepoCandidates.isNotEmpty
-                              ? (_isConfiguringRootDirectory
-                                    ? null
-                                    : _handleConfigureRootDirectory)
-                              : (_isImporting || _waitingForDeploy
-                                    ? null
-                                    : _handleImport),
-                          icon: Icon(
-                            monorepoCandidates.isNotEmpty
-                                ? Icons.rocket_launch
-                                : Icons.download,
-                            size: 18,
-                          ),
-                          text: monorepoCandidates.isNotEmpty
-                              ? 'Start Preview Deploy'
-                              : 'Import Project',
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

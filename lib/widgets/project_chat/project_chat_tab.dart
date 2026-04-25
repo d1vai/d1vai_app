@@ -19,6 +19,7 @@ import '../../services/storage_service.dart';
 import '../../services/workspace_service.dart';
 import '../../utils/billing_errors.dart';
 import '../../utils/message_parser.dart';
+import '../../utils/preview_url.dart';
 import '../chat/chat_bottom_sheet.dart';
 import '../chat/floating_chat_button.dart';
 import '../chat/message_list.dart';

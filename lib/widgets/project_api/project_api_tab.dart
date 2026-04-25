@@ -7,6 +7,7 @@ import '../../models/env_var.dart';
 import '../../services/d1vai_service.dart';
 import '../../core/auth_expiry_bus.dart';
 import '../../utils/error_utils.dart';
+import '../adaptive_modal.dart';
 import '../snackbar_helper.dart';
 import 'env_var_editor_dialog.dart';
 import 'env_var_loading_skeleton.dart';
@@ -100,7 +101,7 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
   }
 
   Future<void> _showCreateEnvVarDialog() async {
-    final result = await showDialog<EnvVarEditorResult>(
+    final result = await showAdaptiveModal<EnvVarEditorResult>(
       context: context,
       builder: (context) => const EnvVarEditorDialog(),
     );
@@ -162,7 +163,7 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
   Future<void> _showEditEnvVarDialog(EnvVar envVar) async {
     final hydrated = await _fetchEnvVarWithValue(envVar);
     if (!mounted) return;
-    final result = await showDialog<EnvVarEditorResult>(
+    final result = await showAdaptiveModal<EnvVarEditorResult>(
       context: context,
       builder: (context) =>
           EnvVarEditorDialog(initial: hydrated, allowEditKey: false),

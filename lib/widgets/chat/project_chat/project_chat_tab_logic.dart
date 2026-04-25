@@ -1672,15 +1672,9 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       try {
         final msg = payload['message'];
         if (msg is Map) {
-          url =
-              msg['custom_url']?.toString() ??
-              msg['vercel_url']?.toString() ??
-              msg['url']?.toString();
+          url = preferredPreviewUrlFromPayload(msg.cast<String, dynamic>());
         }
-        url ??=
-            payload['custom_url']?.toString() ??
-            payload['vercel_url']?.toString() ??
-            payload['url']?.toString();
+        url ??= preferredPreviewUrlFromPayload(payload);
       } catch (_) {}
 
       final nextUrl = url?.trim() ?? '';
@@ -1705,7 +1699,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
   Future<void> _refreshPreviewUrlFromApi() async {
     try {
       final project = await _d1vaiService.getUserProjectById(widget.projectId);
-      final next = (project.latestPreviewUrl ?? '').trim();
+      final next = (preferredPreviewUrlFromProject(project) ?? '').trim();
       if (!mounted) return;
       if (next.isEmpty) return;
       setState(() {
@@ -1713,6 +1707,49 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _previewKey += 1;
       });
     } catch (_) {}
+  }
+
+  void _appendManualRedeployMessages({String? commitHash, String? branch}) {
+    final now = DateTime.now();
+    final branchLabel = (branch ?? '').trim().isNotEmpty
+        ? branch!.trim()
+        : 'dev';
+    final sha = (commitHash ?? '').trim();
+    final shortSha = sha.isEmpty
+        ? ''
+        : sha.substring(0, sha.length >= 7 ? 7 : sha.length);
+
+    setState(() {
+      _chatMessages.addAll([
+        ChatMessage(
+          id: 'git-manual-commit-${now.microsecondsSinceEpoch}',
+          role: 'assistant',
+          createdAt: now,
+          contents: [
+            GitCommitMessageContent(
+              projectId: widget.projectId,
+              message: shortSha.isNotEmpty
+                  ? 'Preview branch synced for redeploy ($shortSha)'
+                  : 'Preview branch synced for redeploy',
+              files: const <String>[],
+            ),
+          ],
+        ),
+        ChatMessage(
+          id: 'git-manual-push-${now.microsecondsSinceEpoch + 1}',
+          role: 'assistant',
+          createdAt: now,
+          contents: [
+            GitPushMessageContent(
+              projectId: widget.projectId,
+              branch: branchLabel,
+              success: true,
+            ),
+          ],
+        ),
+      ]);
+    });
+    _scrollToBottom(force: false);
   }
 
   @override
@@ -1725,10 +1762,18 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     _scheduleDeployAutoClear(const Duration(minutes: 2));
     try {
       final res = await _d1vaiService.deployProjectPreview(widget.projectId);
-      final url = (res['vercel_url'] ?? res['production_url'] ?? '')
+      final url = (preferredPreviewUrlFromPayload(res) ?? '').trim();
+      final project = await _d1vaiService.getUserProjectById(widget.projectId);
+      final branch =
+          project.workspaceCurrentBranch ??
+          project.repositoryCurrentBranch ??
+          project.repositoryDefaultBranch ??
+          'dev';
+      final commitHash = (res['commit_hash'] ?? res['git_commit_sha'] ?? '')
           .toString()
           .trim();
       if (!mounted) return;
+      _appendManualRedeployMessages(commitHash: commitHash, branch: branch);
       if (url.isNotEmpty) {
         setState(() {
           _previewUrl = url;

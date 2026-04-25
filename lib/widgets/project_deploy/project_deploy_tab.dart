@@ -10,6 +10,7 @@ import '../../models/project.dart';
 import '../../services/d1vai_service.dart';
 import '../../core/auth_expiry_bus.dart';
 import '../../utils/error_utils.dart';
+import '../../utils/preview_url.dart';
 import 'deployment_log_screen.dart';
 import '../snackbar_helper.dart';
 import '../card.dart';
@@ -338,7 +339,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
       final service = D1vaiService();
       final res = await service.deployProjectPreview(widget.project.id);
       final url = _normalizeHttpUrl(
-        (res['vercel_url'] ?? res['production_url'] ?? '').toString(),
+        (preferredPreviewUrlFromPayload(res) ?? '').toString(),
       );
       final msg = (res['message'] ?? '').toString().trim();
       if (!mounted) return;
@@ -544,8 +545,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
       await service.revertGitCommit(widget.project.id, commitHash: sha);
       final deployRes = await service.deployProjectPreview(widget.project.id);
       final url = _normalizeHttpUrl(
-        (deployRes['vercel_url'] ?? deployRes['production_url'] ?? '')
-            .toString(),
+        (preferredPreviewUrlFromPayload(deployRes) ?? '').toString(),
       );
 
       if (!mounted) return;
@@ -855,7 +855,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final activeHint = _activeFlowHint();
-    final hasPreview = (project.latestPreviewUrl ?? '').trim().isNotEmpty;
+    final hasPreview = (project.preferredPreviewUrl ?? '').trim().isNotEmpty;
     final hasProd = (project.latestProdDeploymentUrl ?? '').trim().isNotEmpty;
 
     return CustomCard(
@@ -1319,8 +1319,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                 onTap: () {},
               ),
             // Preview deployment
-            if (project.latestPreviewUrl != null &&
-                project.latestPreviewUrl!.isNotEmpty) ...[
+            if ((project.preferredPreviewUrl ?? '').isNotEmpty) ...[
               const Divider(),
               ListTile(
                 leading: Container(
@@ -1338,14 +1337,14 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                 ),
                 title: Text(_t('project_deploy_filter_preview', 'Preview')),
                 subtitle: Text(
-                  _getDeploymentLabel(project.latestPreviewUrl),
+                  _getDeploymentLabel(project.preferredPreviewUrl),
                   style: TextStyle(color: Colors.grey.shade600),
                 ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     TextButton(
-                      onPressed: () => _openUrl(project.latestPreviewUrl!),
+                      onPressed: () => _openUrl(project.preferredPreviewUrl!),
                       child: Text(_t('project_deploy_open', 'Open')),
                     ),
                     const Icon(Icons.arrow_forward_ios, size: 14),

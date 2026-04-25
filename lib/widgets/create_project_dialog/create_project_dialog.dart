@@ -18,6 +18,7 @@ import '../../services/model_config_service.dart';
 import '../../services/workspace_service.dart';
 import '../../utils/billing_errors.dart';
 import '../snackbar_helper.dart';
+import '../adaptive_modal.dart';
 import '../insufficient_balance_dialog.dart';
 
 import 'create_project_chooser_view.dart';
@@ -46,6 +47,16 @@ class CreateProjectDialog extends StatefulWidget {
   final Function(UserProject)? onCreated;
 
   const CreateProjectDialog({super.key, this.trigger, this.onCreated});
+
+  static Future<T?> show<T>(
+    BuildContext context, {
+    Function(UserProject)? onCreated,
+  }) {
+    return showAdaptiveModal<T>(
+      context: context,
+      builder: (context) => CreateProjectDialog(onCreated: onCreated),
+    );
+  }
 
   @override
   State<CreateProjectDialog> createState() => _CreateProjectDialogState();

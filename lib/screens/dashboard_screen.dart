@@ -516,10 +516,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           ? null
           : FloatingActionButton(
               onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => const CreateProjectDialog(),
-                );
+                CreateProjectDialog.show(context);
               },
               child: const Icon(Icons.add),
             ),
@@ -766,10 +763,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               const SizedBox(height: 16),
               ElevatedButton.icon(
                 onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => const CreateProjectDialog(),
-                  );
+                  CreateProjectDialog.show(context);
                 },
                 icon: const Icon(Icons.add),
                 label: Text(_t('create_project', 'Create Project')),

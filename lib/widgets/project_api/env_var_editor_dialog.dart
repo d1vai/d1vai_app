@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../adaptive_modal.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/env_var.dart';
 
@@ -88,90 +89,108 @@ class _EnvVarEditorDialogState extends State<EnvVarEditorDialog> {
     final isEdit = widget.initial != null;
     final canSubmit = _validKey && _validValue;
 
-    return AlertDialog(
-      title: Text(
-        isEdit
-            ? _t('project_api_edit_variable', 'Edit variable')
-            : _t('project_api_add_variable', 'Add variable'),
-      ),
-      content: SizedBox(
-        width: 520,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _keyController,
-              enabled: widget.allowEditKey,
-              textCapitalization: TextCapitalization.characters,
-              decoration: InputDecoration(
-                labelText: _t('project_api_key', 'Key'),
-                hintText: _t('project_api_key_example', 'EXAMPLE_API_KEY'),
-                errorText: _keyController.text.trim().isEmpty || _validKey
-                    ? null
-                    : _t(
-                        'project_api_key_error',
-                        'Use only letters, numbers, _ and -',
-                      ),
-              ),
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _valueController,
-              decoration: InputDecoration(
-                labelText: _t('project_api_value', 'Value'),
-                hintText: _t(
+    return AdaptiveModalContainer(
+      maxWidth: 520,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AdaptiveModalHeader(
+                title: isEdit
+                    ? _t('project_api_edit_variable', 'Edit variable')
+                    : _t('project_api_add_variable', 'Add variable'),
+                subtitle: _t(
                   'project_api_value_hint',
                   'Paste the secret value...',
                 ),
+                onClose: () => Navigator.of(context).pop(),
               ),
-              maxLines: 3,
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _descController,
-              decoration: InputDecoration(
-                labelText: _t(
-                  'project_api_description_optional',
-                  'Description (optional)',
+              TextField(
+                controller: _keyController,
+                enabled: widget.allowEditKey,
+                textCapitalization: TextCapitalization.characters,
+                decoration: InputDecoration(
+                  labelText: _t('project_api_key', 'Key'),
+                  hintText: _t('project_api_key_example', 'EXAMPLE_API_KEY'),
+                  errorText: _keyController.text.trim().isEmpty || _validKey
+                      ? null
+                      : _t(
+                          'project_api_key_error',
+                          'Use only letters, numbers, _ and -',
+                        ),
                 ),
+                onChanged: (_) => setState(() {}),
               ),
-              maxLines: 2,
-            ),
-            const SizedBox(height: 8),
-            SwitchListTile.adaptive(
-              value: _isSensitive,
-              onChanged: (v) => setState(() => _isSensitive = v),
-              title: Text(_t('project_api_sensitive', 'Sensitive')),
-              subtitle: Text(
-                _isSensitive
-                    ? _t(
-                        'project_api_sensitive_masked',
-                        'Masked in lists by default',
-                      )
-                    : _t('project_api_sensitive_visible', 'Visible in lists'),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+              const SizedBox(height: 12),
+              TextField(
+                controller: _valueController,
+                decoration: InputDecoration(
+                  labelText: _t('project_api_value', 'Value'),
+                  hintText: _t(
+                    'project_api_value_hint',
+                    'Paste the secret value...',
+                  ),
                 ),
+                maxLines: 3,
+                onChanged: (_) => setState(() {}),
               ),
-              contentPadding: EdgeInsets.zero,
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(_t('cancel', 'Cancel')),
-        ),
-        ElevatedButton(
-          onPressed: canSubmit ? _submit : null,
-          child: Text(
-            isEdit ? _t('save', 'Save') : _t('project_api_add', 'Add'),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _descController,
+                decoration: InputDecoration(
+                  labelText: _t(
+                    'project_api_description_optional',
+                    'Description (optional)',
+                  ),
+                ),
+                maxLines: 2,
+              ),
+              const SizedBox(height: 8),
+              SwitchListTile.adaptive(
+                value: _isSensitive,
+                onChanged: (v) => setState(() => _isSensitive = v),
+                title: Text(_t('project_api_sensitive', 'Sensitive')),
+                subtitle: Text(
+                  _isSensitive
+                      ? _t(
+                          'project_api_sensitive_masked',
+                          'Masked in lists by default',
+                        )
+                      : _t('project_api_sensitive_visible', 'Visible in lists'),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                contentPadding: EdgeInsets.zero,
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text(_t('cancel', 'Cancel')),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: canSubmit ? _submit : null,
+                      child: Text(
+                        isEdit
+                            ? _t('save', 'Save')
+                            : _t('project_api_add', 'Add'),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 }

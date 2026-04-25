@@ -148,10 +148,7 @@ class _OrderHistoryState extends State<OrderHistory> {
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            showDialog(
-              context: context,
-              builder: (context) => OrderDetailDialog(order: order),
-            );
+            OrderDetailDialog.show(context, order: order);
           },
           borderRadius: BorderRadius.circular(14),
           child: Padding(

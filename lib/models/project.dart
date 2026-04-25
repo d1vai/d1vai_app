@@ -8,6 +8,7 @@ class UserProject {
   final int userId;
   final int projectPort;
   final String? emoji;
+  final String? latestDevDeploymentUrl;
   final String? latestPreviewUrl;
   final List<String> tags;
   final String status;
@@ -44,6 +45,7 @@ class UserProject {
     required this.userId,
     required this.projectPort,
     this.emoji,
+    this.latestDevDeploymentUrl,
     this.latestPreviewUrl,
     this.tags = const [],
     this.status = 'active',
@@ -102,6 +104,7 @@ class UserProject {
       userId: parseInt(json['user_id']) ?? 0,
       projectPort: parseInt(json['project_port']) ?? 0,
       emoji: json['emoji']?.toString(),
+      latestDevDeploymentUrl: json['latest_dev_deployment_url']?.toString(),
       latestPreviewUrl: json['latest_preview_url']?.toString(),
       tags: json['tags'] != null ? List<String>.from(json['tags']) : [],
       status: json['status']?.toString() ?? 'active',
@@ -142,6 +145,7 @@ class UserProject {
       'user_id': userId,
       'project_port': projectPort,
       'emoji': emoji,
+      'latest_dev_deployment_url': latestDevDeploymentUrl,
       'latest_preview_url': latestPreviewUrl,
       'tags': tags,
       'status': status,
@@ -170,6 +174,15 @@ class UserProject {
   bool get hasAnalyticsId =>
       analyticsId != null && analyticsId!.trim().isNotEmpty;
 
+  /// Match web preview preference: bound dev domain first, then generic preview.
+  String? get preferredPreviewUrl {
+    final preferred =
+        [latestDevDeploymentUrl, latestPreviewUrl, latestProdDeploymentUrl]
+            .map((e) => e?.trim() ?? '')
+            .firstWhere((value) => value.isNotEmpty, orElse: () => '');
+    return preferred.isEmpty ? null : preferred;
+  }
+
   /// Keep parity with Web's truthy check on `project_database_id`.
   bool get hasDatabaseEnabled => hasProjectDatabase;
 
@@ -183,6 +196,7 @@ class UserProject {
     int? userId,
     int? projectPort,
     String? emoji,
+    String? latestDevDeploymentUrl,
     String? latestPreviewUrl,
     List<String>? tags,
     String? status,
@@ -216,6 +230,8 @@ class UserProject {
       userId: userId ?? this.userId,
       projectPort: projectPort ?? this.projectPort,
       emoji: emoji ?? this.emoji,
+      latestDevDeploymentUrl:
+          latestDevDeploymentUrl ?? this.latestDevDeploymentUrl,
       latestPreviewUrl: latestPreviewUrl ?? this.latestPreviewUrl,
       tags: tags ?? this.tags,
       status: status ?? this.status,

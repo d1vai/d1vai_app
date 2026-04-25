@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../models/project.dart';
+import '../../../utils/preview_url.dart';
 import '../../../providers/auth_provider.dart';
 import 'project_overview_card_shell.dart';
 import 'project_overview_utils.dart';
@@ -95,7 +96,9 @@ class ProjectOverviewStatsCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                ProjectDeploymentLink(url: project.latestPreviewUrl),
+                ProjectDeploymentLink(
+                  url: preferredPreviewUrlFromProject(project),
+                ),
               ],
             ),
           ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import '../models/payment.dart';
+import 'adaptive_modal.dart';
 
 /// 订单详情对话框
 class OrderDetailDialog extends StatefulWidget {
@@ -8,12 +10,21 @@ class OrderDetailDialog extends StatefulWidget {
 
   const OrderDetailDialog({super.key, required this.order});
 
+  static Future<T?> show<T>(
+    BuildContext context, {
+    required PaymentTransaction order,
+  }) {
+    return showAdaptiveModal<T>(
+      context: context,
+      builder: (context) => OrderDetailDialog(order: order),
+    );
+  }
+
   @override
   State<OrderDetailDialog> createState() => _OrderDetailDialogState();
 }
 
 class _OrderDetailDialogState extends State<OrderDetailDialog> {
-  /// 下载发票
   Future<void> _downloadInvoice() async {
     if (!mounted) return;
 
@@ -36,173 +47,111 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
   Widget build(BuildContext context) {
     final order = widget.order;
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        width: MediaQuery.of(context).size.width * 0.95,
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Order Details',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Transaction ID: ${order.id}',
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.6,
-                          ),
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // Status
-            _buildStatusCard(order),
-            const SizedBox(height: 16),
-
-            // Order Information
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Order Information',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildInfoRow(
-                      'Product',
-                      order.productName ?? 'N/A',
-                      icon: Icons.inventory_2,
-                    ),
-                    const Divider(),
-                    _buildInfoRow(
-                      'Amount',
-                      order.formattedAmount,
-                      icon: Icons.attach_money,
-                      valueColor: theme.colorScheme.primary,
-                    ),
-                    const Divider(),
-                    _buildInfoRow(
-                      'Currency',
-                      order.currency.toUpperCase(),
-                      icon: Icons.currency_exchange,
-                    ),
-                    const Divider(),
-                    _buildInfoRow(
-                      'Payment Method',
-                      order.paymentMethod?.toUpperCase() ?? 'N/A',
-                      icon: Icons.payment,
-                    ),
-                  ],
-                ),
+    return AdaptiveModalContainer(
+      maxWidth: 720,
+      mobileMaxHeightFactor: 0.98,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AdaptiveModalHeader(
+            title: 'Order Details',
+            subtitle: 'Transaction ID: ${order.id}',
+            leading: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: order.statusColor.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(12),
               ),
+              child: Icon(order.statusIcon, color: order.statusColor, size: 22),
             ),
-            const SizedBox(height: 16),
-
-            // Timestamps
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Timestamps',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+            onClose: () => Navigator.pop(context),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildStatusCard(order),
+                  const SizedBox(height: 16),
+                  _buildSectionCard(
+                    title: 'Order Information',
+                    children: [
+                      _buildInfoRow(
+                        'Product',
+                        order.productName ?? 'N/A',
+                        icon: Icons.inventory_2,
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildInfoRow(
-                      'Created',
-                      _formatDateTime(order.createdAt),
-                      icon: Icons.schedule,
-                    ),
-                    if (order.completedAt != null) ...[
                       const Divider(),
                       _buildInfoRow(
-                        'Completed',
-                        _formatDateTime(order.completedAt),
-                        icon: Icons.check_circle,
+                        'Amount',
+                        order.formattedAmount,
+                        icon: Icons.attach_money,
+                        valueColor: colorScheme.primary,
                       ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Customer Information
-            if (order.customerEmail != null)
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Customer',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
+                      const Divider(),
                       _buildInfoRow(
-                        'Email',
-                        order.customerEmail!,
-                        icon: Icons.email,
+                        'Currency',
+                        order.currency.toUpperCase(),
+                        icon: Icons.currency_exchange,
+                      ),
+                      const Divider(),
+                      _buildInfoRow(
+                        'Payment Method',
+                        order.paymentMethod?.toUpperCase() ?? 'N/A',
+                        icon: Icons.payment,
                       ),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 16),
+                  _buildSectionCard(
+                    title: 'Timestamps',
+                    children: [
+                      _buildInfoRow(
+                        'Created',
+                        _formatDateTime(order.createdAt),
+                        icon: Icons.schedule,
+                      ),
+                      if (order.completedAt != null) ...[
+                        const Divider(),
+                        _buildInfoRow(
+                          'Completed',
+                          _formatDateTime(order.completedAt),
+                          icon: Icons.check_circle,
+                        ),
+                      ],
+                    ],
+                  ),
+                  if (order.customerEmail != null) ...[
+                    const SizedBox(height: 16),
+                    _buildSectionCard(
+                      title: 'Customer',
+                      children: [
+                        _buildInfoRow(
+                          'Email',
+                          order.customerEmail!,
+                          icon: Icons.email,
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
               ),
-
-            const SizedBox(height: 24),
-
-            // Action Buttons
-            Row(
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+            child: Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
+                    onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      side: BorderSide(color: theme.colorScheme.outline),
+                      side: BorderSide(color: colorScheme.outline),
                     ),
                     child: const Text('Close'),
                   ),
@@ -210,13 +159,11 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () {
-                      _downloadInvoice();
-                    },
+                    onPressed: _downloadInvoice,
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: theme.colorScheme.onPrimary,
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: colorScheme.onPrimary,
                     ),
                     icon: const Icon(Icons.file_download, size: 20),
                     label: const Text('Invoice'),
@@ -224,6 +171,28 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionCard({
+    required String title,
+    required List<Widget> children,
+  }) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            ...children,
           ],
         ),
       ),

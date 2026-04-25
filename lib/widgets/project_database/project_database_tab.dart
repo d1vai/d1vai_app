@@ -1762,9 +1762,11 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
               unawaited(_openTableInData(meta));
             },
             onLongPress: () {
-              showDialog(
-                context: context,
-                builder: (context) => TableDetailDialog(table: table),
+              TableDetailDialog.show(
+                context,
+                table: table,
+                projectId: widget.project.id,
+                branch: _selectedBranch.isEmpty ? null : _selectedBranch,
               );
             },
           ),
@@ -1922,9 +1924,11 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                   table: t,
                   size: nodeSize,
                   onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (_) => TableDetailDialog(table: t),
+                    TableDetailDialog.show(
+                      context,
+                      table: t,
+                      projectId: widget.project.id,
+                      branch: _selectedBranch.isEmpty ? null : _selectedBranch,
                     );
                   },
                   onLongPress: () {

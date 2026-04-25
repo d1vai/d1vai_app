@@ -11,6 +11,7 @@ import '../../providers/auth_provider.dart';
 import '../../services/github_service.dart';
 import '../../widgets/button.dart';
 import '../../widgets/card.dart';
+import '../../widgets/adaptive_modal.dart';
 import '../../widgets/import_repository_dialog.dart';
 import '../../widgets/login_required_view.dart';
 import '../../widgets/snackbar_helper.dart';
@@ -203,7 +204,7 @@ class _SettingsGithubTabState extends State<SettingsGithubTab>
   Future<void> _openImportDialog(Map<String, dynamic> repository) async {
     final installationId = _selectedInstallationId;
     if (installationId == null) return;
-    final imported = await showDialog<bool>(
+    final imported = await showAdaptiveModal<bool>(
       context: context,
       builder: (context) => ImportRepositoryDialog(
         repository: repository,

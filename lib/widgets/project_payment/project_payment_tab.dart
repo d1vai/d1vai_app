@@ -6,6 +6,7 @@ import '../../models/payment.dart';
 import '../../services/d1vai_service.dart';
 import '../../core/auth_expiry_bus.dart';
 import '../../utils/error_utils.dart';
+import '../adaptive_modal.dart';
 import '../select.dart';
 import '../snackbar_helper.dart';
 
@@ -556,18 +557,27 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
     String error = '';
     bool isLoading = false;
 
-    showDialog(
+    showAdaptiveModal(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(
-            _t('project_payment_add_product_title', 'Add Payment Product'),
-          ),
-          content: SizedBox(
-            width: double.maxFinite,
+        builder: (context, setDialogState) => AdaptiveModalContainer(
+          maxWidth: 540,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                AdaptiveModalHeader(
+                  title: _t(
+                    'project_payment_add_product_title',
+                    'Add Payment Product',
+                  ),
+                  subtitle: _t(
+                    'project_payment_description_hint',
+                    'Describe your product',
+                  ),
+                  onClose: isLoading ? null : () => Navigator.pop(context),
+                ),
                 if (error.isNotEmpty) ...[
                   Container(
                     padding: const EdgeInsets.all(8),
@@ -670,99 +680,122 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                   contentPadding: EdgeInsets.zero,
                   dense: true,
                 ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: isLoading
+                            ? null
+                            : () => Navigator.pop(context),
+                        child: Text(_t('cancel', 'Cancel')),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: isLoading
+                            ? null
+                            : () async {
+                                final name = nameController.text.trim();
+                                final description = descriptionController.text
+                                    .trim();
+                                final priceText = priceController.text.trim();
+
+                                if (name.isEmpty) {
+                                  setDialogState(() {
+                                    error = _t(
+                                      'project_payment_product_name_required',
+                                      'Product name is required',
+                                    );
+                                  });
+                                  return;
+                                }
+
+                                if (priceText.isEmpty) {
+                                  setDialogState(() {
+                                    error = _t(
+                                      'project_payment_price_required',
+                                      'Price is required',
+                                    );
+                                  });
+                                  return;
+                                }
+
+                                final price = double.tryParse(priceText);
+                                if (price == null || price <= 0) {
+                                  setDialogState(() {
+                                    error = _t(
+                                      'project_payment_price_invalid',
+                                      'Please enter a valid price',
+                                    );
+                                  });
+                                  return;
+                                }
+
+                                setDialogState(() {
+                                  isLoading = true;
+                                  error = '';
+                                });
+
+                                try {
+                                  await Future.delayed(
+                                    const Duration(seconds: 1),
+                                  );
+
+                                  if (!mounted) return;
+
+                                  final product = PayProduct(
+                                    id: DateTime.now().millisecondsSinceEpoch
+                                        .toString(),
+                                    name: name,
+                                    description: description.isEmpty
+                                        ? null
+                                        : description,
+                                    price: price,
+                                    currency: selectedCurrency,
+                                    isActive: isActive,
+                                    createdAt: DateTime.now().toIso8601String(),
+                                  );
+
+                                  setState(() {
+                                    _payProducts.add(product);
+                                  });
+
+                                  if (context.mounted) {
+                                    Navigator.pop(context);
+                                  }
+                                } catch (e) {
+                                  setDialogState(() {
+                                    isLoading = false;
+                                    error = _t(
+                                      'project_payment_add_product_failed',
+                                      'Failed to add product: {error}',
+                                    ).replaceAll('{error}', '$e');
+                                  });
+                                }
+                              },
+                        child: isLoading
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                _t(
+                                  'project_payment_add_product',
+                                  'Add Product',
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: isLoading ? null : () => Navigator.pop(context),
-              child: Text(_t('cancel', 'Cancel')),
-            ),
-            ElevatedButton(
-              onPressed: isLoading
-                  ? null
-                  : () async {
-                      final name = nameController.text.trim();
-                      final description = descriptionController.text.trim();
-                      final priceText = priceController.text.trim();
-
-                      if (name.isEmpty) {
-                        setDialogState(() {
-                          error = _t(
-                            'project_payment_product_name_required',
-                            'Product name is required',
-                          );
-                        });
-                        return;
-                      }
-
-                      if (priceText.isEmpty) {
-                        setDialogState(() {
-                          error = _t(
-                            'project_payment_price_required',
-                            'Price is required',
-                          );
-                        });
-                        return;
-                      }
-
-                      final price = double.tryParse(priceText);
-                      if (price == null || price <= 0) {
-                        setDialogState(() {
-                          error = _t(
-                            'project_payment_price_invalid',
-                            'Please enter a valid price',
-                          );
-                        });
-                        return;
-                      }
-
-                      setDialogState(() {
-                        isLoading = true;
-                        error = '';
-                      });
-
-                      try {
-                        await Future.delayed(const Duration(seconds: 1));
-
-                        if (!mounted) return;
-
-                        final product = PayProduct(
-                          id: DateTime.now().millisecondsSinceEpoch.toString(),
-                          name: name,
-                          description: description.isEmpty ? null : description,
-                          price: price,
-                          currency: selectedCurrency,
-                          isActive: isActive,
-                          createdAt: DateTime.now().toIso8601String(),
-                        );
-
-                        setState(() {
-                          _payProducts.add(product);
-                        });
-
-                        if (context.mounted) {
-                          Navigator.pop(context);
-                        }
-                      } catch (e) {
-                        setDialogState(() {
-                          isLoading = false;
-                          error = _t(
-                            'project_payment_add_product_failed',
-                            'Failed to add product: {error}',
-                          ).replaceAll('{error}', '$e');
-                        });
-                      }
-                    },
-              child: isLoading
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(_t('project_payment_add_product', 'Add Product')),
-            ),
-          ],
         ),
       ),
     );
@@ -781,18 +814,27 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
     String error = '';
     bool isLoading = false;
 
-    showDialog(
+    showAdaptiveModal(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(
-            _t('project_payment_edit_product_title', 'Edit Payment Product'),
-          ),
-          content: SizedBox(
-            width: double.maxFinite,
+        builder: (context, setDialogState) => AdaptiveModalContainer(
+          maxWidth: 540,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                AdaptiveModalHeader(
+                  title: _t(
+                    'project_payment_edit_product_title',
+                    'Edit Payment Product',
+                  ),
+                  subtitle: _t(
+                    'project_payment_description_hint',
+                    'Describe your product',
+                  ),
+                  onClose: isLoading ? null : () => Navigator.pop(context),
+                ),
                 if (error.isNotEmpty) ...[
                   Container(
                     padding: const EdgeInsets.all(8),
@@ -895,102 +937,122 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                   contentPadding: EdgeInsets.zero,
                   dense: true,
                 ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: isLoading
+                            ? null
+                            : () => Navigator.pop(context),
+                        child: Text(_t('cancel', 'Cancel')),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: isLoading
+                            ? null
+                            : () async {
+                                final name = nameController.text.trim();
+                                final description = descriptionController.text
+                                    .trim();
+                                final priceText = priceController.text.trim();
+
+                                if (name.isEmpty) {
+                                  setDialogState(() {
+                                    error = _t(
+                                      'project_payment_product_name_required',
+                                      'Product name is required',
+                                    );
+                                  });
+                                  return;
+                                }
+
+                                if (priceText.isEmpty) {
+                                  setDialogState(() {
+                                    error = _t(
+                                      'project_payment_price_required',
+                                      'Price is required',
+                                    );
+                                  });
+                                  return;
+                                }
+
+                                final price = double.tryParse(priceText);
+                                if (price == null || price <= 0) {
+                                  setDialogState(() {
+                                    error = _t(
+                                      'project_payment_price_invalid',
+                                      'Please enter a valid price',
+                                    );
+                                  });
+                                  return;
+                                }
+
+                                setDialogState(() {
+                                  isLoading = true;
+                                  error = '';
+                                });
+
+                                try {
+                                  await Future.delayed(
+                                    const Duration(seconds: 1),
+                                  );
+
+                                  if (!mounted) return;
+
+                                  setState(() {
+                                    final index = _payProducts.indexOf(product);
+                                    if (index != -1) {
+                                      _payProducts[index] = PayProduct(
+                                        id: product.id,
+                                        name: name,
+                                        description: description.isEmpty
+                                            ? null
+                                            : description,
+                                        price: price,
+                                        currency: selectedCurrency,
+                                        isActive: isActive,
+                                        createdAt: product.createdAt,
+                                      );
+                                    }
+                                  });
+
+                                  if (context.mounted) {
+                                    Navigator.pop(context);
+                                  }
+                                } catch (e) {
+                                  setDialogState(() {
+                                    isLoading = false;
+                                    error = _t(
+                                      'project_payment_update_product_failed',
+                                      'Failed to update product: {error}',
+                                    ).replaceAll('{error}', '$e');
+                                  });
+                                }
+                              },
+                        child: isLoading
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                _t(
+                                  'project_payment_save_changes',
+                                  'Save Changes',
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: isLoading ? null : () => Navigator.pop(context),
-              child: Text(_t('cancel', 'Cancel')),
-            ),
-            ElevatedButton(
-              onPressed: isLoading
-                  ? null
-                  : () async {
-                      final name = nameController.text.trim();
-                      final description = descriptionController.text.trim();
-                      final priceText = priceController.text.trim();
-
-                      if (name.isEmpty) {
-                        setDialogState(() {
-                          error = _t(
-                            'project_payment_product_name_required',
-                            'Product name is required',
-                          );
-                        });
-                        return;
-                      }
-
-                      if (priceText.isEmpty) {
-                        setDialogState(() {
-                          error = _t(
-                            'project_payment_price_required',
-                            'Price is required',
-                          );
-                        });
-                        return;
-                      }
-
-                      final price = double.tryParse(priceText);
-                      if (price == null || price <= 0) {
-                        setDialogState(() {
-                          error = _t(
-                            'project_payment_price_invalid',
-                            'Please enter a valid price',
-                          );
-                        });
-                        return;
-                      }
-
-                      setDialogState(() {
-                        isLoading = true;
-                        error = '';
-                      });
-
-                      try {
-                        await Future.delayed(const Duration(seconds: 1));
-
-                        if (!mounted) return;
-
-                        setState(() {
-                          final index = _payProducts.indexOf(product);
-                          if (index != -1) {
-                            _payProducts[index] = PayProduct(
-                              id: product.id,
-                              name: name,
-                              description: description.isEmpty
-                                  ? null
-                                  : description,
-                              price: price,
-                              currency: selectedCurrency,
-                              isActive: isActive,
-                              createdAt: product.createdAt,
-                            );
-                          }
-                        });
-
-                        if (context.mounted) {
-                          Navigator.pop(context);
-                        }
-                      } catch (e) {
-                        setDialogState(() {
-                          isLoading = false;
-                          error = _t(
-                            'project_payment_update_product_failed',
-                            'Failed to update product: {error}',
-                          ).replaceAll('{error}', '$e');
-                        });
-                      }
-                    },
-              child: isLoading
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(_t('project_payment_save_changes', 'Save Changes')),
-            ),
-          ],
         ),
       ),
     );

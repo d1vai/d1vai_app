@@ -412,7 +412,7 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       final project = await _d1vaiService.getUserProjectById(widget.projectId);
       final next =
-          (project.latestPreviewUrl ?? project.latestProdDeploymentUrl ?? '')
+          (project.preferredPreviewUrl ?? project.latestProdDeploymentUrl ?? '')
               .trim();
       if (!mounted) return;
       if (next.isEmpty) {
@@ -1205,8 +1205,7 @@ class _ChatScreenState extends State<ChatScreen> {
           }
           final prevOutput = c.output?.text ?? '';
           final nextOutput = tool.output?.text ?? '';
-          final mergedOutput =
-              prevOutput.isNotEmpty && nextOutput.isNotEmpty
+          final mergedOutput = prevOutput.isNotEmpty && nextOutput.isNotEmpty
               ? (prevOutput.endsWith(nextOutput)
                     ? prevOutput
                     : '$prevOutput$nextOutput')
@@ -1220,8 +1219,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ? c.output
                 : ToolOutput(
                     text: mergedOutput,
-                    isError:
-                        tool.output?.isError ?? c.output?.isError ?? false,
+                    isError: tool.output?.isError ?? c.output?.isError ?? false,
                   ),
           );
           setState(() {

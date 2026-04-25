@@ -98,7 +98,7 @@ class _ProjectCardTileState extends State<ProjectCardTile>
     final status = _statusStyle(project.status, colorScheme);
     final accent = status.color;
     final tags = project.tags.take(3).toList(growable: false);
-    final hasPreview = (project.latestPreviewUrl ?? '').trim().isNotEmpty;
+    final hasPreview = (project.preferredPreviewUrl ?? '').trim().isNotEmpty;
     final hasChatAction = widget.onChat != null;
 
     final scale = Tween<double>(

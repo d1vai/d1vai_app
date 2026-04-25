@@ -5,6 +5,7 @@ import 'package:d1vai_app/providers/auth_provider.dart';
 import 'package:d1vai_app/providers/theme_provider.dart';
 import 'package:d1vai_app/l10n/app_localizations.dart';
 import 'package:d1vai_app/services/d1vai_service.dart';
+import 'package:d1vai_app/widgets/adaptive_modal.dart';
 import 'package:d1vai_app/widgets/snackbar_helper.dart';
 import 'package:d1vai_app/widgets/button.dart';
 import 'package:d1vai_app/core/theme/app_colors.dart';
@@ -145,16 +146,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
   /// 显示主题选择对话框
   void _showThemeDialog() {
     final loc = AppLocalizations.of(context);
-    showDialog(
+    showAdaptiveModal(
       context: context,
       builder: (context) {
         return Consumer<ThemeProvider>(
           builder: (context, themeProvider, child) {
-            return AlertDialog(
-              title: Text(loc?.translate('choose_theme') ?? 'Choose Theme'),
-              content: Column(
+            return AdaptiveModalContainer(
+              maxWidth: 460,
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  AdaptiveModalHeader(
+                    title: loc?.translate('choose_theme') ?? 'Choose Theme',
+                    subtitle: 'Match your workspace mood and ambient contrast.',
+                    onClose: () => Navigator.of(context).pop(),
+                  ),
                   _buildThemeOption(
                     context,
                     themeProvider,
@@ -176,6 +182,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Icons.brightness_auto,
                     loc?.translate('system_mode') ?? 'System',
                   ),
+                  const SizedBox(height: 8),
                 ],
               ),
             );
@@ -260,179 +267,192 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     final loc = AppLocalizations.of(context);
 
-    showDialog(
+    showAdaptiveModal(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(loc?.translate('bind_email') ?? 'Bind Email'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                step == 1
-                    ? (loc?.translate('enter_email_for_code') ??
-                          'Enter your email address to receive a verification code')
-                    : (loc?.translate('enter_code_sent') ??
-                          'Enter the 6-digit verification code sent to your email'),
-                style: TextStyle(color: Colors.grey.shade600),
-              ),
-              const SizedBox(height: 16),
-              if (step == 1) ...[
-                TextField(
-                  controller: emailController,
-                  decoration: InputDecoration(
-                    labelText: loc?.translate('email') ?? 'Email',
-                    hintText: 'your@email.com',
-                    border: const OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.emailAddress,
+        builder: (context, setDialogState) => AdaptiveModalContainer(
+          maxWidth: 520,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AdaptiveModalHeader(
+                  title: loc?.translate('bind_email') ?? 'Bind Email',
+                  subtitle: step == 1
+                      ? (loc?.translate('enter_email_for_code') ??
+                            'Enter your email address to receive a verification code')
+                      : (loc?.translate('enter_code_sent') ??
+                            'Enter the 6-digit verification code sent to your email'),
+                  onClose: () => Navigator.pop(context),
                 ),
-              ] else ...[
-                TextField(
-                  controller: codeController,
-                  decoration: InputDecoration(
-                    labelText:
-                        loc?.translate('verify_code') ?? 'Verification Code',
-                    hintText: '123456',
-                    border: const OutlineInputBorder(),
+                if (step == 1) ...[
+                  TextField(
+                    controller: emailController,
+                    decoration: InputDecoration(
+                      labelText: loc?.translate('email') ?? 'Email',
+                      hintText: 'your@email.com',
+                      border: const OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
                   ),
-                  keyboardType: TextInputType.number,
-                  maxLength: 6,
+                ] else ...[
+                  TextField(
+                    controller: codeController,
+                    decoration: InputDecoration(
+                      labelText:
+                          loc?.translate('verify_code') ?? 'Verification Code',
+                      hintText: '123456',
+                      border: const OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
+                    maxLength: 6,
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(loc?.translate('cancel') ?? 'Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (step == 1) {
+                            final email = emailController.text.trim();
+                            if (email.isEmpty) {
+                              if (!context.mounted) return;
+                              SnackBarHelper.showError(
+                                context,
+                                title: loc?.translate('error') ?? 'Error',
+                                message:
+                                    loc?.translate('email_required') ??
+                                    'Please enter an email address',
+                              );
+                              return;
+                            }
+
+                            // 验证邮箱格式
+                            final emailRegex = RegExp(
+                              r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                            );
+                            if (!emailRegex.hasMatch(email)) {
+                              if (!context.mounted) return;
+                              SnackBarHelper.showError(
+                                context,
+                                title: loc?.translate('error') ?? 'Error',
+                                message:
+                                    loc?.translate('email_invalid') ??
+                                    'Please enter a valid email address',
+                              );
+                              return;
+                            }
+
+                            try {
+                              if (!context.mounted) return;
+                              SnackBarHelper.showInfo(
+                                context,
+                                title: loc?.translate('sending') ?? 'Sending',
+                                message:
+                                    loc?.translate('sending') ??
+                                    'Sending verification code...',
+                              );
+
+                              await d1vaiService.postUserBindEmailSend(email);
+
+                              if (!context.mounted) return;
+                              SnackBarHelper.showSuccess(
+                                context,
+                                title: loc?.translate('success') ?? 'Success',
+                                message:
+                                    loc?.translate('code_sent_success') ??
+                                    'Verification code sent to your email',
+                              );
+                              setDialogState(() {
+                                step = 2;
+                              });
+                            } catch (error) {
+                              if (!context.mounted) return;
+                              SnackBarHelper.showError(
+                                context,
+                                title: loc?.translate('error') ?? 'Error',
+                                message:
+                                    '${loc?.translate('failed_to_send_code') ?? "Failed to send verification code"}: $error',
+                              );
+                            }
+                          } else {
+                            final code = codeController.text.trim();
+                            if (code.isEmpty || code.length != 6) {
+                              if (!context.mounted) return;
+                              SnackBarHelper.showError(
+                                context,
+                                title: loc?.translate('error') ?? 'Error',
+                                message:
+                                    loc?.translate('verify_code_complete') ??
+                                    'Please enter a 6-digit verification code',
+                              );
+                              return;
+                            }
+
+                            try {
+                              if (!context.mounted) return;
+                              SnackBarHelper.showInfo(
+                                context,
+                                title:
+                                    loc?.translate('verifying') ?? 'Verifying',
+                                message:
+                                    loc?.translate('verifying') ??
+                                    'Verifying code...',
+                              );
+
+                              await d1vaiService.postUserBindEmailConfirm(
+                                emailController.text.trim(),
+                                code,
+                              );
+
+                              if (!context.mounted) return;
+                              SnackBarHelper.showSuccess(
+                                context,
+                                title: loc?.translate('success') ?? 'Success',
+                                message:
+                                    loc?.translate('email_bound_success') ??
+                                    'Email bound successfully',
+                              );
+                              Navigator.pop(context);
+
+                              // 刷新用户信息
+                              final authProvider = Provider.of<AuthProvider>(
+                                context,
+                                listen: false,
+                              );
+                              await authProvider.refreshUser();
+                            } catch (error) {
+                              if (!context.mounted) return;
+                              SnackBarHelper.showError(
+                                context,
+                                title: loc?.translate('error') ?? 'Error',
+                                message:
+                                    '${loc?.translate('failed_to_verify') ?? "Failed to verify code"}: $error',
+                              );
+                            }
+                          }
+                        },
+                        child: Text(
+                          step == 1
+                              ? (loc?.translate('send_code') ?? 'Send Code')
+                              : (loc?.translate('confirm') ?? 'Verify'),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
-            ],
+            ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(loc?.translate('cancel') ?? 'Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (step == 1) {
-                  final email = emailController.text.trim();
-                  if (email.isEmpty) {
-                    if (!context.mounted) return;
-                    SnackBarHelper.showError(
-                      context,
-                      title: loc?.translate('error') ?? 'Error',
-                      message:
-                          loc?.translate('email_required') ??
-                          'Please enter an email address',
-                    );
-                    return;
-                  }
-
-                  // 验证邮箱格式
-                  final emailRegex = RegExp(
-                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                  );
-                  if (!emailRegex.hasMatch(email)) {
-                    if (!context.mounted) return;
-                    SnackBarHelper.showError(
-                      context,
-                      title: loc?.translate('error') ?? 'Error',
-                      message:
-                          loc?.translate('email_invalid') ??
-                          'Please enter a valid email address',
-                    );
-                    return;
-                  }
-
-                  try {
-                    if (!context.mounted) return;
-                    SnackBarHelper.showInfo(
-                      context,
-                      title: loc?.translate('sending') ?? 'Sending',
-                      message:
-                          loc?.translate('sending') ??
-                          'Sending verification code...',
-                    );
-
-                    await d1vaiService.postUserBindEmailSend(email);
-
-                    if (!context.mounted) return;
-                    SnackBarHelper.showSuccess(
-                      context,
-                      title: loc?.translate('success') ?? 'Success',
-                      message:
-                          loc?.translate('code_sent_success') ??
-                          'Verification code sent to your email',
-                    );
-                    setDialogState(() {
-                      step = 2;
-                    });
-                  } catch (error) {
-                    if (!context.mounted) return;
-                    SnackBarHelper.showError(
-                      context,
-                      title: loc?.translate('error') ?? 'Error',
-                      message:
-                          '${loc?.translate('failed_to_send_code') ?? "Failed to send verification code"}: $error',
-                    );
-                  }
-                } else {
-                  final code = codeController.text.trim();
-                  if (code.isEmpty || code.length != 6) {
-                    if (!context.mounted) return;
-                    SnackBarHelper.showError(
-                      context,
-                      title: loc?.translate('error') ?? 'Error',
-                      message:
-                          loc?.translate('verify_code_complete') ??
-                          'Please enter a 6-digit verification code',
-                    );
-                    return;
-                  }
-
-                  try {
-                    if (!context.mounted) return;
-                    SnackBarHelper.showInfo(
-                      context,
-                      title: loc?.translate('verifying') ?? 'Verifying',
-                      message:
-                          loc?.translate('verifying') ?? 'Verifying code...',
-                    );
-
-                    await d1vaiService.postUserBindEmailConfirm(
-                      emailController.text.trim(),
-                      code,
-                    );
-
-                    if (!context.mounted) return;
-                    SnackBarHelper.showSuccess(
-                      context,
-                      title: loc?.translate('success') ?? 'Success',
-                      message:
-                          loc?.translate('email_bound_success') ??
-                          'Email bound successfully',
-                    );
-                    Navigator.pop(context);
-
-                    // 刷新用户信息
-                    final authProvider = Provider.of<AuthProvider>(
-                      context,
-                      listen: false,
-                    );
-                    await authProvider.refreshUser();
-                  } catch (error) {
-                    if (!context.mounted) return;
-                    SnackBarHelper.showError(
-                      context,
-                      title: loc?.translate('error') ?? 'Error',
-                      message:
-                          '${loc?.translate('failed_to_verify') ?? "Failed to verify code"}: $error',
-                    );
-                  }
-                }
-              },
-              child: Text(
-                step == 1
-                    ? (loc?.translate('send_code') ?? 'Send Code')
-                    : (loc?.translate('confirm') ?? 'Verify'),
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -448,239 +468,256 @@ class _SettingsScreenState extends State<SettingsScreen> {
     int step = 1; // 1: 输入邮箱, 2: 输入验证码和新密码
     final d1vaiService = D1vaiService();
 
-    showDialog(
+    showAdaptiveModal(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(loc?.translate('reset_password') ?? 'Reset Password'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                step == 1
-                    ? (loc?.translate('enter_email_for_code') ??
-                          'Enter your email address to receive a verification code')
-                    : (loc?.translate('enter_code_and_new_password') ??
-                          'Enter the verification code and your new password'),
-                style: TextStyle(color: Colors.grey.shade600),
-              ),
-              const SizedBox(height: 16),
-              if (step == 1) ...[
-                TextField(
-                  controller: emailController,
-                  decoration: InputDecoration(
-                    labelText: loc?.translate('email') ?? 'Email',
-                    hintText: 'your@email.com',
-                    border: const OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.emailAddress,
+        builder: (context, setDialogState) => AdaptiveModalContainer(
+          maxWidth: 520,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AdaptiveModalHeader(
+                  title: loc?.translate('reset_password') ?? 'Reset Password',
+                  subtitle: step == 1
+                      ? (loc?.translate('enter_email_for_code') ??
+                            'Enter your email address to receive a verification code')
+                      : (loc?.translate('enter_code_and_new_password') ??
+                            'Enter the verification code and your new password'),
+                  onClose: () => Navigator.pop(context),
                 ),
-              ] else ...[
-                TextField(
-                  controller: codeController,
-                  decoration: InputDecoration(
-                    labelText:
-                        loc?.translate('verify_code') ?? 'Verification Code',
-                    hintText: '123456',
-                    border: const OutlineInputBorder(),
+                if (step == 1) ...[
+                  TextField(
+                    controller: emailController,
+                    decoration: InputDecoration(
+                      labelText: loc?.translate('email') ?? 'Email',
+                      hintText: 'your@email.com',
+                      border: const OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
                   ),
-                  keyboardType: TextInputType.number,
-                  maxLength: 6,
-                ),
+                ] else ...[
+                  TextField(
+                    controller: codeController,
+                    decoration: InputDecoration(
+                      labelText:
+                          loc?.translate('verify_code') ?? 'Verification Code',
+                      hintText: '123456',
+                      border: const OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
+                    maxLength: 6,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: passwordController,
+                    decoration: InputDecoration(
+                      labelText:
+                          loc?.translate('new_password') ?? 'New Password',
+                      hintText:
+                          loc?.translate('enter_new_password') ??
+                          'Enter new password',
+                      border: const OutlineInputBorder(),
+                    ),
+                    obscureText: true,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: confirmPasswordController,
+                    decoration: InputDecoration(
+                      labelText:
+                          loc?.translate('confirm_password') ??
+                          'Confirm Password',
+                      hintText:
+                          loc?.translate('re_enter_new_password') ??
+                          'Re-enter new password',
+                      border: const OutlineInputBorder(),
+                    ),
+                    obscureText: true,
+                  ),
+                ],
                 const SizedBox(height: 12),
-                TextField(
-                  controller: passwordController,
-                  decoration: InputDecoration(
-                    labelText: loc?.translate('new_password') ?? 'New Password',
-                    hintText:
-                        loc?.translate('enter_new_password') ??
-                        'Enter new password',
-                    border: const OutlineInputBorder(),
-                  ),
-                  obscureText: true,
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: confirmPasswordController,
-                  decoration: InputDecoration(
-                    labelText:
-                        loc?.translate('confirm_password') ??
-                        'Confirm Password',
-                    hintText:
-                        loc?.translate('re_enter_new_password') ??
-                        'Re-enter new password',
-                    border: const OutlineInputBorder(),
-                  ),
-                  obscureText: true,
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(loc?.translate('cancel') ?? 'Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (step == 1) {
+                            final email = emailController.text.trim();
+                            if (email.isEmpty) {
+                              if (!context.mounted) return;
+                              SnackBarHelper.showError(
+                                context,
+                                title: loc?.translate('error') ?? 'Error',
+                                message:
+                                    loc?.translate('email_required') ??
+                                    'Please enter an email address',
+                              );
+                              return;
+                            }
+
+                            // 验证邮箱格式
+                            final emailRegex = RegExp(
+                              r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                            );
+                            if (!emailRegex.hasMatch(email)) {
+                              if (!context.mounted) return;
+                              SnackBarHelper.showError(
+                                context,
+                                title: loc?.translate('error') ?? 'Error',
+                                message:
+                                    loc?.translate('email_invalid') ??
+                                    'Please enter a valid email address',
+                              );
+                              return;
+                            }
+
+                            try {
+                              if (!context.mounted) return;
+                              SnackBarHelper.showInfo(
+                                context,
+                                title: loc?.translate('sending') ?? 'Sending',
+                                message:
+                                    loc?.translate('sending') ??
+                                    'Sending verification code...',
+                              );
+
+                              await d1vaiService.postUserPasswordForgotSend(
+                                email,
+                              );
+
+                              if (!context.mounted) return;
+                              SnackBarHelper.showSuccess(
+                                context,
+                                title: loc?.translate('success') ?? 'Success',
+                                message:
+                                    loc?.translate('code_sent_success') ??
+                                    'Verification code sent to your email',
+                              );
+                              setDialogState(() {
+                                step = 2;
+                              });
+                            } catch (error) {
+                              if (!context.mounted) return;
+                              SnackBarHelper.showError(
+                                context,
+                                title: loc?.translate('error') ?? 'Error',
+                                message:
+                                    '${loc?.translate('failed_to_send_code') ?? "Failed to send verification code"}: $error',
+                              );
+                            }
+                          } else {
+                            final code = codeController.text.trim();
+                            final newPassword = passwordController.text;
+                            final confirmPassword =
+                                confirmPasswordController.text;
+
+                            if (code.isEmpty || code.length != 6) {
+                              if (!context.mounted) return;
+                              SnackBarHelper.showError(
+                                context,
+                                title: loc?.translate('error') ?? 'Error',
+                                message:
+                                    loc?.translate('verify_code_complete') ??
+                                    'Please enter a 6-digit verification code',
+                              );
+                              return;
+                            }
+
+                            if (newPassword.isEmpty) {
+                              if (!context.mounted) return;
+                              SnackBarHelper.showError(
+                                context,
+                                title: loc?.translate('error') ?? 'Error',
+                                message:
+                                    loc?.translate('password_required') ??
+                                    'Please enter a new password',
+                              );
+                              return;
+                            }
+
+                            if (newPassword != confirmPassword) {
+                              if (!context.mounted) return;
+                              SnackBarHelper.showError(
+                                context,
+                                title: loc?.translate('error') ?? 'Error',
+                                message:
+                                    loc?.translate('passwords_do_not_match') ??
+                                    'Passwords do not match',
+                              );
+                              return;
+                            }
+
+                            if (newPassword.length < 6) {
+                              if (!context.mounted) return;
+                              SnackBarHelper.showError(
+                                context,
+                                title: loc?.translate('error') ?? 'Error',
+                                message:
+                                    loc?.translate('password_length_error') ??
+                                    'Password must be at least 6 characters',
+                              );
+                              return;
+                            }
+
+                            try {
+                              if (!context.mounted) return;
+                              SnackBarHelper.showInfo(
+                                context,
+                                title:
+                                    loc?.translate('resetting') ?? 'Resetting',
+                                message:
+                                    loc?.translate('resetting') ??
+                                    'Resetting password...',
+                              );
+
+                              await d1vaiService.postUserPasswordReset(
+                                emailController.text.trim(),
+                                code,
+                                newPassword,
+                              );
+
+                              if (!context.mounted) return;
+                              SnackBarHelper.showSuccess(
+                                context,
+                                title: loc?.translate('success') ?? 'Success',
+                                message:
+                                    loc?.translate('password_reset_success') ??
+                                    'Password reset successfully',
+                              );
+                              Navigator.pop(context);
+                            } catch (error) {
+                              if (!context.mounted) return;
+                              SnackBarHelper.showError(
+                                context,
+                                title: loc?.translate('error') ?? 'Error',
+                                message:
+                                    '${loc?.translate('failed_to_reset_password') ?? "Failed to reset password"}: $error',
+                              );
+                            }
+                          }
+                        },
+                        child: Text(
+                          step == 1
+                              ? (loc?.translate('send_code') ?? 'Send Code')
+                              : (loc?.translate('reset_password') ??
+                                    'Reset Password'),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
-            ],
+            ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(loc?.translate('cancel') ?? 'Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (step == 1) {
-                  final email = emailController.text.trim();
-                  if (email.isEmpty) {
-                    if (!context.mounted) return;
-                    SnackBarHelper.showError(
-                      context,
-                      title: loc?.translate('error') ?? 'Error',
-                      message:
-                          loc?.translate('email_required') ??
-                          'Please enter an email address',
-                    );
-                    return;
-                  }
-
-                  // 验证邮箱格式
-                  final emailRegex = RegExp(
-                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                  );
-                  if (!emailRegex.hasMatch(email)) {
-                    if (!context.mounted) return;
-                    SnackBarHelper.showError(
-                      context,
-                      title: loc?.translate('error') ?? 'Error',
-                      message:
-                          loc?.translate('email_invalid') ??
-                          'Please enter a valid email address',
-                    );
-                    return;
-                  }
-
-                  try {
-                    if (!context.mounted) return;
-                    SnackBarHelper.showInfo(
-                      context,
-                      title: loc?.translate('sending') ?? 'Sending',
-                      message:
-                          loc?.translate('sending') ??
-                          'Sending verification code...',
-                    );
-
-                    await d1vaiService.postUserPasswordForgotSend(email);
-
-                    if (!context.mounted) return;
-                    SnackBarHelper.showSuccess(
-                      context,
-                      title: loc?.translate('success') ?? 'Success',
-                      message:
-                          loc?.translate('code_sent_success') ??
-                          'Verification code sent to your email',
-                    );
-                    setDialogState(() {
-                      step = 2;
-                    });
-                  } catch (error) {
-                    if (!context.mounted) return;
-                    SnackBarHelper.showError(
-                      context,
-                      title: loc?.translate('error') ?? 'Error',
-                      message:
-                          '${loc?.translate('failed_to_send_code') ?? "Failed to send verification code"}: $error',
-                    );
-                  }
-                } else {
-                  final code = codeController.text.trim();
-                  final newPassword = passwordController.text;
-                  final confirmPassword = confirmPasswordController.text;
-
-                  if (code.isEmpty || code.length != 6) {
-                    if (!context.mounted) return;
-                    SnackBarHelper.showError(
-                      context,
-                      title: loc?.translate('error') ?? 'Error',
-                      message:
-                          loc?.translate('verify_code_complete') ??
-                          'Please enter a 6-digit verification code',
-                    );
-                    return;
-                  }
-
-                  if (newPassword.isEmpty) {
-                    if (!context.mounted) return;
-                    SnackBarHelper.showError(
-                      context,
-                      title: loc?.translate('error') ?? 'Error',
-                      message:
-                          loc?.translate('password_required') ??
-                          'Please enter a new password',
-                    );
-                    return;
-                  }
-
-                  if (newPassword != confirmPassword) {
-                    if (!context.mounted) return;
-                    SnackBarHelper.showError(
-                      context,
-                      title: loc?.translate('error') ?? 'Error',
-                      message:
-                          loc?.translate('passwords_do_not_match') ??
-                          'Passwords do not match',
-                    );
-                    return;
-                  }
-
-                  if (newPassword.length < 6) {
-                    if (!context.mounted) return;
-                    SnackBarHelper.showError(
-                      context,
-                      title: loc?.translate('error') ?? 'Error',
-                      message:
-                          loc?.translate('password_length_error') ??
-                          'Password must be at least 6 characters',
-                    );
-                    return;
-                  }
-
-                  try {
-                    if (!context.mounted) return;
-                    SnackBarHelper.showInfo(
-                      context,
-                      title: loc?.translate('resetting') ?? 'Resetting',
-                      message:
-                          loc?.translate('resetting') ??
-                          'Resetting password...',
-                    );
-
-                    await d1vaiService.postUserPasswordReset(
-                      emailController.text.trim(),
-                      code,
-                      newPassword,
-                    );
-
-                    if (!context.mounted) return;
-                    SnackBarHelper.showSuccess(
-                      context,
-                      title: loc?.translate('success') ?? 'Success',
-                      message:
-                          loc?.translate('password_reset_success') ??
-                          'Password reset successfully',
-                    );
-                    Navigator.pop(context);
-                  } catch (error) {
-                    if (!context.mounted) return;
-                    SnackBarHelper.showError(
-                      context,
-                      title: loc?.translate('error') ?? 'Error',
-                      message:
-                          '${loc?.translate('failed_to_reset_password') ?? "Failed to reset password"}: $error',
-                    );
-                  }
-                }
-              },
-              child: Text(
-                step == 1
-                    ? (loc?.translate('send_code') ?? 'Send Code')
-                    : (loc?.translate('reset_password') ?? 'Reset Password'),
-              ),
-            ),
-          ],
         ),
       ),
     );

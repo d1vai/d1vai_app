@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/deployment.dart';
 import '../../models/project.dart';
+import '../../utils/preview_url.dart';
 import '../../providers/project_provider.dart';
 import '../../core/api_client.dart';
 import '../../services/d1vai_service.dart';
@@ -105,7 +106,7 @@ class _ProjectOverviewTabState extends State<ProjectOverviewTab> {
           ),
           const SizedBox(height: 16),
           AppPreview(
-            previewUrl: project.latestPreviewUrl,
+            previewUrl: preferredPreviewUrlFromProject(project),
             projectName: project.projectName,
           ),
           const SizedBox(height: 16),

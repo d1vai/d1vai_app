@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:d1vai_app/widgets/adaptive_modal.dart';
 import 'package:d1vai_app/widgets/snackbar_helper.dart';
 
 class TwoFactorAuthSettingsScreen extends StatefulWidget {
@@ -169,186 +170,224 @@ class _TwoFactorAuthSettingsScreenState
   ) async {
     final codeController = TextEditingController();
 
-    return showDialog<bool>(
+    return showAdaptiveModal<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('Set Up Two-Factor Authentication'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView(
-            shrinkWrap: true,
-            children: [
-              const Text(
-                'Scan the QR code with your authenticator app or enter the secret key manually.',
-                style: TextStyle(fontSize: 13),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300),
+      builder: (context) {
+        final theme = Theme.of(context);
+        final isDark = theme.brightness == Brightness.dark;
+        final qrSurface = Color.alphaBlend(
+          theme.colorScheme.primary.withValues(alpha: isDark ? 0.08 : 0.04),
+          theme.colorScheme.surfaceContainerLow,
+        );
+        final warningSurface = Color.alphaBlend(
+          theme.colorScheme.tertiary.withValues(alpha: isDark ? 0.18 : 0.12),
+          theme.colorScheme.surface,
+        );
+
+        return AdaptiveModalContainer(
+          maxWidth: 620,
+          mobileMaxHeightFactor: 0.98,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                AdaptiveModalHeader(
+                  title: 'Set Up Two-Factor Authentication',
+                  subtitle:
+                      'Scan the QR code with your authenticator app or enter the secret key manually.',
+                  onClose: () => Navigator.of(context).pop(false),
                 ),
-                child: Column(
-                  children: [
-                    // 模拟二维码（实际应用中会显示真实的二维码图片）
-                    Container(
-                      width: 200,
-                      height: 200,
-                      color: Colors.grey.shade200,
-                      child: const Icon(
-                        Icons.qr_code,
-                        size: 100,
-                        color: Colors.grey,
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: qrSurface,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 0.8,
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Scan this QR code with your authenticator app',
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Secret Key:',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        secret,
-                        style: const TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 14,
+                  ),
+                  child: Column(
+                    children: [
+                      // 模拟二维码（实际应用中会显示真实的二维码图片）
+                      Container(
+                        width: 200,
+                        height: 200,
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        child: Icon(
+                          Icons.qr_code,
+                          size: 100,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
-                    ),
-                    IconButton(
-                      onPressed: () async {
-                        await Clipboard.setData(ClipboardData(text: secret));
-                        if (context.mounted) {
-                          SnackBarHelper.showSuccess(
-                            context,
-                            title: 'Copied',
-                            message: 'Secret key copied to clipboard',
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.copy, size: 20),
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+                      Text(
+                        'Scan this QR code with your authenticator app',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Backup Codes:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.orange.shade200),
+                const SizedBox(height: 16),
+                Text(
+                  'Secret Key:',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Save these backup codes in a safe place. You can use them to access your account if you lose your authenticator device.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.orange.shade700,
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          secret,
+                          style: const TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () async {
+                          await Clipboard.setData(ClipboardData(text: secret));
+                          if (context.mounted) {
+                            SnackBarHelper.showSuccess(
+                              context,
+                              title: 'Copied',
+                              message: 'Secret key copied to clipboard',
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.copy, size: 20),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Backup Codes:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: warningSurface,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: theme.colorScheme.tertiary.withValues(
+                        alpha: isDark ? 0.55 : 0.3,
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: backupCodes
-                          .map(
-                            (code) => Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(color: Colors.grey.shade300),
-                              ),
-                              child: Text(
-                                code,
-                                style: const TextStyle(
-                                  fontFamily: 'monospace',
-                                  fontSize: 12,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Save these backup codes in a safe place. You can use them to access your account if you lose your authenticator device.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: backupCodes
+                            .map(
+                              (code) => Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.surface,
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(
+                                    color: theme.colorScheme.outlineVariant,
+                                  ),
+                                ),
+                                child: Text(
+                                  code,
+                                  style: const TextStyle(
+                                    fontFamily: 'monospace',
+                                    fontSize: 12,
+                                  ),
                                 ),
                               ),
-                            ),
-                          )
-                          .toList(),
+                            )
+                            .toList(),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Enter verification code from your app:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: codeController,
+                  decoration: const InputDecoration(
+                    hintText: '123456',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                  maxLength: 6,
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop(false);
+                        },
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final code = codeController.text.trim();
+                          if (code.length != 6) {
+                            if (context.mounted) {
+                              SnackBarHelper.showError(
+                                context,
+                                title: 'Error',
+                                message:
+                                    'Please enter a 6-digit verification code',
+                              );
+                            }
+                            return;
+                          }
+
+                          Navigator.of(context, rootNavigator: true).pop(true);
+                        },
+                        child: const Text('Verify & Enable'),
+                      ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Enter verification code from your app:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: codeController,
-                decoration: const InputDecoration(
-                  hintText: '123456',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                maxLength: 6,
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(false);
-            },
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final code = codeController.text.trim();
-              if (code.length != 6) {
-                if (context.mounted) {
-                  SnackBarHelper.showError(
-                    context,
-                    title: 'Error',
-                    message: 'Please enter a 6-digit verification code',
-                  );
-                }
-                return;
-              }
-
-              Navigator.of(context, rootNavigator: true).pop(true);
-            },
-            child: const Text('Verify & Enable'),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 

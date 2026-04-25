@@ -168,7 +168,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
     return uri.host.trim();
   }
 
-  String? get _previewHost => _hostFromUrl(widget.project.latestPreviewUrl);
+  String? get _previewHost => _hostFromUrl(widget.project.preferredPreviewUrl);
   String? get _prodHost =>
       _hostFromUrl(widget.project.latestProdDeploymentUrl) ??
       (widget.project.vercelProdDomain?.trim().isEmpty ?? true

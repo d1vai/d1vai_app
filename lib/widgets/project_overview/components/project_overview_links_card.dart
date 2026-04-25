@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../models/project.dart';
+import '../../../utils/preview_url.dart';
 import 'project_overview_card_shell.dart';
 
 class ProjectOverviewLinksCard extends StatelessWidget {
@@ -25,6 +26,7 @@ class ProjectOverviewLinksCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final previewUrl = preferredPreviewUrlFromProject(project);
     return ProjectOverviewCardShell(
       child: Column(
         children: [
@@ -38,7 +40,7 @@ class ProjectOverviewLinksCard extends StatelessWidget {
               _t(context, 'project_overview_links_preview_url', 'Preview URL'),
             ),
             subtitle: Text(
-              project.latestPreviewUrl ??
+              previewUrl ??
                   _t(
                     context,
                     'project_overview_links_not_available',
@@ -51,7 +53,7 @@ class ProjectOverviewLinksCard extends StatelessWidget {
               color: theme.colorScheme.onSurfaceVariant,
             ),
             onTap: () {
-              final url = project.latestPreviewUrl;
+              final url = previewUrl;
               if (url != null && url.isNotEmpty) {
                 onOpenPreviewUrl(url);
               }

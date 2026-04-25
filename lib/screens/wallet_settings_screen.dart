@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:d1vai_app/providers/auth_provider.dart';
+import 'package:d1vai_app/widgets/adaptive_modal.dart';
 import 'package:d1vai_app/widgets/snackbar_helper.dart';
 import 'package:d1vai_app/services/d1vai_service.dart';
 import 'package:d1vai_app/utils/error_utils.dart';
@@ -315,7 +316,7 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
     String? error;
     String? address;
 
-    await showDialog<void>(
+    await showAdaptiveModal<void>(
       context: context,
       barrierDismissible: false,
       builder: (ctx) {
@@ -323,21 +324,20 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
         final baseMessage = _signMessage(walletType, '<address>');
         return StatefulBuilder(
           builder: (ctx, setInner) {
-            return AlertDialog(
-              title: Text('Connect ${walletType.name}'),
-              content: SizedBox(
-                width: double.maxFinite,
+            return AdaptiveModalContainer(
+              maxWidth: 520,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'You will sign a message to prove wallet ownership. This does NOT send any funds.',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
+                    AdaptiveModalHeader(
+                      title: 'Connect ${walletType.name}',
+                      subtitle:
+                          'You will sign a message to prove wallet ownership. This does NOT send any funds.',
+                      onClose: () => Navigator.of(ctx).pop(),
                     ),
-                    const SizedBox(height: 12),
                     TextField(
                       controller: controller,
                       decoration: InputDecoration(
@@ -367,45 +367,59 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => Navigator.of(ctx).pop(),
+                            child: const Text('Cancel'),
+                          ),
+                        ),
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () async {
+                              final addr = controller.text.trim();
+                              final toCopy = _signMessage(
+                                walletType,
+                                addr.isEmpty ? '<address>' : addr,
+                              );
+                              await Clipboard.setData(
+                                ClipboardData(text: toCopy),
+                              );
+                              if (!ctx.mounted) return;
+                              SnackBarHelper.showSuccess(
+                                ctx,
+                                title: 'Copied',
+                                message: 'Signing message copied',
+                              );
+                            },
+                            child: const Text('Copy message'),
+                          ),
+                        ),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              final addr = controller.text.trim();
+                              final err = _validateWalletAddress(
+                                walletType,
+                                addr,
+                              );
+                              if (err != null) {
+                                setInner(() => error = err);
+                                return;
+                              }
+                              address = addr;
+                              Navigator.of(ctx).pop();
+                            },
+                            child: const Text('Sign & Connect'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('Cancel'),
-                ),
-                TextButton(
-                  onPressed: () async {
-                    final addr = controller.text.trim();
-                    final toCopy = _signMessage(
-                      walletType,
-                      addr.isEmpty ? '<address>' : addr,
-                    );
-                    await Clipboard.setData(ClipboardData(text: toCopy));
-                    if (!ctx.mounted) return;
-                    SnackBarHelper.showSuccess(
-                      ctx,
-                      title: 'Copied',
-                      message: 'Signing message copied',
-                    );
-                  },
-                  child: const Text('Copy message'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    final addr = controller.text.trim();
-                    final err = _validateWalletAddress(walletType, addr);
-                    if (err != null) {
-                      setInner(() => error = err);
-                      return;
-                    }
-                    address = addr;
-                    Navigator.of(ctx).pop();
-                  },
-                  child: const Text('Sign & Connect'),
-                ),
-              ],
             );
           },
         );

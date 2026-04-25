@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import '../services/wallet_service.dart';
+import 'adaptive_modal.dart';
 import 'topup_dialog.dart';
 
 class BalanceCard extends StatefulWidget {
@@ -361,7 +362,7 @@ class _BalanceCardState extends State<BalanceCard>
                 ElevatedButton.icon(
                   onPressed: _isLoading || _isProcessingPayment
                       ? null
-                      : () => showDialog(
+                      : () => showAdaptiveModal(
                           context: context,
                           builder: (context) =>
                               TopUpDialog(onSuccess: _handleTopUpSuccess),

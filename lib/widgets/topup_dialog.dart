@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/wallet_service.dart';
+import 'adaptive_modal.dart';
 import 'snackbar_helper.dart';
 import '../utils/error_utils.dart';
 import '../l10n/app_localizations.dart';
@@ -177,187 +178,178 @@ class _TopUpDialogState extends State<TopUpDialog> {
     final amount = _parseAmount();
     final canSubmit =
         amount != null && amount.isFinite && _isValidAmount(amount);
-    return Dialog(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
-        child: SingleChildScrollView(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.add_circle,
-                    color: theme.colorScheme.primary,
-                    size: 28,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Top up credits',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+    return AdaptiveModalContainer(
+      maxWidth: 520,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.add_circle,
+                  color: theme.colorScheme.primary,
+                  size: 28,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Top up credits',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  IconButton(
+                ),
+                IconButton(
+                  onPressed: _isLoading
+                      ? null
+                      : () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Add funds to your account balance. Secure checkout by Stripe.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+              ),
+            ),
+            const SizedBox(height: 18),
+
+            Row(
+              children: [
+                _StepperButton(
+                  icon: Icons.remove,
+                  onTap: _isLoading ? null : () => _stepAmount(-5),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextField(
+                    controller: _amountController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    enabled: !_isLoading,
+                    inputFormatters: const [_CurrencyInputFormatter()],
+                    decoration: const InputDecoration(
+                      labelText: 'Amount (USD)',
+                      hintText: '25 - 20000',
+                      prefixText: '\$ ',
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        _error = null;
+                        final n = double.tryParse(value.trim());
+                        final asInt = (n != null && n.isFinite)
+                            ? n.toInt()
+                            : null;
+                        _selectedQuickAmount =
+                            asInt != null && _quickAmounts.contains(asInt)
+                            ? asInt
+                            : null;
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 10),
+                _StepperButton(
+                  icon: Icons.add,
+                  onTap: _isLoading ? null : () => _stepAmount(5),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _quickAmounts.map((amount) {
+                final isSelected = _selectedQuickAmount == amount;
+                return ChoiceChip(
+                  label: Text('\$$amount'),
+                  selected: isSelected,
+                  onSelected: _isLoading
+                      ? null
+                      : (_) => _selectQuickAmount(amount),
+                  labelStyle: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: isSelected
+                        ? theme.colorScheme.onPrimary
+                        : theme.colorScheme.primary,
+                  ),
+                  selectedColor: theme.colorScheme.primary,
+                  backgroundColor: theme.colorScheme.primary.withValues(
+                    alpha: 0.10,
+                  ),
+                  side: BorderSide(
+                    color: theme.colorScheme.primary.withValues(
+                      alpha: isSelected ? 0.0 : 0.25,
+                    ),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  showCheckmark: false,
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Min \$25 • Max \$20,000',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                _error!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.error,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
                     onPressed: _isLoading
                         ? null
                         : () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close),
+                    child: const Text('Cancel'),
                   ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'Add funds to your account balance. Secure checkout by Stripe.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
                 ),
-              ),
-              const SizedBox(height: 18),
-
-              Row(
-                children: [
-                  _StepperButton(
-                    icon: Icons.remove,
-                    onTap: _isLoading ? null : () => _stepAmount(-5),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextField(
-                      controller: _amountController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      enabled: !_isLoading,
-                      inputFormatters: const [_CurrencyInputFormatter()],
-                      decoration: const InputDecoration(
-                        labelText: 'Amount (USD)',
-                        hintText: '25 - 20000',
-                        prefixText: '\$ ',
-                        border: OutlineInputBorder(),
-                      ),
-                      onChanged: (value) {
-                        setState(() {
-                          _error = null;
-                          final n = double.tryParse(value.trim());
-                          final asInt = (n != null && n.isFinite)
-                              ? n.toInt()
-                              : null;
-                          _selectedQuickAmount =
-                              asInt != null && _quickAmounts.contains(asInt)
-                              ? asInt
-                              : null;
-                        });
-                      },
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _isLoading || !canSubmit ? null : _handleSubmit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  _StepperButton(
-                    icon: Icons.add,
-                    onTap: _isLoading ? null : () => _stepAmount(5),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _quickAmounts.map((amount) {
-                  final isSelected = _selectedQuickAmount == amount;
-                  return ChoiceChip(
-                    label: Text('\$$amount'),
-                    selected: isSelected,
-                    onSelected: _isLoading
-                        ? null
-                        : (_) => _selectQuickAmount(amount),
-                    labelStyle: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: isSelected
-                          ? theme.colorScheme.onPrimary
-                          : theme.colorScheme.primary,
-                    ),
-                    selectedColor: theme.colorScheme.primary,
-                    backgroundColor: theme.colorScheme.primary.withValues(
-                      alpha: 0.10,
-                    ),
-                    side: BorderSide(
-                      color: theme.colorScheme.primary.withValues(
-                        alpha: isSelected ? 0.0 : 0.25,
-                      ),
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    showCheckmark: false,
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Min \$25 • Max \$20,000',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-              ),
-              if (_error != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  _error!,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.error,
-                    fontWeight: FontWeight.w600,
+                    child: _isLoading
+                        ? SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                theme.colorScheme.onPrimary,
+                              ),
+                            ),
+                          )
+                        : Text(_ctaLabel()),
                   ),
                 ),
               ],
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: _isLoading
-                          ? null
-                          : () => Navigator.of(context).pop(),
-                      child: const Text('Cancel'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _isLoading || !canSubmit
-                          ? null
-                          : _handleSubmit,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.colorScheme.primary,
-                        foregroundColor: theme.colorScheme.onPrimary,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      child: _isLoading
-                          ? SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  theme.colorScheme.onPrimary,
-                                ),
-                              ),
-                            )
-                          : Text(_ctaLabel()),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

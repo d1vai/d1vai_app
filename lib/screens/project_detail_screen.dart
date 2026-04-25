@@ -211,7 +211,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     final project = _project;
     if (project == null) return;
     final prod = (project.latestProdDeploymentUrl ?? '').trim();
-    final preview = (project.latestPreviewUrl ?? '').trim();
+    final preview = (project.preferredPreviewUrl ?? '').trim();
     final raw = (prod.isNotEmpty ? prod : preview).trim();
     if (raw.isEmpty) {
       SnackBarHelper.showInfo(
@@ -312,7 +312,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           ProjectChatTab(
             key: _chatTabKey,
             projectId: project.id,
-            previewUrl: project.latestPreviewUrl,
+            previewUrl: project.preferredPreviewUrl,
           ),
           ProjectApiTab(projectId: project.id),
           ProjectDatabaseTab(

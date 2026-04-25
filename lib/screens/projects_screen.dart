@@ -54,10 +54,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
         _didOpenCreate = true;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
-          showDialog(
-            context: context,
-            builder: (context) => const CreateProjectDialog(),
-          );
+          CreateProjectDialog.show(context);
         });
       }
     });
@@ -223,11 +220,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                           const SizedBox(height: 12),
                           ElevatedButton.icon(
                             onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (context) =>
-                                    const CreateProjectDialog(),
-                              );
+                              CreateProjectDialog.show(context);
                             },
                             icon: const Icon(Icons.add),
                             label: Text(_t('create_project', 'Create Project')),
@@ -279,10 +272,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) => const CreateProjectDialog(),
-          );
+          CreateProjectDialog.show(context);
         },
         child: const Icon(Icons.add),
       ),
