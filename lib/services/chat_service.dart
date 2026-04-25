@@ -19,6 +19,7 @@ class ChatService {
     String sessionType = 'new',
     String? sessionId,
     String? model,
+    String? engine,
     String? systemPrompt,
     String? optimisticMessage,
   }) async {
@@ -28,6 +29,7 @@ class ChatService {
         if (sessionType != 'new') 'session_type': sessionType,
         if (sessionId != null) 'session_id': sessionId,
         if (model != null) 'model': model,
+        if (engine != null) 'engine': engine,
         if (systemPrompt != null) 'system_prompt': systemPrompt,
         if (optimisticMessage != null) 'optimistic_message': optimisticMessage,
       };

@@ -614,12 +614,14 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
               },
               models: _availableModels,
               selectedModelId: _selectedModelId,
+              selectedEngine: _selectedEngine,
               isModelLoading:
                   _isLoadingModels ||
                   _workspacePhase != WorkspacePhase.ready ||
                   !_hasLoadedModelConfig,
               isModelSwitching: _isSwitchingModel,
               onModelChanged: (v) => unawaited(_handleModelChanged(v)),
+              onEngineChanged: (v) => unawaited(_handleEngineChanged(v)),
             ),
             Expanded(
               child: IndexedStack(
@@ -676,12 +678,14 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
               },
               models: _availableModels,
               selectedModelId: _selectedModelId,
+              selectedEngine: _selectedEngine,
               isModelLoading:
                   _isLoadingModels ||
                   _workspacePhase != WorkspacePhase.ready ||
                   !_hasLoadedModelConfig,
               isModelSwitching: _isSwitchingModel,
               onModelChanged: (v) => unawaited(_handleModelChanged(v)),
+              onEngineChanged: (v) => unawaited(_handleEngineChanged(v)),
             ),
             Expanded(
               child: IndexedStack(

@@ -769,6 +769,10 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       final firstModel = models.isNotEmpty ? models.first.id.trim() : '';
       final cachedModel =
           (await _modelConfigService.getCachedModel())?.trim() ?? '';
+      final cachedEngine =
+          _storageService.getString('project_chat_engine_mode')?.trim().toLowerCase() ??
+          'codex';
+      final normalizedEngine = cachedEngine == 'claude' ? 'claude' : 'codex';
       final modelExists =
           cachedModel.isNotEmpty &&
           models.any((m) => m.id.trim() == cachedModel);
@@ -777,6 +781,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       setState(() {
         _availableModels = models;
         _selectedModelId = selected;
+        _selectedEngine = normalizedEngine;
         _isLoadingModels = false;
         _hasLoadedModelConfig = true;
         _modelConfigError = null;
@@ -868,6 +873,36 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       _signalOutbox();
       unawaited(_drainOutbox());
     }
+  }
+
+  @override
+  Future<void> _handleEngineChanged(String engine) async {
+    final next = engine.trim().toLowerCase();
+    if ((next != 'claude' && next != 'codex') || next == _selectedEngine) {
+      return;
+    }
+    if (!mounted) return;
+
+    final loc = AppLocalizations.of(context);
+    setState(() {
+      _selectedEngine = next;
+    });
+    await _storageService.setString('project_chat_engine_mode', next);
+    await _resetExecuteSessionForModelSwitch();
+
+    if (!mounted) return;
+    SnackBarHelper.showSuccess(
+      context,
+      title: loc?.translate('project_chat_engine_title') ?? 'Engine',
+      message:
+          next == 'claude'
+              ? (loc?.translate('project_chat_engine_fast_hint') ??
+                  'Fast mode uses Claude engine')
+              : (loc?.translate('project_chat_engine_think_hard_hint') ??
+                  'Think Hard mode uses Codex engine'),
+      position: SnackBarPosition.top,
+      duration: const Duration(seconds: 2),
+    );
   }
 
   Future<void> _resetExecuteSessionForModelSwitch() async {
@@ -2031,6 +2066,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         sessionType: isNew ? 'new' : 'continue',
         sessionId: isNew ? null : _currentSessionId,
         model: _selectedModelId.trim().isEmpty ? null : _selectedModelId.trim(),
+        engine: _selectedEngine,
         optimisticMessage: prompt,
       );
       if (!mounted) return;
@@ -2081,6 +2117,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         prompt: prompt,
         sessionType: 'new',
         model: _selectedModelId.trim().isEmpty ? null : _selectedModelId.trim(),
+        engine: _selectedEngine,
         optimisticMessage: prompt,
       );
       if (!mounted) return;

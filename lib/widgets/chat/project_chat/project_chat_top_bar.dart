@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../models/model_config.dart';
 import '../../compact_selector.dart';
 import 'status_dot.dart';
@@ -14,7 +15,9 @@ class ProjectChatTopBar extends StatelessWidget {
   final VoidCallback? onWorkspacePressed;
   final List<ModelInfo> models;
   final String selectedModelId;
+  final String selectedEngine;
   final ValueChanged<String>? onModelChanged;
+  final ValueChanged<String>? onEngineChanged;
   final bool isModelLoading;
   final bool isModelSwitching;
 
@@ -29,7 +32,9 @@ class ProjectChatTopBar extends StatelessWidget {
     this.onWorkspacePressed,
     this.models = const <ModelInfo>[],
     this.selectedModelId = '',
+    this.selectedEngine = 'codex',
     this.onModelChanged,
+    this.onEngineChanged,
     this.isModelLoading = false,
     this.isModelSwitching = false,
   });
@@ -37,6 +42,16 @@ class ProjectChatTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = AppLocalizations.of(context);
+    final fastLabel = loc?.translate('project_chat_engine_fast') ?? 'Fast';
+    final thinkHardLabel =
+        loc?.translate('project_chat_engine_think_hard') ?? 'Think Hard';
+    final fastHint =
+        loc?.translate('project_chat_engine_fast_hint') ??
+        'Fast mode uses Claude engine';
+    final thinkHardHint =
+        loc?.translate('project_chat_engine_think_hard_hint') ??
+        'Think Hard mode uses Codex engine';
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
@@ -99,6 +114,18 @@ class ProjectChatTopBar extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
+              _EngineModeSegment(
+                value: selectedEngine,
+                fastLabel: fastLabel,
+                thinkHardLabel: thinkHardLabel,
+                fastTooltip: fastHint,
+                thinkHardTooltip: thinkHardHint,
+                onChanged:
+                    (isModelLoading || isModelSwitching || onEngineChanged == null)
+                    ? null
+                    : onEngineChanged,
+              ),
+              const SizedBox(width: 8),
               if (workspaceDotColor != null)
                 _ActionIconButton(
                   iconWidget: ProjectChatStatusDot(
@@ -118,6 +145,96 @@ class ProjectChatTopBar extends StatelessWidget {
                 onPressed: onOpenInNewTab,
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EngineModeSegment extends StatelessWidget {
+  final String value;
+  final String fastLabel;
+  final String thinkHardLabel;
+  final String fastTooltip;
+  final String thinkHardTooltip;
+  final ValueChanged<String>? onChanged;
+
+  const _EngineModeSegment({
+    required this.value,
+    required this.fastLabel,
+    required this.thinkHardLabel,
+    required this.fastTooltip,
+    required this.thinkHardTooltip,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isFast = value == 'claude';
+
+    Widget buildOption({
+      required bool active,
+      required String label,
+      required String tooltip,
+      required VoidCallback onTap,
+      required Color activeBg,
+      required Color activeFg,
+    }) {
+      return Tooltip(
+        message: tooltip,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(7),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+            decoration: BoxDecoration(
+              color: active ? activeBg : Colors.transparent,
+              borderRadius: BorderRadius.circular(7),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                color: active ? activeFg : theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+          width: 1,
+        ),
+      ),
+      padding: const EdgeInsets.all(2),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          buildOption(
+            active: isFast,
+            label: fastLabel,
+            tooltip: fastTooltip,
+            onTap: () => onChanged?.call('claude'),
+            activeBg: Colors.green.withValues(alpha: 0.14),
+            activeFg: Colors.green.shade700,
+          ),
+          buildOption(
+            active: !isFast,
+            label: thinkHardLabel,
+            tooltip: thinkHardTooltip,
+            onTap: () => onChanged?.call('codex'),
+            activeBg: theme.colorScheme.primary.withValues(alpha: 0.14),
+            activeFg: theme.colorScheme.primary,
           ),
         ],
       ),
