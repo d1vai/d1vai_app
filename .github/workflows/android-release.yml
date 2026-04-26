@@ -16,6 +16,8 @@ concurrency:
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
+    env:
+      STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
 
     steps:
       - name: Checkout repository
@@ -102,11 +104,20 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Validate mobile payment secrets
+        shell: bash
+        run: |
+          if [ -z "${STRIPE_PUBLISHABLE_KEY}" ]; then
+            echo "Missing required secret: STRIPE_PUBLISHABLE_KEY" >&2
+            exit 1
+          fi
+
       - name: Build release APK
         run: >
           flutter build apk --release
           --build-name="${{ steps.meta.outputs.version_name }}"
           --build-number="${{ steps.meta.outputs.build_number }}"
+          --dart-define=STRIPE_PUBLISHABLE_KEY="${STRIPE_PUBLISHABLE_KEY}"
 
       - name: Rename APK asset
         run: >
