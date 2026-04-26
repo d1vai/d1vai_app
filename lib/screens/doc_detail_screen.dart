@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:d1vai_app/l10n/app_localizations.dart';
 
 import '../utils/link_navigator.dart';
 import '../widgets/share_sheet.dart';
@@ -121,6 +123,11 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
   }
 
   Future<void> _injectCodeCopy() async {
+    final loc = AppLocalizations.of(context);
+    final copyLabel = jsonEncode(loc?.translate('docs_copy_code') ?? 'Copy');
+    final copiedLabel = jsonEncode(
+      loc?.translate('docs_copy_code_done') ?? 'Copied',
+    );
     // Add a lightweight "Copy" button to code blocks for quick reuse on mobile.
     // Uses a JS handler to bridge clipboard access back to Flutter.
     await _controller?.evaluateJavascript(
@@ -151,7 +158,7 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
 
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.textContent = 'Copy';
+        btn.textContent = $copyLabel;
         btn.setAttribute(BTN_ATTR, '1');
         btn.style.cssText = [
           'position:absolute',
@@ -178,8 +185,8 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
             if (!text.trim()) return;
             window.flutter_inappwebview.callHandler('$_jsHandlerCopyCode', text);
             const old = btn.textContent;
-            btn.textContent = 'Copied';
-            setTimeout(() => { btn.textContent = old || 'Copy'; }, 900);
+            btn.textContent = $copiedLabel;
+            setTimeout(() => { btn.textContent = old || $copyLabel; }, 900);
           } catch (_) {}
         });
 
@@ -197,6 +204,7 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
   }
 
   Future<void> _openExternal() async {
+    final loc = AppLocalizations.of(context);
     final uri = _docUrl;
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -204,14 +212,16 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
       if (!mounted) return;
       SnackBarHelper.showError(
         context,
-        title: 'Open failed',
-        message: 'Cannot open link',
+        title: loc?.translate('docs_open_failed_title') ?? 'Open failed',
+        message:
+            loc?.translate('docs_open_failed_message') ?? 'Cannot open link',
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
@@ -221,22 +231,28 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
           ? const Color(0xFF0B1220)
           : const Color(0xFFF8FAFC),
       appBar: WebSubPageAppBar(
-        title: Text('Docs: ${widget.slug}'),
+        title: Text(
+          (loc?.translate('docs_title_slug') ?? 'Docs: {slug}').replaceAll(
+            '{slug}',
+            widget.slug,
+          ),
+        ),
         actions: [
           IconButton(
-            tooltip: 'Share',
+            tooltip: loc?.translate('docs_share') ?? 'Share',
             icon: const Icon(Icons.share),
             onPressed: () {
               ShareSheet.show(
                 context,
                 url: _docUrl,
-                title: 'd1v.ai docs',
+                title: loc?.translate('docs_share_title') ?? 'd1v.ai docs',
                 message: '/docs/${widget.slug}',
               );
             },
           ),
           IconButton(
-            tooltip: 'Open in browser',
+            tooltip:
+                loc?.translate('docs_open_in_browser') ?? 'Open in browser',
             icon: const Icon(Icons.open_in_new),
             onPressed: _openExternal,
           ),
@@ -338,8 +354,10 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
                         if (!ctx.mounted) return null;
                         SnackBarHelper.showSuccess(
                           ctx,
-                          title: 'Copied',
-                          message: 'Code block copied. Paste it anywhere.',
+                          title: loc?.translate('copied') ?? 'Copied',
+                          message:
+                              loc?.translate('docs_code_copied_message') ??
+                              'Code block copied. Paste it anywhere.',
                         );
                         return null;
                       },
@@ -451,14 +469,16 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
                           ),
                           const SizedBox(height: 14),
                           Text(
-                            'Failed to load doc',
+                            loc?.translate('docs_load_failed_title') ??
+                                'Failed to load doc',
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w800,
                             ),
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'The in-app reader could not load this document. Retry here or open it in the browser.',
+                            loc?.translate('docs_load_failed_message') ??
+                                'The in-app reader could not load this document. Retry here or open it in the browser.',
                             textAlign: TextAlign.center,
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: colorScheme.onSurfaceVariant,
@@ -491,7 +511,9 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
                                     ),
                                   ),
                                   icon: const Icon(Icons.refresh_rounded),
-                                  label: const Text('Retry'),
+                                  label: Text(
+                                    loc?.translate('retry') ?? 'Retry',
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -510,7 +532,9 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
                                     ),
                                   ),
                                   icon: const Icon(Icons.open_in_new_rounded),
-                                  label: const Text('Browser'),
+                                  label: Text(
+                                    loc?.translate('docs_browser') ?? 'Browser',
+                                  ),
                                 ),
                               ),
                             ],

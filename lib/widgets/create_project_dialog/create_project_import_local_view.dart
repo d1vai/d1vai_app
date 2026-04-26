@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../button.dart';
 import '../input.dart';
 
@@ -35,6 +36,7 @@ class CreateProjectImportLocalView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final listenable = Listenable.merge([
       nameController,
@@ -61,7 +63,8 @@ class CreateProjectImportLocalView extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Upload a local .zip workspace and import it directly as a project. The archive should contain your project files at the root.',
+                  loc?.translate('create_project_import_local_info') ??
+                      'Upload a local .zip workspace and import it directly as a project. The archive should contain your project files at the root.',
                   style: TextStyle(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
                     fontSize: 13,
@@ -76,8 +79,11 @@ class CreateProjectImportLocalView extends StatelessWidget {
         Input(
           controller: nameController,
           onChanged: onChanged,
-          labelText: 'Project Name',
-          hintText: 'my-project',
+          labelText:
+              loc?.translate('create_project_project_name') ?? 'Project Name',
+          hintText:
+              loc?.translate('create_project_project_name_hint') ??
+              'my-project',
           variant: InputVariant.outlined,
           prefixIcon: const Icon(Icons.folder_outlined),
           errorText: (errorText != null && errorText!.isNotEmpty)
@@ -88,8 +94,10 @@ class CreateProjectImportLocalView extends StatelessWidget {
         Input(
           controller: descriptionController,
           onChanged: onChanged,
-          labelText: 'Description',
-          hintText: 'Optional description',
+          labelText:
+              loc?.translate('create_project_description') ?? 'Description',
+          hintText:
+              loc?.translate('optional_description') ?? 'Optional description',
           variant: InputVariant.outlined,
           prefixIcon: const Icon(Icons.description_outlined),
         ),
@@ -112,7 +120,8 @@ class CreateProjectImportLocalView extends StatelessWidget {
                   child: Text(
                     archiveFileName?.trim().isNotEmpty == true
                         ? archiveFileName!
-                        : 'Choose .zip archive',
+                        : (loc?.translate('create_project_choose_zip') ??
+                              'Choose .zip archive'),
                     style: TextStyle(
                       fontSize: 13,
                       color: archiveFileName?.trim().isNotEmpty == true
@@ -123,7 +132,7 @@ class CreateProjectImportLocalView extends StatelessWidget {
                 ),
                 TextButton(
                   onPressed: onPickArchive,
-                  child: const Text('Browse'),
+                  child: Text(loc?.translate('browse') ?? 'Browse'),
                 ),
               ],
             ),
@@ -131,7 +140,8 @@ class CreateProjectImportLocalView extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Supported format: .zip',
+          loc?.translate('create_project_supported_zip') ??
+              'Supported format: .zip',
           style: TextStyle(
             fontSize: 12,
             color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
@@ -142,8 +152,14 @@ class CreateProjectImportLocalView extends StatelessWidget {
           contentPadding: EdgeInsets.zero,
           value: isPrivate,
           onChanged: onPrivateChanged,
-          title: const Text('Private project'),
-          subtitle: const Text('Keep the imported project private by default'),
+          title: Text(
+            loc?.translate('create_project_private_project') ??
+                'Private project',
+          ),
+          subtitle: Text(
+            loc?.translate('create_project_private_project_subtitle') ??
+                'Keep the imported project private by default',
+          ),
         ),
         const SizedBox(height: 12),
         ListenableBuilder(
@@ -157,7 +173,9 @@ class CreateProjectImportLocalView extends StatelessWidget {
                 disabled: !enabled,
                 variant: ButtonVariant.defaultVariant,
                 size: ButtonSize.defaultSize,
-                text: 'Import Local Zip',
+                text:
+                    loc?.translate('create_project_import_local_action') ??
+                    'Import Local Zip',
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 12,

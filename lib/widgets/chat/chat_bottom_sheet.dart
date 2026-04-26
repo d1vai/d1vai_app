@@ -35,6 +35,7 @@ class ChatBottomSheet extends StatefulWidget {
   final VoidCallback? onOpenFullScreen;
   final String? heroTag;
   final String? statusLabel;
+  final String? statusToken;
   final bool statusIsError;
   final bool isModelReady;
   final bool isModelLoading;
@@ -76,6 +77,7 @@ class ChatBottomSheet extends StatefulWidget {
     this.onOpenFullScreen,
     this.heroTag,
     this.statusLabel,
+    this.statusToken,
     this.statusIsError = false,
     this.isModelReady = true,
     this.isModelLoading = false,
@@ -233,6 +235,7 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                             child: ChatStatusPill(
                               key: ValueKey(statusText),
                               label: statusText,
+                              statusToken: widget.statusToken,
                               isError: widget.statusIsError,
                             ),
                           ),

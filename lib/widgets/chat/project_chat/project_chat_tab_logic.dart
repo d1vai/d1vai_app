@@ -131,25 +131,33 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
   }
 
   void _showWorkspaceWarmupUi() {
+    final loc = AppLocalizations.of(context);
     if (_workspaceWarmupVisible || !mounted) return;
     setState(() {
       _workspaceWarmupVisible = true;
       _workspaceWarmupCompleted = false;
-      _workspaceWarmupMessage = 'Starting workspace. Sending next.';
+      _workspaceWarmupMessage =
+          loc?.translate('workspace_warmup_inline_next') ??
+          'Starting workspace. Sending next.';
     });
     _showInfoNotice(
       key: 'workspace_warmup_started',
-      title: 'Workspace',
-      message: 'Starting. Sending next.',
+      title: loc?.translate('workspace_title') ?? 'Workspace',
+      message:
+          loc?.translate('workspace_warmup_notice_next') ??
+          'Starting. Sending next.',
       cooldown: const Duration(seconds: 12),
     );
   }
 
   void _completeWorkspaceWarmupUi() {
+    final loc = AppLocalizations.of(context);
     if (!_workspaceWarmupVisible || !mounted) return;
     setState(() {
       _workspaceWarmupCompleted = true;
-      _workspaceWarmupMessage = 'Ready. Sending now.';
+      _workspaceWarmupMessage =
+          loc?.translate('workspace_warmup_inline_now') ??
+          'Ready. Sending now.';
     });
   }
 
@@ -836,10 +844,13 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       });
       _signalOutbox();
       if (authErr) {
+        final loc = AppLocalizations.of(context);
         _showErrorNotice(
           key: 'model_auth_expired',
-          title: 'Model',
-          message: 'Login expired. Please sign in again to load models.',
+          title: loc?.translate('model_switch_title') ?? 'Model',
+          message:
+              loc?.translate('model_load_auth_expired') ??
+              'Login expired. Please sign in again to load models.',
         );
       } else {
         _scheduleModelConfigRetry();
@@ -885,8 +896,13 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       });
       SnackBarHelper.showError(
         context,
-        title: 'Model',
-        message: 'Failed to switch model: $e',
+        title:
+            AppLocalizations.of(context)?.translate('model_switch_title') ??
+            'Model',
+        message:
+            (AppLocalizations.of(context)?.translate('model_switch_failed') ??
+                    'Failed to switch model: {error}')
+                .replaceAll('{error}', '$e'),
       );
     } finally {
       if (mounted) {
@@ -1719,10 +1735,17 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       _scheduleDeployAutoClear(const Duration(minutes: 3));
       _showInfoNotice(
         key: 'deployment_start',
-        title: 'Deploying',
+        title:
+            AppLocalizations.of(context)?.translate('deploying_title') ??
+            'Deploying',
         message: _deployFramework != null && _deployFramework!.trim().isNotEmpty
-            ? 'Starting ${_deployFramework!.trim()} deploy...'
-            : 'Starting deploy...',
+            ? (AppLocalizations.of(
+                        context,
+                      )?.translate('deploying_start_framework') ??
+                      'Starting {framework} deploy...')
+                  .replaceAll('{framework}', _deployFramework!.trim())
+            : (AppLocalizations.of(context)?.translate('deploying_start') ??
+                  'Starting deploy...'),
         cooldown: const Duration(seconds: 4),
         duration: const Duration(seconds: 2),
       );
@@ -1851,9 +1874,18 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       }
       _showSuccessNotice(
         key: 'preview_redeploy_triggered',
-        title: 'Redeploy started',
-        message: url.isNotEmpty ? url : 'Preview deploy started',
-        actionLabel: url.isNotEmpty ? 'Open' : null,
+        title:
+            AppLocalizations.of(context)?.translate('redeploy_started_title') ??
+            'Redeploy started',
+        message: url.isNotEmpty
+            ? url
+            : (AppLocalizations.of(
+                    context,
+                  )?.translate('redeploy_started_message') ??
+                  'Preview deploy started'),
+        actionLabel: url.isNotEmpty
+            ? (AppLocalizations.of(context)?.translate('open') ?? 'Open')
+            : null,
         onActionPressed: url.isNotEmpty
             ? () {
                 final uri = Uri.tryParse(url);
@@ -1877,7 +1909,9 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       if (!mounted) return;
       _showErrorNotice(
         key: 'preview_redeploy_failed',
-        title: 'Redeploy failed',
+        title:
+            AppLocalizations.of(context)?.translate('redeploy_failed_title') ??
+            'Redeploy failed',
         message: e.toString(),
       );
       setState(() {

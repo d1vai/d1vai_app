@@ -20,6 +20,7 @@ import '../../utils/billing_errors.dart';
 import '../snackbar_helper.dart';
 import '../adaptive_modal.dart';
 import '../insufficient_balance_dialog.dart';
+import '../../l10n/app_localizations.dart';
 
 import 'create_project_chooser_view.dart';
 import 'create_project_dialog_shell.dart';
@@ -31,15 +32,6 @@ import 'github_import/github_collaborator_import_view.dart';
 import 'github_import/github_import_utils.dart';
 
 const String _autoTemplateRepo = 'auto';
-const ProjectTemplateInfo _autoTemplateInfo = ProjectTemplateInfo(
-  templateRepo: _autoTemplateRepo,
-  name: 'Auto',
-  description: 'Let D1V choose the best template based on your prompt.',
-  category: 'system',
-  kind: 'smart',
-  featured: true,
-  rank: -1,
-);
 
 /// 项目创建对话框
 class CreateProjectDialog extends StatefulWidget {
@@ -122,14 +114,22 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     final isAnyLoading = _isLoading || _ghLoading;
     final showBack = _flow != _CreateProjectFlow.chooser;
     final title = switch (_flow) {
-      _CreateProjectFlow.chooser => 'Add Project',
-      _CreateProjectFlow.newAi => 'New Project',
-      _CreateProjectFlow.importLocal => 'Import Local Zip',
-      _CreateProjectFlow.importPublic => 'Import Public Repo',
-      _CreateProjectFlow.githubCollaborator => 'GitHub Import',
+      _CreateProjectFlow.chooser =>
+        loc?.translate('create_project_dialog_title') ?? 'Add Project',
+      _CreateProjectFlow.newAi =>
+        loc?.translate('create_project_new_project_title') ?? 'New Project',
+      _CreateProjectFlow.importLocal =>
+        loc?.translate('create_project_import_local_title') ??
+            'Import Local Zip',
+      _CreateProjectFlow.importPublic =>
+        loc?.translate('create_project_import_public_title') ??
+            'Import Public Repo',
+      _CreateProjectFlow.githubCollaborator =>
+        loc?.translate('create_project_github_import_title') ?? 'GitHub Import',
     };
     return CreateProjectDialogShell(
       title: title,
@@ -159,9 +159,24 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
         s.contains('expired');
   }
 
-  List<ProjectTemplateInfo> get _templateOptions {
+  ProjectTemplateInfo _localizedAutoTemplateInfo(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+    return ProjectTemplateInfo(
+      templateRepo: _autoTemplateRepo,
+      name: loc?.translate('create_project_template_auto_name') ?? 'Auto',
+      description:
+          loc?.translate('create_project_template_auto_description') ??
+          'Let D1V choose the best template based on your prompt.',
+      category: 'system',
+      kind: 'smart',
+      featured: true,
+      rank: -1,
+    );
+  }
+
+  List<ProjectTemplateInfo> _templateOptions(BuildContext context) {
     return <ProjectTemplateInfo>[
-      _autoTemplateInfo,
+      _localizedAutoTemplateInfo(context),
       ..._availableTemplates.where(
         (template) => template.templateRepo != _autoTemplateRepo,
       ),
@@ -264,7 +279,11 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
       });
       if (_isAuthError(e)) {
         setState(() {
-          _error = 'Login expired. Please sign in again before loading models.';
+          _error =
+              AppLocalizations.of(
+                context,
+              )?.translate('create_project_login_expired_models') ??
+              'Login expired. Please sign in again before loading models.';
         });
         return;
       }
@@ -312,6 +331,9 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
         _isLoadingTemplates = false;
         if (_isAuthError(e)) {
           _error =
+              AppLocalizations.of(
+                context,
+              )?.translate('create_project_login_expired_templates') ??
               'Login expired. Please sign in again before loading templates.';
         }
       });
@@ -371,8 +393,12 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     if (!mounted) return;
     SnackBarHelper.showSuccess(
       context,
-      title: 'Copied',
-      message: 'Bot username copied to clipboard',
+      title: AppLocalizations.of(context)?.translate('copied') ?? 'Copied',
+      message:
+          AppLocalizations.of(
+            context,
+          )?.translate('create_project_bot_username_copied') ??
+          'Bot username copied to clipboard',
       duration: const Duration(seconds: 2),
     );
   }
@@ -443,7 +469,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
             },
             isModelLoading: _isLoadingModels,
             isWorkspaceReady: _newProjectWorkspacePhase == WorkspacePhase.ready,
-            templateOptions: _templateOptions,
+            templateOptions: _templateOptions(context),
             selectedTemplateRepo: _selectedTemplateRepo,
             onTemplateChanged: _handleTemplateSelectionChanged,
             isTemplateLoading: _isLoadingTemplates,
@@ -502,7 +528,11 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     // Validate: description must be at least 8 characters (match d1vai frontend)
     if (description.isEmpty) {
       setState(() {
-        _error = 'Please describe what you want to build';
+        _error =
+            AppLocalizations.of(
+              context,
+            )?.translate('create_project_description_required') ??
+            'Please describe what you want to build';
       });
       return;
     }
@@ -510,6 +540,9 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     if (description.length < 8) {
       setState(() {
         _error =
+            AppLocalizations.of(
+              context,
+            )?.translate('create_project_description_too_short') ??
             'Description is too short. Please provide more details (min 8 chars)';
       });
       return;
@@ -521,6 +554,9 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     if (token.isEmpty) {
       setState(() {
         _error =
+            AppLocalizations.of(
+              context,
+            )?.translate('create_project_token_missing') ??
             'Not logged in or token missing. Please login again.\n\nTip: Settings → Profile → API → Copy diagnostics.';
       });
       return;
@@ -541,9 +577,17 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
           if (mounted) {
             SnackBarHelper.showInfo(
               context,
-              title: 'Model',
+              title:
+                  AppLocalizations.of(
+                    context,
+                  )?.translate('model_switch_title') ??
+                  'Model',
               message:
-                  'Failed to switch model, continuing with server default. ($e)',
+                  (AppLocalizations.of(context)?.translate(
+                            'create_project_model_switch_failed_continue',
+                          ) ??
+                          'Failed to switch model, continuing with server default. ({error})')
+                      .replaceAll('{error}', '$e'),
               duration: const Duration(seconds: 3),
             );
           }
@@ -559,7 +603,12 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
         setState(() {
           _isLoading = false;
           _error =
-              'Workspace is not ready: $e\n\nAPI Base: ${ApiClient.baseUrl}';
+              (AppLocalizations.of(
+                        context,
+                      )?.translate('create_project_workspace_not_ready') ??
+                      'Workspace is not ready: {error}\n\nAPI Base: {base}')
+                  .replaceAll('{error}', '$e')
+                  .replaceAll('{base}', ApiClient.baseUrl);
         });
         return;
       }
@@ -581,7 +630,12 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
       final projectId = project?['id'] as String?;
 
       if (projectId == null) {
-        throw Exception('Failed to get project ID');
+        throw Exception(
+          AppLocalizations.of(
+                context,
+              )?.translate('create_project_failed_get_project_id') ??
+              'Failed to get project ID',
+        );
       }
 
       if (!mounted) return;
@@ -629,8 +683,13 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
           if (!mounted) return;
           SnackBarHelper.showInfo(
             context,
-            title: 'Retrying',
-            message: 'Create-with-integrations failed, retrying once…',
+            title:
+                AppLocalizations.of(context)?.translate('retry') ?? 'Retrying',
+            message:
+                AppLocalizations.of(
+                  context,
+                )?.translate('create_project_retry_create_integrations') ??
+                'Create-with-integrations failed, retrying once…',
             duration: const Duration(seconds: 5),
           );
 
@@ -650,7 +709,12 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
           final project = retryResult['project'] as Map<String, dynamic>?;
           final projectId = project?['id']?.toString();
           if (projectId == null || projectId.isEmpty) {
-            throw Exception('Retry create project missing id');
+            throw Exception(
+              AppLocalizations.of(
+                    context,
+                  )?.translate('create_project_retry_missing_id') ??
+                  'Retry create project missing id',
+            );
           }
 
           final projectProvider = Provider.of<ProjectProvider>(
@@ -691,7 +755,12 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
       setState(() {
         _isLoading = false;
         _error =
-            'Failed to create project: $errText\n\nAPI Base: ${ApiClient.baseUrl}';
+            (AppLocalizations.of(
+                      context,
+                    )?.translate('create_project_failed_to_create') ??
+                    'Failed to create project: {error}\n\nAPI Base: {base}')
+                .replaceAll('{error}', errText)
+                .replaceAll('{base}', ApiClient.baseUrl);
       });
     }
   }
@@ -703,7 +772,11 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
 
     if (url.isEmpty || name.isEmpty) {
       setState(() {
-        _error = 'Please fill in all required fields';
+        _error =
+            AppLocalizations.of(
+              context,
+            )?.translate('create_project_fill_required') ??
+            'Please fill in all required fields';
       });
       return;
     }
@@ -733,7 +806,12 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
           : null;
       final projectId = project?['id']?.toString();
       if (projectId == null || projectId.isEmpty) {
-        throw Exception('Failed to get project ID');
+        throw Exception(
+          AppLocalizations.of(
+                context,
+              )?.translate('create_project_failed_get_project_id') ??
+              'Failed to get project ID',
+        );
       }
 
       final projectProvider = Provider.of<ProjectProvider>(
@@ -754,12 +832,25 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error = 'Failed to import repository: $e';
+        _error =
+            (AppLocalizations.of(
+                      context,
+                    )?.translate('create_project_failed_import_repo') ??
+                    'Failed to import repository: {error}')
+                .replaceAll('{error}', '$e');
       });
     }
   }
 
   Future<void> _pickLocalArchive() async {
+    final loc = AppLocalizations.of(context);
+    final selectedArchiveEmptyText =
+        loc?.translate('create_project_selected_archive_empty') ??
+        'Selected archive is empty';
+    final failedChooseArchiveText =
+        loc?.translate('create_project_failed_choose_archive') ??
+        'Failed to choose archive: {error}';
+
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -774,7 +865,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
         bytes = await File(file.path!).readAsBytes();
       }
       if (bytes == null || bytes.isEmpty) {
-        throw Exception('Selected archive is empty');
+        throw Exception(selectedArchiveEmptyText);
       }
 
       if (!mounted) return;
@@ -793,7 +884,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = 'Failed to choose archive: $e';
+        _error = failedChooseArchiveText.replaceAll('{error}', '$e');
       });
     }
   }
@@ -807,7 +898,11 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
         archiveBytes == null ||
         archiveFileName.isEmpty) {
       setState(() {
-        _error = 'Please choose a zip archive and fill in the project name';
+        _error =
+            AppLocalizations.of(
+              context,
+            )?.translate('create_project_choose_zip_and_name') ??
+            'Please choose a zip archive and fill in the project name';
       });
       return;
     }
@@ -845,7 +940,12 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
           payload['project_id']?.toString() ??
           payload['id']?.toString();
       if (projectId == null || projectId.isEmpty) {
-        throw Exception('Failed to get project ID');
+        throw Exception(
+          AppLocalizations.of(
+                context,
+              )?.translate('create_project_failed_get_project_id') ??
+              'Failed to get project ID',
+        );
       }
 
       final projectProvider = Provider.of<ProjectProvider>(
@@ -862,7 +962,12 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error = 'Failed to import local zip: $e';
+        _error =
+            (AppLocalizations.of(
+                      context,
+                    )?.translate('create_project_failed_import_local') ??
+                    'Failed to import local zip: {error}')
+                .replaceAll('{error}', '$e');
       });
       return;
     }
@@ -898,7 +1003,11 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     final repoFullName = parseGithubRepoFullName(repoUrl);
     if (repoFullName == null) {
       setState(() {
-        _ghError = 'Invalid repo URL. Example: https://github.com/owner/repo';
+        _ghError =
+            AppLocalizations.of(
+              context,
+            )?.translate('create_project_invalid_repo_url') ??
+            'Invalid repo URL. Example: https://github.com/owner/repo';
       });
       return;
     }
@@ -929,8 +1038,14 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     if (!ok && mounted) {
       SnackBarHelper.showError(
         context,
-        title: 'Open failed',
-        message: 'Could not open GitHub settings in browser',
+        title:
+            AppLocalizations.of(context)?.translate('docs_open_failed_title') ??
+            'Open failed',
+        message:
+            AppLocalizations.of(
+              context,
+            )?.translate('create_project_could_not_open_github_settings') ??
+            'Could not open GitHub settings in browser',
       );
     }
   }
@@ -941,7 +1056,11 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     );
     if (repoFullName == null) {
       setState(() {
-        _ghError = 'Invalid repo URL';
+        _ghError =
+            AppLocalizations.of(
+              context,
+            )?.translate('create_project_invalid_repo_url_simple') ??
+            'Invalid repo URL';
       });
       return;
     }
@@ -961,13 +1080,24 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
       });
       SnackBarHelper.showSuccess(
         context,
-        title: 'Invitation',
-        message: 'Invitation accepted',
+        title:
+            AppLocalizations.of(context)?.translate('invitation') ??
+            'Invitation',
+        message:
+            AppLocalizations.of(
+              context,
+            )?.translate('create_project_invitation_accepted_message') ??
+            'Invitation accepted',
       );
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _ghError = 'Accept invitation failed: $e';
+        _ghError =
+            (AppLocalizations.of(
+                      context,
+                    )?.translate('create_project_accept_invitation_failed') ??
+                    'Accept invitation failed: {error}')
+                .replaceAll('{error}', '$e');
       });
     } finally {
       if (mounted) {
@@ -984,7 +1114,11 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     );
     if (repoFullName == null) {
       setState(() {
-        _ghError = 'Invalid repo URL';
+        _ghError =
+            AppLocalizations.of(
+              context,
+            )?.translate('create_project_invalid_repo_url_simple') ??
+            'Invalid repo URL';
       });
       return;
     }
@@ -1010,15 +1144,25 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
       });
       SnackBarHelper.showSuccess(
         context,
-        title: 'Access',
-        message: 'Access verified for $repoFullName',
+        title: AppLocalizations.of(context)?.translate('access') ?? 'Access',
+        message:
+            (AppLocalizations.of(
+                      context,
+                    )?.translate('create_project_access_verified_for') ??
+                    'Access verified for {repo}')
+                .replaceAll('{repo}', repoFullName),
       );
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _ghAccessVerified = false;
         _ghRepoInfo = null;
-        _ghError = 'Verify access failed: $e';
+        _ghError =
+            (AppLocalizations.of(
+                      context,
+                    )?.translate('create_project_verify_access_failed') ??
+                    'Verify access failed: {error}')
+                .replaceAll('{error}', '$e');
       });
     } finally {
       if (mounted) {
@@ -1041,13 +1185,20 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
         : (repoInfo['repository_name']?.toString() ??
               repoFullName.split('/')[1]);
 
+    final importedDescription =
+        (AppLocalizations.of(
+                  context,
+                )?.translate('create_project_imported_from_github') ??
+                'Imported from GitHub: {repo}')
+            .replaceAll('{repo}', repoFullName);
+
     final payload = <String, dynamic>{
       'repository_full_name': repoFullName,
       'project_name': projectName,
       'project_description':
           (repoInfo['description']?.toString().isNotEmpty ?? false)
           ? repoInfo['description'].toString()
-          : 'Imported from GitHub: $repoFullName',
+          : importedDescription,
       'repository_url': repoInfo['clone_url'],
       'repository_ssh_url': repoInfo['ssh_url'],
       'default_branch': repoInfo['default_branch'] ?? 'main',
@@ -1068,7 +1219,12 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
       final normalized = normalizeImportedProject(res);
       final projectId = normalized.projectId;
       if (projectId == null || projectId.isEmpty) {
-        throw Exception('Import succeeded but missing project id');
+        throw Exception(
+          AppLocalizations.of(
+                context,
+              )?.translate('create_project_missing_project_id_after_import') ??
+              'Import succeeded but missing project id',
+        );
       }
 
       final projectProvider = Provider.of<ProjectProvider>(
@@ -1083,7 +1239,12 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _ghError = 'Import failed: $e';
+        _ghError =
+            (AppLocalizations.of(
+                      context,
+                    )?.translate('create_project_failed_import_project') ??
+                    'Import failed: {error}')
+                .replaceAll('{error}', '$e');
       });
     } finally {
       if (mounted) {

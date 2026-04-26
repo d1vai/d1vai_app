@@ -850,95 +850,6 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
     return null;
   }
 
-  Widget _buildRetentionCoachCard(UserProject project) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final activeHint = _activeFlowHint();
-    final hasPreview = (project.preferredPreviewUrl ?? '').trim().isNotEmpty;
-    final hasProd = (project.latestProdDeploymentUrl ?? '').trim().isNotEmpty;
-
-    return CustomCard(
-      padding: const EdgeInsets.all(14),
-      child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 220),
-        child: activeHint != null
-            ? Row(
-                key: ValueKey('flow-$activeHint'),
-                children: [
-                  const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      activeHint,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                ],
-              )
-            : Row(
-                key: ValueKey('coach-$hasPreview-$hasProd'),
-                children: [
-                  Icon(
-                    hasProd
-                        ? Icons.rocket_launch_outlined
-                        : Icons.trending_up_outlined,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      hasProd
-                          ? _t(
-                              'project_deploy_coach_prod_live',
-                              'Production is live. Keep shipping with small preview iterations.',
-                            )
-                          : hasPreview
-                          ? _t(
-                              'project_deploy_coach_preview_ready',
-                              'Preview is ready. Recommended next step: release to production.',
-                            )
-                          : _t(
-                              'project_deploy_coach_no_preview',
-                              'No preview yet. Start with a preview deploy to reduce release risk.',
-                            ),
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                  if (!hasProd && hasPreview)
-                    TextButton(
-                      onPressed: _deployingProduction
-                          ? null
-                          : () => _confirmAndDeploy(
-                              title: _t(
-                                'project_deploy_confirm_prod_title',
-                                'Deploy to production?',
-                              ),
-                              message: _t(
-                                'project_deploy_confirm_prod_message',
-                                'This will compare dev/main, merge if needed, then trigger a production deployment.',
-                              ),
-                              action: _triggerProductionDeploy,
-                            ),
-                      child: Text(
-                        _t('project_deploy_release_now', 'Release now'),
-                      ),
-                    ),
-                ],
-              ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final project = widget.project;
@@ -948,429 +859,548 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
         await _loadDeployments();
         await _loadReleases();
       },
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildActionsCard(project),
-            const SizedBox(height: 16),
-            _buildRetentionCoachCard(project),
-            const SizedBox(height: 16),
-            _buildTroubleshootingCard(project),
-            const SizedBox(height: 16),
-            _buildCurrentDeploymentsCard(project),
-            const SizedBox(height: 16),
-            _buildReleasesCard(project),
-            const SizedBox(height: 16),
-            _buildDeploymentHistoryCard(),
-          ],
-        ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth >= 980;
+          return SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildDeployControlDeck(project, isWide: isWide),
+                const SizedBox(height: 16),
+                if (isWide)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(flex: 5, child: _buildReleasesCard(project)),
+                      const SizedBox(width: 16),
+                      Expanded(flex: 7, child: _buildDeploymentHistoryCard()),
+                    ],
+                  )
+                else ...[
+                  _buildReleasesCard(project),
+                  const SizedBox(height: 16),
+                  _buildDeploymentHistoryCard(),
+                ],
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildActionsCard(UserProject project) {
+  Widget _buildDeployControlDeck(UserProject project, {required bool isWide}) {
+    if (isWide) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(flex: 7, child: _buildCommandCenterCard(project)),
+          const SizedBox(width: 16),
+          Expanded(flex: 5, child: _buildEnvironmentSnapshotCard(project)),
+        ],
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildCommandCenterCard(project),
+        const SizedBox(height: 16),
+        _buildEnvironmentSnapshotCard(project),
+      ],
+    );
+  }
+
+  Widget _buildCommandCenterCard(UserProject project) {
     final theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _t('project_deploy_actions', 'Actions'),
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
+    final colorScheme = theme.colorScheme;
+    final activeHint = _activeFlowHint();
+    final previewReady = (project.preferredPreviewUrl ?? '').trim().isNotEmpty;
+    final prodReady = (project.latestProdDeploymentUrl ?? '').trim().isNotEmpty;
+    final branch = _resolveDevBranch();
+    final releaseBranch = _resolveMainBranch();
+
+    return CustomCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 14,
+            runSpacing: 14,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(18),
+                  color: Color.alphaBlend(
+                    colorScheme.primary.withValues(alpha: 0.12),
+                    colorScheme.surface,
+                  ),
+                  border: Border.all(
+                    color: colorScheme.primary.withValues(alpha: 0.18),
+                  ),
+                ),
+                child: Icon(
+                  Icons.rocket_launch_rounded,
+                  color: colorScheme.primary,
+                  size: 28,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _deployingPreview
-                        ? null
-                        : () => _confirmAndDeploy(
-                            title: _t(
-                              'project_deploy_confirm_preview_title',
-                              'Redeploy preview?',
-                            ),
-                            message: _t(
-                              'project_deploy_confirm_preview_message',
-                              'This will trigger a new preview (dev) deployment on Vercel.',
-                            ),
-                            action: _triggerPreviewDeploy,
-                          ),
-                    icon: _deployingPreview
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.refresh),
-                    label: Text(
-                      _t(
-                        'project_deploy_action_redeploy_preview',
-                        'Redeploy preview',
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _deployingProduction
-                        ? null
-                        : () => _confirmAndDeploy(
-                            title: _t(
-                              'project_deploy_confirm_prod_title',
-                              'Deploy to production?',
-                            ),
-                            message: _t(
-                              'project_deploy_confirm_prod_message',
-                              'This will compare dev/main, merge if needed, then trigger a production deployment.',
-                            ),
-                            action: _triggerProductionDeploy,
-                          ),
-                    icon: _deployingProduction
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.cloud_upload),
-                    label: Text(
-                      _deployingProduction
-                          ? _productionPhaseLabel
-                          : _t(
-                              'project_deploy_action_deploy_prod',
-                              'Deploy production',
-                            ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            if (_deployingProduction) ...[
-              const SizedBox(height: 8),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 180),
-                child: Row(
-                  key: ValueKey(_productionReleasePhase),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 620),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.sync, size: 14),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        _t(
-                          'project_deploy_release_flow',
-                          'Release flow: {phase}',
-                        ).replaceAll(
-                          '{phase}',
-                          _productionPhaseLabel.replaceAll('...', ''),
-                        ),
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
+                    Text(
+                      _t('project_deploy_control_title', 'Release control'),
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
+                        height: 1.0,
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      activeHint ??
+                          (prodReady
+                              ? _t(
+                                  'project_deploy_coach_prod_live',
+                                  'Production is live. Keep shipping with small preview iterations.',
+                                )
+                              : previewReady
+                              ? _t(
+                                  'project_deploy_coach_preview_ready',
+                                  'Preview is ready. Recommended next step: release to production.',
+                                )
+                              : _t(
+                                  'project_deploy_coach_no_preview',
+                                  'No preview yet. Start with a preview deploy to reduce release risk.',
+                                )),
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.92,
+                        ),
+                        height: 1.45,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        _DeployInlinePill(
+                          icon: Icons.alt_route,
+                          text: '$branch -> $releaseBranch',
+                          monospace: true,
+                        ),
+                        _DeployInlinePill(
+                          icon: Icons.history_toggle_off,
+                          text:
+                              '${_deployments.length} ${_t('project_deploy_history', 'History').toLowerCase()}',
+                        ),
+                        if (_isLoadingReleases)
+                          _DeployInlinePill(
+                            icon: Icons.sync,
+                            text: _t(
+                              'project_deploy_loading_releases',
+                              'Refreshing releases',
+                            ),
+                          ),
+                      ],
                     ),
                   ],
                 ),
               ),
             ],
-            const SizedBox(height: 12),
-            SizedBox(
+          ),
+          const SizedBox(height: 22),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              SizedBox(
+                width: 220,
+                child: FilledButton.icon(
+                  onPressed: _deployingProduction
+                      ? null
+                      : () => _confirmAndDeploy(
+                          title: _t(
+                            'project_deploy_confirm_prod_title',
+                            'Deploy to production?',
+                          ),
+                          message: _t(
+                            'project_deploy_confirm_prod_message',
+                            'This will compare dev/main, merge if needed, then trigger a production deployment.',
+                          ),
+                          action: _triggerProductionDeploy,
+                        ),
+                  icon: _deployingProduction
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.cloud_upload_rounded),
+                  label: Text(
+                    _deployingProduction
+                        ? _productionPhaseLabel
+                        : _t(
+                            'project_deploy_action_deploy_prod',
+                            'Deploy production',
+                          ),
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 220,
+                child: OutlinedButton.icon(
+                  onPressed: _deployingPreview
+                      ? null
+                      : () => _confirmAndDeploy(
+                          title: _t(
+                            'project_deploy_confirm_preview_title',
+                            'Redeploy preview?',
+                          ),
+                          message: _t(
+                            'project_deploy_confirm_preview_message',
+                            'This will trigger a new preview (dev) deployment on Vercel.',
+                          ),
+                          action: _triggerPreviewDeploy,
+                        ),
+                  icon: _deployingPreview
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.refresh_rounded),
+                  label: Text(
+                    _t(
+                      'project_deploy_action_redeploy_preview',
+                      'Redeploy preview',
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 220,
+                child: OutlinedButton.icon(
+                  onPressed:
+                      (_deployingPreview ||
+                          _deployingProduction ||
+                          _retryingLast)
+                      ? null
+                      : _retryLastDeployment,
+                  icon: _retryingLast
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.replay_rounded),
+                  label: Text(
+                    _t('project_deploy_retry_last', 'Retry last deployment'),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (_deployingProduction) ...[
+            const SizedBox(height: 14),
+            Container(
               width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed:
-                    (_deployingPreview || _deployingProduction || _retryingLast)
-                    ? null
-                    : _retryLastDeployment,
-                icon: _retryingLast
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: colorScheme.primary.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: colorScheme.primary.withValues(alpha: 0.16),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _t(
+                        'project_deploy_release_flow',
+                        'Release flow: {phase}',
+                      ).replaceAll(
+                        '{phase}',
+                        _productionPhaseLabel.replaceAll('...', ''),
+                      ),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 18),
+          Text(
+            _t('project_deploy_troubleshooting', 'Failure triage'),
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _t(
+              'project_deploy_troubleshooting_hint',
+              'Start with the shortest path to isolate build, config, and permission issues.',
+            ),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 18,
+            runSpacing: 10,
+            children: [
+              SizedBox(
+                width: 260,
+                child: _TroubleRow(
+                  icon: Icons.receipt_long,
+                  text: _t(
+                    'project_deploy_tip_short_logs',
+                    'Open build logs and share error snippet',
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 260,
+                child: _TroubleRow(
+                  icon: Icons.key,
+                  text: _t(
+                    'project_deploy_tip_short_env',
+                    'Env vars configured (and synced to Vercel)',
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 260,
+                child: _TroubleRow(
+                  icon: Icons.code,
+                  text: _t(
+                    'project_deploy_tip_short_github',
+                    'GitHub access / repo permissions',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              if (widget.onAskAi != null)
+                OutlinedButton.icon(
+                  onPressed: () {
+                    widget.onAskAi!(
+                      '${_t('project_deploy_ai_prompt_vercel_prefix', 'My Vercel deployment failed for project')} "${project.projectName}". '
+                      '${_t('project_deploy_ai_prompt_vercel_middle', 'Give a step-by-step debugging checklist based on common Vercel/Remix issues.')} '
+                      '${_t('project_deploy_ai_prompt_vercel_suffix', 'Also suggest what logs/env vars to check first.')}',
+                    );
+                  },
+                  icon: const Icon(Icons.auto_awesome, size: 18),
+                  label: Text(_t('project_deploy_ask_ai', 'Ask AI')),
+                ),
+              TextButton.icon(
+                onPressed: _isLoading ? null : _loadDeployments,
+                icon: _isLoading
                     ? const SizedBox(
                         width: 16,
                         height: 16,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Icon(Icons.replay),
-                label: Text(
-                  _t('project_deploy_retry_last', 'Retry last deployment'),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Text(
-                  _t('project_deploy_history', 'History'),
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                DropdownButton<_DeploymentEnvFilter>(
-                  value: _envFilter,
-                  onChanged: (v) async {
-                    if (v == null) return;
-                    setState(() => _envFilter = v);
-                    await _loadDeployments();
-                  },
-                  items: [
-                    DropdownMenuItem(
-                      value: _DeploymentEnvFilter.all,
-                      child: Text(_t('project_deploy_filter_all', 'All')),
-                    ),
-                    DropdownMenuItem(
-                      value: _DeploymentEnvFilter.dev,
-                      child: Text(
-                        _t('project_deploy_filter_preview', 'Preview'),
-                      ),
-                    ),
-                    DropdownMenuItem(
-                      value: _DeploymentEnvFilter.prod,
-                      child: Text(
-                        _t('project_deploy_filter_production', 'Production'),
-                      ),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                IconButton(
-                  tooltip: _t('refresh', 'Refresh'),
-                  onPressed: _isLoading ? null : _loadDeployments,
-                  icon: _isLoading
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.refresh),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTroubleshootingCard(UserProject project) {
-    final theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _t('project_deploy_troubleshooting', 'Troubleshooting'),
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              _t(
-                'project_deploy_troubleshooting_hint',
-                'If deploy fails, try these quick checks:',
-              ),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 10),
-            _TroubleRow(
-              icon: Icons.code,
-              text: _t(
-                'project_deploy_tip_short_github',
-                'GitHub access / repo permissions',
-              ),
-            ),
-            const SizedBox(height: 6),
-            _TroubleRow(
-              icon: Icons.key,
-              text: _t(
-                'project_deploy_tip_short_env',
-                'Env vars configured (and synced to Vercel)',
-              ),
-            ),
-            const SizedBox(height: 6),
-            _TroubleRow(
-              icon: Icons.cloud,
-              text: _t(
-                'project_deploy_tip_short_retry_preview',
-                'Retry preview deploy first',
-              ),
-            ),
-            const SizedBox(height: 6),
-            _TroubleRow(
-              icon: Icons.receipt_long,
-              text: _t(
-                'project_deploy_tip_short_logs',
-                'Open build logs and share error snippet',
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: widget.onAskAi == null
-                        ? null
-                        : () {
-                            widget.onAskAi!(
-                              '${_t('project_deploy_ai_prompt_vercel_prefix', 'My Vercel deployment failed for project')} "${project.projectName}". '
-                              '${_t('project_deploy_ai_prompt_vercel_middle', 'Give a step-by-step debugging checklist based on common Vercel/Remix issues.')} '
-                              '${_t('project_deploy_ai_prompt_vercel_suffix', 'Also suggest what logs/env vars to check first.')}',
-                            );
-                          },
-                    icon: const Icon(Icons.auto_awesome, size: 18),
-                    label: Text(_t('project_deploy_ask_ai', 'Ask AI')),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _retryingLast ? null : _retryLastDeployment,
-                    icon: const Icon(Icons.replay, size: 18),
-                    label: Text(_t('retry', 'Retry')),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCurrentDeploymentsCard(UserProject project) {
-    final theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _t('project_deploy_current_deployments', 'Current Deployments'),
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Production deployment
-            if (project.latestProdDeploymentUrl != null &&
-                project.latestProdDeploymentUrl!.isNotEmpty)
-              ListTile(
-                leading: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade100,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.check_circle,
-                    color: Colors.green,
-                    size: 24,
-                  ),
-                ),
-                title: Text(
-                  _t('project_deploy_filter_production', 'Production'),
-                ),
-                subtitle: Text(
-                  _getDeploymentLabel(project.latestProdDeploymentUrl),
-                  style: TextStyle(color: Colors.grey.shade600),
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextButton(
-                      onPressed: () =>
-                          _openUrl(project.latestProdDeploymentUrl!),
-                      child: Text(_t('project_deploy_open', 'Open')),
-                    ),
-                    const Icon(Icons.arrow_forward_ios, size: 14),
-                  ],
-                ),
-                onTap: () {
-                  final question = _t(
-                    'project_deploy_ai_prompt_prod',
-                    'Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?',
-                  );
-                  widget.onAskAi?.call(question);
-                },
-              )
-            else
-              ListTile(
-                leading: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.cancel, color: Colors.grey, size: 24),
-                ),
-                title: Text(
-                  _t('project_deploy_filter_production', 'Production'),
-                ),
-                subtitle: Text(
-                  _t(
-                    'project_deploy_no_production',
-                    'No production deployment',
-                  ),
-                ),
-                onTap: () {},
-              ),
-            // Preview deployment
-            if ((project.preferredPreviewUrl ?? '').isNotEmpty) ...[
-              const Divider(),
-              ListTile(
-                leading: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade100,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.preview,
-                    color: Colors.blue,
-                    size: 24,
-                  ),
-                ),
-                title: Text(_t('project_deploy_filter_preview', 'Preview')),
-                subtitle: Text(
-                  _getDeploymentLabel(project.preferredPreviewUrl),
-                  style: TextStyle(color: Colors.grey.shade600),
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextButton(
-                      onPressed: () => _openUrl(project.preferredPreviewUrl!),
-                      child: Text(_t('project_deploy_open', 'Open')),
-                    ),
-                    const Icon(Icons.arrow_forward_ios, size: 14),
-                  ],
-                ),
-                onTap: () {
-                  final question = _t(
-                    'project_deploy_ai_prompt_preview',
-                    'Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?',
-                  );
-                  widget.onAskAi?.call(question);
-                },
+                    : const Icon(Icons.sync, size: 18),
+                label: Text(_t('refresh', 'Refresh')),
               ),
             ],
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEnvironmentSnapshotCard(UserProject project) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final productionUrl = _normalizeHttpUrl(
+      project.latestProdDeploymentUrl ?? project.vercelProdDomain,
+    );
+    final previewUrl = _normalizeHttpUrl(project.preferredPreviewUrl);
+
+    return CustomCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _t('project_deploy_current_deployments', 'Current Deployments'),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _t(
+              'project_deploy_snapshot_hint',
+              'Use this as the source of truth for what is live now and what is safe to release next.',
+            ),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 18),
+          _buildDeploymentSurfaceTile(
+            title: _t('project_deploy_filter_production', 'Production'),
+            url: productionUrl,
+            icon: Icons.public,
+            iconColor: colorScheme.tertiary,
+            onAskAiPrompt: _t(
+              'project_deploy_ai_prompt_prod',
+              'Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?',
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildDeploymentSurfaceTile(
+            title: _t('project_deploy_filter_preview', 'Preview'),
+            url: previewUrl,
+            icon: Icons.preview,
+            iconColor: colorScheme.primary,
+            onAskAiPrompt: _t(
+              'project_deploy_ai_prompt_preview',
+              'Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDeploymentSurfaceTile({
+    required String title,
+    required String? url,
+    required IconData icon,
+    required Color iconColor,
+    required String onAskAiPrompt,
+  }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isAvailable = url != null && url.isNotEmpty;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: Color.alphaBlend(
+          iconColor.withValues(alpha: 0.05),
+          colorScheme.surface,
         ),
+        border: Border.all(
+          color: Color.alphaBlend(
+            iconColor.withValues(alpha: 0.16),
+            colorScheme.outlineVariant,
+          ),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: iconColor, size: 19),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      isAvailable
+                          ? _getDeploymentLabel(url)
+                          : _t(
+                              'project_deploy_no_surface',
+                              'Not available yet',
+                            ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: isAvailable
+                            ? iconColor
+                            : colorScheme.onSurfaceVariant,
+                        fontWeight: isAvailable ? FontWeight.w600 : null,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              if (isAvailable)
+                FilledButton.tonalIcon(
+                  onPressed: () => _openUrl(url),
+                  icon: const Icon(Icons.open_in_new, size: 16),
+                  label: Text(_t('project_deploy_open', 'Open')),
+                ),
+              if (isAvailable)
+                TextButton.icon(
+                  onPressed: () async {
+                    await Clipboard.setData(ClipboardData(text: url));
+                    if (!mounted) return;
+                    SnackBarHelper.showSuccess(
+                      context,
+                      title: _t('copied', 'Copied'),
+                      message: url,
+                    );
+                  },
+                  icon: const Icon(Icons.content_copy_outlined, size: 16),
+                  label: Text(_t('project_deploy_copy', 'Copy')),
+                ),
+              if (widget.onAskAi != null)
+                TextButton.icon(
+                  onPressed: () => widget.onAskAi?.call(onAskAiPrompt),
+                  icon: const Icon(Icons.smart_toy_outlined, size: 16),
+                  label: Text(_t('project_deploy_ask_ai', 'Ask AI')),
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -1735,20 +1765,85 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                _t('project_deploy_history_title', 'Deployment History'),
-                style:
-                    theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ) ??
-                    const TextStyle(fontWeight: FontWeight.w800),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _t('project_deploy_history_title', 'Deployment History'),
+                      style:
+                          theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ) ??
+                          const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _t(
+                        'project_deploy_history_hint',
+                        'Review recent deploy outcomes, open logs, and roll back specific commits when needed.',
+                      ),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const Spacer(),
               countPill,
             ],
           ),
           const SizedBox(height: 14),
+          Row(
+            children: [
+              Text(
+                _t('project_deploy_history', 'History'),
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(width: 10),
+              DropdownButton<_DeploymentEnvFilter>(
+                value: _envFilter,
+                onChanged: (v) async {
+                  if (v == null) return;
+                  setState(() => _envFilter = v);
+                  await _loadDeployments();
+                },
+                items: [
+                  DropdownMenuItem(
+                    value: _DeploymentEnvFilter.all,
+                    child: Text(_t('project_deploy_filter_all', 'All')),
+                  ),
+                  DropdownMenuItem(
+                    value: _DeploymentEnvFilter.dev,
+                    child: Text(_t('project_deploy_filter_preview', 'Preview')),
+                  ),
+                  DropdownMenuItem(
+                    value: _DeploymentEnvFilter.prod,
+                    child: Text(
+                      _t('project_deploy_filter_production', 'Production'),
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              IconButton(
+                tooltip: _t('refresh', 'Refresh'),
+                onPressed: _isLoading ? null : _loadDeployments,
+                icon: _isLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.refresh),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
           body,
         ],
       ),
@@ -2100,6 +2195,47 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
         ).replaceAll('{url}', uri.toString()),
       );
     }
+  }
+}
+
+class _DeployInlinePill extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final bool monospace;
+
+  const _DeployInlinePill({
+    required this.icon,
+    required this.text,
+    this.monospace = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: colorScheme.surface.withValues(alpha: 0.56),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.34),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: colorScheme.onSurfaceVariant),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+              fontFamily: monospace ? 'monospace' : null,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

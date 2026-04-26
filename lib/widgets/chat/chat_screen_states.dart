@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:d1vai_app/l10n/app_localizations.dart';
 
 import 'message_skeleton.dart';
 import 'quick_actions.dart';
@@ -10,6 +11,7 @@ class ChatScreenEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -27,14 +29,15 @@ class ChatScreenEmptyState extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Ask AI',
+                  loc?.translate('chat_empty_title') ?? 'Ask AI',
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Ask about this project or paste code.',
+                  loc?.translate('chat_empty_subtitle') ??
+                      'Ask about this project or paste code.',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant.withValues(

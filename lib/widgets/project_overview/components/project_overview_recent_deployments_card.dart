@@ -124,34 +124,36 @@ class ProjectOverviewRecentDeploymentsCard extends StatelessWidget {
                 statusColor = colorScheme.error;
               }
 
-              final itemSurface = Color.alphaBlend(
-                colorScheme.primary.withValues(alpha: isDark ? 0.06 : 0.02),
-                colorScheme.surface,
-              );
+              final summary =
+                  '${_t(context, 'project_overview_recent_deployments_env', '{env} deployment').replaceAll('{env}', deployment.environmentLabel)} • ${deployment.statusLabel} • ${formatTimeAgo(context, timestamp)}';
 
               return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
-                  color: itemSurface,
-                  borderRadius: BorderRadius.circular(14),
+                  color: Color.alphaBlend(
+                    statusColor.withValues(alpha: isDark ? 0.08 : 0.035),
+                    colorScheme.surface,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: colorScheme.outlineVariant.withValues(
-                      alpha: isDark ? 0.30 : 0.36,
-                    ),
+                    color: statusColor.withValues(alpha: isDark ? 0.24 : 0.14),
                   ),
                 ),
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      width: 34,
-                      height: 34,
+                      width: 24,
+                      height: 24,
+                      alignment: Alignment.center,
                       decoration: BoxDecoration(
                         color: statusColor.withValues(
                           alpha: isDark ? 0.16 : 0.10,
                         ),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: statusColor.withValues(
                             alpha: isDark ? 0.24 : 0.18,
@@ -160,50 +162,24 @@ class ProjectOverviewRecentDeploymentsCard extends StatelessWidget {
                       ),
                       child: Icon(
                         deployment.status == 'success'
-                            ? Icons.check_circle_outline
+                            ? Icons.check_rounded
                             : deployment.status == 'pending'
-                            ? Icons.hourglass_bottom_rounded
-                            : Icons.error_outline,
-                        size: 18,
+                            ? Icons.schedule_rounded
+                            : Icons.close_rounded,
+                        size: 14,
                         color: statusColor,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  _t(
-                                    context,
-                                    'project_overview_recent_deployments_env',
-                                    '{env} deployment',
-                                  ).replaceAll('{env}', deployment.environment),
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ),
-                              Text(
-                                formatTimeAgo(context, timestamp),
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            deployment.statusLabel,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        summary,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: colorScheme.onSurface.withValues(alpha: 0.92),
+                        ),
                       ),
                     ),
                   ],

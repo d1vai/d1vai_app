@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../models/project.dart';
 import '../../../widgets/card.dart';
 
@@ -54,29 +55,32 @@ class _ProjectCardTileState extends State<ProjectCardTile>
     String status,
     ColorScheme colorScheme,
   ) {
+    final loc = AppLocalizations.of(context);
     switch (status) {
       case 'active':
         return (
           color: colorScheme.primary,
-          label: 'Active',
+          label: loc?.translate('project_overview_status_active') ?? 'Active',
           icon: Icons.check_circle_outline,
         );
       case 'archived':
         return (
           color: colorScheme.tertiary,
-          label: 'Archived',
+          label:
+              loc?.translate('project_overview_status_archived') ??
+              '😴 Sleeping',
           icon: Icons.archive_outlined,
         );
       case 'draft':
         return (
           color: colorScheme.onSurfaceVariant,
-          label: 'Draft',
+          label: loc?.translate('project_overview_status_draft') ?? 'Draft',
           icon: Icons.edit_note_outlined,
         );
       case 'error':
         return (
           color: colorScheme.error,
-          label: 'Error',
+          label: loc?.translate('dashboard_workspace_status_error') ?? 'Error',
           icon: Icons.error_outline,
         );
       default:

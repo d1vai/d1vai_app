@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../models/model_config.dart';
 import '../../models/project.dart';
 import '../../utils/project_template_localizations.dart';
@@ -43,11 +44,6 @@ class CreateProjectNewAiView extends StatelessWidget {
     return t.isNotEmpty && t.length >= 8;
   }
 
-  bool _isChineseLocale(BuildContext context) {
-    final code = Localizations.localeOf(context).languageCode.toLowerCase();
-    return code == 'zh';
-  }
-
   ProjectTemplateInfo? _selectedTemplate() {
     for (final template in templateOptions) {
       if (template.templateRepo == selectedTemplateRepo) {
@@ -62,12 +58,12 @@ class CreateProjectNewAiView extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    final isZh = _isChineseLocale(context);
+    final loc = AppLocalizations.of(context);
     final locale = Localizations.localeOf(context);
 
-    final summaryText = isZh
-        ? '一句话写清页面、登录、数据和关键流程（至少 8 个字），系统会自动创建项目并在聊天里继续完成。'
-        : 'In one sentence, describe pages, auth, data, and key flows (min 8 chars); we will create the project and continue in chat.';
+    final summaryText =
+        loc?.translate('create_project_new_ai_summary') ??
+        'In one sentence, describe pages, auth, data, and key flows (min 8 chars); we will create the project and continue in chat.';
     final selectedTemplate = _selectedTemplate();
     final localizedSelectedTemplate = selectedTemplate == null
         ? null
@@ -145,10 +141,12 @@ class CreateProjectNewAiView extends StatelessWidget {
         Input(
           controller: descriptionController,
           onChanged: onChanged,
-          labelText: isZh ? '项目描述' : 'Project Description',
-          hintText: isZh
-              ? '例如：一个支持团队协作与任务看板的应用，带登录、权限和数据库。'
-              : 'Example: a team task board app with auth, roles, and database.',
+          labelText:
+              loc?.translate('create_project_project_description') ??
+              'Project Description',
+          hintText:
+              loc?.translate('create_project_new_ai_hint') ??
+              'Example: a team task board app with auth, roles, and database.',
           variant: InputVariant.filled,
           maxLines: 5,
           minLines: 4,
@@ -170,7 +168,7 @@ class CreateProjectNewAiView extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          isZh ? '模板' : 'Template',
+          loc?.translate('create_project_template') ?? 'Template',
           style: theme.textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.w700,
           ),
@@ -186,7 +184,7 @@ class CreateProjectNewAiView extends StatelessWidget {
                   .map(
                     (template) => DropdownMenuItem<String>(
                       value: template.templateRepo,
-                child: Text(
+                      child: Text(
                         localizeProjectTemplate(template, locale).name,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -201,8 +199,9 @@ class CreateProjectNewAiView extends StatelessWidget {
                     },
               decoration: InputDecoration(
                 hintText: isTemplateLoading
-                    ? (isZh ? '正在加载模板…' : 'Loading templates…')
-                    : (isZh ? '选择模板' : 'Select template'),
+                    ? (loc?.translate('loading') ?? 'Loading...')
+                    : (loc?.translate('create_project_select_template') ??
+                          'Select template'),
                 filled: true,
                 fillColor: scheme.surfaceContainerHighest.withValues(
                   alpha: isDark ? 0.2 : 0.28,
@@ -332,7 +331,7 @@ class CreateProjectNewAiView extends StatelessWidget {
         ],
         const SizedBox(height: 16),
         Text(
-          isZh ? '模型' : 'Model',
+          loc?.translate('model_switch_title') ?? 'Model',
           style: theme.textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.w700,
           ),
@@ -366,9 +365,11 @@ class CreateProjectNewAiView extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: isWorkspaceReady
                     ? (isModelLoading
-                          ? (isZh ? '正在加载模型…' : 'Loading models…')
-                          : (isZh ? '选择模型' : 'Select model'))
-                    : (isZh ? '等待工作区就绪…' : 'Waiting workspace ready…'),
+                          ? (loc?.translate('loading') ?? 'Loading...')
+                          : (loc?.translate('create_project_select_model') ??
+                                'Select model'))
+                    : (loc?.translate('create_project_waiting_workspace') ??
+                          'Waiting workspace ready…'),
                 filled: true,
                 fillColor: scheme.surfaceContainerHighest.withValues(
                   alpha: isDark ? 0.2 : 0.28,
@@ -421,7 +422,8 @@ class CreateProjectNewAiView extends StatelessWidget {
                 disabled: !enabled,
                 variant: ButtonVariant.defaultVariant,
                 size: ButtonSize.defaultSize,
-                text: isZh ? '创建项目' : 'Create Project',
+                text:
+                    loc?.translate('create_project_action') ?? 'Create Project',
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 12,

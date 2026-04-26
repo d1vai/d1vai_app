@@ -66,7 +66,7 @@ class WorkspaceStatusBadge extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                inAppBar ? 'WS $statusText' : 'Workspace $statusText',
+                inAppBar ? 'WS · $statusText' : 'Workspace · $statusText',
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: textColor,
                   fontWeight: FontWeight.w600,

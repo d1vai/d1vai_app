@@ -588,70 +588,91 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   List<String> _workspaceWarmupTips() {
+    final loc = AppLocalizations.of(context);
     switch (_workspacePhase) {
       case WorkspacePhase.ready:
-        return const <String>[
-          'Workspace online',
-          'Syncing model settings',
-          'Ready to send',
+        return <String>[
+          loc?.translate('workspace_tip_online') ?? 'Workspace online',
+          loc?.translate('workspace_tip_sync_model') ??
+              'Syncing model settings',
+          loc?.translate('workspace_tip_ready_send') ?? 'Ready to send',
         ];
       case WorkspacePhase.starting:
-        return const <String>[
-          'Checking workspace status',
-          'Starting workspace container',
-          'Preparing execution session',
+        return <String>[
+          loc?.translate('workspace_tip_checking_status') ??
+              'Checking workspace status',
+          loc?.translate('workspace_tip_starting_container') ??
+              'Starting workspace container',
+          loc?.translate('workspace_tip_prepare_session') ??
+              'Preparing execution session',
         ];
       case WorkspacePhase.syncing:
-        return const <String>[
-          'Workspace online',
-          'Syncing files and runtime',
-          'Preparing execution session',
+        return <String>[
+          loc?.translate('workspace_tip_online') ?? 'Workspace online',
+          loc?.translate('workspace_tip_sync_files') ??
+              'Syncing files and runtime',
+          loc?.translate('workspace_tip_prepare_session') ??
+              'Preparing execution session',
         ];
       case WorkspacePhase.standby:
       case WorkspacePhase.archived:
-        return const <String>[
-          'Workspace sleeping',
-          'Waking workspace up',
-          'Preparing execution session',
+        return <String>[
+          loc?.translate('workspace_tip_sleeping') ?? 'Workspace sleeping',
+          loc?.translate('workspace_tip_waking_up') ?? 'Waking workspace up',
+          loc?.translate('workspace_tip_prepare_session') ??
+              'Preparing execution session',
         ];
       case WorkspacePhase.error:
-        return const <String>[
-          'Workspace warmup failed',
-          'Retrying workspace startup',
-          'Preparing execution session',
+        return <String>[
+          loc?.translate('workspace_tip_warmup_failed') ??
+              'Workspace warmup failed',
+          loc?.translate('workspace_tip_retry_startup') ??
+              'Retrying workspace startup',
+          loc?.translate('workspace_tip_prepare_session') ??
+              'Preparing execution session',
         ];
       case WorkspacePhase.unknown:
-        return const <String>[
-          'Checking workspace status',
-          'Preparing workspace',
-          'Preparing execution session',
+        return <String>[
+          loc?.translate('workspace_tip_checking_status') ??
+              'Checking workspace status',
+          loc?.translate('workspace_tip_prepare_workspace') ??
+              'Preparing workspace',
+          loc?.translate('workspace_tip_prepare_session') ??
+              'Preparing execution session',
         ];
     }
   }
 
   void _showWorkspaceWarmupUi() {
+    final loc = AppLocalizations.of(context);
     if (_workspaceWarmupVisible) return;
     if (!mounted) return;
     setState(() {
       _workspaceWarmupVisible = true;
       _workspaceWarmupCompleted = false;
       _workspaceWarmupMessage =
+          loc?.translate('workspace_warmup_inline_starting') ??
           'Workspace is starting. Your message will send automatically.';
     });
     SnackBarHelper.showInfo(
       context,
-      title: 'Workspace',
-      message: 'Workspace is starting. Sending will continue automatically.',
+      title: loc?.translate('workspace_title') ?? 'Workspace',
+      message:
+          loc?.translate('workspace_warmup_notice_starting') ??
+          'Workspace is starting. Sending will continue automatically.',
       position: SnackBarPosition.top,
       duration: const Duration(seconds: 3),
     );
   }
 
   void _completeWorkspaceWarmupUi() {
+    final loc = AppLocalizations.of(context);
     if (!_workspaceWarmupVisible || !mounted) return;
     setState(() {
       _workspaceWarmupCompleted = true;
-      _workspaceWarmupMessage = 'Workspace ready. Sending your message...';
+      _workspaceWarmupMessage =
+          loc?.translate('workspace_warmup_inline_ready') ??
+          'Workspace ready. Sending your message...';
     });
   }
 
@@ -779,9 +800,16 @@ class _ChatScreenState extends State<ChatScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to switch model: $e')));
+      final loc = AppLocalizations.of(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            (loc?.translate('model_switch_failed') ??
+                    'Failed to switch model: {error}')
+                .replaceAll('{error}', '$e'),
+          ),
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -825,14 +853,18 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _redeployPreviewFromChatScreen() async {
+    final loc = AppLocalizations.of(context);
     try {
       final res = await _d1vaiService.deployProjectPreview(widget.projectId);
       final nextUrl = (preferredPreviewUrlFromPayload(res) ?? '').trim();
       if (!mounted) return;
       SnackBarHelper.showSuccess(
         context,
-        title: 'Redeploy started',
-        message: nextUrl.isNotEmpty ? nextUrl : 'Preview deploy started',
+        title: loc?.translate('redeploy_started_title') ?? 'Redeploy started',
+        message: nextUrl.isNotEmpty
+            ? nextUrl
+            : (loc?.translate('redeploy_started_message') ??
+                  'Preview deploy started'),
         position: SnackBarPosition.top,
       );
       _refreshMiniPreview(fetchLatestUrl: true);
@@ -840,7 +872,7 @@ class _ChatScreenState extends State<ChatScreen> {
       if (!mounted) return;
       SnackBarHelper.showError(
         context,
-        title: 'Redeploy failed',
+        title: loc?.translate('redeploy_failed_title') ?? 'Redeploy failed',
         message: humanizeError(e),
         position: SnackBarPosition.top,
       );
@@ -1030,11 +1062,17 @@ class _ChatScreenState extends State<ChatScreen> {
         _isLoadingHistory = false;
       });
       final msg = humanizeError(e);
+      final loc = AppLocalizations.of(context);
       showDialog(
         context: context,
         builder: (context) => Alert(
           variant: AlertVariant.destructive,
-          child: AlertDescription(text: 'Failed to load chat history: $msg'),
+          child: AlertDescription(
+            text:
+                (loc?.translate('chat_history_load_failed') ??
+                        'Failed to load chat history: {error}')
+                    .replaceAll('{error}', msg),
+          ),
         ),
       );
     } finally {
@@ -1692,6 +1730,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   String _taskLabel() {
+    final loc = AppLocalizations.of(context);
     final working =
         _isLoading ||
         _wsConnState == _WsConnectionState.connecting ||
@@ -1701,12 +1740,27 @@ class _ChatScreenState extends State<ChatScreen> {
             !_sessionError &&
             (_activeWsSessionId ?? '').trim().isNotEmpty);
     return _sessionError
-        ? 'Error'
+        ? (loc?.translate('chat_status_error') ?? 'Error')
         : _sessionDone
-        ? 'Done'
+        ? (loc?.translate('chat_status_done') ?? 'Done')
         : working
-        ? 'Working'
-        : 'Ready';
+        ? (loc?.translate('chat_status_working') ?? 'Working')
+        : (loc?.translate('chat_status_ready') ?? 'Ready');
+  }
+
+  String _taskStatusToken() {
+    final working =
+        _isLoading ||
+        _wsConnState == _WsConnectionState.connecting ||
+        (_wsConnState == _WsConnectionState.connected &&
+            !_autoConnectDisabled &&
+            !_sessionDone &&
+            !_sessionError &&
+            (_activeWsSessionId ?? '').trim().isNotEmpty);
+    if (_sessionError) return 'error';
+    if (_sessionDone) return 'done';
+    if (working) return 'working';
+    return 'ready';
   }
 
   /// Send a message
@@ -1863,19 +1917,23 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _showClearChatDialog() async {
+    final loc = AppLocalizations.of(context);
     final shouldClear = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Clear Chat'),
-        content: const Text('Are you sure you want to clear all messages?'),
+        title: Text(loc?.translate('chat_clear_title') ?? 'Clear Chat'),
+        content: Text(
+          loc?.translate('chat_clear_message') ??
+              'Are you sure you want to clear all messages?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(loc?.translate('cancel') ?? 'Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Clear'),
+            child: Text(loc?.translate('chat_clear_action') ?? 'Clear'),
           ),
         ],
       ),
@@ -1921,11 +1979,16 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final heroTag = 'project-chat-messages-${widget.projectId}';
 
-    final fastHint = 'Fast mode uses Claude engine';
-    final thinkHardHint = 'Think Hard mode uses Codex engine';
+    final fastHint =
+        loc?.translate('project_chat_engine_fast_hint') ??
+        'Fast mode uses Claude engine';
+    final thinkHardHint =
+        loc?.translate('project_chat_engine_think_hard_hint') ??
+        'Think Hard mode uses Codex engine';
 
     return Scaffold(
       appBar: AppBar(
@@ -1933,7 +1996,7 @@ class _ChatScreenState extends State<ChatScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Chat with AI',
+              loc?.translate('chat_with_ai_title') ?? 'Chat with AI',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             AnimatedSwitcher(
@@ -1954,6 +2017,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: ChatStatusPill(
                   key: ValueKey(_taskLabel()),
                   label: _taskLabel(),
+                  statusToken: _taskStatusToken(),
                   isError: _sessionError,
                 ),
               ),
@@ -1994,67 +2058,72 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
           PopupMenuButton<_ChatAppBarAction>(
-            tooltip: 'More',
+            tooltip: loc?.translate('chat_menu_more') ?? 'More',
             icon: const Icon(Icons.more_vert),
             onSelected: _handleAppBarAction,
             itemBuilder: (context) => [
-              const PopupMenuItem<_ChatAppBarAction>(
+              PopupMenuItem<_ChatAppBarAction>(
                 value: _ChatAppBarAction.openOverview,
                 child: Row(
                   children: [
-                    Icon(Icons.dashboard_outlined, size: 18),
-                    SizedBox(width: 10),
-                    Text('Overview'),
+                    const Icon(Icons.dashboard_outlined, size: 18),
+                    const SizedBox(width: 10),
+                    Text(loc?.translate('chat_menu_overview') ?? 'Overview'),
                   ],
                 ),
               ),
-              const PopupMenuItem<_ChatAppBarAction>(
+              PopupMenuItem<_ChatAppBarAction>(
                 value: _ChatAppBarAction.openEnvironment,
                 child: Row(
                   children: [
-                    Icon(Icons.key_outlined, size: 18),
-                    SizedBox(width: 10),
-                    Text('Environment'),
+                    const Icon(Icons.key_outlined, size: 18),
+                    const SizedBox(width: 10),
+                    Text(
+                      loc?.translate('chat_menu_environment') ?? 'Environment',
+                    ),
                   ],
                 ),
               ),
-              const PopupMenuItem<_ChatAppBarAction>(
+              PopupMenuItem<_ChatAppBarAction>(
                 value: _ChatAppBarAction.openDatabase,
                 child: Row(
                   children: [
-                    Icon(Icons.storage_outlined, size: 18),
-                    SizedBox(width: 10),
-                    Text('Database'),
+                    const Icon(Icons.storage_outlined, size: 18),
+                    const SizedBox(width: 10),
+                    Text(loc?.translate('chat_menu_database') ?? 'Database'),
                   ],
                 ),
               ),
-              const PopupMenuItem<_ChatAppBarAction>(
+              PopupMenuItem<_ChatAppBarAction>(
                 value: _ChatAppBarAction.openPayment,
                 child: Row(
                   children: [
-                    Icon(Icons.payment_outlined, size: 18),
-                    SizedBox(width: 10),
-                    Text('Payment'),
+                    const Icon(Icons.payment_outlined, size: 18),
+                    const SizedBox(width: 10),
+                    Text(loc?.translate('chat_menu_payment') ?? 'Payment'),
                   ],
                 ),
               ),
-              const PopupMenuItem<_ChatAppBarAction>(
+              PopupMenuItem<_ChatAppBarAction>(
                 value: _ChatAppBarAction.openDeployHistory,
                 child: Row(
                   children: [
-                    Icon(Icons.history_outlined, size: 18),
-                    SizedBox(width: 10),
-                    Text('Deploy History'),
+                    const Icon(Icons.history_outlined, size: 18),
+                    const SizedBox(width: 10),
+                    Text(
+                      loc?.translate('chat_menu_deploy_history') ??
+                          'Deploy History',
+                    ),
                   ],
                 ),
               ),
-              const PopupMenuItem<_ChatAppBarAction>(
+              PopupMenuItem<_ChatAppBarAction>(
                 value: _ChatAppBarAction.openAnalytics,
                 child: Row(
                   children: [
-                    Icon(Icons.analytics_outlined, size: 18),
-                    SizedBox(width: 10),
-                    Text('Analytics'),
+                    const Icon(Icons.analytics_outlined, size: 18),
+                    const SizedBox(width: 10),
+                    Text(loc?.translate('chat_menu_analytics') ?? 'Analytics'),
                   ],
                 ),
               ),
@@ -2065,27 +2134,32 @@ class _ChatScreenState extends State<ChatScreen> {
                   children: [
                     Icon(Icons.rocket_launch_outlined, size: 18),
                     const SizedBox(width: 10),
-                    Expanded(child: Text('Redeploy Preview')),
+                    Expanded(
+                      child: Text(
+                        loc?.translate('chat_menu_redeploy_preview') ??
+                            'Redeploy Preview',
+                      ),
+                    ),
                   ],
                 ),
               ),
-              const PopupMenuItem<_ChatAppBarAction>(
+              PopupMenuItem<_ChatAppBarAction>(
                 value: _ChatAppBarAction.refresh,
                 child: Row(
                   children: [
-                    Icon(Icons.refresh, size: 18),
-                    SizedBox(width: 10),
-                    Text('Refresh'),
+                    const Icon(Icons.refresh, size: 18),
+                    const SizedBox(width: 10),
+                    Text(loc?.translate('refresh') ?? 'Refresh'),
                   ],
                 ),
               ),
-              const PopupMenuItem<_ChatAppBarAction>(
+              PopupMenuItem<_ChatAppBarAction>(
                 value: _ChatAppBarAction.clearChat,
                 child: Row(
                   children: [
-                    Icon(Icons.clear_all, size: 18),
-                    SizedBox(width: 10),
-                    Text('Clear Chat'),
+                    const Icon(Icons.clear_all, size: 18),
+                    const SizedBox(width: 10),
+                    Text(loc?.translate('chat_clear_title') ?? 'Clear Chat'),
                   ],
                 ),
               ),
@@ -2147,7 +2221,8 @@ class _ChatScreenState extends State<ChatScreen> {
               MessageInput(
                 onSend: _sendMessage,
                 isEnabled: !_isLoading,
-                hintText: 'Type your message...',
+                hintText:
+                    loc?.translate('chat_input_hint') ?? 'Type your message...',
                 controller: _inputController,
                 focusNode: _inputFocusNode,
                 queueCount: _outboxItems.length,

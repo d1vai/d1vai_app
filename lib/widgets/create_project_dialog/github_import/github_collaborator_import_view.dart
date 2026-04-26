@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../input.dart';
 import '../../button.dart';
 import 'github_import_utils.dart';
@@ -42,6 +43,7 @@ class GithubCollaboratorImportView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
     return Column(
@@ -54,7 +56,8 @@ class GithubCollaboratorImportView extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Guided GitHub import (3 steps)',
+                loc?.translate('create_project_github_guided_title') ??
+                    'Guided GitHub import (3 steps)',
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -73,7 +76,8 @@ class GithubCollaboratorImportView extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Step $step of 3',
+          (loc?.translate('create_project_step_of_3') ?? 'Step {step} of 3')
+              .replaceAll('{step}', '$step'),
           style: TextStyle(
             fontSize: 12,
             color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
@@ -157,8 +161,13 @@ class _ErrorBanner extends StatelessWidget {
 class _BotUsernameCard extends StatelessWidget {
   final String botUsername;
   final VoidCallback onCopy;
+  final AppLocalizations? loc;
 
-  const _BotUsernameCard({required this.botUsername, required this.onCopy});
+  const _BotUsernameCard({
+    required this.botUsername,
+    required this.onCopy,
+    required this.loc,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -178,8 +187,9 @@ class _BotUsernameCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'GitHub Bot Username',
+                Text(
+                  loc?.translate('create_project_github_bot_username') ??
+                      'GitHub Bot Username',
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 2),
@@ -196,7 +206,7 @@ class _BotUsernameCard extends StatelessWidget {
           IconButton(
             onPressed: onCopy,
             icon: const Icon(Icons.copy),
-            tooltip: 'Copy',
+            tooltip: loc?.translate('copy') ?? 'Copy',
           ),
         ],
       ),
@@ -225,6 +235,7 @@ class _GithubStep1 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     final repoFullName = parseGithubRepoFullName(repoUrlController.text);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,7 +243,9 @@ class _GithubStep1 extends StatelessWidget {
         Input(
           controller: repoUrlController,
           onChanged: onRepoUrlChanged,
-          labelText: 'Repository URL',
+          labelText:
+              loc?.translate('create_project_repository_url') ??
+              'Repository URL',
           hintText: 'https://github.com/owner/repo',
           variant: InputVariant.outlined,
           prefixIcon: const Icon(Icons.link),
@@ -241,7 +254,11 @@ class _GithubStep1 extends StatelessWidget {
               : null,
         ),
         const SizedBox(height: 12),
-        _BotUsernameCard(botUsername: botUsername, onCopy: onCopyBotUsername),
+        _BotUsernameCard(
+          botUsername: botUsername,
+          onCopy: onCopyBotUsername,
+          loc: loc,
+        ),
         const SizedBox(height: 16),
         SizedBox(
           width: double.infinity,
@@ -252,7 +269,9 @@ class _GithubStep1 extends StatelessWidget {
             disabled: loading || repoFullName == null,
             variant: ButtonVariant.defaultVariant,
             size: ButtonSize.defaultSize,
-            text: 'Open GitHub Settings',
+            text:
+                loc?.translate('create_project_open_github_settings') ??
+                'Open GitHub Settings',
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           ),
         ),
@@ -280,20 +299,27 @@ class _GithubStep2 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final repoFullName = parseGithubRepoFullName(repoUrlController.text);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Add "$botUsername" as a collaborator in GitHub repo settings, then tap “Accept Invitation”.',
+          (loc?.translate('create_project_accept_invitation_hint') ??
+                  'Add "{bot}" as a collaborator in GitHub repo settings, then tap "Accept Invitation".')
+              .replaceAll('{bot}', botUsername),
           style: TextStyle(
             color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             fontSize: 13,
           ),
         ),
         const SizedBox(height: 12),
-        _BotUsernameCard(botUsername: botUsername, onCopy: onCopyBotUsername),
+        _BotUsernameCard(
+          botUsername: botUsername,
+          onCopy: onCopyBotUsername,
+          loc: loc,
+        ),
         const SizedBox(height: 12),
         if (repoFullName != null)
           Container(
@@ -318,8 +344,10 @@ class _GithubStep2 extends StatelessWidget {
             variant: ButtonVariant.defaultVariant,
             size: ButtonSize.defaultSize,
             text: invitationAccepted
-                ? 'Invitation Accepted'
-                : 'Accept Invitation',
+                ? (loc?.translate('create_project_invitation_accepted') ??
+                      'Invitation Accepted')
+                : (loc?.translate('create_project_accept_invitation') ??
+                      'Accept Invitation'),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           ),
         ),
@@ -349,6 +377,7 @@ class _GithubStep3 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final repoFullName = parseGithubRepoFullName(repoUrlController.text);
     final canImport =
@@ -364,7 +393,11 @@ class _GithubStep3 extends StatelessWidget {
             disabled: loading,
             variant: ButtonVariant.defaultVariant,
             size: ButtonSize.defaultSize,
-            text: accessVerified ? 'Access Verified' : 'Verify Access',
+            text: accessVerified
+                ? (loc?.translate('create_project_access_verified') ??
+                      'Access Verified')
+                : (loc?.translate('create_project_verify_access') ??
+                      'Verify Access'),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           ),
         ),
@@ -406,8 +439,11 @@ class _GithubStep3 extends StatelessWidget {
         const SizedBox(height: 16),
         Input(
           controller: projectNameController,
-          labelText: 'Project Name',
-          hintText: 'Default: repository name',
+          labelText:
+              loc?.translate('create_project_project_name') ?? 'Project Name',
+          hintText:
+              loc?.translate('create_project_default_repo_name') ??
+              'Default: repository name',
           variant: InputVariant.outlined,
           prefixIcon: const Icon(Icons.folder),
         ),
@@ -419,7 +455,9 @@ class _GithubStep3 extends StatelessWidget {
             disabled: loading || !canImport,
             variant: ButtonVariant.defaultVariant,
             size: ButtonSize.defaultSize,
-            text: 'Import Project',
+            text:
+                loc?.translate('create_project_import_project_action') ??
+                'Import Project',
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           ),
         ),

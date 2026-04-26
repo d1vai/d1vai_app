@@ -9,6 +9,17 @@ bool chatStatusIsPulsing(String label) {
   return false;
 }
 
+bool chatStatusTokenIsPulsing(String token) {
+  final lower = token.toLowerCase().trim();
+  if (lower.contains('work')) return true;
+  if (lower.contains('think')) return true;
+  if (lower.contains('deploy')) return true;
+  if (lower.contains('send')) return true;
+  if (lower.contains('prepar')) return true;
+  if (lower.contains('wake')) return true;
+  return false;
+}
+
 Color chatStatusDotColor(
   ThemeData theme,
   String label, {
@@ -33,17 +44,56 @@ Color chatStatusDotColor(
   return theme.colorScheme.onSurfaceVariant;
 }
 
+Color chatStatusDotColorForToken(
+  ThemeData theme,
+  String token, {
+  required bool isError,
+}) {
+  final lower = token.toLowerCase().trim();
+  if (isError) {
+    return theme.colorScheme.error;
+  }
+  if (lower.contains('deploy')) {
+    return theme.colorScheme.primary;
+  }
+  if (lower.contains('wake') || lower.contains('workspace')) {
+    return Colors.amber;
+  }
+  if (lower.contains('think') ||
+      lower.contains('work') ||
+      lower.contains('send') ||
+      lower.contains('load') ||
+      lower.contains('prepar')) {
+    return Colors.purple;
+  }
+  if (lower.contains('done') || lower.contains('ready')) {
+    return Colors.green;
+  }
+  return theme.colorScheme.onSurfaceVariant;
+}
+
 class ChatStatusPill extends StatelessWidget {
   final String label;
+  final String? statusToken;
   final bool isError;
 
-  const ChatStatusPill({super.key, required this.label, this.isError = false});
+  const ChatStatusPill({
+    super.key,
+    required this.label,
+    this.statusToken,
+    this.isError = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = chatStatusDotColor(theme, label, isError: isError);
-    final isPulsing = chatStatusIsPulsing(label);
+    final token = statusToken?.trim() ?? '';
+    final color = token.isNotEmpty
+        ? chatStatusDotColorForToken(theme, token, isError: isError)
+        : chatStatusDotColor(theme, label, isError: isError);
+    final isPulsing = token.isNotEmpty
+        ? chatStatusTokenIsPulsing(token)
+        : chatStatusIsPulsing(label);
 
     final bg = Color.alphaBlend(
       color.withValues(alpha: 0.10),

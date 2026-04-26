@@ -5,20 +5,19 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/deployment.dart';
 import '../../models/project.dart';
+import '../../providers/auth_provider.dart';
 import '../../utils/preview_url.dart';
+import '../snackbar_helper.dart';
+import 'components/project_overview_card_shell.dart';
+import 'components/project_overview_danger_zone_card.dart';
+import 'components/project_overview_health_metrics_card.dart';
+import 'components/project_overview_recent_deployments_card.dart';
+import 'components/project_overview_utils.dart';
 import '../../providers/project_provider.dart';
 import '../../core/api_client.dart';
 import '../../services/d1vai_service.dart';
 import '../../utils/error_utils.dart';
-import '../app_preview.dart';
 import '../progress_widget.dart';
-import '../snackbar_helper.dart';
-import 'components/project_overview_danger_zone_card.dart';
-import 'components/project_overview_header_card.dart';
-import 'components/project_overview_health_metrics_card.dart';
-import 'components/project_overview_links_card.dart';
-import 'components/project_overview_recent_deployments_card.dart';
-import 'components/project_overview_stats_card.dart';
 
 /// 项目详情页 - 概览 Tab
 class ProjectOverviewTab extends StatefulWidget {
@@ -91,47 +90,91 @@ class _ProjectOverviewTabState extends State<ProjectOverviewTab> {
   @override
   Widget build(BuildContext context) {
     final project = widget.project;
+    final ownerEmail = context.select<AuthProvider, String?>(
+      (authProvider) => authProvider.user?.email,
+    );
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ProjectOverviewHeaderCard(project: project),
-          const SizedBox(height: 16),
-          _CommunityActionsCard(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 920;
+        final content = <Widget>[
+          _OverviewHeroPanel(
             project: project,
-            onRefreshProject: widget.onRefreshProject,
-            onReloadDeployments: _loadDeployments,
-          ),
-          const SizedBox(height: 16),
-          AppPreview(
-            previewUrl: preferredPreviewUrlFromProject(project),
-            projectName: project.projectName,
-          ),
-          const SizedBox(height: 16),
-          ProjectOverviewStatsCard(project: project),
-          const SizedBox(height: 16),
-          ProjectOverviewLinksCard(
-            project: project,
+            ownerEmail: ownerEmail,
             onOpenPreviewUrl: _openPreviewUrl,
-            onOpenGitHubRepo: _openGitHubRepo,
           ),
           const SizedBox(height: 16),
-          ProjectOverviewRecentDeploymentsCard(
-            deployments: _deployments,
-            isLoading: _isLoadingDeployments,
+        ];
+
+        if (isWide) {
+          content.add(
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 7,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _CommunityActionsCard(
+                        project: project,
+                        onRefreshProject: widget.onRefreshProject,
+                        onReloadDeployments: _loadDeployments,
+                      ),
+                      const SizedBox(height: 16),
+                      ProjectOverviewRecentDeploymentsCard(
+                        deployments: _deployments,
+                        isLoading: _isLoadingDeployments,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  flex: 5,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ProjectOverviewHealthMetricsCard(project: project),
+                      const SizedBox(height: 16),
+                      ProjectOverviewDangerZoneCard(project: project),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        } else {
+          content.addAll([
+            _CommunityActionsCard(
+              project: project,
+              onRefreshProject: widget.onRefreshProject,
+              onReloadDeployments: _loadDeployments,
+            ),
+            const SizedBox(height: 16),
+            ProjectOverviewRecentDeploymentsCard(
+              deployments: _deployments,
+              isLoading: _isLoadingDeployments,
+            ),
+            const SizedBox(height: 16),
+            ProjectOverviewHealthMetricsCard(project: project),
+            const SizedBox(height: 16),
+            ProjectOverviewDangerZoneCard(project: project),
+          ]);
+        }
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: content,
           ),
-          const SizedBox(height: 16),
-          ProjectOverviewHealthMetricsCard(project: project),
-          const SizedBox(height: 16),
-          ProjectOverviewDangerZoneCard(project: project),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Future<void> _openPreviewUrl(String url) async {
+  Future<void> _openUrl(String url, String errorMessage) async {
     if (!mounted) return;
 
     final uri = Uri.tryParse(url);
@@ -145,37 +188,370 @@ class _ProjectOverviewTabState extends State<ProjectOverviewTab> {
       SnackBarHelper.showError(
         context,
         title: _t('error', 'Error'),
-        message: _t(
-          'project_overview_links_open_preview_failed',
-          'Could not open preview URL',
-        ),
+        message: errorMessage,
       );
     }
   }
 
-  Future<void> _openGitHubRepo(String repoName) async {
-    if (!mounted) return;
+  Future<void> _openPreviewUrl(String url) async {
+    await _openUrl(
+      url,
+      _t(
+        'project_overview_links_open_preview_failed',
+        'Could not open preview URL',
+      ),
+    );
+  }
+}
 
-    final githubUrl = 'https://github.com/d1vai/$repoName';
-    final uri = Uri.tryParse(githubUrl);
-    if (uri == null) return;
+class _OverviewHeroPanel extends StatelessWidget {
+  final UserProject project;
+  final String? ownerEmail;
+  final Future<void> Function(String url) onOpenPreviewUrl;
 
-    final canLaunch = await canLaunchUrl(uri);
+  const _OverviewHeroPanel({
+    required this.project,
+    required this.ownerEmail,
+    required this.onOpenPreviewUrl,
+  });
 
-    if (!mounted) return;
+  String _t(BuildContext context, String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
 
-    if (canLaunch) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      SnackBarHelper.showError(
-        context,
-        title: _t('error', 'Error'),
-        message: _t(
-          'project_overview_links_open_github_failed',
-          'Could not open GitHub repository',
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final previewUrl = preferredPreviewUrlFromProject(project);
+    final branch =
+        (project.workspaceCurrentBranch ??
+                project.repositoryCurrentBranch ??
+                '')
+            .trim();
+    final prodUrl = (project.latestProdDeploymentUrl?.trim().isNotEmpty == true)
+        ? project.latestProdDeploymentUrl!.trim()
+        : ((project.vercelProdDomain ?? '').trim().isNotEmpty
+              ? 'https://${project.vercelProdDomain!.trim()}'
+              : null);
+
+    return ProjectOverviewCardShell(
+      padding: const EdgeInsets.all(20),
+      accentColor: cs.primary,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Hero(
+                tag: 'project-emoji-${project.id}',
+                child: Material(
+                  color: Colors.transparent,
+                  child: Container(
+                    width: 76,
+                    height: 76,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(22),
+                      color: Color.alphaBlend(
+                        cs.primary.withValues(alpha: isDark ? 0.22 : 0.10),
+                        cs.surface,
+                      ),
+                      border: Border.all(
+                        color: cs.primary.withValues(
+                          alpha: isDark ? 0.28 : 0.18,
+                        ),
+                      ),
+                    ),
+                    child: Text(
+                      project.emoji ?? '🚀',
+                      style: const TextStyle(fontSize: 36),
+                    ),
+                  ),
+                ),
+              ),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 620),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          project.projectName,
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.6,
+                            height: 1.0,
+                          ),
+                        ),
+                        _OverviewStatusPill(status: project.status),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      project.projectDescription.trim().isEmpty
+                          ? _t(
+                              context,
+                              'project_overview_no_description',
+                              'No description yet.',
+                            )
+                          : project.projectDescription,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: cs.onSurfaceVariant.withValues(alpha: 0.9),
+                        height: 1.45,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        _OverviewInlineTag(
+                          icon: Icons.schedule_rounded,
+                          text:
+                              _t(
+                                context,
+                                'project_overview_header_updated',
+                                'Updated {time}',
+                              ).replaceAll(
+                                '{time}',
+                                formatTimeAgo(context, project.updatedAt),
+                              ),
+                        ),
+                        if (branch.isNotEmpty)
+                          _OverviewInlineTag(
+                            icon: Icons.alt_route,
+                            text: branch,
+                            monospace: true,
+                          ),
+                        if (prodUrl != null)
+                          _OverviewInlineTag(
+                            icon: Icons.public,
+                            text: getDeploymentLabel(context, prodUrl),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 22),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _OverviewMetricTile(
+                label: _t(context, 'project_overview_stats_created', 'Created'),
+                value: _safeDate(context, project.createdAt),
+              ),
+              _OverviewMetricTile(
+                label: _t(context, 'project_overview_stats_owner', 'Owner'),
+                value: (ownerEmail ?? '').trim().isEmpty
+                    ? _t(context, 'project_overview_stats_unknown', 'Unknown')
+                    : ownerEmail!,
+              ),
+              _OverviewMetricTile(
+                label: _t(
+                  context,
+                  'project_overview_stats_deployment',
+                  'Deployment',
+                ),
+                value: getDeploymentLabel(context, previewUrl),
+              ),
+              _OverviewMetricTile(
+                label: _t(
+                  context,
+                  'project_overview_health_analytics',
+                  'Analytics',
+                ),
+                value: project.hasAnalyticsId
+                    ? _t(
+                        context,
+                        'project_overview_health_status_enabled',
+                        'Enabled',
+                      )
+                    : _t(
+                        context,
+                        'project_overview_health_status_disabled',
+                        'Disabled',
+                      ),
+              ),
+            ],
+          ),
+          if (previewUrl != null && previewUrl.isNotEmpty) ...[
+            const SizedBox(height: 18),
+            FilledButton.tonalIcon(
+              onPressed: () => onOpenPreviewUrl(previewUrl),
+              icon: const Icon(Icons.open_in_new),
+              label: Text(
+                _t(context, 'project_overview_open_preview', 'Open preview'),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+String _safeDate(BuildContext context, String raw) {
+  try {
+    return MaterialLocalizations.of(
+      context,
+    ).formatMediumDate(DateTime.parse(raw));
+  } catch (_) {
+    final value = AppLocalizations.of(
+      context,
+    )?.translate('project_overview_stats_unknown');
+    return (value == null || value == 'project_overview_stats_unknown')
+        ? 'Unknown'
+        : value;
+  }
+}
+
+class _OverviewMetricTile extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _OverviewMetricTile({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final width = (MediaQuery.sizeOf(context).width - 56) / 2;
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        minWidth: 150,
+        maxWidth: width.clamp(150, 240),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: cs.surface.withValues(alpha: 0.55),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.35)),
         ),
-      );
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: Theme.of(
+                context,
+              ).textTheme.labelMedium?.copyWith(color: cs.onSurfaceVariant),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _OverviewInlineTag extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final bool monospace;
+
+  const _OverviewInlineTag({
+    required this.icon,
+    required this.text,
+    this.monospace = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: cs.surface.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.34)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: cs.onSurfaceVariant),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+              fontFamily: monospace ? 'monospace' : null,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OverviewStatusPill extends StatelessWidget {
+  final String status;
+
+  const _OverviewStatusPill({required this.status});
+
+  String _t(BuildContext context, String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    late final Color color;
+    late final String label;
+    switch (status) {
+      case 'active':
+        color = cs.primary;
+        label = _t(context, 'project_overview_status_active', 'Active');
+        break;
+      case 'archived':
+        color = cs.tertiary;
+        label = _t(context, 'project_overview_status_archived', 'Archived');
+        break;
+      case 'draft':
+        color = cs.onSurfaceVariant;
+        label = _t(context, 'project_overview_status_draft', 'Draft');
+        break;
+      default:
+        color = cs.onSurfaceVariant;
+        label = status;
     }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(color: color, fontWeight: FontWeight.w700),
+      ),
+    );
   }
 }
 
@@ -780,6 +1156,61 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
     };
 
     final canInteract = !_isLoading && _loadingAction == null;
+    Widget communityActionButton({
+      required double width,
+      required String label,
+      required Widget icon,
+      required VoidCallback? onPressed,
+      bool primary = false,
+    }) {
+      final cs = theme.colorScheme;
+      final outlinedStyle = OutlinedButton.styleFrom(
+        minimumSize: const Size(0, 48),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        alignment: Alignment.centerLeft,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        side: BorderSide(
+          color: primary
+              ? cs.primary.withValues(alpha: 0.18)
+              : cs.outlineVariant.withValues(alpha: 0.45),
+        ),
+        backgroundColor: primary
+            ? cs.primary.withValues(alpha: 0.08)
+            : cs.surface.withValues(alpha: 0.48),
+        foregroundColor: primary ? cs.primary : cs.onSurface,
+        disabledForegroundColor: cs.onSurfaceVariant.withValues(alpha: 0.6),
+        disabledBackgroundColor: cs.surfaceContainerHighest.withValues(
+          alpha: 0.4,
+        ),
+      );
+
+      return SizedBox(
+        width: width,
+        child: primary
+            ? FilledButton.tonalIcon(
+                onPressed: onPressed,
+                style: outlinedStyle,
+                icon: icon,
+                label: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              )
+            : OutlinedButton.icon(
+                onPressed: onPressed,
+                style: outlinedStyle,
+                icon: icon,
+                label: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+      );
+    }
 
     return Card(
       child: Padding(
@@ -826,69 +1257,86 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
                 ),
               )
             else
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: canInteract ? _showPublishDialog : null,
-                    icon: _loadingAction == 'publish'
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.send, size: 18),
-                    label: Text(
-                      _t(
-                        'project_overview_community_action_publish',
-                        'Publish',
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final buttonWidth = (constraints.maxWidth - 10) / 2;
+                  return Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      communityActionButton(
+                        width: buttonWidth,
+                        primary: true,
+                        onPressed: canInteract ? _showPublishDialog : null,
+                        icon: _loadingAction == 'publish'
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.send_rounded, size: 18),
+                        label: _t(
+                          'project_overview_community_action_publish',
+                          'Publish',
+                        ),
                       ),
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: canInteract && _status != 'none'
-                        ? _update
-                        : null,
-                    icon: _loadingAction == 'update'
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.refresh, size: 18),
-                    label: Text(
-                      _t('project_overview_community_action_update', 'Update'),
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: canInteract && _status == 'published'
-                        ? _unpublish
-                        : null,
-                    icon: _loadingAction == 'unpublish'
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.visibility_off, size: 18),
-                    label: Text(
-                      _t(
-                        'project_overview_community_action_unpublish',
-                        'Unpublish',
+                      communityActionButton(
+                        width: buttonWidth,
+                        onPressed: canInteract && _status != 'none'
+                            ? _update
+                            : null,
+                        icon: _loadingAction == 'update'
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.refresh_rounded, size: 18),
+                        label: _t(
+                          'project_overview_community_action_update',
+                          'Update',
+                        ),
                       ),
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: canInteract && _status == 'published'
-                        ? _openCommunityPost
-                        : null,
-                    icon: const Icon(Icons.open_in_new, size: 18),
-                    label: Text(
-                      _t('project_overview_community_action_view', 'View'),
-                    ),
-                  ),
-                ],
+                      communityActionButton(
+                        width: buttonWidth,
+                        onPressed: canInteract && _status == 'published'
+                            ? _unpublish
+                            : null,
+                        icon: _loadingAction == 'unpublish'
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.visibility_off_rounded,
+                                size: 18,
+                              ),
+                        label: _t(
+                          'project_overview_community_action_unpublish',
+                          'Unpublish',
+                        ),
+                      ),
+                      communityActionButton(
+                        width: buttonWidth,
+                        onPressed: canInteract && _status == 'published'
+                            ? _openCommunityPost
+                            : null,
+                        icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                        label: _t(
+                          'project_overview_community_action_view',
+                          'View',
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             const SizedBox(height: 10),
             Text(

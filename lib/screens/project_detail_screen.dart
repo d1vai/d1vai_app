@@ -12,7 +12,6 @@ import '../widgets/project_api/project_api_tab.dart';
 import '../widgets/project_chat/project_chat_tab.dart';
 import '../widgets/project_database/project_database_tab.dart';
 import '../widgets/project_deploy/project_deploy_tab.dart';
-import '../widgets/project_github/project_github_tab.dart';
 import '../widgets/project_overview/project_overview_tab.dart';
 import '../widgets/project_payment/project_payment_tab.dart';
 import '../widgets/d1v_tab_bar_view.dart';
@@ -53,7 +52,6 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     _TabItem('project_detail_tab_chat', 'Chat', Icons.chat),
     _TabItem('project_detail_tab_environment', 'Environment', Icons.key),
     _TabItem('project_detail_tab_database', 'Database', Icons.storage),
-    _TabItem('project_detail_tab_github', 'GitHub', Icons.code),
     _TabItem('project_detail_tab_payment', 'Payment', Icons.payment),
     _TabItem('project_detail_tab_deploy', 'Deploy', Icons.cloud_upload),
     _TabItem('project_detail_tab_analytics', 'Analytics', Icons.analytics),
@@ -114,17 +112,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
       case 'database':
       case 'db':
         return 3;
-      case 'github':
-        return 4;
       case 'payment':
       case 'billing':
-        return 5;
+        return 4;
       case 'deploy':
       case 'deployment':
       case 'logs':
-        return 6;
+        return 5;
       case 'analytics':
-        return 7;
+        return 6;
       default:
         return 0;
     }
@@ -320,7 +316,6 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
             onAskAi: _handleAskAi,
             onRefreshProject: _loadProject,
           ),
-          ProjectGithubTab(project: project),
           ProjectPaymentTab(projectId: project.id, onAskAi: _handleAskAi),
           ProjectDeployTab(
             project: project,

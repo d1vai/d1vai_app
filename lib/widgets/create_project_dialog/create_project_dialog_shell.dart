@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../adaptive_modal.dart';
 
 class CreateProjectDialogShell extends StatelessWidget {
@@ -22,6 +23,7 @@ class CreateProjectDialogShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
     final dialog = AdaptiveModalContainer(
@@ -42,7 +44,7 @@ class CreateProjectDialogShell extends StatelessWidget {
                       IconButton(
                         onPressed: isAnyLoading ? null : onBack,
                         icon: const Icon(Icons.arrow_back),
-                        tooltip: 'Back',
+                        tooltip: loc?.translate('back') ?? 'Back',
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(
                           minWidth: 40,

@@ -1,5 +1,6 @@
 import '../core/api_client.dart';
 import '../models/balance.dart';
+import '../models/package_info.dart';
 import '../models/payment.dart';
 
 class WalletService {
@@ -47,6 +48,14 @@ class WalletService {
     });
   }
 
+  Future<Map<String, dynamic>> initiateTopupApp({
+    required double amountUsd,
+  }) async {
+    return _apiClient.post<Map<String, dynamic>>('/api/wallet/topup/app', {
+      'amount_usd': amountUsd,
+    });
+  }
+
   /// 创建订阅链接（用于购买定价计划）
   Future<Map<String, dynamic>> createSubscribeLink({
     String? stripePriceId,
@@ -68,6 +77,25 @@ class WalletService {
     }
 
     return _apiClient.post<Map<String, dynamic>>('/api/wallet/subscribe', body);
+  }
+
+  Future<Map<String, dynamic>> subscribePlanApp({
+    required String packageId,
+  }) async {
+    return _apiClient.post<Map<String, dynamic>>(
+      '/api/package_order/subscribe-plan-app',
+      {'package_id': packageId},
+    );
+  }
+
+  Future<List<PackageInfo>> getPackages() async {
+    final List<dynamic> data = await _apiClient.get<List<dynamic>>(
+      '/api/package_info/package_info',
+    );
+    return data.map((item) {
+      final json = (item as Map).cast<String, dynamic>();
+      return PackageInfo.fromJson(json);
+    }).toList();
   }
 
   /// 获取交易历史（对齐 Web 端订单记录）

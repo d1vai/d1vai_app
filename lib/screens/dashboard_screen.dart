@@ -375,8 +375,8 @@ class _DashboardScreenState extends State<DashboardScreen>
           placeholder: _allProjectsLabel(context),
           tooltip: _t('dashboard_switch_project', 'Switch project'),
           leadingIcon: Icons.folder_open_rounded,
-          minWidth: 112,
-          maxWidth: 156,
+          minWidth: 100,
+          maxWidth: 142,
           isLoading: isLoading,
           onChanged: isLoading
               ? null

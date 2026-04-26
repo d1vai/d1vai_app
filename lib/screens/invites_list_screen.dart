@@ -3,6 +3,7 @@ import '../services/d1vai_service.dart';
 import '../widgets/snackbar_helper.dart';
 import '../widgets/empty_state_widget.dart';
 import '../widgets/avatar_image.dart';
+import '../widgets/card.dart';
 import '../utils/error_utils.dart';
 import '../l10n/app_localizations.dart';
 
@@ -76,38 +77,70 @@ class _InvitesListScreenState extends State<InvitesListScreen> {
   }
 
   Widget _buildBody() {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
     if (_error != null) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
-            const SizedBox(height: 16),
-            Text(
-              _t('invites_load_failed_title', 'Failed to load invited users'),
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.red.shade700,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: CustomCard(
+            borderRadius: 24,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: Color.alphaBlend(
+                        scheme.error.withValues(alpha: isDark ? 0.18 : 0.10),
+                        scheme.surface,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Icon(
+                      Icons.error_outline_rounded,
+                      size: 32,
+                      color: scheme.error,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    _t(
+                      'invites_load_failed_title',
+                      'Failed to load invited users',
+                    ),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _error!,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    onPressed: _loadInvitedUsers,
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: Text(_t('retry', 'Retry')),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              _error!,
-              style: TextStyle(color: Colors.grey.shade600),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: _loadInvitedUsers,
-              icon: const Icon(Icons.refresh),
-              label: Text(_t('retry', 'Retry')),
-            ),
-          ],
+          ),
         ),
       );
     }
@@ -125,9 +158,10 @@ class _InvitesListScreenState extends State<InvitesListScreen> {
 
     return RefreshIndicator(
       onRefresh: _loadInvitedUsers,
-      child: ListView.builder(
+      child: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: _invitedUsers.length,
+        separatorBuilder: (_, _) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final user = _invitedUsers[index];
           return _buildUserCard(user);
@@ -141,52 +175,84 @@ class _InvitesListScreenState extends State<InvitesListScreen> {
     final joinedAt = user['joined_at'] as String?;
     final companyName = user['company_name'] as String?;
     final avatarUrl = user['picture'] as String?;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+    return CustomCard(
+      borderRadius: 22,
+      backgroundColor: Color.alphaBlend(
+        scheme.primary.withValues(alpha: isDark ? 0.05 : 0.03),
+        scheme.surface,
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Avatar with real image support (PNG and SVG)
-            AvatarImage(
-              imageUrl: avatarUrl ?? '',
-              size: 48,
-              placeholderText: email.isNotEmpty ? email[0].toUpperCase() : '?',
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                color: Color.alphaBlend(
+                  scheme.primary.withValues(alpha: isDark ? 0.18 : 0.10),
+                  scheme.surface,
+                ),
+              ),
+              padding: const EdgeInsets.all(4),
+              child: AvatarImage(
+                imageUrl: avatarUrl ?? '',
+                size: 48,
+                placeholderText: email.isNotEmpty
+                    ? email[0].toUpperCase()
+                    : '?',
+              ),
             ),
-            const SizedBox(width: 16),
-            // User info
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     email,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   if (companyName != null && companyName.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
                       companyName,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
                       ),
                     ),
                   ],
-                  const SizedBox(height: 8),
                   if (joinedAt != null) ...[
-                    Text(
-                      _t(
-                        'invites_joined_at',
-                        'Joined {time}',
-                      ).replaceAll('{time}', _formatDate(joinedAt)),
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey.shade600,
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Color.alphaBlend(
+                          scheme.surfaceContainerHighest.withValues(
+                            alpha: isDark ? 0.30 : 0.60,
+                          ),
+                          scheme.surface,
+                        ),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        _t(
+                          'invites_joined_at',
+                          'Joined {time}',
+                        ).replaceAll('{time}', _formatDate(joinedAt)),
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
                   ],

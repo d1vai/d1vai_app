@@ -326,9 +326,11 @@ class _SettingsGithubTabState extends State<SettingsGithubTab>
                     ),
                   ],
                   const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final compact = constraints.maxWidth < 380;
+                      final mainButton = SizedBox(
+                        width: compact ? double.infinity : null,
                         child: Button(
                           onPressed: _actionLoading
                               ? null
@@ -343,10 +345,9 @@ class _SettingsGithubTabState extends State<SettingsGithubTab>
                           backgroundColor: _isConnected ? Colors.black : null,
                           foregroundColor: _isConnected ? Colors.white : null,
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      SizedBox(
-                        width: 104,
+                      );
+                      final refreshButton = SizedBox(
+                        width: compact ? double.infinity : 104,
                         child: Button(
                           variant: ButtonVariant.secondary,
                           onPressed: _actionLoading
@@ -355,8 +356,27 @@ class _SettingsGithubTabState extends State<SettingsGithubTab>
                           icon: const Icon(Icons.refresh, size: 18),
                           text: 'Refresh',
                         ),
-                      ),
-                    ],
+                      );
+
+                      if (compact) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            mainButton,
+                            const SizedBox(height: 12),
+                            refreshButton,
+                          ],
+                        );
+                      }
+
+                      return Row(
+                        children: [
+                          Expanded(child: mainButton),
+                          const SizedBox(width: 12),
+                          refreshButton,
+                        ],
+                      );
+                    },
                   ),
                 ],
               ),

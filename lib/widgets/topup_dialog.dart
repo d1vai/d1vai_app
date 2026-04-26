@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../services/wallet_service.dart';
+import '../services/stripe_payment_service.dart';
 import 'adaptive_modal.dart';
 import 'snackbar_helper.dart';
 import '../utils/error_utils.dart';
@@ -23,23 +23,6 @@ class _TopUpDialogState extends State<TopUpDialog> {
 
   final List<int> _quickAmounts = [25, 50, 100, 200, 500, 1000];
   int? _selectedQuickAmount;
-
-  static const String _webBaseUrlEnv = String.fromEnvironment(
-    'WEB_BASE_URL',
-    defaultValue: 'https://www.d1v.ai',
-  );
-
-  static String _normalizeBaseUrl(String raw) {
-    final v = raw.trim();
-    if (v.isEmpty) return 'https://www.d1v.ai';
-    return v.endsWith('/') ? v.substring(0, v.length - 1) : v;
-  }
-
-  static String _ordersUrl({String? pay}) {
-    final base = _normalizeBaseUrl(_webBaseUrlEnv);
-    if (pay == null || pay.trim().isEmpty) return '$base/orders';
-    return '$base/orders?pay=${Uri.encodeQueryComponent(pay.trim())}';
-  }
 
   @override
   void dispose() {
@@ -115,43 +98,34 @@ class _TopUpDialogState extends State<TopUpDialog> {
     });
 
     try {
-      // Call API to initiate top-up
-      final response = await _walletService.initiateTopup(
+      final response = await _walletService.initiateTopupApp(
         amountUsd: normalized,
-        successUrl: _ordersUrl(pay: 'success'),
-        cancelUrl: _ordersUrl(pay: 'cancel'),
       );
 
       if (!mounted) return;
 
-      // Get the checkout URL from response
-      final checkoutUrl = response['url'] as String?;
-      if (checkoutUrl == null) {
-        throw Exception('Invalid response from server');
+      final clientSecret = response['client_secret'] as String?;
+      final currency = (response['currency'] as String? ?? 'usd').toUpperCase();
+      if (clientSecret == null || clientSecret.isEmpty) {
+        throw Exception('Missing client secret');
       }
 
-      final uri = Uri.tryParse(checkoutUrl.trim());
-      if (uri == null || (uri.scheme != 'https' && uri.scheme != 'http')) {
-        throw Exception('Invalid checkout URL');
-      }
+      await StripePaymentService.presentPaymentSheet(
+        clientSecret: clientSecret,
+        amountUsd: normalized,
+        currencyCode: currency,
+      );
 
-      // Close dialog
+      if (!mounted) return;
       Navigator.of(context).pop();
 
-      SnackBarHelper.showInfo(
+      SnackBarHelper.showSuccess(
         context,
-        title: 'Redirecting',
-        message: 'Opening Stripe checkout…',
+        title: 'Payment submitted',
+        message: 'Your top-up payment was submitted successfully.',
         duration: const Duration(seconds: 3),
         position: SnackBarPosition.top,
       );
-
-      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!ok) {
-        throw Exception('Failed to open checkout URL');
-      }
-
-      // Call success callback to refresh balance
       widget.onSuccess?.call();
     } catch (e) {
       debugPrint('Top-up failed: $e');
@@ -213,7 +187,9 @@ class _TopUpDialogState extends State<TopUpDialog> {
             ),
             const SizedBox(height: 10),
             Text(
-              'Add funds to your account balance. Secure checkout by Stripe.',
+              StripePaymentService.isConfigured
+                  ? 'Add funds with Apple Pay, Google Pay, or card through Stripe.'
+                  : 'Stripe mobile payment is not configured in this build.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -328,7 +304,12 @@ class _TopUpDialogState extends State<TopUpDialog> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: _isLoading || !canSubmit ? null : _handleSubmit,
+                    onPressed:
+                        _isLoading ||
+                            !canSubmit ||
+                            !StripePaymentService.isConfigured
+                        ? null
+                        : _handleSubmit,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.colorScheme.primary,
                       foregroundColor: theme.colorScheme.onPrimary,

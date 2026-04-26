@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:d1vai_app/l10n/app_localizations.dart';
 import 'markdown_text.dart';
 
 /// Expandable markdown text widget that can show/hide long text
@@ -31,6 +32,7 @@ class _ExpandableTextState extends State<ExpandableText> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final textLines = widget.text.split('\n');
     final hasMoreLines = textLines.length > widget.maxLines;
@@ -77,7 +79,15 @@ class _ExpandableTextState extends State<ExpandableText> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  _isExpanded ? widget.collapseText : widget.expandText,
+                  _isExpanded
+                      ? (widget.collapseText == 'Show less'
+                            ? (loc?.translate('expandable_show_less') ??
+                                  'Show less')
+                            : widget.collapseText)
+                      : (widget.expandText == 'Show more'
+                            ? (loc?.translate('expandable_show_more') ??
+                                  'Show more')
+                            : widget.expandText),
                   style: TextStyle(
                     color: theme.colorScheme.primary,
                     fontSize: 12,

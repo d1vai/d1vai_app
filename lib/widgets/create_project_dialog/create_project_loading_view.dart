@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../progress_widget.dart';
 
 class CreateProjectLoadingView extends StatelessWidget {
@@ -7,15 +8,19 @@ class CreateProjectLoadingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         ProgressWidget(
-          tipList: const [
-            'Planning project structure...',
-            'Setting up integrations...',
-            'Finalizing setup...',
+          tipList: [
+            loc?.translate('create_project_loading_step_plan') ??
+                'Planning project structure...',
+            loc?.translate('create_project_loading_step_integrations') ??
+                'Setting up integrations...',
+            loc?.translate('create_project_loading_step_finalize') ??
+                'Finalizing setup...',
           ],
           completed: false,
           preCompleteDuration: Duration(seconds: 100),
@@ -23,7 +28,8 @@ class CreateProjectLoadingView extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          'Creating your project. This can take up to a couple of minutes...',
+          loc?.translate('create_project_loading_message') ??
+              'Creating your project. This can take up to a couple of minutes...',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
           ),

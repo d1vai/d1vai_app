@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../button.dart';
 import '../input.dart';
 
@@ -27,6 +28,7 @@ class CreateProjectImportPublicView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final listenable = Listenable.merge([urlController, nameController]);
 
@@ -50,7 +52,8 @@ class CreateProjectImportPublicView extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'We will mirror the public repo into the organization workspace. Large repos may take longer.',
+                  loc?.translate('create_project_public_repo_info') ??
+                      'We will mirror the public repo into the organization workspace. Large repos may take longer.',
                   style: TextStyle(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
                     fontSize: 13,
@@ -65,7 +68,9 @@ class CreateProjectImportPublicView extends StatelessWidget {
         Input(
           controller: urlController,
           onChanged: onChanged,
-          labelText: 'Public Repo URL',
+          labelText:
+              loc?.translate('create_project_public_repo_url') ??
+              'Public Repo URL',
           hintText: 'https://github.com/owner/repo',
           variant: InputVariant.outlined,
           prefixIcon: const Icon(Icons.link),
@@ -75,7 +80,8 @@ class CreateProjectImportPublicView extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Example: https://github.com/owner/repo',
+          loc?.translate('create_project_public_repo_example') ??
+              'Example: https://github.com/owner/repo',
           style: TextStyle(
             fontSize: 12,
             color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
@@ -85,8 +91,11 @@ class CreateProjectImportPublicView extends StatelessWidget {
         Input(
           controller: nameController,
           onChanged: onChanged,
-          labelText: 'Project Name',
-          hintText: 'my-project',
+          labelText:
+              loc?.translate('create_project_project_name') ?? 'Project Name',
+          hintText:
+              loc?.translate('create_project_project_name_hint') ??
+              'my-project',
           variant: InputVariant.outlined,
           prefixIcon: const Icon(Icons.folder),
         ),
@@ -94,8 +103,10 @@ class CreateProjectImportPublicView extends StatelessWidget {
         Input(
           controller: descriptionController,
           onChanged: onChanged,
-          labelText: 'Description',
-          hintText: 'Optional description',
+          labelText:
+              loc?.translate('create_project_description') ?? 'Description',
+          hintText:
+              loc?.translate('optional_description') ?? 'Optional description',
           variant: InputVariant.outlined,
           prefixIcon: const Icon(Icons.description),
         ),
@@ -111,7 +122,9 @@ class CreateProjectImportPublicView extends StatelessWidget {
                 disabled: !enabled,
                 variant: ButtonVariant.defaultVariant,
                 size: ButtonSize.defaultSize,
-                text: 'Import Repository',
+                text:
+                    loc?.translate('create_project_import_repo_action') ??
+                    'Import Repository',
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 12,

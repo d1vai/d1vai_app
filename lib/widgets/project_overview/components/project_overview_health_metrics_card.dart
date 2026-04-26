@@ -92,6 +92,52 @@ class ProjectOverviewHealthMetricsCard extends StatelessWidget {
           _HealthMetricItem(
             title: _t(
               context,
+              'project_overview_links_preview_url',
+              'Preview URL',
+            ),
+            status: getDeploymentLabel(context, project.preferredPreviewUrl),
+            description: _t(
+              context,
+              'project_overview_health_preview_desc',
+              'Primary preview surface',
+            ),
+            icon: Icons.preview_outlined,
+            isEnabled:
+                project.preferredPreviewUrl != null &&
+                project.preferredPreviewUrl!.trim().isNotEmpty,
+            statusOnNewLine: true,
+          ),
+          const Divider(height: 32),
+          _HealthMetricItem(
+            title: _t(
+              context,
+              'project_overview_links_github_repo',
+              'GitHub Repository',
+            ),
+            status:
+                (project.repositoryFullName ?? project.repositoryName)
+                        ?.trim()
+                        .isNotEmpty ==
+                    true
+                ? (project.repositoryFullName ?? project.repositoryName!).trim()
+                : 'proj_${project.projectPort}',
+            description: _t(
+              context,
+              'project_overview_health_repository_desc',
+              'Linked repository source',
+            ),
+            icon: Icons.code,
+            isEnabled:
+                (project.repositoryFullName ?? project.repositoryName)
+                    ?.trim()
+                    .isNotEmpty ==
+                true,
+            statusOnNewLine: true,
+          ),
+          const Divider(height: 32),
+          _HealthMetricItem(
+            title: _t(
+              context,
               'project_overview_health_analytics',
               'Analytics status',
             ),

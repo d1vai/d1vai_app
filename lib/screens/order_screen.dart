@@ -6,9 +6,9 @@ import '../widgets/order_history.dart';
 import '../widgets/usage_stats.dart';
 import '../widgets/credit_history.dart';
 import '../widgets/wallet_usage_history.dart';
-import '../screens/pricing_screen.dart';
 import '../widgets/d1v_tab_bar_view.dart';
 import '../widgets/d1v_app_bar.dart';
+import '../widgets/upgrade_plans_panel.dart';
 import '../providers/auth_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/login_required_view.dart';
@@ -24,13 +24,14 @@ class OrderScreen extends StatefulWidget {
 
 class _OrderScreenState extends State<OrderScreen>
     with TickerProviderStateMixin {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late final TabController _tabController;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: 4,
+      length: 3,
       vsync: this,
       initialIndex: _initialIndexFromTab(widget.initialTab),
     );
@@ -50,7 +51,7 @@ class _OrderScreenState extends State<OrderScreen>
         return 2;
       case 'price':
       case 'pricing':
-        return 3;
+        return 0;
       default:
         return 0;
     }
@@ -79,24 +80,72 @@ class _OrderScreenState extends State<OrderScreen>
     }
 
     return Scaffold(
+      key: _scaffoldKey,
+      endDrawerEnableOpenDragGesture: false,
+      endDrawer: SizedBox(
+        width: MediaQuery.of(context).size.width < 680
+            ? MediaQuery.of(context).size.width
+            : 460,
+        child: Drawer(
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+          child: UpgradePlansPanel(
+            showAsDrawer: true,
+            onClose: () => Navigator.of(context).maybePop(),
+          ),
+        ),
+      ),
       appBar: D1VAppBar(
         title: Text(loc?.translate('orders_title') ?? 'Orders'),
         controller: _tabController,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: _UpgradeButton(
+              onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+            ),
+          ),
+        ],
         tabs: [
           D1VTab(text: loc?.translate('orders_tab_balance') ?? 'Balance'),
           D1VTab(text: loc?.translate('orders_tab_orders') ?? 'Orders'),
           D1VTab(text: loc?.translate('orders_tab_usage') ?? 'Usage'),
-          D1VTab(text: loc?.translate('orders_tab_price') ?? 'Price'),
         ],
       ),
       body: D1VTabBarView(
         controller: _tabController,
-        children: const [
-          BalanceCard(),
-          OrdersTabContent(),
-          UsageStats(),
-          PricingScreen(),
-        ],
+        children: const [BalanceCard(), OrdersTabContent(), UsageStats()],
+      ),
+    );
+  }
+}
+
+class _UpgradeButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _UpgradeButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return TextButton.icon(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        foregroundColor: colorScheme.onPrimary,
+        backgroundColor: colorScheme.onPrimary.withValues(alpha: 0.12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(999),
+          side: BorderSide(
+            color: colorScheme.onPrimary.withValues(alpha: 0.18),
+          ),
+        ),
+      ),
+      icon: const Icon(Icons.north_east, size: 16),
+      label: const Text(
+        'Upgrade',
+        style: TextStyle(fontWeight: FontWeight.w700),
       ),
     );
   }

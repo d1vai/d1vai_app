@@ -756,25 +756,7 @@ class _UsageStatsState extends State<UsageStats>
                         ),
                         if (project.archived) ...[
                           const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.red.shade50,
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: Colors.red.shade200),
-                            ),
-                            child: Text(
-                              _t('orders_usage_project_deleted', 'Deleted'),
-                              style: TextStyle(
-                                color: Colors.red.shade700,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
+                          _buildArchivedProjectBadge(),
                         ],
                         const SizedBox(height: 4),
                         Row(
@@ -833,6 +815,37 @@ class _UsageStatsState extends State<UsageStats>
               ),
             );
           }).toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildArchivedProjectBadge() {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final background = Color.alphaBlend(
+      scheme.error.withValues(alpha: isDark ? 0.18 : 0.10),
+      scheme.surface,
+    );
+    final border = scheme.error.withValues(alpha: isDark ? 0.26 : 0.18);
+    final textColor = isDark
+        ? scheme.error.withValues(alpha: 0.92)
+        : const Color(0xFFB42318);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: border),
+      ),
+      child: Text(
+        _t('orders_usage_project_deleted', 'Deleted'),
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: textColor,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.1,
         ),
       ),
     );

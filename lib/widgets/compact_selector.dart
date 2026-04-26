@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:d1vai_app/l10n/app_localizations.dart';
 
 class CompactSelectorOption {
   final String value;
@@ -75,6 +76,7 @@ class CompactSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final canOpen = onChanged != null && options.isNotEmpty;
@@ -217,7 +219,7 @@ class CompactSelector extends StatelessWidget {
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: Text(
-                            'ON',
+                            loc?.translate('compact_selector_active') ?? 'ON',
                             style: theme.textTheme.labelSmall?.copyWith(
                               fontSize: 9,
                               fontWeight: FontWeight.w800,

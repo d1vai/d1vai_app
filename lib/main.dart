@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'dart:async';
+import 'core/api_client.dart';
 import 'providers/auth_provider.dart';
 import 'providers/locale_provider.dart';
 import 'providers/project_provider.dart';
@@ -12,12 +13,15 @@ import 'router/app_router.dart';
 import 'l10n/app_localizations.dart';
 import 'core/theme/app_theme.dart';
 import 'core/auth_expiry_bus.dart';
+import 'services/stripe_payment_service.dart';
 
 final _appRouter = createAppRouter();
 
-void main() {
+Future<void> main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  await ApiClient.ensureInitialized();
+  await StripePaymentService.initialize();
 
   runApp(
     MultiProvider(

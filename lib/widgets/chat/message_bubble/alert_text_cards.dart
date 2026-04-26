@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:d1vai_app/l10n/app_localizations.dart';
 
 import '../expandable_text.dart';
 import 'message_card_base.dart';
@@ -13,6 +14,7 @@ class ChatAlertTextCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
     final Color tint = switch (kind) {
@@ -21,8 +23,9 @@ class ChatAlertTextCard extends StatelessWidget {
     };
 
     final String title = switch (kind) {
-      ChatAlertKind.error => 'Error',
-      ChatAlertKind.warning => 'Warning',
+      ChatAlertKind.error => loc?.translate('alert_title_error') ?? 'Error',
+      ChatAlertKind.warning =>
+        loc?.translate('alert_title_warning') ?? 'Warning',
     };
 
     return ChatMessageCard(
