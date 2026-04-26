@@ -199,6 +199,7 @@ class _TopUpDialogState extends State<TopUpDialog> {
                     'Top up credits',
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w700,
+                      letterSpacing: -0.3,
                     ),
                   ),
                 ),
@@ -214,7 +215,7 @@ class _TopUpDialogState extends State<TopUpDialog> {
             Text(
               'Add funds to your account balance. Secure checkout by Stripe.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 18),
@@ -300,7 +301,7 @@ class _TopUpDialogState extends State<TopUpDialog> {
             Text(
               'Min \$25 • Max \$20,000',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
             if (_error != null) ...[

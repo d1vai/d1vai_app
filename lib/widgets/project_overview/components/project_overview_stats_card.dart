@@ -53,9 +53,7 @@ class ProjectOverviewStatsCard extends StatelessWidget {
               children: [
                 Text(
                   _t(context, 'project_overview_stats_owner', 'Owner'),
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                  style: theme.textTheme.labelMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
@@ -67,9 +65,8 @@ class ProjectOverviewStatsCard extends StatelessWidget {
                   builder: (context, email, child) {
                     return Text(
                       email,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -89,9 +86,7 @@ class ProjectOverviewStatsCard extends StatelessWidget {
                     'project_overview_stats_deployment',
                     'Deployment',
                   ),
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                  style: theme.textTheme.labelMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
@@ -122,16 +117,16 @@ class _StatBlock extends StatelessWidget {
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
+          style: theme.textTheme.labelMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           value,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -164,7 +159,7 @@ class ProjectDeploymentLink extends StatelessWidget {
             child: Text(
               getDeploymentLabel(context, url),
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: url != null && url!.isNotEmpty
                     ? theme.colorScheme.primary

@@ -178,8 +178,8 @@ class _TableDetailDialogState extends State<TableDetailDialog> {
         child: Text(
           label,
           textAlign: TextAlign.center,
-          style: TextStyle(
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             color: isSelected
                 ? theme.colorScheme.primary
                 : theme.colorScheme.onSurfaceVariant,

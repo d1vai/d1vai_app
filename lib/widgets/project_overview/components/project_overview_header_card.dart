@@ -68,8 +68,9 @@ class ProjectOverviewHeaderCard extends StatelessWidget {
                     Text(
                       project.projectName,
                       style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        height: 1.08,
+                        fontWeight: FontWeight.w700,
+                        height: 1.05,
+                        letterSpacing: -0.3,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -79,9 +80,9 @@ class ProjectOverviewHeaderCard extends StatelessWidget {
                       project.projectDescription,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: colorScheme.onSurfaceVariant.withValues(
-                          alpha: 0.92,
+                          alpha: 0.82,
                         ),
-                        height: 1.2,
+                        height: 1.35,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -183,7 +184,7 @@ class ProjectStatusChip extends StatelessWidget {
         style: TextStyle(
           color: s.color,
           fontSize: 12,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );

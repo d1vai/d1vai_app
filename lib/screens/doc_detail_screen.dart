@@ -213,8 +213,13 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
+      backgroundColor: isDark
+          ? const Color(0xFF0B1220)
+          : const Color(0xFFF8FAFC),
       appBar: WebSubPageAppBar(
         title: Text('Docs: ${widget.slug}'),
         actions: [
@@ -237,143 +242,282 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
           ),
         ],
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(2),
+          preferredSize: const Size.fromHeight(3),
           child: _isLoading
-              ? LinearProgressIndicator(
-                  value: _progress > 0 && _progress < 1 ? _progress : null,
-                  minHeight: 2,
+              ? Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      value: _progress > 0 && _progress < 1 ? _progress : null,
+                      minHeight: 3,
+                      backgroundColor: isDark
+                          ? Colors.white.withValues(alpha: 0.06)
+                          : colorScheme.outlineVariant.withValues(alpha: 0.28),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        colorScheme.primary,
+                      ),
+                    ),
+                  ),
                 )
-              : const SizedBox(height: 2),
+              : const SizedBox(height: 10),
         ),
       ),
       body: Stack(
         children: [
-          InAppWebView(
-            initialUrlRequest: URLRequest(url: WebUri(_docUrl.toString())),
-            pullToRefreshController: _pullToRefreshController,
-            shouldOverrideUrlLoading: (controller, navigationAction) async {
-              final webUri = navigationAction.request.url;
-              if (webUri == null) return NavigationActionPolicy.ALLOW;
-              final uri = Uri.tryParse(webUri.toString());
-              if (uri == null) return NavigationActionPolicy.ALLOW;
-              if (uri.scheme != 'http' && uri.scheme != 'https') {
-                await LinkNavigator.openExternal(uri);
-                return NavigationActionPolicy.CANCEL;
-              }
-              final handled = await LinkNavigator.tryNavigate(context, uri);
-              return handled
-                  ? NavigationActionPolicy.CANCEL
-                  : NavigationActionPolicy.ALLOW;
-            },
-            onWebViewCreated: (controller) {
-              _controller = controller;
-              controller.addJavaScriptHandler(
-                handlerName: _jsHandlerCopyCode,
-                callback: (args) async {
-                  final ctx = context;
-                  final text = args.isNotEmpty ? args.first?.toString() : null;
-                  if (text == null || text.trim().isEmpty) return null;
-                  await Clipboard.setData(ClipboardData(text: text));
-                  if (!ctx.mounted) return null;
-                  SnackBarHelper.showSuccess(
-                    ctx,
-                    title: 'Copied',
-                    message: 'Code block copied. Paste it anywhere.',
-                  );
-                  return null;
-                },
-              );
-            },
-            onLoadStart: (controller, url) {
-              if (!mounted) return;
-              setState(() {
-                _isLoading = true;
-                _hasError = false;
-                _progress = 0;
-              });
-            },
-            onProgressChanged: (controller, progress) {
-              if (!mounted) return;
-              setState(() {
-                _progress = (progress / 100).clamp(0.0, 1.0);
-              });
-              if (progress >= 100) {
-                _pullToRefreshController?.endRefreshing();
-              }
-            },
-            onLoadStop: (controller, url) async {
-              _pullToRefreshController?.endRefreshing();
-              await _injectCodeCopy();
-              await _restoreScrollIfNeeded();
-              if (!mounted) return;
-              setState(() {
-                _isLoading = false;
-                _progress = 1;
-              });
-            },
-            onReceivedError: (controller, request, error) {
-              _pullToRefreshController?.endRefreshing();
-              if (!mounted) return;
-              setState(() {
-                _isLoading = false;
-                _hasError = true;
-              });
-            },
-            onScrollChanged: (controller, x, y) {
-              _scheduleSaveScrollY(y);
-            },
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  isDark ? const Color(0xFF0B1220) : const Color(0xFFF8FAFC),
+                  isDark ? const Color(0xFF0F172A) : const Color(0xFFFDF7FB),
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.03)
+                      : Colors.white,
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : colorScheme.outlineVariant.withValues(alpha: 0.78),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(
+                        alpha: isDark ? 0.16 : 0.06,
+                      ),
+                      blurRadius: 24,
+                      offset: const Offset(0, 14),
+                    ),
+                  ],
+                ),
+                child: InAppWebView(
+                  initialUrlRequest: URLRequest(
+                    url: WebUri(_docUrl.toString()),
+                  ),
+                  pullToRefreshController: _pullToRefreshController,
+                  shouldOverrideUrlLoading:
+                      (controller, navigationAction) async {
+                        final webUri = navigationAction.request.url;
+                        if (webUri == null) return NavigationActionPolicy.ALLOW;
+                        final uri = Uri.tryParse(webUri.toString());
+                        if (uri == null) return NavigationActionPolicy.ALLOW;
+                        if (uri.scheme != 'http' && uri.scheme != 'https') {
+                          await LinkNavigator.openExternal(uri);
+                          return NavigationActionPolicy.CANCEL;
+                        }
+                        final handled = await LinkNavigator.tryNavigate(
+                          context,
+                          uri,
+                        );
+                        return handled
+                            ? NavigationActionPolicy.CANCEL
+                            : NavigationActionPolicy.ALLOW;
+                      },
+                  onWebViewCreated: (controller) {
+                    _controller = controller;
+                    controller.addJavaScriptHandler(
+                      handlerName: _jsHandlerCopyCode,
+                      callback: (args) async {
+                        final ctx = context;
+                        final text = args.isNotEmpty
+                            ? args.first?.toString()
+                            : null;
+                        if (text == null || text.trim().isEmpty) return null;
+                        await Clipboard.setData(ClipboardData(text: text));
+                        if (!ctx.mounted) return null;
+                        SnackBarHelper.showSuccess(
+                          ctx,
+                          title: 'Copied',
+                          message: 'Code block copied. Paste it anywhere.',
+                        );
+                        return null;
+                      },
+                    );
+                  },
+                  onLoadStart: (controller, url) {
+                    if (!mounted) return;
+                    setState(() {
+                      _isLoading = true;
+                      _hasError = false;
+                      _progress = 0;
+                    });
+                  },
+                  onProgressChanged: (controller, progress) {
+                    if (!mounted) return;
+                    setState(() {
+                      _progress = (progress / 100).clamp(0.0, 1.0);
+                    });
+                    if (progress >= 100) {
+                      _pullToRefreshController?.endRefreshing();
+                    }
+                  },
+                  onLoadStop: (controller, url) async {
+                    _pullToRefreshController?.endRefreshing();
+                    await _injectCodeCopy();
+                    await _restoreScrollIfNeeded();
+                    if (!mounted) return;
+                    setState(() {
+                      _isLoading = false;
+                      _progress = 1;
+                    });
+                  },
+                  onReceivedError: (controller, request, error) {
+                    _pullToRefreshController?.endRefreshing();
+                    if (!mounted) return;
+                    setState(() {
+                      _isLoading = false;
+                      _hasError = true;
+                    });
+                  },
+                  onScrollChanged: (controller, x, y) {
+                    _scheduleSaveScrollY(y);
+                  },
+                ),
+              ),
+            ),
           ),
           if (_hasError)
             Positioned.fill(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 48,
-                        color: theme.colorScheme.error,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Failed to load doc',
-                        style: theme.textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _docUrl.toString(),
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+              child: ColoredBox(
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.28)
+                    : Colors.white.withValues(alpha: 0.72),
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Container(
+                      constraints: const BoxConstraints(maxWidth: 420),
+                      padding: const EdgeInsets.all(22),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(28),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: isDark
+                              ? [
+                                  const Color(0xFF111827),
+                                  const Color(0xFF1A2235),
+                                ]
+                              : [Colors.white, const Color(0xFFFFF7F7)],
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        alignment: WrapAlignment.center,
-                        children: [
-                          ElevatedButton.icon(
-                            onPressed: () async {
-                              setState(() {
-                                _hasError = false;
-                                _isLoading = true;
-                              });
-                              await _controller?.reload();
-                            },
-                            icon: const Icon(Icons.refresh),
-                            label: const Text('Retry'),
-                          ),
-                          OutlinedButton.icon(
-                            onPressed: _openExternal,
-                            icon: const Icon(Icons.open_in_new),
-                            label: const Text('Browser'),
+                        border: Border.all(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.08)
+                              : colorScheme.outlineVariant.withValues(
+                                  alpha: 0.72,
+                                ),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(
+                              alpha: isDark ? 0.24 : 0.08,
+                            ),
+                            blurRadius: 28,
+                            offset: const Offset(0, 16),
                           ),
                         ],
                       ),
-                    ],
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              color: colorScheme.error.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(
+                                color: colorScheme.error.withValues(
+                                  alpha: 0.24,
+                                ),
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.error_outline_rounded,
+                              size: 28,
+                              color: colorScheme.error,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          Text(
+                            'Failed to load doc',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'The in-app reader could not load this document. Retry here or open it in the browser.',
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            _docUrl.toString(),
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () async {
+                                    setState(() {
+                                      _hasError = false;
+                                      _isLoading = true;
+                                    });
+                                    await _controller?.reload();
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    minimumSize: const Size.fromHeight(48),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                  ),
+                                  icon: const Icon(Icons.refresh_rounded),
+                                  label: const Text('Retry'),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: _openExternal,
+                                  style: OutlinedButton.styleFrom(
+                                    minimumSize: const Size.fromHeight(48),
+                                    side: BorderSide(
+                                      color: isDark
+                                          ? Colors.white.withValues(alpha: 0.10)
+                                          : colorScheme.outlineVariant,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                  ),
+                                  icon: const Icon(Icons.open_in_new_rounded),
+                                  label: const Text('Browser'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),

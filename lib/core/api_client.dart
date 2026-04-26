@@ -886,11 +886,6 @@ class ApiClient {
                 throw Exception('Unauthenticated');
               }
               AuthExpiryBus.trigger(endpoint: endpoint);
-              // Token removal is best-effort; redirect flow also clears it.
-              final prefs = _sharedPreferences;
-              if (prefs != null) {
-                unawaited(prefs.remove('auth_token').then((_) {}));
-              }
               throw AuthExpiredException(responseBodyForException);
             }
           }
@@ -911,11 +906,6 @@ class ApiClient {
           throw Exception('Unauthenticated');
         }
         AuthExpiryBus.trigger(endpoint: endpoint);
-        // Token removal is best-effort; redirect flow also clears it.
-        final prefs = _sharedPreferences;
-        if (prefs != null) {
-          unawaited(prefs.remove('auth_token').then((_) {}));
-        }
         _noteLastApiError(
           endpoint: endpoint,
           statusCode: response.statusCode,

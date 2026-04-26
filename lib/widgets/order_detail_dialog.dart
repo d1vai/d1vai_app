@@ -189,7 +189,9 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
           children: [
             Text(
               title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 16),
             ...children,
@@ -219,18 +221,16 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
               children: [
                 Text(
                   'Status: ${order.statusLabel}',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
                     color: order.statusColor,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Payment Status: ${order.status}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -263,9 +263,8 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
           flex: 2,
           child: Text(
             label,
-            style: TextStyle(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-              fontSize: 14,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ),
@@ -273,9 +272,8 @@ class _OrderDetailDialogState extends State<OrderDetailDialog> {
           flex: 3,
           child: Text(
             value,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
               color: valueColor ?? theme.colorScheme.onSurface,
             ),
           ),

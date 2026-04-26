@@ -237,7 +237,9 @@ class _TwoFactorAuthSettingsScreenState
                 const SizedBox(height: 16),
                 Text(
                   'Secret Key:',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Container(
@@ -278,7 +280,7 @@ class _TwoFactorAuthSettingsScreenState
                 const SizedBox(height: 16),
                 const Text(
                   'Backup Codes:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 8),
                 Container(
@@ -336,7 +338,7 @@ class _TwoFactorAuthSettingsScreenState
                 const SizedBox(height: 16),
                 const Text(
                   'Enter verification code from your app:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 8),
                 TextField(
@@ -574,6 +576,7 @@ class _TwoFactorAuthSettingsScreenState
   }
 
   Widget _buildStatusCard() {
+    final theme = Theme.of(context);
     return Card(
       color: _isEnabled ? Colors.green.shade50 : Colors.grey.shade50,
       child: Padding(
@@ -592,9 +595,8 @@ class _TwoFactorAuthSettingsScreenState
                 children: [
                   Text(
                     _isEnabled ? 'Two-Factor Enabled' : 'Two-Factor Disabled',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
                       color: _isEnabled
                           ? Colors.green.shade700
                           : Colors.grey.shade700,
@@ -605,8 +607,7 @@ class _TwoFactorAuthSettingsScreenState
                     _isEnabled
                         ? 'Your account is protected with 2FA'
                         : 'Add an extra layer of security to your account',
-                    style: TextStyle(
-                      fontSize: 13,
+                    style: theme.textTheme.bodySmall?.copyWith(
                       color: _isEnabled
                           ? Colors.green.shade600
                           : Colors.grey.shade600,
@@ -625,9 +626,8 @@ class _TwoFactorAuthSettingsScreenState
               ),
               child: Text(
                 _isEnabled ? 'Enabled' : 'Disabled',
-                style: const TextStyle(
+                style: theme.textTheme.labelMedium?.copyWith(
                   color: Colors.white,
-                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -639,6 +639,7 @@ class _TwoFactorAuthSettingsScreenState
   }
 
   Widget _buildInstructionsCard() {
+    final theme = Theme.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -647,7 +648,9 @@ class _TwoFactorAuthSettingsScreenState
           children: [
             Text(
               'How it works',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 12),
             _buildInstructionItem(
@@ -684,6 +687,7 @@ class _TwoFactorAuthSettingsScreenState
     String title,
     String description,
   ) {
+    final theme = Theme.of(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -712,15 +716,16 @@ class _TwoFactorAuthSettingsScreenState
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 description,
-                style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),

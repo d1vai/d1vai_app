@@ -220,7 +220,8 @@ class _ProjectCardTileState extends State<ProjectCardTile>
                                 Text(
                                   project.projectName,
                                   style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w900,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: -0.2,
                                     height: 1.1,
                                   ),
                                   maxLines: 1,
@@ -231,8 +232,8 @@ class _ProjectCardTileState extends State<ProjectCardTile>
                                   project.projectDescription,
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: colorScheme.onSurfaceVariant
-                                        .withValues(alpha: 0.92),
-                                    height: 1.25,
+                                        .withValues(alpha: 0.82),
+                                    height: 1.35,
                                   ),
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,

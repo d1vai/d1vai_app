@@ -38,6 +38,9 @@ class ProjectOverviewLinksCard extends StatelessWidget {
             leading: Icon(Icons.language, color: theme.colorScheme.primary),
             title: Text(
               _t(context, 'project_overview_links_preview_url', 'Preview URL'),
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
             subtitle: Text(
               previewUrl ??
@@ -46,6 +49,9 @@ class ProjectOverviewLinksCard extends StatelessWidget {
                     'project_overview_links_not_available',
                     'Not available',
                   ),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
             trailing: Icon(
               Icons.open_in_new,
@@ -75,8 +81,16 @@ class ProjectOverviewLinksCard extends StatelessWidget {
                 'project_overview_links_github_repo',
                 'GitHub Repository',
               ),
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
-            subtitle: Text('proj_${project.projectPort}'),
+            subtitle: Text(
+              'proj_${project.projectPort}',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
             trailing: Icon(
               Icons.chevron_right_rounded,
               color: theme.colorScheme.onSurfaceVariant,

@@ -380,65 +380,52 @@ class _LoginScreenState extends State<LoginScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     if (!_isCodeSent) {
-      final bgGradient = LinearGradient(
-        colors: [
-          cs.primary.withValues(alpha: isDark ? 0.2 : 0.08),
-          cs.tertiary.withValues(alpha: isDark ? 0.16 : 0.06),
-        ],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      );
-
-      return Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          gradient: bgGradient,
-          border: Border.all(
-            color: cs.outlineVariant.withValues(alpha: isDark ? 0.62 : 0.85),
+      return FilledButton.tonalIcon(
+        onPressed: _isSendingCode || (_countdownSeconds < 60 && _isCodeSent)
+            ? null
+            : _sendCode,
+        icon: _isSendingCode
+            ? SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(cs.primary),
+                ),
+              )
+            : Icon(Icons.send_outlined, size: 18, color: cs.primary),
+        label: Text(
+          _isSendingCode
+              ? loc?.translate('sending') ?? '发送中...'
+              : (_countdownSeconds < 60 && _isCodeSent
+                    ? _countdownText
+                    : (_isCodeSent
+                          ? loc?.translate('resend_code') ?? '重新发送验证码'
+                          : loc?.translate('send_code') ?? '发送验证码')),
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: cs.primary,
           ),
-          borderRadius: BorderRadius.circular(14),
         ),
-        child: FilledButton.tonalIcon(
-          onPressed: _isSendingCode || (_countdownSeconds < 60 && _isCodeSent)
-              ? null
-              : _sendCode,
-          icon: _isSendingCode
-              ? SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(cs.primary),
-                  ),
-                )
-              : Icon(Icons.send_outlined, size: 18, color: cs.primary),
-          label: Text(
-            _isSendingCode
-                ? loc?.translate('sending') ?? '发送中...'
-                : (_countdownSeconds < 60 && _isCodeSent
-                      ? _countdownText
-                      : (_isCodeSent
-                            ? loc?.translate('resend_code') ?? '重新发送验证码'
-                            : loc?.translate('send_code') ?? '发送验证码')),
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: cs.primary,
+        style: FilledButton.styleFrom(
+          minimumSize: const Size(double.infinity, 54),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+            side: BorderSide(
+              color: cs.primary.withValues(alpha: isDark ? 0.3 : 0.14),
             ),
           ),
-          style: FilledButton.styleFrom(
-            minimumSize: const Size(double.infinity, 52),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            backgroundColor: cs.surface.withValues(alpha: isDark ? 0.8 : 0.94),
-            foregroundColor: cs.primary,
-            disabledBackgroundColor: cs.surface.withValues(
-              alpha: isDark ? 0.45 : 0.84,
-            ),
-            disabledForegroundColor: cs.onSurfaceVariant.withValues(alpha: 0.7),
-            elevation: 0,
-          ),
+          backgroundColor: isDark
+              ? cs.surfaceContainerHigh.withValues(alpha: 0.76)
+              : cs.primary.withValues(alpha: 0.08),
+          foregroundColor: cs.primary,
+          disabledBackgroundColor: isDark
+              ? cs.surfaceContainerHighest.withValues(alpha: 0.5)
+              : cs.surfaceContainerHigh.withValues(alpha: 0.72),
+          disabledForegroundColor: cs.onSurfaceVariant.withValues(alpha: 0.7),
+          elevation: 0,
         ),
       );
     }

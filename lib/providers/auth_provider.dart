@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import '../core/api_client.dart';
 import '../core/avatar_generator.dart';
 import '../models/user.dart';
 import '../models/onboarding.dart';
@@ -19,11 +20,12 @@ class AuthProvider extends ChangeNotifier {
   User? _user;
   OnboardingData? _onboardingData;
   bool _isLoading = true;
+  bool _hasPersistedAuth = false;
 
   User? get user => _user;
   OnboardingData? get onboardingData => _onboardingData;
   bool get isLoading => _isLoading;
-  bool get isAuthenticated => _user != null;
+  bool get isAuthenticated => _user != null || _hasPersistedAuth;
 
   /// 检查是否需要完成 onboarding
   bool get needsOnboarding {
@@ -40,24 +42,45 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> _checkAuth() async {
+    final token = _storageService.getAuthToken()?.trim();
+    _hasPersistedAuth = token != null && token.isNotEmpty;
+
     try {
-      final token = _storageService.getAuthToken();
-      if (token != null) {
-        _user = await _d1vaiService.getUserProfile();
-        _user = _user?.copyWith(bearerToken: token);
+      if (!_hasPersistedAuth) return;
 
-        // 加载 onboarding 数据
-        _onboardingData = _storageService.getOnboardingData();
+      _onboardingData = _storageService.getOnboardingData();
 
-        // 如果用户已完成 onboarding，清理 onboarding 数据
-        if (_user?.isOnboarded == true) {
-          await _storageService.clearOnboardingData();
-          _onboardingData = null;
+      try {
+        final fetchedUser = await _d1vaiService.getUserProfile();
+        _user = fetchedUser.copyWith(bearerToken: token);
+        await _storageService.saveAuthUser(_user!);
+      } on AuthExpiredException {
+        await logout();
+        return;
+      } on ApiClientException catch (e) {
+        if (e.statusCode == 401 || e.code == 401) {
+          await logout();
+          return;
         }
+        final cachedUser = _storageService.getAuthUser();
+        if (cachedUser != null) {
+          _user = cachedUser.copyWith(bearerToken: token);
+        }
+        debugPrint('Auth restore fallback after API error: $e');
+      } catch (e) {
+        final cachedUser = _storageService.getAuthUser();
+        if (cachedUser != null) {
+          _user = cachedUser.copyWith(bearerToken: token);
+        }
+        debugPrint('Auth restore fallback after transient error: $e');
+      }
+
+      if (_user?.isOnboarded == true) {
+        await _storageService.clearOnboardingData();
+        _onboardingData = null;
       }
     } catch (e) {
-      // Token invalid or expired
-      await logout();
+      debugPrint('Unexpected auth bootstrap error: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -150,9 +173,13 @@ class AuthProvider extends ChangeNotifier {
   Future<void> _completeLogin(String token) async {
     await _storageService.saveAuthToken(token);
     AuthExpiryBus.reset();
+    _hasPersistedAuth = true;
 
     _user = await _d1vaiService.getUserProfile();
     _user = _user?.copyWith(bearerToken: token);
+    if (_user != null) {
+      await _storageService.saveAuthUser(_user!);
+    }
 
     // 检查是否需要 onboarding
     if (_user != null && !_user!.isOnboarded) {
@@ -194,6 +221,9 @@ class AuthProvider extends ChangeNotifier {
 
       // 刷新用户信息
       _user = await _d1vaiService.getUserProfile();
+      if (_user != null) {
+        await _storageService.saveAuthUser(_user!);
+      }
 
       notifyListeners();
     } catch (e) {
@@ -215,6 +245,7 @@ class AuthProvider extends ChangeNotifier {
       });
 
       _user = updatedUser;
+      await _storageService.saveAuthUser(_user!);
 
       // 更新 onboarding 数据
       _onboardingData ??= OnboardingData();
@@ -268,9 +299,12 @@ class AuthProvider extends ChangeNotifier {
 
       if (token == null) {
         _user = null;
+        _hasPersistedAuth = false;
       } else {
         final user = await _d1vaiService.getUserProfile();
         _user = user.copyWith(bearerToken: token);
+        _hasPersistedAuth = true;
+        await _storageService.saveAuthUser(_user!);
       }
 
       notifyListeners();
@@ -292,6 +326,7 @@ class AuthProvider extends ChangeNotifier {
         'picture': avatarUrl,
       });
       _user = updatedUser;
+      await _storageService.saveAuthUser(_user!);
 
       // 更新 onboarding 数据
       _onboardingData ??= OnboardingData();
@@ -319,6 +354,7 @@ class AuthProvider extends ChangeNotifier {
       });
 
       _user = updatedUser;
+      await _storageService.saveAuthUser(_user!);
 
       // 同步更新本地 onboarding 数据中的头像
       _onboardingData ??= OnboardingData();
@@ -336,6 +372,9 @@ class AuthProvider extends ChangeNotifier {
       await _d1vaiService.postUserOnboardedSet(true);
 
       _user = await _d1vaiService.getUserProfile();
+      if (_user != null) {
+        await _storageService.saveAuthUser(_user!);
+      }
 
       // 清理 onboarding 数据
       await _storageService.clearOnboardingData();
@@ -354,6 +393,9 @@ class AuthProvider extends ChangeNotifier {
         final token = _storageService.getAuthToken();
         _user = await _d1vaiService.getUserProfile();
         _user = _user?.copyWith(bearerToken: token);
+        if (_user != null) {
+          await _storageService.saveAuthUser(_user!);
+        }
         notifyListeners();
       }
     } catch (e) {
@@ -376,11 +418,13 @@ class AuthProvider extends ChangeNotifier {
       // Make logout effective immediately for routing.
       _user = null;
       _onboardingData = null;
+      _hasPersistedAuth = false;
       _isLoading = false;
       notifyListeners();
 
       // 清除认证相关数据
       await _storageService.clearAuthToken();
+      await _storageService.clearAuthUser();
       await _storageService.clearOnboardingData();
 
       // 清除所有缓存数据
@@ -392,6 +436,7 @@ class AuthProvider extends ChangeNotifier {
       // 重置状态
       _user = null;
       _onboardingData = null;
+      _hasPersistedAuth = false;
       _isLoading = false;
 
       notifyListeners();
@@ -400,6 +445,7 @@ class AuthProvider extends ChangeNotifier {
       // 即使出错也要重置状态
       _user = null;
       _onboardingData = null;
+      _hasPersistedAuth = false;
       _isLoading = false;
       notifyListeners();
       rethrow;

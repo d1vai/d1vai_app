@@ -68,6 +68,7 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('Wallet Settings')),
       body: Consumer<AuthProvider>(
@@ -96,15 +97,16 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
                               children: [
                                 Text(
                                   'Connect Your Wallet',
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.titleMedium,
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   'Connect your wallet to receive payments and rewards',
-                                  style: Theme.of(context).textTheme.bodySmall
-                                      ?.copyWith(color: Colors.grey.shade600),
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
                                 ),
                               ],
                             ),
@@ -139,6 +141,7 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
     String? currentAddress, {
     bool isComingSoon = false,
   }) {
+    final theme = Theme.of(context);
     final bool isConnected =
         currentAddress != null && currentAddress.isNotEmpty;
 
@@ -163,8 +166,7 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
                 children: [
                   Text(
                     walletType.name,
-                    style: const TextStyle(
-                      fontSize: 16,
+                    style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -175,9 +177,8 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
                         Expanded(
                           child: Text(
                             '${walletType.symbol} • ${_formatAddress(currentAddress)}',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey.shade600,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ),
@@ -201,9 +202,8 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
                   else
                     Text(
                       isComingSoon ? 'Coming Soon' : 'Not connected',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey.shade600,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                 ],
@@ -216,9 +216,11 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
                   : () => _handleWalletAction(walletType),
               style: ElevatedButton.styleFrom(
                 backgroundColor: isConnected
-                    ? Colors.grey.shade200
+                    ? theme.colorScheme.surfaceContainerHighest
                     : walletType.color,
-                foregroundColor: isConnected ? Colors.black87 : Colors.white,
+                foregroundColor: isConnected
+                    ? theme.colorScheme.onSurface
+                    : Colors.white,
               ),
               child: _isBinding
                   ? const SizedBox(
@@ -231,7 +233,10 @@ class _WalletSettingsScreenState extends State<WalletSettingsScreen> {
                     )
                   : Text(
                       isConnected ? 'Disconnect' : 'Connect',
-                      style: const TextStyle(fontSize: 13),
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
             ),
           ],

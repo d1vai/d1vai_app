@@ -75,8 +75,7 @@ class _TroubleRow extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: TextStyle(
-              fontSize: 13,
+            style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
@@ -973,6 +972,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
   }
 
   Widget _buildActionsCard(UserProject project) {
+    final theme = Theme.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -981,7 +981,9 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
           children: [
             Text(
               _t('project_deploy_actions', 'Actions'),
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 12),
             Row(
@@ -1070,8 +1072,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                           _productionPhaseLabel.replaceAll('...', ''),
                         ),
                         style: TextStyle(
-                          fontSize: 12,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ),
@@ -1104,7 +1105,9 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
               children: [
                 Text(
                   _t('project_deploy_history', 'History'),
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 DropdownButton<_DeploymentEnvFilter>(
@@ -1163,7 +1166,9 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
           children: [
             Text(
               _t('project_deploy_troubleshooting', 'Troubleshooting'),
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 10),
             Text(
@@ -1171,7 +1176,9 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                 'project_deploy_troubleshooting_hint',
                 'If deploy fails, try these quick checks:',
               ),
-              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 10),
             _TroubleRow(
@@ -1240,6 +1247,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
   }
 
   Widget _buildCurrentDeploymentsCard(UserProject project) {
+    final theme = Theme.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -1248,7 +1256,9 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
           children: [
             Text(
               _t('project_deploy_current_deployments', 'Current Deployments'),
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 16),
             // Production deployment
@@ -1979,15 +1989,16 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                     'project_deploy_environment_deployment',
                     '{env} deployment',
                   ).replaceAll('{env}', deployment.environmentLabel),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   '${deployment.statusLabel} • ${deployment.id}',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 if (deployment.statusMessage != null &&
@@ -1996,9 +2007,8 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Text(
                       deployment.statusMessage!.trim(),
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey.shade800,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                   ),

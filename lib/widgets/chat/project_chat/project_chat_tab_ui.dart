@@ -614,7 +614,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
               },
               models: _availableModels,
               selectedModelId: _selectedModelId,
-              selectedEngine: _selectedEngine,
+              selectedEngineMode: _selectedEngineMode,
               isModelLoading:
                   _isLoadingModels ||
                   _workspacePhase != WorkspacePhase.ready ||
@@ -678,7 +678,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
               },
               models: _availableModels,
               selectedModelId: _selectedModelId,
-              selectedEngine: _selectedEngine,
+              selectedEngineMode: _selectedEngineMode,
               isModelLoading:
                   _isLoadingModels ||
                   _workspacePhase != WorkspacePhase.ready ||

@@ -211,9 +211,8 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                                   'No projects match your search',
                                 )
                               : _t('projects_empty', 'No projects found'),
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: theme.colorScheme.onSurfaceVariant,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: theme.colorScheme.onSurface,
                           ),
                         ),
                         if (!hasSearchQuery) ...[

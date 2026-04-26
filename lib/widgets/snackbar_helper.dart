@@ -1,10 +1,9 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'dart:async';
 
-/// 通用的 SnackBar 显示助手
-/// 用于显示成功、失败、警告和信息提示
+import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
 enum SnackBarPosition { bottom, top }
 
 class SnackBarHelper {
@@ -24,16 +23,12 @@ class SnackBarHelper {
           HapticFeedback.selectionClick();
           break;
         case ContentType.help:
-        default:
           HapticFeedback.selectionClick();
           break;
       }
-    } catch (_) {
-      // Best-effort UX; ignore platform failures.
-    }
+    } catch (_) {}
   }
 
-  /// 显示成功 SnackBar
   static void showSuccess(
     BuildContext context, {
     required String title,
@@ -55,7 +50,6 @@ class SnackBarHelper {
     );
   }
 
-  /// 显示失败 SnackBar
   static void showError(
     BuildContext context, {
     required String title,
@@ -77,7 +71,6 @@ class SnackBarHelper {
     );
   }
 
-  /// 显示警告 SnackBar
   static void showWarning(
     BuildContext context, {
     required String title,
@@ -99,7 +92,6 @@ class SnackBarHelper {
     );
   }
 
-  /// 显示信息 SnackBar
   static void showInfo(
     BuildContext context, {
     required String title,
@@ -142,15 +134,12 @@ class SnackBarHelper {
     final overlay = Overlay.maybeOf(context, rootOverlay: true);
     if (overlay == null) return;
 
-    final theme = Theme.of(context);
-    final visual = _snackVisual(theme, contentType);
+    final visual = _snackVisual(Theme.of(context), contentType);
+    final stamp = DateTime.now().millisecondsSinceEpoch;
 
-    late final OverlayEntry entry;
-    entry = OverlayEntry(
+    final entry = OverlayEntry(
       builder: (overlayContext) {
         final topInset = MediaQuery.of(overlayContext).padding.top;
-        final animKey =
-            '${contentType.toString()}:$title:$message:${DateTime.now().millisecondsSinceEpoch}';
         return Positioned(
           top: topInset + 12,
           left: 12,
@@ -160,7 +149,7 @@ class SnackBarHelper {
             child: SafeArea(
               bottom: false,
               child: TweenAnimationBuilder<double>(
-                key: ValueKey(animKey),
+                key: ValueKey('toast:$stamp'),
                 tween: Tween(begin: 0, end: 1),
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeOutCubic,
@@ -168,18 +157,22 @@ class SnackBarHelper {
                   return Opacity(
                     opacity: t.clamp(0, 1),
                     child: Transform.translate(
-                      offset: Offset(0, (1 - t) * -10),
+                      offset: Offset(0, (1 - t) * -12),
                       child: child,
                     ),
                   );
                 },
-                child: _ToastCard(
-                  key: ValueKey(animKey),
+                child: _FeedbackCard(
                   title: title,
                   message: message,
                   visual: visual,
                   actionLabel: actionLabel,
-                  onActionPressed: onActionPressed,
+                  onActionPressed: onActionPressed == null
+                      ? null
+                      : () {
+                          _clearTopToast();
+                          onActionPressed();
+                        },
                   onClose: _clearTopToast,
                 ),
               ),
@@ -191,13 +184,12 @@ class SnackBarHelper {
 
     _topToastEntry = entry;
     overlay.insert(entry);
-
-    _topToastTimer = Timer(duration ?? const Duration(seconds: 3), () {
-      _clearTopToast();
-    });
+    _topToastTimer = Timer(
+      duration ?? const Duration(seconds: 3),
+      _clearTopToast,
+    );
   }
 
-  /// 内部方法：显示 SnackBar
   static void _showSnackBar(
     BuildContext context, {
     required String title,
@@ -209,6 +201,7 @@ class SnackBarHelper {
     SnackBarPosition position = SnackBarPosition.bottom,
   }) {
     _triggerHaptic(contentType);
+
     if (position == SnackBarPosition.top) {
       _showTopToast(
         context,
@@ -217,312 +210,235 @@ class SnackBarHelper {
         contentType: contentType,
         actionLabel: actionLabel,
         onActionPressed: onActionPressed,
-        duration: duration ?? const Duration(seconds: 3),
+        duration: duration,
       );
       return;
     }
 
-    // 先清除已有的 SnackBar，避免 Hero tag 冲突
-    ScaffoldMessenger.of(context).clearSnackBars();
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.clearSnackBars();
 
-    final theme = Theme.of(context);
-    final visual = _snackVisual(theme, contentType);
-    final snackBar = SnackBar(
-      elevation: 0,
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: Colors.transparent,
-      duration: duration ?? const Duration(seconds: 4),
-      margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-      padding: EdgeInsets.zero,
-      content: _SnackBarCard(
-        key: UniqueKey(),
-        title: title,
-        message: message,
-        visual: visual,
-        actionLabel: actionLabel,
-        onActionPressed: actionLabel != null && onActionPressed != null
-            ? () {
-                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                onActionPressed();
-              }
-            : null,
+    final visual = _snackVisual(Theme.of(context), contentType);
+    messenger.showSnackBar(
+      SnackBar(
+        elevation: 0,
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.transparent,
+        duration: duration ?? const Duration(seconds: 4),
+        margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        padding: EdgeInsets.zero,
+        content: _FeedbackCard(
+          title: title,
+          message: message,
+          visual: visual,
+          actionLabel: actionLabel,
+          onActionPressed: actionLabel != null && onActionPressed != null
+              ? () {
+                  messenger.hideCurrentSnackBar();
+                  onActionPressed();
+                }
+              : null,
+        ),
       ),
     );
-
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
   static _SnackVisual _snackVisual(ThemeData theme, ContentType contentType) {
     switch (contentType) {
       case ContentType.success:
         return _SnackVisual(
-          accent: Colors.green.shade600,
-          icon: Icons.check_circle_outline,
+          accent: const Color(0xFF10B981),
+          accentSoft: const Color(0xFFECFDF5),
+          icon: Icons.check_circle_outline_rounded,
         );
       case ContentType.failure:
         return _SnackVisual(
           accent: theme.colorScheme.error,
-          icon: Icons.error_outline,
+          accentSoft: const Color(0xFFFEF2F2),
+          icon: Icons.error_outline_rounded,
         );
       case ContentType.warning:
         return _SnackVisual(
-          accent: Colors.orange.shade700,
+          accent: const Color(0xFFF59E0B),
+          accentSoft: const Color(0xFFFFFBEB),
           icon: Icons.warning_amber_rounded,
         );
       case ContentType.help:
         return _SnackVisual(
           accent: theme.colorScheme.primary,
-          icon: Icons.info_outline,
-        );
-      default:
-        return _SnackVisual(
-          accent: theme.colorScheme.primary,
-          icon: Icons.info_outline,
+          accentSoft: const Color(0xFFF5F3FF),
+          icon: Icons.info_outline_rounded,
         );
     }
+    return _SnackVisual(
+      accent: theme.colorScheme.primary,
+      accentSoft: const Color(0xFFF5F3FF),
+      icon: Icons.info_outline_rounded,
+    );
   }
 }
 
 class _SnackVisual {
+  const _SnackVisual({
+    required this.accent,
+    required this.accentSoft,
+    required this.icon,
+  });
+
   final Color accent;
+  final Color accentSoft;
   final IconData icon;
-
-  const _SnackVisual({required this.accent, required this.icon});
 }
 
-class _SnackBarCard extends StatelessWidget {
-  final String title;
-  final String message;
-  final _SnackVisual visual;
-  final String? actionLabel;
-  final VoidCallback? onActionPressed;
-
-  const _SnackBarCard({
-    super.key,
+class _FeedbackCard extends StatelessWidget {
+  const _FeedbackCard({
     required this.title,
     required this.message,
     required this.visual,
     this.actionLabel,
     this.onActionPressed,
+    this.onClose,
   });
+
+  final String title;
+  final String message;
+  final _SnackVisual visual;
+  final String? actionLabel;
+  final VoidCallback? onActionPressed;
+  final VoidCallback? onClose;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    final surface = theme.colorScheme.surfaceContainerHigh;
-    final bg = Color.alphaBlend(
-      visual.accent.withValues(alpha: isDark ? 0.18 : 0.10),
-      surface,
-    );
-    final border = Color.alphaBlend(
-      visual.accent.withValues(alpha: isDark ? 0.28 : 0.20),
-      theme.colorScheme.outlineVariant,
-    );
+    final background = isDark
+        ? Color.alphaBlend(
+            visual.accent.withValues(alpha: 0.12),
+            const Color(0xFF111827),
+          )
+        : Color.alphaBlend(visual.accent.withValues(alpha: 0.05), Colors.white);
+    final edge = isDark
+        ? visual.accent.withValues(alpha: 0.26)
+        : Color.alphaBlend(
+            visual.accent.withValues(alpha: 0.18),
+            colorScheme.outlineVariant,
+          );
 
     return Container(
       decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.28 : 0.10),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 4,
-            height: 36,
-            decoration: BoxDecoration(
-              color: visual.accent,
-              borderRadius: BorderRadius.circular(999),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Icon(visual.icon, size: 18, color: visual.accent),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style:
-                      theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ) ??
-                      const TextStyle(fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  message,
-                  style:
-                      theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        height: 1.25,
-                      ) ??
-                      TextStyle(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        height: 1.25,
-                      ),
-                ),
-              ],
-            ),
-          ),
-          if (actionLabel != null && onActionPressed != null) ...[
-            const SizedBox(width: 8),
-            TextButton(
-              onPressed: onActionPressed,
-              style: TextButton.styleFrom(
-                foregroundColor: visual.accent,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                minimumSize: const Size(0, 0),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                visualDensity: VisualDensity.compact,
-              ),
-              child: Text(
-                actionLabel!,
-                style: const TextStyle(fontWeight: FontWeight.w800),
-              ),
-            ),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            background,
+            isDark
+                ? Colors.white.withValues(alpha: 0.02)
+                : visual.accentSoft.withValues(alpha: 0.8),
           ],
-        ],
-      ),
-    );
-  }
-}
-
-class _ToastCard extends StatelessWidget {
-  final String title;
-  final String message;
-  final _SnackVisual visual;
-  final String? actionLabel;
-  final VoidCallback? onActionPressed;
-  final VoidCallback onClose;
-
-  const _ToastCard({
-    super.key,
-    required this.title,
-    required this.message,
-    required this.visual,
-    required this.onClose,
-    this.actionLabel,
-    this.onActionPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final surface = theme.colorScheme.surfaceContainerHigh;
-    final bg = Color.alphaBlend(
-      visual.accent.withValues(alpha: isDark ? 0.22 : 0.12),
-      surface,
-    );
-    final border = Color.alphaBlend(
-      visual.accent.withValues(alpha: isDark ? 0.30 : 0.22),
-      theme.colorScheme.outlineVariant,
-    );
-
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: border),
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: edge),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.12),
-            blurRadius: 22,
-            offset: const Offset(0, 12),
+            color: Colors.black.withValues(alpha: isDark ? 0.24 : 0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 14),
           ),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 4,
-            height: 36,
+            width: 42,
+            height: 42,
             decoration: BoxDecoration(
-              color: visual.accent,
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(14),
+              gradient: LinearGradient(
+                colors: [
+                  visual.accent.withValues(alpha: isDark ? 0.28 : 0.16),
+                  visual.accent.withValues(alpha: isDark ? 0.12 : 0.08),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              border: Border.all(
+                color: visual.accent.withValues(alpha: isDark ? 0.24 : 0.16),
+              ),
             ),
+            child: Icon(visual.icon, size: 20, color: visual.accent),
           ),
-          const SizedBox(width: 10),
-          Icon(visual.icon, size: 18, color: visual.accent),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
-              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  title,
-                  style:
-                      theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ) ??
-                      const TextStyle(fontWeight: FontWeight.w800),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                    if (onClose != null)
+                      InkWell(
+                        onTap: onClose,
+                        borderRadius: BorderRadius.circular(10),
+                        child: Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: Icon(
+                            Icons.close_rounded,
+                            size: 16,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 Text(
                   message,
-                  style:
-                      theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        height: 1.25,
-                      ) ??
-                      TextStyle(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        height: 1.25,
-                      ),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    height: 1.35,
+                  ),
                 ),
                 if (actionLabel != null && onActionPressed != null) ...[
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton(
-                      onPressed: () {
-                        onClose();
-                        onActionPressed!();
-                      },
-                      style: TextButton.styleFrom(
-                        foregroundColor: visual.accent,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        minimumSize: const Size(0, 0),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        visualDensity: VisualDensity.compact,
+                  const SizedBox(height: 10),
+                  TextButton(
+                    onPressed: onActionPressed,
+                    style: TextButton.styleFrom(
+                      foregroundColor: visual.accent,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
                       ),
-                      child: Text(
-                        actionLabel!,
-                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      backgroundColor: visual.accent.withValues(
+                        alpha: isDark ? 0.12 : 0.08,
                       ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      minimumSize: const Size(0, 0),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    child: Text(
+                      actionLabel!,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
                     ),
                   ),
                 ],
               ],
             ),
-          ),
-          IconButton(
-            onPressed: onClose,
-            icon: Icon(Icons.close, color: theme.colorScheme.onSurfaceVariant),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
           ),
         ],
       ),

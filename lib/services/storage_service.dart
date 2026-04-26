@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/onboarding.dart';
+import '../models/user.dart';
 
 /// 本地存储服务 - 管理应用程序的本地数据存储
 class StorageService {
   static const String _onboardingKey = 'onboarding_data';
   static const String _authTokenKey = 'auth_token';
+  static const String _authUserKey = 'auth_user';
 
   // 单例模式
   static final StorageService _instance = StorageService._internal();
@@ -99,6 +101,42 @@ class StorageService {
   /// 检查是否有认证令牌
   bool hasAuthToken() {
     return _sharedPrefs.containsKey(_authTokenKey);
+  }
+
+  /// 保存最近一次成功同步的用户信息，便于开发期后端重启后恢复会话。
+  Future<bool> saveAuthUser(User user) async {
+    try {
+      return await _sharedPrefs.setString(_authUserKey, jsonEncode(user.toJson()));
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// 获取本地缓存的用户信息。
+  User? getAuthUser() {
+    try {
+      final jsonString = _sharedPrefs.getString(_authUserKey);
+      if (jsonString == null || jsonString.isEmpty) return null;
+      final json = jsonDecode(jsonString);
+      if (json is Map<String, dynamic>) {
+        return User.fromJson(json);
+      }
+      if (json is Map) {
+        return User.fromJson(Map<String, dynamic>.from(json));
+      }
+    } catch (e) {
+      // Ignore malformed cache.
+    }
+    return null;
+  }
+
+  /// 清除缓存的用户信息。
+  Future<bool> clearAuthUser() async {
+    try {
+      return await _sharedPrefs.remove(_authUserKey);
+    } catch (e) {
+      return false;
+    }
   }
 
   // ============================================

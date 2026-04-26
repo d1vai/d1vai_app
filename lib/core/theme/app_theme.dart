@@ -23,6 +23,18 @@ class AppTheme {
       ),
       scaffoldBackgroundColor: AppColors.surfaceLight,
       textTheme: AppTypography.getTheme(false),
+      inputDecorationTheme: InputDecorationTheme(
+        labelStyle: AppTypography.getTheme(
+          false,
+        ).bodyMedium?.copyWith(color: AppColors.textSecondaryLight),
+        hintStyle: AppTypography.getTheme(false).bodySmall?.copyWith(
+          color: AppColors.textSecondaryLight.withValues(alpha: 0.9),
+        ),
+      ),
+      listTileTheme: ListTileThemeData(
+        titleTextStyle: AppTypography.getTheme(false).titleSmall,
+        subtitleTextStyle: AppTypography.getTheme(false).bodySmall,
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.surfaceLight,
         foregroundColor: AppColors.textPrimaryLight,
@@ -52,6 +64,18 @@ class AppTheme {
       ),
       scaffoldBackgroundColor: AppColors.surfaceDark,
       textTheme: AppTypography.getTheme(true),
+      inputDecorationTheme: InputDecorationTheme(
+        labelStyle: AppTypography.getTheme(
+          true,
+        ).bodyMedium?.copyWith(color: AppColors.textSecondaryDark),
+        hintStyle: AppTypography.getTheme(true).bodySmall?.copyWith(
+          color: AppColors.textSecondaryDark.withValues(alpha: 0.9),
+        ),
+      ),
+      listTileTheme: ListTileThemeData(
+        titleTextStyle: AppTypography.getTheme(true).titleSmall,
+        subtitleTextStyle: AppTypography.getTheme(true).bodySmall,
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.surfaceDark,
         foregroundColor: AppColors.textPrimaryDark,

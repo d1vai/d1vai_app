@@ -323,7 +323,7 @@ class _ImportRepositoryDialogState extends State<ImportRepositoryDialog> {
                         'Import Repository',
                         style: TextStyle(
                           fontSize: 18,
-                          fontWeight: FontWeight.w900,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
@@ -346,7 +346,7 @@ class _ImportRepositoryDialogState extends State<ImportRepositoryDialog> {
                         Text(
                           fullName,
                           style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                         const SizedBox(height: 6),

@@ -9,8 +9,11 @@ class AppTypography {
   static TextTheme getTheme(bool isDark) {
     final Color primaryColor = isDark ? Colors.white : const Color(0xFF0F172A);
     final Color secondaryColor = isDark
-        ? const Color(0xFF94A3B8)
-        : const Color(0xFF64748B);
+        ? primaryColor.withValues(alpha: 0.78)
+        : primaryColor.withValues(alpha: 0.72);
+    final Color tertiaryColor = isDark
+        ? primaryColor.withValues(alpha: 0.62)
+        : primaryColor.withValues(alpha: 0.56);
 
     return TextTheme(
       // Display / Headings (SmileySans)
@@ -53,40 +56,43 @@ class AppTypography {
 
       // Body / Content (System Font)
       titleLarge: TextStyle(
-        fontSize: 22,
-        fontWeight: FontWeight.w600,
+        fontSize: 24,
+        fontWeight: FontWeight.w700,
         color: primaryColor,
-        letterSpacing: 0,
+        letterSpacing: -0.2,
       ),
       titleMedium: TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
         color: primaryColor,
-        letterSpacing: 0.15,
+        letterSpacing: -0.1,
       ),
       titleSmall: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w500,
+        fontSize: 15,
+        fontWeight: FontWeight.w600,
         color: primaryColor,
         letterSpacing: 0.1,
       ),
       bodyLarge: TextStyle(
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: FontWeight.w400,
         color: primaryColor,
-        letterSpacing: 0.5,
+        height: 1.45,
+        letterSpacing: 0.15,
       ),
       bodyMedium: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w400,
-        color: secondaryColor, // Slightly muted for body text
-        letterSpacing: 0.25,
+        color: secondaryColor,
+        height: 1.45,
+        letterSpacing: 0.1,
       ),
       bodySmall: TextStyle(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w400,
-        color: secondaryColor,
-        letterSpacing: 0.4,
+        color: tertiaryColor,
+        height: 1.35,
+        letterSpacing: 0.15,
       ),
       labelLarge: TextStyle(
         fontSize: 14,
@@ -97,14 +103,14 @@ class AppTypography {
       labelMedium: TextStyle(
         fontSize: 12,
         fontWeight: FontWeight.w600,
-        color: secondaryColor,
-        letterSpacing: 0.5,
+        color: tertiaryColor,
+        letterSpacing: 0.25,
       ),
       labelSmall: TextStyle(
         fontSize: 11,
-        fontWeight: FontWeight.w600,
-        color: secondaryColor,
-        letterSpacing: 0.5,
+        fontWeight: FontWeight.w500,
+        color: tertiaryColor,
+        letterSpacing: 0.2,
       ),
     );
   }

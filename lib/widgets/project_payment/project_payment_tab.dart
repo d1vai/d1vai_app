@@ -177,6 +177,7 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
   }
 
   Widget _buildOverviewCard() {
+    final theme = Theme.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -185,7 +186,9 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
           children: [
             Text(
               _t('project_payment_overview', 'Payment Overview'),
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 16),
             if (_payMetrics != null) ...[
@@ -247,7 +250,9 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                   'project_payment_not_activated',
                   'Payment not activated yet',
                 ),
-                style: TextStyle(color: Colors.grey.shade600),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
           ],
         ),
@@ -256,6 +261,7 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
   }
 
   Widget _buildProductsCard(BuildContext context) {
+    final theme = Theme.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -267,9 +273,8 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                 Expanded(
                   child: Text(
                     _t('project_payment_products', 'Payment Products'),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -297,7 +302,9 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Text(
                   _t('project_payment_no_products', 'No payment products yet'),
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               )
             else
@@ -315,9 +322,11 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
+                      color: theme.colorScheme.surfaceContainerLowest,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey.shade200),
+                      border: Border.all(
+                        color: theme.colorScheme.outlineVariant,
+                      ),
                     ),
                     child: Row(
                       children: [
@@ -327,18 +336,16 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                             children: [
                               Text(
                                 product.name,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                               if (product.description != null) ...[
                                 const SizedBox(height: 4),
                                 Text(
                                   product.description!,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey.shade600,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -347,8 +354,7 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                         ),
                         Text(
                           product.formattedPrice,
-                          style: TextStyle(
-                            fontSize: 14,
+                          style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: product.price > 0
                                 ? Colors.green.shade700
@@ -412,6 +418,7 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
   }
 
   Widget _buildTransactionsCard() {
+    final theme = Theme.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -425,9 +432,8 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                     'project_payment_recent_transactions',
                     'Recent Transactions',
                   ),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const Spacer(),
@@ -457,7 +463,9 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Text(
                   _t('project_payment_no_transactions', 'No transactions yet'),
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               )
             else
@@ -478,9 +486,11 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                     margin: const EdgeInsets.only(bottom: 12),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
+                      color: theme.colorScheme.surfaceContainerLowest,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey.shade200),
+                      border: Border.all(
+                        color: theme.colorScheme.outlineVariant,
+                      ),
                     ),
                     child: Row(
                       children: [
@@ -496,9 +506,8 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                                       'project_payment_unknown_product',
                                       'Unknown Product',
                                     ),
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -508,9 +517,8 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                                       'project_payment_anonymous',
                                       'Anonymous',
                                     ),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey.shade600,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
                                 ),
                               ),
                             ],
@@ -521,8 +529,7 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                           children: [
                             Text(
                               tx.formattedAmount,
-                              style: const TextStyle(
-                                fontSize: 14,
+                              style: theme.textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -1074,12 +1081,13 @@ class _PayMetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1088,12 +1096,17 @@ class _PayMetricCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: theme.colorScheme.onSurface,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             title,
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),

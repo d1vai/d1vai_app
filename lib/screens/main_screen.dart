@@ -113,6 +113,10 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final items = _navBarsItems(context);
+    const navContainerHeight = 64.0;
+    const navOuterPadding = EdgeInsets.fromLTRB(12, 6, 12, 6);
+    final navBarHeight =
+        navContainerHeight + navOuterPadding.top + navOuterPadding.bottom;
     return PersistentTabView.custom(
       context,
       controller: _controller,
@@ -123,7 +127,7 @@ class _MainScreenState extends State<MainScreen> {
       handleAndroidBackButtonPress: true,
       resizeToAvoidBottomInset: true,
       stateManagement: true,
-      navBarHeight: 78,
+      navBarHeight: navBarHeight,
       customWidget: _D1VBottomNavBar(
         items: items,
         selectedIndex: _controller.index,
@@ -149,95 +153,91 @@ class _D1VBottomNavBar extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final colorScheme = theme.colorScheme;
-    const outerPadding = EdgeInsets.fromLTRB(12, 8, 12, 12);
+    const outerPadding = EdgeInsets.fromLTRB(12, 6, 12, 6);
+    const navContainerHeight = 64.0;
 
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: outerPadding,
-        child: Container(
-          height: 66,
-          decoration: BoxDecoration(
-            color: colorScheme.surface,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: colorScheme.outlineVariant.withValues(
-                alpha: isDark ? 0.72 : 0.9,
-              ),
+    return Padding(
+      padding: outerPadding,
+      child: Container(
+        height: navContainerHeight,
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: colorScheme.outlineVariant.withValues(
+              alpha: isDark ? 0.72 : 0.9,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: colorScheme.shadow.withValues(
-                  alpha: isDark ? 0.24 : 0.1,
-                ),
-                blurRadius: isDark ? 18 : 22,
-                offset: const Offset(0, 10),
-              ),
-            ],
           ),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final width = constraints.maxWidth;
-              final itemWidth = width / items.length;
-              final indicatorWidth = itemWidth - 12;
+          boxShadow: [
+            BoxShadow(
+              color: colorScheme.shadow.withValues(alpha: isDark ? 0.24 : 0.1),
+              blurRadius: isDark ? 18 : 22,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
+            final itemWidth = width / items.length;
+            final indicatorWidth = itemWidth - 12;
 
-              return Stack(
-                children: [
-                  AnimatedPositioned(
-                    duration: const Duration(milliseconds: 260),
-                    curve: Curves.easeOutCubic,
-                    left: selectedIndex * itemWidth + 6,
-                    top: 6,
-                    bottom: 6,
-                    width: indicatorWidth,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        gradient: LinearGradient(
-                          colors: [
-                            colorScheme.primary.withValues(
-                              alpha: isDark ? 0.28 : 0.12,
-                            ),
-                            colorScheme.primary.withValues(
-                              alpha: isDark ? 0.16 : 0.06,
-                            ),
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ),
-                        border: Border.all(
-                          color: colorScheme.primary.withValues(
-                            alpha: isDark ? 0.4 : 0.14,
+            return Stack(
+              children: [
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 260),
+                  curve: Curves.easeOutCubic,
+                  left: selectedIndex * itemWidth + 6,
+                  top: 6,
+                  bottom: 6,
+                  width: indicatorWidth,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      gradient: LinearGradient(
+                        colors: [
+                          colorScheme.primary.withValues(
+                            alpha: isDark ? 0.28 : 0.12,
                           ),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: colorScheme.primary.withValues(
-                              alpha: isDark ? 0.18 : 0.08,
-                            ),
-                            blurRadius: isDark ? 18 : 14,
-                            offset: const Offset(0, 6),
+                          colorScheme.primary.withValues(
+                            alpha: isDark ? 0.16 : 0.06,
                           ),
                         ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
                       ),
+                      border: Border.all(
+                        color: colorScheme.primary.withValues(
+                          alpha: isDark ? 0.4 : 0.14,
+                        ),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colorScheme.primary.withValues(
+                            alpha: isDark ? 0.18 : 0.08,
+                          ),
+                          blurRadius: isDark ? 18 : 14,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
                     ),
                   ),
-                  Row(
-                    children: [
-                      for (var i = 0; i < items.length; i++)
-                        Expanded(
-                          child: _D1VBottomNavItem(
-                            item: items[i],
-                            selected: i == selectedIndex,
-                            onTap: () => onItemSelected(i),
-                          ),
+                ),
+                Row(
+                  children: [
+                    for (var i = 0; i < items.length; i++)
+                      Expanded(
+                        child: _D1VBottomNavItem(
+                          item: items[i],
+                          selected: i == selectedIndex,
+                          onTap: () => onItemSelected(i),
                         ),
-                    ],
-                  ),
-                ],
-              );
-            },
-          ),
+                      ),
+                  ],
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

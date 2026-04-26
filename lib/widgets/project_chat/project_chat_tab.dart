@@ -26,6 +26,7 @@ import '../chat/message_list.dart';
 import '../chat/quick_actions.dart';
 import '../insufficient_balance_dialog.dart';
 import '../chat/project_chat/no_preview_available_view.dart';
+import '../chat/project_chat/chat_engine_mode.dart';
 import '../chat/project_chat/project_chat_code_tab.dart';
 import '../chat/project_chat/project_chat_preview_header.dart';
 import '../chat/project_chat/project_chat_top_bar.dart';

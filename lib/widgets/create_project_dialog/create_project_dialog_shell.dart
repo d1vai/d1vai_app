@@ -79,9 +79,9 @@ class CreateProjectDialogShell extends StatelessWidget {
                         child: Text(
                           title,
                           key: ValueKey(title),
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.3,
                           ),
                         ),
                       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../core/theme/app_colors.dart';
 import '../widgets/snackbar_helper.dart';
 
 class DocsScreen extends StatefulWidget {
@@ -141,80 +142,303 @@ class _DocsScreenState extends State<DocsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final showRecent = _searchController.text.trim().isEmpty;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Documentation'),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search docs...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchController.text.trim().isEmpty
-                    ? null
-                    : IconButton(
-                        tooltip: 'Clear',
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {});
-                        },
-                      ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                filled: true,
-                fillColor: theme.colorScheme.surfaceContainerHighest,
-                contentPadding: EdgeInsets.zero,
-                prefixIconColor: theme.colorScheme.onSurfaceVariant,
-                suffixIconColor: theme.colorScheme.onSurfaceVariant,
-              ),
-              onChanged: (value) {
-                setState(() {});
-              },
-            ),
+      appBar: AppBar(title: const Text('Documentation')),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              isDark ? const Color(0xFF0B1220) : const Color(0xFFF8FAFC),
+              isDark ? const Color(0xFF111827) : const Color(0xFFFDF7FB),
+            ],
           ),
         ),
-      ),
-      body: _filteredPages.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.search,
-                    size: 64,
-                    color: theme.colorScheme.onSurfaceVariant.withValues(
-                      alpha: 0.6,
-                    ),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          children: [
+            _buildHero(context),
+            const SizedBox(height: 16),
+            _buildSearchField(context),
+            const SizedBox(height: 20),
+            if (_filteredPages.isEmpty)
+              _buildEmptyState(context)
+            else ...[
+              if (showRecent && _recentSlugs.isNotEmpty) ...[
+                _buildSectionHeader(
+                  context,
+                  eyebrow: 'History',
+                  title: 'Recently viewed',
+                  action: TextButton(
+                    onPressed: _clearRecent,
+                    child: const Text('Clear'),
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No results found',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                if (showRecent && _recentSlugs.isNotEmpty)
-                  _buildRecent(context),
-                ..._filteredPages.map((page) => _buildDocCard(context, page)),
+                ),
+                const SizedBox(height: 12),
+                _buildRecent(context),
+                const SizedBox(height: 22),
               ],
+              _buildSectionHeader(
+                context,
+                eyebrow: 'Library',
+                title: _searchController.text.trim().isEmpty
+                    ? 'Browse all documents'
+                    : 'Search results',
+                trailingText:
+                    '${_filteredPages.length.toString().padLeft(2, '0')} items',
+              ),
+              const SizedBox(height: 12),
+              ..._filteredPages.asMap().entries.map(
+                (entry) => _buildDocCard(context, entry.value, entry.key),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHero(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [
+                  const Color(0xFF131D33),
+                  colorScheme.primary.withValues(alpha: 0.18),
+                  const Color(0xFF1A1330),
+                ]
+              : [
+                  Colors.white,
+                  const Color(0xFFF7F3FF),
+                  const Color(0xFFFFF3F8),
+                ],
+        ),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : colorScheme.outlineVariant.withValues(alpha: 0.7),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.22)
+                : const Color(0xFF8B5CF6).withValues(alpha: 0.07),
+            blurRadius: 28,
+            offset: const Offset(0, 16),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.06)
+                  : const Color(0xFFF4F0FF),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.10)
+                    : const Color(0xFFD9CCFF),
+              ),
             ),
+            child: Text(
+              'd1v.ai docs',
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: colorScheme.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Operational guidance, product context, and implementation references.',
+            style: theme.textTheme.titleLarge?.copyWith(
+              height: 1.15,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Use the docs like a product index: scan by outcome, reopen what you touched recently, and jump straight into the detail view.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchField(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.04)
+            : Colors.white.withValues(alpha: 0.86),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : colorScheme.outlineVariant.withValues(alpha: 0.85),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.12)
+                : const Color(0xFF0F172A).withValues(alpha: 0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: 'Search docs, workflows, API, setup...',
+          prefixIcon: const Icon(Icons.search),
+          suffixIcon: _searchController.text.trim().isEmpty
+              ? null
+              : IconButton(
+                  tooltip: 'Clear',
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() {});
+                  },
+                ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(22),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(22),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(22),
+            borderSide: BorderSide.none,
+          ),
+          filled: true,
+          fillColor: Colors.transparent,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 6,
+            vertical: 18,
+          ),
+          prefixIconColor: colorScheme.onSurfaceVariant,
+          suffixIconColor: colorScheme.onSurfaceVariant,
+        ),
+        onChanged: (value) {
+          setState(() {});
+        },
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.04)
+            : Colors.white.withValues(alpha: 0.8),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : colorScheme.outlineVariant.withValues(alpha: 0.8),
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.search_off_rounded,
+            size: 44,
+            color: colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: 12),
+          Text('No matching documents', style: theme.textTheme.titleMedium),
+          const SizedBox(height: 6),
+          Text(
+            'Try broader keywords or search by product area, workflow, or API topic.',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(
+    BuildContext context, {
+    required String eyebrow,
+    required String title,
+    Widget? action,
+    String? trailingText,
+  }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                eyebrow.toUpperCase(),
+                style: theme.textTheme.labelMedium?.copyWith(
+                  letterSpacing: 1.1,
+                  color: colorScheme.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(title, style: theme.textTheme.titleLarge),
+            ],
+          ),
+        ),
+        if (trailingText != null)
+          Text(
+            trailingText,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+        if (action != null) action,
+      ],
     );
   }
 
   Widget _buildRecent(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     DocItem? findBySlug(String slug) {
       for (final p in _pages) {
@@ -231,92 +455,204 @@ class _DocsScreenState extends State<DocsScreen> {
 
     if (items.isEmpty) return const SizedBox.shrink();
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.history, color: theme.colorScheme.primary),
-                const SizedBox(width: 8),
-                const Text(
-                  'Recently viewed',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
-                ),
-                const Spacer(),
-                TextButton(onPressed: _clearRecent, child: const Text('Clear')),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: items.map((p) {
-                return ActionChip(
-                  label: Text(p.title),
-                  onPressed: () => _navigateToDoc(context, p.href),
-                );
-              }).toList(),
-            ),
-          ],
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.04)
+            : Colors.white.withValues(alpha: 0.82),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : colorScheme.outlineVariant.withValues(alpha: 0.8),
         ),
+      ),
+      child: Wrap(
+        spacing: 10,
+        runSpacing: 10,
+        children: items.map((p) {
+          return ActionChip(
+            avatar: Icon(p.icon, size: 16, color: colorScheme.primary),
+            label: Text(p.title),
+            labelStyle: theme.textTheme.labelLarge?.copyWith(
+              color: colorScheme.onSurface,
+            ),
+            backgroundColor: isDark
+                ? colorScheme.primary.withValues(alpha: 0.12)
+                : const Color(0xFFF5F3FF),
+            side: BorderSide(
+              color: isDark
+                  ? colorScheme.primary.withValues(alpha: 0.26)
+                  : const Color(0xFFD9CCFF),
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(999),
+            ),
+            onPressed: () => _navigateToDoc(context, p.href),
+          );
+        }).toList(),
       ),
     );
   }
 
-  Widget _buildDocCard(BuildContext context, DocItem page) {
-    return Card(
+  Widget _buildDocCard(BuildContext context, DocItem page, int index) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final accent = _accentForIndex(index);
+    final tag = _tagForItem(page);
+
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [
+                  Colors.white.withValues(alpha: 0.04),
+                  accent.withValues(alpha: 0.10),
+                ]
+              : [Colors.white, accent.withValues(alpha: 0.07)],
+        ),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : colorScheme.outlineVariant.withValues(alpha: 0.78),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.10)
+                : const Color(0xFF0F172A).withValues(alpha: 0.035),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
       child: InkWell(
-        onTap: () {
-          _navigateToDoc(context, page.href);
-        },
-        borderRadius: BorderRadius.circular(8),
+        onTap: () => _navigateToDoc(context, page.href),
+        borderRadius: BorderRadius.circular(24),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 14, 16),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: 52,
+                height: 52,
                 decoration: BoxDecoration(
-                  color: Colors.deepPurple.shade50,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(18),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      accent.withValues(alpha: isDark ? 0.34 : 0.18),
+                      accent.withValues(alpha: isDark ? 0.16 : 0.08),
+                    ],
+                  ),
+                  border: Border.all(
+                    color: accent.withValues(alpha: isDark ? 0.32 : 0.18),
+                  ),
                 ),
-                child: Icon(page.icon, color: Colors.deepPurple, size: 24),
+                child: Icon(page.icon, color: accent, size: 24),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.05)
+                                : accent.withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            tag,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: accent,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          (index + 1).toString().padLeft(2, '0'),
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
                     Text(
                       page.title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Text(
                       page.desc,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.arrow_forward_ios, size: 16),
+              const SizedBox(width: 10),
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Icon(
+                  Icons.north_east_rounded,
+                  size: 18,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Color _accentForIndex(int index) {
+    const accents = <Color>[
+      AppColors.primaryBrand,
+      AppColors.secondaryBrand,
+      AppColors.info,
+      AppColors.success,
+      Color(0xFF8B5CF6),
+      Color(0xFFF59E0B),
+    ];
+    return accents[index % accents.length];
+  }
+
+  String _tagForItem(DocItem page) {
+    final title = page.title.toLowerCase();
+    if (title.contains('api')) return 'Reference';
+    if (title.contains('faq')) return 'Support';
+    if (title.contains('pricing') || title.contains('refund')) return 'Policy';
+    if (title.contains('legal')) return 'Compliance';
+    if (title.contains('roadmap')) return 'Planning';
+    if (title.contains('architecture') || title.contains('integrations')) {
+      return 'Technical';
+    }
+    if (title.contains('overview') || title.contains('product')) return 'Core';
+    return 'Guide';
   }
 
   void _navigateToDoc(BuildContext context, String href) async {

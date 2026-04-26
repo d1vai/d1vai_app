@@ -13,6 +13,24 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
   Timer? _assistantDeltaFlushTimer;
 
   String get _chatDraftKey => 'project_chat_draft:${widget.projectId}';
+  String get _selectedEngine =>
+      _selectedEngineMode == ChatEngineMode.fast ? 'claude' : 'codex';
+
+  ChatEngineMode _engineModeFromStoredValue(String raw) {
+    switch (raw.trim().toLowerCase()) {
+      case 'fast':
+      case 'claude':
+        return ChatEngineMode.fast;
+      case 'think_hard':
+      case 'codex':
+      default:
+        return ChatEngineMode.thinkHard;
+    }
+  }
+
+  String _engineModeStorageValue(ChatEngineMode mode) {
+    return mode == ChatEngineMode.fast ? 'fast' : 'think_hard';
+  }
 
   void _loadChatDraft() {
     try {
@@ -769,10 +787,11 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       final firstModel = models.isNotEmpty ? models.first.id.trim() : '';
       final cachedModel =
           (await _modelConfigService.getCachedModel())?.trim() ?? '';
-      final cachedEngine =
-          _storageService.getString('project_chat_engine_mode')?.trim().toLowerCase() ??
-          'codex';
-      final normalizedEngine = cachedEngine == 'claude' ? 'claude' : 'codex';
+      final cachedEngineMode = _engineModeFromStoredValue(
+        _storageService.getString(chatEngineModeCacheKey) ??
+            _storageService.getString('project_chat_engine_mode') ??
+            'think_hard',
+      );
       final modelExists =
           cachedModel.isNotEmpty &&
           models.any((m) => m.id.trim() == cachedModel);
@@ -781,11 +800,16 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       setState(() {
         _availableModels = models;
         _selectedModelId = selected;
-        _selectedEngine = normalizedEngine;
+        _selectedEngineMode = cachedEngineMode;
         _isLoadingModels = false;
         _hasLoadedModelConfig = true;
         _modelConfigError = null;
       });
+
+      await _storageService.setString(
+        chatEngineModeCacheKey,
+        _engineModeStorageValue(cachedEngineMode),
+      );
 
       if (selected.isNotEmpty) {
         await _modelConfigService.setCachedModel(selected);
@@ -876,30 +900,32 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
   }
 
   @override
-  Future<void> _handleEngineChanged(String engine) async {
-    final next = engine.trim().toLowerCase();
-    if ((next != 'claude' && next != 'codex') || next == _selectedEngine) {
+  Future<void> _handleEngineChanged(ChatEngineMode nextMode) async {
+    if (nextMode == _selectedEngineMode) {
       return;
     }
     if (!mounted) return;
 
     final loc = AppLocalizations.of(context);
     setState(() {
-      _selectedEngine = next;
+      _selectedEngineMode = nextMode;
     });
-    await _storageService.setString('project_chat_engine_mode', next);
+    await _storageService.setString(
+      chatEngineModeCacheKey,
+      _engineModeStorageValue(nextMode),
+    );
+    await _storageService.remove('project_chat_engine_mode');
     await _resetExecuteSessionForModelSwitch();
 
     if (!mounted) return;
     SnackBarHelper.showSuccess(
       context,
       title: loc?.translate('project_chat_engine_title') ?? 'Engine',
-      message:
-          next == 'claude'
-              ? (loc?.translate('project_chat_engine_fast_hint') ??
-                  'Fast mode uses Claude engine')
-              : (loc?.translate('project_chat_engine_think_hard_hint') ??
-                  'Think Hard mode uses Codex engine'),
+      message: nextMode == ChatEngineMode.fast
+          ? (loc?.translate('project_chat_engine_fast_hint') ??
+              'Fast mode uses Claude engine')
+          : (loc?.translate('project_chat_engine_think_hard_hint') ??
+              'Think Hard mode uses Codex engine'),
       position: SnackBarPosition.top,
       duration: const Duration(seconds: 2),
     );

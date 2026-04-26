@@ -103,7 +103,7 @@ class _EnvVarEditorDialogState extends State<EnvVarEditorDialog> {
                     : _t('project_api_add_variable', 'Add variable'),
                 subtitle: _t(
                   'project_api_value_hint',
-                  'Paste the secret value...',
+                  'Add a clear key and keep sensitive values masked by default.',
                 ),
                 onClose: () => Navigator.of(context).pop(),
               ),

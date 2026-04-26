@@ -204,8 +204,8 @@ class AdaptiveModalHeader extends StatelessWidget {
                 Text(
                   title,
                   style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.2,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
                   ),
                 ),
                 if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
@@ -214,7 +214,7 @@ class AdaptiveModalHeader extends StatelessWidget {
                     subtitle!,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
-                      height: 1.35,
+                      height: 1.4,
                     ),
                   ),
                 ],

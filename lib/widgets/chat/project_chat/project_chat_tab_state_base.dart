@@ -49,7 +49,7 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   // Model selection state (align with web BigChat/create flow)
   List<ModelInfo> _availableModels = <ModelInfo>[];
   String _selectedModelId = '';
-  String _selectedEngine = 'codex';
+  ChatEngineMode _selectedEngineMode = ChatEngineMode.thinkHard;
   bool _isLoadingModels = false;
   bool _isSwitchingModel = false;
   bool _hasLoadedModelConfig = false;
@@ -115,7 +115,7 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   Future<void> _loadMoreHistory();
   Future<void> _retryMessage(ChatMessage message);
   Future<void> _handleModelChanged(String modelId);
-  Future<void> _handleEngineChanged(String engine);
+  Future<void> _handleEngineChanged(ChatEngineMode mode);
   Future<void> _persistChatDraft(String value);
 
   // Outbox actions (implemented by logic mixin; UI passes these into widgets).

@@ -14,6 +14,7 @@ import 'package:d1vai_app/utils/error_utils.dart';
 import 'package:d1vai_app/providers/auth_provider.dart';
 import 'package:d1vai_app/widgets/login_required_dialog.dart';
 import 'package:d1vai_app/l10n/app_localizations.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -433,26 +434,10 @@ class _CommunityScreenState extends State<CommunityScreen>
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
-      child: Wrap(
-        spacing: 10,
-        runSpacing: 10,
-        children: [
-          ChoiceChip(
-            label: const Text('All'),
-            selected: _filter == _CommunityFeedFilter.all,
-            onSelected: (_) => setFilter(_CommunityFeedFilter.all),
-          ),
-          ChoiceChip(
-            label: Text(isAuthed ? 'My posts' : 'My posts (login)'),
-            selected: _filter == _CommunityFeedFilter.mine,
-            onSelected: (_) => setFilter(_CommunityFeedFilter.mine),
-          ),
-          ChoiceChip(
-            label: Text(isAuthed ? 'My drafts' : 'My drafts (login)'),
-            selected: _filter == _CommunityFeedFilter.drafts,
-            onSelected: (_) => setFilter(_CommunityFeedFilter.drafts),
-          ),
-        ],
+      child: _CommunityFilterTabs(
+        selectedFilter: _filter,
+        isAuthed: isAuthed,
+        onSelected: setFilter,
       ),
     );
   }
@@ -630,3 +615,183 @@ class _CommunityScreenState extends State<CommunityScreen>
 }
 
 enum _CommunityFeedFilter { all, mine, drafts }
+
+class _CommunityFilterTabs extends StatelessWidget {
+  final _CommunityFeedFilter selectedFilter;
+  final bool isAuthed;
+  final ValueChanged<_CommunityFeedFilter> onSelected;
+
+  const _CommunityFilterTabs({
+    required this.selectedFilter,
+    required this.isAuthed,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final tabs = [
+      (
+        filter: _CommunityFeedFilter.all,
+        label: 'All',
+        icon: PhosphorIcons.squaresFour(),
+      ),
+      (
+        filter: _CommunityFeedFilter.mine,
+        label: isAuthed ? 'My posts' : 'My posts',
+        icon: PhosphorIcons.notePencil(),
+      ),
+      (
+        filter: _CommunityFeedFilter.drafts,
+        label: isAuthed ? 'My drafts' : 'My drafts',
+        icon: PhosphorIcons.fileDashed(),
+      ),
+    ];
+
+    final shellColor = Color.alphaBlend(
+      colorScheme.primary.withValues(alpha: isDark ? 0.08 : 0.05),
+      colorScheme.surfaceContainerHighest.withValues(alpha: isDark ? 0.88 : 0.96),
+    );
+    final borderColor = colorScheme.outlineVariant.withValues(
+      alpha: isDark ? 0.48 : 0.72,
+    );
+
+    return Container(
+      height: 54,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: shellColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: isDark ? 0.16 : 0.05),
+            blurRadius: isDark ? 18 : 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          for (final tab in tabs)
+            Expanded(
+              child: _CommunityFilterTabButton(
+                label: tab.label,
+                icon: tab.icon,
+                selected: tab.filter == selectedFilter,
+                onTap: () => onSelected(tab.filter),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CommunityFilterTabButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _CommunityFilterTabButton({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final foregroundColor = selected
+        ? colorScheme.primary
+        : colorScheme.onSurfaceVariant.withValues(alpha: isDark ? 0.86 : 0.92);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: selected
+              ? LinearGradient(
+                  colors: [
+                    colorScheme.primary.withValues(alpha: isDark ? 0.26 : 0.14),
+                    colorScheme.primary.withValues(alpha: isDark ? 0.12 : 0.06),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: selected
+              ? null
+              : Colors.transparent,
+          border: Border.all(
+            color: selected
+                ? colorScheme.primary.withValues(alpha: isDark ? 0.34 : 0.16)
+                : Colors.transparent,
+          ),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: colorScheme.primary.withValues(
+                      alpha: isDark ? 0.14 : 0.08,
+                    ),
+                    blurRadius: isDark ? 16 : 12,
+                    offset: const Offset(0, 6),
+                  ),
+                ]
+              : null,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final compact = constraints.maxWidth < 108;
+                  final iconSize = compact ? 14.0 : 16.0;
+                  final spacing = compact ? 4.0 : 6.0;
+
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(icon, size: iconSize, color: foregroundColor),
+                      SizedBox(width: spacing),
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            label,
+                            maxLines: 1,
+                            softWrap: false,
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: foregroundColor,
+                              fontWeight: selected
+                                  ? FontWeight.w800
+                                  : FontWeight.w700,
+                              letterSpacing: compact ? -0.15 : 0.1,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
