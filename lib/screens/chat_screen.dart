@@ -6,6 +6,7 @@ import 'package:d1vai_app/models/model_config.dart';
 import 'package:d1vai_app/models/outbox.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:d1vai_app/services/chat_service.dart';
 import 'package:d1vai_app/services/d1vai_service.dart';
 import 'package:d1vai_app/services/model_config_service.dart';
@@ -21,10 +22,12 @@ import 'package:d1vai_app/widgets/chat/chat_screen_states.dart';
 import 'package:d1vai_app/widgets/chat/floating_preview_dock.dart';
 import 'package:d1vai_app/widgets/insufficient_balance_dialog.dart';
 import 'package:d1vai_app/widgets/chat/status_pill.dart';
-import 'package:d1vai_app/widgets/compact_selector.dart';
 import 'package:d1vai_app/widgets/alert.dart';
 import 'package:d1vai_app/widgets/progress_widget.dart';
 import 'package:d1vai_app/widgets/snackbar_helper.dart';
+import 'package:d1vai_app/utils/preview_url.dart';
+import 'package:d1vai_app/widgets/chat/project_chat/chat_engine_mode.dart';
+import 'package:d1vai_app/widgets/chat/project_chat/project_chat_top_bar.dart';
 
 class _OutboxAborted implements Exception {
   const _OutboxAborted();
@@ -40,7 +43,7 @@ enum _ChatAppBarAction {
   openPayment,
   openDeployHistory,
   openAnalytics,
-  workspaceStatus,
+  redeployPreview,
   refresh,
   clearChat,
 }
@@ -118,6 +121,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   List<ModelInfo> _availableModels = <ModelInfo>[];
   String _selectedModelId = '';
+  ChatEngineMode _selectedEngineMode = ChatEngineMode.thinkHard;
   bool _isLoadingModels = false;
   bool _isSwitchingModel = false;
   bool _hasLoadedModelConfig = false;
@@ -404,8 +408,29 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _initialize() async {
+    await _loadEngineModePreference();
     await _refreshHistory(attemptReconnect: true);
     await _maybeRunAutoprompt();
+  }
+
+  String get _selectedEngine =>
+      _selectedEngineMode == ChatEngineMode.fast ? 'claude' : 'codex';
+
+  Future<void> _loadEngineModePreference() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = (prefs.getString(chatEngineModeCacheKey) ?? '').trim();
+      final next = raw == 'claude'
+          ? ChatEngineMode.fast
+          : ChatEngineMode.thinkHard;
+      if (!mounted) {
+        _selectedEngineMode = next;
+        return;
+      }
+      setState(() {
+        _selectedEngineMode = next;
+      });
+    } catch (_) {}
   }
 
   Future<void> _syncMiniPreviewUrl({bool bumpVersion = false}) async {
@@ -766,6 +791,62 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  Future<void> _handleEngineChanged(ChatEngineMode nextMode) async {
+    if (nextMode == _selectedEngineMode || _isSwitchingModel) return;
+    if (!mounted) return;
+
+    final loc = AppLocalizations.of(context);
+    setState(() {
+      _selectedEngineMode = nextMode;
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        chatEngineModeCacheKey,
+        nextMode == ChatEngineMode.fast ? 'claude' : 'codex',
+      );
+      await _resetExecuteSessionForModelSwitch();
+      if (!mounted) return;
+      final modeLabel = nextMode == ChatEngineMode.fast
+          ? (loc?.translate('project_chat_engine_fast') ?? 'Fast')
+          : (loc?.translate('project_chat_engine_think_hard') ?? 'Think Hard');
+      final template =
+          loc?.translate('project_chat_engine_switch_success') ??
+          'Switched to {mode}';
+      SnackBarHelper.showSuccess(
+        context,
+        title: loc?.translate('project_chat_engine_title') ?? 'Engine',
+        message: template.replaceAll('{mode}', modeLabel),
+        position: SnackBarPosition.top,
+        duration: const Duration(seconds: 2),
+      );
+    } catch (_) {}
+  }
+
+  Future<void> _redeployPreviewFromChatScreen() async {
+    try {
+      final res = await _d1vaiService.deployProjectPreview(widget.projectId);
+      final nextUrl = (preferredPreviewUrlFromPayload(res) ?? '').trim();
+      if (!mounted) return;
+      SnackBarHelper.showSuccess(
+        context,
+        title: 'Redeploy started',
+        message: nextUrl.isNotEmpty ? nextUrl : 'Preview deploy started',
+        position: SnackBarPosition.top,
+      );
+      _refreshMiniPreview(fetchLatestUrl: true);
+    } catch (e) {
+      if (!mounted) return;
+      SnackBarHelper.showError(
+        context,
+        title: 'Redeploy failed',
+        message: humanizeError(e),
+        position: SnackBarPosition.top,
+      );
+    }
+  }
+
   Future<void> _resetExecuteSessionForModelSwitch() async {
     await _closeWebSocket(manual: true);
     if (!mounted) {
@@ -781,12 +862,6 @@ class _ChatScreenState extends State<ChatScreen> {
       _sessionError = false;
       _autoConnectDisabled = false;
     });
-  }
-
-  String _selectedModelLabel() {
-    final id = _selectedModelId.trim();
-    if (id.isEmpty) return 'Model';
-    return _modelLabelFor(id);
   }
 
   String _modelLabelFor(String modelId) {
@@ -1634,25 +1709,6 @@ class _ChatScreenState extends State<ChatScreen> {
         : 'Ready';
   }
 
-  String _workspaceStatusLabel() {
-    switch (_workspacePhase) {
-      case WorkspacePhase.ready:
-        return 'Ready';
-      case WorkspacePhase.starting:
-        return 'Starting';
-      case WorkspacePhase.syncing:
-        return 'Syncing';
-      case WorkspacePhase.standby:
-        return 'Standby';
-      case WorkspacePhase.archived:
-        return 'Archived';
-      case WorkspacePhase.error:
-        return 'Error';
-      case WorkspacePhase.unknown:
-        return 'Unknown';
-    }
-  }
-
   /// Send a message
   Future<void> _sendMessage(String text, {bool forceNewSession = false}) async {
     final prompt = text.trim();
@@ -1708,6 +1764,7 @@ class _ChatScreenState extends State<ChatScreen> {
         sessionType: isNew ? 'new' : 'continue',
         sessionId: isNew ? null : _currentSessionId,
         model: _selectedModelId.trim().isEmpty ? null : _selectedModelId.trim(),
+        engine: _selectedEngine,
         optimisticMessage: prompt,
       );
 
@@ -1764,6 +1821,7 @@ class _ChatScreenState extends State<ChatScreen> {
         prompt: prompt,
         sessionType: 'new',
         model: _selectedModelId.trim().isEmpty ? null : _selectedModelId.trim(),
+        engine: _selectedEngine,
         optimisticMessage: prompt,
       );
       if (!mounted) return;
@@ -1848,8 +1906,8 @@ class _ChatScreenState extends State<ChatScreen> {
       case _ChatAppBarAction.openAnalytics:
         context.push('/projects/${widget.projectId}?tab=analytics');
         break;
-      case _ChatAppBarAction.workspaceStatus:
-        unawaited(_refreshWorkspaceStatus(bypassCache: true));
+      case _ChatAppBarAction.redeployPreview:
+        unawaited(_redeployPreviewFromChatScreen());
         break;
       case _ChatAppBarAction.refresh:
         unawaited(_refreshHistory(attemptReconnect: true));
@@ -1866,45 +1924,8 @@ class _ChatScreenState extends State<ChatScreen> {
     final theme = Theme.of(context);
     final heroTag = 'project-chat-messages-${widget.projectId}';
 
-    Color dotColor;
-    switch (_workspacePhase) {
-      case WorkspacePhase.ready:
-        dotColor = Colors.green;
-        break;
-      case WorkspacePhase.starting:
-        dotColor = Colors.amber;
-        break;
-      case WorkspacePhase.syncing:
-        dotColor = Colors.purple;
-        break;
-      case WorkspacePhase.standby:
-      case WorkspacePhase.archived:
-        dotColor = Colors.grey;
-        break;
-      case WorkspacePhase.error:
-        dotColor = Colors.red;
-        break;
-      case WorkspacePhase.unknown:
-        dotColor = Colors.grey;
-        break;
-    }
-
-    final wsLabelParts = <String>[];
-    final raw = _workspaceState?.status;
-    if (raw != null && raw.trim().isNotEmpty) {
-      wsLabelParts.add('status=$raw');
-    }
-    final ip = _workspaceState?.ip;
-    final port = _workspaceState?.port;
-    if (ip != null && port != null) {
-      wsLabelParts.add('$ip:$port');
-    }
-    if (_workspaceError != null && _workspaceError!.trim().isNotEmpty) {
-      wsLabelParts.add(_workspaceError!);
-    }
-    final wsTooltip = wsLabelParts.isEmpty
-        ? 'Workspace'
-        : wsLabelParts.join(' · ');
+    final fastHint = 'Fast mode uses Claude engine';
+    final thinkHardHint = 'Think Hard mode uses Codex engine';
 
     return Scaffold(
       appBar: AppBar(
@@ -1943,22 +1964,13 @@ class _ChatScreenState extends State<ChatScreen> {
           Padding(
             padding: const EdgeInsets.only(right: 4),
             child: Center(
-              child: CompactSelector(
-                options: _availableModels
-                    .map(
-                      (m) => CompactSelectorOption(value: m.id, label: m.name),
-                    )
-                    .toList(),
-                value: _selectedModelId.trim().isEmpty
-                    ? null
-                    : _selectedModelId.trim(),
-                displayLabel: _selectedModelLabel(),
-                placeholder: 'Model',
-                tooltip: 'Select model',
-                leadingIcon: Icons.auto_awesome_rounded,
-                minWidth: 108,
-                maxWidth: 142,
+              child: ProjectChatModelSelector(
+                models: _availableModels,
+                selectedModelId: _selectedModelId,
                 isLoading: _isLoadingModels || _isSwitchingModel,
+                minWidth: 104,
+                maxWidth: 132,
+                width: 132,
                 onChanged:
                     (_isLoadingModels ||
                         _isSwitchingModel ||
@@ -1968,8 +1980,21 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: Center(
+              child: ProjectChatEngineModeSegment(
+                value: _selectedEngineMode,
+                fastTooltip: fastHint,
+                thinkHardTooltip: thinkHardHint,
+                onChanged: (_isLoadingModels || _isSwitchingModel)
+                    ? null
+                    : (value) => unawaited(_handleEngineChanged(value)),
+              ),
+            ),
+          ),
           PopupMenuButton<_ChatAppBarAction>(
-            tooltip: wsTooltip,
+            tooltip: 'More',
             icon: const Icon(Icons.more_vert),
             onSelected: _handleAppBarAction,
             itemBuilder: (context) => [
@@ -2035,21 +2060,12 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
               const PopupMenuDivider(),
               PopupMenuItem<_ChatAppBarAction>(
-                value: _ChatAppBarAction.workspaceStatus,
+                value: _ChatAppBarAction.redeployPreview,
                 child: Row(
                   children: [
-                    Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: dotColor,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
+                    Icon(Icons.rocket_launch_outlined, size: 18),
                     const SizedBox(width: 10),
-                    Expanded(
-                      child: Text('Workspace: ${_workspaceStatusLabel()}'),
-                    ),
+                    Expanded(child: Text('Redeploy Preview')),
                   ],
                 ),
               ),

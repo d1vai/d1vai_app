@@ -1,26 +1,14 @@
 import 'package:flutter/material.dart';
 
-import '../../../l10n/app_localizations.dart';
 import '../../../models/model_config.dart';
 import '../../compact_selector.dart';
 import 'chat_engine_mode.dart';
-import 'status_dot.dart';
 
 class ProjectChatTopBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTabSelected;
   final VoidCallback onRefreshPreview;
   final VoidCallback onOpenInNewTab;
-  final Color? workspaceDotColor;
-  final String? workspaceTooltip;
-  final VoidCallback? onWorkspacePressed;
-  final List<ModelInfo> models;
-  final String selectedModelId;
-  final ChatEngineMode selectedEngineMode;
-  final ValueChanged<String>? onModelChanged;
-  final ValueChanged<ChatEngineMode>? onEngineChanged;
-  final bool isModelLoading;
-  final bool isModelSwitching;
 
   const ProjectChatTopBar({
     super.key,
@@ -28,28 +16,11 @@ class ProjectChatTopBar extends StatelessWidget {
     required this.onTabSelected,
     required this.onRefreshPreview,
     required this.onOpenInNewTab,
-    this.workspaceDotColor,
-    this.workspaceTooltip,
-    this.onWorkspacePressed,
-    this.models = const <ModelInfo>[],
-    this.selectedModelId = '',
-    this.selectedEngineMode = ChatEngineMode.thinkHard,
-    this.onModelChanged,
-    this.onEngineChanged,
-    this.isModelLoading = false,
-    this.isModelSwitching = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final loc = AppLocalizations.of(context);
-    final fastHint =
-        loc?.translate('project_chat_engine_fast_hint') ??
-        'Fast mode uses Claude engine';
-    final thinkHardHint =
-        loc?.translate('project_chat_engine_think_hard_hint') ??
-        'Think Hard mode uses Codex engine';
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
@@ -84,53 +55,6 @@ class ProjectChatTopBar extends StatelessWidget {
           ),
           Row(
             children: [
-              SizedBox(
-                width: 156,
-                child: CompactSelector(
-                  options: models
-                      .map(
-                        (m) =>
-                            CompactSelectorOption(value: m.id, label: m.name),
-                      )
-                      .toList(),
-                  value: selectedModelId.trim().isEmpty
-                      ? null
-                      : selectedModelId.trim(),
-                  placeholder: 'Model',
-                  tooltip: 'Select model',
-                  leadingIcon: Icons.auto_awesome_rounded,
-                  minWidth: 120,
-                  maxWidth: 156,
-                  isLoading: isModelLoading || isModelSwitching,
-                  onChanged:
-                      (isModelLoading ||
-                          isModelSwitching ||
-                          onModelChanged == null ||
-                          models.isEmpty)
-                      ? null
-                      : (v) => onModelChanged!(v),
-                ),
-              ),
-              const SizedBox(width: 8),
-              _EngineModeSegment(
-                value: selectedEngineMode,
-                fastTooltip: fastHint,
-                thinkHardTooltip: thinkHardHint,
-                onChanged:
-                    (isModelLoading || isModelSwitching || onEngineChanged == null)
-                    ? null
-                    : onEngineChanged,
-              ),
-              const SizedBox(width: 8),
-              if (workspaceDotColor != null)
-                _ActionIconButton(
-                  iconWidget: ProjectChatStatusDot(
-                    color: workspaceDotColor!,
-                    tooltip: workspaceTooltip ?? 'Workspace',
-                  ),
-                  onPressed: onWorkspacePressed ?? () {},
-                ),
-              if (workspaceDotColor != null) const SizedBox(width: 8),
               _ActionIconButton(
                 icon: Icons.restart_alt,
                 onPressed: onRefreshPreview,
@@ -148,13 +72,99 @@ class ProjectChatTopBar extends StatelessWidget {
   }
 }
 
-class _EngineModeSegment extends StatelessWidget {
+class ProjectChatModelSelector extends StatelessWidget {
+  final List<ModelInfo> models;
+  final String selectedModelId;
+  final ValueChanged<String>? onChanged;
+  final bool isLoading;
+  final double minWidth;
+  final double maxWidth;
+  final double? width;
+  final String placeholder;
+  final String tooltip;
+
+  const ProjectChatModelSelector({
+    super.key,
+    this.models = const <ModelInfo>[],
+    this.selectedModelId = '',
+    this.onChanged,
+    this.isLoading = false,
+    this.minWidth = 120,
+    this.maxWidth = 156,
+    this.width,
+    this.placeholder = 'Model',
+    this.tooltip = 'Select model',
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final cs = theme.colorScheme;
+
+    return SizedBox(
+      width: width ?? maxWidth,
+      child: CompactSelector(
+        options: models
+            .map((m) => CompactSelectorOption(value: m.id, label: m.name))
+            .toList(),
+        value: selectedModelId.trim().isEmpty ? null : selectedModelId.trim(),
+        placeholder: placeholder,
+        tooltip: tooltip,
+        leadingIcon: Icons.auto_awesome_rounded,
+        minWidth: minWidth,
+        maxWidth: maxWidth,
+        borderRadius: 13,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        backgroundColor: isDark
+            ? Color.alphaBlend(
+                cs.primary.withValues(alpha: 0.12),
+                cs.surfaceContainerHigh,
+              )
+            : Color.alphaBlend(
+                cs.primary.withValues(alpha: 0.06),
+                Colors.white,
+              ),
+        borderColor: isDark
+            ? cs.primary.withValues(alpha: 0.28)
+            : cs.outlineVariant.withValues(alpha: 0.9),
+        menuBackgroundColor: isDark
+            ? Color.alphaBlend(
+                cs.surfaceContainerHighest.withValues(alpha: 0.96),
+                cs.surface,
+              )
+            : Color.alphaBlend(
+                Colors.white.withValues(alpha: 0.96),
+                cs.surface,
+              ),
+        menuBorderColor: isDark
+            ? cs.primary.withValues(alpha: 0.22)
+            : cs.outlineVariant.withValues(alpha: 0.7),
+        menuBorderRadius: 18,
+        menuPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
+        itemHeight: 48,
+        textColor: isDark ? cs.onSurface : cs.onSurface.withValues(alpha: 0.92),
+        iconColor: isDark
+            ? cs.primary.withValues(alpha: 0.9)
+            : cs.onSurfaceVariant,
+        trailingIcon: Icons.expand_more_rounded,
+        isLoading: isLoading,
+        onChanged: (isLoading || onChanged == null || models.isEmpty)
+            ? null
+            : (v) => onChanged!(v),
+      ),
+    );
+  }
+}
+
+class ProjectChatEngineModeSegment extends StatelessWidget {
   final ChatEngineMode value;
   final String fastTooltip;
   final String thinkHardTooltip;
   final ValueChanged<ChatEngineMode>? onChanged;
 
-  const _EngineModeSegment({
+  const ProjectChatEngineModeSegment({
+    super.key,
     required this.value,
     required this.fastTooltip,
     required this.thinkHardTooltip,
@@ -228,14 +238,18 @@ class _EngineModeSegment extends StatelessWidget {
                       ],
                     ),
                     child: Icon(
-                      isFast ? Icons.flash_on_rounded : Icons.psychology_rounded,
+                      isFast
+                          ? Icons.flash_on_rounded
+                          : Icons.psychology_rounded,
                       size: 11,
                       color: isFast ? Colors.green.shade900 : Colors.white,
                     ),
                   ),
                   const SizedBox(width: 6),
                   Icon(
-                    isFast ? Icons.psychology_alt_rounded : Icons.flash_on_rounded,
+                    isFast
+                        ? Icons.psychology_alt_rounded
+                        : Icons.flash_on_rounded,
                     size: 14,
                     color: iconColor.withValues(alpha: isFast ? 0.72 : 0.82),
                   ),

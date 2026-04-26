@@ -918,14 +918,16 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     await _resetExecuteSessionForModelSwitch();
 
     if (!mounted) return;
+    final modeLabel = nextMode == ChatEngineMode.fast
+        ? (loc?.translate('project_chat_engine_fast') ?? 'Fast')
+        : (loc?.translate('project_chat_engine_think_hard') ?? 'Think Hard');
+    final template =
+        loc?.translate('project_chat_engine_switch_success') ??
+        'Switched to {mode}';
     SnackBarHelper.showSuccess(
       context,
       title: loc?.translate('project_chat_engine_title') ?? 'Engine',
-      message: nextMode == ChatEngineMode.fast
-          ? (loc?.translate('project_chat_engine_fast_hint') ??
-              'Fast mode uses Claude engine')
-          : (loc?.translate('project_chat_engine_think_hard_hint') ??
-              'Think Hard mode uses Codex engine'),
+      message: template.replaceAll('{mode}', modeLabel),
       position: SnackBarPosition.top,
       duration: const Duration(seconds: 2),
     );

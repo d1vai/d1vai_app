@@ -313,19 +313,8 @@ class _GradientPillIndicatorPainter extends BoxPainter {
 
     final cornerRadius = Radius.circular(2.0);
 
-    // Light Mode: 柔和发光 + 渐变 + 白色高光条
+    // Light Mode: 单层渐变条，避免粉白双色分层感
     if (!isDark) {
-      // 1. 底部柔和发光
-      final glowPaint = Paint()
-        ..color = D1VColors.indicatorStartLight.withValues(alpha: 0.3 * 255)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, glowRadius * 0.5);
-
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(scaledRect, cornerRadius),
-        glowPaint,
-      );
-
-      // 2. 基础渐变
       final gradientPaint = Paint()
         ..shader = gradient.createShader(scaledRect)
         ..style = PaintingStyle.fill;
@@ -333,23 +322,6 @@ class _GradientPillIndicatorPainter extends BoxPainter {
       canvas.drawRRect(
         RRect.fromRectAndRadius(scaledRect, cornerRadius),
         gradientPaint,
-      );
-
-      // 3. 顶部白色高光条 (1px)
-      final highlightRect = Rect.fromLTWH(
-        scaledRect.left,
-        scaledRect.top,
-        scaledRect.width,
-        1.0,
-      );
-
-      final highlightPaint = Paint()
-        ..color = Colors.white.withValues(alpha: 0.6 * 255)
-        ..style = PaintingStyle.fill;
-
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(highlightRect, Radius.circular(1.0)),
-        highlightPaint,
       );
     } else {
       // Dark Mode: 外发光 + 渐变

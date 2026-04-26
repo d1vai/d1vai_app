@@ -242,7 +242,7 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
           ),
         ],
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(3),
+          preferredSize: const Size.fromHeight(13),
           child: _isLoading
               ? Padding(
                   padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),

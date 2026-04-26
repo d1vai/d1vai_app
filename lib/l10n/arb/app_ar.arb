@@ -164,6 +164,7 @@
   "project_chat_engine_fast_hint": "استخدم Claude للحصول على ردود أسرع",
   "project_chat_engine_think_hard": "تفكير عميق",
   "project_chat_engine_think_hard_hint": "استخدم Codex للحصول على استدلال أعمق",
+  "project_chat_engine_switch_success": "تم التبديل إلى {mode}",
   "model_switch_success": "تم التبديل إلى {model}",
   "prompt_activity_title": "نشاط البرومبت",
   "prompt_activity_total": "الإجمالي:",

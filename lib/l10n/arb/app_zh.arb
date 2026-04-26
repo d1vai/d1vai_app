@@ -121,6 +121,7 @@
   "project_chat_engine_fast_hint": "使用 Claude，更快返回结果",
   "project_chat_engine_think_hard": "深度思考",
   "project_chat_engine_think_hard_hint": "使用 Codex，进行更深入的推理",
+  "project_chat_engine_switch_success": "已切换到 {mode}",
   "model_switch_success": "已切换到 {model}",
   "prompt_activity_title": "提示词活跃度",
   "prompt_activity_total": "总计：",

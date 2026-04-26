@@ -164,6 +164,7 @@
   "project_chat_engine_fast_hint": "Usar Claude para respuestas más rápidas",
   "project_chat_engine_think_hard": "Pensar más",
   "project_chat_engine_think_hard_hint": "Usar Codex para un razonamiento más profundo",
+  "project_chat_engine_switch_success": "Cambiado a {mode}",
   "model_switch_success": "Cambiado a {model}",
   "prompt_activity_title": "Actividad de prompts",
   "prompt_activity_total": "Total:",

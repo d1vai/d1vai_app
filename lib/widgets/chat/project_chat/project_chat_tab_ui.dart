@@ -27,43 +27,6 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
     }
   }
 
-  Color _workspaceDotColor() {
-    switch (_workspacePhase) {
-      case WorkspacePhase.ready:
-        return Colors.green;
-      case WorkspacePhase.starting:
-        return Colors.amber;
-      case WorkspacePhase.syncing:
-        return Colors.purple;
-      case WorkspacePhase.standby:
-      case WorkspacePhase.archived:
-        return Colors.grey;
-      case WorkspacePhase.error:
-        return Colors.red;
-      case WorkspacePhase.unknown:
-        return Colors.grey;
-    }
-  }
-
-  String _workspaceTooltip() {
-    final parts = <String>[];
-    final raw = _workspaceState?.status;
-    if (raw != null && raw.trim().isNotEmpty) {
-      parts.add(raw.trim());
-    }
-    final ip = _workspaceState?.ip;
-    final port = _workspaceState?.port;
-    if (ip != null && port != null) {
-      parts.add('$ip:$port');
-    }
-    if (_workspaceError != null && _workspaceError!.trim().isNotEmpty) {
-      parts.add(_workspaceError!);
-    }
-    return raw != null && raw.trim().isNotEmpty
-        ? raw.trim()
-        : (parts.isEmpty ? 'Workspace' : parts.join(' · '));
-  }
-
   String _statusLabel() {
     if (_isDeploying) return 'Deploying';
     if (_outboxItems.isNotEmpty) {
@@ -488,7 +451,6 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
               quickActions: _quickActions(),
               quickActionsTitle: _quickActionsTitle(),
               onSendMessage: _sendChatMessage,
-              onRedeploy: () => unawaited(triggerPreviewRedeploy()),
               onOpenFullScreen: () {
                 GoRouter.of(context).push('/projects/${widget.projectId}/chat');
               },
@@ -499,6 +461,11 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
                   _isSwitchingModel ||
                   _workspacePhase != WorkspacePhase.ready ||
                   !_hasLoadedModelConfig,
+              models: _availableModels,
+              selectedModelId: _selectedModelId,
+              selectedEngineMode: _selectedEngineMode,
+              onModelChanged: (v) => unawaited(_handleModelChanged(v)),
+              onEngineChanged: (v) => unawaited(_handleEngineChanged(v)),
             ),
           );
         },
@@ -607,21 +574,6 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
               },
               onRefreshPreview: _handleRefreshPreview,
               onOpenInNewTab: _handleOpenInNewTab,
-              workspaceDotColor: _workspaceDotColor(),
-              workspaceTooltip: _workspaceTooltip(),
-              onWorkspacePressed: () {
-                unawaited(_refreshWorkspaceStatus(bypassCache: true));
-              },
-              models: _availableModels,
-              selectedModelId: _selectedModelId,
-              selectedEngineMode: _selectedEngineMode,
-              isModelLoading:
-                  _isLoadingModels ||
-                  _workspacePhase != WorkspacePhase.ready ||
-                  !_hasLoadedModelConfig,
-              isModelSwitching: _isSwitchingModel,
-              onModelChanged: (v) => unawaited(_handleModelChanged(v)),
-              onEngineChanged: (v) => unawaited(_handleEngineChanged(v)),
             ),
             Expanded(
               child: IndexedStack(
@@ -671,21 +623,6 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
               },
               onRefreshPreview: _handleRefreshPreview,
               onOpenInNewTab: _handleOpenInNewTab,
-              workspaceDotColor: _workspaceDotColor(),
-              workspaceTooltip: _workspaceTooltip(),
-              onWorkspacePressed: () {
-                unawaited(_refreshWorkspaceStatus(bypassCache: true));
-              },
-              models: _availableModels,
-              selectedModelId: _selectedModelId,
-              selectedEngineMode: _selectedEngineMode,
-              isModelLoading:
-                  _isLoadingModels ||
-                  _workspacePhase != WorkspacePhase.ready ||
-                  !_hasLoadedModelConfig,
-              isModelSwitching: _isSwitchingModel,
-              onModelChanged: (v) => unawaited(_handleModelChanged(v)),
-              onEngineChanged: (v) => unawaited(_handleEngineChanged(v)),
             ),
             Expanded(
               child: IndexedStack(

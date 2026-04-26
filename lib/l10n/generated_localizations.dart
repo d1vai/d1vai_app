@@ -14,7 +14,8 @@ const List<String> kSupportedLocaleKeys = <String>[
   "zh_Hant",
 ];
 
-const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, String>>{
+const Map<String, Map<String, String>>
+kLocalizedValues = <String, Map<String, String>>{
   "ar": <String, String>{
     "about": "حول",
     "about_description": "منصة تطوير تطبيقات تعمل بالذكاء الاصطناعي.",
@@ -22,17 +23,23 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "about_title": "حول",
     "account_data_contact_support_delete": "التواصل مع الدعم لحذف الحساب",
     "account_data_copy_request_template": "نسخ قالب الطلب",
-    "account_data_delete_confirm_message": "سيتم التواصل مع {support_email} لطلب حذف الحساب. قد تكون عملية الحذف غير قابلة للاسترجاع. هل تريد المتابعة؟",
-    "account_data_delete_description": "يتم حذف الحساب حاليا عبر الدعم. يرجى مراجعة القيود القانونية قبل طلب الحذف.",
-    "account_data_delete_template": "الطلب: حذف الحساب\\nالحساب: {email}\\nيرجى حذف حسابي والبيانات المرتبطة به.\\nأفهم أن هذا الإجراء قد يكون غير قابل للاسترجاع.\\nالتواصل: {support_email}",
+    "account_data_delete_confirm_message":
+        "سيتم التواصل مع {support_email} لطلب حذف الحساب. قد تكون عملية الحذف غير قابلة للاسترجاع. هل تريد المتابعة؟",
+    "account_data_delete_description":
+        "يتم حذف الحساب حاليا عبر الدعم. يرجى مراجعة القيود القانونية قبل طلب الحذف.",
+    "account_data_delete_template":
+        "الطلب: حذف الحساب\\nالحساب: {email}\\nيرجى حذف حسابي والبيانات المرتبطة به.\\nأفهم أن هذا الإجراء قد يكون غير قابل للاسترجاع.\\nالتواصل: {support_email}",
     "account_data_delete_title": "حذف الحساب",
-    "account_data_export_description": "يتم تنفيذ التصدير حاليا عبر الدعم. نوفر قالبا يمكنك نسخه وإرساله.",
-    "account_data_export_template": "الطلب: تصدير البيانات\\nالحساب: {email}\\nيرجى تصدير بيانات حسابي (الملف الشخصي، المشاريع، الفوترة).\\nالتواصل: {support_email}",
+    "account_data_export_description":
+        "يتم تنفيذ التصدير حاليا عبر الدعم. نوفر قالبا يمكنك نسخه وإرساله.",
+    "account_data_export_template":
+        "الطلب: تصدير البيانات\\nالحساب: {email}\\nيرجى تصدير بيانات حسابي (الملف الشخصي، المشاريع، الفوترة).\\nالتواصل: {support_email}",
     "account_data_export_title": "تصدير البيانات",
     "account_data_legal": "قانوني",
     "account_data_request_template_copied": "تم نسخ قالب الطلب إلى الحافظة",
     "account_data_subtitle": "تصدير البيانات وحذف الحساب",
-    "account_data_support_dialog_message": "يرجى التواصل مع {support_email} بخصوص هذا الطلب.",
+    "account_data_support_dialog_message":
+        "يرجى التواصل مع {support_email} بخصوص هذا الطلب.",
     "account_data_title": "الحساب والبيانات",
     "activity": "النشاط",
     "agree_terms": "بتسجيل الدخول، فإنك توافق على شروط الخدمة وسياسة الخصوصية",
@@ -42,7 +49,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "be_first_to_share": "كن أول من يشارك شيئاً!",
     "billing_insufficient_action_later": "Later",
     "billing_insufficient_action_topup": "Top up now",
-    "billing_insufficient_description": "Your balance is insufficient for this action. Please top up first.",
+    "billing_insufficient_description":
+        "Your balance is insufficient for this action. Please top up first.",
     "billing_insufficient_title": "Insufficient Balance",
     "bind_email": "ربط البريد الإلكتروني",
     "bind_email_subtitle": "ربط البريد الإلكتروني بحسابك",
@@ -118,7 +126,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "friends_count": "أصدقاء",
     "friends_referred": "الأصدقاء المدعوون",
     "github": "GitHub",
-    "github_connect_description": "قم بتوصيل حساب GitHub الخاص بك لاستيراد المستودعات",
+    "github_connect_description":
+        "قم بتوصيل حساب GitHub الخاص بك لاستيراد المستودعات",
     "github_integration": "تكامل GitHub",
     "help_support": "المساعدة والدعم",
     "help_support_contact_subtitle": "Email us at {email}",
@@ -126,7 +135,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "help_support_cta_title": "Still need help?",
     "help_support_docs_subtitle": "Technical documentation and API reference",
     "help_support_email_open_error": "Failed to open email: {error}",
-    "help_support_email_open_failed": "Could not open email app. Please email us at {email}",
+    "help_support_email_open_failed":
+        "Could not open email app. Please email us at {email}",
     "help_support_faq_title": "Frequently Asked Questions",
     "help_support_hero_subtitle": "Find answers or contact our support team",
     "help_support_hero_title": "How can we help you?",
@@ -148,10 +158,12 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "input_error_owner_repo": "يرجى إدخال اسم المالك والمستودع",
     "invite_code_copied": "تم نسخ رمز الدعوة إلى الحافظة",
     "invite_code_unavailable": "رمز الدعوة غير متاح",
-    "invite_description": "قم بدعوة الأصدقاء للانضمام إلى d1v.ai واحصل على مكافآت",
+    "invite_description":
+        "قم بدعوة الأصدقاء للانضمام إلى d1v.ai واحصل على مكافآت",
     "invite_friends": "دعوة الأصدقاء",
     "invites": "الدعوات",
-    "invites_empty_message": "You haven't invited any friends yet.\\nShare your invite code to get started!",
+    "invites_empty_message":
+        "You haven't invited any friends yet.\\nShare your invite code to get started!",
     "invites_empty_title": "No Invites Yet",
     "invites_joined_at": "Joined {time}",
     "invites_load_failed_title": "Failed to load invited users",
@@ -172,12 +184,17 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "login_failed": "فشل في تسجيل الدخول",
     "login_first": "يرجى تسجيل الدخول أولاً",
     "login_required_button": "تسجيل الدخول",
-    "login_required_create_post_message": "تحتاج إلى تسجيل الدخول لإنشاء منشور.",
+    "login_required_create_post_message":
+        "تحتاج إلى تسجيل الدخول لإنشاء منشور.",
     "login_required_dashboard_message": "تحتاج إلى تسجيل الدخول لعرض مشاريعك.",
-    "login_required_github_message": "تحتاج إلى تسجيل الدخول لإدارة تكامل GitHub.",
-    "login_required_invites_message": "تحتاج إلى تسجيل الدخول لعرض الدعوات والمكافآت.",
-    "login_required_orders_message": "تحتاج إلى تسجيل الدخول لعرض الطلبات والفوترة.",
-    "login_required_settings_message": "تحتاج إلى تسجيل الدخول لإدارة إعدادات حسابك.",
+    "login_required_github_message":
+        "تحتاج إلى تسجيل الدخول لإدارة تكامل GitHub.",
+    "login_required_invites_message":
+        "تحتاج إلى تسجيل الدخول لعرض الدعوات والمكافآت.",
+    "login_required_orders_message":
+        "تحتاج إلى تسجيل الدخول لعرض الطلبات والفوترة.",
+    "login_required_settings_message":
+        "تحتاج إلى تسجيل الدخول لإدارة إعدادات حسابك.",
     "login_required_title": "تسجيل الدخول مطلوب",
     "login_success": "تم تسجيل الدخول بنجاح",
     "login_with_code": "تسجيل الدخول بالرمز",
@@ -202,7 +219,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "orders_usage_builder_billing_rule": "Billing rule: {rate}/min",
     "orders_usage_builder_empty": "No deployment records yet.",
     "orders_usage_builder_estimated_cost": "Estimated Cost",
-    "orders_usage_builder_estimated_cost_hint": "Estimated from deployment build durations",
+    "orders_usage_builder_estimated_cost_hint":
+        "Estimated from deployment build durations",
     "orders_usage_builder_load_failed": "Unable to load builder usage data.",
     "orders_usage_builder_overall": "Overall Build Time",
     "orders_usage_builder_projects_title": "Top Projects",
@@ -224,7 +242,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "orders_usage_llm_total_cost_hint": "Estimated cost",
     "orders_usage_na": "N/A",
     "orders_usage_project_breakdown_empty": "No usage data available",
-    "orders_usage_project_breakdown_empty_hint": "Your LLM usage will appear here",
+    "orders_usage_project_breakdown_empty_hint":
+        "Your LLM usage will appear here",
     "orders_usage_project_breakdown_title": "Project Breakdown",
     "orders_usage_project_deleted": "Deleted",
     "orders_usage_time_range": "Time Range",
@@ -232,9 +251,11 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "orders_wallet_usage_bucket_expiring": "Expiring",
     "orders_wallet_usage_bucket_non_expiring": "Non-expiring",
     "orders_wallet_usage_empty": "No usage records yet.",
-    "orders_wallet_usage_empty_hint": "Consumption records from deployments and model usage will appear here.",
+    "orders_wallet_usage_empty_hint":
+        "Consumption records from deployments and model usage will appear here.",
     "orders_wallet_usage_source_admin_broadcast": "admin broadcast",
-    "orders_wallet_usage_source_system_message": "System message: {description}",
+    "orders_wallet_usage_source_system_message":
+        "System message: {description}",
     "other": "أخرى",
     "owner_hint": "اسم المستخدم أو المنظمة",
     "owner_label": "المالك",
@@ -254,12 +275,18 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_actions": "Actions",
     "project_analytics_active_now": "Active Now",
     "project_analytics_active_visitors": "Active Visitors",
-    "project_analytics_ai_prompt_active_now": "Can you help me interpret my real-time active users and recommend actions to improve conversion?",
-    "project_analytics_ai_prompt_custom_events": "Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?",
-    "project_analytics_ai_prompt_dashboard": "Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?",
-    "project_analytics_ai_prompt_pageviews": "Can you analyze my pageviews trend and suggest ways to increase traffic and retention?",
-    "project_analytics_ai_prompt_sessions": "Can you analyze my sessions and suggest how to increase engagement and session duration?",
-    "project_analytics_ai_prompt_visitors": "Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?",
+    "project_analytics_ai_prompt_active_now":
+        "Can you help me interpret my real-time active users and recommend actions to improve conversion?",
+    "project_analytics_ai_prompt_custom_events":
+        "Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?",
+    "project_analytics_ai_prompt_dashboard":
+        "Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?",
+    "project_analytics_ai_prompt_pageviews":
+        "Can you analyze my pageviews trend and suggest ways to increase traffic and retention?",
+    "project_analytics_ai_prompt_sessions":
+        "Can you analyze my sessions and suggest how to increase engagement and session duration?",
+    "project_analytics_ai_prompt_visitors":
+        "Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?",
     "project_analytics_all": "All",
     "project_analytics_bounces": "Bounces",
     "project_analytics_comparison_notes": "Comparison Notes",
@@ -267,7 +294,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_copy_failed": "Copy failed",
     "project_analytics_copy_field": "Copy {title}",
     "project_analytics_copy_summary": "Copy Summary",
-    "project_analytics_copy_summary_hint": "Copy a shareable analytics snapshot",
+    "project_analytics_copy_summary_hint":
+        "Copy a shareable analytics snapshot",
     "project_analytics_copy_tracking_code": "Copy Tracking Code",
     "project_analytics_copy_tracking_code_hint": "Copy Umami script snippet",
     "project_analytics_current_window": "Current window: {range}",
@@ -287,9 +315,11 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_dim_screen": "Screen",
     "project_analytics_dim_tag": "Tag",
     "project_analytics_enable_action": "Enable Analytics",
-    "project_analytics_enable_hint": "Track your website's visitors, page views, and custom events with Umami Analytics",
+    "project_analytics_enable_hint":
+        "Track your website's visitors, page views, and custom events with Umami Analytics",
     "project_analytics_enable_title": "Enable Analytics",
-    "project_analytics_env_filter_note": "Note: environment filter uses hostname exact matching.",
+    "project_analytics_env_filter_note":
+        "Note: environment filter uses hostname exact matching.",
     "project_analytics_environment": "Environment",
     "project_analytics_events": "Events",
     "project_analytics_events_trend": "Events Trend",
@@ -302,14 +332,20 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_filters": "Filters",
     "project_analytics_inactive_tab": "{title} tab",
     "project_analytics_initializing": "Initializing...",
-    "project_analytics_install_done_autojump": "Installation completed. Auto-opening Data in {seconds}s.",
-    "project_analytics_install_done_open": "Installation completed. You can open the analytics tabs now.",
-    "project_analytics_install_incomplete": "Analytics install did not complete successfully.",
-    "project_analytics_install_success": "Analytics successfully installed and activated.",
+    "project_analytics_install_done_autojump":
+        "Installation completed. Auto-opening Data in {seconds}s.",
+    "project_analytics_install_done_open":
+        "Installation completed. You can open the analytics tabs now.",
+    "project_analytics_install_incomplete":
+        "Analytics install did not complete successfully.",
+    "project_analytics_install_success":
+        "Analytics successfully installed and activated.",
     "project_analytics_installer": "Analytics Installer",
-    "project_analytics_installer_hint": "Review the session output or retry the install.",
+    "project_analytics_installer_hint":
+        "Review the session output or retry the install.",
     "project_analytics_installing": "Installing Analytics…",
-    "project_analytics_installing_hint": "We are initializing Umami and inserting the tracking script via a chat session.",
+    "project_analytics_installing_hint":
+        "We are initializing Umami and inserting the tracking script via a chat session.",
     "project_analytics_last_24_hours": "Last 24 Hours",
     "project_analytics_last_30_days": "Last 30 Days",
     "project_analytics_last_6_hours": "Last 6 Hours",
@@ -320,10 +356,12 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_metrics": "Metrics",
     "project_analytics_no_compare_data": "No top-page comparison data",
     "project_analytics_no_data": "No analytics data yet",
-    "project_analytics_no_data_hint": "Analytics data will appear once your project is live and receiving traffic.",
+    "project_analytics_no_data_hint":
+        "Analytics data will appear once your project is live and receiving traffic.",
     "project_analytics_no_data_short": "No data",
     "project_analytics_no_events": "No events in current range",
-    "project_analytics_no_metrics_selected": "No metrics selected. Enable Pageviews/Sessions in Filters.",
+    "project_analytics_no_metrics_selected":
+        "No metrics selected. Enable Pageviews/Sessions in Filters.",
     "project_analytics_no_realtime_urls": "No realtime URL data yet",
     "project_analytics_no_sessions": "No sessions in current range",
     "project_analytics_pageviews": "Pageviews",
@@ -337,11 +375,13 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_ready": "Analytics Ready",
     "project_analytics_recent_events": "Recent Events",
     "project_analytics_reenable": "Re-enable Analytics",
-    "project_analytics_reenable_confirm": "This will re-run analytics setup and re-insert the tracking script via workspace session. Continue?",
+    "project_analytics_reenable_confirm":
+        "This will re-run analytics setup and re-insert the tracking script via workspace session. Continue?",
     "project_analytics_reenable_hint": "Re-run script installation flow",
     "project_analytics_reenable_started": "Re-enable process started.",
     "project_analytics_reports": "Reports",
-    "project_analytics_reports_coming": "Custom reports are coming soon. This keeps parity with the current web placeholder state.",
+    "project_analytics_reports_coming":
+        "Custom reports are coming soon. This keeps parity with the current web placeholder state.",
     "project_analytics_reset": "Reset",
     "project_analytics_restore_defaults": "Restore defaults",
     "project_analytics_retry_install": "Retry Install",
@@ -412,7 +452,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_api_deleted": "Deleted",
     "project_api_description_optional": "Description (optional)",
     "project_api_edit_variable": "Edit variable",
-    "project_api_empty_hint": "Create your first key-value pair to configure\\nruntime behavior for this project.",
+    "project_api_empty_hint":
+        "Create your first key-value pair to configure\\nruntime behavior for this project.",
     "project_api_empty_title": "No environment variables",
     "project_api_environment_variables": "Environment Variables",
     "project_api_key": "Key",
@@ -424,7 +465,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_api_sensitive_masked": "Masked in lists by default",
     "project_api_sensitive_visible": "Visible in lists",
     "project_api_show": "Show",
-    "project_api_show_values_message": "This will reveal sensitive environment values on screen.",
+    "project_api_show_values_message":
+        "This will reveal sensitive environment values on screen.",
     "project_api_show_values_title": "Show values?",
     "project_api_update_failed": "Update failed",
     "project_api_value": "Value",
@@ -435,32 +477,41 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_api_variable_updated": "Environment variable updated",
     "project_chat_engine_fast": "سريع",
     "project_chat_engine_fast_hint": "استخدم Claude للحصول على ردود أسرع",
+    "project_chat_engine_switch_success": "تم التبديل إلى {mode}",
     "project_chat_engine_think_hard": "تفكير عميق",
-    "project_chat_engine_think_hard_hint": "استخدم Codex للحصول على استدلال أعمق",
+    "project_chat_engine_think_hard_hint":
+        "استخدم Codex للحصول على استدلال أعمق",
     "project_chat_engine_title": "الوضع",
     "project_database_actions": "Actions",
-    "project_database_ai_prompt_graph": "Given the database schema, explain how \"{table}\" relates to other tables (foreign keys) and suggest improvements.",
-    "project_database_ai_prompt_relation": "Explain the relationship from {from} to {to}. Suggest indexes and common queries.",
-    "project_database_ai_prompt_table": "Can you analyze the database table \"{table}\" and explain its purpose, structure, and any suggestions for optimization or best practices?",
+    "project_database_ai_prompt_graph":
+        "Given the database schema, explain how \"{table}\" relates to other tables (foreign keys) and suggest improvements.",
+    "project_database_ai_prompt_relation":
+        "Explain the relationship from {from} to {to}. Suggest indexes and common queries.",
+    "project_database_ai_prompt_table":
+        "Can you analyze the database table \"{table}\" and explain its purpose, structure, and any suggestions for optimization or best practices?",
     "project_database_ask_ai_table": "Ask AI about this table",
     "project_database_branch": "Branch",
     "project_database_branch_hint": "Current Neon branch context",
     "project_database_branch_primary": "{name} (primary)",
     "project_database_column_pk": "{name} (PK)",
     "project_database_columns_schema": "{columns} columns • {schema} schema",
-    "project_database_data_empty_hint": "Create tables first, then browse rows here.",
+    "project_database_data_empty_hint":
+        "Create tables first, then browse rows here.",
     "project_database_delete_row": "Delete row",
-    "project_database_delete_row_confirm": "Delete this row from {table}? This action cannot be undone.",
+    "project_database_delete_row_confirm":
+        "Delete this row from {table}? This action cannot be undone.",
     "project_database_edit_row": "Edit row",
     "project_database_enable_action": "Enable Database",
-    "project_database_enable_hint": "Provision a Neon PostgreSQL database for this project and start exploring your schema and data.",
+    "project_database_enable_hint":
+        "Provision a Neon PostgreSQL database for this project and start exploring your schema and data.",
     "project_database_enable_title": "Enable Database",
     "project_database_enabled_success": "Database enabled successfully!",
     "project_database_enabling": "Enabling...",
     "project_database_feature_branching": "Branching support",
     "project_database_feature_serverless": "Serverless Postgres on Neon",
     "project_database_feature_ssl": "Secure SSL connections",
-    "project_database_graph_hint": "Add more tables to see relationships as a graph.",
+    "project_database_graph_hint":
+        "Add more tables to see relationships as a graph.",
     "project_database_insert": "Insert",
     "project_database_insert_row": "Insert row",
     "project_database_inserting": "Inserting...",
@@ -470,17 +521,22 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_database_migration_plans": "{count} plans",
     "project_database_next": "Next",
     "project_database_no_columns": "No visible columns",
-    "project_database_no_columns_hint": "This table currently has no browsable columns.",
+    "project_database_no_columns_hint":
+        "This table currently has no browsable columns.",
     "project_database_no_editable_columns": "No editable columns",
-    "project_database_no_editable_columns_hint": "This table has no editable non-primary-key columns.",
+    "project_database_no_editable_columns_hint":
+        "This table has no editable non-primary-key columns.",
     "project_database_no_job_details": "No job details available yet.",
     "project_database_no_migration": "No migration history",
-    "project_database_no_migration_hint": "Migration plans and execution records will appear here.",
+    "project_database_no_migration_hint":
+        "Migration plans and execution records will appear here.",
     "project_database_no_relations": "No foreign-key relationships found.",
     "project_database_no_rows": "No rows found",
-    "project_database_no_rows_hint": "Try another table or insert data from your application flow.",
+    "project_database_no_rows_hint":
+        "Try another table or insert data from your application flow.",
     "project_database_no_tables": "No database tables",
-    "project_database_no_tables_hint": "Database tables will appear here once they are created.",
+    "project_database_no_tables_hint":
+        "Database tables will appear here once they are created.",
     "project_database_page": "Page {index}",
     "project_database_page_size": "{size} / page",
     "project_database_previous": "Previous",
@@ -507,27 +563,40 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_actions": "Actions",
     "project_deploy_active_preview": "Preview deployment in progress...",
     "project_deploy_active_prod": "Production release in progress: {phase}",
-    "project_deploy_active_reverting": "Rolling back commit{suffix} and triggering preview deploy...",
-    "project_deploy_ai_prompt_environment": "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_active_reverting":
+        "Rolling back commit{suffix} and triggering preview deploy...",
+    "project_deploy_ai_prompt_environment":
+        "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
     "project_deploy_ai_prompt_prefix": "My deploy failed with this error:",
-    "project_deploy_ai_prompt_preview": "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_prod": "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_suffix": "Give me the most likely root cause and a step-by-step fix.",
-    "project_deploy_ai_prompt_vercel_middle": "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
-    "project_deploy_ai_prompt_vercel_prefix": "My Vercel deployment failed for project",
-    "project_deploy_ai_prompt_vercel_suffix": "Also suggest what logs/env vars to check first.",
+    "project_deploy_ai_prompt_preview":
+        "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_prod":
+        "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_suffix":
+        "Give me the most likely root cause and a step-by-step fix.",
+    "project_deploy_ai_prompt_vercel_middle":
+        "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
+    "project_deploy_ai_prompt_vercel_prefix":
+        "My Vercel deployment failed for project",
+    "project_deploy_ai_prompt_vercel_suffix":
+        "Also suggest what logs/env vars to check first.",
     "project_deploy_ask_ai": "Ask AI",
     "project_deploy_build_log": "Build log",
     "project_deploy_build_logs": "Build logs",
     "project_deploy_close": "Close",
-    "project_deploy_coach_no_preview": "No preview yet. Start with a preview deploy to reduce release risk.",
-    "project_deploy_coach_preview_ready": "Preview is ready. Recommended next step: release to production.",
-    "project_deploy_coach_prod_live": "Production is live. Keep shipping with small preview iterations.",
+    "project_deploy_coach_no_preview":
+        "No preview yet. Start with a preview deploy to reduce release risk.",
+    "project_deploy_coach_preview_ready":
+        "Preview is ready. Recommended next step: release to production.",
+    "project_deploy_coach_prod_live":
+        "Production is live. Keep shipping with small preview iterations.",
     "project_deploy_common_fixes": "Common fixes:",
     "project_deploy_configure_later": "Configure later",
-    "project_deploy_confirm_preview_message": "This will trigger a new preview (dev) deployment on Vercel.",
+    "project_deploy_confirm_preview_message":
+        "This will trigger a new preview (dev) deployment on Vercel.",
     "project_deploy_confirm_preview_title": "Redeploy preview?",
-    "project_deploy_confirm_prod_message": "This will compare dev/main, merge if needed, then trigger a production deployment.",
+    "project_deploy_confirm_prod_message":
+        "This will compare dev/main, merge if needed, then trigger a production deployment.",
     "project_deploy_confirm_prod_title": "Deploy to production?",
     "project_deploy_copy": "Copy",
     "project_deploy_copy_all": "Copy all",
@@ -540,7 +609,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_filter_preview": "Preview",
     "project_deploy_filter_production": "Production",
     "project_deploy_history": "History",
-    "project_deploy_history_empty": "No deployments yet — deploy your project to see history here.",
+    "project_deploy_history_empty":
+        "No deployments yet — deploy your project to see history here.",
     "project_deploy_history_title": "Deployment History",
     "project_deploy_log_cached": "Cached",
     "project_deploy_log_empty": "No logs available for this deployment.",
@@ -558,10 +628,12 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_merge_into_main": "Merge into main",
     "project_deploy_more": "More",
     "project_deploy_next_steps": "Next steps",
-    "project_deploy_no_change_commits": "No change commits between adjacent releases.",
+    "project_deploy_no_change_commits":
+        "No change commits between adjacent releases.",
     "project_deploy_no_history": "No deployment history yet.",
     "project_deploy_no_logs": "No logs",
-    "project_deploy_no_logs_message": "This deployment has no Vercel deployment id.",
+    "project_deploy_no_logs_message":
+        "This deployment has no Vercel deployment id.",
     "project_deploy_no_message": "(no message)",
     "project_deploy_no_production": "No production deployment",
     "project_deploy_no_releases": "No releases detected on main yet.",
@@ -583,12 +655,15 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_releases": "Releases",
     "project_deploy_releases_main": "(main)",
     "project_deploy_retry_last": "Retry last deployment",
-    "project_deploy_retry_preview_message": "This will trigger a new preview (dev) deployment.",
+    "project_deploy_retry_preview_message":
+        "This will trigger a new preview (dev) deployment.",
     "project_deploy_retry_preview_title": "Retry preview deploy?",
-    "project_deploy_retry_prod_message": "This will compare dev/main, merge if needed, then trigger a new production deployment.",
+    "project_deploy_retry_prod_message":
+        "This will compare dev/main, merge if needed, then trigger a new production deployment.",
     "project_deploy_retry_prod_title": "Retry production deploy?",
     "project_deploy_revert_confirm_action": "Confirm revert",
-    "project_deploy_revert_confirm_message": "This will run git revert on commit {sha} and trigger a new preview deployment.",
+    "project_deploy_revert_confirm_message":
+        "This will run git revert on commit {sha} and trigger a new preview deployment.",
     "project_deploy_revert_confirm_title": "Revert this commit?",
     "project_deploy_revert_failed": "Revert failed",
     "project_deploy_revert_no_sha": "No commit SHA found for this deployment.",
@@ -604,19 +679,28 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_time_hours_ago": "{hours}h ago",
     "project_deploy_time_just_now": "just now",
     "project_deploy_time_minutes_ago": "{minutes}m ago",
-    "project_deploy_tip_build_issue": "This looks like a build failure — check compilation errors in logs.",
-    "project_deploy_tip_check_env_vars": "Check environment variables (and sync to Vercel).",
-    "project_deploy_tip_check_github_access": "Check GitHub collaborator/bot access to the repo.",
-    "project_deploy_tip_env_issue": "This looks like an env var issue — verify required secrets are set.",
-    "project_deploy_tip_open_logs": "Open the latest build logs and copy/share the error snippet.",
-    "project_deploy_tip_permission": "This looks like a permission issue — verify GitHub access and tokens.",
-    "project_deploy_tip_retry_preview_first": "Retry preview deploy first (then production).",
-    "project_deploy_tip_short_env": "Env vars configured (and synced to Vercel)",
+    "project_deploy_tip_build_issue":
+        "This looks like a build failure — check compilation errors in logs.",
+    "project_deploy_tip_check_env_vars":
+        "Check environment variables (and sync to Vercel).",
+    "project_deploy_tip_check_github_access":
+        "Check GitHub collaborator/bot access to the repo.",
+    "project_deploy_tip_env_issue":
+        "This looks like an env var issue — verify required secrets are set.",
+    "project_deploy_tip_open_logs":
+        "Open the latest build logs and copy/share the error snippet.",
+    "project_deploy_tip_permission":
+        "This looks like a permission issue — verify GitHub access and tokens.",
+    "project_deploy_tip_retry_preview_first":
+        "Retry preview deploy first (then production).",
+    "project_deploy_tip_short_env":
+        "Env vars configured (and synced to Vercel)",
     "project_deploy_tip_short_github": "GitHub access / repo permissions",
     "project_deploy_tip_short_logs": "Open build logs and share error snippet",
     "project_deploy_tip_short_retry_preview": "Retry preview deploy first",
     "project_deploy_troubleshooting": "Troubleshooting",
-    "project_deploy_troubleshooting_hint": "If deploy fails, try these quick checks:",
+    "project_deploy_troubleshooting_hint":
+        "If deploy fails, try these quick checks:",
     "project_deploy_unknown": "unknown",
     "project_detail_error_text": "Error: {error}",
     "project_detail_not_found": "Project not found",
@@ -648,7 +732,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_github_import": "GitHub Import",
     "project_github_import_as_new": "Import as new project",
     "project_github_import_failed": "Import failed: {error}",
-    "project_github_import_missing_project_id": "Import succeeded but missing project id",
+    "project_github_import_missing_project_id":
+        "Import succeeded but missing project id",
     "project_github_imported": "Imported",
     "project_github_imported_description": "Imported from GitHub: {repo}",
     "project_github_invalid_repo_url": "Invalid repository URL",
@@ -674,25 +759,38 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_overview_community_action_unpublish": "Unpublish",
     "project_overview_community_action_update": "Update",
     "project_overview_community_action_view": "View",
-    "project_overview_community_hint": "Publish a community post linked to this project (auto-release to production if needed).",
-    "project_overview_community_progress_deploy": "Triggering production deploy…",
+    "project_overview_community_hint":
+        "Publish a community post linked to this project (auto-release to production if needed).",
+    "project_overview_community_progress_deploy":
+        "Triggering production deploy…",
     "project_overview_community_progress_finalizing": "Finalizing…",
     "project_overview_community_progress_merge": "Merging branches…",
     "project_overview_community_progress_publish": "Publishing to community…",
-    "project_overview_community_publish_dialog_current_domain": "Current domain: {domain}",
-    "project_overview_community_publish_dialog_has_prod": "This project already has a production deployment. Publishing will create or update a community post linked to your project overview.",
-    "project_overview_community_publish_dialog_need_release": "To publish this project to the community, we first need to release it to production. We'll merge your dev branch into main, trigger a production deploy, then publish the post.",
-    "project_overview_community_publish_dialog_step_deploy": "• Trigger production deploy",
-    "project_overview_community_publish_dialog_step_merge": "• Merge dev → main",
-    "project_overview_community_publish_dialog_step_publish": "• Publish to community",
+    "project_overview_community_publish_dialog_current_domain":
+        "Current domain: {domain}",
+    "project_overview_community_publish_dialog_has_prod":
+        "This project already has a production deployment. Publishing will create or update a community post linked to your project overview.",
+    "project_overview_community_publish_dialog_need_release":
+        "To publish this project to the community, we first need to release it to production. We'll merge your dev branch into main, trigger a production deploy, then publish the post.",
+    "project_overview_community_publish_dialog_step_deploy":
+        "• Trigger production deploy",
+    "project_overview_community_publish_dialog_step_merge":
+        "• Merge dev → main",
+    "project_overview_community_publish_dialog_step_publish":
+        "• Publish to community",
     "project_overview_community_publish_dialog_steps": "Steps:",
     "project_overview_community_publish_dialog_title": "Publish to community",
-    "project_overview_community_publish_failed": "Failed to publish to community",
-    "project_overview_community_publish_failed_sentence": "Failed to publish to community.",
+    "project_overview_community_publish_failed":
+        "Failed to publish to community",
+    "project_overview_community_publish_failed_sentence":
+        "Failed to publish to community.",
     "project_overview_community_publish_success": "Published to community",
-    "project_overview_community_release_merge_message": "Merge {head} into {base}",
-    "project_overview_community_release_no_commits": "No commits found on development branch",
-    "project_overview_community_release_publish_failed": "Production deploy succeeded, but failed to publish to community",
+    "project_overview_community_release_merge_message":
+        "Merge {head} into {base}",
+    "project_overview_community_release_no_commits":
+        "No commits found on development branch",
+    "project_overview_community_release_publish_failed":
+        "Production deploy succeeded, but failed to publish to community",
     "project_overview_community_status_draft": "Draft",
     "project_overview_community_status_none": "Not published",
     "project_overview_community_status_published": "Published",
@@ -701,20 +799,25 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_overview_community_unpublish_success": "Unpublished",
     "project_overview_community_update_failed": "Failed to update post",
     "project_overview_community_update_success": "Post updated",
-    "project_overview_danger_delete_confirm_label": "Type project name to confirm",
-    "project_overview_danger_delete_desc": "This action cannot be undone. Please type the project name to confirm deletion.",
+    "project_overview_danger_delete_confirm_label":
+        "Type project name to confirm",
+    "project_overview_danger_delete_desc":
+        "This action cannot be undone. Please type the project name to confirm deletion.",
     "project_overview_danger_delete_failed": "Failed to delete project",
     "project_overview_danger_delete_in_progress": "Deleting {name}...",
     "project_overview_danger_delete_name_mismatch": "Name does not match.",
     "project_overview_danger_delete_progress_cleanup": "Final cleanup...",
-    "project_overview_danger_delete_progress_remove": "Removing project resources...",
-    "project_overview_danger_delete_progress_submit": "Submitting delete request...",
+    "project_overview_danger_delete_progress_remove":
+        "Removing project resources...",
+    "project_overview_danger_delete_progress_submit":
+        "Submitting delete request...",
     "project_overview_danger_delete_success": "Deleted {name}",
     "project_overview_danger_delete_title": "Delete project",
     "project_overview_danger_project_name": "Project: {name}",
     "project_overview_danger_title": "Danger zone",
     "project_overview_danger_transfer_action": "Transfer",
-    "project_overview_danger_transfer_desc": "Enter the recipient email to transfer ownership. You will lose access after transfer.",
+    "project_overview_danger_transfer_desc":
+        "Enter the recipient email to transfer ownership. You will lose access after transfer.",
     "project_overview_danger_transfer_failed": "Failed to transfer project",
     "project_overview_danger_transfer_recipient": "Recipient email",
     "project_overview_danger_transfer_success": "Project transferred",
@@ -736,10 +839,12 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_overview_health_title": "Health metrics",
     "project_overview_links_github_repo": "GitHub Repository",
     "project_overview_links_not_available": "Not available",
-    "project_overview_links_open_github_failed": "Could not open GitHub repository",
+    "project_overview_links_open_github_failed":
+        "Could not open GitHub repository",
     "project_overview_links_open_preview_failed": "Could not open preview URL",
     "project_overview_links_preview_url": "Preview URL",
-    "project_overview_recent_deployments_empty": "No recent deployments — ship a new build to see activity here.",
+    "project_overview_recent_deployments_empty":
+        "No recent deployments — ship a new build to see activity here.",
     "project_overview_recent_deployments_env": "{env} deployment",
     "project_overview_recent_deployments_feed": "Activity feed",
     "project_overview_recent_deployments_title": "Recent deployments",
@@ -760,10 +865,13 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_payment_add_product": "Add Product",
     "project_payment_add_product_failed": "Failed to add product: {error}",
     "project_payment_add_product_title": "Add Payment Product",
-    "project_payment_ai_prompt_product": "Can you analyze the payment product \"{name}\" and provide suggestions on pricing strategy, configuration, or marketing improvements?",
-    "project_payment_ai_prompt_transaction": "Can you analyze this payment transaction ({amount}, {status}) and provide insights about payment patterns or recommendations?",
+    "project_payment_ai_prompt_product":
+        "Can you analyze the payment product \"{name}\" and provide suggestions on pricing strategy, configuration, or marketing improvements?",
+    "project_payment_ai_prompt_transaction":
+        "Can you analyze this payment transaction ({amount}, {status}) and provide insights about payment patterns or recommendations?",
     "project_payment_anonymous": "Anonymous",
-    "project_payment_available_for_purchase": "Product is available for purchase",
+    "project_payment_available_for_purchase":
+        "Product is available for purchase",
     "project_payment_conversion_rate": "Conversion Rate",
     "project_payment_description_hint": "Describe your product",
     "project_payment_description_optional": "Description (Optional)",
@@ -790,7 +898,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_payment_total_revenue": "Total Revenue",
     "project_payment_transactions": "Transactions",
     "project_payment_unknown_product": "Unknown Product",
-    "project_payment_update_product_failed": "Failed to update product: {error}",
+    "project_payment_update_product_failed":
+        "Failed to update product: {error}",
     "projects_action_load_more": "Load More",
     "projects_action_relogin": "Re-login",
     "projects_empty": "No projects found",
@@ -822,7 +931,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "search": "بحث",
     "send_code": "إرسال الرمز",
     "sending": "جاري الإرسال...",
-    "session_expired_message": "انتهت صلاحية تسجيل الدخول. يرجى تسجيل الدخول مرة أخرى.",
+    "session_expired_message":
+        "انتهت صلاحية تسجيل الدخول. يرجى تسجيل الدخول مرة أخرى.",
     "session_expired_title": "انتهت الجلسة",
     "settings": "الإعدادات",
     "share_failed": "Failed to share",
@@ -858,27 +968,36 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "about_title": "About",
     "account_data_contact_support_delete": "Contact support to delete account",
     "account_data_copy_request_template": "Copy request template",
-    "account_data_delete_confirm_message": "This will contact {support_email} to request account deletion. Deletion may be irreversible. Continue?",
-    "account_data_delete_description": "Account deletion is currently handled by support. Please review the legal restrictions before requesting deletion.",
-    "account_data_delete_template": "Request: Account Deletion\\nAccount: {email}\\nPlease delete my account and associated data.\\nI understand this action may be irreversible.\\nContact: {support_email}",
+    "account_data_delete_confirm_message":
+        "This will contact {support_email} to request account deletion. Deletion may be irreversible. Continue?",
+    "account_data_delete_description":
+        "Account deletion is currently handled by support. Please review the legal restrictions before requesting deletion.",
+    "account_data_delete_template":
+        "Request: Account Deletion\\nAccount: {email}\\nPlease delete my account and associated data.\\nI understand this action may be irreversible.\\nContact: {support_email}",
     "account_data_delete_title": "Account Deletion",
-    "account_data_export_description": "Export is currently handled by support. We provide a template you can copy and send.",
-    "account_data_export_template": "Request: Data Export\\nAccount: {email}\\nPlease export my account data (profile, projects, billing).\\nContact: {support_email}",
+    "account_data_export_description":
+        "Export is currently handled by support. We provide a template you can copy and send.",
+    "account_data_export_template":
+        "Request: Data Export\\nAccount: {email}\\nPlease export my account data (profile, projects, billing).\\nContact: {support_email}",
     "account_data_export_title": "Data Export",
     "account_data_legal": "Legal",
-    "account_data_request_template_copied": "Request template copied to clipboard",
+    "account_data_request_template_copied":
+        "Request template copied to clipboard",
     "account_data_subtitle": "Data export and account deletion",
-    "account_data_support_dialog_message": "Please contact {support_email} for this request.",
+    "account_data_support_dialog_message":
+        "Please contact {support_email} for this request.",
     "account_data_title": "Account & Data",
     "activity": "Activity",
-    "agree_terms": "By logging in, you agree to our Terms of Service and Privacy Policy",
+    "agree_terms":
+        "By logging in, you agree to our Terms of Service and Privacy Policy",
     "api_settings": "API",
     "appearance": "Appearance",
     "basic_information": "Basic Information",
     "be_first_to_share": "Be the first to share something!",
     "billing_insufficient_action_later": "Later",
     "billing_insufficient_action_topup": "Top up now",
-    "billing_insufficient_description": "Your balance is insufficient for this action. Please top up first.",
+    "billing_insufficient_description":
+        "Your balance is insufficient for this action. Please top up first.",
     "billing_insufficient_title": "Insufficient Balance",
     "bind_email": "Bind Email",
     "bind_email_subtitle": "Bind email to your account",
@@ -934,15 +1053,18 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "email_bound_success": "Email bound successfully",
     "email_invalid": "Please enter a valid email address",
     "email_required": "Please enter email address",
-    "enter_code_and_new_password": "Enter the verification code and your new password",
+    "enter_code_and_new_password":
+        "Enter the verification code and your new password",
     "enter_code_sent": "Enter the 6-digit verification code sent to your email",
     "enter_email": "Enter your email",
-    "enter_email_for_code": "Enter your email address to receive a verification code",
+    "enter_email_for_code":
+        "Enter your email address to receive a verification code",
     "enter_new_password": "Enter new password",
     "enter_password": "Enter password",
     "enter_verify_code": "Enter verification code",
     "error": "Error",
-    "error_network": "Network error. Please check your connection and try again.",
+    "error_network":
+        "Network error. Please check your connection and try again.",
     "error_request_failed": "Request failed. Please try again later.",
     "error_timeout": "Request timed out. Please try again.",
     "failed_to_load": "Failed to load",
@@ -954,7 +1076,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "friends_count": "friends",
     "friends_referred": "Friends Referred",
     "github": "GitHub",
-    "github_connect_description": "Connect your GitHub account to import repositories",
+    "github_connect_description":
+        "Connect your GitHub account to import repositories",
     "github_integration": "GitHub Integration",
     "help_support": "Help & Support",
     "help_support_contact_subtitle": "Email us at {email}",
@@ -962,7 +1085,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "help_support_cta_title": "Still need help?",
     "help_support_docs_subtitle": "Technical documentation and API reference",
     "help_support_email_open_error": "Failed to open email: {error}",
-    "help_support_email_open_failed": "Could not open email app. Please email us at {email}",
+    "help_support_email_open_failed":
+        "Could not open email app. Please email us at {email}",
     "help_support_faq_title": "Frequently Asked Questions",
     "help_support_hero_subtitle": "Find answers or contact our support team",
     "help_support_hero_title": "How can we help you?",
@@ -973,7 +1097,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "help_support_user_guide_subtitle": "Learn how to use all features",
     "help_support_user_guide_title": "User Guide",
     "import_action": "Import",
-    "import_dialog_description": "Enter the repository information you want to import",
+    "import_dialog_description":
+        "Enter the repository information you want to import",
     "import_dialog_title": "Import Public Repository",
     "import_failed": "Failed to import repository",
     "import_repository": "Import Repository",
@@ -987,7 +1112,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "invite_description": "Invite friends to join d1v.ai and get rewards",
     "invite_friends": "Invite Friends",
     "invites": "Invites",
-    "invites_empty_message": "You haven't invited any friends yet.\\nShare your invite code to get started!",
+    "invites_empty_message":
+        "You haven't invited any friends yet.\\nShare your invite code to get started!",
     "invites_empty_title": "No Invites Yet",
     "invites_joined_at": "Joined {time}",
     "invites_load_failed_title": "Failed to load invited users",
@@ -1008,12 +1134,18 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "login_failed": "Login failed",
     "login_first": "Please login first",
     "login_required_button": "Login",
-    "login_required_create_post_message": "You need to log in to create a post.",
-    "login_required_dashboard_message": "You need to log in to view your projects.",
-    "login_required_github_message": "You need to log in to manage GitHub integration.",
-    "login_required_invites_message": "You need to log in to view invites and rewards.",
-    "login_required_orders_message": "You need to log in to view orders and billing.",
-    "login_required_settings_message": "You need to log in to manage your account settings.",
+    "login_required_create_post_message":
+        "You need to log in to create a post.",
+    "login_required_dashboard_message":
+        "You need to log in to view your projects.",
+    "login_required_github_message":
+        "You need to log in to manage GitHub integration.",
+    "login_required_invites_message":
+        "You need to log in to view invites and rewards.",
+    "login_required_orders_message":
+        "You need to log in to view orders and billing.",
+    "login_required_settings_message":
+        "You need to log in to manage your account settings.",
     "login_required_title": "Login required",
     "login_success": "Login successful",
     "login_with_code": "Login with Code",
@@ -1038,7 +1170,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "orders_usage_builder_billing_rule": "Billing rule: {rate}/min",
     "orders_usage_builder_empty": "No deployment records yet.",
     "orders_usage_builder_estimated_cost": "Estimated Cost",
-    "orders_usage_builder_estimated_cost_hint": "Estimated from deployment build durations",
+    "orders_usage_builder_estimated_cost_hint":
+        "Estimated from deployment build durations",
     "orders_usage_builder_load_failed": "Unable to load builder usage data.",
     "orders_usage_builder_overall": "Overall Build Time",
     "orders_usage_builder_projects_title": "Top Projects",
@@ -1060,7 +1193,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "orders_usage_llm_total_cost_hint": "Estimated cost",
     "orders_usage_na": "N/A",
     "orders_usage_project_breakdown_empty": "No usage data available",
-    "orders_usage_project_breakdown_empty_hint": "Your LLM usage will appear here",
+    "orders_usage_project_breakdown_empty_hint":
+        "Your LLM usage will appear here",
     "orders_usage_project_breakdown_title": "Project Breakdown",
     "orders_usage_project_deleted": "Deleted",
     "orders_usage_time_range": "Time Range",
@@ -1068,9 +1202,11 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "orders_wallet_usage_bucket_expiring": "Expiring",
     "orders_wallet_usage_bucket_non_expiring": "Non-expiring",
     "orders_wallet_usage_empty": "No usage records yet.",
-    "orders_wallet_usage_empty_hint": "Consumption records from deployments and model usage will appear here.",
+    "orders_wallet_usage_empty_hint":
+        "Consumption records from deployments and model usage will appear here.",
     "orders_wallet_usage_source_admin_broadcast": "admin broadcast",
-    "orders_wallet_usage_source_system_message": "System message: {description}",
+    "orders_wallet_usage_source_system_message":
+        "System message: {description}",
     "other": "Other",
     "owner_hint": "username or organization",
     "owner_label": "Owner",
@@ -1090,12 +1226,18 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_actions": "Actions",
     "project_analytics_active_now": "Active Now",
     "project_analytics_active_visitors": "Active Visitors",
-    "project_analytics_ai_prompt_active_now": "Can you help me interpret my real-time active users and recommend actions to improve conversion?",
-    "project_analytics_ai_prompt_custom_events": "Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?",
-    "project_analytics_ai_prompt_dashboard": "Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?",
-    "project_analytics_ai_prompt_pageviews": "Can you analyze my pageviews trend and suggest ways to increase traffic and retention?",
-    "project_analytics_ai_prompt_sessions": "Can you analyze my sessions and suggest how to increase engagement and session duration?",
-    "project_analytics_ai_prompt_visitors": "Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?",
+    "project_analytics_ai_prompt_active_now":
+        "Can you help me interpret my real-time active users and recommend actions to improve conversion?",
+    "project_analytics_ai_prompt_custom_events":
+        "Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?",
+    "project_analytics_ai_prompt_dashboard":
+        "Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?",
+    "project_analytics_ai_prompt_pageviews":
+        "Can you analyze my pageviews trend and suggest ways to increase traffic and retention?",
+    "project_analytics_ai_prompt_sessions":
+        "Can you analyze my sessions and suggest how to increase engagement and session duration?",
+    "project_analytics_ai_prompt_visitors":
+        "Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?",
     "project_analytics_all": "All",
     "project_analytics_bounces": "Bounces",
     "project_analytics_comparison_notes": "Comparison Notes",
@@ -1103,7 +1245,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_copy_failed": "Copy failed",
     "project_analytics_copy_field": "Copy {title}",
     "project_analytics_copy_summary": "Copy Summary",
-    "project_analytics_copy_summary_hint": "Copy a shareable analytics snapshot",
+    "project_analytics_copy_summary_hint":
+        "Copy a shareable analytics snapshot",
     "project_analytics_copy_tracking_code": "Copy Tracking Code",
     "project_analytics_copy_tracking_code_hint": "Copy Umami script snippet",
     "project_analytics_current_window": "Current window: {range}",
@@ -1123,9 +1266,11 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_dim_screen": "Screen",
     "project_analytics_dim_tag": "Tag",
     "project_analytics_enable_action": "Enable Analytics",
-    "project_analytics_enable_hint": "Track your website's visitors, page views, and custom events with Umami Analytics",
+    "project_analytics_enable_hint":
+        "Track your website's visitors, page views, and custom events with Umami Analytics",
     "project_analytics_enable_title": "Enable Analytics",
-    "project_analytics_env_filter_note": "Note: environment filter uses hostname exact matching.",
+    "project_analytics_env_filter_note":
+        "Note: environment filter uses hostname exact matching.",
     "project_analytics_environment": "Environment",
     "project_analytics_events": "Events",
     "project_analytics_events_trend": "Events Trend",
@@ -1138,14 +1283,20 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_filters": "Filters",
     "project_analytics_inactive_tab": "{title} tab",
     "project_analytics_initializing": "Initializing...",
-    "project_analytics_install_done_autojump": "Installation completed. Auto-opening Data in {seconds}s.",
-    "project_analytics_install_done_open": "Installation completed. You can open the analytics tabs now.",
-    "project_analytics_install_incomplete": "Analytics install did not complete successfully.",
-    "project_analytics_install_success": "Analytics successfully installed and activated.",
+    "project_analytics_install_done_autojump":
+        "Installation completed. Auto-opening Data in {seconds}s.",
+    "project_analytics_install_done_open":
+        "Installation completed. You can open the analytics tabs now.",
+    "project_analytics_install_incomplete":
+        "Analytics install did not complete successfully.",
+    "project_analytics_install_success":
+        "Analytics successfully installed and activated.",
     "project_analytics_installer": "Analytics Installer",
-    "project_analytics_installer_hint": "Review the session output or retry the install.",
+    "project_analytics_installer_hint":
+        "Review the session output or retry the install.",
     "project_analytics_installing": "Installing Analytics…",
-    "project_analytics_installing_hint": "We are initializing Umami and inserting the tracking script via a chat session.",
+    "project_analytics_installing_hint":
+        "We are initializing Umami and inserting the tracking script via a chat session.",
     "project_analytics_last_24_hours": "Last 24 Hours",
     "project_analytics_last_30_days": "Last 30 Days",
     "project_analytics_last_6_hours": "Last 6 Hours",
@@ -1156,10 +1307,12 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_metrics": "Metrics",
     "project_analytics_no_compare_data": "No top-page comparison data",
     "project_analytics_no_data": "No analytics data yet",
-    "project_analytics_no_data_hint": "Analytics data will appear once your project is live and receiving traffic.",
+    "project_analytics_no_data_hint":
+        "Analytics data will appear once your project is live and receiving traffic.",
     "project_analytics_no_data_short": "No data",
     "project_analytics_no_events": "No events in current range",
-    "project_analytics_no_metrics_selected": "No metrics selected. Enable Pageviews/Sessions in Filters.",
+    "project_analytics_no_metrics_selected":
+        "No metrics selected. Enable Pageviews/Sessions in Filters.",
     "project_analytics_no_realtime_urls": "No realtime URL data yet",
     "project_analytics_no_sessions": "No sessions in current range",
     "project_analytics_pageviews": "Pageviews",
@@ -1173,11 +1326,13 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_ready": "Analytics Ready",
     "project_analytics_recent_events": "Recent Events",
     "project_analytics_reenable": "Re-enable Analytics",
-    "project_analytics_reenable_confirm": "This will re-run analytics setup and re-insert the tracking script via workspace session. Continue?",
+    "project_analytics_reenable_confirm":
+        "This will re-run analytics setup and re-insert the tracking script via workspace session. Continue?",
     "project_analytics_reenable_hint": "Re-run script installation flow",
     "project_analytics_reenable_started": "Re-enable process started.",
     "project_analytics_reports": "Reports",
-    "project_analytics_reports_coming": "Custom reports are coming soon. This keeps parity with the current web placeholder state.",
+    "project_analytics_reports_coming":
+        "Custom reports are coming soon. This keeps parity with the current web placeholder state.",
     "project_analytics_reset": "Reset",
     "project_analytics_restore_defaults": "Restore defaults",
     "project_analytics_retry_install": "Retry Install",
@@ -1248,7 +1403,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_api_deleted": "Deleted",
     "project_api_description_optional": "Description (optional)",
     "project_api_edit_variable": "Edit variable",
-    "project_api_empty_hint": "Create your first key-value pair to configure\\nruntime behavior for this project.",
+    "project_api_empty_hint":
+        "Create your first key-value pair to configure\\nruntime behavior for this project.",
     "project_api_empty_title": "No environment variables",
     "project_api_environment_variables": "Environment Variables",
     "project_api_key": "Key",
@@ -1260,7 +1416,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_api_sensitive_masked": "Masked in lists by default",
     "project_api_sensitive_visible": "Visible in lists",
     "project_api_show": "Show",
-    "project_api_show_values_message": "This will reveal sensitive environment values on screen.",
+    "project_api_show_values_message":
+        "This will reveal sensitive environment values on screen.",
     "project_api_show_values_title": "Show values?",
     "project_api_update_failed": "Update failed",
     "project_api_value": "Value",
@@ -1271,32 +1428,40 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_api_variable_updated": "Environment variable updated",
     "project_chat_engine_fast": "Fast",
     "project_chat_engine_fast_hint": "Use Claude for quicker responses",
+    "project_chat_engine_switch_success": "Switched to {mode}",
     "project_chat_engine_think_hard": "Think Hard",
     "project_chat_engine_think_hard_hint": "Use Codex for deeper reasoning",
     "project_chat_engine_title": "Mode",
     "project_database_actions": "Actions",
-    "project_database_ai_prompt_graph": "Given the database schema, explain how \"{table}\" relates to other tables (foreign keys) and suggest improvements.",
-    "project_database_ai_prompt_relation": "Explain the relationship from {from} to {to}. Suggest indexes and common queries.",
-    "project_database_ai_prompt_table": "Can you analyze the database table \"{table}\" and explain its purpose, structure, and any suggestions for optimization or best practices?",
+    "project_database_ai_prompt_graph":
+        "Given the database schema, explain how \"{table}\" relates to other tables (foreign keys) and suggest improvements.",
+    "project_database_ai_prompt_relation":
+        "Explain the relationship from {from} to {to}. Suggest indexes and common queries.",
+    "project_database_ai_prompt_table":
+        "Can you analyze the database table \"{table}\" and explain its purpose, structure, and any suggestions for optimization or best practices?",
     "project_database_ask_ai_table": "Ask AI about this table",
     "project_database_branch": "Branch",
     "project_database_branch_hint": "Current Neon branch context",
     "project_database_branch_primary": "{name} (primary)",
     "project_database_column_pk": "{name} (PK)",
     "project_database_columns_schema": "{columns} columns • {schema} schema",
-    "project_database_data_empty_hint": "Create tables first, then browse rows here.",
+    "project_database_data_empty_hint":
+        "Create tables first, then browse rows here.",
     "project_database_delete_row": "Delete row",
-    "project_database_delete_row_confirm": "Delete this row from {table}? This action cannot be undone.",
+    "project_database_delete_row_confirm":
+        "Delete this row from {table}? This action cannot be undone.",
     "project_database_edit_row": "Edit row",
     "project_database_enable_action": "Enable Database",
-    "project_database_enable_hint": "Provision a Neon PostgreSQL database for this project and start exploring your schema and data.",
+    "project_database_enable_hint":
+        "Provision a Neon PostgreSQL database for this project and start exploring your schema and data.",
     "project_database_enable_title": "Enable Database",
     "project_database_enabled_success": "Database enabled successfully!",
     "project_database_enabling": "Enabling...",
     "project_database_feature_branching": "Branching support",
     "project_database_feature_serverless": "Serverless Postgres on Neon",
     "project_database_feature_ssl": "Secure SSL connections",
-    "project_database_graph_hint": "Add more tables to see relationships as a graph.",
+    "project_database_graph_hint":
+        "Add more tables to see relationships as a graph.",
     "project_database_insert": "Insert",
     "project_database_insert_row": "Insert row",
     "project_database_inserting": "Inserting...",
@@ -1306,17 +1471,22 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_database_migration_plans": "{count} plans",
     "project_database_next": "Next",
     "project_database_no_columns": "No visible columns",
-    "project_database_no_columns_hint": "This table currently has no browsable columns.",
+    "project_database_no_columns_hint":
+        "This table currently has no browsable columns.",
     "project_database_no_editable_columns": "No editable columns",
-    "project_database_no_editable_columns_hint": "This table has no editable non-primary-key columns.",
+    "project_database_no_editable_columns_hint":
+        "This table has no editable non-primary-key columns.",
     "project_database_no_job_details": "No job details available yet.",
     "project_database_no_migration": "No migration history",
-    "project_database_no_migration_hint": "Migration plans and execution records will appear here.",
+    "project_database_no_migration_hint":
+        "Migration plans and execution records will appear here.",
     "project_database_no_relations": "No foreign-key relationships found.",
     "project_database_no_rows": "No rows found",
-    "project_database_no_rows_hint": "Try another table or insert data from your application flow.",
+    "project_database_no_rows_hint":
+        "Try another table or insert data from your application flow.",
     "project_database_no_tables": "No database tables",
-    "project_database_no_tables_hint": "Database tables will appear here once they are created.",
+    "project_database_no_tables_hint":
+        "Database tables will appear here once they are created.",
     "project_database_page": "Page {index}",
     "project_database_page_size": "{size} / page",
     "project_database_previous": "Previous",
@@ -1343,27 +1513,40 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_actions": "Actions",
     "project_deploy_active_preview": "Preview deployment in progress...",
     "project_deploy_active_prod": "Production release in progress: {phase}",
-    "project_deploy_active_reverting": "Rolling back commit{suffix} and triggering preview deploy...",
-    "project_deploy_ai_prompt_environment": "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_active_reverting":
+        "Rolling back commit{suffix} and triggering preview deploy...",
+    "project_deploy_ai_prompt_environment":
+        "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
     "project_deploy_ai_prompt_prefix": "My deploy failed with this error:",
-    "project_deploy_ai_prompt_preview": "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_prod": "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_suffix": "Give me the most likely root cause and a step-by-step fix.",
-    "project_deploy_ai_prompt_vercel_middle": "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
-    "project_deploy_ai_prompt_vercel_prefix": "My Vercel deployment failed for project",
-    "project_deploy_ai_prompt_vercel_suffix": "Also suggest what logs/env vars to check first.",
+    "project_deploy_ai_prompt_preview":
+        "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_prod":
+        "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_suffix":
+        "Give me the most likely root cause and a step-by-step fix.",
+    "project_deploy_ai_prompt_vercel_middle":
+        "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
+    "project_deploy_ai_prompt_vercel_prefix":
+        "My Vercel deployment failed for project",
+    "project_deploy_ai_prompt_vercel_suffix":
+        "Also suggest what logs/env vars to check first.",
     "project_deploy_ask_ai": "Ask AI",
     "project_deploy_build_log": "Build log",
     "project_deploy_build_logs": "Build logs",
     "project_deploy_close": "Close",
-    "project_deploy_coach_no_preview": "No preview yet. Start with a preview deploy to reduce release risk.",
-    "project_deploy_coach_preview_ready": "Preview is ready. Recommended next step: release to production.",
-    "project_deploy_coach_prod_live": "Production is live. Keep shipping with small preview iterations.",
+    "project_deploy_coach_no_preview":
+        "No preview yet. Start with a preview deploy to reduce release risk.",
+    "project_deploy_coach_preview_ready":
+        "Preview is ready. Recommended next step: release to production.",
+    "project_deploy_coach_prod_live":
+        "Production is live. Keep shipping with small preview iterations.",
     "project_deploy_common_fixes": "Common fixes:",
     "project_deploy_configure_later": "Configure later",
-    "project_deploy_confirm_preview_message": "This will trigger a new preview (dev) deployment on Vercel.",
+    "project_deploy_confirm_preview_message":
+        "This will trigger a new preview (dev) deployment on Vercel.",
     "project_deploy_confirm_preview_title": "Redeploy preview?",
-    "project_deploy_confirm_prod_message": "This will compare dev/main, merge if needed, then trigger a production deployment.",
+    "project_deploy_confirm_prod_message":
+        "This will compare dev/main, merge if needed, then trigger a production deployment.",
     "project_deploy_confirm_prod_title": "Deploy to production?",
     "project_deploy_copy": "Copy",
     "project_deploy_copy_all": "Copy all",
@@ -1376,7 +1559,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_filter_preview": "Preview",
     "project_deploy_filter_production": "Production",
     "project_deploy_history": "History",
-    "project_deploy_history_empty": "No deployments yet — deploy your project to see history here.",
+    "project_deploy_history_empty":
+        "No deployments yet — deploy your project to see history here.",
     "project_deploy_history_title": "Deployment History",
     "project_deploy_log_cached": "Cached",
     "project_deploy_log_empty": "No logs available for this deployment.",
@@ -1394,10 +1578,12 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_merge_into_main": "Merge into main",
     "project_deploy_more": "More",
     "project_deploy_next_steps": "Next steps",
-    "project_deploy_no_change_commits": "No change commits between adjacent releases.",
+    "project_deploy_no_change_commits":
+        "No change commits between adjacent releases.",
     "project_deploy_no_history": "No deployment history yet.",
     "project_deploy_no_logs": "No logs",
-    "project_deploy_no_logs_message": "This deployment has no Vercel deployment id.",
+    "project_deploy_no_logs_message":
+        "This deployment has no Vercel deployment id.",
     "project_deploy_no_message": "(no message)",
     "project_deploy_no_production": "No production deployment",
     "project_deploy_no_releases": "No releases detected on main yet.",
@@ -1419,12 +1605,15 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_releases": "Releases",
     "project_deploy_releases_main": "(main)",
     "project_deploy_retry_last": "Retry last deployment",
-    "project_deploy_retry_preview_message": "This will trigger a new preview (dev) deployment.",
+    "project_deploy_retry_preview_message":
+        "This will trigger a new preview (dev) deployment.",
     "project_deploy_retry_preview_title": "Retry preview deploy?",
-    "project_deploy_retry_prod_message": "This will compare dev/main, merge if needed, then trigger a new production deployment.",
+    "project_deploy_retry_prod_message":
+        "This will compare dev/main, merge if needed, then trigger a new production deployment.",
     "project_deploy_retry_prod_title": "Retry production deploy?",
     "project_deploy_revert_confirm_action": "Confirm revert",
-    "project_deploy_revert_confirm_message": "This will run git revert on commit {sha} and trigger a new preview deployment.",
+    "project_deploy_revert_confirm_message":
+        "This will run git revert on commit {sha} and trigger a new preview deployment.",
     "project_deploy_revert_confirm_title": "Revert this commit?",
     "project_deploy_revert_failed": "Revert failed",
     "project_deploy_revert_no_sha": "No commit SHA found for this deployment.",
@@ -1440,19 +1629,28 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_time_hours_ago": "{hours}h ago",
     "project_deploy_time_just_now": "just now",
     "project_deploy_time_minutes_ago": "{minutes}m ago",
-    "project_deploy_tip_build_issue": "This looks like a build failure — check compilation errors in logs.",
-    "project_deploy_tip_check_env_vars": "Check environment variables (and sync to Vercel).",
-    "project_deploy_tip_check_github_access": "Check GitHub collaborator/bot access to the repo.",
-    "project_deploy_tip_env_issue": "This looks like an env var issue — verify required secrets are set.",
-    "project_deploy_tip_open_logs": "Open the latest build logs and copy/share the error snippet.",
-    "project_deploy_tip_permission": "This looks like a permission issue — verify GitHub access and tokens.",
-    "project_deploy_tip_retry_preview_first": "Retry preview deploy first (then production).",
-    "project_deploy_tip_short_env": "Env vars configured (and synced to Vercel)",
+    "project_deploy_tip_build_issue":
+        "This looks like a build failure — check compilation errors in logs.",
+    "project_deploy_tip_check_env_vars":
+        "Check environment variables (and sync to Vercel).",
+    "project_deploy_tip_check_github_access":
+        "Check GitHub collaborator/bot access to the repo.",
+    "project_deploy_tip_env_issue":
+        "This looks like an env var issue — verify required secrets are set.",
+    "project_deploy_tip_open_logs":
+        "Open the latest build logs and copy/share the error snippet.",
+    "project_deploy_tip_permission":
+        "This looks like a permission issue — verify GitHub access and tokens.",
+    "project_deploy_tip_retry_preview_first":
+        "Retry preview deploy first (then production).",
+    "project_deploy_tip_short_env":
+        "Env vars configured (and synced to Vercel)",
     "project_deploy_tip_short_github": "GitHub access / repo permissions",
     "project_deploy_tip_short_logs": "Open build logs and share error snippet",
     "project_deploy_tip_short_retry_preview": "Retry preview deploy first",
     "project_deploy_troubleshooting": "Troubleshooting",
-    "project_deploy_troubleshooting_hint": "If deploy fails, try these quick checks:",
+    "project_deploy_troubleshooting_hint":
+        "If deploy fails, try these quick checks:",
     "project_deploy_unknown": "unknown",
     "project_detail_error_text": "Error: {error}",
     "project_detail_not_found": "Project not found",
@@ -1484,7 +1682,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_github_import": "GitHub Import",
     "project_github_import_as_new": "Import as new project",
     "project_github_import_failed": "Import failed: {error}",
-    "project_github_import_missing_project_id": "Import succeeded but missing project id",
+    "project_github_import_missing_project_id":
+        "Import succeeded but missing project id",
     "project_github_imported": "Imported",
     "project_github_imported_description": "Imported from GitHub: {repo}",
     "project_github_invalid_repo_url": "Invalid repository URL",
@@ -1510,25 +1709,38 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_overview_community_action_unpublish": "Unpublish",
     "project_overview_community_action_update": "Update",
     "project_overview_community_action_view": "View",
-    "project_overview_community_hint": "Publish a community post linked to this project (auto-release to production if needed).",
-    "project_overview_community_progress_deploy": "Triggering production deploy…",
+    "project_overview_community_hint":
+        "Publish a community post linked to this project (auto-release to production if needed).",
+    "project_overview_community_progress_deploy":
+        "Triggering production deploy…",
     "project_overview_community_progress_finalizing": "Finalizing…",
     "project_overview_community_progress_merge": "Merging branches…",
     "project_overview_community_progress_publish": "Publishing to community…",
-    "project_overview_community_publish_dialog_current_domain": "Current domain: {domain}",
-    "project_overview_community_publish_dialog_has_prod": "This project already has a production deployment. Publishing will create or update a community post linked to your project overview.",
-    "project_overview_community_publish_dialog_need_release": "To publish this project to the community, we first need to release it to production. We'll merge your dev branch into main, trigger a production deploy, then publish the post.",
-    "project_overview_community_publish_dialog_step_deploy": "• Trigger production deploy",
-    "project_overview_community_publish_dialog_step_merge": "• Merge dev → main",
-    "project_overview_community_publish_dialog_step_publish": "• Publish to community",
+    "project_overview_community_publish_dialog_current_domain":
+        "Current domain: {domain}",
+    "project_overview_community_publish_dialog_has_prod":
+        "This project already has a production deployment. Publishing will create or update a community post linked to your project overview.",
+    "project_overview_community_publish_dialog_need_release":
+        "To publish this project to the community, we first need to release it to production. We'll merge your dev branch into main, trigger a production deploy, then publish the post.",
+    "project_overview_community_publish_dialog_step_deploy":
+        "• Trigger production deploy",
+    "project_overview_community_publish_dialog_step_merge":
+        "• Merge dev → main",
+    "project_overview_community_publish_dialog_step_publish":
+        "• Publish to community",
     "project_overview_community_publish_dialog_steps": "Steps:",
     "project_overview_community_publish_dialog_title": "Publish to community",
-    "project_overview_community_publish_failed": "Failed to publish to community",
-    "project_overview_community_publish_failed_sentence": "Failed to publish to community.",
+    "project_overview_community_publish_failed":
+        "Failed to publish to community",
+    "project_overview_community_publish_failed_sentence":
+        "Failed to publish to community.",
     "project_overview_community_publish_success": "Published to community",
-    "project_overview_community_release_merge_message": "Merge {head} into {base}",
-    "project_overview_community_release_no_commits": "No commits found on development branch",
-    "project_overview_community_release_publish_failed": "Production deploy succeeded, but failed to publish to community",
+    "project_overview_community_release_merge_message":
+        "Merge {head} into {base}",
+    "project_overview_community_release_no_commits":
+        "No commits found on development branch",
+    "project_overview_community_release_publish_failed":
+        "Production deploy succeeded, but failed to publish to community",
     "project_overview_community_status_draft": "Draft",
     "project_overview_community_status_none": "Not published",
     "project_overview_community_status_published": "Published",
@@ -1537,20 +1749,25 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_overview_community_unpublish_success": "Unpublished",
     "project_overview_community_update_failed": "Failed to update post",
     "project_overview_community_update_success": "Post updated",
-    "project_overview_danger_delete_confirm_label": "Type project name to confirm",
-    "project_overview_danger_delete_desc": "This action cannot be undone. Please type the project name to confirm deletion.",
+    "project_overview_danger_delete_confirm_label":
+        "Type project name to confirm",
+    "project_overview_danger_delete_desc":
+        "This action cannot be undone. Please type the project name to confirm deletion.",
     "project_overview_danger_delete_failed": "Failed to delete project",
     "project_overview_danger_delete_in_progress": "Deleting {name}...",
     "project_overview_danger_delete_name_mismatch": "Name does not match.",
     "project_overview_danger_delete_progress_cleanup": "Final cleanup...",
-    "project_overview_danger_delete_progress_remove": "Removing project resources...",
-    "project_overview_danger_delete_progress_submit": "Submitting delete request...",
+    "project_overview_danger_delete_progress_remove":
+        "Removing project resources...",
+    "project_overview_danger_delete_progress_submit":
+        "Submitting delete request...",
     "project_overview_danger_delete_success": "Deleted {name}",
     "project_overview_danger_delete_title": "Delete project",
     "project_overview_danger_project_name": "Project: {name}",
     "project_overview_danger_title": "Danger zone",
     "project_overview_danger_transfer_action": "Transfer",
-    "project_overview_danger_transfer_desc": "Enter the recipient email to transfer ownership. You will lose access after transfer.",
+    "project_overview_danger_transfer_desc":
+        "Enter the recipient email to transfer ownership. You will lose access after transfer.",
     "project_overview_danger_transfer_failed": "Failed to transfer project",
     "project_overview_danger_transfer_recipient": "Recipient email",
     "project_overview_danger_transfer_success": "Project transferred",
@@ -1572,10 +1789,12 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_overview_health_title": "Health metrics",
     "project_overview_links_github_repo": "GitHub Repository",
     "project_overview_links_not_available": "Not available",
-    "project_overview_links_open_github_failed": "Could not open GitHub repository",
+    "project_overview_links_open_github_failed":
+        "Could not open GitHub repository",
     "project_overview_links_open_preview_failed": "Could not open preview URL",
     "project_overview_links_preview_url": "Preview URL",
-    "project_overview_recent_deployments_empty": "No recent deployments — ship a new build to see activity here.",
+    "project_overview_recent_deployments_empty":
+        "No recent deployments — ship a new build to see activity here.",
     "project_overview_recent_deployments_env": "{env} deployment",
     "project_overview_recent_deployments_feed": "Activity feed",
     "project_overview_recent_deployments_title": "Recent deployments",
@@ -1596,10 +1815,13 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_payment_add_product": "Add Product",
     "project_payment_add_product_failed": "Failed to add product: {error}",
     "project_payment_add_product_title": "Add Payment Product",
-    "project_payment_ai_prompt_product": "Can you analyze the payment product \"{name}\" and provide suggestions on pricing strategy, configuration, or marketing improvements?",
-    "project_payment_ai_prompt_transaction": "Can you analyze this payment transaction ({amount}, {status}) and provide insights about payment patterns or recommendations?",
+    "project_payment_ai_prompt_product":
+        "Can you analyze the payment product \"{name}\" and provide suggestions on pricing strategy, configuration, or marketing improvements?",
+    "project_payment_ai_prompt_transaction":
+        "Can you analyze this payment transaction ({amount}, {status}) and provide insights about payment patterns or recommendations?",
     "project_payment_anonymous": "Anonymous",
-    "project_payment_available_for_purchase": "Product is available for purchase",
+    "project_payment_available_for_purchase":
+        "Product is available for purchase",
     "project_payment_conversion_rate": "Conversion Rate",
     "project_payment_description_hint": "Describe your product",
     "project_payment_description_optional": "Description (Optional)",
@@ -1626,7 +1848,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_payment_total_revenue": "Total Revenue",
     "project_payment_transactions": "Transactions",
     "project_payment_unknown_product": "Unknown Product",
-    "project_payment_update_product_failed": "Failed to update product: {error}",
+    "project_payment_update_product_failed":
+        "Failed to update product: {error}",
     "projects_action_load_more": "Load More",
     "projects_action_relogin": "Re-login",
     "projects_empty": "No projects found",
@@ -1689,32 +1912,43 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
   },
   "es": <String, String>{
     "about": "Acerca de",
-    "about_description": "Una plataforma de desarrollo de aplicaciones impulsada por IA.",
+    "about_description":
+        "Una plataforma de desarrollo de aplicaciones impulsada por IA.",
     "about_subtitle": "Versión e información de la aplicación",
     "about_title": "Acerca de",
-    "account_data_contact_support_delete": "Contactar con soporte para eliminar la cuenta",
+    "account_data_contact_support_delete":
+        "Contactar con soporte para eliminar la cuenta",
     "account_data_copy_request_template": "Copiar plantilla de solicitud",
-    "account_data_delete_confirm_message": "Esto contactará con {support_email} para solicitar la eliminación de la cuenta. Esta acción puede ser irreversible. ¿Continuar?",
-    "account_data_delete_description": "Actualmente la eliminación de cuenta la gestiona soporte. Revisa las restricciones legales antes de solicitar la eliminación.",
-    "account_data_delete_template": "Solicitud: Eliminación de cuenta\\nCuenta: {email}\\nPor favor, eliminen mi cuenta y los datos asociados.\\nEntiendo que esta acción puede ser irreversible.\\nContacto: {support_email}",
+    "account_data_delete_confirm_message":
+        "Esto contactará con {support_email} para solicitar la eliminación de la cuenta. Esta acción puede ser irreversible. ¿Continuar?",
+    "account_data_delete_description":
+        "Actualmente la eliminación de cuenta la gestiona soporte. Revisa las restricciones legales antes de solicitar la eliminación.",
+    "account_data_delete_template":
+        "Solicitud: Eliminación de cuenta\\nCuenta: {email}\\nPor favor, eliminen mi cuenta y los datos asociados.\\nEntiendo que esta acción puede ser irreversible.\\nContacto: {support_email}",
     "account_data_delete_title": "Eliminación de cuenta",
-    "account_data_export_description": "Actualmente la exportación la gestiona soporte. Te ofrecemos una plantilla para copiar y enviar.",
-    "account_data_export_template": "Solicitud: Exportación de datos\\nCuenta: {email}\\nPor favor, exporten los datos de mi cuenta (perfil, proyectos, facturación).\\nContacto: {support_email}",
+    "account_data_export_description":
+        "Actualmente la exportación la gestiona soporte. Te ofrecemos una plantilla para copiar y enviar.",
+    "account_data_export_template":
+        "Solicitud: Exportación de datos\\nCuenta: {email}\\nPor favor, exporten los datos de mi cuenta (perfil, proyectos, facturación).\\nContacto: {support_email}",
     "account_data_export_title": "Exportación de datos",
     "account_data_legal": "Legal",
-    "account_data_request_template_copied": "Plantilla de solicitud copiada al portapapeles",
+    "account_data_request_template_copied":
+        "Plantilla de solicitud copiada al portapapeles",
     "account_data_subtitle": "Exportación de datos y eliminación de cuenta",
-    "account_data_support_dialog_message": "Ponte en contacto con {support_email} para esta solicitud.",
+    "account_data_support_dialog_message":
+        "Ponte en contacto con {support_email} para esta solicitud.",
     "account_data_title": "Cuenta y datos",
     "activity": "Actividad",
-    "agree_terms": "Al iniciar sesión, acepta nuestros Términos de Servicio y Política de Privacidad",
+    "agree_terms":
+        "Al iniciar sesión, acepta nuestros Términos de Servicio y Política de Privacidad",
     "api_settings": "API",
     "appearance": "Apariencia",
     "basic_information": "Información básica",
     "be_first_to_share": "¡Sé el primero en compartir algo!",
     "billing_insufficient_action_later": "Later",
     "billing_insufficient_action_topup": "Top up now",
-    "billing_insufficient_description": "Your balance is insufficient for this action. Please top up first.",
+    "billing_insufficient_description":
+        "Your balance is insufficient for this action. Please top up first.",
     "billing_insufficient_title": "Insufficient Balance",
     "bind_email": "Vincular correo",
     "bind_email_subtitle": "Vincular correo a su cuenta",
@@ -1773,12 +2007,14 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "enter_code_and_new_password": "Ingrese el código y la nueva contraseña",
     "enter_code_sent": "Ingrese el código de 6 dígitos enviado a su correo",
     "enter_email": "Ingrese su correo electrónico",
-    "enter_email_for_code": "Ingrese su correo para recibir un código de verificación",
+    "enter_email_for_code":
+        "Ingrese su correo para recibir un código de verificación",
     "enter_new_password": "Ingrese la nueva contraseña",
     "enter_password": "Ingrese la contraseña",
     "enter_verify_code": "Ingrese el código de verificación",
     "error": "Error",
-    "error_network": "Error de red. Comprueba tu conexión e inténtalo de nuevo.",
+    "error_network":
+        "Error de red. Comprueba tu conexión e inténtalo de nuevo.",
     "error_request_failed": "La solicitud falló. Inténtalo más tarde.",
     "error_timeout": "Tiempo de espera agotado. Inténtalo de nuevo.",
     "failed_to_load": "Failed to load",
@@ -1790,7 +2026,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "friends_count": "amigos",
     "friends_referred": "Amigos referidos",
     "github": "GitHub",
-    "github_connect_description": "Conecte su cuenta de GitHub para importar repositorios",
+    "github_connect_description":
+        "Conecte su cuenta de GitHub para importar repositorios",
     "github_integration": "Integración con GitHub",
     "help_support": "Ayuda y soporte",
     "help_support_contact_subtitle": "Email us at {email}",
@@ -1798,7 +2035,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "help_support_cta_title": "Still need help?",
     "help_support_docs_subtitle": "Technical documentation and API reference",
     "help_support_email_open_error": "Failed to open email: {error}",
-    "help_support_email_open_failed": "Could not open email app. Please email us at {email}",
+    "help_support_email_open_failed":
+        "Could not open email app. Please email us at {email}",
     "help_support_faq_title": "Frequently Asked Questions",
     "help_support_hero_subtitle": "Find answers or contact our support team",
     "help_support_hero_title": "How can we help you?",
@@ -1809,7 +2047,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "help_support_user_guide_subtitle": "Learn how to use all features",
     "help_support_user_guide_title": "User Guide",
     "import_action": "Importar",
-    "import_dialog_description": "Ingrese la información del repositorio que desea importar",
+    "import_dialog_description":
+        "Ingrese la información del repositorio que desea importar",
     "import_dialog_title": "Importar Repositorio Público",
     "import_failed": "Error al importar repositorio",
     "import_repository": "Importar repositorio",
@@ -1817,13 +2056,16 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "import_success": "Repositorio importado exitosamente",
     "importing": "Importando...",
     "industry": "Industria",
-    "input_error_owner_repo": "Por favor ingrese el propietario y el nombre del repositorio",
+    "input_error_owner_repo":
+        "Por favor ingrese el propietario y el nombre del repositorio",
     "invite_code_copied": "Código de invitación copiado al portapapeles",
     "invite_code_unavailable": "Código de invitación no disponible",
-    "invite_description": "Invite a amigos a unirse a d1v.ai y obtenga recompensas",
+    "invite_description":
+        "Invite a amigos a unirse a d1v.ai y obtenga recompensas",
     "invite_friends": "Invitar amigos",
     "invites": "Invitaciones",
-    "invites_empty_message": "You haven't invited any friends yet.\\nShare your invite code to get started!",
+    "invites_empty_message":
+        "You haven't invited any friends yet.\\nShare your invite code to get started!",
     "invites_empty_title": "No Invites Yet",
     "invites_joined_at": "Joined {time}",
     "invites_load_failed_title": "Failed to load invited users",
@@ -1844,12 +2086,18 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "login_failed": "Error al iniciar sesión",
     "login_first": "Por favor inicie sesión primero",
     "login_required_button": "Iniciar sesión",
-    "login_required_create_post_message": "Necesitas iniciar sesión para crear una publicación.",
-    "login_required_dashboard_message": "Necesitas iniciar sesión para ver tus proyectos.",
-    "login_required_github_message": "Necesitas iniciar sesión para administrar la integración con GitHub.",
-    "login_required_invites_message": "Necesitas iniciar sesión para ver invitaciones y recompensas.",
-    "login_required_orders_message": "Necesitas iniciar sesión para ver pedidos y facturación.",
-    "login_required_settings_message": "Necesitas iniciar sesión para administrar la configuración de tu cuenta.",
+    "login_required_create_post_message":
+        "Necesitas iniciar sesión para crear una publicación.",
+    "login_required_dashboard_message":
+        "Necesitas iniciar sesión para ver tus proyectos.",
+    "login_required_github_message":
+        "Necesitas iniciar sesión para administrar la integración con GitHub.",
+    "login_required_invites_message":
+        "Necesitas iniciar sesión para ver invitaciones y recompensas.",
+    "login_required_orders_message":
+        "Necesitas iniciar sesión para ver pedidos y facturación.",
+    "login_required_settings_message":
+        "Necesitas iniciar sesión para administrar la configuración de tu cuenta.",
     "login_required_title": "Inicio de sesión requerido",
     "login_success": "Inicio de sesión exitoso",
     "login_with_code": "Iniciar sesión con código",
@@ -1874,7 +2122,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "orders_usage_builder_billing_rule": "Billing rule: {rate}/min",
     "orders_usage_builder_empty": "No deployment records yet.",
     "orders_usage_builder_estimated_cost": "Estimated Cost",
-    "orders_usage_builder_estimated_cost_hint": "Estimated from deployment build durations",
+    "orders_usage_builder_estimated_cost_hint":
+        "Estimated from deployment build durations",
     "orders_usage_builder_load_failed": "Unable to load builder usage data.",
     "orders_usage_builder_overall": "Overall Build Time",
     "orders_usage_builder_projects_title": "Top Projects",
@@ -1896,7 +2145,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "orders_usage_llm_total_cost_hint": "Estimated cost",
     "orders_usage_na": "N/A",
     "orders_usage_project_breakdown_empty": "No usage data available",
-    "orders_usage_project_breakdown_empty_hint": "Your LLM usage will appear here",
+    "orders_usage_project_breakdown_empty_hint":
+        "Your LLM usage will appear here",
     "orders_usage_project_breakdown_title": "Project Breakdown",
     "orders_usage_project_deleted": "Deleted",
     "orders_usage_time_range": "Time Range",
@@ -1904,9 +2154,11 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "orders_wallet_usage_bucket_expiring": "Expiring",
     "orders_wallet_usage_bucket_non_expiring": "Non-expiring",
     "orders_wallet_usage_empty": "No usage records yet.",
-    "orders_wallet_usage_empty_hint": "Consumption records from deployments and model usage will appear here.",
+    "orders_wallet_usage_empty_hint":
+        "Consumption records from deployments and model usage will appear here.",
     "orders_wallet_usage_source_admin_broadcast": "admin broadcast",
-    "orders_wallet_usage_source_system_message": "System message: {description}",
+    "orders_wallet_usage_source_system_message":
+        "System message: {description}",
     "other": "Otro",
     "owner_hint": "usuario u organización",
     "owner_label": "Propietario",
@@ -1926,12 +2178,18 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_actions": "Actions",
     "project_analytics_active_now": "Active Now",
     "project_analytics_active_visitors": "Active Visitors",
-    "project_analytics_ai_prompt_active_now": "Can you help me interpret my real-time active users and recommend actions to improve conversion?",
-    "project_analytics_ai_prompt_custom_events": "Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?",
-    "project_analytics_ai_prompt_dashboard": "Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?",
-    "project_analytics_ai_prompt_pageviews": "Can you analyze my pageviews trend and suggest ways to increase traffic and retention?",
-    "project_analytics_ai_prompt_sessions": "Can you analyze my sessions and suggest how to increase engagement and session duration?",
-    "project_analytics_ai_prompt_visitors": "Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?",
+    "project_analytics_ai_prompt_active_now":
+        "Can you help me interpret my real-time active users and recommend actions to improve conversion?",
+    "project_analytics_ai_prompt_custom_events":
+        "Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?",
+    "project_analytics_ai_prompt_dashboard":
+        "Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?",
+    "project_analytics_ai_prompt_pageviews":
+        "Can you analyze my pageviews trend and suggest ways to increase traffic and retention?",
+    "project_analytics_ai_prompt_sessions":
+        "Can you analyze my sessions and suggest how to increase engagement and session duration?",
+    "project_analytics_ai_prompt_visitors":
+        "Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?",
     "project_analytics_all": "All",
     "project_analytics_bounces": "Bounces",
     "project_analytics_comparison_notes": "Comparison Notes",
@@ -1939,7 +2197,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_copy_failed": "Copy failed",
     "project_analytics_copy_field": "Copy {title}",
     "project_analytics_copy_summary": "Copy Summary",
-    "project_analytics_copy_summary_hint": "Copy a shareable analytics snapshot",
+    "project_analytics_copy_summary_hint":
+        "Copy a shareable analytics snapshot",
     "project_analytics_copy_tracking_code": "Copy Tracking Code",
     "project_analytics_copy_tracking_code_hint": "Copy Umami script snippet",
     "project_analytics_current_window": "Current window: {range}",
@@ -1959,9 +2218,11 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_dim_screen": "Screen",
     "project_analytics_dim_tag": "Tag",
     "project_analytics_enable_action": "Enable Analytics",
-    "project_analytics_enable_hint": "Track your website's visitors, page views, and custom events with Umami Analytics",
+    "project_analytics_enable_hint":
+        "Track your website's visitors, page views, and custom events with Umami Analytics",
     "project_analytics_enable_title": "Enable Analytics",
-    "project_analytics_env_filter_note": "Note: environment filter uses hostname exact matching.",
+    "project_analytics_env_filter_note":
+        "Note: environment filter uses hostname exact matching.",
     "project_analytics_environment": "Environment",
     "project_analytics_events": "Events",
     "project_analytics_events_trend": "Events Trend",
@@ -1974,14 +2235,20 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_filters": "Filters",
     "project_analytics_inactive_tab": "{title} tab",
     "project_analytics_initializing": "Initializing...",
-    "project_analytics_install_done_autojump": "Installation completed. Auto-opening Data in {seconds}s.",
-    "project_analytics_install_done_open": "Installation completed. You can open the analytics tabs now.",
-    "project_analytics_install_incomplete": "Analytics install did not complete successfully.",
-    "project_analytics_install_success": "Analytics successfully installed and activated.",
+    "project_analytics_install_done_autojump":
+        "Installation completed. Auto-opening Data in {seconds}s.",
+    "project_analytics_install_done_open":
+        "Installation completed. You can open the analytics tabs now.",
+    "project_analytics_install_incomplete":
+        "Analytics install did not complete successfully.",
+    "project_analytics_install_success":
+        "Analytics successfully installed and activated.",
     "project_analytics_installer": "Analytics Installer",
-    "project_analytics_installer_hint": "Review the session output or retry the install.",
+    "project_analytics_installer_hint":
+        "Review the session output or retry the install.",
     "project_analytics_installing": "Installing Analytics…",
-    "project_analytics_installing_hint": "We are initializing Umami and inserting the tracking script via a chat session.",
+    "project_analytics_installing_hint":
+        "We are initializing Umami and inserting the tracking script via a chat session.",
     "project_analytics_last_24_hours": "Last 24 Hours",
     "project_analytics_last_30_days": "Last 30 Days",
     "project_analytics_last_6_hours": "Last 6 Hours",
@@ -1992,10 +2259,12 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_metrics": "Metrics",
     "project_analytics_no_compare_data": "No top-page comparison data",
     "project_analytics_no_data": "No analytics data yet",
-    "project_analytics_no_data_hint": "Analytics data will appear once your project is live and receiving traffic.",
+    "project_analytics_no_data_hint":
+        "Analytics data will appear once your project is live and receiving traffic.",
     "project_analytics_no_data_short": "No data",
     "project_analytics_no_events": "No events in current range",
-    "project_analytics_no_metrics_selected": "No metrics selected. Enable Pageviews/Sessions in Filters.",
+    "project_analytics_no_metrics_selected":
+        "No metrics selected. Enable Pageviews/Sessions in Filters.",
     "project_analytics_no_realtime_urls": "No realtime URL data yet",
     "project_analytics_no_sessions": "No sessions in current range",
     "project_analytics_pageviews": "Pageviews",
@@ -2009,11 +2278,13 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_ready": "Analytics Ready",
     "project_analytics_recent_events": "Recent Events",
     "project_analytics_reenable": "Re-enable Analytics",
-    "project_analytics_reenable_confirm": "This will re-run analytics setup and re-insert the tracking script via workspace session. Continue?",
+    "project_analytics_reenable_confirm":
+        "This will re-run analytics setup and re-insert the tracking script via workspace session. Continue?",
     "project_analytics_reenable_hint": "Re-run script installation flow",
     "project_analytics_reenable_started": "Re-enable process started.",
     "project_analytics_reports": "Reports",
-    "project_analytics_reports_coming": "Custom reports are coming soon. This keeps parity with the current web placeholder state.",
+    "project_analytics_reports_coming":
+        "Custom reports are coming soon. This keeps parity with the current web placeholder state.",
     "project_analytics_reset": "Reset",
     "project_analytics_restore_defaults": "Restore defaults",
     "project_analytics_retry_install": "Retry Install",
@@ -2084,7 +2355,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_api_deleted": "Deleted",
     "project_api_description_optional": "Description (optional)",
     "project_api_edit_variable": "Edit variable",
-    "project_api_empty_hint": "Create your first key-value pair to configure\\nruntime behavior for this project.",
+    "project_api_empty_hint":
+        "Create your first key-value pair to configure\\nruntime behavior for this project.",
     "project_api_empty_title": "No environment variables",
     "project_api_environment_variables": "Environment Variables",
     "project_api_key": "Key",
@@ -2096,7 +2368,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_api_sensitive_masked": "Masked in lists by default",
     "project_api_sensitive_visible": "Visible in lists",
     "project_api_show": "Show",
-    "project_api_show_values_message": "This will reveal sensitive environment values on screen.",
+    "project_api_show_values_message":
+        "This will reveal sensitive environment values on screen.",
     "project_api_show_values_title": "Show values?",
     "project_api_update_failed": "Update failed",
     "project_api_value": "Value",
@@ -2107,32 +2380,41 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_api_variable_updated": "Environment variable updated",
     "project_chat_engine_fast": "Rápido",
     "project_chat_engine_fast_hint": "Usar Claude para respuestas más rápidas",
+    "project_chat_engine_switch_success": "Cambiado a {mode}",
     "project_chat_engine_think_hard": "Pensar más",
-    "project_chat_engine_think_hard_hint": "Usar Codex para un razonamiento más profundo",
+    "project_chat_engine_think_hard_hint":
+        "Usar Codex para un razonamiento más profundo",
     "project_chat_engine_title": "Modo",
     "project_database_actions": "Actions",
-    "project_database_ai_prompt_graph": "Given the database schema, explain how \"{table}\" relates to other tables (foreign keys) and suggest improvements.",
-    "project_database_ai_prompt_relation": "Explain the relationship from {from} to {to}. Suggest indexes and common queries.",
-    "project_database_ai_prompt_table": "Can you analyze the database table \"{table}\" and explain its purpose, structure, and any suggestions for optimization or best practices?",
+    "project_database_ai_prompt_graph":
+        "Given the database schema, explain how \"{table}\" relates to other tables (foreign keys) and suggest improvements.",
+    "project_database_ai_prompt_relation":
+        "Explain the relationship from {from} to {to}. Suggest indexes and common queries.",
+    "project_database_ai_prompt_table":
+        "Can you analyze the database table \"{table}\" and explain its purpose, structure, and any suggestions for optimization or best practices?",
     "project_database_ask_ai_table": "Ask AI about this table",
     "project_database_branch": "Branch",
     "project_database_branch_hint": "Current Neon branch context",
     "project_database_branch_primary": "{name} (primary)",
     "project_database_column_pk": "{name} (PK)",
     "project_database_columns_schema": "{columns} columns • {schema} schema",
-    "project_database_data_empty_hint": "Create tables first, then browse rows here.",
+    "project_database_data_empty_hint":
+        "Create tables first, then browse rows here.",
     "project_database_delete_row": "Delete row",
-    "project_database_delete_row_confirm": "Delete this row from {table}? This action cannot be undone.",
+    "project_database_delete_row_confirm":
+        "Delete this row from {table}? This action cannot be undone.",
     "project_database_edit_row": "Edit row",
     "project_database_enable_action": "Enable Database",
-    "project_database_enable_hint": "Provision a Neon PostgreSQL database for this project and start exploring your schema and data.",
+    "project_database_enable_hint":
+        "Provision a Neon PostgreSQL database for this project and start exploring your schema and data.",
     "project_database_enable_title": "Enable Database",
     "project_database_enabled_success": "Database enabled successfully!",
     "project_database_enabling": "Enabling...",
     "project_database_feature_branching": "Branching support",
     "project_database_feature_serverless": "Serverless Postgres on Neon",
     "project_database_feature_ssl": "Secure SSL connections",
-    "project_database_graph_hint": "Add more tables to see relationships as a graph.",
+    "project_database_graph_hint":
+        "Add more tables to see relationships as a graph.",
     "project_database_insert": "Insert",
     "project_database_insert_row": "Insert row",
     "project_database_inserting": "Inserting...",
@@ -2142,17 +2424,22 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_database_migration_plans": "{count} plans",
     "project_database_next": "Next",
     "project_database_no_columns": "No visible columns",
-    "project_database_no_columns_hint": "This table currently has no browsable columns.",
+    "project_database_no_columns_hint":
+        "This table currently has no browsable columns.",
     "project_database_no_editable_columns": "No editable columns",
-    "project_database_no_editable_columns_hint": "This table has no editable non-primary-key columns.",
+    "project_database_no_editable_columns_hint":
+        "This table has no editable non-primary-key columns.",
     "project_database_no_job_details": "No job details available yet.",
     "project_database_no_migration": "No migration history",
-    "project_database_no_migration_hint": "Migration plans and execution records will appear here.",
+    "project_database_no_migration_hint":
+        "Migration plans and execution records will appear here.",
     "project_database_no_relations": "No foreign-key relationships found.",
     "project_database_no_rows": "No rows found",
-    "project_database_no_rows_hint": "Try another table or insert data from your application flow.",
+    "project_database_no_rows_hint":
+        "Try another table or insert data from your application flow.",
     "project_database_no_tables": "No database tables",
-    "project_database_no_tables_hint": "Database tables will appear here once they are created.",
+    "project_database_no_tables_hint":
+        "Database tables will appear here once they are created.",
     "project_database_page": "Page {index}",
     "project_database_page_size": "{size} / page",
     "project_database_previous": "Previous",
@@ -2179,27 +2466,40 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_actions": "Actions",
     "project_deploy_active_preview": "Preview deployment in progress...",
     "project_deploy_active_prod": "Production release in progress: {phase}",
-    "project_deploy_active_reverting": "Rolling back commit{suffix} and triggering preview deploy...",
-    "project_deploy_ai_prompt_environment": "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_active_reverting":
+        "Rolling back commit{suffix} and triggering preview deploy...",
+    "project_deploy_ai_prompt_environment":
+        "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
     "project_deploy_ai_prompt_prefix": "My deploy failed with this error:",
-    "project_deploy_ai_prompt_preview": "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_prod": "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_suffix": "Give me the most likely root cause and a step-by-step fix.",
-    "project_deploy_ai_prompt_vercel_middle": "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
-    "project_deploy_ai_prompt_vercel_prefix": "My Vercel deployment failed for project",
-    "project_deploy_ai_prompt_vercel_suffix": "Also suggest what logs/env vars to check first.",
+    "project_deploy_ai_prompt_preview":
+        "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_prod":
+        "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_suffix":
+        "Give me the most likely root cause and a step-by-step fix.",
+    "project_deploy_ai_prompt_vercel_middle":
+        "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
+    "project_deploy_ai_prompt_vercel_prefix":
+        "My Vercel deployment failed for project",
+    "project_deploy_ai_prompt_vercel_suffix":
+        "Also suggest what logs/env vars to check first.",
     "project_deploy_ask_ai": "Ask AI",
     "project_deploy_build_log": "Build log",
     "project_deploy_build_logs": "Build logs",
     "project_deploy_close": "Close",
-    "project_deploy_coach_no_preview": "No preview yet. Start with a preview deploy to reduce release risk.",
-    "project_deploy_coach_preview_ready": "Preview is ready. Recommended next step: release to production.",
-    "project_deploy_coach_prod_live": "Production is live. Keep shipping with small preview iterations.",
+    "project_deploy_coach_no_preview":
+        "No preview yet. Start with a preview deploy to reduce release risk.",
+    "project_deploy_coach_preview_ready":
+        "Preview is ready. Recommended next step: release to production.",
+    "project_deploy_coach_prod_live":
+        "Production is live. Keep shipping with small preview iterations.",
     "project_deploy_common_fixes": "Common fixes:",
     "project_deploy_configure_later": "Configure later",
-    "project_deploy_confirm_preview_message": "This will trigger a new preview (dev) deployment on Vercel.",
+    "project_deploy_confirm_preview_message":
+        "This will trigger a new preview (dev) deployment on Vercel.",
     "project_deploy_confirm_preview_title": "Redeploy preview?",
-    "project_deploy_confirm_prod_message": "This will compare dev/main, merge if needed, then trigger a production deployment.",
+    "project_deploy_confirm_prod_message":
+        "This will compare dev/main, merge if needed, then trigger a production deployment.",
     "project_deploy_confirm_prod_title": "Deploy to production?",
     "project_deploy_copy": "Copy",
     "project_deploy_copy_all": "Copy all",
@@ -2212,7 +2512,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_filter_preview": "Preview",
     "project_deploy_filter_production": "Production",
     "project_deploy_history": "History",
-    "project_deploy_history_empty": "No deployments yet — deploy your project to see history here.",
+    "project_deploy_history_empty":
+        "No deployments yet — deploy your project to see history here.",
     "project_deploy_history_title": "Deployment History",
     "project_deploy_log_cached": "Cached",
     "project_deploy_log_empty": "No logs available for this deployment.",
@@ -2230,10 +2531,12 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_merge_into_main": "Merge into main",
     "project_deploy_more": "More",
     "project_deploy_next_steps": "Next steps",
-    "project_deploy_no_change_commits": "No change commits between adjacent releases.",
+    "project_deploy_no_change_commits":
+        "No change commits between adjacent releases.",
     "project_deploy_no_history": "No deployment history yet.",
     "project_deploy_no_logs": "No logs",
-    "project_deploy_no_logs_message": "This deployment has no Vercel deployment id.",
+    "project_deploy_no_logs_message":
+        "This deployment has no Vercel deployment id.",
     "project_deploy_no_message": "(no message)",
     "project_deploy_no_production": "No production deployment",
     "project_deploy_no_releases": "No releases detected on main yet.",
@@ -2255,12 +2558,15 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_releases": "Releases",
     "project_deploy_releases_main": "(main)",
     "project_deploy_retry_last": "Retry last deployment",
-    "project_deploy_retry_preview_message": "This will trigger a new preview (dev) deployment.",
+    "project_deploy_retry_preview_message":
+        "This will trigger a new preview (dev) deployment.",
     "project_deploy_retry_preview_title": "Retry preview deploy?",
-    "project_deploy_retry_prod_message": "This will compare dev/main, merge if needed, then trigger a new production deployment.",
+    "project_deploy_retry_prod_message":
+        "This will compare dev/main, merge if needed, then trigger a new production deployment.",
     "project_deploy_retry_prod_title": "Retry production deploy?",
     "project_deploy_revert_confirm_action": "Confirm revert",
-    "project_deploy_revert_confirm_message": "This will run git revert on commit {sha} and trigger a new preview deployment.",
+    "project_deploy_revert_confirm_message":
+        "This will run git revert on commit {sha} and trigger a new preview deployment.",
     "project_deploy_revert_confirm_title": "Revert this commit?",
     "project_deploy_revert_failed": "Revert failed",
     "project_deploy_revert_no_sha": "No commit SHA found for this deployment.",
@@ -2276,19 +2582,28 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_time_hours_ago": "{hours}h ago",
     "project_deploy_time_just_now": "just now",
     "project_deploy_time_minutes_ago": "{minutes}m ago",
-    "project_deploy_tip_build_issue": "This looks like a build failure — check compilation errors in logs.",
-    "project_deploy_tip_check_env_vars": "Check environment variables (and sync to Vercel).",
-    "project_deploy_tip_check_github_access": "Check GitHub collaborator/bot access to the repo.",
-    "project_deploy_tip_env_issue": "This looks like an env var issue — verify required secrets are set.",
-    "project_deploy_tip_open_logs": "Open the latest build logs and copy/share the error snippet.",
-    "project_deploy_tip_permission": "This looks like a permission issue — verify GitHub access and tokens.",
-    "project_deploy_tip_retry_preview_first": "Retry preview deploy first (then production).",
-    "project_deploy_tip_short_env": "Env vars configured (and synced to Vercel)",
+    "project_deploy_tip_build_issue":
+        "This looks like a build failure — check compilation errors in logs.",
+    "project_deploy_tip_check_env_vars":
+        "Check environment variables (and sync to Vercel).",
+    "project_deploy_tip_check_github_access":
+        "Check GitHub collaborator/bot access to the repo.",
+    "project_deploy_tip_env_issue":
+        "This looks like an env var issue — verify required secrets are set.",
+    "project_deploy_tip_open_logs":
+        "Open the latest build logs and copy/share the error snippet.",
+    "project_deploy_tip_permission":
+        "This looks like a permission issue — verify GitHub access and tokens.",
+    "project_deploy_tip_retry_preview_first":
+        "Retry preview deploy first (then production).",
+    "project_deploy_tip_short_env":
+        "Env vars configured (and synced to Vercel)",
     "project_deploy_tip_short_github": "GitHub access / repo permissions",
     "project_deploy_tip_short_logs": "Open build logs and share error snippet",
     "project_deploy_tip_short_retry_preview": "Retry preview deploy first",
     "project_deploy_troubleshooting": "Troubleshooting",
-    "project_deploy_troubleshooting_hint": "If deploy fails, try these quick checks:",
+    "project_deploy_troubleshooting_hint":
+        "If deploy fails, try these quick checks:",
     "project_deploy_unknown": "unknown",
     "project_detail_error_text": "Error: {error}",
     "project_detail_not_found": "Project not found",
@@ -2320,7 +2635,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_github_import": "GitHub Import",
     "project_github_import_as_new": "Import as new project",
     "project_github_import_failed": "Import failed: {error}",
-    "project_github_import_missing_project_id": "Import succeeded but missing project id",
+    "project_github_import_missing_project_id":
+        "Import succeeded but missing project id",
     "project_github_imported": "Imported",
     "project_github_imported_description": "Imported from GitHub: {repo}",
     "project_github_invalid_repo_url": "Invalid repository URL",
@@ -2346,25 +2662,38 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_overview_community_action_unpublish": "Unpublish",
     "project_overview_community_action_update": "Update",
     "project_overview_community_action_view": "View",
-    "project_overview_community_hint": "Publish a community post linked to this project (auto-release to production if needed).",
-    "project_overview_community_progress_deploy": "Triggering production deploy…",
+    "project_overview_community_hint":
+        "Publish a community post linked to this project (auto-release to production if needed).",
+    "project_overview_community_progress_deploy":
+        "Triggering production deploy…",
     "project_overview_community_progress_finalizing": "Finalizing…",
     "project_overview_community_progress_merge": "Merging branches…",
     "project_overview_community_progress_publish": "Publishing to community…",
-    "project_overview_community_publish_dialog_current_domain": "Current domain: {domain}",
-    "project_overview_community_publish_dialog_has_prod": "This project already has a production deployment. Publishing will create or update a community post linked to your project overview.",
-    "project_overview_community_publish_dialog_need_release": "To publish this project to the community, we first need to release it to production. We'll merge your dev branch into main, trigger a production deploy, then publish the post.",
-    "project_overview_community_publish_dialog_step_deploy": "• Trigger production deploy",
-    "project_overview_community_publish_dialog_step_merge": "• Merge dev → main",
-    "project_overview_community_publish_dialog_step_publish": "• Publish to community",
+    "project_overview_community_publish_dialog_current_domain":
+        "Current domain: {domain}",
+    "project_overview_community_publish_dialog_has_prod":
+        "This project already has a production deployment. Publishing will create or update a community post linked to your project overview.",
+    "project_overview_community_publish_dialog_need_release":
+        "To publish this project to the community, we first need to release it to production. We'll merge your dev branch into main, trigger a production deploy, then publish the post.",
+    "project_overview_community_publish_dialog_step_deploy":
+        "• Trigger production deploy",
+    "project_overview_community_publish_dialog_step_merge":
+        "• Merge dev → main",
+    "project_overview_community_publish_dialog_step_publish":
+        "• Publish to community",
     "project_overview_community_publish_dialog_steps": "Steps:",
     "project_overview_community_publish_dialog_title": "Publish to community",
-    "project_overview_community_publish_failed": "Failed to publish to community",
-    "project_overview_community_publish_failed_sentence": "Failed to publish to community.",
+    "project_overview_community_publish_failed":
+        "Failed to publish to community",
+    "project_overview_community_publish_failed_sentence":
+        "Failed to publish to community.",
     "project_overview_community_publish_success": "Published to community",
-    "project_overview_community_release_merge_message": "Merge {head} into {base}",
-    "project_overview_community_release_no_commits": "No commits found on development branch",
-    "project_overview_community_release_publish_failed": "Production deploy succeeded, but failed to publish to community",
+    "project_overview_community_release_merge_message":
+        "Merge {head} into {base}",
+    "project_overview_community_release_no_commits":
+        "No commits found on development branch",
+    "project_overview_community_release_publish_failed":
+        "Production deploy succeeded, but failed to publish to community",
     "project_overview_community_status_draft": "Draft",
     "project_overview_community_status_none": "Not published",
     "project_overview_community_status_published": "Published",
@@ -2373,20 +2702,25 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_overview_community_unpublish_success": "Unpublished",
     "project_overview_community_update_failed": "Failed to update post",
     "project_overview_community_update_success": "Post updated",
-    "project_overview_danger_delete_confirm_label": "Type project name to confirm",
-    "project_overview_danger_delete_desc": "This action cannot be undone. Please type the project name to confirm deletion.",
+    "project_overview_danger_delete_confirm_label":
+        "Type project name to confirm",
+    "project_overview_danger_delete_desc":
+        "This action cannot be undone. Please type the project name to confirm deletion.",
     "project_overview_danger_delete_failed": "Failed to delete project",
     "project_overview_danger_delete_in_progress": "Deleting {name}...",
     "project_overview_danger_delete_name_mismatch": "Name does not match.",
     "project_overview_danger_delete_progress_cleanup": "Final cleanup...",
-    "project_overview_danger_delete_progress_remove": "Removing project resources...",
-    "project_overview_danger_delete_progress_submit": "Submitting delete request...",
+    "project_overview_danger_delete_progress_remove":
+        "Removing project resources...",
+    "project_overview_danger_delete_progress_submit":
+        "Submitting delete request...",
     "project_overview_danger_delete_success": "Deleted {name}",
     "project_overview_danger_delete_title": "Delete project",
     "project_overview_danger_project_name": "Project: {name}",
     "project_overview_danger_title": "Danger zone",
     "project_overview_danger_transfer_action": "Transfer",
-    "project_overview_danger_transfer_desc": "Enter the recipient email to transfer ownership. You will lose access after transfer.",
+    "project_overview_danger_transfer_desc":
+        "Enter the recipient email to transfer ownership. You will lose access after transfer.",
     "project_overview_danger_transfer_failed": "Failed to transfer project",
     "project_overview_danger_transfer_recipient": "Recipient email",
     "project_overview_danger_transfer_success": "Project transferred",
@@ -2408,10 +2742,12 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_overview_health_title": "Health metrics",
     "project_overview_links_github_repo": "GitHub Repository",
     "project_overview_links_not_available": "Not available",
-    "project_overview_links_open_github_failed": "Could not open GitHub repository",
+    "project_overview_links_open_github_failed":
+        "Could not open GitHub repository",
     "project_overview_links_open_preview_failed": "Could not open preview URL",
     "project_overview_links_preview_url": "Preview URL",
-    "project_overview_recent_deployments_empty": "No recent deployments — ship a new build to see activity here.",
+    "project_overview_recent_deployments_empty":
+        "No recent deployments — ship a new build to see activity here.",
     "project_overview_recent_deployments_env": "{env} deployment",
     "project_overview_recent_deployments_feed": "Activity feed",
     "project_overview_recent_deployments_title": "Recent deployments",
@@ -2432,10 +2768,13 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_payment_add_product": "Add Product",
     "project_payment_add_product_failed": "Failed to add product: {error}",
     "project_payment_add_product_title": "Add Payment Product",
-    "project_payment_ai_prompt_product": "Can you analyze the payment product \"{name}\" and provide suggestions on pricing strategy, configuration, or marketing improvements?",
-    "project_payment_ai_prompt_transaction": "Can you analyze this payment transaction ({amount}, {status}) and provide insights about payment patterns or recommendations?",
+    "project_payment_ai_prompt_product":
+        "Can you analyze the payment product \"{name}\" and provide suggestions on pricing strategy, configuration, or marketing improvements?",
+    "project_payment_ai_prompt_transaction":
+        "Can you analyze this payment transaction ({amount}, {status}) and provide insights about payment patterns or recommendations?",
     "project_payment_anonymous": "Anonymous",
-    "project_payment_available_for_purchase": "Product is available for purchase",
+    "project_payment_available_for_purchase":
+        "Product is available for purchase",
     "project_payment_conversion_rate": "Conversion Rate",
     "project_payment_description_hint": "Describe your product",
     "project_payment_description_optional": "Description (Optional)",
@@ -2462,7 +2801,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_payment_total_revenue": "Total Revenue",
     "project_payment_transactions": "Transactions",
     "project_payment_unknown_product": "Unknown Product",
-    "project_payment_update_product_failed": "Failed to update product: {error}",
+    "project_payment_update_product_failed":
+        "Failed to update product: {error}",
     "projects_action_load_more": "Load More",
     "projects_action_relogin": "Re-login",
     "projects_empty": "No projects found",
@@ -2515,7 +2855,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "theme_title": "Tema",
     "theme_updated": "Tema actualizado",
     "verify_code": "Código de verificación",
-    "verify_code_complete": "Por favor ingrese el código de verificación completo",
+    "verify_code_complete":
+        "Por favor ingrese el código de verificación completo",
     "verify_code_required": "Por favor ingrese el código de verificación",
     "verify_login": "Verificar inicio de sesión",
     "verifying": "Verificando...",
@@ -2525,32 +2866,43 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
   },
   "fr": <String, String>{
     "about": "À propos",
-    "about_description": "Une plateforme de développement d'applications alimentée par l'IA.",
+    "about_description":
+        "Une plateforme de développement d'applications alimentée par l'IA.",
     "about_subtitle": "Version de l'application et informations",
     "about_title": "À propos",
-    "account_data_contact_support_delete": "Contacter le support pour supprimer le compte",
+    "account_data_contact_support_delete":
+        "Contacter le support pour supprimer le compte",
     "account_data_copy_request_template": "Copier le modèle de demande",
-    "account_data_delete_confirm_message": "Cela contactera {support_email} pour demander la suppression du compte. La suppression peut être irréversible. Continuer ?",
-    "account_data_delete_description": "La suppression du compte est actuellement gérée par le support. Veuillez consulter les restrictions légales avant de demander la suppression.",
-    "account_data_delete_template": "Demande : Suppression du compte\\nCompte : {email}\\nVeuillez supprimer mon compte et les données associées.\\nJe comprends que cette action peut être irréversible.\\nContact : {support_email}",
+    "account_data_delete_confirm_message":
+        "Cela contactera {support_email} pour demander la suppression du compte. La suppression peut être irréversible. Continuer ?",
+    "account_data_delete_description":
+        "La suppression du compte est actuellement gérée par le support. Veuillez consulter les restrictions légales avant de demander la suppression.",
+    "account_data_delete_template":
+        "Demande : Suppression du compte\\nCompte : {email}\\nVeuillez supprimer mon compte et les données associées.\\nJe comprends que cette action peut être irréversible.\\nContact : {support_email}",
     "account_data_delete_title": "Suppression du compte",
-    "account_data_export_description": "L’export est actuellement géré par le support. Nous fournissons un modèle que vous pouvez copier et envoyer.",
-    "account_data_export_template": "Demande : Export des données\\nCompte : {email}\\nVeuillez exporter les données de mon compte (profil, projets, facturation).\\nContact : {support_email}",
+    "account_data_export_description":
+        "L’export est actuellement géré par le support. Nous fournissons un modèle que vous pouvez copier et envoyer.",
+    "account_data_export_template":
+        "Demande : Export des données\\nCompte : {email}\\nVeuillez exporter les données de mon compte (profil, projets, facturation).\\nContact : {support_email}",
     "account_data_export_title": "Export des données",
     "account_data_legal": "Juridique",
-    "account_data_request_template_copied": "Le modèle de demande a été copié dans le presse-papiers",
+    "account_data_request_template_copied":
+        "Le modèle de demande a été copié dans le presse-papiers",
     "account_data_subtitle": "Export des données et suppression du compte",
-    "account_data_support_dialog_message": "Veuillez contacter {support_email} pour cette demande.",
+    "account_data_support_dialog_message":
+        "Veuillez contacter {support_email} pour cette demande.",
     "account_data_title": "Compte et données",
     "activity": "Activité",
-    "agree_terms": "En vous connectant, vous acceptez nos Conditions de Service et notre Politique de Confidentialité",
+    "agree_terms":
+        "En vous connectant, vous acceptez nos Conditions de Service et notre Politique de Confidentialité",
     "api_settings": "API",
     "appearance": "Apparence",
     "basic_information": "Informations de base",
     "be_first_to_share": "Soyez le premier à partager quelque chose!",
     "billing_insufficient_action_later": "Later",
     "billing_insufficient_action_topup": "Top up now",
-    "billing_insufficient_description": "Your balance is insufficient for this action. Please top up first.",
+    "billing_insufficient_description":
+        "Your balance is insufficient for this action. Please top up first.",
     "billing_insufficient_title": "Insufficient Balance",
     "bind_email": "Lier l'e-mail",
     "bind_email_subtitle": "Lier l'e-mail à votre compte",
@@ -2606,16 +2958,20 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "email_bound_success": "E-mail lié avec succès",
     "email_invalid": "Veuillez entrer une adresse e-mail valide",
     "email_required": "Veuillez entrer votre adresse e-mail",
-    "enter_code_and_new_password": "Entrez le code de vérification et votre nouveau mot de passe",
-    "enter_code_sent": "Entrez le code de vérification à 6 chiffres envoyé à votre e-mail",
+    "enter_code_and_new_password":
+        "Entrez le code de vérification et votre nouveau mot de passe",
+    "enter_code_sent":
+        "Entrez le code de vérification à 6 chiffres envoyé à votre e-mail",
     "enter_email": "Entrez votre e-mail",
-    "enter_email_for_code": "Entrez votre adresse e-mail pour recevoir un code de vérification",
+    "enter_email_for_code":
+        "Entrez votre adresse e-mail pour recevoir un code de vérification",
     "enter_new_password": "Entrez le nouveau mot de passe",
     "enter_password": "Entrez le mot de passe",
     "enter_verify_code": "Entrez le code de vérification",
     "error": "Error",
     "error_network": "Erreur réseau. Vérifiez votre connexion et réessayez.",
-    "error_request_failed": "La requête a échoué. Veuillez réessayer plus tard.",
+    "error_request_failed":
+        "La requête a échoué. Veuillez réessayer plus tard.",
     "error_timeout": "Délai d’attente dépassé. Veuillez réessayer.",
     "failed_to_load": "Failed to load",
     "failed_to_load_posts": "Échec du chargement des publications",
@@ -2626,7 +2982,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "friends_count": "amis",
     "friends_referred": "Amis parrainés",
     "github": "GitHub",
-    "github_connect_description": "Connectez votre compte GitHub pour importer des référentiels",
+    "github_connect_description":
+        "Connectez votre compte GitHub pour importer des référentiels",
     "github_integration": "Intégration GitHub",
     "help_support": "Aide et support",
     "help_support_contact_subtitle": "Email us at {email}",
@@ -2634,7 +2991,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "help_support_cta_title": "Still need help?",
     "help_support_docs_subtitle": "Technical documentation and API reference",
     "help_support_email_open_error": "Failed to open email: {error}",
-    "help_support_email_open_failed": "Could not open email app. Please email us at {email}",
+    "help_support_email_open_failed":
+        "Could not open email app. Please email us at {email}",
     "help_support_faq_title": "Frequently Asked Questions",
     "help_support_hero_subtitle": "Find answers or contact our support team",
     "help_support_hero_title": "How can we help you?",
@@ -2645,7 +3003,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "help_support_user_guide_subtitle": "Learn how to use all features",
     "help_support_user_guide_title": "User Guide",
     "import_action": "Importer",
-    "import_dialog_description": "Entrez les informations du référentiel que vous souhaitez importer",
+    "import_dialog_description":
+        "Entrez les informations du référentiel que vous souhaitez importer",
     "import_dialog_title": "Importer un référentiel public",
     "import_failed": "Échec de l'importation du référentiel",
     "import_repository": "Importer un référentiel",
@@ -2653,13 +3012,16 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "import_success": "Référentiel importé avec succès",
     "importing": "Importation...",
     "industry": "Industrie",
-    "input_error_owner_repo": "Veuillez entrer le propriétaire et le nom du référentiel",
+    "input_error_owner_repo":
+        "Veuillez entrer le propriétaire et le nom du référentiel",
     "invite_code_copied": "Code d'invitation copié dans le presse-papiers",
     "invite_code_unavailable": "Code d'invitation non disponible",
-    "invite_description": "Invitez des amis à rejoindre d1v.ai et obtenez des récompenses",
+    "invite_description":
+        "Invitez des amis à rejoindre d1v.ai et obtenez des récompenses",
     "invite_friends": "Inviter des amis",
     "invites": "Invitations",
-    "invites_empty_message": "You haven't invited any friends yet.\\nShare your invite code to get started!",
+    "invites_empty_message":
+        "You haven't invited any friends yet.\\nShare your invite code to get started!",
     "invites_empty_title": "No Invites Yet",
     "invites_joined_at": "Joined {time}",
     "invites_load_failed_title": "Failed to load invited users",
@@ -2680,12 +3042,18 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "login_failed": "Échec de la connexion",
     "login_first": "Veuillez d'abord vous connecter",
     "login_required_button": "Se connecter",
-    "login_required_create_post_message": "Vous devez vous connecter pour créer une publication.",
-    "login_required_dashboard_message": "Vous devez vous connecter pour voir vos projets.",
-    "login_required_github_message": "Vous devez vous connecter pour gérer l’intégration GitHub.",
-    "login_required_invites_message": "Vous devez vous connecter pour voir les invitations et les récompenses.",
-    "login_required_orders_message": "Vous devez vous connecter pour voir les commandes et la facturation.",
-    "login_required_settings_message": "Vous devez vous connecter pour gérer les paramètres de votre compte.",
+    "login_required_create_post_message":
+        "Vous devez vous connecter pour créer une publication.",
+    "login_required_dashboard_message":
+        "Vous devez vous connecter pour voir vos projets.",
+    "login_required_github_message":
+        "Vous devez vous connecter pour gérer l’intégration GitHub.",
+    "login_required_invites_message":
+        "Vous devez vous connecter pour voir les invitations et les récompenses.",
+    "login_required_orders_message":
+        "Vous devez vous connecter pour voir les commandes et la facturation.",
+    "login_required_settings_message":
+        "Vous devez vous connecter pour gérer les paramètres de votre compte.",
     "login_required_title": "Connexion requise",
     "login_success": "Connexion réussie",
     "login_with_code": "Se connecter avec code",
@@ -2710,7 +3078,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "orders_usage_builder_billing_rule": "Billing rule: {rate}/min",
     "orders_usage_builder_empty": "No deployment records yet.",
     "orders_usage_builder_estimated_cost": "Estimated Cost",
-    "orders_usage_builder_estimated_cost_hint": "Estimated from deployment build durations",
+    "orders_usage_builder_estimated_cost_hint":
+        "Estimated from deployment build durations",
     "orders_usage_builder_load_failed": "Unable to load builder usage data.",
     "orders_usage_builder_overall": "Overall Build Time",
     "orders_usage_builder_projects_title": "Top Projects",
@@ -2732,7 +3101,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "orders_usage_llm_total_cost_hint": "Estimated cost",
     "orders_usage_na": "N/A",
     "orders_usage_project_breakdown_empty": "No usage data available",
-    "orders_usage_project_breakdown_empty_hint": "Your LLM usage will appear here",
+    "orders_usage_project_breakdown_empty_hint":
+        "Your LLM usage will appear here",
     "orders_usage_project_breakdown_title": "Project Breakdown",
     "orders_usage_project_deleted": "Deleted",
     "orders_usage_time_range": "Time Range",
@@ -2740,14 +3110,17 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "orders_wallet_usage_bucket_expiring": "Expiring",
     "orders_wallet_usage_bucket_non_expiring": "Non-expiring",
     "orders_wallet_usage_empty": "No usage records yet.",
-    "orders_wallet_usage_empty_hint": "Consumption records from deployments and model usage will appear here.",
+    "orders_wallet_usage_empty_hint":
+        "Consumption records from deployments and model usage will appear here.",
     "orders_wallet_usage_source_admin_broadcast": "admin broadcast",
-    "orders_wallet_usage_source_system_message": "System message: {description}",
+    "orders_wallet_usage_source_system_message":
+        "System message: {description}",
     "other": "Autre",
     "owner_hint": "nom d'utilisateur ou organisation",
     "owner_label": "Propriétaire",
     "password": "Mot de passe",
-    "password_length_error": "Le mot de passe doit comporter au moins 6 caractères",
+    "password_length_error":
+        "Le mot de passe doit comporter au moins 6 caractères",
     "password_required": "Veuillez entrer le mot de passe",
     "password_reset_success": "Mot de passe réinitialisé avec succès",
     "passwords_do_not_match": "Les mots de passe ne correspondent pas",
@@ -2762,12 +3135,18 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_actions": "Actions",
     "project_analytics_active_now": "Active Now",
     "project_analytics_active_visitors": "Active Visitors",
-    "project_analytics_ai_prompt_active_now": "Can you help me interpret my real-time active users and recommend actions to improve conversion?",
-    "project_analytics_ai_prompt_custom_events": "Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?",
-    "project_analytics_ai_prompt_dashboard": "Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?",
-    "project_analytics_ai_prompt_pageviews": "Can you analyze my pageviews trend and suggest ways to increase traffic and retention?",
-    "project_analytics_ai_prompt_sessions": "Can you analyze my sessions and suggest how to increase engagement and session duration?",
-    "project_analytics_ai_prompt_visitors": "Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?",
+    "project_analytics_ai_prompt_active_now":
+        "Can you help me interpret my real-time active users and recommend actions to improve conversion?",
+    "project_analytics_ai_prompt_custom_events":
+        "Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?",
+    "project_analytics_ai_prompt_dashboard":
+        "Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?",
+    "project_analytics_ai_prompt_pageviews":
+        "Can you analyze my pageviews trend and suggest ways to increase traffic and retention?",
+    "project_analytics_ai_prompt_sessions":
+        "Can you analyze my sessions and suggest how to increase engagement and session duration?",
+    "project_analytics_ai_prompt_visitors":
+        "Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?",
     "project_analytics_all": "All",
     "project_analytics_bounces": "Bounces",
     "project_analytics_comparison_notes": "Comparison Notes",
@@ -2775,7 +3154,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_copy_failed": "Copy failed",
     "project_analytics_copy_field": "Copy {title}",
     "project_analytics_copy_summary": "Copy Summary",
-    "project_analytics_copy_summary_hint": "Copy a shareable analytics snapshot",
+    "project_analytics_copy_summary_hint":
+        "Copy a shareable analytics snapshot",
     "project_analytics_copy_tracking_code": "Copy Tracking Code",
     "project_analytics_copy_tracking_code_hint": "Copy Umami script snippet",
     "project_analytics_current_window": "Current window: {range}",
@@ -2795,9 +3175,11 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_dim_screen": "Screen",
     "project_analytics_dim_tag": "Tag",
     "project_analytics_enable_action": "Enable Analytics",
-    "project_analytics_enable_hint": "Track your website's visitors, page views, and custom events with Umami Analytics",
+    "project_analytics_enable_hint":
+        "Track your website's visitors, page views, and custom events with Umami Analytics",
     "project_analytics_enable_title": "Enable Analytics",
-    "project_analytics_env_filter_note": "Note: environment filter uses hostname exact matching.",
+    "project_analytics_env_filter_note":
+        "Note: environment filter uses hostname exact matching.",
     "project_analytics_environment": "Environment",
     "project_analytics_events": "Events",
     "project_analytics_events_trend": "Events Trend",
@@ -2810,14 +3192,20 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_filters": "Filters",
     "project_analytics_inactive_tab": "{title} tab",
     "project_analytics_initializing": "Initializing...",
-    "project_analytics_install_done_autojump": "Installation completed. Auto-opening Data in {seconds}s.",
-    "project_analytics_install_done_open": "Installation completed. You can open the analytics tabs now.",
-    "project_analytics_install_incomplete": "Analytics install did not complete successfully.",
-    "project_analytics_install_success": "Analytics successfully installed and activated.",
+    "project_analytics_install_done_autojump":
+        "Installation completed. Auto-opening Data in {seconds}s.",
+    "project_analytics_install_done_open":
+        "Installation completed. You can open the analytics tabs now.",
+    "project_analytics_install_incomplete":
+        "Analytics install did not complete successfully.",
+    "project_analytics_install_success":
+        "Analytics successfully installed and activated.",
     "project_analytics_installer": "Analytics Installer",
-    "project_analytics_installer_hint": "Review the session output or retry the install.",
+    "project_analytics_installer_hint":
+        "Review the session output or retry the install.",
     "project_analytics_installing": "Installing Analytics…",
-    "project_analytics_installing_hint": "We are initializing Umami and inserting the tracking script via a chat session.",
+    "project_analytics_installing_hint":
+        "We are initializing Umami and inserting the tracking script via a chat session.",
     "project_analytics_last_24_hours": "Last 24 Hours",
     "project_analytics_last_30_days": "Last 30 Days",
     "project_analytics_last_6_hours": "Last 6 Hours",
@@ -2828,10 +3216,12 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_metrics": "Metrics",
     "project_analytics_no_compare_data": "No top-page comparison data",
     "project_analytics_no_data": "No analytics data yet",
-    "project_analytics_no_data_hint": "Analytics data will appear once your project is live and receiving traffic.",
+    "project_analytics_no_data_hint":
+        "Analytics data will appear once your project is live and receiving traffic.",
     "project_analytics_no_data_short": "No data",
     "project_analytics_no_events": "No events in current range",
-    "project_analytics_no_metrics_selected": "No metrics selected. Enable Pageviews/Sessions in Filters.",
+    "project_analytics_no_metrics_selected":
+        "No metrics selected. Enable Pageviews/Sessions in Filters.",
     "project_analytics_no_realtime_urls": "No realtime URL data yet",
     "project_analytics_no_sessions": "No sessions in current range",
     "project_analytics_pageviews": "Pageviews",
@@ -2845,11 +3235,13 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_ready": "Analytics Ready",
     "project_analytics_recent_events": "Recent Events",
     "project_analytics_reenable": "Re-enable Analytics",
-    "project_analytics_reenable_confirm": "This will re-run analytics setup and re-insert the tracking script via workspace session. Continue?",
+    "project_analytics_reenable_confirm":
+        "This will re-run analytics setup and re-insert the tracking script via workspace session. Continue?",
     "project_analytics_reenable_hint": "Re-run script installation flow",
     "project_analytics_reenable_started": "Re-enable process started.",
     "project_analytics_reports": "Reports",
-    "project_analytics_reports_coming": "Custom reports are coming soon. This keeps parity with the current web placeholder state.",
+    "project_analytics_reports_coming":
+        "Custom reports are coming soon. This keeps parity with the current web placeholder state.",
     "project_analytics_reset": "Reset",
     "project_analytics_restore_defaults": "Restore defaults",
     "project_analytics_retry_install": "Retry Install",
@@ -2920,7 +3312,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_api_deleted": "Deleted",
     "project_api_description_optional": "Description (optional)",
     "project_api_edit_variable": "Edit variable",
-    "project_api_empty_hint": "Create your first key-value pair to configure\\nruntime behavior for this project.",
+    "project_api_empty_hint":
+        "Create your first key-value pair to configure\\nruntime behavior for this project.",
     "project_api_empty_title": "No environment variables",
     "project_api_environment_variables": "Environment Variables",
     "project_api_key": "Key",
@@ -2932,7 +3325,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_api_sensitive_masked": "Masked in lists by default",
     "project_api_sensitive_visible": "Visible in lists",
     "project_api_show": "Show",
-    "project_api_show_values_message": "This will reveal sensitive environment values on screen.",
+    "project_api_show_values_message":
+        "This will reveal sensitive environment values on screen.",
     "project_api_show_values_title": "Show values?",
     "project_api_update_failed": "Update failed",
     "project_api_value": "Value",
@@ -2942,33 +3336,43 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_api_variable_created": "Environment variable created",
     "project_api_variable_updated": "Environment variable updated",
     "project_chat_engine_fast": "Rapide",
-    "project_chat_engine_fast_hint": "Utiliser Claude pour des réponses plus rapides",
+    "project_chat_engine_fast_hint":
+        "Utiliser Claude pour des réponses plus rapides",
+    "project_chat_engine_switch_success": "Basculé vers {mode}",
     "project_chat_engine_think_hard": "Réflexion approfondie",
-    "project_chat_engine_think_hard_hint": "Utiliser Codex pour un raisonnement plus poussé",
+    "project_chat_engine_think_hard_hint":
+        "Utiliser Codex pour un raisonnement plus poussé",
     "project_chat_engine_title": "Mode",
     "project_database_actions": "Actions",
-    "project_database_ai_prompt_graph": "Given the database schema, explain how \"{table}\" relates to other tables (foreign keys) and suggest improvements.",
-    "project_database_ai_prompt_relation": "Explain the relationship from {from} to {to}. Suggest indexes and common queries.",
-    "project_database_ai_prompt_table": "Can you analyze the database table \"{table}\" and explain its purpose, structure, and any suggestions for optimization or best practices?",
+    "project_database_ai_prompt_graph":
+        "Given the database schema, explain how \"{table}\" relates to other tables (foreign keys) and suggest improvements.",
+    "project_database_ai_prompt_relation":
+        "Explain the relationship from {from} to {to}. Suggest indexes and common queries.",
+    "project_database_ai_prompt_table":
+        "Can you analyze the database table \"{table}\" and explain its purpose, structure, and any suggestions for optimization or best practices?",
     "project_database_ask_ai_table": "Ask AI about this table",
     "project_database_branch": "Branch",
     "project_database_branch_hint": "Current Neon branch context",
     "project_database_branch_primary": "{name} (primary)",
     "project_database_column_pk": "{name} (PK)",
     "project_database_columns_schema": "{columns} columns • {schema} schema",
-    "project_database_data_empty_hint": "Create tables first, then browse rows here.",
+    "project_database_data_empty_hint":
+        "Create tables first, then browse rows here.",
     "project_database_delete_row": "Delete row",
-    "project_database_delete_row_confirm": "Delete this row from {table}? This action cannot be undone.",
+    "project_database_delete_row_confirm":
+        "Delete this row from {table}? This action cannot be undone.",
     "project_database_edit_row": "Edit row",
     "project_database_enable_action": "Enable Database",
-    "project_database_enable_hint": "Provision a Neon PostgreSQL database for this project and start exploring your schema and data.",
+    "project_database_enable_hint":
+        "Provision a Neon PostgreSQL database for this project and start exploring your schema and data.",
     "project_database_enable_title": "Enable Database",
     "project_database_enabled_success": "Database enabled successfully!",
     "project_database_enabling": "Enabling...",
     "project_database_feature_branching": "Branching support",
     "project_database_feature_serverless": "Serverless Postgres on Neon",
     "project_database_feature_ssl": "Secure SSL connections",
-    "project_database_graph_hint": "Add more tables to see relationships as a graph.",
+    "project_database_graph_hint":
+        "Add more tables to see relationships as a graph.",
     "project_database_insert": "Insert",
     "project_database_insert_row": "Insert row",
     "project_database_inserting": "Inserting...",
@@ -2978,17 +3382,22 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_database_migration_plans": "{count} plans",
     "project_database_next": "Next",
     "project_database_no_columns": "No visible columns",
-    "project_database_no_columns_hint": "This table currently has no browsable columns.",
+    "project_database_no_columns_hint":
+        "This table currently has no browsable columns.",
     "project_database_no_editable_columns": "No editable columns",
-    "project_database_no_editable_columns_hint": "This table has no editable non-primary-key columns.",
+    "project_database_no_editable_columns_hint":
+        "This table has no editable non-primary-key columns.",
     "project_database_no_job_details": "No job details available yet.",
     "project_database_no_migration": "No migration history",
-    "project_database_no_migration_hint": "Migration plans and execution records will appear here.",
+    "project_database_no_migration_hint":
+        "Migration plans and execution records will appear here.",
     "project_database_no_relations": "No foreign-key relationships found.",
     "project_database_no_rows": "No rows found",
-    "project_database_no_rows_hint": "Try another table or insert data from your application flow.",
+    "project_database_no_rows_hint":
+        "Try another table or insert data from your application flow.",
     "project_database_no_tables": "No database tables",
-    "project_database_no_tables_hint": "Database tables will appear here once they are created.",
+    "project_database_no_tables_hint":
+        "Database tables will appear here once they are created.",
     "project_database_page": "Page {index}",
     "project_database_page_size": "{size} / page",
     "project_database_previous": "Previous",
@@ -3015,27 +3424,40 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_actions": "Actions",
     "project_deploy_active_preview": "Preview deployment in progress...",
     "project_deploy_active_prod": "Production release in progress: {phase}",
-    "project_deploy_active_reverting": "Rolling back commit{suffix} and triggering preview deploy...",
-    "project_deploy_ai_prompt_environment": "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_active_reverting":
+        "Rolling back commit{suffix} and triggering preview deploy...",
+    "project_deploy_ai_prompt_environment":
+        "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
     "project_deploy_ai_prompt_prefix": "My deploy failed with this error:",
-    "project_deploy_ai_prompt_preview": "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_prod": "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_suffix": "Give me the most likely root cause and a step-by-step fix.",
-    "project_deploy_ai_prompt_vercel_middle": "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
-    "project_deploy_ai_prompt_vercel_prefix": "My Vercel deployment failed for project",
-    "project_deploy_ai_prompt_vercel_suffix": "Also suggest what logs/env vars to check first.",
+    "project_deploy_ai_prompt_preview":
+        "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_prod":
+        "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_suffix":
+        "Give me the most likely root cause and a step-by-step fix.",
+    "project_deploy_ai_prompt_vercel_middle":
+        "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
+    "project_deploy_ai_prompt_vercel_prefix":
+        "My Vercel deployment failed for project",
+    "project_deploy_ai_prompt_vercel_suffix":
+        "Also suggest what logs/env vars to check first.",
     "project_deploy_ask_ai": "Ask AI",
     "project_deploy_build_log": "Build log",
     "project_deploy_build_logs": "Build logs",
     "project_deploy_close": "Close",
-    "project_deploy_coach_no_preview": "No preview yet. Start with a preview deploy to reduce release risk.",
-    "project_deploy_coach_preview_ready": "Preview is ready. Recommended next step: release to production.",
-    "project_deploy_coach_prod_live": "Production is live. Keep shipping with small preview iterations.",
+    "project_deploy_coach_no_preview":
+        "No preview yet. Start with a preview deploy to reduce release risk.",
+    "project_deploy_coach_preview_ready":
+        "Preview is ready. Recommended next step: release to production.",
+    "project_deploy_coach_prod_live":
+        "Production is live. Keep shipping with small preview iterations.",
     "project_deploy_common_fixes": "Common fixes:",
     "project_deploy_configure_later": "Configure later",
-    "project_deploy_confirm_preview_message": "This will trigger a new preview (dev) deployment on Vercel.",
+    "project_deploy_confirm_preview_message":
+        "This will trigger a new preview (dev) deployment on Vercel.",
     "project_deploy_confirm_preview_title": "Redeploy preview?",
-    "project_deploy_confirm_prod_message": "This will compare dev/main, merge if needed, then trigger a production deployment.",
+    "project_deploy_confirm_prod_message":
+        "This will compare dev/main, merge if needed, then trigger a production deployment.",
     "project_deploy_confirm_prod_title": "Deploy to production?",
     "project_deploy_copy": "Copy",
     "project_deploy_copy_all": "Copy all",
@@ -3048,7 +3470,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_filter_preview": "Preview",
     "project_deploy_filter_production": "Production",
     "project_deploy_history": "History",
-    "project_deploy_history_empty": "No deployments yet — deploy your project to see history here.",
+    "project_deploy_history_empty":
+        "No deployments yet — deploy your project to see history here.",
     "project_deploy_history_title": "Deployment History",
     "project_deploy_log_cached": "Cached",
     "project_deploy_log_empty": "No logs available for this deployment.",
@@ -3066,10 +3489,12 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_merge_into_main": "Merge into main",
     "project_deploy_more": "More",
     "project_deploy_next_steps": "Next steps",
-    "project_deploy_no_change_commits": "No change commits between adjacent releases.",
+    "project_deploy_no_change_commits":
+        "No change commits between adjacent releases.",
     "project_deploy_no_history": "No deployment history yet.",
     "project_deploy_no_logs": "No logs",
-    "project_deploy_no_logs_message": "This deployment has no Vercel deployment id.",
+    "project_deploy_no_logs_message":
+        "This deployment has no Vercel deployment id.",
     "project_deploy_no_message": "(no message)",
     "project_deploy_no_production": "No production deployment",
     "project_deploy_no_releases": "No releases detected on main yet.",
@@ -3091,12 +3516,15 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_releases": "Releases",
     "project_deploy_releases_main": "(main)",
     "project_deploy_retry_last": "Retry last deployment",
-    "project_deploy_retry_preview_message": "This will trigger a new preview (dev) deployment.",
+    "project_deploy_retry_preview_message":
+        "This will trigger a new preview (dev) deployment.",
     "project_deploy_retry_preview_title": "Retry preview deploy?",
-    "project_deploy_retry_prod_message": "This will compare dev/main, merge if needed, then trigger a new production deployment.",
+    "project_deploy_retry_prod_message":
+        "This will compare dev/main, merge if needed, then trigger a new production deployment.",
     "project_deploy_retry_prod_title": "Retry production deploy?",
     "project_deploy_revert_confirm_action": "Confirm revert",
-    "project_deploy_revert_confirm_message": "This will run git revert on commit {sha} and trigger a new preview deployment.",
+    "project_deploy_revert_confirm_message":
+        "This will run git revert on commit {sha} and trigger a new preview deployment.",
     "project_deploy_revert_confirm_title": "Revert this commit?",
     "project_deploy_revert_failed": "Revert failed",
     "project_deploy_revert_no_sha": "No commit SHA found for this deployment.",
@@ -3112,19 +3540,28 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_time_hours_ago": "{hours}h ago",
     "project_deploy_time_just_now": "just now",
     "project_deploy_time_minutes_ago": "{minutes}m ago",
-    "project_deploy_tip_build_issue": "This looks like a build failure — check compilation errors in logs.",
-    "project_deploy_tip_check_env_vars": "Check environment variables (and sync to Vercel).",
-    "project_deploy_tip_check_github_access": "Check GitHub collaborator/bot access to the repo.",
-    "project_deploy_tip_env_issue": "This looks like an env var issue — verify required secrets are set.",
-    "project_deploy_tip_open_logs": "Open the latest build logs and copy/share the error snippet.",
-    "project_deploy_tip_permission": "This looks like a permission issue — verify GitHub access and tokens.",
-    "project_deploy_tip_retry_preview_first": "Retry preview deploy first (then production).",
-    "project_deploy_tip_short_env": "Env vars configured (and synced to Vercel)",
+    "project_deploy_tip_build_issue":
+        "This looks like a build failure — check compilation errors in logs.",
+    "project_deploy_tip_check_env_vars":
+        "Check environment variables (and sync to Vercel).",
+    "project_deploy_tip_check_github_access":
+        "Check GitHub collaborator/bot access to the repo.",
+    "project_deploy_tip_env_issue":
+        "This looks like an env var issue — verify required secrets are set.",
+    "project_deploy_tip_open_logs":
+        "Open the latest build logs and copy/share the error snippet.",
+    "project_deploy_tip_permission":
+        "This looks like a permission issue — verify GitHub access and tokens.",
+    "project_deploy_tip_retry_preview_first":
+        "Retry preview deploy first (then production).",
+    "project_deploy_tip_short_env":
+        "Env vars configured (and synced to Vercel)",
     "project_deploy_tip_short_github": "GitHub access / repo permissions",
     "project_deploy_tip_short_logs": "Open build logs and share error snippet",
     "project_deploy_tip_short_retry_preview": "Retry preview deploy first",
     "project_deploy_troubleshooting": "Troubleshooting",
-    "project_deploy_troubleshooting_hint": "If deploy fails, try these quick checks:",
+    "project_deploy_troubleshooting_hint":
+        "If deploy fails, try these quick checks:",
     "project_deploy_unknown": "unknown",
     "project_detail_error_text": "Error: {error}",
     "project_detail_not_found": "Project not found",
@@ -3156,7 +3593,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_github_import": "GitHub Import",
     "project_github_import_as_new": "Import as new project",
     "project_github_import_failed": "Import failed: {error}",
-    "project_github_import_missing_project_id": "Import succeeded but missing project id",
+    "project_github_import_missing_project_id":
+        "Import succeeded but missing project id",
     "project_github_imported": "Imported",
     "project_github_imported_description": "Imported from GitHub: {repo}",
     "project_github_invalid_repo_url": "Invalid repository URL",
@@ -3182,25 +3620,38 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_overview_community_action_unpublish": "Unpublish",
     "project_overview_community_action_update": "Update",
     "project_overview_community_action_view": "View",
-    "project_overview_community_hint": "Publish a community post linked to this project (auto-release to production if needed).",
-    "project_overview_community_progress_deploy": "Triggering production deploy…",
+    "project_overview_community_hint":
+        "Publish a community post linked to this project (auto-release to production if needed).",
+    "project_overview_community_progress_deploy":
+        "Triggering production deploy…",
     "project_overview_community_progress_finalizing": "Finalizing…",
     "project_overview_community_progress_merge": "Merging branches…",
     "project_overview_community_progress_publish": "Publishing to community…",
-    "project_overview_community_publish_dialog_current_domain": "Current domain: {domain}",
-    "project_overview_community_publish_dialog_has_prod": "This project already has a production deployment. Publishing will create or update a community post linked to your project overview.",
-    "project_overview_community_publish_dialog_need_release": "To publish this project to the community, we first need to release it to production. We'll merge your dev branch into main, trigger a production deploy, then publish the post.",
-    "project_overview_community_publish_dialog_step_deploy": "• Trigger production deploy",
-    "project_overview_community_publish_dialog_step_merge": "• Merge dev → main",
-    "project_overview_community_publish_dialog_step_publish": "• Publish to community",
+    "project_overview_community_publish_dialog_current_domain":
+        "Current domain: {domain}",
+    "project_overview_community_publish_dialog_has_prod":
+        "This project already has a production deployment. Publishing will create or update a community post linked to your project overview.",
+    "project_overview_community_publish_dialog_need_release":
+        "To publish this project to the community, we first need to release it to production. We'll merge your dev branch into main, trigger a production deploy, then publish the post.",
+    "project_overview_community_publish_dialog_step_deploy":
+        "• Trigger production deploy",
+    "project_overview_community_publish_dialog_step_merge":
+        "• Merge dev → main",
+    "project_overview_community_publish_dialog_step_publish":
+        "• Publish to community",
     "project_overview_community_publish_dialog_steps": "Steps:",
     "project_overview_community_publish_dialog_title": "Publish to community",
-    "project_overview_community_publish_failed": "Failed to publish to community",
-    "project_overview_community_publish_failed_sentence": "Failed to publish to community.",
+    "project_overview_community_publish_failed":
+        "Failed to publish to community",
+    "project_overview_community_publish_failed_sentence":
+        "Failed to publish to community.",
     "project_overview_community_publish_success": "Published to community",
-    "project_overview_community_release_merge_message": "Merge {head} into {base}",
-    "project_overview_community_release_no_commits": "No commits found on development branch",
-    "project_overview_community_release_publish_failed": "Production deploy succeeded, but failed to publish to community",
+    "project_overview_community_release_merge_message":
+        "Merge {head} into {base}",
+    "project_overview_community_release_no_commits":
+        "No commits found on development branch",
+    "project_overview_community_release_publish_failed":
+        "Production deploy succeeded, but failed to publish to community",
     "project_overview_community_status_draft": "Draft",
     "project_overview_community_status_none": "Not published",
     "project_overview_community_status_published": "Published",
@@ -3209,20 +3660,25 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_overview_community_unpublish_success": "Unpublished",
     "project_overview_community_update_failed": "Failed to update post",
     "project_overview_community_update_success": "Post updated",
-    "project_overview_danger_delete_confirm_label": "Type project name to confirm",
-    "project_overview_danger_delete_desc": "This action cannot be undone. Please type the project name to confirm deletion.",
+    "project_overview_danger_delete_confirm_label":
+        "Type project name to confirm",
+    "project_overview_danger_delete_desc":
+        "This action cannot be undone. Please type the project name to confirm deletion.",
     "project_overview_danger_delete_failed": "Failed to delete project",
     "project_overview_danger_delete_in_progress": "Deleting {name}...",
     "project_overview_danger_delete_name_mismatch": "Name does not match.",
     "project_overview_danger_delete_progress_cleanup": "Final cleanup...",
-    "project_overview_danger_delete_progress_remove": "Removing project resources...",
-    "project_overview_danger_delete_progress_submit": "Submitting delete request...",
+    "project_overview_danger_delete_progress_remove":
+        "Removing project resources...",
+    "project_overview_danger_delete_progress_submit":
+        "Submitting delete request...",
     "project_overview_danger_delete_success": "Deleted {name}",
     "project_overview_danger_delete_title": "Delete project",
     "project_overview_danger_project_name": "Project: {name}",
     "project_overview_danger_title": "Danger zone",
     "project_overview_danger_transfer_action": "Transfer",
-    "project_overview_danger_transfer_desc": "Enter the recipient email to transfer ownership. You will lose access after transfer.",
+    "project_overview_danger_transfer_desc":
+        "Enter the recipient email to transfer ownership. You will lose access after transfer.",
     "project_overview_danger_transfer_failed": "Failed to transfer project",
     "project_overview_danger_transfer_recipient": "Recipient email",
     "project_overview_danger_transfer_success": "Project transferred",
@@ -3244,10 +3700,12 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_overview_health_title": "Health metrics",
     "project_overview_links_github_repo": "GitHub Repository",
     "project_overview_links_not_available": "Not available",
-    "project_overview_links_open_github_failed": "Could not open GitHub repository",
+    "project_overview_links_open_github_failed":
+        "Could not open GitHub repository",
     "project_overview_links_open_preview_failed": "Could not open preview URL",
     "project_overview_links_preview_url": "Preview URL",
-    "project_overview_recent_deployments_empty": "No recent deployments — ship a new build to see activity here.",
+    "project_overview_recent_deployments_empty":
+        "No recent deployments — ship a new build to see activity here.",
     "project_overview_recent_deployments_env": "{env} deployment",
     "project_overview_recent_deployments_feed": "Activity feed",
     "project_overview_recent_deployments_title": "Recent deployments",
@@ -3268,10 +3726,13 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_payment_add_product": "Add Product",
     "project_payment_add_product_failed": "Failed to add product: {error}",
     "project_payment_add_product_title": "Add Payment Product",
-    "project_payment_ai_prompt_product": "Can you analyze the payment product \"{name}\" and provide suggestions on pricing strategy, configuration, or marketing improvements?",
-    "project_payment_ai_prompt_transaction": "Can you analyze this payment transaction ({amount}, {status}) and provide insights about payment patterns or recommendations?",
+    "project_payment_ai_prompt_product":
+        "Can you analyze the payment product \"{name}\" and provide suggestions on pricing strategy, configuration, or marketing improvements?",
+    "project_payment_ai_prompt_transaction":
+        "Can you analyze this payment transaction ({amount}, {status}) and provide insights about payment patterns or recommendations?",
     "project_payment_anonymous": "Anonymous",
-    "project_payment_available_for_purchase": "Product is available for purchase",
+    "project_payment_available_for_purchase":
+        "Product is available for purchase",
     "project_payment_conversion_rate": "Conversion Rate",
     "project_payment_description_hint": "Describe your product",
     "project_payment_description_optional": "Description (Optional)",
@@ -3298,7 +3759,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_payment_total_revenue": "Total Revenue",
     "project_payment_transactions": "Transactions",
     "project_payment_unknown_product": "Unknown Product",
-    "project_payment_update_product_failed": "Failed to update product: {error}",
+    "project_payment_update_product_failed":
+        "Failed to update product: {error}",
     "projects_action_load_more": "Load More",
     "projects_action_relogin": "Re-login",
     "projects_empty": "No projects found",
@@ -3330,7 +3792,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "search": "Rechercher",
     "send_code": "Envoyer le code",
     "sending": "Envoi...",
-    "session_expired_message": "Votre session a expiré. Veuillez vous reconnecter.",
+    "session_expired_message":
+        "Votre session a expiré. Veuillez vous reconnecter.",
     "session_expired_title": "Session expirée",
     "settings": "Paramètres",
     "share_failed": "Failed to share",
@@ -3366,12 +3829,17 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "about_title": "アプリ情報",
     "account_data_contact_support_delete": "サポートに連絡してアカウントを削除",
     "account_data_copy_request_template": "依頼テンプレートをコピー",
-    "account_data_delete_confirm_message": "{support_email} にアカウント削除を依頼します。削除は元に戻せない場合があります。続行しますか？",
-    "account_data_delete_description": "アカウント削除は現在サポートが対応しています。削除を依頼する前に法的制限をご確認ください。",
-    "account_data_delete_template": "依頼: アカウント削除\\nアカウント: {email}\\nアカウントおよび関連データの削除をお願いします。\\nこの操作は元に戻せない可能性があることを理解しています。\\n連絡先: {support_email}",
+    "account_data_delete_confirm_message":
+        "{support_email} にアカウント削除を依頼します。削除は元に戻せない場合があります。続行しますか？",
+    "account_data_delete_description":
+        "アカウント削除は現在サポートが対応しています。削除を依頼する前に法的制限をご確認ください。",
+    "account_data_delete_template":
+        "依頼: アカウント削除\\nアカウント: {email}\\nアカウントおよび関連データの削除をお願いします。\\nこの操作は元に戻せない可能性があることを理解しています。\\n連絡先: {support_email}",
     "account_data_delete_title": "アカウント削除",
-    "account_data_export_description": "エクスポートは現在サポートが対応しています。コピーして送信できる依頼テンプレートを用意しています。",
-    "account_data_export_template": "依頼: データエクスポート\\nアカウント: {email}\\nアカウントデータ（プロフィール、プロジェクト、請求情報）のエクスポートをお願いします。\\n連絡先: {support_email}",
+    "account_data_export_description":
+        "エクスポートは現在サポートが対応しています。コピーして送信できる依頼テンプレートを用意しています。",
+    "account_data_export_template":
+        "依頼: データエクスポート\\nアカウント: {email}\\nアカウントデータ（プロフィール、プロジェクト、請求情報）のエクスポートをお願いします。\\n連絡先: {support_email}",
     "account_data_export_title": "データエクスポート",
     "account_data_legal": "法務",
     "account_data_request_template_copied": "依頼テンプレートをクリップボードにコピーしました",
@@ -3386,7 +3854,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "be_first_to_share": "最初の投稿者になりましょう！",
     "billing_insufficient_action_later": "Later",
     "billing_insufficient_action_topup": "Top up now",
-    "billing_insufficient_description": "Your balance is insufficient for this action. Please top up first.",
+    "billing_insufficient_description":
+        "Your balance is insufficient for this action. Please top up first.",
     "billing_insufficient_title": "Insufficient Balance",
     "bind_email": "メールアドレスをバインド",
     "bind_email_subtitle": "アカウントにメールアドレスをバインド",
@@ -3470,7 +3939,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "help_support_cta_title": "Still need help?",
     "help_support_docs_subtitle": "Technical documentation and API reference",
     "help_support_email_open_error": "Failed to open email: {error}",
-    "help_support_email_open_failed": "Could not open email app. Please email us at {email}",
+    "help_support_email_open_failed":
+        "Could not open email app. Please email us at {email}",
     "help_support_faq_title": "Frequently Asked Questions",
     "help_support_hero_subtitle": "Find answers or contact our support team",
     "help_support_hero_title": "How can we help you?",
@@ -3495,7 +3965,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "invite_description": "友達を d1v.ai に招待して報酬を獲得",
     "invite_friends": "友達を招待",
     "invites": "招待",
-    "invites_empty_message": "You haven't invited any friends yet.\\nShare your invite code to get started!",
+    "invites_empty_message":
+        "You haven't invited any friends yet.\\nShare your invite code to get started!",
     "invites_empty_title": "No Invites Yet",
     "invites_joined_at": "Joined {time}",
     "invites_load_failed_title": "Failed to load invited users",
@@ -3546,7 +4017,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "orders_usage_builder_billing_rule": "Billing rule: {rate}/min",
     "orders_usage_builder_empty": "No deployment records yet.",
     "orders_usage_builder_estimated_cost": "Estimated Cost",
-    "orders_usage_builder_estimated_cost_hint": "Estimated from deployment build durations",
+    "orders_usage_builder_estimated_cost_hint":
+        "Estimated from deployment build durations",
     "orders_usage_builder_load_failed": "Unable to load builder usage data.",
     "orders_usage_builder_overall": "Overall Build Time",
     "orders_usage_builder_projects_title": "Top Projects",
@@ -3568,7 +4040,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "orders_usage_llm_total_cost_hint": "Estimated cost",
     "orders_usage_na": "N/A",
     "orders_usage_project_breakdown_empty": "No usage data available",
-    "orders_usage_project_breakdown_empty_hint": "Your LLM usage will appear here",
+    "orders_usage_project_breakdown_empty_hint":
+        "Your LLM usage will appear here",
     "orders_usage_project_breakdown_title": "Project Breakdown",
     "orders_usage_project_deleted": "Deleted",
     "orders_usage_time_range": "Time Range",
@@ -3576,9 +4049,11 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "orders_wallet_usage_bucket_expiring": "Expiring",
     "orders_wallet_usage_bucket_non_expiring": "Non-expiring",
     "orders_wallet_usage_empty": "No usage records yet.",
-    "orders_wallet_usage_empty_hint": "Consumption records from deployments and model usage will appear here.",
+    "orders_wallet_usage_empty_hint":
+        "Consumption records from deployments and model usage will appear here.",
     "orders_wallet_usage_source_admin_broadcast": "admin broadcast",
-    "orders_wallet_usage_source_system_message": "System message: {description}",
+    "orders_wallet_usage_source_system_message":
+        "System message: {description}",
     "other": "その他",
     "owner_hint": "ユーザー名または組織名",
     "owner_label": "オーナー",
@@ -3598,12 +4073,18 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_actions": "Actions",
     "project_analytics_active_now": "Active Now",
     "project_analytics_active_visitors": "Active Visitors",
-    "project_analytics_ai_prompt_active_now": "Can you help me interpret my real-time active users and recommend actions to improve conversion?",
-    "project_analytics_ai_prompt_custom_events": "Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?",
-    "project_analytics_ai_prompt_dashboard": "Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?",
-    "project_analytics_ai_prompt_pageviews": "Can you analyze my pageviews trend and suggest ways to increase traffic and retention?",
-    "project_analytics_ai_prompt_sessions": "Can you analyze my sessions and suggest how to increase engagement and session duration?",
-    "project_analytics_ai_prompt_visitors": "Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?",
+    "project_analytics_ai_prompt_active_now":
+        "Can you help me interpret my real-time active users and recommend actions to improve conversion?",
+    "project_analytics_ai_prompt_custom_events":
+        "Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?",
+    "project_analytics_ai_prompt_dashboard":
+        "Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?",
+    "project_analytics_ai_prompt_pageviews":
+        "Can you analyze my pageviews trend and suggest ways to increase traffic and retention?",
+    "project_analytics_ai_prompt_sessions":
+        "Can you analyze my sessions and suggest how to increase engagement and session duration?",
+    "project_analytics_ai_prompt_visitors":
+        "Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?",
     "project_analytics_all": "All",
     "project_analytics_bounces": "Bounces",
     "project_analytics_comparison_notes": "Comparison Notes",
@@ -3611,7 +4092,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_copy_failed": "Copy failed",
     "project_analytics_copy_field": "Copy {title}",
     "project_analytics_copy_summary": "Copy Summary",
-    "project_analytics_copy_summary_hint": "Copy a shareable analytics snapshot",
+    "project_analytics_copy_summary_hint":
+        "Copy a shareable analytics snapshot",
     "project_analytics_copy_tracking_code": "Copy Tracking Code",
     "project_analytics_copy_tracking_code_hint": "Copy Umami script snippet",
     "project_analytics_current_window": "Current window: {range}",
@@ -3631,9 +4113,11 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_dim_screen": "Screen",
     "project_analytics_dim_tag": "Tag",
     "project_analytics_enable_action": "Enable Analytics",
-    "project_analytics_enable_hint": "Track your website's visitors, page views, and custom events with Umami Analytics",
+    "project_analytics_enable_hint":
+        "Track your website's visitors, page views, and custom events with Umami Analytics",
     "project_analytics_enable_title": "Enable Analytics",
-    "project_analytics_env_filter_note": "Note: environment filter uses hostname exact matching.",
+    "project_analytics_env_filter_note":
+        "Note: environment filter uses hostname exact matching.",
     "project_analytics_environment": "Environment",
     "project_analytics_events": "Events",
     "project_analytics_events_trend": "Events Trend",
@@ -3646,14 +4130,20 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_filters": "Filters",
     "project_analytics_inactive_tab": "{title} tab",
     "project_analytics_initializing": "Initializing...",
-    "project_analytics_install_done_autojump": "Installation completed. Auto-opening Data in {seconds}s.",
-    "project_analytics_install_done_open": "Installation completed. You can open the analytics tabs now.",
-    "project_analytics_install_incomplete": "Analytics install did not complete successfully.",
-    "project_analytics_install_success": "Analytics successfully installed and activated.",
+    "project_analytics_install_done_autojump":
+        "Installation completed. Auto-opening Data in {seconds}s.",
+    "project_analytics_install_done_open":
+        "Installation completed. You can open the analytics tabs now.",
+    "project_analytics_install_incomplete":
+        "Analytics install did not complete successfully.",
+    "project_analytics_install_success":
+        "Analytics successfully installed and activated.",
     "project_analytics_installer": "Analytics Installer",
-    "project_analytics_installer_hint": "Review the session output or retry the install.",
+    "project_analytics_installer_hint":
+        "Review the session output or retry the install.",
     "project_analytics_installing": "Installing Analytics…",
-    "project_analytics_installing_hint": "We are initializing Umami and inserting the tracking script via a chat session.",
+    "project_analytics_installing_hint":
+        "We are initializing Umami and inserting the tracking script via a chat session.",
     "project_analytics_last_24_hours": "Last 24 Hours",
     "project_analytics_last_30_days": "Last 30 Days",
     "project_analytics_last_6_hours": "Last 6 Hours",
@@ -3664,10 +4154,12 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_metrics": "Metrics",
     "project_analytics_no_compare_data": "No top-page comparison data",
     "project_analytics_no_data": "No analytics data yet",
-    "project_analytics_no_data_hint": "Analytics data will appear once your project is live and receiving traffic.",
+    "project_analytics_no_data_hint":
+        "Analytics data will appear once your project is live and receiving traffic.",
     "project_analytics_no_data_short": "No data",
     "project_analytics_no_events": "No events in current range",
-    "project_analytics_no_metrics_selected": "No metrics selected. Enable Pageviews/Sessions in Filters.",
+    "project_analytics_no_metrics_selected":
+        "No metrics selected. Enable Pageviews/Sessions in Filters.",
     "project_analytics_no_realtime_urls": "No realtime URL data yet",
     "project_analytics_no_sessions": "No sessions in current range",
     "project_analytics_pageviews": "Pageviews",
@@ -3681,11 +4173,13 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_ready": "Analytics Ready",
     "project_analytics_recent_events": "Recent Events",
     "project_analytics_reenable": "Re-enable Analytics",
-    "project_analytics_reenable_confirm": "This will re-run analytics setup and re-insert the tracking script via workspace session. Continue?",
+    "project_analytics_reenable_confirm":
+        "This will re-run analytics setup and re-insert the tracking script via workspace session. Continue?",
     "project_analytics_reenable_hint": "Re-run script installation flow",
     "project_analytics_reenable_started": "Re-enable process started.",
     "project_analytics_reports": "Reports",
-    "project_analytics_reports_coming": "Custom reports are coming soon. This keeps parity with the current web placeholder state.",
+    "project_analytics_reports_coming":
+        "Custom reports are coming soon. This keeps parity with the current web placeholder state.",
     "project_analytics_reset": "Reset",
     "project_analytics_restore_defaults": "Restore defaults",
     "project_analytics_retry_install": "Retry Install",
@@ -3756,7 +4250,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_api_deleted": "Deleted",
     "project_api_description_optional": "Description (optional)",
     "project_api_edit_variable": "Edit variable",
-    "project_api_empty_hint": "Create your first key-value pair to configure\\nruntime behavior for this project.",
+    "project_api_empty_hint":
+        "Create your first key-value pair to configure\\nruntime behavior for this project.",
     "project_api_empty_title": "No environment variables",
     "project_api_environment_variables": "Environment Variables",
     "project_api_key": "Key",
@@ -3768,7 +4263,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_api_sensitive_masked": "Masked in lists by default",
     "project_api_sensitive_visible": "Visible in lists",
     "project_api_show": "Show",
-    "project_api_show_values_message": "This will reveal sensitive environment values on screen.",
+    "project_api_show_values_message":
+        "This will reveal sensitive environment values on screen.",
     "project_api_show_values_title": "Show values?",
     "project_api_update_failed": "Update failed",
     "project_api_value": "Value",
@@ -3779,32 +4275,40 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_api_variable_updated": "Environment variable updated",
     "project_chat_engine_fast": "高速",
     "project_chat_engine_fast_hint": "Claude を使って速く返答します",
+    "project_chat_engine_switch_success": "{mode} に切り替えました",
     "project_chat_engine_think_hard": "深く考える",
     "project_chat_engine_think_hard_hint": "Codex を使ってより深く推論します",
     "project_chat_engine_title": "モード",
     "project_database_actions": "Actions",
-    "project_database_ai_prompt_graph": "Given the database schema, explain how \"{table}\" relates to other tables (foreign keys) and suggest improvements.",
-    "project_database_ai_prompt_relation": "Explain the relationship from {from} to {to}. Suggest indexes and common queries.",
-    "project_database_ai_prompt_table": "Can you analyze the database table \"{table}\" and explain its purpose, structure, and any suggestions for optimization or best practices?",
+    "project_database_ai_prompt_graph":
+        "Given the database schema, explain how \"{table}\" relates to other tables (foreign keys) and suggest improvements.",
+    "project_database_ai_prompt_relation":
+        "Explain the relationship from {from} to {to}. Suggest indexes and common queries.",
+    "project_database_ai_prompt_table":
+        "Can you analyze the database table \"{table}\" and explain its purpose, structure, and any suggestions for optimization or best practices?",
     "project_database_ask_ai_table": "Ask AI about this table",
     "project_database_branch": "Branch",
     "project_database_branch_hint": "Current Neon branch context",
     "project_database_branch_primary": "{name} (primary)",
     "project_database_column_pk": "{name} (PK)",
     "project_database_columns_schema": "{columns} columns • {schema} schema",
-    "project_database_data_empty_hint": "Create tables first, then browse rows here.",
+    "project_database_data_empty_hint":
+        "Create tables first, then browse rows here.",
     "project_database_delete_row": "Delete row",
-    "project_database_delete_row_confirm": "Delete this row from {table}? This action cannot be undone.",
+    "project_database_delete_row_confirm":
+        "Delete this row from {table}? This action cannot be undone.",
     "project_database_edit_row": "Edit row",
     "project_database_enable_action": "Enable Database",
-    "project_database_enable_hint": "Provision a Neon PostgreSQL database for this project and start exploring your schema and data.",
+    "project_database_enable_hint":
+        "Provision a Neon PostgreSQL database for this project and start exploring your schema and data.",
     "project_database_enable_title": "Enable Database",
     "project_database_enabled_success": "Database enabled successfully!",
     "project_database_enabling": "Enabling...",
     "project_database_feature_branching": "Branching support",
     "project_database_feature_serverless": "Serverless Postgres on Neon",
     "project_database_feature_ssl": "Secure SSL connections",
-    "project_database_graph_hint": "Add more tables to see relationships as a graph.",
+    "project_database_graph_hint":
+        "Add more tables to see relationships as a graph.",
     "project_database_insert": "Insert",
     "project_database_insert_row": "Insert row",
     "project_database_inserting": "Inserting...",
@@ -3814,17 +4318,22 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_database_migration_plans": "{count} plans",
     "project_database_next": "Next",
     "project_database_no_columns": "No visible columns",
-    "project_database_no_columns_hint": "This table currently has no browsable columns.",
+    "project_database_no_columns_hint":
+        "This table currently has no browsable columns.",
     "project_database_no_editable_columns": "No editable columns",
-    "project_database_no_editable_columns_hint": "This table has no editable non-primary-key columns.",
+    "project_database_no_editable_columns_hint":
+        "This table has no editable non-primary-key columns.",
     "project_database_no_job_details": "No job details available yet.",
     "project_database_no_migration": "No migration history",
-    "project_database_no_migration_hint": "Migration plans and execution records will appear here.",
+    "project_database_no_migration_hint":
+        "Migration plans and execution records will appear here.",
     "project_database_no_relations": "No foreign-key relationships found.",
     "project_database_no_rows": "No rows found",
-    "project_database_no_rows_hint": "Try another table or insert data from your application flow.",
+    "project_database_no_rows_hint":
+        "Try another table or insert data from your application flow.",
     "project_database_no_tables": "No database tables",
-    "project_database_no_tables_hint": "Database tables will appear here once they are created.",
+    "project_database_no_tables_hint":
+        "Database tables will appear here once they are created.",
     "project_database_page": "Page {index}",
     "project_database_page_size": "{size} / page",
     "project_database_previous": "Previous",
@@ -3851,27 +4360,40 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_actions": "Actions",
     "project_deploy_active_preview": "Preview deployment in progress...",
     "project_deploy_active_prod": "Production release in progress: {phase}",
-    "project_deploy_active_reverting": "Rolling back commit{suffix} and triggering preview deploy...",
-    "project_deploy_ai_prompt_environment": "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_active_reverting":
+        "Rolling back commit{suffix} and triggering preview deploy...",
+    "project_deploy_ai_prompt_environment":
+        "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
     "project_deploy_ai_prompt_prefix": "My deploy failed with this error:",
-    "project_deploy_ai_prompt_preview": "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_prod": "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_suffix": "Give me the most likely root cause and a step-by-step fix.",
-    "project_deploy_ai_prompt_vercel_middle": "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
-    "project_deploy_ai_prompt_vercel_prefix": "My Vercel deployment failed for project",
-    "project_deploy_ai_prompt_vercel_suffix": "Also suggest what logs/env vars to check first.",
+    "project_deploy_ai_prompt_preview":
+        "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_prod":
+        "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_suffix":
+        "Give me the most likely root cause and a step-by-step fix.",
+    "project_deploy_ai_prompt_vercel_middle":
+        "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
+    "project_deploy_ai_prompt_vercel_prefix":
+        "My Vercel deployment failed for project",
+    "project_deploy_ai_prompt_vercel_suffix":
+        "Also suggest what logs/env vars to check first.",
     "project_deploy_ask_ai": "Ask AI",
     "project_deploy_build_log": "Build log",
     "project_deploy_build_logs": "Build logs",
     "project_deploy_close": "Close",
-    "project_deploy_coach_no_preview": "No preview yet. Start with a preview deploy to reduce release risk.",
-    "project_deploy_coach_preview_ready": "Preview is ready. Recommended next step: release to production.",
-    "project_deploy_coach_prod_live": "Production is live. Keep shipping with small preview iterations.",
+    "project_deploy_coach_no_preview":
+        "No preview yet. Start with a preview deploy to reduce release risk.",
+    "project_deploy_coach_preview_ready":
+        "Preview is ready. Recommended next step: release to production.",
+    "project_deploy_coach_prod_live":
+        "Production is live. Keep shipping with small preview iterations.",
     "project_deploy_common_fixes": "Common fixes:",
     "project_deploy_configure_later": "Configure later",
-    "project_deploy_confirm_preview_message": "This will trigger a new preview (dev) deployment on Vercel.",
+    "project_deploy_confirm_preview_message":
+        "This will trigger a new preview (dev) deployment on Vercel.",
     "project_deploy_confirm_preview_title": "Redeploy preview?",
-    "project_deploy_confirm_prod_message": "This will compare dev/main, merge if needed, then trigger a production deployment.",
+    "project_deploy_confirm_prod_message":
+        "This will compare dev/main, merge if needed, then trigger a production deployment.",
     "project_deploy_confirm_prod_title": "Deploy to production?",
     "project_deploy_copy": "Copy",
     "project_deploy_copy_all": "Copy all",
@@ -3884,7 +4406,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_filter_preview": "Preview",
     "project_deploy_filter_production": "Production",
     "project_deploy_history": "History",
-    "project_deploy_history_empty": "No deployments yet — deploy your project to see history here.",
+    "project_deploy_history_empty":
+        "No deployments yet — deploy your project to see history here.",
     "project_deploy_history_title": "Deployment History",
     "project_deploy_log_cached": "Cached",
     "project_deploy_log_empty": "No logs available for this deployment.",
@@ -3902,10 +4425,12 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_merge_into_main": "Merge into main",
     "project_deploy_more": "More",
     "project_deploy_next_steps": "Next steps",
-    "project_deploy_no_change_commits": "No change commits between adjacent releases.",
+    "project_deploy_no_change_commits":
+        "No change commits between adjacent releases.",
     "project_deploy_no_history": "No deployment history yet.",
     "project_deploy_no_logs": "No logs",
-    "project_deploy_no_logs_message": "This deployment has no Vercel deployment id.",
+    "project_deploy_no_logs_message":
+        "This deployment has no Vercel deployment id.",
     "project_deploy_no_message": "(no message)",
     "project_deploy_no_production": "No production deployment",
     "project_deploy_no_releases": "No releases detected on main yet.",
@@ -3927,12 +4452,15 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_releases": "Releases",
     "project_deploy_releases_main": "(main)",
     "project_deploy_retry_last": "Retry last deployment",
-    "project_deploy_retry_preview_message": "This will trigger a new preview (dev) deployment.",
+    "project_deploy_retry_preview_message":
+        "This will trigger a new preview (dev) deployment.",
     "project_deploy_retry_preview_title": "Retry preview deploy?",
-    "project_deploy_retry_prod_message": "This will compare dev/main, merge if needed, then trigger a new production deployment.",
+    "project_deploy_retry_prod_message":
+        "This will compare dev/main, merge if needed, then trigger a new production deployment.",
     "project_deploy_retry_prod_title": "Retry production deploy?",
     "project_deploy_revert_confirm_action": "Confirm revert",
-    "project_deploy_revert_confirm_message": "This will run git revert on commit {sha} and trigger a new preview deployment.",
+    "project_deploy_revert_confirm_message":
+        "This will run git revert on commit {sha} and trigger a new preview deployment.",
     "project_deploy_revert_confirm_title": "Revert this commit?",
     "project_deploy_revert_failed": "Revert failed",
     "project_deploy_revert_no_sha": "No commit SHA found for this deployment.",
@@ -3948,19 +4476,28 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_time_hours_ago": "{hours}h ago",
     "project_deploy_time_just_now": "just now",
     "project_deploy_time_minutes_ago": "{minutes}m ago",
-    "project_deploy_tip_build_issue": "This looks like a build failure — check compilation errors in logs.",
-    "project_deploy_tip_check_env_vars": "Check environment variables (and sync to Vercel).",
-    "project_deploy_tip_check_github_access": "Check GitHub collaborator/bot access to the repo.",
-    "project_deploy_tip_env_issue": "This looks like an env var issue — verify required secrets are set.",
-    "project_deploy_tip_open_logs": "Open the latest build logs and copy/share the error snippet.",
-    "project_deploy_tip_permission": "This looks like a permission issue — verify GitHub access and tokens.",
-    "project_deploy_tip_retry_preview_first": "Retry preview deploy first (then production).",
-    "project_deploy_tip_short_env": "Env vars configured (and synced to Vercel)",
+    "project_deploy_tip_build_issue":
+        "This looks like a build failure — check compilation errors in logs.",
+    "project_deploy_tip_check_env_vars":
+        "Check environment variables (and sync to Vercel).",
+    "project_deploy_tip_check_github_access":
+        "Check GitHub collaborator/bot access to the repo.",
+    "project_deploy_tip_env_issue":
+        "This looks like an env var issue — verify required secrets are set.",
+    "project_deploy_tip_open_logs":
+        "Open the latest build logs and copy/share the error snippet.",
+    "project_deploy_tip_permission":
+        "This looks like a permission issue — verify GitHub access and tokens.",
+    "project_deploy_tip_retry_preview_first":
+        "Retry preview deploy first (then production).",
+    "project_deploy_tip_short_env":
+        "Env vars configured (and synced to Vercel)",
     "project_deploy_tip_short_github": "GitHub access / repo permissions",
     "project_deploy_tip_short_logs": "Open build logs and share error snippet",
     "project_deploy_tip_short_retry_preview": "Retry preview deploy first",
     "project_deploy_troubleshooting": "Troubleshooting",
-    "project_deploy_troubleshooting_hint": "If deploy fails, try these quick checks:",
+    "project_deploy_troubleshooting_hint":
+        "If deploy fails, try these quick checks:",
     "project_deploy_unknown": "unknown",
     "project_detail_error_text": "Error: {error}",
     "project_detail_not_found": "Project not found",
@@ -3992,7 +4529,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_github_import": "GitHub Import",
     "project_github_import_as_new": "Import as new project",
     "project_github_import_failed": "Import failed: {error}",
-    "project_github_import_missing_project_id": "Import succeeded but missing project id",
+    "project_github_import_missing_project_id":
+        "Import succeeded but missing project id",
     "project_github_imported": "Imported",
     "project_github_imported_description": "Imported from GitHub: {repo}",
     "project_github_invalid_repo_url": "Invalid repository URL",
@@ -4018,25 +4556,38 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_overview_community_action_unpublish": "Unpublish",
     "project_overview_community_action_update": "Update",
     "project_overview_community_action_view": "View",
-    "project_overview_community_hint": "Publish a community post linked to this project (auto-release to production if needed).",
-    "project_overview_community_progress_deploy": "Triggering production deploy…",
+    "project_overview_community_hint":
+        "Publish a community post linked to this project (auto-release to production if needed).",
+    "project_overview_community_progress_deploy":
+        "Triggering production deploy…",
     "project_overview_community_progress_finalizing": "Finalizing…",
     "project_overview_community_progress_merge": "Merging branches…",
     "project_overview_community_progress_publish": "Publishing to community…",
-    "project_overview_community_publish_dialog_current_domain": "Current domain: {domain}",
-    "project_overview_community_publish_dialog_has_prod": "This project already has a production deployment. Publishing will create or update a community post linked to your project overview.",
-    "project_overview_community_publish_dialog_need_release": "To publish this project to the community, we first need to release it to production. We'll merge your dev branch into main, trigger a production deploy, then publish the post.",
-    "project_overview_community_publish_dialog_step_deploy": "• Trigger production deploy",
-    "project_overview_community_publish_dialog_step_merge": "• Merge dev → main",
-    "project_overview_community_publish_dialog_step_publish": "• Publish to community",
+    "project_overview_community_publish_dialog_current_domain":
+        "Current domain: {domain}",
+    "project_overview_community_publish_dialog_has_prod":
+        "This project already has a production deployment. Publishing will create or update a community post linked to your project overview.",
+    "project_overview_community_publish_dialog_need_release":
+        "To publish this project to the community, we first need to release it to production. We'll merge your dev branch into main, trigger a production deploy, then publish the post.",
+    "project_overview_community_publish_dialog_step_deploy":
+        "• Trigger production deploy",
+    "project_overview_community_publish_dialog_step_merge":
+        "• Merge dev → main",
+    "project_overview_community_publish_dialog_step_publish":
+        "• Publish to community",
     "project_overview_community_publish_dialog_steps": "Steps:",
     "project_overview_community_publish_dialog_title": "Publish to community",
-    "project_overview_community_publish_failed": "Failed to publish to community",
-    "project_overview_community_publish_failed_sentence": "Failed to publish to community.",
+    "project_overview_community_publish_failed":
+        "Failed to publish to community",
+    "project_overview_community_publish_failed_sentence":
+        "Failed to publish to community.",
     "project_overview_community_publish_success": "Published to community",
-    "project_overview_community_release_merge_message": "Merge {head} into {base}",
-    "project_overview_community_release_no_commits": "No commits found on development branch",
-    "project_overview_community_release_publish_failed": "Production deploy succeeded, but failed to publish to community",
+    "project_overview_community_release_merge_message":
+        "Merge {head} into {base}",
+    "project_overview_community_release_no_commits":
+        "No commits found on development branch",
+    "project_overview_community_release_publish_failed":
+        "Production deploy succeeded, but failed to publish to community",
     "project_overview_community_status_draft": "Draft",
     "project_overview_community_status_none": "Not published",
     "project_overview_community_status_published": "Published",
@@ -4045,20 +4596,25 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_overview_community_unpublish_success": "Unpublished",
     "project_overview_community_update_failed": "Failed to update post",
     "project_overview_community_update_success": "Post updated",
-    "project_overview_danger_delete_confirm_label": "Type project name to confirm",
-    "project_overview_danger_delete_desc": "This action cannot be undone. Please type the project name to confirm deletion.",
+    "project_overview_danger_delete_confirm_label":
+        "Type project name to confirm",
+    "project_overview_danger_delete_desc":
+        "This action cannot be undone. Please type the project name to confirm deletion.",
     "project_overview_danger_delete_failed": "Failed to delete project",
     "project_overview_danger_delete_in_progress": "Deleting {name}...",
     "project_overview_danger_delete_name_mismatch": "Name does not match.",
     "project_overview_danger_delete_progress_cleanup": "Final cleanup...",
-    "project_overview_danger_delete_progress_remove": "Removing project resources...",
-    "project_overview_danger_delete_progress_submit": "Submitting delete request...",
+    "project_overview_danger_delete_progress_remove":
+        "Removing project resources...",
+    "project_overview_danger_delete_progress_submit":
+        "Submitting delete request...",
     "project_overview_danger_delete_success": "Deleted {name}",
     "project_overview_danger_delete_title": "Delete project",
     "project_overview_danger_project_name": "Project: {name}",
     "project_overview_danger_title": "Danger zone",
     "project_overview_danger_transfer_action": "Transfer",
-    "project_overview_danger_transfer_desc": "Enter the recipient email to transfer ownership. You will lose access after transfer.",
+    "project_overview_danger_transfer_desc":
+        "Enter the recipient email to transfer ownership. You will lose access after transfer.",
     "project_overview_danger_transfer_failed": "Failed to transfer project",
     "project_overview_danger_transfer_recipient": "Recipient email",
     "project_overview_danger_transfer_success": "Project transferred",
@@ -4080,10 +4636,12 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_overview_health_title": "Health metrics",
     "project_overview_links_github_repo": "GitHub Repository",
     "project_overview_links_not_available": "Not available",
-    "project_overview_links_open_github_failed": "Could not open GitHub repository",
+    "project_overview_links_open_github_failed":
+        "Could not open GitHub repository",
     "project_overview_links_open_preview_failed": "Could not open preview URL",
     "project_overview_links_preview_url": "Preview URL",
-    "project_overview_recent_deployments_empty": "No recent deployments — ship a new build to see activity here.",
+    "project_overview_recent_deployments_empty":
+        "No recent deployments — ship a new build to see activity here.",
     "project_overview_recent_deployments_env": "{env} deployment",
     "project_overview_recent_deployments_feed": "Activity feed",
     "project_overview_recent_deployments_title": "Recent deployments",
@@ -4104,10 +4662,13 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_payment_add_product": "Add Product",
     "project_payment_add_product_failed": "Failed to add product: {error}",
     "project_payment_add_product_title": "Add Payment Product",
-    "project_payment_ai_prompt_product": "Can you analyze the payment product \"{name}\" and provide suggestions on pricing strategy, configuration, or marketing improvements?",
-    "project_payment_ai_prompt_transaction": "Can you analyze this payment transaction ({amount}, {status}) and provide insights about payment patterns or recommendations?",
+    "project_payment_ai_prompt_product":
+        "Can you analyze the payment product \"{name}\" and provide suggestions on pricing strategy, configuration, or marketing improvements?",
+    "project_payment_ai_prompt_transaction":
+        "Can you analyze this payment transaction ({amount}, {status}) and provide insights about payment patterns or recommendations?",
     "project_payment_anonymous": "Anonymous",
-    "project_payment_available_for_purchase": "Product is available for purchase",
+    "project_payment_available_for_purchase":
+        "Product is available for purchase",
     "project_payment_conversion_rate": "Conversion Rate",
     "project_payment_description_hint": "Describe your product",
     "project_payment_description_optional": "Description (Optional)",
@@ -4134,7 +4695,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_payment_total_revenue": "Total Revenue",
     "project_payment_transactions": "Transactions",
     "project_payment_unknown_product": "Unknown Product",
-    "project_payment_update_product_failed": "Failed to update product: {error}",
+    "project_payment_update_product_failed":
+        "Failed to update product: {error}",
     "projects_action_load_more": "Load More",
     "projects_action_relogin": "Re-login",
     "projects_empty": "No projects found",
@@ -4197,32 +4759,43 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
   },
   "ru": <String, String>{
     "about": "О программе",
-    "about_description": "Платформа для разработки приложений с использованием ИИ.",
+    "about_description":
+        "Платформа для разработки приложений с использованием ИИ.",
     "about_subtitle": "Версия приложения и информация",
     "about_title": "О приложении",
-    "account_data_contact_support_delete": "Связаться с поддержкой для удаления аккаунта",
+    "account_data_contact_support_delete":
+        "Связаться с поддержкой для удаления аккаунта",
     "account_data_copy_request_template": "Скопировать шаблон запроса",
-    "account_data_delete_confirm_message": "Это свяжется с {support_email} для запроса удаления аккаунта. Удаление может быть необратимым. Продолжить?",
-    "account_data_delete_description": "Сейчас удаление аккаунта выполняется через поддержку. Перед запросом удаления ознакомьтесь с юридическими ограничениями.",
-    "account_data_delete_template": "Запрос: Удаление аккаунта\\nАккаунт: {email}\\nПожалуйста, удалите мой аккаунт и связанные данные.\\nЯ понимаю, что это действие может быть необратимым.\\nКонтакт: {support_email}",
+    "account_data_delete_confirm_message":
+        "Это свяжется с {support_email} для запроса удаления аккаунта. Удаление может быть необратимым. Продолжить?",
+    "account_data_delete_description":
+        "Сейчас удаление аккаунта выполняется через поддержку. Перед запросом удаления ознакомьтесь с юридическими ограничениями.",
+    "account_data_delete_template":
+        "Запрос: Удаление аккаунта\\nАккаунт: {email}\\nПожалуйста, удалите мой аккаунт и связанные данные.\\nЯ понимаю, что это действие может быть необратимым.\\nКонтакт: {support_email}",
     "account_data_delete_title": "Удаление аккаунта",
-    "account_data_export_description": "Сейчас экспорт выполняется через поддержку. Мы предоставляем шаблон, который можно скопировать и отправить.",
-    "account_data_export_template": "Запрос: Экспорт данных\\nАккаунт: {email}\\nПожалуйста, экспортируйте данные моего аккаунта (профиль, проекты, биллинг).\\nКонтакт: {support_email}",
+    "account_data_export_description":
+        "Сейчас экспорт выполняется через поддержку. Мы предоставляем шаблон, который можно скопировать и отправить.",
+    "account_data_export_template":
+        "Запрос: Экспорт данных\\nАккаунт: {email}\\nПожалуйста, экспортируйте данные моего аккаунта (профиль, проекты, биллинг).\\nКонтакт: {support_email}",
     "account_data_export_title": "Экспорт данных",
     "account_data_legal": "Юридическое",
-    "account_data_request_template_copied": "Шаблон запроса скопирован в буфер обмена",
+    "account_data_request_template_copied":
+        "Шаблон запроса скопирован в буфер обмена",
     "account_data_subtitle": "Экспорт данных и удаление аккаунта",
-    "account_data_support_dialog_message": "Пожалуйста, свяжитесь с {support_email} по этому запросу.",
+    "account_data_support_dialog_message":
+        "Пожалуйста, свяжитесь с {support_email} по этому запросу.",
     "account_data_title": "Аккаунт и данные",
     "activity": "Активность",
-    "agree_terms": "Входя в систему, вы соглашаетесь с нашими Условиями обслуживания и Политикой конфиденциальности",
+    "agree_terms":
+        "Входя в систему, вы соглашаетесь с нашими Условиями обслуживания и Политикой конфиденциальности",
     "api_settings": "API",
     "appearance": "Внешний вид",
     "basic_information": "Основная информация",
     "be_first_to_share": "Будьте первым, кто поделится чем-то!",
     "billing_insufficient_action_later": "Later",
     "billing_insufficient_action_topup": "Top up now",
-    "billing_insufficient_description": "Your balance is insufficient for this action. Please top up first.",
+    "billing_insufficient_description":
+        "Your balance is insufficient for this action. Please top up first.",
     "billing_insufficient_title": "Insufficient Balance",
     "bind_email": "Привязать почту",
     "bind_email_subtitle": "Привязать почту к аккаунту",
@@ -4276,12 +4849,15 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "email": "Электронная почта",
     "email_address": "Адрес электронной почты",
     "email_bound_success": "Электронная почта успешно привязана",
-    "email_invalid": "Пожалуйста, введите действительный адрес электронной почты",
+    "email_invalid":
+        "Пожалуйста, введите действительный адрес электронной почты",
     "email_required": "Пожалуйста, введите адрес электронной почты",
     "enter_code_and_new_password": "Введите код подтверждения и новый пароль",
-    "enter_code_sent": "Введите 6-значный код подтверждения, отправленный на вашу почту",
+    "enter_code_sent":
+        "Введите 6-значный код подтверждения, отправленный на вашу почту",
     "enter_email": "Введите вашу почту",
-    "enter_email_for_code": "Введите адрес электронной почты для получения кода подтверждения",
+    "enter_email_for_code":
+        "Введите адрес электронной почты для получения кода подтверждения",
     "enter_new_password": "Введите новый пароль",
     "enter_password": "Введите пароль",
     "enter_verify_code": "Введите код подтверждения",
@@ -4298,7 +4874,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "friends_count": "друзей",
     "friends_referred": "Приглашенные друзья",
     "github": "GitHub",
-    "github_connect_description": "Подключите свой аккаунт GitHub для импорта репозиториев",
+    "github_connect_description":
+        "Подключите свой аккаунт GitHub для импорта репозиториев",
     "github_integration": "Интеграция с GitHub",
     "help_support": "Помощь и поддержка",
     "help_support_contact_subtitle": "Email us at {email}",
@@ -4306,7 +4883,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "help_support_cta_title": "Still need help?",
     "help_support_docs_subtitle": "Technical documentation and API reference",
     "help_support_email_open_error": "Failed to open email: {error}",
-    "help_support_email_open_failed": "Could not open email app. Please email us at {email}",
+    "help_support_email_open_failed":
+        "Could not open email app. Please email us at {email}",
     "help_support_faq_title": "Frequently Asked Questions",
     "help_support_hero_subtitle": "Find answers or contact our support team",
     "help_support_hero_title": "How can we help you?",
@@ -4317,7 +4895,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "help_support_user_guide_subtitle": "Learn how to use all features",
     "help_support_user_guide_title": "User Guide",
     "import_action": "Импортировать",
-    "import_dialog_description": "Введите информацию о репозитории, который хотите импортировать",
+    "import_dialog_description":
+        "Введите информацию о репозитории, который хотите импортировать",
     "import_dialog_title": "Импорт публичного репозитория",
     "import_failed": "Не удалось импортировать репозиторий",
     "import_repository": "Импортировать репозиторий",
@@ -4325,13 +4904,16 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "import_success": "Репозиторий успешно импортирован",
     "importing": "Импорт...",
     "industry": "Отрасль",
-    "input_error_owner_repo": "Пожалуйста, введите владельца и название репозитория",
+    "input_error_owner_repo":
+        "Пожалуйста, введите владельца и название репозитория",
     "invite_code_copied": "Код приглашения скопирован в буфер обмена",
     "invite_code_unavailable": "Код приглашения недоступен",
-    "invite_description": "Приглашайте друзей присоединиться к d1v.ai и получайте награды",
+    "invite_description":
+        "Приглашайте друзей присоединиться к d1v.ai и получайте награды",
     "invite_friends": "Пригласить друзей",
     "invites": "Приглашения",
-    "invites_empty_message": "You haven't invited any friends yet.\\nShare your invite code to get started!",
+    "invites_empty_message":
+        "You haven't invited any friends yet.\\nShare your invite code to get started!",
     "invites_empty_title": "No Invites Yet",
     "invites_joined_at": "Joined {time}",
     "invites_load_failed_title": "Failed to load invited users",
@@ -4352,12 +4934,18 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "login_failed": "Ошибка входа",
     "login_first": "Пожалуйста, войдите сначала",
     "login_required_button": "Войти",
-    "login_required_create_post_message": "Чтобы создать публикацию, необходимо войти в систему.",
-    "login_required_dashboard_message": "Чтобы просматривать проекты, необходимо войти в систему.",
-    "login_required_github_message": "Чтобы управлять интеграцией GitHub, необходимо войти в систему.",
-    "login_required_invites_message": "Чтобы просматривать приглашения и награды, необходимо войти в систему.",
-    "login_required_orders_message": "Чтобы просматривать заказы и биллинг, необходимо войти в систему.",
-    "login_required_settings_message": "Чтобы управлять настройками аккаунта, необходимо войти в систему.",
+    "login_required_create_post_message":
+        "Чтобы создать публикацию, необходимо войти в систему.",
+    "login_required_dashboard_message":
+        "Чтобы просматривать проекты, необходимо войти в систему.",
+    "login_required_github_message":
+        "Чтобы управлять интеграцией GitHub, необходимо войти в систему.",
+    "login_required_invites_message":
+        "Чтобы просматривать приглашения и награды, необходимо войти в систему.",
+    "login_required_orders_message":
+        "Чтобы просматривать заказы и биллинг, необходимо войти в систему.",
+    "login_required_settings_message":
+        "Чтобы управлять настройками аккаунта, необходимо войти в систему.",
     "login_required_title": "Требуется вход",
     "login_success": "Успешный вход",
     "login_with_code": "Войти с кодом",
@@ -4382,7 +4970,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "orders_usage_builder_billing_rule": "Billing rule: {rate}/min",
     "orders_usage_builder_empty": "No deployment records yet.",
     "orders_usage_builder_estimated_cost": "Estimated Cost",
-    "orders_usage_builder_estimated_cost_hint": "Estimated from deployment build durations",
+    "orders_usage_builder_estimated_cost_hint":
+        "Estimated from deployment build durations",
     "orders_usage_builder_load_failed": "Unable to load builder usage data.",
     "orders_usage_builder_overall": "Overall Build Time",
     "orders_usage_builder_projects_title": "Top Projects",
@@ -4404,7 +4993,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "orders_usage_llm_total_cost_hint": "Estimated cost",
     "orders_usage_na": "N/A",
     "orders_usage_project_breakdown_empty": "No usage data available",
-    "orders_usage_project_breakdown_empty_hint": "Your LLM usage will appear here",
+    "orders_usage_project_breakdown_empty_hint":
+        "Your LLM usage will appear here",
     "orders_usage_project_breakdown_title": "Project Breakdown",
     "orders_usage_project_deleted": "Deleted",
     "orders_usage_time_range": "Time Range",
@@ -4412,9 +5002,11 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "orders_wallet_usage_bucket_expiring": "Expiring",
     "orders_wallet_usage_bucket_non_expiring": "Non-expiring",
     "orders_wallet_usage_empty": "No usage records yet.",
-    "orders_wallet_usage_empty_hint": "Consumption records from deployments and model usage will appear here.",
+    "orders_wallet_usage_empty_hint":
+        "Consumption records from deployments and model usage will appear here.",
     "orders_wallet_usage_source_admin_broadcast": "admin broadcast",
-    "orders_wallet_usage_source_system_message": "System message: {description}",
+    "orders_wallet_usage_source_system_message":
+        "System message: {description}",
     "other": "Другое",
     "owner_hint": "пользователь или организация",
     "owner_label": "Владелец",
@@ -4434,12 +5026,18 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_actions": "Actions",
     "project_analytics_active_now": "Active Now",
     "project_analytics_active_visitors": "Active Visitors",
-    "project_analytics_ai_prompt_active_now": "Can you help me interpret my real-time active users and recommend actions to improve conversion?",
-    "project_analytics_ai_prompt_custom_events": "Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?",
-    "project_analytics_ai_prompt_dashboard": "Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?",
-    "project_analytics_ai_prompt_pageviews": "Can you analyze my pageviews trend and suggest ways to increase traffic and retention?",
-    "project_analytics_ai_prompt_sessions": "Can you analyze my sessions and suggest how to increase engagement and session duration?",
-    "project_analytics_ai_prompt_visitors": "Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?",
+    "project_analytics_ai_prompt_active_now":
+        "Can you help me interpret my real-time active users and recommend actions to improve conversion?",
+    "project_analytics_ai_prompt_custom_events":
+        "Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?",
+    "project_analytics_ai_prompt_dashboard":
+        "Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?",
+    "project_analytics_ai_prompt_pageviews":
+        "Can you analyze my pageviews trend and suggest ways to increase traffic and retention?",
+    "project_analytics_ai_prompt_sessions":
+        "Can you analyze my sessions and suggest how to increase engagement and session duration?",
+    "project_analytics_ai_prompt_visitors":
+        "Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?",
     "project_analytics_all": "All",
     "project_analytics_bounces": "Bounces",
     "project_analytics_comparison_notes": "Comparison Notes",
@@ -4447,7 +5045,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_copy_failed": "Copy failed",
     "project_analytics_copy_field": "Copy {title}",
     "project_analytics_copy_summary": "Copy Summary",
-    "project_analytics_copy_summary_hint": "Copy a shareable analytics snapshot",
+    "project_analytics_copy_summary_hint":
+        "Copy a shareable analytics snapshot",
     "project_analytics_copy_tracking_code": "Copy Tracking Code",
     "project_analytics_copy_tracking_code_hint": "Copy Umami script snippet",
     "project_analytics_current_window": "Current window: {range}",
@@ -4467,9 +5066,11 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_dim_screen": "Screen",
     "project_analytics_dim_tag": "Tag",
     "project_analytics_enable_action": "Enable Analytics",
-    "project_analytics_enable_hint": "Track your website's visitors, page views, and custom events with Umami Analytics",
+    "project_analytics_enable_hint":
+        "Track your website's visitors, page views, and custom events with Umami Analytics",
     "project_analytics_enable_title": "Enable Analytics",
-    "project_analytics_env_filter_note": "Note: environment filter uses hostname exact matching.",
+    "project_analytics_env_filter_note":
+        "Note: environment filter uses hostname exact matching.",
     "project_analytics_environment": "Environment",
     "project_analytics_events": "Events",
     "project_analytics_events_trend": "Events Trend",
@@ -4482,14 +5083,20 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_filters": "Filters",
     "project_analytics_inactive_tab": "{title} tab",
     "project_analytics_initializing": "Initializing...",
-    "project_analytics_install_done_autojump": "Installation completed. Auto-opening Data in {seconds}s.",
-    "project_analytics_install_done_open": "Installation completed. You can open the analytics tabs now.",
-    "project_analytics_install_incomplete": "Analytics install did not complete successfully.",
-    "project_analytics_install_success": "Analytics successfully installed and activated.",
+    "project_analytics_install_done_autojump":
+        "Installation completed. Auto-opening Data in {seconds}s.",
+    "project_analytics_install_done_open":
+        "Installation completed. You can open the analytics tabs now.",
+    "project_analytics_install_incomplete":
+        "Analytics install did not complete successfully.",
+    "project_analytics_install_success":
+        "Analytics successfully installed and activated.",
     "project_analytics_installer": "Analytics Installer",
-    "project_analytics_installer_hint": "Review the session output or retry the install.",
+    "project_analytics_installer_hint":
+        "Review the session output or retry the install.",
     "project_analytics_installing": "Installing Analytics…",
-    "project_analytics_installing_hint": "We are initializing Umami and inserting the tracking script via a chat session.",
+    "project_analytics_installing_hint":
+        "We are initializing Umami and inserting the tracking script via a chat session.",
     "project_analytics_last_24_hours": "Last 24 Hours",
     "project_analytics_last_30_days": "Last 30 Days",
     "project_analytics_last_6_hours": "Last 6 Hours",
@@ -4500,10 +5107,12 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_metrics": "Metrics",
     "project_analytics_no_compare_data": "No top-page comparison data",
     "project_analytics_no_data": "No analytics data yet",
-    "project_analytics_no_data_hint": "Analytics data will appear once your project is live and receiving traffic.",
+    "project_analytics_no_data_hint":
+        "Analytics data will appear once your project is live and receiving traffic.",
     "project_analytics_no_data_short": "No data",
     "project_analytics_no_events": "No events in current range",
-    "project_analytics_no_metrics_selected": "No metrics selected. Enable Pageviews/Sessions in Filters.",
+    "project_analytics_no_metrics_selected":
+        "No metrics selected. Enable Pageviews/Sessions in Filters.",
     "project_analytics_no_realtime_urls": "No realtime URL data yet",
     "project_analytics_no_sessions": "No sessions in current range",
     "project_analytics_pageviews": "Pageviews",
@@ -4517,11 +5126,13 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_ready": "Analytics Ready",
     "project_analytics_recent_events": "Recent Events",
     "project_analytics_reenable": "Re-enable Analytics",
-    "project_analytics_reenable_confirm": "This will re-run analytics setup and re-insert the tracking script via workspace session. Continue?",
+    "project_analytics_reenable_confirm":
+        "This will re-run analytics setup and re-insert the tracking script via workspace session. Continue?",
     "project_analytics_reenable_hint": "Re-run script installation flow",
     "project_analytics_reenable_started": "Re-enable process started.",
     "project_analytics_reports": "Reports",
-    "project_analytics_reports_coming": "Custom reports are coming soon. This keeps parity with the current web placeholder state.",
+    "project_analytics_reports_coming":
+        "Custom reports are coming soon. This keeps parity with the current web placeholder state.",
     "project_analytics_reset": "Reset",
     "project_analytics_restore_defaults": "Restore defaults",
     "project_analytics_retry_install": "Retry Install",
@@ -4592,7 +5203,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_api_deleted": "Deleted",
     "project_api_description_optional": "Description (optional)",
     "project_api_edit_variable": "Edit variable",
-    "project_api_empty_hint": "Create your first key-value pair to configure\\nruntime behavior for this project.",
+    "project_api_empty_hint":
+        "Create your first key-value pair to configure\\nruntime behavior for this project.",
     "project_api_empty_title": "No environment variables",
     "project_api_environment_variables": "Environment Variables",
     "project_api_key": "Key",
@@ -4604,7 +5216,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_api_sensitive_masked": "Masked in lists by default",
     "project_api_sensitive_visible": "Visible in lists",
     "project_api_show": "Show",
-    "project_api_show_values_message": "This will reveal sensitive environment values on screen.",
+    "project_api_show_values_message":
+        "This will reveal sensitive environment values on screen.",
     "project_api_show_values_title": "Show values?",
     "project_api_update_failed": "Update failed",
     "project_api_value": "Value",
@@ -4614,33 +5227,43 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_api_variable_created": "Environment variable created",
     "project_api_variable_updated": "Environment variable updated",
     "project_chat_engine_fast": "Быстро",
-    "project_chat_engine_fast_hint": "Использовать Claude для более быстрых ответов",
+    "project_chat_engine_fast_hint":
+        "Использовать Claude для более быстрых ответов",
+    "project_chat_engine_switch_success": "Переключено на {mode}",
     "project_chat_engine_think_hard": "Думать глубже",
-    "project_chat_engine_think_hard_hint": "Использовать Codex для более глубокого рассуждения",
+    "project_chat_engine_think_hard_hint":
+        "Использовать Codex для более глубокого рассуждения",
     "project_chat_engine_title": "Режим",
     "project_database_actions": "Actions",
-    "project_database_ai_prompt_graph": "Given the database schema, explain how \"{table}\" relates to other tables (foreign keys) and suggest improvements.",
-    "project_database_ai_prompt_relation": "Explain the relationship from {from} to {to}. Suggest indexes and common queries.",
-    "project_database_ai_prompt_table": "Can you analyze the database table \"{table}\" and explain its purpose, structure, and any suggestions for optimization or best practices?",
+    "project_database_ai_prompt_graph":
+        "Given the database schema, explain how \"{table}\" relates to other tables (foreign keys) and suggest improvements.",
+    "project_database_ai_prompt_relation":
+        "Explain the relationship from {from} to {to}. Suggest indexes and common queries.",
+    "project_database_ai_prompt_table":
+        "Can you analyze the database table \"{table}\" and explain its purpose, structure, and any suggestions for optimization or best practices?",
     "project_database_ask_ai_table": "Ask AI about this table",
     "project_database_branch": "Branch",
     "project_database_branch_hint": "Current Neon branch context",
     "project_database_branch_primary": "{name} (primary)",
     "project_database_column_pk": "{name} (PK)",
     "project_database_columns_schema": "{columns} columns • {schema} schema",
-    "project_database_data_empty_hint": "Create tables first, then browse rows here.",
+    "project_database_data_empty_hint":
+        "Create tables first, then browse rows here.",
     "project_database_delete_row": "Delete row",
-    "project_database_delete_row_confirm": "Delete this row from {table}? This action cannot be undone.",
+    "project_database_delete_row_confirm":
+        "Delete this row from {table}? This action cannot be undone.",
     "project_database_edit_row": "Edit row",
     "project_database_enable_action": "Enable Database",
-    "project_database_enable_hint": "Provision a Neon PostgreSQL database for this project and start exploring your schema and data.",
+    "project_database_enable_hint":
+        "Provision a Neon PostgreSQL database for this project and start exploring your schema and data.",
     "project_database_enable_title": "Enable Database",
     "project_database_enabled_success": "Database enabled successfully!",
     "project_database_enabling": "Enabling...",
     "project_database_feature_branching": "Branching support",
     "project_database_feature_serverless": "Serverless Postgres on Neon",
     "project_database_feature_ssl": "Secure SSL connections",
-    "project_database_graph_hint": "Add more tables to see relationships as a graph.",
+    "project_database_graph_hint":
+        "Add more tables to see relationships as a graph.",
     "project_database_insert": "Insert",
     "project_database_insert_row": "Insert row",
     "project_database_inserting": "Inserting...",
@@ -4650,17 +5273,22 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_database_migration_plans": "{count} plans",
     "project_database_next": "Next",
     "project_database_no_columns": "No visible columns",
-    "project_database_no_columns_hint": "This table currently has no browsable columns.",
+    "project_database_no_columns_hint":
+        "This table currently has no browsable columns.",
     "project_database_no_editable_columns": "No editable columns",
-    "project_database_no_editable_columns_hint": "This table has no editable non-primary-key columns.",
+    "project_database_no_editable_columns_hint":
+        "This table has no editable non-primary-key columns.",
     "project_database_no_job_details": "No job details available yet.",
     "project_database_no_migration": "No migration history",
-    "project_database_no_migration_hint": "Migration plans and execution records will appear here.",
+    "project_database_no_migration_hint":
+        "Migration plans and execution records will appear here.",
     "project_database_no_relations": "No foreign-key relationships found.",
     "project_database_no_rows": "No rows found",
-    "project_database_no_rows_hint": "Try another table or insert data from your application flow.",
+    "project_database_no_rows_hint":
+        "Try another table or insert data from your application flow.",
     "project_database_no_tables": "No database tables",
-    "project_database_no_tables_hint": "Database tables will appear here once they are created.",
+    "project_database_no_tables_hint":
+        "Database tables will appear here once they are created.",
     "project_database_page": "Page {index}",
     "project_database_page_size": "{size} / page",
     "project_database_previous": "Previous",
@@ -4687,27 +5315,40 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_actions": "Actions",
     "project_deploy_active_preview": "Preview deployment in progress...",
     "project_deploy_active_prod": "Production release in progress: {phase}",
-    "project_deploy_active_reverting": "Rolling back commit{suffix} and triggering preview deploy...",
-    "project_deploy_ai_prompt_environment": "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_active_reverting":
+        "Rolling back commit{suffix} and triggering preview deploy...",
+    "project_deploy_ai_prompt_environment":
+        "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
     "project_deploy_ai_prompt_prefix": "My deploy failed with this error:",
-    "project_deploy_ai_prompt_preview": "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_prod": "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_suffix": "Give me the most likely root cause and a step-by-step fix.",
-    "project_deploy_ai_prompt_vercel_middle": "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
-    "project_deploy_ai_prompt_vercel_prefix": "My Vercel deployment failed for project",
-    "project_deploy_ai_prompt_vercel_suffix": "Also suggest what logs/env vars to check first.",
+    "project_deploy_ai_prompt_preview":
+        "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_prod":
+        "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_suffix":
+        "Give me the most likely root cause and a step-by-step fix.",
+    "project_deploy_ai_prompt_vercel_middle":
+        "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
+    "project_deploy_ai_prompt_vercel_prefix":
+        "My Vercel deployment failed for project",
+    "project_deploy_ai_prompt_vercel_suffix":
+        "Also suggest what logs/env vars to check first.",
     "project_deploy_ask_ai": "Ask AI",
     "project_deploy_build_log": "Build log",
     "project_deploy_build_logs": "Build logs",
     "project_deploy_close": "Close",
-    "project_deploy_coach_no_preview": "No preview yet. Start with a preview deploy to reduce release risk.",
-    "project_deploy_coach_preview_ready": "Preview is ready. Recommended next step: release to production.",
-    "project_deploy_coach_prod_live": "Production is live. Keep shipping with small preview iterations.",
+    "project_deploy_coach_no_preview":
+        "No preview yet. Start with a preview deploy to reduce release risk.",
+    "project_deploy_coach_preview_ready":
+        "Preview is ready. Recommended next step: release to production.",
+    "project_deploy_coach_prod_live":
+        "Production is live. Keep shipping with small preview iterations.",
     "project_deploy_common_fixes": "Common fixes:",
     "project_deploy_configure_later": "Configure later",
-    "project_deploy_confirm_preview_message": "This will trigger a new preview (dev) deployment on Vercel.",
+    "project_deploy_confirm_preview_message":
+        "This will trigger a new preview (dev) deployment on Vercel.",
     "project_deploy_confirm_preview_title": "Redeploy preview?",
-    "project_deploy_confirm_prod_message": "This will compare dev/main, merge if needed, then trigger a production deployment.",
+    "project_deploy_confirm_prod_message":
+        "This will compare dev/main, merge if needed, then trigger a production deployment.",
     "project_deploy_confirm_prod_title": "Deploy to production?",
     "project_deploy_copy": "Copy",
     "project_deploy_copy_all": "Copy all",
@@ -4720,7 +5361,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_filter_preview": "Preview",
     "project_deploy_filter_production": "Production",
     "project_deploy_history": "History",
-    "project_deploy_history_empty": "No deployments yet — deploy your project to see history here.",
+    "project_deploy_history_empty":
+        "No deployments yet — deploy your project to see history here.",
     "project_deploy_history_title": "Deployment History",
     "project_deploy_log_cached": "Cached",
     "project_deploy_log_empty": "No logs available for this deployment.",
@@ -4738,10 +5380,12 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_merge_into_main": "Merge into main",
     "project_deploy_more": "More",
     "project_deploy_next_steps": "Next steps",
-    "project_deploy_no_change_commits": "No change commits between adjacent releases.",
+    "project_deploy_no_change_commits":
+        "No change commits between adjacent releases.",
     "project_deploy_no_history": "No deployment history yet.",
     "project_deploy_no_logs": "No logs",
-    "project_deploy_no_logs_message": "This deployment has no Vercel deployment id.",
+    "project_deploy_no_logs_message":
+        "This deployment has no Vercel deployment id.",
     "project_deploy_no_message": "(no message)",
     "project_deploy_no_production": "No production deployment",
     "project_deploy_no_releases": "No releases detected on main yet.",
@@ -4763,12 +5407,15 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_releases": "Releases",
     "project_deploy_releases_main": "(main)",
     "project_deploy_retry_last": "Retry last deployment",
-    "project_deploy_retry_preview_message": "This will trigger a new preview (dev) deployment.",
+    "project_deploy_retry_preview_message":
+        "This will trigger a new preview (dev) deployment.",
     "project_deploy_retry_preview_title": "Retry preview deploy?",
-    "project_deploy_retry_prod_message": "This will compare dev/main, merge if needed, then trigger a new production deployment.",
+    "project_deploy_retry_prod_message":
+        "This will compare dev/main, merge if needed, then trigger a new production deployment.",
     "project_deploy_retry_prod_title": "Retry production deploy?",
     "project_deploy_revert_confirm_action": "Confirm revert",
-    "project_deploy_revert_confirm_message": "This will run git revert on commit {sha} and trigger a new preview deployment.",
+    "project_deploy_revert_confirm_message":
+        "This will run git revert on commit {sha} and trigger a new preview deployment.",
     "project_deploy_revert_confirm_title": "Revert this commit?",
     "project_deploy_revert_failed": "Revert failed",
     "project_deploy_revert_no_sha": "No commit SHA found for this deployment.",
@@ -4784,19 +5431,28 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_time_hours_ago": "{hours}h ago",
     "project_deploy_time_just_now": "just now",
     "project_deploy_time_minutes_ago": "{minutes}m ago",
-    "project_deploy_tip_build_issue": "This looks like a build failure — check compilation errors in logs.",
-    "project_deploy_tip_check_env_vars": "Check environment variables (and sync to Vercel).",
-    "project_deploy_tip_check_github_access": "Check GitHub collaborator/bot access to the repo.",
-    "project_deploy_tip_env_issue": "This looks like an env var issue — verify required secrets are set.",
-    "project_deploy_tip_open_logs": "Open the latest build logs and copy/share the error snippet.",
-    "project_deploy_tip_permission": "This looks like a permission issue — verify GitHub access and tokens.",
-    "project_deploy_tip_retry_preview_first": "Retry preview deploy first (then production).",
-    "project_deploy_tip_short_env": "Env vars configured (and synced to Vercel)",
+    "project_deploy_tip_build_issue":
+        "This looks like a build failure — check compilation errors in logs.",
+    "project_deploy_tip_check_env_vars":
+        "Check environment variables (and sync to Vercel).",
+    "project_deploy_tip_check_github_access":
+        "Check GitHub collaborator/bot access to the repo.",
+    "project_deploy_tip_env_issue":
+        "This looks like an env var issue — verify required secrets are set.",
+    "project_deploy_tip_open_logs":
+        "Open the latest build logs and copy/share the error snippet.",
+    "project_deploy_tip_permission":
+        "This looks like a permission issue — verify GitHub access and tokens.",
+    "project_deploy_tip_retry_preview_first":
+        "Retry preview deploy first (then production).",
+    "project_deploy_tip_short_env":
+        "Env vars configured (and synced to Vercel)",
     "project_deploy_tip_short_github": "GitHub access / repo permissions",
     "project_deploy_tip_short_logs": "Open build logs and share error snippet",
     "project_deploy_tip_short_retry_preview": "Retry preview deploy first",
     "project_deploy_troubleshooting": "Troubleshooting",
-    "project_deploy_troubleshooting_hint": "If deploy fails, try these quick checks:",
+    "project_deploy_troubleshooting_hint":
+        "If deploy fails, try these quick checks:",
     "project_deploy_unknown": "unknown",
     "project_detail_error_text": "Error: {error}",
     "project_detail_not_found": "Project not found",
@@ -4828,7 +5484,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_github_import": "GitHub Import",
     "project_github_import_as_new": "Import as new project",
     "project_github_import_failed": "Import failed: {error}",
-    "project_github_import_missing_project_id": "Import succeeded but missing project id",
+    "project_github_import_missing_project_id":
+        "Import succeeded but missing project id",
     "project_github_imported": "Imported",
     "project_github_imported_description": "Imported from GitHub: {repo}",
     "project_github_invalid_repo_url": "Invalid repository URL",
@@ -4847,32 +5504,46 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_github_verify_access": "Verify access",
     "project_github_verify_access_failed": "Verify access failed: {error}",
     "project_github_workspace_branch": "workspace: {branch}",
-    "project_name_hint": "Оставьте пустым, чтобы использовать название репозитория",
+    "project_name_hint":
+        "Оставьте пустым, чтобы использовать название репозитория",
     "project_name_optional": "Название проекта (необязательно)",
     "project_overview_community_action_publish": "Publish",
     "project_overview_community_action_release_publish": "Release & Publish",
     "project_overview_community_action_unpublish": "Unpublish",
     "project_overview_community_action_update": "Update",
     "project_overview_community_action_view": "View",
-    "project_overview_community_hint": "Publish a community post linked to this project (auto-release to production if needed).",
-    "project_overview_community_progress_deploy": "Triggering production deploy…",
+    "project_overview_community_hint":
+        "Publish a community post linked to this project (auto-release to production if needed).",
+    "project_overview_community_progress_deploy":
+        "Triggering production deploy…",
     "project_overview_community_progress_finalizing": "Finalizing…",
     "project_overview_community_progress_merge": "Merging branches…",
     "project_overview_community_progress_publish": "Publishing to community…",
-    "project_overview_community_publish_dialog_current_domain": "Current domain: {domain}",
-    "project_overview_community_publish_dialog_has_prod": "This project already has a production deployment. Publishing will create or update a community post linked to your project overview.",
-    "project_overview_community_publish_dialog_need_release": "To publish this project to the community, we first need to release it to production. We'll merge your dev branch into main, trigger a production deploy, then publish the post.",
-    "project_overview_community_publish_dialog_step_deploy": "• Trigger production deploy",
-    "project_overview_community_publish_dialog_step_merge": "• Merge dev → main",
-    "project_overview_community_publish_dialog_step_publish": "• Publish to community",
+    "project_overview_community_publish_dialog_current_domain":
+        "Current domain: {domain}",
+    "project_overview_community_publish_dialog_has_prod":
+        "This project already has a production deployment. Publishing will create or update a community post linked to your project overview.",
+    "project_overview_community_publish_dialog_need_release":
+        "To publish this project to the community, we first need to release it to production. We'll merge your dev branch into main, trigger a production deploy, then publish the post.",
+    "project_overview_community_publish_dialog_step_deploy":
+        "• Trigger production deploy",
+    "project_overview_community_publish_dialog_step_merge":
+        "• Merge dev → main",
+    "project_overview_community_publish_dialog_step_publish":
+        "• Publish to community",
     "project_overview_community_publish_dialog_steps": "Steps:",
     "project_overview_community_publish_dialog_title": "Publish to community",
-    "project_overview_community_publish_failed": "Failed to publish to community",
-    "project_overview_community_publish_failed_sentence": "Failed to publish to community.",
+    "project_overview_community_publish_failed":
+        "Failed to publish to community",
+    "project_overview_community_publish_failed_sentence":
+        "Failed to publish to community.",
     "project_overview_community_publish_success": "Published to community",
-    "project_overview_community_release_merge_message": "Merge {head} into {base}",
-    "project_overview_community_release_no_commits": "No commits found on development branch",
-    "project_overview_community_release_publish_failed": "Production deploy succeeded, but failed to publish to community",
+    "project_overview_community_release_merge_message":
+        "Merge {head} into {base}",
+    "project_overview_community_release_no_commits":
+        "No commits found on development branch",
+    "project_overview_community_release_publish_failed":
+        "Production deploy succeeded, but failed to publish to community",
     "project_overview_community_status_draft": "Draft",
     "project_overview_community_status_none": "Not published",
     "project_overview_community_status_published": "Published",
@@ -4881,20 +5552,25 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_overview_community_unpublish_success": "Unpublished",
     "project_overview_community_update_failed": "Failed to update post",
     "project_overview_community_update_success": "Post updated",
-    "project_overview_danger_delete_confirm_label": "Type project name to confirm",
-    "project_overview_danger_delete_desc": "This action cannot be undone. Please type the project name to confirm deletion.",
+    "project_overview_danger_delete_confirm_label":
+        "Type project name to confirm",
+    "project_overview_danger_delete_desc":
+        "This action cannot be undone. Please type the project name to confirm deletion.",
     "project_overview_danger_delete_failed": "Failed to delete project",
     "project_overview_danger_delete_in_progress": "Deleting {name}...",
     "project_overview_danger_delete_name_mismatch": "Name does not match.",
     "project_overview_danger_delete_progress_cleanup": "Final cleanup...",
-    "project_overview_danger_delete_progress_remove": "Removing project resources...",
-    "project_overview_danger_delete_progress_submit": "Submitting delete request...",
+    "project_overview_danger_delete_progress_remove":
+        "Removing project resources...",
+    "project_overview_danger_delete_progress_submit":
+        "Submitting delete request...",
     "project_overview_danger_delete_success": "Deleted {name}",
     "project_overview_danger_delete_title": "Delete project",
     "project_overview_danger_project_name": "Project: {name}",
     "project_overview_danger_title": "Danger zone",
     "project_overview_danger_transfer_action": "Transfer",
-    "project_overview_danger_transfer_desc": "Enter the recipient email to transfer ownership. You will lose access after transfer.",
+    "project_overview_danger_transfer_desc":
+        "Enter the recipient email to transfer ownership. You will lose access after transfer.",
     "project_overview_danger_transfer_failed": "Failed to transfer project",
     "project_overview_danger_transfer_recipient": "Recipient email",
     "project_overview_danger_transfer_success": "Project transferred",
@@ -4916,10 +5592,12 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_overview_health_title": "Health metrics",
     "project_overview_links_github_repo": "GitHub Repository",
     "project_overview_links_not_available": "Not available",
-    "project_overview_links_open_github_failed": "Could not open GitHub repository",
+    "project_overview_links_open_github_failed":
+        "Could not open GitHub repository",
     "project_overview_links_open_preview_failed": "Could not open preview URL",
     "project_overview_links_preview_url": "Preview URL",
-    "project_overview_recent_deployments_empty": "No recent deployments — ship a new build to see activity here.",
+    "project_overview_recent_deployments_empty":
+        "No recent deployments — ship a new build to see activity here.",
     "project_overview_recent_deployments_env": "{env} deployment",
     "project_overview_recent_deployments_feed": "Activity feed",
     "project_overview_recent_deployments_title": "Recent deployments",
@@ -4940,10 +5618,13 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_payment_add_product": "Add Product",
     "project_payment_add_product_failed": "Failed to add product: {error}",
     "project_payment_add_product_title": "Add Payment Product",
-    "project_payment_ai_prompt_product": "Can you analyze the payment product \"{name}\" and provide suggestions on pricing strategy, configuration, or marketing improvements?",
-    "project_payment_ai_prompt_transaction": "Can you analyze this payment transaction ({amount}, {status}) and provide insights about payment patterns or recommendations?",
+    "project_payment_ai_prompt_product":
+        "Can you analyze the payment product \"{name}\" and provide suggestions on pricing strategy, configuration, or marketing improvements?",
+    "project_payment_ai_prompt_transaction":
+        "Can you analyze this payment transaction ({amount}, {status}) and provide insights about payment patterns or recommendations?",
     "project_payment_anonymous": "Anonymous",
-    "project_payment_available_for_purchase": "Product is available for purchase",
+    "project_payment_available_for_purchase":
+        "Product is available for purchase",
     "project_payment_conversion_rate": "Conversion Rate",
     "project_payment_description_hint": "Describe your product",
     "project_payment_description_optional": "Description (Optional)",
@@ -4970,7 +5651,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_payment_total_revenue": "Total Revenue",
     "project_payment_transactions": "Transactions",
     "project_payment_unknown_product": "Unknown Product",
-    "project_payment_update_product_failed": "Failed to update product: {error}",
+    "project_payment_update_product_failed":
+        "Failed to update product: {error}",
     "projects_action_load_more": "Load More",
     "projects_action_relogin": "Re-login",
     "projects_empty": "No projects found",
@@ -5002,7 +5684,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "search": "Поиск",
     "send_code": "Отправить код",
     "sending": "Отправка...",
-    "session_expired_message": "Срок действия входа истек. Пожалуйста, войдите снова.",
+    "session_expired_message":
+        "Срок действия входа истек. Пожалуйста, войдите снова.",
     "session_expired_title": "Сессия истекла",
     "settings": "Настройки",
     "share_failed": "Failed to share",
@@ -5038,12 +5721,15 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "about_title": "关于",
     "account_data_contact_support_delete": "联系支持删除账户",
     "account_data_copy_request_template": "复制请求文案",
-    "account_data_delete_confirm_message": "这将通过 {support_email} 发起账户删除请求。删除可能不可恢复，是否继续？",
+    "account_data_delete_confirm_message":
+        "这将通过 {support_email} 发起账户删除请求。删除可能不可恢复，是否继续？",
     "account_data_delete_description": "账户删除目前由客服处理。在发起删除前请先阅读法律限制说明。",
-    "account_data_delete_template": "请求：账户删除\\n账户：{email}\\n请删除我的账户及关联数据。\\n我理解该操作可能不可逆。\\n联系方式：{support_email}",
+    "account_data_delete_template":
+        "请求：账户删除\\n账户：{email}\\n请删除我的账户及关联数据。\\n我理解该操作可能不可逆。\\n联系方式：{support_email}",
     "account_data_delete_title": "账户删除",
     "account_data_export_description": "导出目前由客服处理。我们提供可复制并发送的请求模板。",
-    "account_data_export_template": "请求：数据导出\\n账户：{email}\\n请导出我的账户数据（资料、项目、计费）。\\n联系方式：{support_email}",
+    "account_data_export_template":
+        "请求：数据导出\\n账户：{email}\\n请导出我的账户数据（资料、项目、计费）。\\n联系方式：{support_email}",
     "account_data_export_title": "数据导出",
     "account_data_legal": "法律",
     "account_data_request_template_copied": "请求文案已复制到剪贴板",
@@ -5271,11 +5957,14 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_active_now": "当前活跃",
     "project_analytics_active_visitors": "活跃访客",
     "project_analytics_ai_prompt_active_now": "你可以帮我解读实时活跃用户，并给出提升转化的建议吗？",
-    "project_analytics_ai_prompt_custom_events": "你可以指导我如何在项目中配置自定义事件追踪吗？为了提升产品，最应该追踪哪些事件？",
-    "project_analytics_ai_prompt_dashboard": "你可以帮我解读这些分析数据，并给出提升用户参与度、性能和整体指标的建议吗？",
+    "project_analytics_ai_prompt_custom_events":
+        "你可以指导我如何在项目中配置自定义事件追踪吗？为了提升产品，最应该追踪哪些事件？",
+    "project_analytics_ai_prompt_dashboard":
+        "你可以帮我解读这些分析数据，并给出提升用户参与度、性能和整体指标的建议吗？",
     "project_analytics_ai_prompt_pageviews": "请分析我的浏览量趋势，并给出提升流量和留存的建议。",
     "project_analytics_ai_prompt_sessions": "请分析我的会话数据，并给出提升参与度和会话时长的建议。",
-    "project_analytics_ai_prompt_visitors": "请分析我的访客获取情况，并给出优化建议（SEO、来源渠道、落地页）。",
+    "project_analytics_ai_prompt_visitors":
+        "请分析我的访客获取情况，并给出优化建议（SEO、来源渠道、落地页）。",
     "project_analytics_all": "全部",
     "project_analytics_bounces": "跳出数",
     "project_analytics_comparison_notes": "对比说明",
@@ -5451,13 +6140,17 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_api_variable_updated": "环境变量已更新",
     "project_chat_engine_fast": "快速",
     "project_chat_engine_fast_hint": "使用 Claude，更快返回结果",
+    "project_chat_engine_switch_success": "已切换到 {mode}",
     "project_chat_engine_think_hard": "深度思考",
     "project_chat_engine_think_hard_hint": "使用 Codex，进行更深入的推理",
     "project_chat_engine_title": "模式",
     "project_database_actions": "操作",
-    "project_database_ai_prompt_graph": "基于当前数据库 schema，请解释“{table}”与其他表（外键）的关系并提出优化建议。",
-    "project_database_ai_prompt_relation": "请解释 {from} 到 {to} 的关系，并建议可用索引与常见查询方式。",
-    "project_database_ai_prompt_table": "请分析数据库表“{table}”，并说明其用途、结构，以及可优化点或最佳实践建议。",
+    "project_database_ai_prompt_graph":
+        "基于当前数据库 schema，请解释“{table}”与其他表（外键）的关系并提出优化建议。",
+    "project_database_ai_prompt_relation":
+        "请解释 {from} 到 {to} 的关系，并建议可用索引与常见查询方式。",
+    "project_database_ai_prompt_table":
+        "请分析数据库表“{table}”，并说明其用途、结构，以及可优化点或最佳实践建议。",
     "project_database_ask_ai_table": "询问 AI 分析此表",
     "project_database_branch": "分支",
     "project_database_branch_hint": "当前 Neon 分支上下文",
@@ -5469,7 +6162,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_database_delete_row_confirm": "要从 {table} 删除这一行吗？此操作不可撤销。",
     "project_database_edit_row": "编辑行",
     "project_database_enable_action": "启用数据库",
-    "project_database_enable_hint": "为该项目开通 Neon PostgreSQL 数据库，并开始探索你的 Schema 与数据。",
+    "project_database_enable_hint":
+        "为该项目开通 Neon PostgreSQL 数据库，并开始探索你的 Schema 与数据。",
     "project_database_enable_title": "启用数据库",
     "project_database_enabled_success": "数据库已成功启用！",
     "project_database_enabling": "启用中...",
@@ -5524,14 +6218,21 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_active_preview": "预览部署进行中...",
     "project_deploy_active_prod": "生产发布进行中：{phase}",
     "project_deploy_active_reverting": "正在回滚提交{suffix}并触发预览部署...",
-    "project_deploy_ai_prompt_environment": "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_environment":
+        "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
     "project_deploy_ai_prompt_prefix": "My deploy failed with this error:",
-    "project_deploy_ai_prompt_preview": "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_prod": "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_suffix": "Give me the most likely root cause and a step-by-step fix.",
-    "project_deploy_ai_prompt_vercel_middle": "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
-    "project_deploy_ai_prompt_vercel_prefix": "My Vercel deployment failed for project",
-    "project_deploy_ai_prompt_vercel_suffix": "Also suggest what logs/env vars to check first.",
+    "project_deploy_ai_prompt_preview":
+        "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_prod":
+        "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_suffix":
+        "Give me the most likely root cause and a step-by-step fix.",
+    "project_deploy_ai_prompt_vercel_middle":
+        "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
+    "project_deploy_ai_prompt_vercel_prefix":
+        "My Vercel deployment failed for project",
+    "project_deploy_ai_prompt_vercel_suffix":
+        "Also suggest what logs/env vars to check first.",
     "project_deploy_ask_ai": "询问 AI",
     "project_deploy_build_log": "构建日志",
     "project_deploy_build_logs": "构建日志",
@@ -5604,7 +6305,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_retry_prod_message": "这会比较 dev/main，必要时自动合并，然后触发新的生产部署。",
     "project_deploy_retry_prod_title": "重试生产部署？",
     "project_deploy_revert_confirm_action": "确认回滚",
-    "project_deploy_revert_confirm_message": "这会对提交 {sha} 执行 git revert，并触发新的预览部署。",
+    "project_deploy_revert_confirm_message":
+        "这会对提交 {sha} 执行 git revert，并触发新的预览部署。",
     "project_deploy_revert_confirm_title": "回滚这个提交？",
     "project_deploy_revert_failed": "回滚失败",
     "project_deploy_revert_no_sha": "该部署没有可用的 commit SHA。",
@@ -5696,8 +6398,10 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_overview_community_progress_merge": "正在合并分支…",
     "project_overview_community_progress_publish": "正在发布到社区…",
     "project_overview_community_publish_dialog_current_domain": "当前域名：{domain}",
-    "project_overview_community_publish_dialog_has_prod": "该项目已有生产部署。发布后会创建或更新与项目概览关联的社区帖子。",
-    "project_overview_community_publish_dialog_need_release": "要将项目发布到社区，需要先发布到生产环境。我们会先把 dev 分支合并到 main，再触发生产部署，最后发布帖子。",
+    "project_overview_community_publish_dialog_has_prod":
+        "该项目已有生产部署。发布后会创建或更新与项目概览关联的社区帖子。",
+    "project_overview_community_publish_dialog_need_release":
+        "要将项目发布到社区，需要先发布到生产环境。我们会先把 dev 分支合并到 main，再触发生产部署，最后发布帖子。",
     "project_overview_community_publish_dialog_step_deploy": "• 触发生产部署",
     "project_overview_community_publish_dialog_step_merge": "• 合并 dev → main",
     "project_overview_community_publish_dialog_step_publish": "• 发布到社区",
@@ -5777,7 +6481,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_payment_add_product_failed": "新增商品失败：{error}",
     "project_payment_add_product_title": "新增支付商品",
     "project_payment_ai_prompt_product": "你可以分析支付商品“{name}”并给出定价策略、配置或营销优化建议吗？",
-    "project_payment_ai_prompt_transaction": "你可以分析这条支付交易（{amount}，{status}）并给出支付模式洞察或优化建议吗？",
+    "project_payment_ai_prompt_transaction":
+        "你可以分析这条支付交易（{amount}，{status}）并给出支付模式洞察或优化建议吗？",
     "project_payment_anonymous": "匿名",
     "project_payment_available_for_purchase": "该商品可供购买",
     "project_payment_conversion_rate": "转化率",
@@ -5874,12 +6579,15 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "about_title": "關於",
     "account_data_contact_support_delete": "聯絡客服刪除帳戶",
     "account_data_copy_request_template": "複製請求文案",
-    "account_data_delete_confirm_message": "這將透過 {support_email} 發起帳戶刪除請求。刪除可能無法復原，是否繼續？",
+    "account_data_delete_confirm_message":
+        "這將透過 {support_email} 發起帳戶刪除請求。刪除可能無法復原，是否繼續？",
     "account_data_delete_description": "帳戶刪除目前由客服處理。提出刪除前請先閱讀法律限制說明。",
-    "account_data_delete_template": "請求：帳戶刪除\\n帳戶：{email}\\n請刪除我的帳戶及關聯資料。\\n我了解此操作可能不可逆。\\n聯絡方式：{support_email}",
+    "account_data_delete_template":
+        "請求：帳戶刪除\\n帳戶：{email}\\n請刪除我的帳戶及關聯資料。\\n我了解此操作可能不可逆。\\n聯絡方式：{support_email}",
     "account_data_delete_title": "帳戶刪除",
     "account_data_export_description": "匯出目前由客服處理。我們提供可複製並發送的請求範本。",
-    "account_data_export_template": "請求：資料匯出\\n帳戶：{email}\\n請匯出我的帳戶資料（資料、專案、計費）。\\n聯絡方式：{support_email}",
+    "account_data_export_template":
+        "請求：資料匯出\\n帳戶：{email}\\n請匯出我的帳戶資料（資料、專案、計費）。\\n聯絡方式：{support_email}",
     "account_data_export_title": "資料匯出",
     "account_data_legal": "法律",
     "account_data_request_template_copied": "請求文案已複製到剪貼簿",
@@ -6107,11 +6815,14 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_analytics_active_now": "當前活跃",
     "project_analytics_active_visitors": "活跃訪客",
     "project_analytics_ai_prompt_active_now": "你可以幫我解讀即時活躍使用者，並給出提升轉換的建議嗎？",
-    "project_analytics_ai_prompt_custom_events": "你可以指導我如何在專案中配置自訂事件追蹤嗎？為了提升產品，最應該追蹤哪些事件？",
-    "project_analytics_ai_prompt_dashboard": "你可以幫我解讀這些分析資料，並給出提升使用者參與度、效能和整體指標的建議嗎？",
+    "project_analytics_ai_prompt_custom_events":
+        "你可以指導我如何在專案中配置自訂事件追蹤嗎？為了提升產品，最應該追蹤哪些事件？",
+    "project_analytics_ai_prompt_dashboard":
+        "你可以幫我解讀這些分析資料，並給出提升使用者參與度、效能和整體指標的建議嗎？",
     "project_analytics_ai_prompt_pageviews": "请分析我的瀏覽量趨勢，並给出提升流量和留存的建議。",
     "project_analytics_ai_prompt_sessions": "請分析我的會話資料，並給出提升參與度和會話時長的建議。",
-    "project_analytics_ai_prompt_visitors": "請分析我的訪客獲取情況，並給出最佳化建議（SEO、來源渠道、落地頁）。",
+    "project_analytics_ai_prompt_visitors":
+        "請分析我的訪客獲取情況，並給出最佳化建議（SEO、來源渠道、落地頁）。",
     "project_analytics_all": "全部",
     "project_analytics_bounces": "跳出数",
     "project_analytics_comparison_notes": "對比說明",
@@ -6287,13 +6998,17 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_api_variable_updated": "環境變數已更新",
     "project_chat_engine_fast": "快速",
     "project_chat_engine_fast_hint": "使用 Claude，更快取得回應",
+    "project_chat_engine_switch_success": "已切換到 {mode}",
     "project_chat_engine_think_hard": "深入思考",
     "project_chat_engine_think_hard_hint": "使用 Codex，進行更深入的推理",
     "project_chat_engine_title": "模式",
     "project_database_actions": "操作",
-    "project_database_ai_prompt_graph": "基於目前資料庫 schema，請說明「{table}」與其他表（外鍵）的關係並提出優化建議。",
-    "project_database_ai_prompt_relation": "請解釋 {from} 到 {to} 的關係，並建議可用索引與常見查詢方式。",
-    "project_database_ai_prompt_table": "請分析資料庫表「{table}」，並說明其用途、結構，以及可優化點或最佳實踐建議。",
+    "project_database_ai_prompt_graph":
+        "基於目前資料庫 schema，請說明「{table}」與其他表（外鍵）的關係並提出優化建議。",
+    "project_database_ai_prompt_relation":
+        "請解釋 {from} 到 {to} 的關係，並建議可用索引與常見查詢方式。",
+    "project_database_ai_prompt_table":
+        "請分析資料庫表「{table}」，並說明其用途、結構，以及可優化點或最佳實踐建議。",
     "project_database_ask_ai_table": "詢問 AI 分析此表",
     "project_database_branch": "分支",
     "project_database_branch_hint": "目前 Neon 分支上下文",
@@ -6305,7 +7020,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_database_delete_row_confirm": "要從 {table} 刪除此列嗎？此操作無法復原。",
     "project_database_edit_row": "編輯資料列",
     "project_database_enable_action": "啟用資料庫",
-    "project_database_enable_hint": "為此專案開通 Neon PostgreSQL 資料庫，並開始探索你的 Schema 與資料。",
+    "project_database_enable_hint":
+        "為此專案開通 Neon PostgreSQL 資料庫，並開始探索你的 Schema 與資料。",
     "project_database_enable_title": "啟用資料庫",
     "project_database_enabled_success": "資料庫已成功啟用！",
     "project_database_enabling": "啟用中...",
@@ -6360,14 +7076,21 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_active_preview": "預覽部署進行中...",
     "project_deploy_active_prod": "生產發佈進行中：{phase}",
     "project_deploy_active_reverting": "正在回滾提交{suffix}並觸發預覽部署...",
-    "project_deploy_ai_prompt_environment": "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_environment":
+        "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
     "project_deploy_ai_prompt_prefix": "My deploy failed with this error:",
-    "project_deploy_ai_prompt_preview": "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_prod": "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_suffix": "Give me the most likely root cause and a step-by-step fix.",
-    "project_deploy_ai_prompt_vercel_middle": "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
-    "project_deploy_ai_prompt_vercel_prefix": "My Vercel deployment failed for project",
-    "project_deploy_ai_prompt_vercel_suffix": "Also suggest what logs/env vars to check first.",
+    "project_deploy_ai_prompt_preview":
+        "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_prod":
+        "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_suffix":
+        "Give me the most likely root cause and a step-by-step fix.",
+    "project_deploy_ai_prompt_vercel_middle":
+        "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
+    "project_deploy_ai_prompt_vercel_prefix":
+        "My Vercel deployment failed for project",
+    "project_deploy_ai_prompt_vercel_suffix":
+        "Also suggest what logs/env vars to check first.",
     "project_deploy_ask_ai": "詢問 AI",
     "project_deploy_build_log": "建置日誌",
     "project_deploy_build_logs": "建置日誌",
@@ -6440,7 +7163,8 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_deploy_retry_prod_message": "這會比較 dev/main，必要時自動合併，然後觸發新的生產部署。",
     "project_deploy_retry_prod_title": "重試生產部署？",
     "project_deploy_revert_confirm_action": "確認回滾",
-    "project_deploy_revert_confirm_message": "這會對提交 {sha} 執行 git revert，並觸發新的預覽部署。",
+    "project_deploy_revert_confirm_message":
+        "這會對提交 {sha} 執行 git revert，並觸發新的預覽部署。",
     "project_deploy_revert_confirm_title": "回滾這個提交？",
     "project_deploy_revert_failed": "回滾失敗",
     "project_deploy_revert_no_sha": "此部署沒有可用的 commit SHA。",
@@ -6532,8 +7256,10 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_overview_community_progress_merge": "正在合併分支…",
     "project_overview_community_progress_publish": "正在發佈到社群…",
     "project_overview_community_publish_dialog_current_domain": "當前網域：{domain}",
-    "project_overview_community_publish_dialog_has_prod": "此專案已有生產部署。發佈後會建立或更新與專案總覽關聯的社群貼文。",
-    "project_overview_community_publish_dialog_need_release": "要將專案發佈到社群，需要先發佈到生產環境。我們會先把 dev 分支合併到 main，再觸發生產部署，最後發佈貼文。",
+    "project_overview_community_publish_dialog_has_prod":
+        "此專案已有生產部署。發佈後會建立或更新與專案總覽關聯的社群貼文。",
+    "project_overview_community_publish_dialog_need_release":
+        "要將專案發佈到社群，需要先發佈到生產環境。我們會先把 dev 分支合併到 main，再觸發生產部署，最後發佈貼文。",
     "project_overview_community_publish_dialog_step_deploy": "• 觸發生產部署",
     "project_overview_community_publish_dialog_step_merge": "• 合併 dev → main",
     "project_overview_community_publish_dialog_step_publish": "• 發佈到社群",
@@ -6612,8 +7338,10 @@ const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, S
     "project_payment_add_product": "新增商品",
     "project_payment_add_product_failed": "新增商品失敗：{error}",
     "project_payment_add_product_title": "新增支付商品",
-    "project_payment_ai_prompt_product": "你可以分析支付商品「{name}」並給出定價策略、配置或行銷最佳化建議嗎？",
-    "project_payment_ai_prompt_transaction": "你可以分析這筆支付交易（{amount}、{status}）並給出支付模式洞察或最佳化建議嗎？",
+    "project_payment_ai_prompt_product":
+        "你可以分析支付商品「{name}」並給出定價策略、配置或行銷最佳化建議嗎？",
+    "project_payment_ai_prompt_transaction":
+        "你可以分析這筆支付交易（{amount}、{status}）並給出支付模式洞察或最佳化建議嗎？",
     "project_payment_anonymous": "匿名",
     "project_payment_available_for_purchase": "該商品可供購買",
     "project_payment_conversion_rate": "轉換率",

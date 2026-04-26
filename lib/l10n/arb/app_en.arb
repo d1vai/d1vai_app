@@ -121,6 +121,7 @@
   "project_chat_engine_fast_hint": "Use Claude for quicker responses",
   "project_chat_engine_think_hard": "Think Hard",
   "project_chat_engine_think_hard_hint": "Use Codex for deeper reasoning",
+  "project_chat_engine_switch_success": "Switched to {mode}",
   "model_switch_success": "Switched to {model}",
   "prompt_activity_title": "Prompt activity",
   "prompt_activity_total": "Total:",

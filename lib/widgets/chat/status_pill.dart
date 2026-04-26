@@ -57,38 +57,60 @@ class ChatStatusPill extends StatelessWidget {
     return Tooltip(
       message: label,
       triggerMode: TooltipTriggerMode.longPress,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: border, width: 1),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ProjectChatStatusDot(color: color, size: 8, enablePulse: isPulsing),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style:
-                  theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant.withValues(
-                      alpha: 0.95,
-                    ),
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.2,
-                  ) ??
-                  TextStyle(
-                    fontSize: 11,
-                    color: theme.colorScheme.onSurfaceVariant.withValues(
-                      alpha: 0.95,
-                    ),
-                    fontWeight: FontWeight.w700,
-                  ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact =
+              constraints.maxWidth.isFinite && constraints.maxWidth < 110;
+          final horizontalPadding = compact ? 8.0 : 10.0;
+          final verticalPadding = compact ? 5.0 : 6.0;
+          final spacing = compact ? 4.0 : 6.0;
+
+          return Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
+              vertical: verticalPadding,
             ),
-          ],
-        ),
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: border, width: 1),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ProjectChatStatusDot(
+                  color: color,
+                  size: compact ? 7 : 8,
+                  enablePulse: isPulsing,
+                ),
+                SizedBox(width: spacing),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    softWrap: false,
+                    style:
+                        theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.95,
+                          ),
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: compact ? 0.1 : 0.2,
+                        ) ??
+                        TextStyle(
+                          fontSize: 11,
+                          color: theme.colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.95,
+                          ),
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

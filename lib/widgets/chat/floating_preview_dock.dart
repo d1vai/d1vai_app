@@ -180,16 +180,8 @@ class _FloatingPreviewDockState extends State<FloatingPreviewDock> {
               borderRadius: BorderRadius.circular(16),
               child: Stack(
                 children: [
-                  IgnorePointer(
-                    ignoring: true,
-                    child: InAppWebView(
-                      key: ValueKey('mini-preview-$url'),
-                      contextMenu: ContextMenu(),
-                      initialUrlRequest: URLRequest(url: WebUri(url)),
-                      onWebViewCreated: (controller) {
-                        _miniController = controller;
-                      },
-                    ),
+                  Positioned.fill(
+                    child: _buildScaledMiniPreview(url, dockSize),
                   ),
                   Positioned.fill(
                     child: DecoratedBox(
@@ -289,6 +281,44 @@ class _FloatingPreviewDockState extends State<FloatingPreviewDock> {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScaledMiniPreview(String url, Size dockSize) {
+    final virtualSize = Size(dockSize.width * 2.8, dockSize.height * 2.8);
+    final scale = math.min(
+      dockSize.width / virtualSize.width,
+      dockSize.height / virtualSize.height,
+    );
+
+    return IgnorePointer(
+      ignoring: true,
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: OverflowBox(
+          minWidth: virtualSize.width,
+          maxWidth: virtualSize.width,
+          minHeight: virtualSize.height,
+          maxHeight: virtualSize.height,
+          alignment: Alignment.topCenter,
+          child: Transform.scale(
+            scale: scale,
+            alignment: Alignment.topCenter,
+            child: SizedBox(
+              width: virtualSize.width,
+              height: virtualSize.height,
+              child: InAppWebView(
+                key: ValueKey('mini-preview-$url'),
+                contextMenu: ContextMenu(),
+                initialUrlRequest: URLRequest(url: WebUri(url)),
+                onWebViewCreated: (controller) {
+                  _miniController = controller;
+                },
               ),
             ),
           ),

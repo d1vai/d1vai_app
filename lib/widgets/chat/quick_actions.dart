@@ -239,7 +239,7 @@ class _QuickActionChip extends StatefulWidget {
 }
 
 class _QuickActionChipState extends State<_QuickActionChip>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final AnimationController _pressController;
   late final Animation<double> _pressScale;
   AnimationController? _breathController;

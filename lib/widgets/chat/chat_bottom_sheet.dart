@@ -1,10 +1,15 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import '../../models/message.dart';
+import '../../models/model_config.dart';
 import '../../models/outbox.dart';
 import 'message_list.dart';
 import 'message_input.dart';
 import 'quick_actions.dart';
 import 'message_skeleton.dart';
+import 'project_chat/chat_engine_mode.dart';
+import 'project_chat/project_chat_top_bar.dart';
 import 'status_pill.dart';
 import 'outbox/outbox_widgets.dart';
 
@@ -27,13 +32,17 @@ class ChatBottomSheet extends StatefulWidget {
   final bool hasMoreHistory;
   final bool isLoadingMore;
   final VoidCallback? onClose;
-  final VoidCallback? onRedeploy;
   final VoidCallback? onOpenFullScreen;
   final String? heroTag;
   final String? statusLabel;
   final bool statusIsError;
   final bool isModelReady;
   final bool isModelLoading;
+  final List<ModelInfo> models;
+  final String selectedModelId;
+  final ChatEngineMode selectedEngineMode;
+  final ValueChanged<String>? onModelChanged;
+  final ValueChanged<ChatEngineMode>? onEngineChanged;
   final TextEditingController? inputController;
   final FocusNode? inputFocusNode;
   final ValueChanged<String>? onInputChanged;
@@ -64,13 +73,17 @@ class ChatBottomSheet extends StatefulWidget {
     this.hasMoreHistory = false,
     this.isLoadingMore = false,
     this.onClose,
-    this.onRedeploy,
     this.onOpenFullScreen,
     this.heroTag,
     this.statusLabel,
     this.statusIsError = false,
     this.isModelReady = true,
     this.isModelLoading = false,
+    this.models = const <ModelInfo>[],
+    this.selectedModelId = '',
+    this.selectedEngineMode = ChatEngineMode.thinkHard,
+    this.onModelChanged,
+    this.onEngineChanged,
     this.inputController,
     this.inputFocusNode,
     this.onInputChanged,
@@ -118,6 +131,8 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
 
     final statusText = widget.statusLabel?.trim() ?? '';
     final showStatus = statusText.isNotEmpty;
+    final fastHint = 'Fast mode uses Claude engine';
+    final thinkHardHint = 'Think Hard mode uses Codex engine';
     final bannerTitle = widget.bannerTitle?.trim() ?? '';
     final bannerMessage = widget.bannerMessage?.trim() ?? '';
     final showBanner = bannerTitle.isNotEmpty || bannerMessage.isNotEmpty;
@@ -151,112 +166,89 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
               color: theme.colorScheme.surface,
               border: Border(bottom: BorderSide(color: headerDividerColor)),
             ),
-            child: Row(
-              children: [
-                Text(
-                  'Chat',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                if (widget.onOpenFullScreen != null) ...[
-                  const SizedBox(width: 6),
-                  IconButton(
-                    icon: const Icon(Icons.open_in_full),
-                    onPressed: widget.onOpenFullScreen,
-                    iconSize: 18,
-                    tooltip: 'Full screen',
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ],
-                const Spacer(),
-                // Redeploy button
-                if (widget.onRedeploy != null)
-                  Container(
-                    margin: const EdgeInsets.only(right: 8),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                        width: 1,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final modelWidth = math.min(128.0, constraints.maxWidth * 0.28);
+
+                return Row(
+                  children: [
+                    Text(
+                      'Chat',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: widget.isDeploying ? null : widget.onRedeploy,
-                        borderRadius: BorderRadius.circular(8),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (widget.isDeploying)
-                                SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      theme.colorScheme.primary,
-                                    ),
-                                  ),
-                                )
-                              else
-                                Icon(
-                                  Icons.refresh,
-                                  size: 16,
-                                  color: theme.colorScheme.primary,
-                                ),
-                              const SizedBox(width: 6),
-                              Text(
-                                widget.isDeploying ? 'Deploying…' : 'Redeploy',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: theme.colorScheme.primary,
-                                ),
-                              ),
-                            ],
-                          ),
+                    if (widget.onOpenFullScreen != null) ...[
+                      const SizedBox(width: 4),
+                      IconButton(
+                        icon: const Icon(Icons.open_in_full),
+                        onPressed: widget.onOpenFullScreen,
+                        iconSize: 18,
+                        tooltip: 'Full screen',
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ],
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: ProjectChatModelSelector(
+                          models: widget.models,
+                          selectedModelId: widget.selectedModelId,
+                          isLoading: widget.isModelLoading,
+                          onChanged: widget.onModelChanged,
+                          minWidth: 92,
+                          maxWidth: modelWidth,
+                          width: modelWidth,
                         ),
                       ),
                     ),
-                  ),
-                if (showStatus) ...[
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 160),
-                    switchInCurve: Curves.easeOut,
-                    switchOutCurve: Curves.easeIn,
-                    transitionBuilder: (child, anim) => FadeTransition(
-                      opacity: anim,
-                      child: SizeTransition(
-                        sizeFactor: anim,
-                        axis: Axis.horizontal,
-                        axisAlignment: -1,
-                        child: child,
+                    const SizedBox(width: 8),
+                    ProjectChatEngineModeSegment(
+                      value: widget.selectedEngineMode,
+                      fastTooltip: fastHint,
+                      thinkHardTooltip: thinkHardHint,
+                      onChanged: widget.isModelLoading
+                          ? null
+                          : widget.onEngineChanged,
+                    ),
+                    if (showStatus) ...[
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 160),
+                            switchInCurve: Curves.easeOut,
+                            switchOutCurve: Curves.easeIn,
+                            transitionBuilder: (child, anim) => FadeTransition(
+                              opacity: anim,
+                              child: SizeTransition(
+                                sizeFactor: anim,
+                                axis: Axis.horizontal,
+                                axisAlignment: -1,
+                                child: child,
+                              ),
+                            ),
+                            child: ChatStatusPill(
+                              key: ValueKey(statusText),
+                              label: statusText,
+                              isError: widget.statusIsError,
+                            ),
+                          ),
+                        ),
                       ),
+                    ],
+                    const SizedBox(width: 4),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: widget.onClose,
+                      iconSize: 20,
+                      tooltip: 'Close',
                     ),
-                    child: ChatStatusPill(
-                      key: ValueKey(statusText),
-                      label: statusText,
-                      isError: widget.statusIsError,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                ],
-                // Close button
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: widget.onClose,
-                  iconSize: 20,
-                  tooltip: 'Close',
-                ),
-              ],
+                  ],
+                );
+              },
             ),
           ),
           AnimatedSwitcher(
