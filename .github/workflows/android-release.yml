@@ -122,9 +122,20 @@ jobs:
           prerelease: true
           fail_on_unmatched_files: true
           body: |
-            Automated APK build from the `main` branch.
+            Direct Android release built from `main`.
 
-            Version: `${{ steps.meta.outputs.version_name }}`
-            Build: `${{ steps.meta.outputs.build_number }}`
-            Commit: `${{ github.sha }}`
+            ## Release snapshot
+            - Version: `${{ steps.meta.outputs.version_name }}`
+            - Build: `${{ steps.meta.outputs.build_number }}`
+            - Commit: `${{ github.sha }}`
+            - APK: `${{ steps.meta.outputs.artifact_name }}`
+
+            ## Install
+            1. Download the APK asset from this release.
+            2. Allow sideload installation on your Android device if needed.
+            3. Install and verify the latest mobile flow.
+
+            ## Notes
+            - This release is generated automatically by GitHub Actions.
+            - The web download page can read this release directly and stay in sync.
           files: build/app/outputs/flutter-apk/${{ steps.meta.outputs.artifact_name }}
