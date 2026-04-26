@@ -512,6 +512,7 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
                           onAsk: _selectedFilePath == null
                               ? null
                               : _askAboutSelected,
+                          projectId: widget.projectId,
                         ),
                       ),
                     ],

@@ -3,11 +3,22 @@ import 'package:flutter_highlight/flutter_highlight.dart';
 import 'package:flutter_highlight/themes/atom-one-dark.dart';
 import 'package:flutter_highlight/themes/atom-one-light.dart';
 
+import 'code_tab_document_preview.dart';
+
 class CodeTabCodeBlock extends StatelessWidget {
   final String? filePath;
   final String text;
   final bool isBinary;
   final int sizeBytes;
+
+  /// When provided alongside a [filePath] that matches a document-preview
+  /// type (.pdf, .docx, .xmind), the widget renders a specialised preview
+  /// instead of the generic code/binary view.
+  final String? projectId;
+
+  /// Optional callback passed through to [CodeTabDocumentPreview] for DOCX /
+  /// XMind files that cannot be rendered inline.
+  final VoidCallback? onAsk;
 
   const CodeTabCodeBlock({
     super.key,
@@ -15,6 +26,8 @@ class CodeTabCodeBlock extends StatelessWidget {
     required this.text,
     required this.isBinary,
     required this.sizeBytes,
+    this.projectId,
+    this.onAsk,
   });
 
   String? _languageForPath(String? path) {
@@ -40,6 +53,17 @@ class CodeTabCodeBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Delegate to the specialised document preview when projectId is available
+    // and the file extension is one we handle (PDF, DOCX, XMind).
+    if (projectId != null && isDocumentPreviewType(filePath)) {
+      return CodeTabDocumentPreview(
+        projectId: projectId!,
+        filePath: filePath!,
+        sizeBytes: sizeBytes,
+        onAsk: onAsk,
+      );
+    }
+
     final theme = Theme.of(context);
     final highlightLanguage = _languageForPath(filePath);
     final isDark = theme.brightness == Brightness.dark;

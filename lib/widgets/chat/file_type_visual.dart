@@ -45,6 +45,15 @@ FileTypeVisual fileTypeVisual(ThemeData theme, String path) {
   if (endsWithAny(const ['.sql'])) {
     return FileTypeVisual(icon: Icons.storage, color: Colors.amber.shade700);
   }
+  if (endsWithAny(const ['.pdf'])) {
+    return FileTypeVisual(icon: Icons.picture_as_pdf_outlined, color: Colors.red.shade700);
+  }
+  if (endsWithAny(const ['.docx', '.doc'])) {
+    return FileTypeVisual(icon: Icons.article_outlined, color: Colors.blue.shade700);
+  }
+  if (endsWithAny(const ['.xmind'])) {
+    return FileTypeVisual(icon: Icons.account_tree_outlined, color: Colors.green.shade700);
+  }
   if (endsWithAny(const ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'])) {
     return FileTypeVisual(icon: Icons.image_outlined, color: Colors.teal);
   }
