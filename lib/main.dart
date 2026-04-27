@@ -20,8 +20,13 @@ final _appRouter = createAppRouter();
 Future<void> main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
-  await ApiClient.ensureInitialized();
-  await StripePaymentService.initialize();
+
+  try {
+    await ApiClient.ensureInitialized();
+  } catch (e, st) {
+    debugPrint('ApiClient initialization failed: $e');
+    debugPrintStack(stackTrace: st);
+  }
 
   runApp(
     MultiProvider(
@@ -36,7 +41,8 @@ Future<void> main() async {
     ),
   );
 
-  // Remove splash screen after initialization (simulated delay in SplashScreen)
+  unawaited(StripePaymentService.initialize());
+
   Future.delayed(const Duration(seconds: 1), () {
     FlutterNativeSplash.remove();
   });

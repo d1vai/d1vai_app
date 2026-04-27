@@ -8,6 +8,8 @@ import '../l10n/app_localizations.dart';
 class StripePaymentService {
   StripePaymentService._();
 
+  static bool _initialized = false;
+
   static const String publishableKey = String.fromEnvironment(
     'STRIPE_PUBLISHABLE_KEY',
     defaultValue: '',
@@ -34,13 +36,19 @@ class StripePaymentService {
   );
 
   static Future<void> initialize() async {
-    if (kIsWeb || publishableKey.trim().isEmpty) {
+    if (_initialized || kIsWeb || publishableKey.trim().isEmpty) {
       return;
     }
-    Stripe.publishableKey = publishableKey;
-    Stripe.merchantIdentifier = merchantIdentifier;
-    Stripe.urlScheme = Uri.parse(returnUrl).scheme;
-    await Stripe.instance.applySettings();
+    try {
+      Stripe.publishableKey = publishableKey;
+      Stripe.merchantIdentifier = merchantIdentifier;
+      Stripe.urlScheme = Uri.parse(returnUrl).scheme;
+      await Stripe.instance.applySettings();
+      _initialized = true;
+    } catch (e, st) {
+      debugPrint('Stripe initialization failed: $e');
+      debugPrintStack(stackTrace: st);
+    }
   }
 
   static bool get isSupportedPlatform {
@@ -54,8 +62,7 @@ class StripePaymentService {
   static String availablePaymentMethodsLabel(AppLocalizations? loc) {
     final card = loc?.translate('topup_method_card') ?? 'card';
     final applePay = loc?.translate('topup_method_apple_pay') ?? 'Apple Pay';
-    final googlePay =
-        loc?.translate('topup_method_google_pay') ?? 'Google Pay';
+    final googlePay = loc?.translate('topup_method_google_pay') ?? 'Google Pay';
 
     if (kIsWeb) {
       return card;
