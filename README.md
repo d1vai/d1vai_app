@@ -5,7 +5,15 @@
 </p>
 
 <p align="center">
-  <strong>面向下一代构建者与产品团队的 AI 原生移动工作台。</strong>
+  Official Flutter client for <code>d1v.ai</code>. Create projects, import repositories, chat with AI, inspect files, monitor deployments, and manage operations from your phone.
+</p>
+
+<p align="center">
+  <a href="https://www.d1v.ai">Website</a> ·
+  <a href="https://github.com/d1vai/d1vai_app/releases">Downloads</a> ·
+  <a href="https://www.d1v.ai/docs/overview">Docs</a> ·
+  <a href="./docs/DEVELOPER_GUIDE.md">Developer Guide</a> ·
+  <a href="./README.zh-CN.md">中文介绍</a>
 </p>
 
 <p align="center">
@@ -16,129 +24,131 @@
   <img alt="Status" src="https://img.shields.io/badge/status-open%20source-16a34a">
 </p>
 
+<p align="center">
+  <img src="./docs/readme-assets/app-overview.png" alt="d1v.ai mobile app overview" width="360">
+</p>
+
 ---
 
-## English
+## What It Is
 
-### What It Is
+`d1vai_app` is not a notification shell or a thin AI chat wrapper. It is a serious mobile surface for AI-assisted building and operational control.
 
-`d1vai_app` is the official Flutter mobile client for `d1v.ai`.
+The app brings the core `d1v.ai` workflow into a mobile-native format:
 
-It turns the core d1v workflow into a portable mobile experience: create projects, connect workspaces, chat with AI, inspect files, monitor deployments, review analytics, and manage your account from a single app.
+- create new AI projects
+- import GitHub repositories or local archives
+- continue project conversations with AI
+- inspect code, files, preview state, and deployment context
+- manage account, billing, usage, settings, docs, and community surfaces
 
-This is not a lightweight companion shell. It is designed as a serious mobile surface for AI-assisted building and operational control.
+## Why d1v.ai Mobile Is Different
 
-### Why It Matters
+- Workflow-first, not chat-first
+  The product is built around end-to-end project work, not just prompting.
+- Operationally useful away from desktop
+  You can inspect previews, deployments, analytics, files, and account state from one mobile control plane.
+- Connected to real project surfaces
+  GitHub import, workspace state, billing flows, and project detail views are part of the app, not bolted-on links.
+- Built as a production client
+  Authentication, onboarding, diagnostics, theme support, internationalization, and settings are all treated as first-class product areas.
 
-- AI workflow, not just chat: move from prompt to project, deployment, and iteration inside one mobile product.
-- Mobile-first control plane: review code, inspect files, monitor status, and act fast when you are away from desktop.
-- Production-aware UX: account flows, project management, deployment visibility, analytics surfaces, and community/docs access are all integrated.
-- International by default: multilingual support is built in from the start.
+## Product Preview
 
-### Core Capabilities
+<table>
+  <tr>
+    <td align="center" width="33%">
+      <img src="./docs/readme-assets/projects-screen.png" alt="d1v.ai projects screen" width="220"><br>
+      <strong>Projects</strong><br>
+      Import repositories, manage active work, and jump into project chat.
+    </td>
+    <td align="center" width="33%">
+      <img src="./docs/readme-assets/community-screen.png" alt="d1v.ai community screen" width="220"><br>
+      <strong>Community</strong><br>
+      Browse published work, share builds, and track creator activity.
+    </td>
+    <td align="center" width="33%">
+      <img src="./docs/readme-assets/docs-screen.png" alt="d1v.ai docs screen" width="220"><br>
+      <strong>Docs</strong><br>
+      Search product guidance, workflows, and implementation references in-app.
+    </td>
+  </tr>
+</table>
 
-- Authentication
-  Email verification login, password login, Solana login, Sui login, onboarding, invitation flows.
-- Project operations
-  Create AI projects, import repositories, import local zip archives, browse projects, inspect project details.
-- AI collaboration
-  Execute project sessions, continue chats, manage mobile chat state, switch models, and keep workspace status visible.
-- File and code workflows
-  Read project files, preview structured content, edit supported files, and sync changes back to GitHub.
-- Deployment and analytics
-  Track preview state, deployment context, operational metrics, and activity surfaces.
-- Platform experience
-  Theme support, runtime API override, diagnostics, docs, community, orders, and settings.
+## What You Can Do
 
-### Designed For
+### Build
+
+Start a new project from a prompt, import an existing codebase, or continue work from a mobile chat session without dropping out of the product flow.
+
+### Inspect
+
+Open project files, review structured outputs, read generated code, and keep workspace state visible while you are away from desktop.
+
+### Operate
+
+Track deployment state, preview readiness, analytics, usage, wallet activity, and project health from a single mobile control surface.
+
+### Collaborate
+
+Use AI as part of the working session, not as an isolated chatbot. Project context, model switching, session continuity, and action flows all live inside the same app.
+
+### Manage
+
+Handle authentication, onboarding, invitations, GitHub integration, account settings, docs, and community participation in one place.
+
+## Use Cases
+
+- A founder checks whether a preview deployment is ready while traveling and jumps into the project chat to unblock the next step.
+- A product engineer reviews generated code and project files from mobile before handing work back to desktop.
+- An operator watches usage, billing, and deployment state without opening multiple internal tools.
+- An AI-native team uses the app as a portable control plane for remote workspaces and active projects.
+
+## 3-Minute Tour
+
+1. Sign in and connect your workspace or GitHub integration.
+2. Create a project from a prompt or import an existing repository.
+3. Open the project chat to continue building with AI.
+4. Inspect files, code, preview state, and deployment context.
+5. Monitor analytics, usage, billing, and account settings from the same app.
+
+## Why Open Source This App
+
+This repository is useful beyond the product itself.
+
+- It shows how to structure a production Flutter app around AI-native workflows instead of isolated chat screens.
+- It demonstrates a mobile control-plane pattern for remote workspaces, project operations, and deployment visibility.
+- It provides practical reference material for authentication, onboarding, GitHub import flows, diagnostics, and multi-surface app architecture.
+
+If you are evaluating Flutter architecture, AI product UX, or mobile operational tooling, this codebase is meant to be readable, practical, and extensible.
+
+## Designed For
 
 - Founders shipping from anywhere
 - Product engineers who want fast operational visibility on mobile
 - AI-native teams building with remote workspaces
-- Builders who need a polished control surface instead of raw internal tooling
+- Builders who want a polished mobile control surface instead of raw internal tooling
 
-### Open Source
+## Status
 
-This repository is now published as an open-source Flutter client under the MIT License.
+- Active codebase with ongoing feature work
+- Open-source Flutter client under the MIT License
+- Built for iOS and Android
+- Internationalized from the start, with multilingual support throughout the app
 
-If you are evaluating mobile architecture, AI product UX, or workspace-driven app patterns, this codebase is meant to be readable, practical, and extensible.
+## Roadmap Direction
 
-### Developer Docs
+Current areas that matter most in this client:
 
-The previous README content is preserved and expanded as developer-facing documentation:
-
-- [Developer Guide](./docs/DEVELOPER_GUIDE.md)
-
----
-
-## 中文
-
-### 项目定位
-
-`d1vai_app` 是 `d1v.ai` 的官方 Flutter 移动客户端。
-
-它把 d1v 的核心工作流真正带到移动端：创建项目、连接工作区、与 AI 协作、查看文件、关注部署状态、追踪分析数据，并在同一个应用中完成账户与项目管理。
-
-这不是一个只负责“消息通知”的配套 App，而是一个面向真实构建场景的移动工作台。
-
-### 为什么值得关注
-
-- 不只是 AI 聊天，而是完整工作流：从 prompt 到项目、部署、迭代，形成闭环。
-- 真正的移动控制面板：在离开电脑时，依然可以快速查看代码、读文件、看状态、做决策。
-- 面向生产环境的产品设计：认证、项目管理、部署视图、分析数据、社区与文档能力都已打通。
-- 天然国际化：从一开始就支持多语言与全球化使用场景。
-
-### 主要能力
-
-- 认证体系
-  邮箱验证码登录、密码登录、Solana 登录、Sui 登录、邀请与 onboarding 流程。
-- 项目工作流
-  AI 创建项目、仓库导入、本地 ZIP 导入、项目浏览与详情管理。
-- AI 协作体验
-  执行项目会话、持续聊天、移动端会话管理、模型切换、工作区状态可视化。
-- 文件与代码能力
-  浏览项目文件、预览结构化内容、编辑可编辑文件，并同步到 GitHub。
-- 部署与分析
-  查看预览状态、部署上下文、运行数据与项目活跃度。
-- 平台级体验
-  支持主题切换、运行时 API 覆盖、诊断信息导出，以及文档、社区、订单、设置等完整入口。
-
-### 适合谁
-
-- 希望随时随地推进产品的创业者
-- 需要移动端快速掌控项目状态的产品工程师
-- 基于远程工作区与 AI 协作构建产品的团队
-- 希望拥有完整移动控制台，而不是临时内部工具的构建者
-
-### 开源说明
-
-本仓库现以 MIT License 开源。
-
-如果你关注 Flutter 移动架构、AI 产品交互、远程工作区驱动的应用形态，`d1vai_app` 会是一个兼顾工程实用性与产品表达力的参考项目。
-
-### 开发者文档
-
-原有 README 中偏开发者导向的内容已迁移为独立文档：
-
-- [开发者指南 / Developer Guide](./docs/DEVELOPER_GUIDE.md)
-
----
+- stronger mobile project workflows and import flows
+- deeper AI session continuity and code/file handling
+- better deployment, analytics, and operational visibility
+- continued UX refinement across billing, settings, docs, and community surfaces
 
 ## Quick Links
 
+- [Website](https://www.d1v.ai)
+- [Latest Releases](https://github.com/d1vai/d1vai_app/releases)
 - [Developer Guide](./docs/DEVELOPER_GUIDE.md)
+- [Chinese README](./README.zh-CN.md)
 - [License](./LICENSE)
-
-## Local Stripe Debug Setup
-
-For local `flutter run` / debug builds, keep Stripe compile-time values in a local file:
-
-1. Copy `.env/dev.example.json` to `.env/dev.json`
-2. Replace `STRIPE_PUBLISHABLE_KEY` with your real key
-3. Run from VS Code using the included launch config, or run manually:
-
-```bash
-flutter run --dart-define-from-file=.env/dev.json
-```
-
-The `.env/` folder is gitignored by default, so local keys stay out of the repo.

@@ -25,6 +25,11 @@ import '../screens/community_post_link_screen.dart';
 import '../screens/public_user_screen.dart';
 import '../providers/auth_provider.dart';
 
+const String _initialRouteOverride = String.fromEnvironment(
+  'APP_INITIAL_ROUTE',
+  defaultValue: '/',
+);
+
 Page<dynamic> _buildPageWithTransition(
   BuildContext context,
   GoRouterState state,
@@ -100,7 +105,7 @@ class _ClearSnackBarsNavigatorObserver extends NavigatorObserver {
 GoRouter createAppRouter() {
   return GoRouter(
     observers: [_ClearSnackBarsNavigatorObserver()],
-    initialLocation: '/',
+    initialLocation: _resolvedInitialLocation(),
     redirect: (BuildContext context, GoRouterState state) {
       // Use the context provided by GoRouter so that it can read
       // AuthProvider from the widget tree without depending on
@@ -398,4 +403,12 @@ GoRouter createAppRouter() {
       ),
     ],
   );
+}
+
+String _resolvedInitialLocation() {
+  final route = _initialRouteOverride.trim();
+  if (route.isEmpty || !route.startsWith('/')) {
+    return '/';
+  }
+  return route;
 }

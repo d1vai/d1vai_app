@@ -66,6 +66,12 @@ flutter run
 flutter run --dart-define=API_BASE_URL=https://api.d1v.ai
 ```
 
+4. Optional: provide local Stripe debug values from a gitignored file
+
+```bash
+flutter run --dart-define-from-file=.env/dev.json
+```
+
 ## API Configuration
 
 - Default API base URL: `https://api.d1v.ai`
@@ -84,6 +90,20 @@ If project creation fails in `d1vai_app` while the web app works:
 2. Confirm `effective_base_url` is `https://api.d1v.ai`
 3. Confirm `auth_token_present=true`
 4. Compare App and Web/curl `jwt_sub` / `jwt_type` or token suffix
+
+## Local Stripe Debug Setup
+
+For local `flutter run` / debug builds, keep Stripe compile-time values in a local file:
+
+1. Copy `.env/dev.example.json` to `.env/dev.json`
+2. Replace `STRIPE_PUBLISHABLE_KEY` with your real key
+3. Run with:
+
+```bash
+flutter run --dart-define-from-file=.env/dev.json
+```
+
+The `.env/` folder is gitignored by default, so local keys stay out of the repo.
 
 ## Localization Workflow
 
@@ -109,4 +129,3 @@ flutter test
 - You can copy `android/key.properties.example` to `android/key.properties` and fill in real keystore values
 - If `android/key.properties` is not provided, the app falls back to debug signing for local sideloading and GitHub APK distribution
 - Before publishing to any app store, switch to a proper release signing setup
-
