@@ -26,11 +26,13 @@ import '../widgets/skeletons/project_overview_skeleton.dart';
 class ProjectDetailScreen extends StatefulWidget {
   final String projectId;
   final String? initialTab;
+  final String? initialChatTab;
 
   const ProjectDetailScreen({
     super.key,
     required this.projectId,
     this.initialTab,
+    this.initialChatTab,
   });
 
   @override
@@ -309,6 +311,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
             key: _chatTabKey,
             projectId: project.id,
             previewUrl: project.preferredPreviewUrl,
+            initialSubTab: widget.initialChatTab,
           ),
           ProjectApiTab(projectId: project.id),
           ProjectDatabaseTab(
@@ -316,7 +319,12 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
             onAskAi: _handleAskAi,
             onRefreshProject: _loadProject,
           ),
-          ProjectPaymentTab(projectId: project.id, onAskAi: _handleAskAi),
+          ProjectPaymentTab(
+            projectId: project.id,
+            projectPayId: project.projectPayId,
+            onRefreshProject: _loadProject,
+            onAskAi: _handleAskAi,
+          ),
           ProjectDeployTab(
             project: project,
             onAskAi: _handleAskAi,

@@ -5,6 +5,25 @@ import '../models/message.dart';
 /// Unified message parser for converting payload data to ChatMessage
 /// Based on d1vai frontend implementation in messages.ts
 class MessageParser {
+  static String? payloadTurnId(dynamic rawPayload) {
+    final payload = _coerceJsonPayload(rawPayload);
+    try {
+      if (payload is! Map<String, dynamic>) return null;
+      for (final key in const ['client_turn_id', 'turn_id']) {
+        final value = payload[key];
+        if (value is String && value.trim().isNotEmpty) return value.trim();
+      }
+      final message = payload['message'];
+      if (message is Map) {
+        for (final key in const ['client_turn_id', 'turn_id']) {
+          final value = message[key];
+          if (value is String && value.trim().isNotEmpty) return value.trim();
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
   static dynamic _coerceJsonPayload(dynamic raw) {
     if (raw is! String) return raw;
     final s = raw.trim();
@@ -308,7 +327,9 @@ class MessageParser {
                     ThinkingMessageContent(text: item['text'] as String),
                   );
                 } else {
-                  contents.add(TextMessageContent(text: item['text'] as String));
+                  contents.add(
+                    TextMessageContent(text: item['text'] as String),
+                  );
                 }
               } else if (item['type'] == 'thinking' &&
                   item['thinking'] is String) {
@@ -322,9 +343,7 @@ class MessageParser {
                     id: item['id']?.toString(),
                     name: item['name'].toString(),
                     input: item['input'],
-                    status: toolUseSeen >= toolUseTotal
-                        ? 'processing'
-                        : 'done',
+                    status: toolUseSeen >= toolUseTotal ? 'processing' : 'done',
                   ),
                 );
               }
@@ -818,7 +837,366 @@ class MessageParser {
       role: role,
       createdAt: entry.createdAt,
       contents: contents,
+      meta: {if (payloadTurnId(p) != null) 'turnId': payloadTurnId(p)},
     );
+  }
+
+  static List<ChatHistoryEntry> filterNonDeploymentEntries(
+    List<ChatHistoryEntry> entries,
+  ) {
+    return entries
+        .where((entry) {
+          final payload = _coerceJsonPayload(entry.payload);
+          final rawType = payload is Map<String, dynamic>
+              ? (payload['type'] ??
+                        entry.messageType ??
+                        payload['message']?['type'])
+                    ?.toString()
+                    .trim()
+                    .toLowerCase()
+              : entry.messageType?.trim().toLowerCase();
+          if (rawType == null || rawType.isEmpty) return true;
+          return rawType != 'deployment_start' &&
+              rawType != 'deployment_status' &&
+              rawType != 'deployment_complete' &&
+              rawType != 'system';
+        })
+        .toList(growable: false);
+  }
+
+  static List<ChatHistoryEntry> dedupeTurnHistoryEntries(
+    List<ChatHistoryEntry> entries,
+  ) {
+    final ordered = <ChatHistoryEntry>[];
+    final groupedByTurnId = <String, List<ChatHistoryEntry>>{};
+    final seenPromptTurnIds = <String>{};
+
+    for (final entry in entries) {
+      final payload = _coerceJsonPayload(entry.payload);
+      final turnId = payloadTurnId(payload);
+      if (entry.messageType == 'prompt') {
+        if (turnId != null) {
+          (groupedByTurnId[turnId] ??= <ChatHistoryEntry>[]).add(entry);
+          seenPromptTurnIds.add(turnId);
+        } else {
+          ordered.add(entry);
+        }
+        continue;
+      }
+      if (turnId != null && seenPromptTurnIds.contains(turnId)) {
+        (groupedByTurnId[turnId] ??= <ChatHistoryEntry>[]).add(entry);
+        continue;
+      }
+      ordered.add(entry);
+    }
+
+    final regrouped = <ChatHistoryEntry>[];
+    for (final entry in entries) {
+      final turnId = payloadTurnId(entry.payload);
+      if (entry.messageType == 'prompt' &&
+          turnId != null &&
+          groupedByTurnId.containsKey(turnId)) {
+        regrouped.addAll(groupedByTurnId.remove(turnId)!);
+        continue;
+      }
+      if (!ordered.contains(entry)) continue;
+      regrouped.add(entry);
+    }
+
+    return regrouped.isNotEmpty ? regrouped : entries;
+  }
+
+  static String _trimText(String? value) => value?.trim() ?? '';
+
+  static String? _messagePrimaryText(ChatMessage message) {
+    if (message.contents.isEmpty) return null;
+    if (message.contents.any((content) => content is! TextMessageContent)) {
+      return null;
+    }
+    final text = message.contents
+        .whereType<TextMessageContent>()
+        .map((content) => _trimText(content.text))
+        .where((text) => text.isNotEmpty)
+        .join('\n')
+        .trim();
+    return text.isEmpty ? null : text;
+  }
+
+  static String _resultPayloadText(dynamic payload) {
+    final normalized = _coerceJsonPayload(payload);
+    if (normalized is! Map<String, dynamic>) return '';
+    final direct = normalized['result'] ?? normalized['output'];
+    if (direct is String) return direct.trim();
+    final msg = normalized['message'];
+    if (msg is String) return msg.trim();
+    return normalizeOpcodeText(normalized)?.trim() ?? '';
+  }
+
+  static List<ChatMessage> dedupeRepeatedResultMessages(
+    List<ChatMessage> messages,
+  ) {
+    final out = <ChatMessage>[];
+    final seenAssistantTextsByTurn = <String, Set<String>>{};
+    final seenResultKeys = <String>{};
+
+    String? getMessageTurnId(ChatMessage message) {
+      final metaTurnId = message.meta?['turnId'];
+      if (metaTurnId is String && metaTurnId.trim().isNotEmpty) {
+        return metaTurnId.trim();
+      }
+      for (final content in message.contents) {
+        if (content is ResultMessageContent) {
+          final turnId = payloadTurnId(content.payload);
+          if (turnId != null && turnId.isNotEmpty) return turnId;
+        }
+      }
+      return null;
+    }
+
+    for (final message in messages) {
+      final turnId = getMessageTurnId(message);
+      final textOnly = _messagePrimaryText(message);
+      if (message.role == 'assistant' &&
+          turnId != null &&
+          textOnly != null &&
+          textOnly.isNotEmpty) {
+        final set = seenAssistantTextsByTurn.putIfAbsent(
+          turnId,
+          () => <String>{},
+        );
+        if (set.contains(textOnly)) continue;
+        set.add(textOnly);
+        out.add(message);
+        continue;
+      }
+
+      ResultMessageContent? resultContent;
+      for (final content in message.contents) {
+        if (content is ResultMessageContent) {
+          resultContent = content;
+          break;
+        }
+      }
+      if (resultContent != null) {
+        final resultText = _resultPayloadText(resultContent.payload);
+        final key = '${turnId ?? ''}|$resultText';
+        if (seenResultKeys.contains(key)) continue;
+        if (turnId != null &&
+            resultText.isNotEmpty &&
+            seenAssistantTextsByTurn[turnId]?.contains(resultText) == true) {
+          seenResultKeys.add(key);
+          continue;
+        }
+        seenResultKeys.add(key);
+      }
+
+      out.add(message);
+    }
+
+    return out;
+  }
+
+  static List<ChatMessage> prepareHistoryMessages(
+    List<ChatHistoryEntry> entries,
+  ) {
+    final dedupedEntries = dedupeTurnHistoryEntries(entries);
+    final mapped = <ChatMessage>[];
+    for (final entry in filterNonDeploymentEntries(dedupedEntries)) {
+      final message = historyEntryToMessage(entry);
+      if (message != null) mapped.add(message);
+    }
+    final merged = mergeToolResultsIntoPrevToolCalls(mapped);
+    final deduped = dedupeRepeatedResultMessages(merged);
+    return deduped
+        .where((message) {
+          if (message.contents.isEmpty) return false;
+          final allEmptyText = message.contents.every(
+            (content) =>
+                content is TextMessageContent && content.text.trim().isEmpty,
+          );
+          return !allEmptyText;
+        })
+        .toList(growable: false);
+  }
+
+  static List<ChatMessage> mergeRefreshedHistoryWithLocal(
+    List<ChatMessage> historyMessages,
+    List<ChatMessage> currentMessages,
+  ) {
+    final localOptimisticMessages = currentMessages
+        .where((message) {
+          if (message.role != 'user') return false;
+          final status = message.meta?['status'];
+          final isNumericId = RegExp(r'^\d+$').hasMatch(message.id.trim());
+          return status != null || !isNumericId;
+        })
+        .toList(growable: false);
+
+    if (localOptimisticMessages.isEmpty) return historyMessages;
+
+    final merged = historyMessages.toList();
+    for (final localMessage in localOptimisticMessages) {
+      final localText = _messagePrimaryText(localMessage);
+      final localAt = localMessage.createdAt.millisecondsSinceEpoch;
+      final alreadyPresent = merged.any((historyMessage) {
+        if (historyMessage.role != localMessage.role) return false;
+        final historyText = _messagePrimaryText(historyMessage);
+        if (localText == null ||
+            historyText == null ||
+            historyText != localText) {
+          return false;
+        }
+        final historyAt = historyMessage.createdAt.millisecondsSinceEpoch;
+        return (historyAt - localAt).abs() <= 120000;
+      });
+      if (!alreadyPresent) merged.add(localMessage);
+    }
+
+    merged.sort((a, b) {
+      final cmp = a.createdAt.compareTo(b.createdAt);
+      if (cmp != 0) return cmp;
+      return a.id.compareTo(b.id);
+    });
+    return merged;
+  }
+
+  static List<ChatMessage> prependOlderMessages(
+    List<ChatMessage> olderMessages,
+    List<ChatMessage> currentMessages,
+  ) {
+    final seen = <String>{};
+
+    String keyFor(ChatMessage message) {
+      final text = _messagePrimaryText(message) ?? '';
+      return '${message.role}|${message.id}|${message.createdAt.toIso8601String()}|$text';
+    }
+
+    final merged = <ChatMessage>[];
+    for (final message in [...olderMessages, ...currentMessages]) {
+      final key = keyFor(message);
+      if (seen.contains(key)) continue;
+      seen.add(key);
+      merged.add(message);
+    }
+    return merged;
+  }
+
+  static String stableStringify(dynamic value) {
+    dynamic normalize(dynamic input) {
+      if (input is Map) {
+        final sortedKeys = input.keys.map((key) => key.toString()).toList()
+          ..sort();
+        return {for (final key in sortedKeys) key: normalize(input[key])};
+      }
+      if (input is List) {
+        return input.map(normalize).toList(growable: false);
+      }
+      return input;
+    }
+
+    try {
+      return jsonEncode(normalize(value));
+    } catch (_) {
+      return value?.toString() ?? '';
+    }
+  }
+
+  static String? deriveRenderableWsKey(
+    Map<String, dynamic>? payload,
+    String? fallbackKey,
+    String? type,
+  ) {
+    try {
+      if (payload == null) return fallbackKey;
+      if (type == 'assistant') {
+        final content = payload['message']?['content'];
+        if (content is List) {
+          for (final item in content) {
+            if (item is Map<String, dynamic> &&
+                item['type'] == 'tool_use' &&
+                item['id'] != null) {
+              return 'tool_use:${item['id']}';
+            }
+          }
+        }
+      }
+      if (type == 'assistant_message') {
+        final content = payload['content'];
+        if (content is List) {
+          for (final item in content) {
+            if (item is Map<String, dynamic> &&
+                item['type'] == 'tool_use' &&
+                item['id'] != null) {
+              return 'tool_use:${item['id']}';
+            }
+          }
+        }
+      }
+      if (type == 'tool_result') {
+        final direct = payload['tool_use_id'] ?? payload['parent_tool_use_id'];
+        if (direct is String && direct.trim().isNotEmpty) {
+          return 'tool_result:${direct.trim()}';
+        }
+        final content = payload['message']?['content'];
+        if (content is List) {
+          for (final item in content) {
+            if (item is Map<String, dynamic> &&
+                item['type'] == 'tool_result' &&
+                item['tool_use_id'] is String &&
+                (item['tool_use_id'] as String).trim().isNotEmpty) {
+              return 'tool_result:${(item['tool_use_id'] as String).trim()}';
+            }
+          }
+        }
+      }
+    } catch (_) {}
+    return fallbackKey;
+  }
+
+  static String? eventFingerprint(Map<String, dynamic>? payload, String? type) {
+    try {
+      if (payload == null) return null;
+      final sessionId = (payload['session_id'] ?? '').toString();
+      switch (type) {
+        case 'assistant_message':
+          return 'assistant_message:$sessionId:${stableStringify(payload['content'] ?? payload['message']?['content'] ?? [])}';
+        case 'assistant':
+          return 'assistant:$sessionId:${stableStringify(payload['message']?['content'] ?? payload['content'] ?? [])}';
+        case 'tool_start':
+        case 'tool_end':
+          return '$type:$sessionId:${payload['tool_call_id'] ?? ''}:${payload['tool_name'] ?? ''}';
+        case 'tool_output_delta':
+          return '$type:$sessionId:${payload['tool_call_id'] ?? ''}:${payload['delta'] ?? ''}';
+        case 'tool_result':
+          return 'tool_result:$sessionId:${payload['tool_use_id'] ?? payload['parent_tool_use_id'] ?? ''}:${stableStringify(payload['content'] ?? payload['message'] ?? '')}';
+        case 'user':
+          final content = payload['message']?['content'];
+          if (content is List) {
+            for (final item in content) {
+              if (item is Map<String, dynamic> &&
+                  item['type'] == 'tool_result') {
+                return 'user_tool_result:$sessionId:${item['tool_use_id'] ?? ''}:${stableStringify(item['content'] ?? '')}';
+              }
+            }
+          }
+          return 'user:$sessionId:${stableStringify(payload['message']?['content'] ?? payload['message'] ?? '')}';
+        case 'result':
+          return 'result:$sessionId:${payload['result'] ?? payload['output'] ?? ''}';
+        case 'git_commit':
+          return 'git_commit:$sessionId:${payload['project_id'] ?? ''}:${payload['message'] ?? ''}:${stableStringify(payload['files'] ?? [])}';
+        case 'git_push':
+          return 'git_push:$sessionId:${payload['project_id'] ?? ''}:${payload['branch'] ?? ''}:${payload['success'] ?? ''}';
+        case 'deployment_start':
+        case 'deployment_status':
+        case 'deployment_complete':
+        case 'deployment_success':
+          return '$type:$sessionId:${stableStringify(payload)}';
+        default:
+          return null;
+      }
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Align with d1vai web: merge tool execution results into the previous Bash tool

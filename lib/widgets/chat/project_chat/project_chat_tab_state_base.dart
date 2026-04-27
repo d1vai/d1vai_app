@@ -66,6 +66,10 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   bool _manualWsClose = false;
   bool _autoConnectDisabled = false;
   final Set<String> _seenWsKeys = <String>{};
+  final Map<String, int> _recentEventFingerprints = <String, int>{};
+  final List<_PendingAppendItem> _pendingAppendQueue = <_PendingAppendItem>[];
+  final Set<String> _pendingAppendWsKeys = <String>{};
+  Timer? _pendingAppendTimer;
   WsConnectionState _wsConnState = WsConnectionState.idle;
 
   // Mobile chat bottom sheet state
@@ -83,6 +87,18 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
 
   // Sub-tab state (Preview / Code)
   int _currentChatTabIndex = 0;
+
+  int _chatSubTabIndexFromName(String? raw) {
+    switch ((raw ?? '').trim().toLowerCase()) {
+      case 'code':
+      case 'files':
+      case 'file':
+        return 1;
+      case 'preview':
+      default:
+        return 0;
+    }
+  }
 
   // Preview runtime
   String? _previewUrl;
@@ -111,6 +127,7 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   void _sendFirstMessage(String text);
 
   // Shared helpers implemented by logic mixin; UI mixin depends on them.
+  // ignore: unused_element
   Future<void> _refreshWorkspaceStatus({required bool bypassCache});
   Future<void> _loadMoreHistory();
   Future<void> _retryMessage(ChatMessage message);

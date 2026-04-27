@@ -332,6 +332,7 @@ GoRouter createAppRouter() {
           ProjectDetailScreen(
             projectId: state.pathParameters['id']!,
             initialTab: state.uri.queryParameters['tab'],
+            initialChatTab: state.uri.queryParameters['chatTab'],
           ),
         ),
       ),

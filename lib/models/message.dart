@@ -166,12 +166,14 @@ class ChatMessage {
   final String role;
   final DateTime createdAt;
   final List<MessageContent> contents;
+  final Map<String, dynamic>? meta;
 
   const ChatMessage({
     required this.id,
     required this.role,
     required this.createdAt,
     required this.contents,
+    this.meta,
   });
 
   /// Create from JSON
@@ -250,6 +252,9 @@ class ChatMessage {
       role: json['role'] as String,
       createdAt: DateTime.parse(json['createdAt'] as String),
       contents: contents,
+      meta: json['meta'] is Map<String, dynamic>
+          ? json['meta'] as Map<String, dynamic>
+          : null,
     );
   }
 
@@ -259,6 +264,7 @@ class ChatMessage {
       'id': id,
       'role': role,
       'createdAt': createdAt.toIso8601String(),
+      if (meta != null) 'meta': meta,
       'contents': contents.map((content) {
         if (content is TextMessageContent) {
           return {'type': 'text', 'text': content.text};
@@ -333,12 +339,14 @@ class ChatMessage {
     String? role,
     DateTime? createdAt,
     List<MessageContent>? contents,
+    Map<String, dynamic>? meta,
   }) {
     return ChatMessage(
       id: id ?? this.id,
       role: role ?? this.role,
       createdAt: createdAt ?? this.createdAt,
       contents: contents ?? this.contents,
+      meta: meta ?? this.meta,
     );
   }
 

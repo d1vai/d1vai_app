@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/message.dart';
 import 'message_bubble.dart';
 import 'message_metadata.dart';
+import 'tool_call_group.dart';
 
 /// Message status enum
 enum MessageStatus { pending, sent, failed }
@@ -140,10 +141,56 @@ class _MessageListState extends State<MessageList> {
     });
   }
 
+  Set<String> _recentThinkingMessageIds() {
+    final ids = widget.messages
+        .skip(widget.messages.length > 2 ? widget.messages.length - 2 : 0)
+        .where(
+          (message) => message.contents.any(
+            (content) => content is ThinkingMessageContent,
+          ),
+        )
+        .map((message) => message.id)
+        .toSet();
+    return ids;
+  }
+
+  List<_RenderItem> _buildRenderItems() {
+    final items = <_RenderItem>[];
+
+    for (var i = 0; i < widget.messages.length; i++) {
+      final message = widget.messages[i];
+
+      if (!_isToolLikeMessage(message)) {
+        items.add(_RenderItem.message(message));
+        continue;
+      }
+
+      final group = <ChatMessage>[message];
+      var j = i + 1;
+      while (j < widget.messages.length &&
+          _isToolLikeMessage(widget.messages[j])) {
+        group.add(widget.messages[j]);
+        j += 1;
+      }
+
+      if (group.length == 1) {
+        items.add(_RenderItem.message(message));
+      } else {
+        items.add(_RenderItem.toolGroup(group.first.id, group));
+      }
+
+      i = j - 1;
+    }
+
+    return items;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final controller = widget.scrollController ?? _scrollController;
+    final recentThinkingMessageIds = _recentThinkingMessageIds();
+    final renderItems = _buildRenderItems();
 
     return Stack(
       children: [
@@ -176,11 +223,9 @@ class _MessageListState extends State<MessageList> {
             addAutomaticKeepAlives: false,
             addRepaintBoundaries: false,
             padding: const EdgeInsets.only(bottom: 16.0),
-            itemCount: widget.messages.isEmpty
-                ? 0
-                : (widget.messages.length + 1),
+            itemCount: renderItems.isEmpty ? 0 : (renderItems.length + 1),
             itemBuilder: (context, index) {
-              if (index == widget.messages.length) {
+              if (index == renderItems.length) {
                 return _HistoryHeader(
                   hasMore: widget.hasMoreHistory,
                   loading: widget.isLoadingMore,
@@ -189,8 +234,14 @@ class _MessageListState extends State<MessageList> {
                       : null,
                 );
               }
-              final message =
-                  widget.messages[widget.messages.length - 1 - index];
+              final item = renderItems[renderItems.length - 1 - index];
+              if (item.toolGroup != null) {
+                return RepaintBoundary(
+                  child: ToolCallGroup(messages: item.toolGroup!),
+                );
+              }
+
+              final message = item.message!;
               final isUser = message.role == 'user';
               final messageStatus =
                   widget.messageStatuses?[message.id] ?? MessageStatus.sent;
@@ -213,6 +264,9 @@ class _MessageListState extends State<MessageList> {
                     MessageBubble(
                       message: message,
                       isUser: isUser,
+                      highlightThinking: recentThinkingMessageIds.contains(
+                        message.id,
+                      ),
                       userAccessory: userAccessory,
                       onTap: widget.onMessageTap != null
                           ? () => widget.onMessageTap!(message)
@@ -279,6 +333,44 @@ class _MessageListState extends State<MessageList> {
       ],
     );
   }
+}
+
+class _RenderItem {
+  final ChatMessage? message;
+  final List<ChatMessage>? toolGroup;
+  final String type;
+
+  const _RenderItem._({required this.type, this.message, this.toolGroup});
+
+  factory _RenderItem.message(ChatMessage message) =>
+      _RenderItem._(type: 'message', message: message);
+
+  factory _RenderItem.toolGroup(String key, List<ChatMessage> messages) =>
+      _RenderItem._(type: key, toolGroup: messages);
+}
+
+bool _isToolLikeContent(MessageContent content) {
+  if (content is ToolMessageContent) return true;
+  if (content is CodeMessageContent) {
+    return (content.subtype ?? '').toLowerCase().trim() == 'tool_result';
+  }
+  return false;
+}
+
+bool _isToolLikeMessage(ChatMessage message) {
+  final contents = message.contents;
+  if (contents.isEmpty) return false;
+  if (message.role == 'assistant') {
+    return contents.every(_isToolLikeContent);
+  }
+  if (message.role == 'user') {
+    return contents.every(
+      (content) =>
+          content is CodeMessageContent &&
+          (content.subtype ?? '').toLowerCase().trim() == 'tool_result',
+    );
+  }
+  return false;
 }
 
 class _HistoryHeader extends StatelessWidget {

@@ -16,6 +16,9 @@ class MessageBubble extends StatelessWidget {
   final bool isUser;
   final VoidCallback? onTap;
   final Widget? userAccessory;
+  final bool highlightThinking;
+  final List<MessageContent>? overrideContents;
+  final bool plainLayout;
 
   const MessageBubble({
     super.key,
@@ -23,17 +26,27 @@ class MessageBubble extends StatelessWidget {
     required this.isUser,
     this.onTap,
     this.userAccessory,
+    this.highlightThinking = false,
+    this.overrideContents,
+    this.plainLayout = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final role = message.role;
+    final contents = overrideContents ?? message.contents;
     final contentColumn = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ...message.contents.map((content) {
-          return _buildMessageContent(content, role, isUser, context);
+        ...contents.map((content) {
+          return _buildMessageContent(
+            content,
+            role,
+            isUser,
+            context,
+            highlightThinking: highlightThinking,
+          );
         }),
       ],
     );
@@ -48,7 +61,7 @@ class MessageBubble extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Flexible(
-              child: isUser
+              child: isUser && !plainLayout
                   ? Container(
                       padding: const EdgeInsets.symmetric(
                         vertical: 8.0,
@@ -70,7 +83,7 @@ class MessageBubble extends StatelessWidget {
                       child: contentColumn,
                     ),
             ),
-            if (isUser && userAccessory != null) ...[
+            if (isUser && !plainLayout && userAccessory != null) ...[
               const SizedBox(width: 6.0),
               userAccessory!,
             ],
@@ -84,8 +97,9 @@ class MessageBubble extends StatelessWidget {
     MessageContent content,
     String role,
     bool isUser,
-    BuildContext context,
-  ) {
+    BuildContext context, {
+    bool highlightThinking = false,
+  }) {
     final theme = Theme.of(context);
     final textColor = isUser
         ? theme.colorScheme.onPrimary
@@ -143,7 +157,7 @@ class MessageBubble extends StatelessWidget {
         ),
       );
     } else if (content is ThinkingMessageContent) {
-      return ChatThinkingCard(text: content.text);
+      return ChatThinkingCard(text: content.text, highlight: highlightThinking);
     } else if (content is CodeMessageContent) {
       return ChatCodeCard(
         code: content.code,

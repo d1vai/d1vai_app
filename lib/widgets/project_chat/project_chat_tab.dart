@@ -38,15 +38,29 @@ part '../chat/project_chat/project_chat_tab_logic.dart';
 part '../chat/project_chat/project_chat_tab_state_base.dart';
 part '../chat/project_chat/project_chat_tab_ui.dart';
 
+class _PendingAppendItem {
+  final ChatMessage message;
+  final String? wsKey;
+  final int delayMs;
+
+  const _PendingAppendItem({
+    required this.message,
+    this.wsKey,
+    this.delayMs = 0,
+  });
+}
+
 /// 项目详情页 - Chat Tab
 class ProjectChatTab extends StatefulWidget {
   final String projectId;
   final String? previewUrl;
+  final String? initialSubTab;
 
   const ProjectChatTab({
     super.key,
     required this.projectId,
     required this.previewUrl,
+    this.initialSubTab,
   });
 
   @override

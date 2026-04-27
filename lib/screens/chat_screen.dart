@@ -38,6 +38,7 @@ class _OutboxAborted implements Exception {
 
 enum _ChatAppBarAction {
   openOverview,
+  openFiles,
   openEnvironment,
   openDatabase,
   openPayment,
@@ -46,6 +47,18 @@ enum _ChatAppBarAction {
   redeployPreview,
   refresh,
   clearChat,
+}
+
+class _PendingAppendItem {
+  final ChatMessage message;
+  final String? wsKey;
+  final int delayMs;
+
+  const _PendingAppendItem({
+    required this.message,
+    this.wsKey,
+    this.delayMs = 0,
+  });
 }
 
 /// Main chat screen for AI conversations
@@ -100,6 +113,10 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _manualWsClose = false;
   bool _autoConnectDisabled = false;
   final Set<String> _seenWsKeys = <String>{};
+  final Map<String, int> _recentEventFingerprints = <String, int>{};
+  final List<_PendingAppendItem> _pendingAppendQueue = <_PendingAppendItem>[];
+  final Set<String> _pendingAppendWsKeys = <String>{};
+  Timer? _pendingAppendTimer;
   _WsConnectionState _wsConnState = _WsConnectionState.idle;
 
   final StringBuffer _assistantDeltaBuffer = StringBuffer();
@@ -153,6 +170,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void dispose() {
     _assistantDeltaFlushTimer?.cancel();
+    _pendingAppendTimer?.cancel();
     _reconnectTimer?.cancel();
     _workspacePollTimer?.cancel();
     _modelConfigRetryTimer?.cancel();
@@ -936,7 +954,7 @@ class _ChatScreenState extends State<ChatScreen> {
     await _closeWebSocket(manual: true);
 
     try {
-      const limit = 30;
+      const limit = 60;
       final history = await _chatService.getChatHistory(
         projectId: widget.projectId,
         limit: limit,
@@ -947,12 +965,7 @@ class _ChatScreenState extends State<ChatScreen> {
       historyOk = true;
       history.sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
-      final messages = <ChatMessage>[];
-      for (final entry in history) {
-        final m = MessageParser.historyEntryToMessage(entry);
-        if (m != null) messages.add(m);
-      }
-      final merged = MessageParser.mergeToolResultsIntoPrevToolCalls(messages);
+      final merged = MessageParser.prepareHistoryMessages(history);
 
       Map<String, dynamic>? payloadMap(dynamic p) {
         if (p is Map<String, dynamic>) return p;
@@ -1014,10 +1027,15 @@ class _ChatScreenState extends State<ChatScreen> {
       final nextSessionId =
           payloadMap(newestWithSession?.payload)?['session_id'] as String?;
 
+      final hydrated = MessageParser.mergeRefreshedHistoryWithLocal(
+        merged,
+        _messages,
+      );
+
       setState(() {
         _messages
           ..clear()
-          ..addAll(merged);
+          ..addAll(hydrated);
         _messageStatuses.clear();
         _isLoadingHistory = false;
         _hasMoreHistory = history.length >= limit;
@@ -1130,7 +1148,7 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     try {
-      const limit = 30;
+      const limit = 60;
       final history = await _chatService.getChatHistory(
         projectId: widget.projectId,
         limit: limit,
@@ -1141,23 +1159,24 @@ class _ChatScreenState extends State<ChatScreen> {
       if (!mounted) return;
       history.sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
-      final older = <ChatMessage>[];
-      for (final entry in history) {
-        final m = MessageParser.historyEntryToMessage(entry);
-        if (m != null) older.add(m);
-      }
-
+      final older = MessageParser.prepareHistoryMessages(history);
       final existingIds = _messages.map((m) => m.id).toSet();
       final deduped = older.where((m) => !existingIds.contains(m.id)).toList();
-      final merged = MessageParser.mergeToolResultsIntoPrevToolCalls([
-        ...deduped,
-        ..._messages,
-      ]);
+      final merged = MessageParser.dedupeRepeatedResultMessages(
+        MessageParser.mergeToolResultsIntoPrevToolCalls([
+          ...deduped,
+          ..._messages,
+        ]),
+      );
+      final prepended = MessageParser.prependOlderMessages(deduped, _messages);
+      final finalMessages = MessageParser.dedupeRepeatedResultMessages(
+        MessageParser.mergeToolResultsIntoPrevToolCalls(prepended),
+      );
 
       setState(() {
         _messages
           ..clear()
-          ..addAll(merged);
+          ..addAll(finalMessages.isNotEmpty ? finalMessages : merged);
         _isLoadingMoreHistory = false;
         _hasMoreHistory = history.length >= limit;
         _oldestMessageAt = history.isNotEmpty
@@ -1190,6 +1209,10 @@ class _ChatScreenState extends State<ChatScreen> {
     _webSocket = null;
     _activeWsSessionId = null;
     _activeWsUrlOverride = null;
+    _pendingAppendTimer?.cancel();
+    _pendingAppendTimer = null;
+    _pendingAppendQueue.clear();
+    _pendingAppendWsKeys.clear();
     if (mounted) {
       setState(() {
         _wsConnState = _WsConnectionState.idle;
@@ -1206,6 +1229,93 @@ class _ChatScreenState extends State<ChatScreen> {
       if (data is Map<String, dynamic>) return data;
     } catch (_) {}
     return null;
+  }
+
+  bool _sameRenderableMessage(ChatMessage a, ChatMessage b) {
+    if (a.role != b.role) return false;
+    return MessageParser.stableStringify(a.toJson()) ==
+        MessageParser.stableStringify(b.toJson());
+  }
+
+  List<ChatMessage> _appendIfDifferentFromPrevious(
+    List<ChatMessage> messages,
+    ChatMessage nextMessage,
+  ) {
+    if (messages.isNotEmpty &&
+        _sameRenderableMessage(messages.last, nextMessage)) {
+      return messages;
+    }
+    return [...messages, nextMessage];
+  }
+
+  void _flushNextPendingAppend() {
+    _pendingAppendTimer?.cancel();
+    _pendingAppendTimer = null;
+    if (_pendingAppendQueue.isEmpty || !mounted) return;
+
+    final item = _pendingAppendQueue.removeAt(0);
+    final wsKey = item.wsKey;
+    if (wsKey != null && wsKey.isNotEmpty) {
+      _pendingAppendWsKeys.remove(wsKey);
+    }
+
+    setState(() {
+      if (wsKey != null &&
+          wsKey.isNotEmpty &&
+          _messages.any((message) => message.meta?['wsKey'] == wsKey)) {
+        return;
+      }
+      final next = _appendIfDifferentFromPrevious(_messages, item.message);
+      final deduped = MessageParser.dedupeRepeatedResultMessages(next);
+      _messages
+        ..clear()
+        ..addAll(deduped);
+    });
+    _scrollToBottom();
+
+    if (_pendingAppendQueue.isNotEmpty) {
+      final head = _pendingAppendQueue.first;
+      _pendingAppendTimer = Timer(
+        Duration(milliseconds: head.delayMs.clamp(0, 120)),
+        _flushNextPendingAppend,
+      );
+    }
+  }
+
+  void _enqueuePendingAppend(
+    ChatMessage message, {
+    String? wsKey,
+    int delayMs = 0,
+  }) {
+    final normalizedKey = (wsKey ?? '').trim();
+    if (normalizedKey.isNotEmpty &&
+        _pendingAppendWsKeys.contains(normalizedKey)) {
+      return;
+    }
+    final pendingLast = _pendingAppendQueue.isNotEmpty
+        ? _pendingAppendQueue.last.message
+        : null;
+    if (pendingLast != null && _sameRenderableMessage(pendingLast, message)) {
+      return;
+    }
+    if (normalizedKey.isNotEmpty) {
+      _pendingAppendWsKeys.add(normalizedKey);
+    }
+    _pendingAppendQueue.add(
+      _PendingAppendItem(
+        message: message,
+        wsKey: normalizedKey.isEmpty ? null : normalizedKey,
+        delayMs: delayMs,
+      ),
+    );
+
+    if (_pendingAppendTimer == null) {
+      final head = _pendingAppendQueue.first;
+      _pendingAppendTimer = Timer(
+        Duration(milliseconds: head.delayMs.clamp(0, 120)),
+        _flushNextPendingAppend,
+      );
+    }
   }
 
   void _flushAssistantDelta({bool scroll = true}) {
@@ -1401,21 +1511,31 @@ class _ChatScreenState extends State<ChatScreen> {
         if (existing == text) return;
       }
     }
-    setState(() {
-      _messages.add(
-        ChatMessage(
-          id: 'cancelled-${DateTime.now().millisecondsSinceEpoch}',
-          role: 'warning',
-          createdAt: DateTime.now(),
-          contents: const [TextMessageContent(text: text)],
-        ),
-      );
-    });
-    _scrollToBottom();
+    _enqueuePendingAppend(
+      ChatMessage(
+        id: 'cancelled-${DateTime.now().millisecondsSinceEpoch}',
+        role: 'warning',
+        createdAt: DateTime.now(),
+        contents: const [TextMessageContent(text: text)],
+      ),
+      wsKey: 'cancelled_notice',
+    );
   }
 
   void _handleWsPayload(Map<String, dynamic> payload) {
     final type = payload['type']?.toString();
+    final fingerprint = MessageParser.eventFingerprint(payload, type);
+    if (fingerprint != null) {
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      final seenAt = _recentEventFingerprints[fingerprint];
+      if (seenAt != null && nowMs - seenAt < 8000) return;
+      _recentEventFingerprints[fingerprint] = nowMs;
+      if (_recentEventFingerprints.length > 400) {
+        _recentEventFingerprints.removeWhere(
+          (_, value) => nowMs - value > 15000,
+        );
+      }
+    }
 
     if (type == 'system' || MessageParser.isSystemPayload(payload)) return;
 
@@ -1455,6 +1575,7 @@ class _ChatScreenState extends State<ChatScreen> {
           final id = payload['id'];
           if (id is String && id.isNotEmpty) wsKey = id;
         }
+        wsKey = MessageParser.deriveRenderableWsKey(payload, wsKey, type);
         if (wsKey != null) {
           if (_seenWsKeys.contains(wsKey)) return;
           _seenWsKeys.add(wsKey);
@@ -1493,9 +1614,17 @@ class _ChatScreenState extends State<ChatScreen> {
               role: 'assistant',
               createdAt: DateTime.now(),
               contents: contents,
+              meta: {
+                if (MessageParser.payloadTurnId(payload) != null)
+                  'turnId': MessageParser.payloadTurnId(payload),
+              },
             ),
           );
         }
+        final next = MessageParser.dedupeRepeatedResultMessages(_messages);
+        _messages
+          ..clear()
+          ..addAll(next);
       });
       _scrollToBottom();
       return;
@@ -1553,7 +1682,31 @@ class _ChatScreenState extends State<ChatScreen> {
         type == 'error' ||
         type == 'session_failure' ||
         type == 'cancelled') {
-      if (type == 'error' || type == 'session_failure') {
+      if (type == 'result') {
+        _finalizePrevToolDone();
+        final contents = MessageParser.createMessageContentsFromPayload(
+          payload,
+        );
+        if (contents.isNotEmpty) {
+          final turnId = MessageParser.payloadTurnId(payload);
+          final resultWsKey = turnId != null ? 'result:$turnId' : null;
+          _enqueuePendingAppend(
+            ChatMessage(
+              id: 'res-${DateTime.now().millisecondsSinceEpoch}',
+              role: 'assistant',
+              createdAt: DateTime.now(),
+              contents: contents,
+              meta: {
+                if (turnId != null) 'turnId': turnId,
+                if (resultWsKey != null) 'wsKey': resultWsKey,
+              },
+            ),
+            wsKey: resultWsKey,
+          );
+        }
+        _sessionDone = true;
+        _sessionError = false;
+      } else if (type == 'error' || type == 'session_failure') {
         _markLastToolOutcome('error');
         _sessionError = true;
         _sessionDone = false;
@@ -1591,12 +1744,18 @@ class _ChatScreenState extends State<ChatScreen> {
           role: 'assistant',
           createdAt: DateTime.now(),
           contents: contents,
+          meta: {
+            if (MessageParser.payloadTurnId(payload) != null)
+              'turnId': MessageParser.payloadTurnId(payload),
+          },
         );
         setState(() {
-          final next = MessageParser.mergeToolResultsIntoPrevToolCalls([
-            ..._messages,
-            toolMsg,
-          ]);
+          final next = MessageParser.dedupeRepeatedResultMessages(
+            MessageParser.mergeToolResultsIntoPrevToolCalls([
+              ..._messages,
+              toolMsg,
+            ]),
+          );
           _messages
             ..clear()
             ..addAll(next);
@@ -1608,17 +1767,23 @@ class _ChatScreenState extends State<ChatScreen> {
 
     final contents = MessageParser.createMessageContentsFromPayload(payload);
     if (contents.isEmpty) return;
-    setState(() {
-      _messages.add(
-        ChatMessage(
-          id: 'ws-${DateTime.now().millisecondsSinceEpoch}',
-          role: 'assistant',
-          createdAt: DateTime.now(),
-          contents: contents,
-        ),
-      );
-    });
-    _scrollToBottom();
+    final turnId = MessageParser.payloadTurnId(payload);
+    final wsKey =
+        MessageParser.deriveRenderableWsKey(payload, null, type) ??
+        (turnId != null && type != null ? '$type:$turnId' : null);
+    _enqueuePendingAppend(
+      ChatMessage(
+        id: 'ws-${DateTime.now().millisecondsSinceEpoch}',
+        role: 'assistant',
+        createdAt: DateTime.now(),
+        contents: contents,
+        meta: {
+          if (turnId != null) 'turnId': turnId,
+          if (wsKey != null) 'wsKey': wsKey,
+        },
+      ),
+      wsKey: wsKey,
+    );
   }
 
   void _scheduleReconnect() {
@@ -1949,6 +2114,9 @@ class _ChatScreenState extends State<ChatScreen> {
       case _ChatAppBarAction.openOverview:
         context.push('/projects/${widget.projectId}?tab=overview');
         break;
+      case _ChatAppBarAction.openFiles:
+        context.push('/projects/${widget.projectId}?tab=chat&chatTab=code');
+        break;
       case _ChatAppBarAction.openEnvironment:
         context.push('/projects/${widget.projectId}?tab=environment');
         break;
@@ -2073,6 +2241,18 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               ),
               PopupMenuItem<_ChatAppBarAction>(
+                value: _ChatAppBarAction.openFiles,
+                child: Row(
+                  children: [
+                    const Icon(Icons.folder_open_outlined, size: 18),
+                    const SizedBox(width: 10),
+                    Text(
+                      loc?.translate('chat_menu_view_files') ?? 'View Files',
+                    ),
+                  ],
+                ),
+              ),
+              PopupMenuItem<_ChatAppBarAction>(
                 value: _ChatAppBarAction.openEnvironment,
                 child: Row(
                   children: [
@@ -2149,7 +2329,10 @@ class _ChatScreenState extends State<ChatScreen> {
                   children: [
                     const Icon(Icons.refresh, size: 18),
                     const SizedBox(width: 10),
-                    Text(loc?.translate('refresh') ?? 'Refresh'),
+                    Text(
+                      loc?.translate('chat_menu_refresh_history') ??
+                          'Refresh History',
+                    ),
                   ],
                 ),
               ),

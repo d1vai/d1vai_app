@@ -503,6 +503,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
   void initState() {
     super.initState();
     _previewUrl = widget.previewUrl;
+    _currentChatTabIndex = _chatSubTabIndexFromName(widget.initialSubTab);
     _loadChatDraft();
     unawaited(_bootstrapWorkspace());
   }
@@ -525,6 +526,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       setState(() {
         _previewUrl = widget.previewUrl;
         _previewKey += 1;
+        _currentChatTabIndex = _chatSubTabIndexFromName(widget.initialSubTab);
         _isDeploying = false;
         _deployFramework = null;
         _availableModels = <ModelInfo>[];
@@ -536,6 +538,13 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       });
       _loadChatDraft();
       unawaited(_bootstrapWorkspace());
+    } else if (oldWidget.initialSubTab != widget.initialSubTab) {
+      final nextIndex = _chatSubTabIndexFromName(widget.initialSubTab);
+      if (nextIndex != _currentChatTabIndex) {
+        setState(() {
+          _currentChatTabIndex = nextIndex;
+        });
+      }
     }
   }
 
@@ -549,6 +558,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     _thinkingClearTimer?.cancel();
     _chatDraftPersistTimer?.cancel();
     _scrollToBottomTimer?.cancel();
+    _pendingAppendTimer?.cancel();
     _webSocketSubscription?.cancel();
     _outboxSignals.close();
     _manualWsClose = true;
@@ -998,9 +1008,10 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     });
 
     try {
+      const limit = 60;
       final history = await _chatService.getChatHistory(
         projectId: widget.projectId,
-        limit: 30,
+        limit: limit,
         messageType: 'all',
         includePayload: true,
       );
@@ -1010,14 +1021,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
 
       history.sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
-      final messages = <ChatMessage>[];
-      for (final entry in history) {
-        final message = _convertHistoryEntryToChatMessage(entry);
-        if (message != null) {
-          messages.add(message);
-        }
-      }
-      final merged = MessageParser.mergeToolResultsIntoPrevToolCalls(messages);
+      final merged = MessageParser.prepareHistoryMessages(history);
 
       Map<String, dynamic>? payloadMap(dynamic p) {
         if (p is Map<String, dynamic>) return p;
@@ -1074,14 +1078,19 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       final nextSessionId =
           payloadMap(newestWithSession?.payload)?['session_id'] as String?;
 
+      final hydrated = MessageParser.mergeRefreshedHistoryWithLocal(
+        merged,
+        _chatMessages,
+      );
+
       setState(() {
         _chatMessages
           ..clear()
-          ..addAll(merged);
+          ..addAll(hydrated);
         _messageStatuses.clear();
         _isLoadingHistory = false;
         _historyLoaded = true;
-        _hasMoreHistory = history.length >= 30;
+        _hasMoreHistory = history.length >= limit;
         _oldestMessageAt = history.isNotEmpty ? history.first.createdAt : null;
         _autoConnectDisabled = nextAutoConnectDisabled;
         _currentSessionId = (nextSessionId != null && nextSessionId.isNotEmpty)
@@ -1175,7 +1184,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     });
 
     try {
-      const limit = 30;
+      const limit = 60;
       final history = await _chatService.getChatHistory(
         projectId: widget.projectId,
         limit: limit,
@@ -1186,24 +1195,27 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       if (!mounted) return;
       history.sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
-      final older = <ChatMessage>[];
-      for (final entry in history) {
-        final m = _convertHistoryEntryToChatMessage(entry);
-        if (m == null) continue;
-        older.add(m);
-      }
-
+      final older = MessageParser.prepareHistoryMessages(history);
       final existingIds = _chatMessages.map((m) => m.id).toSet();
       final deduped = older.where((m) => !existingIds.contains(m.id)).toList();
-      final merged = MessageParser.mergeToolResultsIntoPrevToolCalls([
-        ...deduped,
-        ..._chatMessages,
-      ]);
+      final merged = MessageParser.dedupeRepeatedResultMessages(
+        MessageParser.mergeToolResultsIntoPrevToolCalls([
+          ...deduped,
+          ..._chatMessages,
+        ]),
+      );
+      final prepended = MessageParser.prependOlderMessages(
+        deduped,
+        _chatMessages,
+      );
+      final finalMessages = MessageParser.dedupeRepeatedResultMessages(
+        MessageParser.mergeToolResultsIntoPrevToolCalls(prepended),
+      );
 
       setState(() {
         _chatMessages
           ..clear()
-          ..addAll(merged);
+          ..addAll(finalMessages.isNotEmpty ? finalMessages : merged);
         _isLoadingMoreHistory = false;
         _hasMoreHistory = history.length >= limit;
         _oldestMessageAt = history.isNotEmpty
@@ -1216,17 +1228,6 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _isLoadingMoreHistory = false;
         _hasMoreHistory = false;
       });
-    }
-  }
-
-  /// 将 ChatHistoryEntry 转换为 ChatMessage（使用统一的 MessageParser）
-  ChatMessage? _convertHistoryEntryToChatMessage(ChatHistoryEntry entry) {
-    try {
-      return MessageParser.historyEntryToMessage(entry);
-    } catch (e, stackTrace) {
-      debugPrint('Failed to convert history entry ${entry.id}: $e');
-      debugPrint('Stack trace: $stackTrace');
-      return null;
     }
   }
 
@@ -1254,6 +1255,10 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     _webSocket = null;
     _activeWsSessionId = null;
     _activeWsUrlOverride = null;
+    _pendingAppendTimer?.cancel();
+    _pendingAppendTimer = null;
+    _pendingAppendQueue.clear();
+    _pendingAppendWsKeys.clear();
   }
 
   Map<String, dynamic>? _decodeWsPayload(dynamic data) {
@@ -1265,6 +1270,93 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       if (data is Map<String, dynamic>) return data;
     } catch (_) {}
     return null;
+  }
+
+  bool _sameRenderableMessage(ChatMessage a, ChatMessage b) {
+    if (a.role != b.role) return false;
+    return MessageParser.stableStringify(a.toJson()) ==
+        MessageParser.stableStringify(b.toJson());
+  }
+
+  List<ChatMessage> _appendIfDifferentFromPrevious(
+    List<ChatMessage> messages,
+    ChatMessage nextMessage,
+  ) {
+    if (messages.isNotEmpty &&
+        _sameRenderableMessage(messages.last, nextMessage)) {
+      return messages;
+    }
+    return [...messages, nextMessage];
+  }
+
+  void _flushNextPendingAppend() {
+    _pendingAppendTimer?.cancel();
+    _pendingAppendTimer = null;
+    if (_pendingAppendQueue.isEmpty || !mounted) return;
+
+    final item = _pendingAppendQueue.removeAt(0);
+    final wsKey = item.wsKey;
+    if (wsKey != null && wsKey.isNotEmpty) {
+      _pendingAppendWsKeys.remove(wsKey);
+    }
+
+    setState(() {
+      if (wsKey != null &&
+          wsKey.isNotEmpty &&
+          _chatMessages.any((message) => message.meta?['wsKey'] == wsKey)) {
+        return;
+      }
+      final next = _appendIfDifferentFromPrevious(_chatMessages, item.message);
+      final deduped = MessageParser.dedupeRepeatedResultMessages(next);
+      _chatMessages
+        ..clear()
+        ..addAll(deduped);
+    });
+    _scrollToBottom(force: false);
+
+    if (_pendingAppendQueue.isNotEmpty) {
+      final head = _pendingAppendQueue.first;
+      _pendingAppendTimer = Timer(
+        Duration(milliseconds: head.delayMs.clamp(0, 120)),
+        _flushNextPendingAppend,
+      );
+    }
+  }
+
+  void _enqueuePendingAppend(
+    ChatMessage message, {
+    String? wsKey,
+    int delayMs = 0,
+  }) {
+    final normalizedKey = (wsKey ?? '').trim();
+    if (normalizedKey.isNotEmpty &&
+        _pendingAppendWsKeys.contains(normalizedKey)) {
+      return;
+    }
+    final pendingLast = _pendingAppendQueue.isNotEmpty
+        ? _pendingAppendQueue.last.message
+        : null;
+    if (pendingLast != null && _sameRenderableMessage(pendingLast, message)) {
+      return;
+    }
+    if (normalizedKey.isNotEmpty) {
+      _pendingAppendWsKeys.add(normalizedKey);
+    }
+    _pendingAppendQueue.add(
+      _PendingAppendItem(
+        message: message,
+        wsKey: normalizedKey.isEmpty ? null : normalizedKey,
+        delayMs: delayMs,
+      ),
+    );
+
+    if (_pendingAppendTimer == null) {
+      final head = _pendingAppendQueue.first;
+      _pendingAppendTimer = Timer(
+        Duration(milliseconds: head.delayMs.clamp(0, 120)),
+        _flushNextPendingAppend,
+      );
+    }
   }
 
   void _flushAssistantDelta({bool scroll = true}) {
@@ -1461,21 +1553,31 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         if (existing == text) return;
       }
     }
-    setState(() {
-      _chatMessages.add(
-        ChatMessage(
-          id: 'cancelled-${DateTime.now().millisecondsSinceEpoch}',
-          role: 'warning',
-          createdAt: DateTime.now(),
-          contents: const [TextMessageContent(text: text)],
-        ),
-      );
-    });
-    _scrollToBottom();
+    _enqueuePendingAppend(
+      ChatMessage(
+        id: 'cancelled-${DateTime.now().millisecondsSinceEpoch}',
+        role: 'warning',
+        createdAt: DateTime.now(),
+        contents: const [TextMessageContent(text: text)],
+      ),
+      wsKey: 'cancelled_notice',
+    );
   }
 
   void _handleWsPayload(Map<String, dynamic> payload) {
     final type = payload['type']?.toString();
+    final fingerprint = MessageParser.eventFingerprint(payload, type);
+    if (fingerprint != null) {
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      final seenAt = _recentEventFingerprints[fingerprint];
+      if (seenAt != null && nowMs - seenAt < 8000) return;
+      _recentEventFingerprints[fingerprint] = nowMs;
+      if (_recentEventFingerprints.length > 400) {
+        _recentEventFingerprints.removeWhere(
+          (_, value) => nowMs - value > 15000,
+        );
+      }
+    }
 
     if (type == 'system' || MessageParser.isSystemPayload(payload)) return;
 
@@ -1527,6 +1629,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
           final id = payload['id'];
           if (id is String && id.isNotEmpty) wsKey = id;
         }
+        wsKey = MessageParser.deriveRenderableWsKey(payload, wsKey, type);
         if (wsKey != null) {
           if (_seenWsKeys.contains(wsKey)) return;
           _seenWsKeys.add(wsKey);
@@ -1586,9 +1689,17 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
               role: 'assistant',
               createdAt: DateTime.now(),
               contents: contents,
+              meta: {
+                if (MessageParser.payloadTurnId(payload) != null)
+                  'turnId': MessageParser.payloadTurnId(payload),
+              },
             ),
           );
         }
+        final next = MessageParser.dedupeRepeatedResultMessages(_chatMessages);
+        _chatMessages
+          ..clear()
+          ..addAll(next);
       });
       _scrollToBottom();
       return;
@@ -1653,7 +1764,30 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         type == 'session_failure' ||
         type == 'cancelled') {
       // Treat these as terminal signals for the current run; don't render as a chat bubble.
-      if (type == 'complete') {
+      if (type == 'result') {
+        _finalizePrevToolDone();
+        _setSessionThinking(false);
+        final contents = MessageParser.createMessageContentsFromPayload(
+          payload,
+        );
+        if (contents.isNotEmpty) {
+          final turnId = MessageParser.payloadTurnId(payload);
+          final resultWsKey = turnId != null ? 'result:$turnId' : null;
+          _enqueuePendingAppend(
+            ChatMessage(
+              id: 'res-${DateTime.now().millisecondsSinceEpoch}',
+              role: 'assistant',
+              createdAt: DateTime.now(),
+              contents: contents,
+              meta: {
+                if (turnId != null) 'turnId': turnId,
+                if (resultWsKey != null) 'wsKey': resultWsKey,
+              },
+            ),
+            wsKey: resultWsKey,
+          );
+        }
+      } else if (type == 'complete') {
         _finalizePrevToolDone();
         _markSessionDone();
       } else if (type == 'error' || type == 'session_failure') {
@@ -1683,12 +1817,18 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
           role: 'assistant',
           createdAt: DateTime.now(),
           contents: contents,
+          meta: {
+            if (MessageParser.payloadTurnId(payload) != null)
+              'turnId': MessageParser.payloadTurnId(payload),
+          },
         );
         setState(() {
-          final next = MessageParser.mergeToolResultsIntoPrevToolCalls([
-            ..._chatMessages,
-            toolMsg,
-          ]);
+          final next = MessageParser.dedupeRepeatedResultMessages(
+            MessageParser.mergeToolResultsIntoPrevToolCalls([
+              ..._chatMessages,
+              toolMsg,
+            ]),
+          );
           _chatMessages
             ..clear()
             ..addAll(next);
@@ -1701,17 +1841,23 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     // Default: render as a standalone assistant message derived from payload.
     final contents = MessageParser.createMessageContentsFromPayload(payload);
     if (contents.isEmpty) return;
-    setState(() {
-      _chatMessages.add(
-        ChatMessage(
-          id: 'ws-${DateTime.now().millisecondsSinceEpoch}',
-          role: 'assistant',
-          createdAt: DateTime.now(),
-          contents: contents,
-        ),
-      );
-    });
-    _scrollToBottom();
+    final turnId = MessageParser.payloadTurnId(payload);
+    final wsKey =
+        MessageParser.deriveRenderableWsKey(payload, null, type) ??
+        (turnId != null && type != null ? '$type:$turnId' : null);
+    _enqueuePendingAppend(
+      ChatMessage(
+        id: 'ws-${DateTime.now().millisecondsSinceEpoch}',
+        role: 'assistant',
+        createdAt: DateTime.now(),
+        contents: contents,
+        meta: {
+          if (turnId != null) 'turnId': turnId,
+          if (wsKey != null) 'wsKey': wsKey,
+        },
+      ),
+      wsKey: wsKey,
+    );
   }
 
   void _handleDeploymentFrame(String type, Map<String, dynamic> payload) {

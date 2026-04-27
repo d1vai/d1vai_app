@@ -13,9 +13,17 @@ import '../snackbar_helper.dart';
 /// 项目详情页 - Payment Tab
 class ProjectPaymentTab extends StatefulWidget {
   final String projectId;
+  final int? projectPayId;
+  final Future<void> Function()? onRefreshProject;
   final void Function(String prompt)? onAskAi;
 
-  const ProjectPaymentTab({super.key, required this.projectId, this.onAskAi});
+  const ProjectPaymentTab({
+    super.key,
+    required this.projectId,
+    this.projectPayId,
+    this.onRefreshProject,
+    this.onAskAi,
+  });
 
   @override
   State<ProjectPaymentTab> createState() => _ProjectPaymentTabState();
@@ -27,6 +35,9 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
   final List<PaymentTransaction> _paymentTransactions = [];
   bool _isLoading = false;
   bool _isInitialized = false;
+  bool _isActivating = false;
+  bool _paymentActivationRequired = false;
+  bool _paymentActivatedOverride = false;
   String? _loadError;
 
   String _t(String key, String fallback) {
@@ -44,10 +55,47 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
     }
   }
 
+  @override
+  void didUpdateWidget(covariant ProjectPaymentTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.projectPayId != widget.projectPayId &&
+        widget.projectPayId != null) {
+      _paymentActivationRequired = false;
+      _paymentActivatedOverride = false;
+      if (_isInitialized && !_isLoading) {
+        unawaited(_loadPaymentData());
+      }
+    }
+  }
+
+  bool get _isPaymentActivated =>
+      _paymentActivatedOverride || widget.projectPayId != null;
+
+  bool _isPaymentNotActivatedError(String message) {
+    final normalized = message.toLowerCase();
+    return (normalized.contains('404') ||
+            normalized.contains('not found') ||
+            normalized.contains('not activated')) &&
+        (normalized.contains('project pay') ||
+            normalized.contains('payment integration') ||
+            normalized.contains('activate-pay') ||
+            normalized.contains('pay integration'));
+  }
+
   Future<void> _loadPaymentData() async {
+    if (!_isPaymentActivated && !_paymentActivatedOverride) {
+      setState(() {
+        _isLoading = false;
+        _loadError = null;
+        _paymentActivationRequired = true;
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _loadError = null;
+      _paymentActivationRequired = false;
     });
 
     try {
@@ -83,10 +131,19 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
           ..addAll(transactions);
         _isLoading = false;
         _loadError = null;
+        _paymentActivationRequired = false;
       });
     } catch (e) {
       if (!mounted) return;
       final msg = humanizeError(e);
+      if (_isPaymentNotActivatedError(msg)) {
+        setState(() {
+          _isLoading = false;
+          _loadError = null;
+          _paymentActivationRequired = true;
+        });
+        return;
+      }
       setState(() {
         _isLoading = false;
         _loadError = msg;
@@ -106,10 +163,53 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
     }
   }
 
+  Future<void> _activatePayments() async {
+    setState(() {
+      _isActivating = true;
+    });
+    try {
+      final service = D1vaiService();
+      await service.activateProjectPay(widget.projectId);
+      if (!mounted) return;
+      setState(() {
+        _paymentActivatedOverride = true;
+        _paymentActivationRequired = false;
+      });
+      SnackBarHelper.showSuccess(
+        context,
+        title: _t('project_payment_enable_title', 'Enable payments'),
+        message: _t(
+          'project_payment_enable_success',
+          'Payments activated successfully',
+        ),
+      );
+      await widget.onRefreshProject?.call();
+      await _loadPaymentData();
+    } catch (e) {
+      if (!mounted) return;
+      SnackBarHelper.showError(
+        context,
+        title: _t('project_payment_enable_title', 'Enable payments'),
+        message:
+            '${_t('project_payment_enable_failed', 'Failed to activate payments')}: ${humanizeError(e)}',
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isActivating = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_paymentActivationRequired) {
+      return _buildActivatePaymentsState();
     }
 
     final error = _loadError;
@@ -171,6 +271,77 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
             const SizedBox(height: 16),
             _buildTransactionsCard(),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActivatePaymentsState() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _t('project_payment_enable_title', 'Enable payments'),
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _t(
+                      'project_payment_enable_description',
+                      'Payments are not activated for this project yet. Initialize payments first, then manage products, transactions, bank accounts, withdrawals, and webhooks.',
+                    ),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _isActivating ? null : _activatePayments,
+                      icon: _isActivating
+                          ? SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  colorScheme.onPrimary,
+                                ),
+                              ),
+                            )
+                          : const Icon(Icons.credit_score_outlined),
+                      label: Text(
+                        _isActivating
+                            ? _t(
+                                'project_payment_enable_loading',
+                                'Initializing…',
+                              )
+                            : _t(
+                                'project_payment_enable_button',
+                                'Enable Payments',
+                              ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
