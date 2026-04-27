@@ -18,6 +18,8 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   bool _isChatLoading = false;
   bool _isLoadingHistory = false;
   String? _currentSessionId;
+  String? _lastSessionModelId;
+  String? _lastSessionEngine;
   bool _historyLoaded = false;
   bool _isLoadingMoreHistory = false;
   bool _hasMoreHistory = true;

@@ -141,19 +141,6 @@ class _MessageListState extends State<MessageList> {
     });
   }
 
-  Set<String> _recentThinkingMessageIds() {
-    final ids = widget.messages
-        .skip(widget.messages.length > 2 ? widget.messages.length - 2 : 0)
-        .where(
-          (message) => message.contents.any(
-            (content) => content is ThinkingMessageContent,
-          ),
-        )
-        .map((message) => message.id)
-        .toSet();
-    return ids;
-  }
-
   List<_RenderItem> _buildRenderItems() {
     final items = <_RenderItem>[];
 
@@ -189,8 +176,8 @@ class _MessageListState extends State<MessageList> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final controller = widget.scrollController ?? _scrollController;
-    final recentThinkingMessageIds = _recentThinkingMessageIds();
     final renderItems = _buildRenderItems();
+    final recentThinkingMessageIds = _recentThinkingMessageIds(renderItems);
 
     return Stack(
       children: [
@@ -332,6 +319,39 @@ class _MessageListState extends State<MessageList> {
           ),
       ],
     );
+  }
+
+  Set<String> _recentThinkingMessageIds(List<_RenderItem> renderItems) {
+    if (renderItems.isEmpty) return const <String>{};
+
+    bool isThinkingMessage(ChatMessage message) {
+      return message.contents.any(
+        (content) => content is ThinkingMessageContent,
+      );
+    }
+
+    final lastItem = renderItems.last;
+    final secondLastItem = renderItems.length > 1
+        ? renderItems[renderItems.length - 2]
+        : null;
+    final ids = <String>{};
+
+    final lastMessage = lastItem.message;
+    if (lastMessage != null && isThinkingMessage(lastMessage)) {
+      ids.add(lastMessage.id);
+    }
+
+    final secondLastMessage = secondLastItem?.message;
+    final lastIsToolGroup = lastItem.toolGroup != null;
+    final lastIsToolMessage =
+        lastMessage != null && _isToolLikeMessage(lastMessage);
+    if (secondLastMessage != null &&
+        isThinkingMessage(secondLastMessage) &&
+        (lastIsToolGroup || lastIsToolMessage)) {
+      ids.add(secondLastMessage.id);
+    }
+
+    return ids;
   }
 }
 

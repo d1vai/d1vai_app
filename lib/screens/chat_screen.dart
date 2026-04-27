@@ -93,6 +93,8 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _hasMoreHistory = true;
   DateTime? _oldestMessageAt;
   String? _currentSessionId;
+  String? _lastSessionModelId;
+  String? _lastSessionEngine;
 
   // Outbox queue (mobile-friendly message queue)
   final List<OutboxItem> _outboxItems = <OutboxItem>[];
@@ -214,6 +216,25 @@ class _ChatScreenState extends State<ChatScreen> {
         !_sessionDone &&
         !_sessionError &&
         activeSid.isNotEmpty;
+  }
+
+  String? _normalizeSessionConfigValue(String? value) {
+    final trimmed = value?.trim();
+    return (trimmed == null || trimmed.isEmpty) ? null : trimmed;
+  }
+
+  bool _canContinueCurrentSession() {
+    final sid = _normalizeSessionConfigValue(_currentSessionId);
+    if (sid == null) return false;
+    return _normalizeSessionConfigValue(_lastSessionModelId) ==
+            _normalizeSessionConfigValue(_selectedModelId) &&
+        _normalizeSessionConfigValue(_lastSessionEngine) ==
+            _normalizeSessionConfigValue(_selectedEngine);
+  }
+
+  void _rememberSessionConfig({String? modelId, String? engine}) {
+    _lastSessionModelId = _normalizeSessionConfigValue(modelId);
+    _lastSessionEngine = _normalizeSessionConfigValue(engine);
   }
 
   bool _isTaskIdleForQueue() {
@@ -341,6 +362,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _maybePowerSaveCloseWebSocket() async {
     if (_outboxItems.isNotEmpty) return;
     if (_hasActiveStreaming()) return;
+    if (_pendingAppendQueue.isNotEmpty || _pendingAppendTimer != null) return;
     if (_wsConnState != _WsConnectionState.connected) return;
     await _closeWebSocket(manual: true);
   }
@@ -901,6 +923,8 @@ class _ChatScreenState extends State<ChatScreen> {
     await _closeWebSocket(manual: true);
     if (!mounted) {
       _currentSessionId = null;
+      _lastSessionModelId = null;
+      _lastSessionEngine = null;
       _sessionDone = false;
       _sessionError = false;
       _autoConnectDisabled = false;
@@ -908,6 +932,8 @@ class _ChatScreenState extends State<ChatScreen> {
     }
     setState(() {
       _currentSessionId = null;
+      _lastSessionModelId = null;
+      _lastSessionEngine = null;
       _sessionDone = false;
       _sessionError = false;
       _autoConnectDisabled = false;
@@ -1014,6 +1040,7 @@ class _ChatScreenState extends State<ChatScreen> {
       final nextSessionError = latestType == 'error';
 
       ChatHistoryEntry? newestWithSession;
+      ChatHistoryEntry? newestPromptForSession;
       for (final e in history) {
         final pm = payloadMap(e.payload);
         if (pm == null) continue;
@@ -1026,6 +1053,18 @@ class _ChatScreenState extends State<ChatScreen> {
       }
       final nextSessionId =
           payloadMap(newestWithSession?.payload)?['session_id'] as String?;
+      if (nextSessionId != null && nextSessionId.isNotEmpty) {
+        for (final e in history.reversed) {
+          if ((e.messageType ?? '').trim() != 'prompt') continue;
+          final pm = payloadMap(e.payload);
+          if (pm == null) continue;
+          final sid = pm['session_id'];
+          if (sid is String && sid.trim() == nextSessionId) {
+            newestPromptForSession = e;
+            break;
+          }
+        }
+      }
 
       final hydrated = MessageParser.mergeRefreshedHistoryWithLocal(
         merged,
@@ -1046,6 +1085,12 @@ class _ChatScreenState extends State<ChatScreen> {
         _currentSessionId = (nextSessionId != null && nextSessionId.isNotEmpty)
             ? nextSessionId
             : _currentSessionId;
+        _lastSessionModelId = _normalizeSessionConfigValue(
+          payloadMap(newestPromptForSession?.payload)?['model']?.toString(),
+        );
+        _lastSessionEngine = _normalizeSessionConfigValue(
+          payloadMap(newestPromptForSession?.payload)?['engine']?.toString(),
+        );
       });
 
       ChatHistoryEntry? newestNonIgnorable;
@@ -1690,19 +1735,32 @@ class _ChatScreenState extends State<ChatScreen> {
         if (contents.isNotEmpty) {
           final turnId = MessageParser.payloadTurnId(payload);
           final resultWsKey = turnId != null ? 'result:$turnId' : null;
-          _enqueuePendingAppend(
-            ChatMessage(
-              id: 'res-${DateTime.now().millisecondsSinceEpoch}',
-              role: 'assistant',
-              createdAt: DateTime.now(),
-              contents: contents,
-              meta: {
-                if (turnId != null) 'turnId': turnId,
-                if (resultWsKey != null) 'wsKey': resultWsKey,
-              },
-            ),
-            wsKey: resultWsKey,
-          );
+          setState(() {
+            if (resultWsKey != null &&
+                _messages.any(
+                  (message) => message.meta?['wsKey'] == resultWsKey,
+                )) {
+              return;
+            }
+            final next = _appendIfDifferentFromPrevious(
+              _messages,
+              ChatMessage(
+                id: 'res-${DateTime.now().millisecondsSinceEpoch}',
+                role: 'assistant',
+                createdAt: DateTime.now(),
+                contents: contents,
+                meta: {
+                  if (turnId != null) 'turnId': turnId,
+                  if (resultWsKey != null) 'wsKey': resultWsKey,
+                },
+              ),
+            );
+            final deduped = MessageParser.dedupeRepeatedResultMessages(next);
+            _messages
+              ..clear()
+              ..addAll(deduped);
+          });
+          _scrollToBottom();
         }
         _sessionDone = true;
         _sessionError = false;
@@ -1976,7 +2034,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     try {
       await _ensureWorkspaceReadyForSend();
-      final isNew = forceNewSession || _currentSessionId == null;
+      final isNew = forceNewSession || !_canContinueCurrentSession();
       final response = await _chatService.executeSession(
         projectId: widget.projectId,
         prompt: prompt,
@@ -1996,6 +2054,10 @@ class _ChatScreenState extends State<ChatScreen> {
         _messageStatuses[tempId] = MessageStatus.sent;
         _autoConnectDisabled = false;
       });
+      _rememberSessionConfig(
+        modelId: _selectedModelId,
+        engine: _selectedEngine,
+      );
 
       await _ensureWebSocketOpen(sid);
       _signalOutbox();
@@ -2051,6 +2113,10 @@ class _ChatScreenState extends State<ChatScreen> {
         _messageStatuses[message.id] = MessageStatus.sent;
         _autoConnectDisabled = false;
       });
+      _rememberSessionConfig(
+        modelId: _selectedModelId,
+        engine: _selectedEngine,
+      );
       await _ensureWebSocketOpen(sid);
     } catch (e) {
       if (!mounted) return;

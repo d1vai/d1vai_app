@@ -32,6 +32,25 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     return mode == ChatEngineMode.fast ? 'fast' : 'think_hard';
   }
 
+  String? _normalizeSessionConfigValue(String? value) {
+    final trimmed = value?.trim();
+    return (trimmed == null || trimmed.isEmpty) ? null : trimmed;
+  }
+
+  bool _canContinueCurrentSession() {
+    final sid = _normalizeSessionConfigValue(_currentSessionId);
+    if (sid == null) return false;
+    return _normalizeSessionConfigValue(_lastSessionModelId) ==
+            _normalizeSessionConfigValue(_selectedModelId) &&
+        _normalizeSessionConfigValue(_lastSessionEngine) ==
+            _normalizeSessionConfigValue(_selectedEngine);
+  }
+
+  void _rememberSessionConfig({String? modelId, String? engine}) {
+    _lastSessionModelId = _normalizeSessionConfigValue(modelId);
+    _lastSessionEngine = _normalizeSessionConfigValue(engine);
+  }
+
   void _loadChatDraft() {
     try {
       final saved = _storageService.getString(_chatDraftKey)?.trimRight() ?? '';
@@ -487,6 +506,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
 
   Future<void> _maybePowerSaveCloseWebSocket() async {
     if (_outboxItems.isNotEmpty) return;
+    if (_pendingAppendQueue.isNotEmpty || _pendingAppendTimer != null) return;
     final activeSid = (_activeWsSessionId ?? '').trim();
     final hasActiveStreaming =
         _wsConnState == WsConnectionState.connected &&
@@ -964,6 +984,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     await _closeWebSocket(manual: true);
     if (!mounted) {
       _currentSessionId = null;
+      _lastSessionModelId = null;
+      _lastSessionEngine = null;
       _sessionThinking = false;
       _sessionDone = false;
       _sessionError = false;
@@ -972,6 +994,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     }
     setState(() {
       _currentSessionId = null;
+      _lastSessionModelId = null;
+      _lastSessionEngine = null;
       _sessionThinking = false;
       _sessionDone = false;
       _sessionError = false;
@@ -1065,6 +1089,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
           : _autoConnectDisabled;
 
       ChatHistoryEntry? newestWithSession;
+      ChatHistoryEntry? newestPromptForSession;
       for (final e in history) {
         final pm = payloadMap(e.payload);
         if (pm == null) continue;
@@ -1077,6 +1102,18 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       }
       final nextSessionId =
           payloadMap(newestWithSession?.payload)?['session_id'] as String?;
+      if (nextSessionId != null && nextSessionId.isNotEmpty) {
+        for (final e in history.reversed) {
+          if ((e.messageType ?? '').trim() != 'prompt') continue;
+          final pm = payloadMap(e.payload);
+          if (pm == null) continue;
+          final sid = pm['session_id'];
+          if (sid is String && sid.trim() == nextSessionId) {
+            newestPromptForSession = e;
+            break;
+          }
+        }
+      }
 
       final hydrated = MessageParser.mergeRefreshedHistoryWithLocal(
         merged,
@@ -1096,6 +1133,12 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _currentSessionId = (nextSessionId != null && nextSessionId.isNotEmpty)
             ? nextSessionId
             : _currentSessionId;
+        _lastSessionModelId = _normalizeSessionConfigValue(
+          payloadMap(newestPromptForSession?.payload)?['model']?.toString(),
+        );
+        _lastSessionEngine = _normalizeSessionConfigValue(
+          payloadMap(newestPromptForSession?.payload)?['engine']?.toString(),
+        );
       });
 
       // Find latest meaningful type timestamp (for stale guarding)
@@ -1773,19 +1816,32 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         if (contents.isNotEmpty) {
           final turnId = MessageParser.payloadTurnId(payload);
           final resultWsKey = turnId != null ? 'result:$turnId' : null;
-          _enqueuePendingAppend(
-            ChatMessage(
-              id: 'res-${DateTime.now().millisecondsSinceEpoch}',
-              role: 'assistant',
-              createdAt: DateTime.now(),
-              contents: contents,
-              meta: {
-                if (turnId != null) 'turnId': turnId,
-                if (resultWsKey != null) 'wsKey': resultWsKey,
-              },
-            ),
-            wsKey: resultWsKey,
-          );
+          setState(() {
+            if (resultWsKey != null &&
+                _chatMessages.any(
+                  (message) => message.meta?['wsKey'] == resultWsKey,
+                )) {
+              return;
+            }
+            final next = _appendIfDifferentFromPrevious(
+              _chatMessages,
+              ChatMessage(
+                id: 'res-${DateTime.now().millisecondsSinceEpoch}',
+                role: 'assistant',
+                createdAt: DateTime.now(),
+                contents: contents,
+                meta: {
+                  if (turnId != null) 'turnId': turnId,
+                  if (resultWsKey != null) 'wsKey': resultWsKey,
+                },
+              ),
+            );
+            final deduped = MessageParser.dedupeRepeatedResultMessages(next);
+            _chatMessages
+              ..clear()
+              ..addAll(deduped);
+          });
+          _scrollToBottom(force: false);
         }
       } else if (type == 'complete') {
         _finalizePrevToolDone();
@@ -2267,7 +2323,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
 
     try {
       await _ensureWorkspaceReadyForSend();
-      final isNew = _currentSessionId == null;
+      final isNew = !_canContinueCurrentSession();
       final response = await _chatService.executeSession(
         projectId: widget.projectId,
         prompt: prompt,
@@ -2286,6 +2342,10 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _autoConnectDisabled = false;
         _messageStatuses[tempId] = MessageStatus.sent;
       });
+      _rememberSessionConfig(
+        modelId: _selectedModelId,
+        engine: _selectedEngine,
+      );
 
       _signalOutbox();
       unawaited(_drainOutbox());
@@ -2336,6 +2396,10 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _autoConnectDisabled = false;
         _messageStatuses[message.id] = MessageStatus.sent;
       });
+      _rememberSessionConfig(
+        modelId: _selectedModelId,
+        engine: _selectedEngine,
+      );
       await _ensureWebSocketOpen(sid);
     } catch (e) {
       if (!mounted) return;

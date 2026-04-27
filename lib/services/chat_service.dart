@@ -37,6 +37,7 @@ class ChatService {
       final response = await _apiClient.post(
         '/api/projects/$projectId/sessions/execute',
         payload,
+        retries: 0,
       );
 
       return ExecuteSessionResponse.fromJson(response);
