@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Local compile-time env files for Flutter `--dart-define-from-file`
+.env/
+!.env/*.example.json

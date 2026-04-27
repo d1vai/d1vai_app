@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/package_info.dart';
 import '../services/stripe_payment_service.dart';
 import '../services/wallet_service.dart';
@@ -70,11 +71,13 @@ class _UpgradePlansPanelState extends State<UpgradePlansPanel> {
   }
 
   Future<void> _handleSubscribe(PackageInfo package) async {
+    final loc = AppLocalizations.of(context);
     if (!StripePaymentService.isConfigured) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Stripe mobile payment is not configured in this build.',
+            loc?.translate('topup_unconfigured') ??
+                'Stripe mobile payment is not configured in this build.',
           ),
           backgroundColor: Colors.red,
         ),
@@ -103,8 +106,11 @@ class _UpgradePlansPanelState extends State<UpgradePlansPanel> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Subscription payment submitted successfully.'),
+        SnackBar(
+          content: Text(
+            loc?.translate('upgrade_subscription_submitted') ??
+                'Subscription payment submitted successfully.',
+          ),
           backgroundColor: Colors.green,
         ),
       );
@@ -112,7 +118,11 @@ class _UpgradePlansPanelState extends State<UpgradePlansPanel> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Subscription failed: $e'),
+          content: Text(
+            (loc?.translate('upgrade_subscription_failed') ??
+                    'Subscription failed: {error}')
+                .replaceAll('{error}', '$e'),
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -129,6 +139,7 @@ class _UpgradePlansPanelState extends State<UpgradePlansPanel> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final loc = AppLocalizations.of(context);
     final visiblePackages = _visiblePackages;
     final featured = _featuredPackage;
 
@@ -170,7 +181,7 @@ class _UpgradePlansPanelState extends State<UpgradePlansPanel> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Upgrade',
+                              loc?.translate('upgrade_title') ?? 'Upgrade',
                               style: theme.textTheme.headlineSmall?.copyWith(
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: -0.9,
@@ -178,7 +189,8 @@ class _UpgradePlansPanelState extends State<UpgradePlansPanel> {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              'Choose a plan built for sustained usage, faster limits, and cleaner billing.',
+                              loc?.translate('upgrade_subtitle') ??
+                                  'Choose a plan built for sustained usage, faster limits, and cleaner billing.',
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: colorScheme.onSurfaceVariant,
                                 height: 1.35,
@@ -191,16 +203,26 @@ class _UpgradePlansPanelState extends State<UpgradePlansPanel> {
                       IconButton(
                         onPressed: widget.onClose,
                         icon: const Icon(Icons.close),
-                        tooltip: 'Close',
+                        tooltip: loc?.translate('cancel') ?? 'Close',
                       ),
                     ],
                   ),
                   const SizedBox(height: 18),
                   Row(
                     children: [
-                      _SignalPill(icon: Icons.apple, label: 'Apple Pay'),
+                      _SignalPill(
+                        icon: Icons.apple,
+                        label:
+                            loc?.translate('topup_method_apple_pay') ??
+                            'Apple Pay',
+                      ),
                       const SizedBox(width: 8),
-                      _SignalPill(icon: Icons.android, label: 'Google Pay'),
+                      _SignalPill(
+                        icon: Icons.android,
+                        label:
+                            loc?.translate('topup_method_google_pay') ??
+                            'Google Pay',
+                      ),
                       const SizedBox(width: 8),
                       _SignalPill(icon: Icons.lock_outline, label: 'Stripe'),
                     ],
@@ -208,9 +230,20 @@ class _UpgradePlansPanelState extends State<UpgradePlansPanel> {
                   const SizedBox(height: 18),
                   SegmentedButton<bool>(
                     showSelectedIcon: false,
-                    segments: const [
-                      ButtonSegment<bool>(value: false, label: Text('Monthly')),
-                      ButtonSegment<bool>(value: true, label: Text('Yearly')),
+                    segments: [
+                      ButtonSegment<bool>(
+                        value: false,
+                        label: Text(
+                          loc?.translate('upgrade_billing_monthly') ??
+                              'Monthly',
+                        ),
+                      ),
+                      ButtonSegment<bool>(
+                        value: true,
+                        label: Text(
+                          loc?.translate('upgrade_billing_yearly') ?? 'Yearly',
+                        ),
+                      ),
                     ],
                     selected: {_isYearly},
                     onSelectionChanged: (selection) {
@@ -239,15 +272,20 @@ class _UpgradePlansPanelState extends State<UpgradePlansPanel> {
                       )
                     else if (_error != null)
                       _PanelState(
-                        title: 'Failed to load plans',
+                        title:
+                            loc?.translate('upgrade_load_failed_title') ??
+                            'Failed to load plans',
                         detail: _error!,
-                        actionLabel: 'Retry',
+                        actionLabel: loc?.translate('retry') ?? 'Retry',
                         onAction: _loadPackages,
                       )
                     else if (visiblePackages.isEmpty)
-                      const _PanelState(
-                        title: 'No plans available',
+                      _PanelState(
+                        title:
+                            loc?.translate('upgrade_empty_title') ??
+                            'No plans available',
                         detail:
+                            loc?.translate('upgrade_empty_detail') ??
                             'Subscription packages will appear here when published.',
                       )
                     else
@@ -277,8 +315,10 @@ class _UpgradePlansPanelState extends State<UpgradePlansPanel> {
                     const SizedBox(height: 8),
                     Text(
                       StripePaymentService.isConfigured
-                          ? 'Payments are processed natively in-app. Balance top-up stays in USD for now.'
-                          : 'This build still needs STRIPE_PUBLISHABLE_KEY before native checkout can open.',
+                          ? (loc?.translate('upgrade_footer_configured') ??
+                              'Payments are processed natively in-app. Balance top-up stays in USD for now.')
+                          : (loc?.translate('upgrade_footer_unconfigured') ??
+                              'This build still needs STRIPE_PUBLISHABLE_KEY before native checkout can open.'),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                         height: 1.35,
@@ -389,6 +429,7 @@ class _UpgradePlanTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final loc = AppLocalizations.of(context);
     final isFeatured = plan.id == featuredPlanId;
     final creditsUsd = plan.creditCents / 100;
 
@@ -448,7 +489,7 @@ class _UpgradePlanTile extends StatelessWidget {
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: Text(
-                              'Best fit',
+                              loc?.translate('upgrade_best_fit') ?? 'Best fit',
                               style: theme.textTheme.labelSmall?.copyWith(
                                 color: colorScheme.onPrimary,
                                 fontWeight: FontWeight.w700,
@@ -497,14 +538,19 @@ class _UpgradePlanTile extends StatelessWidget {
             children: [
               _MetaChip(
                 icon: Icons.bolt,
-                label: '\$${creditsUsd.toStringAsFixed(0)} credits',
+                label:
+                    '\$${creditsUsd.toStringAsFixed(0)} ${loc?.translate('upgrade_credits') ?? 'credits'}',
               ),
               _MetaChip(
                 icon: Icons.schedule,
                 label:
-                    '${plan.intervalCount ?? 1} ${plan.interval ?? 'period'} cycle',
+                    '${plan.intervalCount ?? 1} ${plan.interval ?? (loc?.translate('upgrade_period') ?? 'period')} ${loc?.translate('upgrade_cycle') ?? 'cycle'}',
               ),
-              _MetaChip(icon: Icons.tune, label: 'Quota ${plan.quota}'),
+              _MetaChip(
+                icon: Icons.tune,
+                label:
+                    '${loc?.translate('upgrade_quota') ?? 'Quota'} ${plan.quota}',
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -513,8 +559,10 @@ class _UpgradePlanTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   isFeatured
-                      ? 'Balanced for most active builders'
-                      : 'Designed for focused production usage',
+                      ? (loc?.translate('upgrade_featured_hint') ??
+                          'Balanced for most active builders')
+                      : (loc?.translate('upgrade_standard_hint') ??
+                          'Designed for focused production usage'),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -545,7 +593,7 @@ class _UpgradePlanTile extends StatelessWidget {
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Upgrade'),
+                    : Text(loc?.translate('upgrade_title') ?? 'Upgrade'),
               ),
             ],
           ),

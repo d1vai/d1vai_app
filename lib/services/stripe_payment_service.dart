@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
+import '../l10n/app_localizations.dart';
 
 class StripePaymentService {
   StripePaymentService._();
@@ -49,6 +50,24 @@ class StripePaymentService {
 
   static bool get isConfigured =>
       isSupportedPlatform && publishableKey.trim().isNotEmpty;
+
+  static String availablePaymentMethodsLabel(AppLocalizations? loc) {
+    final card = loc?.translate('topup_method_card') ?? 'card';
+    final applePay = loc?.translate('topup_method_apple_pay') ?? 'Apple Pay';
+    final googlePay =
+        loc?.translate('topup_method_google_pay') ?? 'Google Pay';
+
+    if (kIsWeb) {
+      return card;
+    }
+    if (Platform.isIOS) {
+      return '$applePay or $card';
+    }
+    if (Platform.isAndroid) {
+      return '$googlePay or $card';
+    }
+    return '$applePay, $googlePay, or $card';
+  }
 
   static Future<void> presentPaymentSheet({
     required String clientSecret,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
+import '../l10n/app_localizations.dart';
 import '../services/wallet_service.dart';
 import 'adaptive_modal.dart';
 import 'topup_dialog.dart';
@@ -368,7 +369,12 @@ class _BalanceCardState extends State<BalanceCard>
                               TopUpDialog(onSuccess: _handleTopUpSuccess),
                         ),
                   icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Top up'),
+                  label: Text(
+                    AppLocalizations.of(context)?.translate(
+                          'billing_insufficient_action_topup',
+                        ) ??
+                        'Top up',
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple,
                     foregroundColor: Colors.white,

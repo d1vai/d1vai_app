@@ -9,6 +9,7 @@ import 'package:d1vai_app/widgets/login_required_dialog.dart';
 import 'package:d1vai_app/widgets/ai_avatar_selector_dialog.dart';
 import 'package:d1vai_app/widgets/avatar_image.dart';
 import 'package:d1vai_app/core/theme/app_colors.dart';
+import 'package:d1vai_app/l10n/app_localizations.dart';
 import 'package:d1vai_app/widgets/card.dart';
 import 'package:d1vai_app/widgets/snackbar_helper.dart';
 
@@ -45,9 +46,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: Text(loc?.translate('profile') ?? 'Profile'),
         actions: [
           Consumer<ProfileProvider>(
             builder: (context, profileProvider, child) {
@@ -95,6 +97,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     User user,
     ProfileProvider profileProvider,
   ) {
+    final loc = AppLocalizations.of(context);
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -135,22 +138,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 24),
 
         // 基本信息
-        _buildSectionTitle('Basic Information'),
+        _buildSectionTitle(loc?.translate('basic_information') ?? 'Basic Information'),
         const SizedBox(height: 12),
         _buildInfoCard(
-          'Company Name',
-          user.companyName.isNotEmpty ? user.companyName : 'Not set',
+          loc?.translate('company_name') ?? 'Company Name',
+          user.companyName.isNotEmpty
+              ? user.companyName
+              : (loc?.translate('profile_not_set') ?? 'Not set'),
           Icons.business,
         ),
-        _buildInfoCard('Email', user.email ?? 'Not set', Icons.email),
         _buildInfoCard(
-          'Industry',
-          user.industry.isNotEmpty ? user.industry : 'Not set',
+          loc?.translate('email') ?? 'Email',
+          user.email ?? (loc?.translate('profile_not_set') ?? 'Not set'),
+          Icons.email,
+        ),
+        _buildInfoCard(
+          loc?.translate('industry') ?? 'Industry',
+          user.industry.isNotEmpty
+              ? user.industry
+              : (loc?.translate('profile_not_set') ?? 'Not set'),
           Icons.work,
         ),
         if (user.companyWebsite.isNotEmpty)
           _buildInfoCard(
-            'Website',
+            loc?.translate('profile_website') ?? 'Website',
             user.companyWebsite,
             Icons.language,
             isLink: true,
@@ -159,10 +170,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 24),
 
         // 其他信息
-        _buildSectionTitle('Other'),
+        _buildSectionTitle(loc?.translate('other') ?? 'Other'),
         const SizedBox(height: 12),
-        _buildInfoCard('Referral Code', user.referralCode, Icons.card_giftcard),
-        _buildInfoCard('Invite Code', user.inviteCode, Icons.group_add),
+        _buildInfoCard(
+          loc?.translate('profile_referral_code') ?? 'Referral Code',
+          user.referralCode,
+          Icons.card_giftcard,
+        ),
+        _buildInfoCard(
+          loc?.translate('profile_invite_code') ?? 'Invite Code',
+          user.inviteCode,
+          Icons.group_add,
+        ),
 
         const SizedBox(height: 24),
 
@@ -172,7 +191,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: ElevatedButton.icon(
             onPressed: profileProvider.toggleEditMode,
             icon: const Icon(Icons.edit),
-            label: const Text('Edit Profile'),
+            label: Text(loc?.translate('edit_profile') ?? 'Edit Profile'),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
             ),
@@ -188,6 +207,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     User user,
     ProfileProvider profileProvider,
   ) {
+    final loc = AppLocalizations.of(context);
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -257,35 +277,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 16),
 
         // 编辑表单
-        _buildSectionTitle('Basic Information'),
+        _buildSectionTitle(loc?.translate('basic_information') ?? 'Basic Information'),
         const SizedBox(height: 12),
         TextField(
           controller: profileProvider.companyNameController,
-          decoration: const InputDecoration(
-            labelText: 'Company Name *',
-            hintText: 'Enter your company name',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.business),
+          decoration: InputDecoration(
+            labelText: '${loc?.translate('company_name') ?? 'Company Name'} *',
+            hintText:
+                loc?.translate('profile_company_name_hint') ??
+                'Enter your company name',
+            border: const OutlineInputBorder(),
+            prefixIcon: const Icon(Icons.business),
           ),
         ),
         const SizedBox(height: 16),
         TextField(
           controller: profileProvider.companyWebsiteController,
-          decoration: const InputDecoration(
-            labelText: 'Company Website',
+          decoration: InputDecoration(
+            labelText:
+                loc?.translate('company_website') ?? 'Company Website',
             hintText: 'https://example.com',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.language),
+            border: const OutlineInputBorder(),
+            prefixIcon: const Icon(Icons.language),
           ),
         ),
         const SizedBox(height: 16),
         TextField(
           controller: profileProvider.industryController,
-          decoration: const InputDecoration(
-            labelText: 'Industry *',
-            hintText: 'Enter your industry',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.work),
+          decoration: InputDecoration(
+            labelText: '${loc?.translate('industry') ?? 'Industry'} *',
+            hintText:
+                loc?.translate('profile_industry_hint') ??
+                'Enter your industry',
+            border: const OutlineInputBorder(),
+            prefixIcon: const Icon(Icons.work),
           ),
         ),
 
@@ -302,7 +327,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     if (validation != null) {
                       SnackBarHelper.showError(
                         context,
-                        title: 'Validation Error',
+                        title:
+                            loc?.translate('profile_validation_error') ??
+                            'Validation Error',
                         message: validation,
                       );
                       return;
@@ -314,8 +341,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     if (success) {
                       SnackBarHelper.showSuccess(
                         context,
-                        title: 'Success',
-                        message: 'Profile updated successfully',
+                        title: loc?.translate('success') ?? 'Success',
+                        message:
+                            loc?.translate('profile_updated_success') ??
+                            'Profile updated successfully',
                       );
 
                       // 刷新用户数据
@@ -326,9 +355,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     } else {
                       SnackBarHelper.showError(
                         context,
-                        title: 'Error',
+                        title: loc?.translate('error') ?? 'Error',
                         message:
-                            profileProvider.error ?? 'Failed to update profile',
+                            profileProvider.error ??
+                            (loc?.translate('profile_update_failed') ??
+                                'Failed to update profile'),
                       );
                     }
                   },
@@ -340,7 +371,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   )
                 : const Icon(Icons.save),
             label: Text(
-              profileProvider.isSaving ? 'Saving...' : 'Save Changes',
+              profileProvider.isSaving
+                  ? (loc?.translate('profile_saving') ?? 'Saving...')
+                  : (loc?.translate('save_changes') ?? 'Save Changes'),
             ),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
@@ -356,6 +389,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     BuildContext context,
     ProfileProvider profileProvider,
   ) {
+    final loc = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -367,7 +401,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               ListTile(
                 leading: const Icon(Icons.camera_alt),
-                title: const Text('Take Photo'),
+                title: Text(
+                  loc?.translate('profile_take_photo') ?? 'Take Photo',
+                ),
                 onTap: () async {
                   Navigator.pop(context);
                   final XFile? image = await _imagePicker.pickImage(
@@ -381,7 +417,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library),
-                title: const Text('Choose from Gallery'),
+                title: Text(
+                  loc?.translate('profile_choose_gallery') ??
+                      'Choose from Gallery',
+                ),
                 onTap: () async {
                   Navigator.pop(context);
                   final XFile? image = await _imagePicker.pickImage(
@@ -395,7 +434,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.auto_awesome),
-                title: const Text('AI Random'),
+                title: Text(loc?.translate('profile_ai_random') ?? 'AI Random'),
                 onTap: () async {
                   Navigator.pop(context);
                   await _handleAiAvatarGeneration(profileProvider);
@@ -413,6 +452,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     XFile image,
     ProfileProvider profileProvider,
   ) async {
+    final loc = AppLocalizations.of(context);
     final avatarUrl = await profileProvider.uploadAvatar(image);
     if (!mounted || avatarUrl == null) return;
 
@@ -425,8 +465,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     SnackBarHelper.showSuccess(
       context,
-      title: 'Success',
-      message: 'Avatar updated successfully',
+      title: loc?.translate('success') ?? 'Success',
+      message:
+          loc?.translate('profile_avatar_updated_success') ??
+          'Avatar updated successfully',
     );
   }
 
@@ -434,6 +476,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _handleAiAvatarGeneration(
     ProfileProvider profileProvider,
   ) async {
+    final loc = AppLocalizations.of(context);
     // 初始生成头像
     final avatars = await profileProvider.generateAiAvatars();
     if (!mounted) return;
@@ -441,8 +484,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (avatars.isEmpty) {
       SnackBarHelper.showError(
         context,
-        title: 'Error',
-        message: profileProvider.error ?? 'Failed to generate avatars',
+        title: loc?.translate('error') ?? 'Error',
+        message:
+            profileProvider.error ??
+            (loc?.translate('profile_avatar_generate_failed') ??
+                'Failed to generate avatars'),
       );
       return;
     }
@@ -484,8 +530,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   if (!mounted) return;
                   SnackBarHelper.showSuccess(
                     context,
-                    title: 'Success',
-                    message: 'Avatar updated successfully',
+                    title: loc?.translate('success') ?? 'Success',
+                    message:
+                        loc?.translate('profile_avatar_updated_success') ??
+                        'Avatar updated successfully',
                   );
                 } catch (e) {
                   if (!mounted) return;
@@ -495,8 +543,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   if (!mounted) return;
                   SnackBarHelper.showError(
                     context,
-                    title: 'Error',
-                    message: 'Failed to update avatar: $e',
+                    title: loc?.translate('error') ?? 'Error',
+                    message:
+                        (loc?.translate('profile_avatar_update_failed') ??
+                                'Failed to update avatar: {error}')
+                            .replaceAll('{error}', '$e'),
                   );
                 }
               },

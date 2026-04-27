@@ -8,7 +8,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-String _dartString(String input) => jsonEncode(input);
+String _dartString(String input) => jsonEncode(input).replaceAll(r'$', r'\$');
 
 void main() {
   final arbDir = Directory('lib/l10n/arb');

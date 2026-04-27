@@ -128,6 +128,7 @@ class _UpgradeButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final loc = AppLocalizations.of(context);
 
     return TextButton.icon(
       onPressed: onPressed,
@@ -143,9 +144,9 @@ class _UpgradeButton extends StatelessWidget {
         ),
       ),
       icon: const Icon(Icons.north_east, size: 16),
-      label: const Text(
-        'Upgrade',
-        style: TextStyle(fontWeight: FontWeight.w700),
+      label: Text(
+        loc?.translate('upgrade_title') ?? 'Upgrade',
+        style: const TextStyle(fontWeight: FontWeight.w700),
       ),
     );
   }

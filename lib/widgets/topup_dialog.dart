@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import '../services/wallet_service.dart';
 import '../services/stripe_payment_service.dart';
 import 'adaptive_modal.dart';
@@ -61,8 +62,15 @@ class _TopUpDialogState extends State<TopUpDialog> {
     return amount >= 25 && amount <= 20000;
   }
 
-  String _ctaLabel() {
-    return 'Continue';
+  String _ctaLabel(AppLocalizations? loc) {
+    return loc?.translate('topup_continue') ?? 'Continue';
+  }
+
+  String _paymentMethodsCopy(AppLocalizations? loc) {
+    final methodLabel = StripePaymentService.availablePaymentMethodsLabel(loc);
+    return (loc?.translate('topup_subtitle') ??
+            'Add funds with {methods} through Stripe.')
+        .replaceAll('{methods}', methodLabel);
   }
 
   Future<void> _handleSubmit() async {
@@ -71,7 +79,8 @@ class _TopUpDialogState extends State<TopUpDialog> {
 
     if (amountText.isEmpty) {
       setState(() {
-        _error = 'Please enter an amount';
+        _error = loc?.translate('topup_amount_required') ??
+            'Please enter an amount';
       });
       return;
     }
@@ -79,7 +88,8 @@ class _TopUpDialogState extends State<TopUpDialog> {
     final amount = double.tryParse(amountText);
     if (amount == null) {
       setState(() {
-        _error = 'Please enter a valid number';
+        _error =
+            loc?.translate('topup_amount_invalid') ?? 'Please enter a valid number';
       });
       return;
     }
@@ -87,7 +97,8 @@ class _TopUpDialogState extends State<TopUpDialog> {
     final normalized = (amount * 100).roundToDouble() / 100.0;
     if (!_isValidAmount(normalized)) {
       setState(() {
-        _error = 'Amount must be between \$25 and \$20,000';
+        _error = loc?.translate('topup_amount_range') ??
+            'Amount must be between \$25 and \$20,000';
       });
       return;
     }
@@ -121,12 +132,41 @@ class _TopUpDialogState extends State<TopUpDialog> {
 
       SnackBarHelper.showSuccess(
         context,
-        title: 'Payment submitted',
-        message: 'Your top-up payment was submitted successfully.',
+        title: loc?.translate('topup_payment_submitted_title') ??
+            'Payment submitted',
+        message: loc?.translate('topup_payment_submitted_message') ??
+            'Your top-up payment was submitted successfully.',
         duration: const Duration(seconds: 3),
         position: SnackBarPosition.top,
       );
       widget.onSuccess?.call();
+    } on StripeException catch (e) {
+      debugPrint('Top-up canceled: $e');
+      final error = e.error;
+      final isCanceled =
+          error.code == FailureCode.Canceled ||
+          ((error.localizedMessage ?? '').toLowerCase().contains('canceled')) ||
+          ((error.message ?? '').toLowerCase().contains('canceled'));
+
+      if (isCanceled) {
+        if (mounted) {
+          SnackBarHelper.showInfo(
+            context,
+            title: loc?.translate('topup_payment_canceled_title') ??
+                'Payment canceled',
+            message: loc?.translate('topup_payment_canceled_message') ??
+                'The payment was canceled.',
+            duration: const Duration(seconds: 3),
+            position: SnackBarPosition.top,
+          );
+          setState(() {
+            _isLoading = false;
+            _error = null;
+          });
+        }
+        return;
+      }
+      rethrow;
     } catch (e) {
       debugPrint('Top-up failed: $e');
       final msg = humanizeError(e);
@@ -149,6 +189,7 @@ class _TopUpDialogState extends State<TopUpDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = AppLocalizations.of(context);
     final amount = _parseAmount();
     final canSubmit =
         amount != null && amount.isFinite && _isValidAmount(amount);
@@ -170,7 +211,7 @@ class _TopUpDialogState extends State<TopUpDialog> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Top up credits',
+                    loc?.translate('topup_title') ?? 'Top up credits',
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.3,
@@ -188,8 +229,9 @@ class _TopUpDialogState extends State<TopUpDialog> {
             const SizedBox(height: 10),
             Text(
               StripePaymentService.isConfigured
-                  ? 'Add funds with Apple Pay, Google Pay, or card through Stripe.'
-                  : 'Stripe mobile payment is not configured in this build.',
+                  ? _paymentMethodsCopy(loc)
+                  : (loc?.translate('topup_unconfigured') ??
+                      'Stripe mobile payment is not configured in this build.'),
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -211,9 +253,11 @@ class _TopUpDialogState extends State<TopUpDialog> {
                     ),
                     enabled: !_isLoading,
                     inputFormatters: const [_CurrencyInputFormatter()],
-                    decoration: const InputDecoration(
-                      labelText: 'Amount (USD)',
-                      hintText: '25 - 20000',
+                    decoration: InputDecoration(
+                      labelText:
+                          loc?.translate('topup_amount_label') ?? 'Amount (USD)',
+                      hintText:
+                          loc?.translate('topup_amount_hint') ?? '25 - 20000',
                       prefixText: '\$ ',
                       border: OutlineInputBorder(),
                     ),
@@ -275,7 +319,7 @@ class _TopUpDialogState extends State<TopUpDialog> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Min \$25 • Max \$20,000',
+              loc?.translate('topup_limit_hint') ?? 'Min \$25 • Max \$20,000',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -298,7 +342,7 @@ class _TopUpDialogState extends State<TopUpDialog> {
                     onPressed: _isLoading
                         ? null
                         : () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
+                    child: Text(loc?.translate('cancel') ?? 'Cancel'),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -326,7 +370,7 @@ class _TopUpDialogState extends State<TopUpDialog> {
                               ),
                             ),
                           )
-                        : Text(_ctaLabel()),
+                        : Text(_ctaLabel(loc)),
                   ),
                 ),
               ],

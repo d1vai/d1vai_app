@@ -129,3 +129,16 @@ The previous README content is preserved and expanded as developer-facing docume
 - [Developer Guide](./docs/DEVELOPER_GUIDE.md)
 - [License](./LICENSE)
 
+## Local Stripe Debug Setup
+
+For local `flutter run` / debug builds, keep Stripe compile-time values in a local file:
+
+1. Copy `.env/dev.example.json` to `.env/dev.json`
+2. Replace `STRIPE_PUBLISHABLE_KEY` with your real key
+3. Run from VS Code using the included launch config, or run manually:
+
+```bash
+flutter run --dart-define-from-file=.env/dev.json
+```
+
+The `.env/` folder is gitignored by default, so local keys stay out of the repo.
