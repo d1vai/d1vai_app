@@ -4,8 +4,13 @@ import 'package:d1vai_app/l10n/app_localizations.dart';
 class CompactSelectorOption {
   final String value;
   final String label;
+  final String? tagLabel;
 
-  const CompactSelectorOption({required this.value, required this.label});
+  const CompactSelectorOption({
+    required this.value,
+    required this.label,
+    this.tagLabel,
+  });
 }
 
 class CompactSelector extends StatelessWidget {
@@ -74,6 +79,15 @@ class CompactSelector extends StatelessWidget {
     return current;
   }
 
+  String? _selectedTagLabel() {
+    final current = value?.trim();
+    if (current == null || current.isEmpty) return null;
+    for (final option in options) {
+      if (option.value == current) return option.tagLabel?.trim();
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
@@ -81,6 +95,7 @@ class CompactSelector extends StatelessWidget {
     final cs = theme.colorScheme;
     final canOpen = onChanged != null && options.isNotEmpty;
     final label = _selectedLabel();
+    final selectedTagLabel = _selectedTagLabel();
     final tip = tooltip ?? label;
     final resolvedBackgroundColor =
         backgroundColor ?? cs.surfaceContainerHighest.withValues(alpha: 0.42);
@@ -137,6 +152,7 @@ class CompactSelector extends StatelessWidget {
             onSelected: canOpen ? onChanged : null,
             itemBuilder: (context) => options.map((option) {
               final selected = option.value == value;
+              final tag = option.tagLabel?.trim() ?? '';
               return PopupMenuItem<String>(
                 value: option.value,
                 height: itemHeight,
@@ -192,19 +208,34 @@ class CompactSelector extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Text(
-                          option.label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: textAlign,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: selected
-                                ? FontWeight.w700
-                                : FontWeight.w500,
-                            color: selected
-                                ? cs.onSurface
-                                : cs.onSurface.withValues(alpha: 0.9),
-                          ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                option.label,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: textAlign,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontWeight: selected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                  color: selected
+                                      ? cs.onSurface
+                                      : cs.onSurface.withValues(alpha: 0.9),
+                                ),
+                              ),
+                            ),
+                            if (tag.isNotEmpty) ...[
+                              const SizedBox(width: 8),
+                              _CompactSelectorTag(
+                                label: tag,
+                                colorScheme: cs,
+                                emphasized: selected,
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                       if (selected && emphasizeSelectedOption) ...[
@@ -244,17 +275,34 @@ class CompactSelector extends StatelessWidget {
                     const SizedBox(width: 8),
                   ],
                   Expanded(
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: textAlign,
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        height: 1.1,
-                        color: resolvedTextColor,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: textAlign,
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              height: 1.1,
+                              color: resolvedTextColor,
+                            ),
+                          ),
+                        ),
+                        if (selectedTagLabel != null &&
+                            selectedTagLabel.trim().isNotEmpty) ...[
+                          const SizedBox(width: 6),
+                          _CompactSelectorTag(
+                            label: selectedTagLabel.trim(),
+                            colorScheme: cs,
+                            emphasized: true,
+                            dense: true,
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -266,6 +314,50 @@ class CompactSelector extends StatelessWidget {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CompactSelectorTag extends StatelessWidget {
+  final String label;
+  final ColorScheme colorScheme;
+  final bool emphasized;
+  final bool dense;
+
+  const _CompactSelectorTag({
+    required this.label,
+    required this.colorScheme,
+    this.emphasized = false,
+    this.dense = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: dense ? 5 : 6,
+        vertical: dense ? 1.5 : 2.5,
+      ),
+      decoration: BoxDecoration(
+        color: colorScheme.tertiary.withValues(alpha: emphasized ? 0.18 : 0.11),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: colorScheme.tertiary.withValues(
+            alpha: emphasized ? 0.32 : 0.22,
+          ),
+        ),
+      ),
+      child: Text(
+        label.toUpperCase(),
+        style: theme.textTheme.labelSmall?.copyWith(
+          fontSize: dense ? 8.5 : 9,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.45,
+          color: colorScheme.tertiary,
+          height: 1,
         ),
       ),
     );

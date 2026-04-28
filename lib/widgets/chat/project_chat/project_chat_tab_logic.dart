@@ -237,11 +237,10 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     if (id.isEmpty) return 'Model';
     for (final model in _availableModels) {
       if (model.id.trim() == id) {
-        final name = model.name.trim();
-        return name.isEmpty ? id : name;
+        return model.spokenLabel;
       }
     }
-    return id;
+    return ModelInfo(id: id, name: id).spokenLabel;
   }
 
   Future<void> _sleepAbortable(Duration d, int token) async {

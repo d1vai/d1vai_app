@@ -349,7 +349,15 @@ class CreateProjectNewAiView extends StatelessWidget {
                   .map(
                     (m) => DropdownMenuItem<String>(
                       value: m.id,
-                      child: Text(m.name, overflow: TextOverflow.ellipsis),
+                      child: _ModelDropdownLabel(model: m),
+                    ),
+                  )
+                  .toList(),
+              selectedItemBuilder: (context) => models
+                  .map(
+                    (m) => Align(
+                      alignment: Alignment.centerLeft,
+                      child: _ModelDropdownLabel(model: m, compact: true),
                     ),
                   )
                   .toList(),
@@ -432,6 +440,61 @@ class CreateProjectNewAiView extends StatelessWidget {
             );
           },
         ),
+      ],
+    );
+  }
+}
+
+class _ModelDropdownLabel extends StatelessWidget {
+  final ModelInfo model;
+  final bool compact;
+
+  const _ModelDropdownLabel({required this.model, this.compact = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final badge = model.badgeLabel;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Expanded(
+          child: Text(
+            model.displayName,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: compact ? FontWeight.w600 : FontWeight.w500,
+            ),
+          ),
+        ),
+        if (badge != null) ...[
+          SizedBox(width: compact ? 6 : 8),
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: compact ? 5 : 6,
+              vertical: compact ? 1.5 : 2.5,
+            ),
+            decoration: BoxDecoration(
+              color: scheme.tertiary.withValues(alpha: compact ? 0.16 : 0.12),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: scheme.tertiary.withValues(alpha: 0.24),
+              ),
+            ),
+            child: Text(
+              badge.toUpperCase(),
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontSize: compact ? 8.5 : 9,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.42,
+                color: scheme.tertiary,
+                height: 1,
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }

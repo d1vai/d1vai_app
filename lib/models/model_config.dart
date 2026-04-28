@@ -14,6 +14,33 @@ class ModelInfo {
       description: json['description']?.toString(),
     );
   }
+
+  String get _rawDisplaySource {
+    final preferred = name.trim();
+    if (preferred.isNotEmpty) return preferred;
+    final fallback = id.trim();
+    return fallback.isNotEmpty ? fallback : 'unknown';
+  }
+
+  String get displayName {
+    final source = _rawDisplaySource;
+    final leaf = source.split('/').last.trim();
+    final lowerLeaf = leaf.toLowerCase();
+    if (lowerLeaf.endsWith('-free')) {
+      return leaf.substring(0, leaf.length - 5);
+    }
+    return leaf.isEmpty ? source : leaf;
+  }
+
+  bool get isFreeTier => _rawDisplaySource.toLowerCase().endsWith('-free');
+
+  String? get badgeLabel => isFreeTier ? 'Free' : null;
+
+  String get spokenLabel {
+    final base = displayName.trim().isEmpty ? _rawDisplaySource : displayName;
+    final badge = badgeLabel;
+    return badge == null ? base : '$base $badge';
+  }
 }
 
 class ModelConfigResponse {

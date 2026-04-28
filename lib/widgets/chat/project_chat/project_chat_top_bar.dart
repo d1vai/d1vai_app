@@ -106,7 +106,13 @@ class ProjectChatModelSelector extends StatelessWidget {
       width: width ?? maxWidth,
       child: CompactSelector(
         options: models
-            .map((m) => CompactSelectorOption(value: m.id, label: m.name))
+            .map(
+              (m) => CompactSelectorOption(
+                value: m.id,
+                label: m.displayName,
+                tagLabel: m.badgeLabel,
+              ),
+            )
             .toList(),
         value: selectedModelId.trim().isEmpty ? null : selectedModelId.trim(),
         placeholder: placeholder,
