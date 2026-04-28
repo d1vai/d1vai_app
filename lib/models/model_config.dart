@@ -16,10 +16,14 @@ class ModelInfo {
   }
 
   String get _rawDisplaySource {
-    final preferred = name.trim();
-    if (preferred.isNotEmpty) return preferred;
-    final fallback = id.trim();
-    return fallback.isNotEmpty ? fallback : 'unknown';
+    final normalizedId = id.trim();
+    final normalizedName = name.trim();
+    if (normalizedId.contains('/') ||
+        normalizedId.toLowerCase().endsWith('-free')) {
+      return normalizedId;
+    }
+    if (normalizedName.isNotEmpty) return normalizedName;
+    return normalizedId.isNotEmpty ? normalizedId : 'unknown';
   }
 
   String get displayName {
@@ -29,10 +33,16 @@ class ModelInfo {
     if (lowerLeaf.endsWith('-free')) {
       return leaf.substring(0, leaf.length - 5);
     }
+    if (lowerLeaf.endsWith(' free')) {
+      return leaf.substring(0, leaf.length - 5);
+    }
     return leaf.isEmpty ? source : leaf;
   }
 
-  bool get isFreeTier => _rawDisplaySource.toLowerCase().endsWith('-free');
+  bool get isFreeTier {
+    final lower = _rawDisplaySource.toLowerCase();
+    return lower.endsWith('-free') || lower.endsWith(' free');
+  }
 
   String? get badgeLabel => isFreeTier ? 'Free' : null;
 
