@@ -109,12 +109,14 @@ class _ChatThinkingCardState extends State<ChatThinkingCard>
                 expandText: 'Show more',
                 collapseText: 'Show less',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant.withValues(
-                    alpha: widget.highlight ? 0.94 : 0.85,
-                  ),
                   fontStyle: FontStyle.italic,
                   height: 1.35,
                   fontSize: 13,
+                  color: widget.highlight
+                      ? null
+                      : theme.colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.85,
+                        ),
                   foreground: widget.highlight
                       ? (Paint()
                           ..shader = LinearGradient(

@@ -456,13 +456,34 @@ class _ChatScreenState extends State<ChatScreen> {
   String get _selectedEngine =>
       _selectedEngineMode == ChatEngineMode.fast ? 'claude' : 'codex';
 
+  ChatEngineMode _engineModeFromStoredValue(String raw) {
+    switch (raw.trim().toLowerCase()) {
+      case 'fast':
+      case 'claude':
+        return ChatEngineMode.fast;
+      case 'think_hard':
+      case 'codex':
+      default:
+        return ChatEngineMode.thinkHard;
+    }
+  }
+
+  String _engineModeStorageValue(ChatEngineMode mode) {
+    return mode == ChatEngineMode.fast ? 'fast' : 'think_hard';
+  }
+
   Future<void> _loadEngineModePreference() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final raw = (prefs.getString(chatEngineModeCacheKey) ?? '').trim();
-      final next = raw == 'claude'
-          ? ChatEngineMode.fast
-          : ChatEngineMode.thinkHard;
+      final legacyRaw = (prefs.getString('project_chat_engine_mode') ?? '')
+          .trim();
+      final next = _engineModeFromStoredValue(raw.isNotEmpty ? raw : legacyRaw);
+      await prefs.setString(
+        chatEngineModeCacheKey,
+        _engineModeStorageValue(next),
+      );
+      await prefs.remove('project_chat_engine_mode');
       if (!mounted) {
         _selectedEngineMode = next;
         return;
@@ -872,8 +893,9 @@ class _ChatScreenState extends State<ChatScreen> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
         chatEngineModeCacheKey,
-        nextMode == ChatEngineMode.fast ? 'claude' : 'codex',
+        _engineModeStorageValue(nextMode),
       );
+      await prefs.remove('project_chat_engine_mode');
       await _resetExecuteSessionForModelSwitch();
       if (!mounted) return;
       final modeLabel = nextMode == ChatEngineMode.fast
