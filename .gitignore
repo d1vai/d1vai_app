@@ -32,6 +32,8 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
+docs/store-assets-v2/
+docs/readme-assets/iphone-6.5/
 
 # Symbolication related
 app.*.symbols
