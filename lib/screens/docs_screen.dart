@@ -93,6 +93,13 @@ class _DocsScreenState extends State<DocsScreen> {
       icon: Icons.money_off,
     ),
     DocItem(
+      href: '/docs/privacy-policy',
+      title: 'Privacy Policy',
+      desc:
+          'What data we collect, how we use it, and how to request export or deletion.',
+      icon: Icons.privacy_tip_outlined,
+    ),
+    DocItem(
       href: '/docs/legal-restrictions',
       title: 'Legal and Export Restrictions',
       desc: 'Compliance and export restrictions (high-level).',

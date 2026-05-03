@@ -669,7 +669,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   agreementText:
                       loc?.translate('agree_terms') ?? '登录即表示您同意我们的服务条款和隐私政策',
                   legalLabel: loc?.translate('account_data_legal') ?? 'Legal',
-                  onOpenLegal: () => context.push('/docs/legal-restrictions'),
+                  onOpenLegal: () => context.push('/docs/privacy-policy'),
                 ),
               ],
             ),
