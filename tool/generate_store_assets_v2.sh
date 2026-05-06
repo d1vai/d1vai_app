@@ -357,6 +357,133 @@ compose_master() {
   esac
 }
 
+compose_phone_stack() {
+  local width="$1"
+  local height="$2"
+  local source="$3"
+  local headline="$4"
+  local body="$5"
+  local out="$6"
+  local pill_x=$((width / 14))
+  local pill_y=$((height / 16))
+  local headline_x=$((width / 14))
+  local headline_y=$((height / 7))
+  local body_x=$((width / 14))
+  local body_y=$((height * 28 / 100))
+
+  build_base "${width}" "${height}" "${TMP_DIR}/base.png"
+  build_brand_pill $((width * 44 / 100)) $((height / 24)) "${TMP_DIR}/pill.png"
+  render_display $((width * 40 / 100)) $((height / 6)) $((width / 19)) "#f5f7ff" west "${headline}" "${TMP_DIR}/headline.png"
+  render_text $((width * 36 / 100)) $((height / 12)) $((width / 37)) "#c4cdea" west "${body}" "${TMP_DIR}/body.png"
+  build_card "${SRC_DIR}/home-screen.png" $((width * 30 / 100)) $((height * 33 / 100)) $((width / 24)) "${TMP_DIR}/card-a.png" 34 8 north
+  build_card "${source}" $((width * 42 / 100)) $((height * 46 / 100)) $((width / 24)) "${TMP_DIR}/card-b.png" 34 8 north
+  build_card "${SRC_DIR}/project-detail-screen.png" $((width * 26 / 100)) $((height * 29 / 100)) $((width / 26)) "${TMP_DIR}/card-c.png" 34 8 north
+
+  "${MAGICK_BIN}" "${TMP_DIR}/base.png" \
+    "${TMP_DIR}/pill.png" -gravity northwest -geometry "+${pill_x}+${pill_y}" -composite \
+    "${TMP_DIR}/headline.png" -gravity northwest -geometry "+${headline_x}+${headline_y}" -composite \
+    "${TMP_DIR}/body.png" -gravity northwest -geometry "+${body_x}+${body_y}" -composite \
+    \( "${TMP_DIR}/card-a.png" -background none -rotate -8 \) -gravity southeast -geometry "+$((width / 3))+$((height / 10))" -composite \
+    "${TMP_DIR}/card-b.png" -gravity southeast -geometry "+$((width / 18))+$((height / 22))" -composite \
+    \( "${TMP_DIR}/card-c.png" -background none -rotate 7 \) -gravity southeast -geometry "-$((width / 22))+$((height / 9))" -composite \
+    -background "#08111f" -alpha remove -alpha off \
+    "${out}"
+}
+
+compose_phone_focus() {
+  local width="$1"
+  local height="$2"
+  local source="$3"
+  local headline="$4"
+  local body="$5"
+  local out="$6"
+  local pill_x=$((width / 12))
+  local pill_y=$((height / 18))
+  local headline_x=$((width / 12))
+  local headline_y=$((height / 8))
+  local body_x=$((width / 12))
+  local body_y=$((height * 25 / 100))
+  local card_y=$((height / 20))
+  local chip_edge_x=$((width / 7))
+  local chip_mid_x=$((width / 18))
+  local chip_y=$((height / 28))
+
+  build_base "${width}" "${height}" "${TMP_DIR}/base.png"
+  build_brand_pill $((width * 44 / 100)) $((height / 24)) "${TMP_DIR}/pill.png"
+  render_display $((width * 70 / 100)) $((height / 8)) $((width / 18)) "#f5f7ff" west "${headline}" "${TMP_DIR}/headline.png"
+  render_text $((width * 58 / 100)) $((height / 13)) $((width / 37)) "#c4cdea" west "${body}" "${TMP_DIR}/body.png"
+  build_card "${source}" $((width * 96 / 100)) $((height * 70 / 100)) $((width / 24)) "${TMP_DIR}/card.png" 34 8 north
+  build_chip $((width / 6)) $((height / 28)) "Status" "${TMP_DIR}/chip-a.png"
+  build_chip $((width / 6)) $((height / 28)) "Files" "${TMP_DIR}/chip-b.png"
+  build_chip $((width / 6)) $((height / 28)) "Preview" "${TMP_DIR}/chip-c.png"
+
+  "${MAGICK_BIN}" "${TMP_DIR}/base.png" \
+    "${TMP_DIR}/pill.png" -gravity northwest -geometry "+${pill_x}+${pill_y}" -composite \
+    "${TMP_DIR}/headline.png" -gravity northwest -geometry "+${headline_x}+${headline_y}" -composite \
+    "${TMP_DIR}/body.png" -gravity northwest -geometry "+${body_x}+${body_y}" -composite \
+    "${TMP_DIR}/card.png" -gravity south -geometry "+0-${card_y}" -composite \
+    "${TMP_DIR}/chip-a.png" -gravity southwest -geometry "+${chip_edge_x}+${chip_y}" -composite \
+    "${TMP_DIR}/chip-b.png" -gravity south -geometry "-${chip_mid_x}+${chip_y}" -composite \
+    "${TMP_DIR}/chip-c.png" -gravity southeast -geometry "+${chip_edge_x}+${chip_y}" -composite \
+    -background "#08111f" -alpha remove -alpha off \
+    "${out}"
+}
+
+compose_phone_triptych() {
+  local width="$1"
+  local height="$2"
+  local source="$3"
+  local headline="$4"
+  local body="$5"
+  local out="$6"
+  local pill_y=$((height / 18))
+  local headline_y=$((height / 8))
+  local body_y=$((height * 24 / 100))
+  local side_x=$((width / 4))
+  local side_y=$((height / 10))
+  local center_y=$((height / 10))
+  local side_w=$((width * 28 / 100))
+  local side_h=$((height * 34 / 100))
+  local center_w=$((width * 38 / 100))
+  local center_h=$((height * 42 / 100))
+
+  build_base "${width}" "${height}" "${TMP_DIR}/base.png"
+  build_brand_pill $((width * 36 / 100)) $((height / 24)) "${TMP_DIR}/pill.png"
+  render_display $((width * 76 / 100)) $((height / 7)) $((width / 18)) "#f5f7ff" center "${headline}" "${TMP_DIR}/headline.png"
+  render_text $((width * 66 / 100)) $((height / 14)) $((width / 37)) "#c4cdea" center "${body}" "${TMP_DIR}/body.png"
+  build_card "${SRC_DIR}/home-screen.png" "${side_w}" "${side_h}" $((width / 24)) "${TMP_DIR}/tri-a.png" 34 8 north
+  build_card "${source}" "${center_w}" "${center_h}" $((width / 24)) "${TMP_DIR}/tri-b.png" 34 8 north
+  build_card "${SRC_DIR}/project-detail-screen.png" "${side_w}" "${side_h}" $((width / 24)) "${TMP_DIR}/tri-c.png" 34 8 north
+
+  "${MAGICK_BIN}" "${TMP_DIR}/base.png" \
+    "${TMP_DIR}/pill.png" -gravity north -geometry "+0+${pill_y}" -composite \
+    "${TMP_DIR}/headline.png" -gravity north -geometry "+0+${headline_y}" -composite \
+    "${TMP_DIR}/body.png" -gravity north -geometry "+0+${body_y}" -composite \
+    \( "${TMP_DIR}/tri-a.png" -background none -rotate -4 \) -gravity south -geometry "-${side_x}-${side_y}" -composite \
+    "${TMP_DIR}/tri-b.png" -gravity south -geometry "+0-${center_y}" -composite \
+    \( "${TMP_DIR}/tri-c.png" -background none -rotate 4 \) -gravity south -geometry "+${side_x}-${side_y}" -composite \
+    -background "#08111f" -alpha remove -alpha off \
+    "${out}"
+}
+
+compose_phone() {
+  local width="$1"
+  local height="$2"
+  local layout="$3"
+  local source="$4"
+  local headline="$5"
+  local body="$6"
+  local out="$7"
+
+  case "${layout}" in
+    hero) compose_hero "${width}" "${height}" "${source}" "${headline}" "${body}" "${out}" ;;
+    stack) compose_phone_stack "${width}" "${height}" "${source}" "${headline}" "${body}" "${out}" ;;
+    focus) compose_phone_focus "${width}" "${height}" "${source}" "${headline}" "${body}" "${out}" ;;
+    triptych) compose_phone_triptych "${width}" "${height}" "${source}" "${headline}" "${body}" "${out}" ;;
+    *) echo "Unknown phone layout: ${layout}" >&2; exit 1 ;;
+  esac
+}
+
 compose_iphone65_stack() {
   local width="$1"
   local height="$2"
@@ -369,23 +496,23 @@ compose_iphone65_stack() {
   local headline_x=$((width / 14))
   local headline_y=$((height / 8))
   local body_x=$((width / 14))
-  local body_y=$((height * 34 / 100))
+  local body_y=$((height * 31 / 100))
 
   build_base "${width}" "${height}" "${TMP_DIR}/base.png"
   build_brand_pill $((width * 44 / 100)) $((height / 24)) "${TMP_DIR}/pill.png"
-  render_display $((width * 38 / 100)) $((height / 5)) $((width / 18)) "#f5f7ff" west "${headline}" "${TMP_DIR}/headline.png"
-  render_text $((width * 30 / 100)) $((height / 10)) $((width / 39)) "#c4cdea" west "${body}" "${TMP_DIR}/body.png"
-  build_card "${SRC_DIR}/home-screen.png" $((width * 26 / 100)) $((height * 31 / 100)) $((width / 24)) "${TMP_DIR}/card-a.png" 24 10 north
-  build_card "${source}" $((width * 36 / 100)) $((height * 36 / 100)) $((width / 24)) "${TMP_DIR}/card-b.png" 24 10 north
-  build_card "${SRC_DIR}/project-detail-screen.png" $((width * 22 / 100)) $((height * 29 / 100)) $((width / 26)) "${TMP_DIR}/card-c.png" 24 10 north
+  render_display $((width * 40 / 100)) $((height / 5)) $((width / 18)) "#f5f7ff" west "${headline}" "${TMP_DIR}/headline.png"
+  render_text $((width * 32 / 100)) $((height / 10)) $((width / 39)) "#c4cdea" west "${body}" "${TMP_DIR}/body.png"
+  build_card "${SRC_DIR}/home-screen.png" $((width * 30 / 100)) $((height * 38 / 100)) $((width / 24)) "${TMP_DIR}/card-a.png" 34 8 north
+  build_card "${source}" $((width * 42 / 100)) $((height * 44 / 100)) $((width / 24)) "${TMP_DIR}/card-b.png" 34 8 north
+  build_card "${SRC_DIR}/project-detail-screen.png" $((width * 26 / 100)) $((height * 34 / 100)) $((width / 26)) "${TMP_DIR}/card-c.png" 34 8 north
 
   "${MAGICK_BIN}" "${TMP_DIR}/base.png" \
     "${TMP_DIR}/pill.png" -gravity northwest -geometry "+${pill_x}+${pill_y}" -composite \
     "${TMP_DIR}/headline.png" -gravity northwest -geometry "+${headline_x}+${headline_y}" -composite \
     "${TMP_DIR}/body.png" -gravity northwest -geometry "+${body_x}+${body_y}" -composite \
-    \( "${TMP_DIR}/card-a.png" -background none -rotate -6 \) -gravity southeast -geometry "+$((width / 3))+$((height / 8))" -composite \
-    "${TMP_DIR}/card-b.png" -gravity southeast -geometry "+$((width / 22))+$((height / 16))" -composite \
-    \( "${TMP_DIR}/card-c.png" -background none -rotate 5 \) -gravity southeast -geometry "-$((width / 18))+$((height / 7))" -composite \
+    \( "${TMP_DIR}/card-a.png" -background none -rotate -6 \) -gravity southeast -geometry "+$((width / 3))+$((height / 9))" -composite \
+    "${TMP_DIR}/card-b.png" -gravity southeast -geometry "+$((width / 20))+$((height / 22))" -composite \
+    \( "${TMP_DIR}/card-c.png" -background none -rotate 5 \) -gravity southeast -geometry "-$((width / 24))+$((height / 8))" -composite \
     -background "#08111f" -alpha remove -alpha off \
     "${out}"
 }
@@ -402,13 +529,13 @@ compose_iphone65_focus() {
   local headline_x=$((width / 12))
   local headline_y=$((height / 8))
   local body_x=$((width / 12))
-  local body_y=$((height * 29 / 100))
+  local body_y=$((height * 27 / 100))
 
   build_base "${width}" "${height}" "${TMP_DIR}/base.png"
   build_brand_pill $((width * 44 / 100)) $((height / 24)) "${TMP_DIR}/pill.png"
   render_display $((width * 70 / 100)) $((height / 8)) $((width / 18)) "#f5f7ff" west "${headline}" "${TMP_DIR}/headline.png"
-  render_text $((width * 58 / 100)) $((height / 13)) $((width / 38)) "#c4cdea" west "${body}" "${TMP_DIR}/body.png"
-  build_card "${source}" $((width * 94 / 100)) $((height * 42 / 100)) $((width / 24)) "${TMP_DIR}/card.png" 26 10 north
+  render_text $((width * 60 / 100)) $((height / 12)) $((width / 38)) "#c4cdea" west "${body}" "${TMP_DIR}/body.png"
+  build_card "${source}" $((width * 96 / 100)) $((height * 52 / 100)) $((width / 24)) "${TMP_DIR}/card.png" 34 8 north
   build_chip $((width / 6)) $((height / 30)) "Status" "${TMP_DIR}/chip-a.png"
   build_chip $((width / 6)) $((height / 30)) "Files" "${TMP_DIR}/chip-b.png"
   build_chip $((width / 6)) $((height / 30)) "Preview" "${TMP_DIR}/chip-c.png"
@@ -417,10 +544,10 @@ compose_iphone65_focus() {
     "${TMP_DIR}/pill.png" -gravity northwest -geometry "+${pill_x}+${pill_y}" -composite \
     "${TMP_DIR}/headline.png" -gravity northwest -geometry "+${headline_x}+${headline_y}" -composite \
     "${TMP_DIR}/body.png" -gravity northwest -geometry "+${body_x}+${body_y}" -composite \
-    "${TMP_DIR}/card.png" -gravity south -geometry "+0-$((height / 7))" -composite \
-    "${TMP_DIR}/chip-a.png" -gravity south -geometry "-$((width / 4))-$((height / 18))" -composite \
-    "${TMP_DIR}/chip-b.png" -gravity south -geometry "+0-$((height / 18))" -composite \
-    "${TMP_DIR}/chip-c.png" -gravity south -geometry "+$((width / 4))-$((height / 18))" -composite \
+    "${TMP_DIR}/card.png" -gravity south -geometry "+0-$((height / 9))" -composite \
+    "${TMP_DIR}/chip-a.png" -gravity south -geometry "-$((width / 4))-$((height / 22))" -composite \
+    "${TMP_DIR}/chip-b.png" -gravity south -geometry "+0-$((height / 22))" -composite \
+    "${TMP_DIR}/chip-c.png" -gravity south -geometry "+$((width / 4))-$((height / 22))" -composite \
     -background "#08111f" -alpha remove -alpha off \
     "${out}"
 }
@@ -434,27 +561,27 @@ compose_iphone65_triptych() {
   local out="$6"
   local pill_y=$((height / 18))
   local headline_y=$((height / 8))
-  local body_y=$((height * 26 / 100))
-  local side_w=$((width * 22 / 100))
-  local side_h=$((height * 24 / 100))
-  local center_w=$((width * 34 / 100))
-  local center_h=$((height * 29 / 100))
+  local body_y=$((height * 24 / 100))
+  local side_w=$((width * 29 / 100))
+  local side_h=$((height * 31 / 100))
+  local center_w=$((width * 40 / 100))
+  local center_h=$((height * 36 / 100))
 
   build_base "${width}" "${height}" "${TMP_DIR}/base.png"
   build_brand_pill $((width * 36 / 100)) $((height / 24)) "${TMP_DIR}/pill.png"
   render_display $((width * 76 / 100)) $((height / 7)) $((width / 18)) "#f5f7ff" center "${headline}" "${TMP_DIR}/headline.png"
   render_text $((width * 66 / 100)) $((height / 14)) $((width / 38)) "#c4cdea" center "${body}" "${TMP_DIR}/body.png"
-  build_card "${SRC_DIR}/home-screen.png" "${side_w}" "${side_h}" $((width / 24)) "${TMP_DIR}/tri-a.png" 24 10 north
-  build_card "${source}" "${center_w}" "${center_h}" $((width / 24)) "${TMP_DIR}/tri-b.png" 24 10 north
-  build_card "${SRC_DIR}/project-detail-screen.png" "${side_w}" "${side_h}" $((width / 24)) "${TMP_DIR}/tri-c.png" 24 10 north
+  build_card "${SRC_DIR}/home-screen.png" "${side_w}" "${side_h}" $((width / 24)) "${TMP_DIR}/tri-a.png" 34 8 north
+  build_card "${source}" "${center_w}" "${center_h}" $((width / 24)) "${TMP_DIR}/tri-b.png" 34 8 north
+  build_card "${SRC_DIR}/project-detail-screen.png" "${side_w}" "${side_h}" $((width / 24)) "${TMP_DIR}/tri-c.png" 34 8 north
 
   "${MAGICK_BIN}" "${TMP_DIR}/base.png" \
     "${TMP_DIR}/pill.png" -gravity north -geometry "+0+${pill_y}" -composite \
     "${TMP_DIR}/headline.png" -gravity north -geometry "+0+${headline_y}" -composite \
     "${TMP_DIR}/body.png" -gravity north -geometry "+0+${body_y}" -composite \
-    \( "${TMP_DIR}/tri-a.png" -background none -rotate -5 \) -gravity south -geometry "-$((width / 4))-$((height / 7))" -composite \
-    "${TMP_DIR}/tri-b.png" -gravity south -geometry "+0-$((height / 8))" -composite \
-    \( "${TMP_DIR}/tri-c.png" -background none -rotate 5 \) -gravity south -geometry "+$((width / 4))-$((height / 7))" -composite \
+    \( "${TMP_DIR}/tri-a.png" -background none -rotate -5 \) -gravity south -geometry "-$((width / 4))-$((height / 11))" -composite \
+    "${TMP_DIR}/tri-b.png" -gravity south -geometry "+0-$((height / 10))" -composite \
+    \( "${TMP_DIR}/tri-c.png" -background none -rotate 5 \) -gravity south -geometry "+$((width / 4))-$((height / 11))" -composite \
     -background "#08111f" -alpha remove -alpha off \
     "${out}"
 }
@@ -571,7 +698,7 @@ build_promo_poster() {
 while IFS='|' read -r slug layout source_file headline body; do
   source_path="${SRC_DIR}/${source_file}"
 
-  compose_master 1440 2560 "${layout}" "${source_path}" "${headline}" "${body}" "${OUT_DIR}/masters/phone/${slug}.png"
+  compose_phone 1440 2560 "${layout}" "${source_path}" "${headline}" "${body}" "${OUT_DIR}/masters/phone/${slug}.png"
   compose_master 2064 2752 "${layout}" "${source_path}" "${headline}" "${body}" "${OUT_DIR}/masters/ipad/${slug}.png"
 
   compose_iphone65 "${layout}" 1284 2778 "${source_path}" "${headline}" "${body}" "${OUT_DIR}/app-store/iphone-6.5/${slug}.png"
