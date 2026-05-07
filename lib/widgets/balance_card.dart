@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
-import '../l10n/app_localizations.dart';
 import '../services/wallet_service.dart';
-import 'adaptive_modal.dart';
-import 'topup_dialog.dart';
 
 class BalanceCard extends StatefulWidget {
   const BalanceCard({super.key});
@@ -16,8 +13,6 @@ class _BalanceCardState extends State<BalanceCard>
     with AutomaticKeepAliveClientMixin<BalanceCard> {
   final WalletService _walletService = WalletService();
   bool _isLoading = false;
-  bool _isProcessingPayment = false;
-  bool _showSuccessBanner = false;
   double _totalBalance = 0.0;
   double _expiringBalance = 0.0;
   double _nonExpiringBalance = 0.0;
@@ -59,23 +54,6 @@ class _BalanceCardState extends State<BalanceCard>
         );
       }
     }
-  }
-
-  Future<void> _handleTopUpSuccess() async {
-    setState(() {
-      _isProcessingPayment = true;
-      _showSuccessBanner = false;
-    });
-
-    // Payment happens in Stripe; balance updates asynchronously after webhook.
-    // Do a best-effort refresh after a short delay, then stop the local spinner.
-    await Future.delayed(const Duration(seconds: 2));
-    if (!mounted) return;
-    await _loadBalance();
-    if (!mounted) return;
-    setState(() {
-      _isProcessingPayment = false;
-    });
   }
 
   void _showBalanceDetails(BuildContext context) {
@@ -224,99 +202,6 @@ class _BalanceCardState extends State<BalanceCard>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Success banner with animation
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              transitionBuilder: (Widget child, Animation<double> animation) {
-                return SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(0, -1),
-                    end: Offset.zero,
-                  ).animate(animation),
-                  child: child,
-                );
-              },
-              child: _showSuccessBanner
-                  ? Container(
-                      key: const ValueKey('success_banner'),
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.green.shade50,
-                        border: Border.all(color: Colors.green.shade200),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.check_circle,
-                            color: Colors.green.shade700,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Funds received successfully!',
-                              style: TextStyle(
-                                color: Colors.green.shade700,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : const SizedBox.shrink(key: ValueKey('no_banner')),
-            ),
-            if (_showSuccessBanner) const SizedBox(height: 12),
-
-            // Payment processing indicator with animation
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              transitionBuilder: (Widget child, Animation<double> animation) {
-                return SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(0, -1),
-                    end: Offset.zero,
-                  ).animate(animation),
-                  child: child,
-                );
-              },
-              child: _isProcessingPayment
-                  ? Container(
-                      key: const ValueKey('processing_banner'),
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade50,
-                        border: Border.all(color: Colors.blue.shade200),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.blue.shade700,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Top-up initiated… balance updates after payment',
-                            style: TextStyle(
-                              color: Colors.blue.shade700,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : const SizedBox.shrink(key: ValueKey('no_processing')),
-            ),
-            if (_isProcessingPayment) const SizedBox(height: 12),
             Row(
               children: [
                 Container(
@@ -360,27 +245,20 @@ class _BalanceCardState extends State<BalanceCard>
                       : Icon(Icons.refresh, size: 20),
                 ),
                 const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  onPressed: _isLoading || _isProcessingPayment
-                      ? null
-                      : () => showAdaptiveModal(
-                          context: context,
-                          builder: (context) =>
-                              TopUpDialog(onSuccess: _handleTopUpSuccess),
-                        ),
-                  icon: const Icon(Icons.add, size: 18),
-                  label: Text(
-                    AppLocalizations.of(context)?.translate(
-                          'billing_insufficient_action_topup',
-                        ) ??
-                        'Top up',
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    'Billing managed outside iOS',
+                    style: TextStyle(
+                      color: Colors.grey.shade700,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),

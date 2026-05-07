@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-
 import '../l10n/app_localizations.dart';
 
 Future<void> showInsufficientBalanceDialog(BuildContext context) async {
@@ -11,8 +9,7 @@ Future<void> showInsufficientBalanceDialog(BuildContext context) async {
       loc?.translate('billing_insufficient_description') ??
       'Your balance is insufficient for this action. Please top up first.';
   final later = loc?.translate('billing_insufficient_action_later') ?? 'Later';
-  final topUp =
-      loc?.translate('billing_insufficient_action_topup') ?? 'Top up now';
+  final acknowledge = loc?.translate('ok') ?? 'OK';
 
   await showDialog<void>(
     context: context,
@@ -26,13 +23,8 @@ Future<void> showInsufficientBalanceDialog(BuildContext context) async {
             child: Text(later),
           ),
           FilledButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              if (context.mounted) {
-                context.go('/orders?tab=price');
-              }
-            },
-            child: Text(topUp),
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(acknowledge),
           ),
         ],
       );

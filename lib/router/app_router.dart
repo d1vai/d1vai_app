@@ -8,7 +8,6 @@ import '../screens/main_screen.dart';
 import '../screens/project_detail_screen.dart';
 import '../screens/app_detail_screen.dart';
 import '../screens/profile_screen.dart';
-import '../screens/pricing_screen.dart';
 import '../screens/language_settings_screen.dart';
 import '../screens/chat_screen.dart';
 import '../screens/chat_playground_screen.dart';
@@ -127,7 +126,6 @@ GoRouter createAppRouter() {
           state.matchedLocation == '/settings';
 
       final isPublicStandalone =
-          state.matchedLocation == '/pricing' ||
           state.matchedLocation == '/api-docs' ||
           state.matchedLocation == '/openapi' ||
           state.matchedLocation.startsWith('/apps/') ||
@@ -372,11 +370,6 @@ GoRouter createAppRouter() {
         path: '/profile',
         pageBuilder: (context, state) =>
             _buildPageWithTransition(context, state, const ProfileScreen()),
-      ),
-      GoRoute(
-        path: '/pricing',
-        pageBuilder: (context, state) =>
-            _buildPageWithTransition(context, state, const PricingScreen()),
       ),
       GoRoute(
         path: '/api-docs',

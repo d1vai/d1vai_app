@@ -48,7 +48,7 @@ class HelpSupportScreen extends StatelessWidget {
       'payment_methods': {
         'question': 'What payment methods are supported?',
         'answer':
-            'We currently support credit/debit cards through Stripe. More payment methods will be added in future updates.',
+            'Billing and purchase management are currently handled outside the iOS app. In-app purchase support is planned for a future release.',
       },
       'invite_friends': {
         'question': 'How do I invite friends?',
