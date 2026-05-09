@@ -7,17 +7,14 @@ import 'dashboard_screen.dart';
 import 'community_screen.dart';
 import 'docs_screen.dart';
 import 'settings_screen.dart';
-import 'order_screen.dart';
 
 class MainScreen extends StatefulWidget {
   final int initialIndex;
-  final String? ordersInitialTab;
   final String? settingsInitialTab;
 
   const MainScreen({
     super.key,
     this.initialIndex = 0,
-    this.ordersInitialTab,
     this.settingsInitialTab,
   });
 
@@ -39,7 +36,6 @@ class _MainScreenState extends State<MainScreen> {
       const DashboardScreen(),
       const CommunityScreen(),
       const DocsScreen(),
-      OrderScreen(initialTab: widget.ordersInitialTab),
       SettingsScreen(initialTab: widget.settingsInitialTab),
     ];
   }
@@ -73,14 +69,6 @@ class _MainScreenState extends State<MainScreen> {
       PersistentBottomNavBarItem(
         icon: Icon(PhosphorIcons.book()),
         title: (loc?.translate('docs') ?? 'Docs'),
-        activeColorPrimary: theme.colorScheme.primary,
-        inactiveColorPrimary: theme.colorScheme.onSurface.withValues(
-          alpha: 0.6,
-        ),
-      ),
-      PersistentBottomNavBarItem(
-        icon: Icon(PhosphorIcons.receipt()),
-        title: (loc?.translate('orders_title') ?? 'Orders'),
         activeColorPrimary: theme.colorScheme.primary,
         inactiveColorPrimary: theme.colorScheme.onSurface.withValues(
           alpha: 0.6,
