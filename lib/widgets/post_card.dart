@@ -41,7 +41,6 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
 
   late bool _isLiked;
   late int _likeCount;
-  late int _commentCount;
 
   static const _prefsHiddenPostsKey = 'community_hidden_post_slugs';
   static const _prefsBlockedAuthorsKey = 'community_blocked_author_slugs';
@@ -55,7 +54,6 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
     super.initState();
     _isLiked = widget.post.isLiked;
     _likeCount = widget.post.likeCount;
-    _commentCount = widget.post.commentCount;
     _pressController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 90),
@@ -81,7 +79,6 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
         oldWidget.post.updatedAt != widget.post.updatedAt) {
       _isLiked = widget.post.isLiked;
       _likeCount = widget.post.likeCount;
-      _commentCount = widget.post.commentCount;
     }
   }
 
@@ -103,17 +100,6 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
       context,
       title: _isLiked ? 'Liked' : 'Unliked',
       message: widget.post.title,
-    );
-  }
-
-  void _openComments() {
-    if (!_ensureLoggedIn()) return;
-    HapticFeedback.selectionClick();
-    widget.onTap?.call();
-    SnackBarHelper.showInfo(
-      context,
-      title: 'Comments',
-      message: 'Comments UI coming soon',
     );
   }
 
@@ -345,121 +331,167 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      titleText,
-                                      style:
-                                          theme.textTheme.titleMedium?.copyWith(
-                                            fontWeight: FontWeight.w900,
-                                            height: 1.08,
-                                            color: Colors.white,
-                                          ) ??
-                                          const TextStyle(
-                                            fontWeight: FontWeight.w900,
-                                            color: Colors.white,
+                              LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final titleWidget = Text(
+                                    titleText,
+                                    style:
+                                        theme.textTheme.titleMedium?.copyWith(
+                                          fontWeight: FontWeight.w900,
+                                          height: 1.08,
+                                          color: Colors.white,
+                                        ) ??
+                                        const TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                          color: Colors.white,
+                                        ),
+                                    maxLines: constraints.maxWidth < 320 ? 2 : 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  );
+                                  final trailingWidget = Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Flexible(
+                                        fit: FlexFit.loose,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 6,
                                           ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(
-                                        alpha: isDark ? 0.10 : 0.12,
-                                      ),
-                                      borderRadius: BorderRadius.circular(999),
-                                      border: Border.all(
-                                        color: Colors.white.withValues(
-                                          alpha: isDark ? 0.12 : 0.16,
-                                        ),
-                                      ),
-                                    ),
-                                    child: InkWell(
-                                      borderRadius: BorderRadius.circular(999),
-                                      onTap:
-                                          (post.author?.slug ?? '')
-                                              .trim()
-                                              .isEmpty
-                                          ? null
-                                          : _openAuthorProfile,
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 2,
-                                          vertical: 2,
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Hero(
-                                              tag: communityPostAuthorHeroTag(
-                                                post,
-                                              ),
-                                              child: AvatarImage(
-                                                imageUrl:
-                                                    post
-                                                            .author
-                                                            ?.picture
-                                                            ?.isNotEmpty ==
-                                                        true
-                                                    ? post.author!.picture!
-                                                    : 'placeholder',
-                                                size: 20,
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                                fit: BoxFit.cover,
-                                                showBorder: false,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withValues(
+                                              alpha: isDark ? 0.10 : 0.12,
+                                            ),
+                                            borderRadius:
+                                                BorderRadius.circular(999),
+                                            border: Border.all(
+                                              color: Colors.white.withValues(
+                                                alpha: isDark ? 0.12 : 0.16,
                                               ),
                                             ),
-                                            const SizedBox(width: 6),
-                                            ConstrainedBox(
-                                              constraints: const BoxConstraints(
-                                                maxWidth: 120,
-                                              ),
-                                              child: Text(
-                                                post.author?.slug ??
-                                                    'Anonymous',
-                                                style:
-                                                    theme.textTheme.labelMedium
-                                                        ?.copyWith(
-                                                          fontWeight:
-                                                              FontWeight.w800,
-                                                          color: Colors.white,
-                                                          height: 1.0,
-                                                        ) ??
-                                                    const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w800,
-                                                      color: Colors.white,
+                                          ),
+                                          child: InkWell(
+                                            borderRadius:
+                                                BorderRadius.circular(999),
+                                            onTap:
+                                                (post.author?.slug ?? '')
+                                                        .trim()
+                                                        .isEmpty
+                                                    ? null
+                                                    : _openAuthorProfile,
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 2,
+                                                    vertical: 2,
+                                                  ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Hero(
+                                                    tag:
+                                                        communityPostAuthorHeroTag(
+                                                          post,
+                                                        ),
+                                                    child: AvatarImage(
+                                                      imageUrl:
+                                                          post
+                                                                  .author
+                                                                  ?.picture
+                                                                  ?.isNotEmpty ==
+                                                              true
+                                                          ? post.author!.picture!
+                                                          : 'placeholder',
+                                                      size: 20,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            10,
+                                                          ),
+                                                      fit: BoxFit.cover,
+                                                      showBorder: false,
                                                     ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                  const SizedBox(width: 6),
+                                                  Flexible(
+                                                    fit: FlexFit.loose,
+                                                    child: ConstrainedBox(
+                                                      constraints:
+                                                          const BoxConstraints(
+                                                            maxWidth: 96,
+                                                          ),
+                                                      child: Text(
+                                                        post.author?.slug ??
+                                                            'Anonymous',
+                                                        style: theme
+                                                                .textTheme
+                                                                .labelMedium
+                                                                ?.copyWith(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w800,
+                                                                  color: Colors
+                                                                      .white,
+                                                                  height: 1.0,
+                                                                ) ??
+                                                            const TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w800,
+                                                              color:
+                                                                  Colors.white,
+                                                            ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ),
-                                          ],
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: Icon(
-                                      Icons.more_horiz,
-                                      color: Colors.white.withValues(
-                                        alpha: 0.9,
+                                      IconButton(
+                                        icon: Icon(
+                                          Icons.more_horiz,
+                                          color: Colors.white.withValues(
+                                            alpha: 0.9,
+                                          ),
+                                        ),
+                                        onPressed: () =>
+                                            _showMoreOptions(context),
+                                        tooltip: 'More',
+                                        visualDensity: VisualDensity.compact,
                                       ),
-                                    ),
-                                    onPressed: () => _showMoreOptions(context),
-                                    tooltip: 'More',
-                                    visualDensity: VisualDensity.compact,
-                                  ),
-                                ],
+                                    ],
+                                  );
+
+                                  if (constraints.maxWidth < 320) {
+                                    return Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        titleWidget,
+                                        const SizedBox(height: 8),
+                                        trailingWidget,
+                                      ],
+                                    );
+                                  }
+
+                                  return Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      Expanded(child: titleWidget),
+                                      const SizedBox(width: 10),
+                                      Flexible(
+                                        fit: FlexFit.loose,
+                                        child: trailingWidget,
+                                      ),
+                                    ],
+                                  );
+                                },
                               ),
                               const SizedBox(height: 6),
                               Row(
@@ -518,12 +550,6 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
                                     label: _likeCount.toString(),
                                     onTap: _toggleLike,
                                     active: _isLiked,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  _ActionPill(
-                                    icon: Icons.chat_bubble_outline,
-                                    label: _commentCount.toString(),
-                                    onTap: _openComments,
                                   ),
                                   const Spacer(),
                                   _ActionPill(

@@ -6,7 +6,11 @@ class AppTypography {
   static const String fontFamilyDisplay = 'SmileySans';
   static const String fontFamilyBody = '.SF UI Text'; // System font fallback
 
-  static TextTheme getTheme(bool isDark) {
+  static bool _useChineseDisplayFont(Locale? locale) {
+    return locale?.languageCode == 'zh';
+  }
+
+  static TextTheme getTheme(bool isDark, {Locale? locale}) {
     final Color primaryColor = isDark ? Colors.white : const Color(0xFF0F172A);
     final Color secondaryColor = isDark
         ? primaryColor.withValues(alpha: 0.78)
@@ -14,41 +18,44 @@ class AppTypography {
     final Color tertiaryColor = isDark
         ? primaryColor.withValues(alpha: 0.62)
         : primaryColor.withValues(alpha: 0.56);
+    final displayFontFamily = _useChineseDisplayFont(locale)
+        ? fontFamilyDisplay
+        : null;
 
     return TextTheme(
-      // Display / Headings (SmileySans)
+      // Display / Headings (SmileySans only for Chinese locales)
       displayLarge: TextStyle(
-        fontFamily: fontFamilyDisplay,
+        fontFamily: displayFontFamily,
         fontSize: 57,
         height: 1.1,
         color: primaryColor,
       ),
       displayMedium: TextStyle(
-        fontFamily: fontFamilyDisplay,
+        fontFamily: displayFontFamily,
         fontSize: 45,
         height: 1.1,
         color: primaryColor,
       ),
       displaySmall: TextStyle(
-        fontFamily: fontFamilyDisplay,
+        fontFamily: displayFontFamily,
         fontSize: 36,
         height: 1.1,
         color: primaryColor,
       ),
       headlineLarge: TextStyle(
-        fontFamily: fontFamilyDisplay,
+        fontFamily: displayFontFamily,
         fontSize: 32,
         height: 1.2,
         color: primaryColor,
       ),
       headlineMedium: TextStyle(
-        fontFamily: fontFamilyDisplay,
+        fontFamily: displayFontFamily,
         fontSize: 28,
         height: 1.2,
         color: primaryColor,
       ),
       headlineSmall: TextStyle(
-        fontFamily: fontFamilyDisplay,
+        fontFamily: displayFontFamily,
         fontSize: 24,
         height: 1.2,
         color: primaryColor,

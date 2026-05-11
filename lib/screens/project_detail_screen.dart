@@ -483,88 +483,83 @@ class _ProjectDesktopRail extends StatelessWidget {
               color: colorScheme.outlineVariant.withValues(alpha: 0.55),
             ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  OutlinedButton.icon(
-                    onPressed: onBack,
-                    icon: const Icon(Icons.arrow_back, size: 16),
-                    label: const Text('Back'),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      projectName.trim().isEmpty ? 'Project' : projectName,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: onBack,
+                      icon: const Icon(Icons.arrow_back, size: 16),
+                      label: const Text('Back'),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Use the left rail to jump across overview, chat, environment, billing, deploy, and analytics.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        projectName.trim().isEmpty ? 'Project' : projectName,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 16),
-              for (var i = 0; i < tabs.length; i++) ...[
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () => controller.animateTo(i),
-                    borderRadius: BorderRadius.circular(16),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      curve: Curves.easeOutCubic,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 14,
-                      ),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        color: controller.index == i
-                            ? colorScheme.primary.withValues(alpha: 0.10)
-                            : Colors.transparent,
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            tabs[i].$1,
-                            size: 18,
-                            color: controller.index == i
-                                ? colorScheme.primary
-                                : colorScheme.onSurfaceVariant,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              tabs[i].$2,
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                fontWeight: controller.index == i
-                                    ? FontWeight.w800
-                                    : FontWeight.w600,
-                                color: controller.index == i
-                                    ? colorScheme.primary
-                                    : colorScheme.onSurface,
+                const SizedBox(height: 16),
+                for (var i = 0; i < tabs.length; i++) ...[
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => controller.animateTo(i),
+                      borderRadius: BorderRadius.circular(16),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        curve: Curves.easeOutCubic,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          color: controller.index == i
+                              ? colorScheme.primary.withValues(alpha: 0.10)
+                              : Colors.transparent,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              tabs[i].$1,
+                              size: 18,
+                              color: controller.index == i
+                                  ? colorScheme.primary
+                                  : colorScheme.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                tabs[i].$2,
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: controller.index == i
+                                      ? FontWeight.w800
+                                      : FontWeight.w600,
+                                  color: controller.index == i
+                                      ? colorScheme.primary
+                                      : colorScheme.onSurface,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-                if (i != tabs.length - 1) const SizedBox(height: 8),
+                  if (i != tabs.length - 1) const SizedBox(height: 8),
+                ],
               ],
-            ],
+            ),
           ),
         );
       },

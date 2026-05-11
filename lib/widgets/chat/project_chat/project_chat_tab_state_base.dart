@@ -90,6 +90,13 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   // Sub-tab state (Preview / Code)
   int _currentChatTabIndex = 0;
 
+  // Desktop split-pane state
+  double _desktopChatPaneWidth = 420;
+  final double _desktopChatPaneDefaultWidth = 420;
+  final double _desktopChatPaneMinWidth = 340;
+  final double _desktopChatPaneMaxWidth = 620;
+  final double _desktopPrimaryPaneMinWidth = 420;
+
   int _chatSubTabIndexFromName(String? raw) {
     switch ((raw ?? '').trim().toLowerCase()) {
       case 'code':
@@ -122,6 +129,64 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   void sendInitialPrompt(String text) {
     _currentChatTabIndex = 0;
     _sendFirstMessage(text);
+  }
+
+  String get _desktopChatPaneWidthKey =>
+      'project_chat_desktop_sidebar_width:${widget.projectId}';
+
+  double _clampDesktopChatPaneWidth(double width, double totalWidth) {
+    final maxAllowed = (totalWidth - _desktopPrimaryPaneMinWidth)
+        .clamp(_desktopChatPaneMinWidth, _desktopChatPaneMaxWidth);
+    return width.clamp(_desktopChatPaneMinWidth, maxAllowed);
+  }
+
+  Future<void> _loadDesktopChatPaneWidth() async {
+    try {
+      final raw = _storageService.getString(_desktopChatPaneWidthKey)?.trim();
+      final parsed = raw == null || raw.isEmpty ? null : double.tryParse(raw);
+      if (parsed == null || !mounted) return;
+      setState(() {
+        _desktopChatPaneWidth = parsed.clamp(
+          _desktopChatPaneMinWidth,
+          _desktopChatPaneMaxWidth,
+        );
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _persistDesktopChatPaneWidth(double value) async {
+    try {
+      await _storageService.setString(
+        _desktopChatPaneWidthKey,
+        value.toStringAsFixed(1),
+      );
+    } catch (_) {}
+  }
+
+  void _setDesktopChatPaneWidthForViewport(
+    double next,
+    double totalWidth, {
+    bool persist = true,
+  }) {
+    final clamped = _clampDesktopChatPaneWidth(next, totalWidth);
+    if ((_desktopChatPaneWidth - clamped).abs() < 0.5) return;
+    if (mounted) {
+      setState(() {
+        _desktopChatPaneWidth = clamped;
+      });
+    } else {
+      _desktopChatPaneWidth = clamped;
+    }
+    if (persist) {
+      unawaited(_persistDesktopChatPaneWidth(clamped));
+    }
+  }
+
+  void _resetDesktopChatPaneWidth(double totalWidth) {
+    _setDesktopChatPaneWidthForViewport(
+      _desktopChatPaneDefaultWidth,
+      totalWidth,
+    );
   }
 
   Future<void> _initializeChat();

@@ -5,22 +5,32 @@ import FlutterMacOS
 class AppDelegate: FlutterAppDelegate {
   private let openChannelName = "ai.d1v.d1vai/open"
   private var openChannel: FlutterMethodChannel?
-  private var pendingDirectoryPaths: [String] = []
+  private var pendingImportPaths: [String] = []
 
   override func applicationDidFinishLaunching(_ notification: Notification) {
     super.applicationDidFinishLaunching(notification)
+    configureOpenChannelIfPossible()
+    flushPendingImportPaths()
+  }
 
-    guard let flutterViewController = mainFlutterWindow?.contentViewController as? FlutterViewController else {
+  func configureOpenChannel(binaryMessenger: FlutterBinaryMessenger) {
+    openChannel = FlutterMethodChannel(
+      name: openChannelName,
+      binaryMessenger: binaryMessenger
+    )
+    NSLog("[d1vai-drop] appDelegate configured open channel")
+    flushPendingImportPaths()
+  }
+
+  private func configureOpenChannelIfPossible() {
+    if openChannel != nil {
       return
     }
-
-    let channel = FlutterMethodChannel(
-      name: openChannelName,
-      binaryMessenger: flutterViewController.engine.binaryMessenger
-    )
-    openChannel = channel
-
-    flushPendingDirectories()
+    guard let flutterViewController = mainFlutterWindow?.contentViewController as? FlutterViewController else {
+      NSLog("[d1vai-drop] appDelegate configure skipped missing flutterViewController")
+      return
+    }
+    configureOpenChannel(binaryMessenger: flutterViewController.engine.binaryMessenger)
   }
 
   override func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -33,37 +43,53 @@ class AppDelegate: FlutterAppDelegate {
 
   override func application(_ sender: NSApplication, openFiles filenames: [String]) {
     for filename in filenames {
-      queueDirectoryIfNeeded(path: filename)
+      queueImportPathIfNeeded(path: filename)
     }
-    flushPendingDirectories()
+    flushPendingImportPaths()
     sender.reply(toOpenOrPrint: .success)
   }
 
   func handleDroppedPaths(_ paths: [String]) {
+    NSLog("[d1vai-drop] appDelegate handleDroppedPaths paths=%@", paths.joined(separator: " | "))
     for path in paths {
-      queueDirectoryIfNeeded(path: path)
+      queueImportPathIfNeeded(path: path)
     }
-    flushPendingDirectories()
+    flushPendingImportPaths()
   }
 
-  private func queueDirectoryIfNeeded(path: String) {
+  private func queueImportPathIfNeeded(path: String) {
     var isDirectory: ObjCBool = false
-    guard FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory),
-          isDirectory.boolValue else {
+    guard FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory) else {
+      NSLog("[d1vai-drop] appDelegate queue skipped missing path=%@", path)
       return
     }
-    pendingDirectoryPaths.append(path)
+    if isDirectory.boolValue || FileManager.default.isReadableFile(atPath: path) {
+      NSLog("[d1vai-drop] appDelegate queue accepted path=%@ isDirectory=%@", path, isDirectory.boolValue ? "true" : "false")
+      pendingImportPaths.append(path)
+    } else {
+      NSLog("[d1vai-drop] appDelegate queue rejected unreadable path=%@", path)
+    }
   }
 
-  private func flushPendingDirectories() {
-    guard let channel = openChannel, !pendingDirectoryPaths.isEmpty else {
+  private func flushPendingImportPaths() {
+    if openChannel == nil {
+      configureOpenChannelIfPossible()
+    }
+    guard let channel = openChannel, !pendingImportPaths.isEmpty else {
+      if pendingImportPaths.isEmpty {
+        NSLog("[d1vai-drop] appDelegate flush skipped empty queue")
+      } else {
+        NSLog("[d1vai-drop] appDelegate flush skipped missing channel")
+      }
       return
     }
 
-    let paths = pendingDirectoryPaths
-    pendingDirectoryPaths.removeAll()
+    let paths = pendingImportPaths
+    pendingImportPaths.removeAll()
+    NSLog("[d1vai-drop] appDelegate flush sending count=%ld", paths.count)
     for path in paths {
-      channel.invokeMethod("openDirectory", arguments: path)
+      NSLog("[d1vai-drop] appDelegate invoke openImportPath path=%@", path)
+      channel.invokeMethod("openImportPath", arguments: path)
     }
   }
 }

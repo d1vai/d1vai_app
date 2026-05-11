@@ -15,6 +15,7 @@ import 'outbox/outbox_widgets.dart';
 
 /// Bottom sheet chat interface for mobile devices
 class ChatBottomSheet extends StatefulWidget {
+  final String title;
   final List<ChatMessage> messages;
   final bool isLoading;
   final bool isLoadingHistory;
@@ -57,6 +58,7 @@ class ChatBottomSheet extends StatefulWidget {
 
   const ChatBottomSheet({
     super.key,
+    this.title = 'Chat',
     required this.messages,
     this.isLoading = false,
     this.isLoadingHistory = false,
@@ -182,7 +184,7 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                 final titleRow = Row(
                   children: [
                     Text(
-                      'Chat',
+                      widget.title,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),

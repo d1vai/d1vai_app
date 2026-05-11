@@ -48,6 +48,20 @@ class _CommunityScreenState extends State<CommunityScreen>
   static const _prefsHiddenPostsKey = 'community_hidden_post_slugs';
   static const _prefsBlockedAuthorsKey = 'community_blocked_author_slugs';
 
+  void _finishRefreshNextFrame() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _controller.finishRefresh();
+    });
+  }
+
+  void _finishLoadNextFrame(IndicatorResult result) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _controller.finishLoad(result);
+    });
+  }
+
   List<CommunityPost> _applyFilter(List<CommunityPost> list) {
     final base = list.where((p) {
       if (_hiddenPostSlugs.contains(p.slug)) return false;
@@ -336,18 +350,18 @@ class _CommunityScreenState extends State<CommunityScreen>
       onRefresh: () async {
         await _loadPosts(refresh: true);
         if (!mounted) return;
-        _controller.finishRefresh();
+        _finishRefreshNextFrame();
       },
       onLoad: () async {
         if (_hasMore) {
           await _loadPosts();
           if (!mounted) return;
-          _controller.finishLoad(
+          _finishLoadNextFrame(
             _hasMore ? IndicatorResult.success : IndicatorResult.noMore,
           );
         } else {
           if (!mounted) return;
-          _controller.finishLoad(IndicatorResult.noMore);
+          _finishLoadNextFrame(IndicatorResult.noMore);
         }
       },
       child: desktop
@@ -395,36 +409,14 @@ class _CommunityScreenState extends State<CommunityScreen>
 
     return DesktopContentFrame(
       maxWidth: 1440,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
         children: [
-          SizedBox(
-            width: 280,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+            child: Row(
               children: [
-                _buildFilterBar(),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerLow,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .outlineVariant
-                          .withValues(alpha: 0.55),
-                    ),
-                  ),
-                  child: Text(
-                    'Use the left filter rail to switch between all posts and your own posts.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
+                Expanded(child: _buildFilterBar()),
+                const SizedBox(width: 12),
                 FilledButton.icon(
                   onPressed: () async {
                     final auth = Provider.of<AuthProvider>(
@@ -455,7 +447,6 @@ class _CommunityScreenState extends State<CommunityScreen>
               ],
             ),
           ),
-          const SizedBox(width: 24),
           Expanded(child: feed),
         ],
       ),
@@ -480,7 +471,7 @@ class _CommunityScreenState extends State<CommunityScreen>
     }
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+      padding: EdgeInsets.zero,
       child: _CommunityFilterTabs(
         selectedFilter: _filter,
         isAuthed: isAuthed,

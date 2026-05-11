@@ -30,6 +30,7 @@ class ProjectGithubTab extends StatefulWidget {
 class _ProjectGithubTabState extends State<ProjectGithubTab> {
   final _service = D1vaiService();
   bool _loading = false;
+  bool _openingRepoInvite = false;
   String _botUsername = '…';
   String _error = '';
 
@@ -117,6 +118,35 @@ class _ProjectGithubTabState extends State<ProjectGithubTab> {
       title: _t('copied', 'Copied'),
       message: _t('project_github_bot_copied', 'GitHub bot username copied'),
     );
+  }
+
+  Future<void> _openRepoInviteOrRepo() async {
+    setState(() {
+      _openingRepoInvite = true;
+      _error = '';
+    });
+    try {
+      final payload = await _service.inviteProjectGithubCollaborator(
+        widget.project.id,
+      );
+      final url =
+          (payload['invitation_url'] ?? payload['html_url'] ?? '').toString();
+      if (url.trim().isEmpty) {
+        throw Exception('Missing invitation URL');
+      }
+      await _openExternalUrl(url);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = humanizeError(e);
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _openingRepoInvite = false;
+        });
+      }
+    }
   }
 
   Future<void> _acceptInvitation() async {
@@ -347,6 +377,27 @@ class _ProjectGithubTabState extends State<ProjectGithubTab> {
                           onPressed: () =>
                               _openExternalUrl('https://github.com/$boundRepo'),
                           icon: const Icon(Icons.open_in_new, size: 18),
+                        ),
+                        IconButton(
+                          tooltip: _t(
+                            'project_github_open_invitation_or_repo',
+                            'Open repository access',
+                          ),
+                          onPressed: _openingRepoInvite
+                              ? null
+                              : _openRepoInviteOrRepo,
+                          icon: _openingRepoInvite
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.arrow_outward_rounded,
+                                  size: 18,
+                                ),
                         ),
                       ],
                     ),

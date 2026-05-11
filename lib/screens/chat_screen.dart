@@ -7,11 +7,13 @@ import 'package:d1vai_app/models/outbox.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 import 'package:d1vai_app/services/chat_service.dart';
 import 'package:d1vai_app/services/d1vai_service.dart';
 import 'package:d1vai_app/services/model_config_service.dart';
 import 'package:d1vai_app/services/workspace_service.dart';
 import 'package:d1vai_app/l10n/app_localizations.dart';
+import 'package:d1vai_app/providers/project_provider.dart';
 import 'package:d1vai_app/utils/billing_errors.dart';
 import 'package:d1vai_app/utils/error_utils.dart';
 import 'package:d1vai_app/utils/message_parser.dart';
@@ -495,6 +497,26 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _syncMiniPreviewUrl({bool bumpVersion = false}) async {
+    try {
+      final cachedProject = Provider.of<ProjectProvider>(
+        context,
+        listen: false,
+      ).getProjectById(widget.projectId);
+      final cachedUrl =
+          (cachedProject?.preferredPreviewUrl ??
+                  cachedProject?.latestProdDeploymentUrl ??
+                  '')
+              .trim();
+      if (cachedUrl.isNotEmpty &&
+          cachedUrl != (_miniPreviewUrl ?? '').trim() &&
+          mounted) {
+        setState(() {
+          _miniPreviewUrl = cachedUrl;
+          _miniPreviewReloadVersion += 1;
+        });
+      }
+    } catch (_) {}
+
     try {
       final project = await _d1vaiService.getUserProjectById(widget.projectId);
       final next =

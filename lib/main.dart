@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:desktop_drop/desktop_drop.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -48,14 +50,7 @@ Future<void> main() async {
     ),
   );
 
-  unawaited(_macosOpenService.initialize(onDirectoryOpened: () {
-    final context = _appRouter.routerDelegate.navigatorKey.currentContext;
-    final pendingPath = _macosOpenService.consumePendingDirectoryPath();
-    if (context == null || pendingPath == null || pendingPath.isEmpty) {
-      return;
-    }
-    unawaited(_macosFolderImportService.importDirectory(context, pendingPath));
-  }));
+  unawaited(_macosOpenService.initialize());
 
   unawaited(AppleIapService.ensureInitialized());
   unawaited(StripePaymentService.initialize());
@@ -76,6 +71,11 @@ class MyApp extends StatelessWidget {
         return MaterialApp.router(
           debugShowCheckedModeBanner: false,
           title: 'd1vai',
+          builder: (context, child) {
+            return _MacosImportListener(
+              child: child ?? const SizedBox.shrink(),
+            );
+          },
           locale: localeProvider.locale,
           themeMode: themeProvider.flutterThemeMode,
           supportedLocales: LocaleProvider.supportedLocales,
@@ -85,11 +85,174 @@ class MyApp extends StatelessWidget {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
+          theme: AppTheme.light(localeProvider.locale),
+          darkTheme: AppTheme.dark(localeProvider.locale),
           routerConfig: _appRouter,
         );
       },
+    );
+  }
+}
+
+class _MacosImportListener extends StatefulWidget {
+  final Widget child;
+
+  const _MacosImportListener({required this.child});
+
+  @override
+  State<_MacosImportListener> createState() => _MacosImportListenerState();
+}
+
+class _MacosImportListenerState extends State<_MacosImportListener> {
+  bool _draining = false;
+  bool _dragging = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final pending = context.watch<MacosOpenService>().pendingImportPath;
+    if (pending == null || pending.isEmpty || _draining) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _draining) return;
+      unawaited(_drainPendingImports());
+    });
+  }
+
+  Future<void> _drainPendingImports() async {
+    _draining = true;
+    try {
+      while (mounted) {
+        final pendingPath = _macosOpenService.consumePendingImportPath();
+        if (pendingPath == null || pendingPath.isEmpty) break;
+        final navigatorContext =
+            _appRouter.routerDelegate.navigatorKey.currentContext;
+        if (navigatorContext == null) {
+          debugPrint(
+            '[d1vai-drop] missing navigator context for path=$pendingPath',
+          );
+          _macosOpenService.enqueueImportPath(pendingPath);
+          break;
+        }
+        await _macosFolderImportService.importPath(
+          navigatorContext,
+          pendingPath,
+        );
+      }
+    } finally {
+      _draining = false;
+      if (mounted) {
+        final pending = _macosOpenService.pendingImportPath;
+        if (pending != null && pending.isNotEmpty) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted || _draining) return;
+            unawaited(_drainPendingImports());
+          });
+        }
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isMacos = !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
+
+    if (!isMacos) return widget.child;
+
+    return DropTarget(
+      onDragEntered: (_) {
+        if (!mounted) return;
+        setState(() {
+          _dragging = true;
+        });
+      },
+      onDragExited: (_) {
+        if (!mounted) return;
+        setState(() {
+          _dragging = false;
+        });
+      },
+      onDragDone: (detail) {
+        if (!mounted) return;
+        setState(() {
+          _dragging = false;
+        });
+        for (final file in detail.files) {
+          final path = file.path.trim();
+          if (path.isEmpty) continue;
+          debugPrint('[d1vai-drop] desktop_drop onDragDone path=$path');
+          _macosOpenService.enqueueImportPath(path);
+        }
+      },
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          widget.child,
+          IgnorePointer(
+            ignoring: !_dragging,
+            child: AnimatedOpacity(
+              opacity: _dragging ? 1 : 0,
+              duration: const Duration(milliseconds: 120),
+              child: _FlutterDropOverlay(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FlutterDropOverlay extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ColoredBox(
+      color: Colors.black.withValues(alpha: 0.18),
+      child: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 420),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface.withValues(alpha: 0.96),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: theme.colorScheme.primary.withValues(alpha: 0.55),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.16),
+                blurRadius: 26,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.file_upload_outlined,
+                size: 36,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Drop folder or file to import',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Imports to cloud, then opens Code chat',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

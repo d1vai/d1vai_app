@@ -238,34 +238,6 @@ class _D1VDesktopSideNav extends StatelessWidget {
             const SizedBox(height: 8),
           ],
           const Spacer(),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              color: colorScheme.surfaceContainerLow,
-              border: Border.all(
-                color: colorScheme.outlineVariant.withValues(alpha: 0.55),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  PhosphorIcons.desktop(),
-                  size: 18,
-                  color: colorScheme.primary,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Desktop mode · Cmd+1-4',
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );

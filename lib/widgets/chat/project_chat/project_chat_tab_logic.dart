@@ -524,6 +524,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     _previewUrl = widget.previewUrl;
     _currentChatTabIndex = _chatSubTabIndexFromName(widget.initialSubTab);
     _loadChatDraft();
+    unawaited(_loadDesktopChatPaneWidth());
     unawaited(_bootstrapWorkspace());
   }
 
@@ -546,6 +547,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _previewUrl = widget.previewUrl;
         _previewKey += 1;
         _currentChatTabIndex = _chatSubTabIndexFromName(widget.initialSubTab);
+        _desktopChatPaneWidth = _desktopChatPaneDefaultWidth;
         _isDeploying = false;
         _deployFramework = null;
         _availableModels = <ModelInfo>[];
@@ -556,6 +558,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _modelConfigError = null;
       });
       _loadChatDraft();
+      unawaited(_loadDesktopChatPaneWidth());
       unawaited(_bootstrapWorkspace());
     } else if (oldWidget.initialSubTab != widget.initialSubTab) {
       final nextIndex = _chatSubTabIndexFromName(widget.initialSubTab);

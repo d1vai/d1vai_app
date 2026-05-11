@@ -1242,6 +1242,15 @@ class D1vaiService {
     );
   }
 
+  Future<Map<String, dynamic>> inviteProjectGithubCollaborator(
+    String projectId,
+  ) async {
+    return _apiClient.post<Map<String, dynamic>>(
+      '/api/github-app/projects/$projectId/collaborator-invite',
+      {},
+    );
+  }
+
   /// 检查仓库访问权限
   Future<Map<String, dynamic>> checkRepositoryAccess(
     String owner,

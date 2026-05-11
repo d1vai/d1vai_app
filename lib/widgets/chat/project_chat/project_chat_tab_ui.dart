@@ -721,94 +721,119 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
   }
 
   Widget _buildChatTabDesktop(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          flex: 8,
-          child: Column(
-            children: [
-              ProjectChatTopBar(
-                currentIndex: _currentChatTabIndex,
-                onTabSelected: (index) {
-                  setState(() {
-                    _currentChatTabIndex = index;
-                  });
-                },
-                onRefreshPreview: _handleRefreshPreview,
-                onOpenInNewTab: _handleOpenInNewTab,
-              ),
-              Expanded(
-                child: IndexedStack(
-                  index: _currentChatTabIndex,
-                  children: [_buildChatPreviewTab(), _buildChatCodeTab()],
-                ),
-              ),
-            ],
-          ),
-        ),
-        Container(
-          width: 420,
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            border: Border(
-              left: BorderSide(
-                color: Theme.of(
-                  context,
-                ).colorScheme.outlineVariant.withValues(alpha: 0.6),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final sidebarWidth = _desktopChatPaneWidth.clamp(
+          _desktopChatPaneMinWidth,
+          _desktopChatPaneMaxWidth,
+        );
+        final effectiveSidebarWidth = (constraints.maxWidth -
+                _desktopPrimaryPaneMinWidth)
+            .clamp(_desktopChatPaneMinWidth, sidebarWidth);
+
+        return Row(
+          children: [
+            Expanded(
+              child: Column(
+                children: [
+                  ProjectChatTopBar(
+                    currentIndex: _currentChatTabIndex,
+                    onTabSelected: (index) {
+                      setState(() {
+                        _currentChatTabIndex = index;
+                      });
+                    },
+                    onRefreshPreview: _handleRefreshPreview,
+                    onOpenInNewTab: _handleOpenInNewTab,
+                  ),
+                  Expanded(
+                    child: IndexedStack(
+                      index: _currentChatTabIndex,
+                      children: [_buildChatPreviewTab(), _buildChatCodeTab()],
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-          child: Column(
-            children: [
-              Expanded(
-                child: ChatBottomSheet(
-                  messages: _chatMessages,
-                  isLoading: _isChatLoading,
-                  isLoadingHistory: _isLoadingHistory,
-                  isDeploying: _isDeploying,
-                  outboxItems: _outboxItems,
-                  outboxMode: _outboxMode,
-                  onOutboxClear: _outboxClear,
-                  onOutboxDelete: _outboxDelete,
-                  onOutboxUpdate: _outboxUpdate,
-                  heroTag: 'project-chat-messages-${widget.projectId}',
-                  statusLabel: _statusLabel(),
-                  statusToken: _statusToken(),
-                  statusIsError: _sessionError,
-                  bannerTitle: _statusBannerTitle(),
-                  bannerMessage: _statusBannerMessage(),
-                  bannerIcon: _statusBannerIcon(),
-                  bannerAccent: _statusBannerAccent(context),
-                  bannerBusy: _statusBannerBusy(),
-                  messageStatuses: _messageStatuses,
-                  onRetry: _retryMessage,
-                  onLoadMore: _loadMoreHistory,
-                  hasMoreHistory: _hasMoreHistory,
-                  isLoadingMore: _isLoadingMoreHistory,
-                  scrollController: _chatScrollController,
-                  inputController: _chatInputController,
-                  inputFocusNode: _chatInputFocusNode,
-                  onInputChanged: (text) => unawaited(_persistChatDraft(text)),
-                  quickActions: _quickActions(),
-                  quickActionsTitle: _quickActionsTitle(),
-                  onSendMessage: _sendChatMessage,
-                  isModelReady: _selectedModelId.trim().isNotEmpty,
-                  isModelLoading:
-                      _isLoadingModels ||
-                      _isSwitchingModel ||
-                      _workspacePhase != WorkspacePhase.ready ||
-                      !_hasLoadedModelConfig,
-                  models: _availableModels,
-                  selectedModelId: _selectedModelId,
-                  selectedEngineMode: _selectedEngineMode,
-                  onModelChanged: (v) => unawaited(_handleModelChanged(v)),
-                  onEngineChanged: (v) => unawaited(_handleEngineChanged(v)),
+            _DesktopChatPaneResizeHandle(
+              onDragDelta: (delta) {
+                _setDesktopChatPaneWidthForViewport(
+                  effectiveSidebarWidth - delta,
+                  constraints.maxWidth,
+                );
+              },
+              onDoubleTap: () {
+                _resetDesktopChatPaneWidth(constraints.maxWidth);
+              },
+            ),
+            Container(
+              width: effectiveSidebarWidth,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                border: Border(
+                  left: BorderSide(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.outlineVariant.withValues(alpha: 0.6),
+                  ),
                 ),
               ),
-            ],
-          ),
-        ),
-      ],
+              child: Column(
+                children: [
+                  Expanded(
+                    child: ChatBottomSheet(
+                      title: 'Messages',
+                      messages: _chatMessages,
+                      isLoading: _isChatLoading,
+                      isLoadingHistory: _isLoadingHistory,
+                      isDeploying: _isDeploying,
+                      outboxItems: _outboxItems,
+                      outboxMode: _outboxMode,
+                      onOutboxClear: _outboxClear,
+                      onOutboxDelete: _outboxDelete,
+                      onOutboxUpdate: _outboxUpdate,
+                      heroTag: 'project-chat-messages-${widget.projectId}',
+                      statusLabel: _statusLabel(),
+                      statusToken: _statusToken(),
+                      statusIsError: _sessionError,
+                      bannerTitle: _statusBannerTitle(),
+                      bannerMessage: _statusBannerMessage(),
+                      bannerIcon: _statusBannerIcon(),
+                      bannerAccent: _statusBannerAccent(context),
+                      bannerBusy: _statusBannerBusy(),
+                      messageStatuses: _messageStatuses,
+                      onRetry: _retryMessage,
+                      onLoadMore: _loadMoreHistory,
+                      hasMoreHistory: _hasMoreHistory,
+                      isLoadingMore: _isLoadingMoreHistory,
+                      scrollController: _chatScrollController,
+                      inputController: _chatInputController,
+                      inputFocusNode: _chatInputFocusNode,
+                      onInputChanged: (text) =>
+                          unawaited(_persistChatDraft(text)),
+                      quickActions: _quickActions(),
+                      quickActionsTitle: _quickActionsTitle(),
+                      onSendMessage: _sendChatMessage,
+                      isModelReady: _selectedModelId.trim().isNotEmpty,
+                      isModelLoading:
+                          _isLoadingModels ||
+                          _isSwitchingModel ||
+                          _workspacePhase != WorkspacePhase.ready ||
+                          !_hasLoadedModelConfig,
+                      models: _availableModels,
+                      selectedModelId: _selectedModelId,
+                      selectedEngineMode: _selectedEngineMode,
+                      onModelChanged: (v) => unawaited(_handleModelChanged(v)),
+                      onEngineChanged: (v) =>
+                          unawaited(_handleEngineChanged(v)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -911,5 +936,84 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
     if (uri != null) {
       launchUrl(uri, mode: LaunchMode.externalApplication);
     }
+  }
+}
+
+class _DesktopChatPaneResizeHandle extends StatefulWidget {
+  final ValueChanged<double> onDragDelta;
+  final VoidCallback onDoubleTap;
+
+  const _DesktopChatPaneResizeHandle({
+    required this.onDragDelta,
+    required this.onDoubleTap,
+  });
+
+  @override
+  State<_DesktopChatPaneResizeHandle> createState() =>
+      _DesktopChatPaneResizeHandleState();
+}
+
+class _DesktopChatPaneResizeHandleState
+    extends State<_DesktopChatPaneResizeHandle> {
+  bool _hovering = false;
+  bool _dragging = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final accent = theme.colorScheme.primary.withValues(
+      alpha: _dragging ? 0.92 : _hovering ? 0.58 : 0.22,
+    );
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.resizeLeftRight,
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onDoubleTap: widget.onDoubleTap,
+        onHorizontalDragStart: (_) {
+          setState(() {
+            _dragging = true;
+          });
+        },
+        onHorizontalDragUpdate: (details) {
+          widget.onDragDelta(details.delta.dx);
+        },
+        onHorizontalDragEnd: (_) {
+          setState(() {
+            _dragging = false;
+          });
+        },
+        onHorizontalDragCancel: () {
+          setState(() {
+            _dragging = false;
+          });
+        },
+        child: SizedBox(
+          width: 18,
+          child: Center(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 120),
+              width: _dragging ? 5 : 3,
+              height: 72,
+              decoration: BoxDecoration(
+                color: accent,
+                borderRadius: BorderRadius.circular(999),
+                boxShadow: _hovering || _dragging
+                    ? [
+                        BoxShadow(
+                          color: accent.withValues(alpha: 0.26),
+                          blurRadius: 12,
+                          spreadRadius: 0,
+                        ),
+                      ]
+                    : null,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

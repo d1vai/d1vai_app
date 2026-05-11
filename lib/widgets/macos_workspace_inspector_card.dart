@@ -42,12 +42,12 @@ class _MacosWorkspaceInspectorCardState
   void didChangeDependencies() {
     super.didChangeDependencies();
     final openService = context.watch<MacosOpenService>();
-    final pending = openService.pendingDirectoryPath;
+    final pending = openService.pendingImportPath;
     if (pending == null || pending.isEmpty || pending == _lastConsumedPendingPath) {
       return;
     }
     _lastConsumedPendingPath = pending;
-    final consumed = openService.consumePendingDirectoryPath();
+    final consumed = openService.consumePendingImportPath();
     if (consumed == null || consumed.isEmpty) return;
     _inspectDirectory(consumed);
   }

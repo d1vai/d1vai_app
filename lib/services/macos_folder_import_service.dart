@@ -26,54 +26,73 @@ class MacosFolderImportService extends ChangeNotifier {
   bool _busy = false;
   MacosFolderImportStage _stage = MacosFolderImportStage.idle;
   String _message = '';
-  String? _currentDirectoryPath;
+  String? _currentImportPath;
   String? _error;
 
   bool get busy => _busy;
   MacosFolderImportStage get stage => _stage;
   String get message => _message;
-  String? get currentDirectoryPath => _currentDirectoryPath;
+  String? get currentImportPath => _currentImportPath;
   String? get error => _error;
 
-  Future<void> importDirectory(
+  Future<void> importPath(
     BuildContext context,
-    String directoryPath,
+    String importPath,
   ) async {
     if (kIsWeb || defaultTargetPlatform != TargetPlatform.macOS || _busy) {
+      debugPrint(
+        '[d1vai-drop] importPath skipped path=$importPath kIsWeb=$kIsWeb platform=$defaultTargetPlatform busy=$_busy',
+      );
       return;
     }
 
-    final trimmedPath = directoryPath.trim();
+    final trimmedPath = importPath.trim();
     if (trimmedPath.isEmpty) return;
-
-    _setState(
-      busy: true,
-      stage: MacosFolderImportStage.preparing,
-      message: 'Preparing local folder…',
-      currentDirectoryPath: trimmedPath,
-      error: null,
-    );
-
-    _showProgressDialog(context);
+    debugPrint('[d1vai-drop] importPath start path=$trimmedPath');
     final projectProvider = Provider.of<ProjectProvider>(context, listen: false);
     final rootNavigator = Navigator.of(context, rootNavigator: true);
     final router = GoRouter.of(context);
 
     try {
-      final directory = Directory(trimmedPath);
-      final exists = await directory.exists();
-      if (!exists) {
-        throw Exception('Folder not found: $trimmedPath');
+      final entityType = FileSystemEntity.typeSync(trimmedPath);
+      if (entityType == FileSystemEntityType.notFound) {
+        throw Exception('Import path not found: $trimmedPath');
       }
+      final isDirectory = entityType == FileSystemEntityType.directory;
+      final isFile = entityType == FileSystemEntityType.file;
+      if (!isDirectory && !isFile) {
+        throw Exception('Only folders and files can be imported.');
+      }
+
+      _setState(
+        busy: true,
+        stage: MacosFolderImportStage.preparing,
+        message: isDirectory
+            ? 'Preparing local folder…'
+            : 'Preparing local file…',
+        currentImportPath: trimmedPath,
+        error: null,
+      );
+
+      _showProgressDialog(context);
+      debugPrint('[d1vai-drop] importPath progress dialog shown path=$trimmedPath');
 
       final projectName = _deriveProjectName(trimmedPath);
 
       _setState(
         stage: MacosFolderImportStage.compressing,
-        message: 'Compressing local folder…',
+        message: isDirectory
+            ? 'Compressing local folder…'
+            : 'Packaging local file…',
       );
 
-      final archiveBytes = await _zipDirectory(trimmedPath);
+      final archiveBytes = await _zipImportPath(
+        trimmedPath,
+        isDirectory: isDirectory,
+      );
+      debugPrint(
+        '[d1vai-drop] importPath archive built path=$trimmedPath bytes=${archiveBytes.length}',
+      );
       if (archiveBytes.isEmpty) {
         throw Exception('Generated archive is empty.');
       }
@@ -92,6 +111,7 @@ class MacosFolderImportService extends ChangeNotifier {
       );
 
       final projectId = _extractProjectId(result);
+      debugPrint('[d1vai-drop] importPath upload complete projectId=$projectId');
       if (projectId == null || projectId.isEmpty) {
         throw Exception('Import succeeded but project ID is missing.');
       }
@@ -107,44 +127,50 @@ class MacosFolderImportService extends ChangeNotifier {
         rootNavigator.pop();
       }
       router.go('/projects/$projectId?tab=chat&chatTab=code');
+      debugPrint('[d1vai-drop] importPath navigation complete projectId=$projectId');
 
       _setState(
         busy: false,
         stage: MacosFolderImportStage.idle,
         message: '',
-        currentDirectoryPath: null,
+        currentImportPath: null,
         error: null,
       );
     } catch (e) {
+      debugPrint('[d1vai-drop] importPath failed path=$trimmedPath error=$e');
       _setState(
         busy: false,
         stage: MacosFolderImportStage.failed,
         message: 'Import failed',
+        currentImportPath: trimmedPath,
         error: '$e',
       );
     }
   }
 
-  Future<Uint8List> _zipDirectory(String directoryPath) async {
-    final sourceDirectory = Directory(directoryPath);
-    final parentPath = sourceDirectory.parent.path;
-    final folderName = _deriveProjectName(directoryPath);
+  Future<void> importDirectory(BuildContext context, String directoryPath) {
+    return importPath(context, directoryPath);
+  }
+
+  Future<Uint8List> _zipImportPath(
+    String importPath, {
+    required bool isDirectory,
+  }) async {
     final tempDirectory = await Directory.systemTemp.createTemp('d1vai-import-');
-    final archivePath = '${tempDirectory.path}/$folderName.zip';
+    final archiveBaseName = _deriveProjectName(importPath);
+    final archivePath = '${tempDirectory.path}/$archiveBaseName.zip';
 
     try {
-      final result = await Process.run('ditto', [
-        '-c',
-        '-k',
-        '--sequesterRsrc',
-        '--keepParent',
-        folderName,
-        archivePath,
-      ], workingDirectory: parentPath);
+      final result = isDirectory
+          ? await _zipDirectory(
+              directoryPath: importPath,
+              archivePath: archivePath,
+            )
+          : await _zipFile(filePath: importPath, archivePath: archivePath);
 
       if (result.exitCode != 0) {
         throw Exception(
-          'Failed to compress folder: ${result.stderr.toString().trim()}',
+          'Failed to package import: ${result.stderr.toString().trim()}',
         );
       }
 
@@ -156,12 +182,46 @@ class MacosFolderImportService extends ChangeNotifier {
     }
   }
 
-  String _deriveProjectName(String directoryPath) {
-    final normalized = directoryPath.replaceAll(RegExp(r'[/\\]+$'), '');
-    final segments = normalized.split(RegExp(r'[/\\]'));
-    final raw = segments.isEmpty ? 'local-project' : segments.last.trim();
+  Future<ProcessResult> _zipDirectory({
+    required String directoryPath,
+    required String archivePath,
+  }) {
+    return Process.run('ditto', [
+      '-c',
+      '-k',
+      '--sequesterRsrc',
+      '--keepParent',
+      directoryPath,
+      archivePath,
+    ]);
+  }
+
+  Future<ProcessResult> _zipFile({
+    required String filePath,
+    required String archivePath,
+  }) {
+    return Process.run('ditto', [
+      '-c',
+      '-k',
+      '--sequesterRsrc',
+      filePath,
+      archivePath,
+    ]);
+  }
+
+  String _deriveProjectName(String importPath) {
+    final raw = _lastSegment(importPath);
     if (raw.isEmpty) return 'local-project';
-    return raw;
+    final dotIndex = raw.lastIndexOf('.');
+    if (dotIndex <= 0) return raw;
+    final trimmed = raw.substring(0, dotIndex).trim();
+    return trimmed.isEmpty ? raw : trimmed;
+  }
+
+  String _lastSegment(String path) {
+    final normalized = path.replaceAll(RegExp(r'[/\\]+$'), '');
+    final segments = normalized.split(RegExp(r'[/\\]'));
+    return segments.isEmpty ? '' : segments.last.trim();
   }
 
   String? _extractProjectId(Map<String, dynamic> result) {
@@ -193,13 +253,13 @@ class MacosFolderImportService extends ChangeNotifier {
     bool? busy,
     MacosFolderImportStage? stage,
     String? message,
-    String? currentDirectoryPath,
+    String? currentImportPath,
     String? error,
   }) {
     _busy = busy ?? _busy;
     _stage = stage ?? _stage;
     _message = message ?? _message;
-    _currentDirectoryPath = currentDirectoryPath ?? _currentDirectoryPath;
+    _currentImportPath = currentImportPath ?? _currentImportPath;
     _error = error;
     notifyListeners();
   }
@@ -212,7 +272,7 @@ class _MacosFolderImportProgressDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<MacosFolderImportService>(
       builder: (context, service, _) {
-        final path = service.currentDirectoryPath ?? '';
+        final path = service.currentImportPath ?? '';
         final isFailed = service.stage == MacosFolderImportStage.failed;
 
         return AlertDialog(
