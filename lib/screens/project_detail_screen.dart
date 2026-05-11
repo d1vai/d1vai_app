@@ -130,7 +130,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     }
   }
 
-  Future<void> _loadProject() async {
+  Future<void> _loadProject({bool forceNetwork = false}) async {
     final shouldShowBlocking = _project == null;
     setState(() {
       _isLoading = shouldShowBlocking;
@@ -159,8 +159,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         });
       }
 
-      // Always refresh if branch is missing (overview relies on it, matches web).
-      if (project == null || !hasBranch) {
+      // Force a fresh detail fetch when requested (for example after enabling
+      // payments), otherwise keep the existing fast-path and only fetch when
+      // key runtime fields are missing.
+      if (forceNetwork || project == null || !hasBranch) {
         final service = D1vaiService();
         final fresh = await service.getUserProjectById(widget.projectId);
         if (!mounted) return;
@@ -364,7 +366,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         ProjectPaymentTab(
           projectId: project.id,
           projectPayId: project.projectPayId,
-          onRefreshProject: _loadProject,
+          onRefreshProject: () => _loadProject(forceNetwork: true),
           onAskAi: _handleAskAi,
         ),
         ProjectDeployTab(
