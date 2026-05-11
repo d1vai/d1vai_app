@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import '../services/wallet_service.dart';
+import 'adaptive_modal.dart';
+import 'topup_dialog.dart';
 
 class BalanceCard extends StatefulWidget {
   const BalanceCard({super.key});
@@ -13,6 +15,8 @@ class _BalanceCardState extends State<BalanceCard>
     with AutomaticKeepAliveClientMixin<BalanceCard> {
   final WalletService _walletService = WalletService();
   bool _isLoading = false;
+  bool _isProcessingPayment = false;
+  bool _showSuccessBanner = false;
   double _totalBalance = 0.0;
   double _expiringBalance = 0.0;
   double _nonExpiringBalance = 0.0;
@@ -22,6 +26,21 @@ class _BalanceCardState extends State<BalanceCard>
   void initState() {
     super.initState();
     _loadBalance();
+  }
+
+  Future<void> _handleTopUpSuccess() async {
+    setState(() {
+      _isProcessingPayment = true;
+      _showSuccessBanner = false;
+    });
+
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+    await _loadBalance();
+    if (!mounted) return;
+    setState(() {
+      _isProcessingPayment = false;
+    });
   }
 
   Future<void> _loadBalance() async {
@@ -195,13 +214,104 @@ class _BalanceCardState extends State<BalanceCard>
   @override
   Widget build(BuildContext context) {
     super.build(context); // 必须调用 super.build 来保持状态
+    final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Success banner with animation
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, -1),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                );
+              },
+              child: _showSuccessBanner && !isIOS
+                  ? Container(
+                      key: const ValueKey('success_banner'),
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade50,
+                        border: Border.all(color: Colors.green.shade200),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.check_circle,
+                            color: Colors.green.shade700,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Funds received successfully!',
+                              style: TextStyle(
+                                color: Colors.green.shade700,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : const SizedBox.shrink(key: ValueKey('no_banner')),
+            ),
+            if (_showSuccessBanner && !isIOS) const SizedBox(height: 12),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, -1),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                );
+              },
+              child: _isProcessingPayment && !isIOS
+                  ? Container(
+                      key: const ValueKey('processing_banner'),
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        border: Border.all(color: Colors.blue.shade200),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.blue.shade700,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Top-up initiated… balance updates after payment',
+                            style: TextStyle(
+                              color: Colors.blue.shade700,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : const SizedBox.shrink(key: ValueKey('no_processing')),
+            ),
+            if (_isProcessingPayment && !isIOS) const SizedBox(height: 12),
             Row(
               children: [
                 Container(
@@ -245,23 +355,44 @@ class _BalanceCardState extends State<BalanceCard>
                       : Icon(Icons.refresh, size: 20),
                 ),
                 const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    'Billing managed outside iOS',
-                    style: TextStyle(
-                      color: Colors.grey.shade700,
-                      fontWeight: FontWeight.w600,
+                if (isIOS)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      'Billing managed outside iOS',
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  )
+                else
+                  ElevatedButton.icon(
+                    onPressed: _isLoading || _isProcessingPayment
+                        ? null
+                        : () => showAdaptiveModal(
+                            context: context,
+                            builder: (context) =>
+                                TopUpDialog(onSuccess: _handleTopUpSuccess),
+                          ),
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Top up'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurple,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
             const SizedBox(height: 20),

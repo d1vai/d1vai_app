@@ -24,6 +24,7 @@ import 'package:d1vai_app/widgets/snackbar_helper.dart';
 import 'package:d1vai_app/screens/projects/widgets/project_card_tile.dart';
 import 'package:d1vai_app/widgets/skeletons/dashboard_skeleton.dart';
 import 'package:d1vai_app/widgets/skeletons/prompt_activity_skeleton.dart';
+import 'package:d1vai_app/utils/desktop_layout.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -515,6 +516,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       floatingActionButton: user == null
           ? null
           : FloatingActionButton(
+              tooltip: _t('create_project', 'Create Project'),
               onPressed: () {
                 CreateProjectDialog.show(context);
               },
@@ -534,6 +536,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   ) {
     final loc = AppLocalizations.of(context);
     final stats = projectProvider.getProjectStats();
+    final desktop = isDesktopLayout(context);
 
     // 如果有错误，显示错误提示
     if (projectProvider.error != null && projectProvider.projects.isEmpty) {
@@ -543,126 +546,273 @@ class _DashboardScreenState extends State<DashboardScreen>
     final content = SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            _t('dashboard_welcome', 'Welcome, {user}!').replaceAll(
-              '{user}',
-              user?.email ?? _t('dashboard_user_fallback', 'User'),
-            ),
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 20),
-
-          // 项目统计卡片
-          _buildStatsCards(stats, context),
-          const SizedBox(height: 24),
-
-          // Prompt activity heatmap (GitHub-style)
-          if (user == null)
-            const SizedBox.shrink()
-          else
-            FutureBuilder<PromptDailyActivity>(
-              future: _promptActivityFuture,
-              builder: (context, snapshot) {
-                if (_promptActivityFuture == null) {
-                  return const SizedBox.shrink();
-                }
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const PromptActivitySkeleton();
-                }
-                if (snapshot.hasError || !snapshot.hasData) {
-                  return CustomCard(
-                    glass: true,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Text(
-                        loc?.translate('failed_to_load') ?? 'Failed to load',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
+      child: desktop
+          ? DesktopContentFrame(
+              maxWidth: 1440,
+              padding: EdgeInsets.zero,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 4,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _t('dashboard_welcome', 'Welcome, {user}!').replaceAll(
+                            '{user}',
+                            user?.email ??
+                                _t('dashboard_user_fallback', 'User'),
+                          ),
+                          style: Theme.of(context).textTheme.headlineSmall,
                         ),
-                      ),
+                        const SizedBox(height: 20),
+                        _buildStatsCards(stats, context),
+                        const SizedBox(height: 20),
+                        _buildDesktopWorkspacePanel(context),
+                      ],
                     ),
-                  );
-                }
-                return PromptActivityHeatmap(
-                  activity: snapshot.data!,
-                  headerTrailing: _buildPromptActivityHeaderTrailing(
-                    projectProvider,
                   ),
-                  onDayTap: (isoDate, count) {
-                    final message =
-                        _t(
-                              'dashboard_prompt_activity_day_message',
-                              '{count} prompts on {date}',
-                            )
-                            .replaceAll('{count}', count.toString())
-                            .replaceAll('{date}', isoDate);
-                    SnackBarHelper.showInfo(
-                      context,
-                      title: _t(
-                        'dashboard_prompt_activity_title',
-                        'Prompt activity',
-                      ),
-                      message: message,
-                      position: SnackBarPosition.top,
-                      duration: const Duration(seconds: 2),
-                    );
-                  },
-                );
-              },
-            ),
-          const SizedBox(height: 24),
-
-          // 最近项目
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                _isSearching && _searchController.text.isNotEmpty
-                    ? _t(
-                        'dashboard_search_results',
-                        'Search Results ({count})',
-                      ).replaceAll('{count}', _searchResults.length.toString())
-                    : (_t('recent_projects', 'Recent Projects')),
-                style: Theme.of(context).textTheme.titleLarge,
+                  const SizedBox(width: 24),
+                  Expanded(
+                    flex: 8,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (user != null)
+                          FutureBuilder<PromptDailyActivity>(
+                            future: _promptActivityFuture,
+                            builder: (context, snapshot) {
+                              if (_promptActivityFuture == null) {
+                                return const SizedBox.shrink();
+                              }
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const PromptActivitySkeleton();
+                              }
+                              if (snapshot.hasError || !snapshot.hasData) {
+                                return CustomCard(
+                                  glass: true,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Text(
+                                      loc?.translate('failed_to_load') ??
+                                          'Failed to load',
+                                      style: TextStyle(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .error,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }
+                              return PromptActivityHeatmap(
+                                activity: snapshot.data!,
+                                headerTrailing: _buildPromptActivityHeaderTrailing(
+                                  projectProvider,
+                                ),
+                                onDayTap: (isoDate, count) {
+                                  final message =
+                                      _t(
+                                            'dashboard_prompt_activity_day_message',
+                                            '{count} prompts on {date}',
+                                          )
+                                          .replaceAll(
+                                            '{count}',
+                                            count.toString(),
+                                          )
+                                          .replaceAll('{date}', isoDate);
+                                  SnackBarHelper.showInfo(
+                                    context,
+                                    title: _t(
+                                      'dashboard_prompt_activity_title',
+                                      'Prompt activity',
+                                    ),
+                                    message: message,
+                                    position: SnackBarPosition.top,
+                                    duration: const Duration(seconds: 2),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        const SizedBox(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              _isSearching && _searchController.text.isNotEmpty
+                                  ? _t(
+                                      'dashboard_search_results',
+                                      'Search Results ({count})',
+                                    ).replaceAll(
+                                      '{count}',
+                                      _searchResults.length.toString(),
+                                    )
+                                  : (_t('recent_projects', 'Recent Projects')),
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                            TextButton(
+                              onPressed: user == null
+                                  ? () => context.go('/login')
+                                  : () {
+                                      final q = _isSearching
+                                          ? _searchController.text.trim()
+                                          : '';
+                                      final location = q.isEmpty
+                                          ? '/projects'
+                                          : '/projects?q=${Uri.encodeQueryComponent(q)}';
+                                      context.push(location);
+                                    },
+                              child: Text(_t('dashboard_view_all', 'View All')),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        if (user == null)
+                          LoginRequiredView(
+                            variant: LoginRequiredVariant.full,
+                            message:
+                                loc?.translate(
+                                  'login_required_dashboard_message',
+                                ) ??
+                                'Please login first.',
+                            onAction: () => context.go('/login'),
+                          )
+                        else
+                          _buildProjectList(
+                            context,
+                            projectProvider,
+                            isSearchResults:
+                                _isSearching &&
+                                _searchController.text.isNotEmpty,
+                          ),
+                        const SizedBox(height: 80),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              TextButton(
-                onPressed: user == null
-                    ? () => context.go('/login')
-                    : () {
-                        final q = _isSearching
-                            ? _searchController.text.trim()
-                            : '';
-                        final location = q.isEmpty
-                            ? '/projects'
-                            : '/projects?q=${Uri.encodeQueryComponent(q)}';
-                        context.push(location);
-                      },
-                child: Text(_t('dashboard_view_all', 'View All')),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          if (user == null)
-            LoginRequiredView(
-              variant: LoginRequiredVariant.full,
-              message:
-                  loc?.translate('login_required_dashboard_message') ??
-                  'Please login first.',
-              onAction: () => context.go('/login'),
             )
-          else
-            _buildProjectList(
-              context,
-              projectProvider,
-              isSearchResults:
-                  _isSearching && _searchController.text.isNotEmpty,
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _t('dashboard_welcome', 'Welcome, {user}!').replaceAll(
+                    '{user}',
+                    user?.email ?? _t('dashboard_user_fallback', 'User'),
+                  ),
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                const SizedBox(height: 20),
+                _buildStatsCards(stats, context),
+                const SizedBox(height: 24),
+                if (user == null)
+                  const SizedBox.shrink()
+                else
+                  FutureBuilder<PromptDailyActivity>(
+                    future: _promptActivityFuture,
+                    builder: (context, snapshot) {
+                      if (_promptActivityFuture == null) {
+                        return const SizedBox.shrink();
+                      }
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const PromptActivitySkeleton();
+                      }
+                      if (snapshot.hasError || !snapshot.hasData) {
+                        return CustomCard(
+                          glass: true,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Text(
+                              loc?.translate('failed_to_load') ??
+                                  'Failed to load',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                      return PromptActivityHeatmap(
+                        activity: snapshot.data!,
+                        headerTrailing: _buildPromptActivityHeaderTrailing(
+                          projectProvider,
+                        ),
+                        onDayTap: (isoDate, count) {
+                          final message =
+                              _t(
+                                    'dashboard_prompt_activity_day_message',
+                                    '{count} prompts on {date}',
+                                  )
+                                  .replaceAll('{count}', count.toString())
+                                  .replaceAll('{date}', isoDate);
+                          SnackBarHelper.showInfo(
+                            context,
+                            title: _t(
+                              'dashboard_prompt_activity_title',
+                              'Prompt activity',
+                            ),
+                            message: message,
+                            position: SnackBarPosition.top,
+                            duration: const Duration(seconds: 2),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _isSearching && _searchController.text.isNotEmpty
+                          ? _t(
+                              'dashboard_search_results',
+                              'Search Results ({count})',
+                            ).replaceAll(
+                              '{count}',
+                              _searchResults.length.toString(),
+                            )
+                          : (_t('recent_projects', 'Recent Projects')),
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    TextButton(
+                      onPressed: user == null
+                          ? () => context.go('/login')
+                          : () {
+                              final q = _isSearching
+                                  ? _searchController.text.trim()
+                                  : '';
+                              final location = q.isEmpty
+                                  ? '/projects'
+                                  : '/projects?q=${Uri.encodeQueryComponent(q)}';
+                              context.push(location);
+                            },
+                      child: Text(_t('dashboard_view_all', 'View All')),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (user == null)
+                  LoginRequiredView(
+                    variant: LoginRequiredVariant.full,
+                    message:
+                        loc?.translate('login_required_dashboard_message') ??
+                        'Please login first.',
+                    onAction: () => context.go('/login'),
+                  )
+                else
+                  _buildProjectList(
+                    context,
+                    projectProvider,
+                    isSearchResults:
+                        _isSearching && _searchController.text.isNotEmpty,
+                  ),
+                const SizedBox(height: 80),
+              ],
             ),
-          const SizedBox(height: 80), // Bottom padding for FAB
-        ],
-      ),
     );
 
     if (user == null) return content;
@@ -678,6 +828,48 @@ class _DashboardScreenState extends State<DashboardScreen>
         await projectProvider.refresh();
       },
       child: content,
+    );
+  }
+
+  Widget _buildDesktopWorkspacePanel(BuildContext context) {
+    final theme = Theme.of(context);
+    return CustomCard(
+      glass: true,
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              _t('dashboard_workspace_title', 'Workspace'),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 10),
+            _buildWorkspaceStatusWidget(),
+            const SizedBox(height: 12),
+            Text(
+              _workspaceTooltip(),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 14),
+            FilledButton.icon(
+              onPressed: _workspaceActiveInFlight
+                  ? null
+                  : () => unawaited(_requestWorkspaceActive(fromTap: true)),
+              icon: const Icon(Icons.sync),
+              label: Text(
+                _workspacePhase == WorkspacePhase.ready
+                    ? 'Refresh workspace'
+                    : 'Wake workspace',
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

@@ -8,6 +8,21 @@ import 'package:url_launcher/url_launcher.dart';
 /// - Recognize common d1v.ai / d1vai.com URLs and jump via go_router
 /// - Otherwise fall back to external browser
 class LinkNavigator {
+  static bool _isHideHeaderEnabled(Uri uri) =>
+      (uri.queryParameters['hideheader'] ?? '').toLowerCase() == 'true' ||
+      (uri.queryParameters['hideHeader'] ?? '').toLowerCase() == 'true';
+
+  static String _appendHideHeader(String route, Uri uri) {
+    if (!_isHideHeaderEnabled(uri)) return route;
+    final next = Uri.parse(route);
+    return next.replace(
+      queryParameters: {
+        ...next.queryParameters,
+        'hideheader': 'true',
+      },
+    ).toString();
+  }
+
   static String? routeFor(Uri uri) {
     final host = uri.host.toLowerCase();
     final seg = uri.pathSegments;
@@ -17,9 +32,9 @@ class LinkNavigator {
         host == 'www.d1v.ai' || host == 'd1v.ai' || host == 'docs.d1v.ai';
     if (seg.isNotEmpty && isDocsHost && seg.first == 'docs') {
       if (seg.length >= 2) {
-        return '/docs/${seg[1]}';
+        return _appendHideHeader('/docs/${seg[1]}', uri);
       }
-      return '/docs';
+      return _appendHideHeader('/docs', uri);
     }
 
     if (seg.isNotEmpty &&
@@ -46,6 +61,7 @@ class LinkNavigator {
             'prompt': uri.queryParameters['prompt']!.trim(),
           if ((uri.queryParameters['spec'] ?? '').trim().isNotEmpty)
             'spec': uri.queryParameters['spec']!.trim(),
+          if (_isHideHeaderEnabled(uri)) 'hideheader': 'true',
         },
       );
       return next.toString();

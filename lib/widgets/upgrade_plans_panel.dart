@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/package_info.dart';
+import '../services/apple_iap_service.dart';
 import '../services/stripe_payment_service.dart';
 import '../services/wallet_service.dart';
 
@@ -17,20 +21,28 @@ class UpgradePlansPanel extends StatefulWidget {
 
 class _UpgradePlansPanelState extends State<UpgradePlansPanel> {
   final WalletService _walletService = WalletService();
+  StreamSubscription<List<PurchaseDetails>>? _purchaseSubscription;
 
   bool _isYearly = false;
   bool _isLoading = true;
   String? _error;
   String? _activePackageId;
   List<PackageInfo> _packages = const [];
+  Map<String, ProductDetails> _iosProductsByPackageId = const {};
+  Map<String, PackageInfo> _iosPackagesByProductId = const {};
 
   @override
   void initState() {
     super.initState();
+    AppleIapService.ensureInitialized();
+    _purchaseSubscription = AppleIapService.purchaseUpdates.listen(
+      _handlePurchaseUpdates,
+    );
     _loadPackages();
   }
 
   Future<void> _loadPackages() async {
+    final platform = Theme.of(context).platform;
     setState(() {
       _isLoading = true;
       _error = null;
@@ -41,9 +53,32 @@ class _UpgradePlansPanelState extends State<UpgradePlansPanel> {
       final subscriptions =
           packages.where((item) => item.isSubscription).toList()
             ..sort((a, b) => a.price.compareTo(b.price));
+      Map<String, ProductDetails> iosProductsByPackageId = const {};
+      Map<String, PackageInfo> iosPackagesByProductId = const {};
+      if (platform == TargetPlatform.iOS) {
+        final response = await AppleIapService.queryProducts(
+          subscriptions,
+          platform,
+        );
+        final detailsById = {
+          for (final detail in response.productDetails) detail.id: detail,
+        };
+        iosProductsByPackageId = {
+          for (final pkg in subscriptions)
+            if ((pkg.iosProductId ?? '').isNotEmpty &&
+                detailsById.containsKey(pkg.iosProductId))
+              pkg.id.toString(): detailsById[pkg.iosProductId]!,
+        };
+        iosPackagesByProductId = {
+          for (final pkg in subscriptions)
+            if ((pkg.iosProductId ?? '').isNotEmpty) pkg.iosProductId!: pkg,
+        };
+      }
       if (!mounted) return;
       setState(() {
         _packages = subscriptions;
+        _iosProductsByPackageId = iosProductsByPackageId;
+        _iosPackagesByProductId = iosPackagesByProductId;
         _isLoading = false;
       });
     } catch (e) {
@@ -52,6 +87,49 @@ class _UpgradePlansPanelState extends State<UpgradePlansPanel> {
         _error = e.toString();
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _handlePurchaseUpdates(List<PurchaseDetails> purchases) async {
+    for (final purchase in purchases) {
+      if (purchase.status != PurchaseStatus.purchased &&
+          purchase.status != PurchaseStatus.restored) {
+        continue;
+      }
+
+      final payload = AppleIapService.toPayload(purchase);
+      final package = _iosPackagesByProductId[purchase.productID];
+      if (payload == null || package == null) {
+        continue;
+      }
+
+      try {
+        await _walletService.confirmApplePurchase(
+          packageId: package.id.toString(),
+          productId: payload.productId,
+          transactionId: payload.transactionId,
+          verificationData: payload.verificationData,
+          serverVerificationData: payload.serverVerificationData,
+          status: payload.status,
+        );
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('App Store purchase confirmed successfully.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'App Store purchase finished, but server confirmation is not ready yet: $e',
+            ),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
     }
   }
 
@@ -72,6 +150,12 @@ class _UpgradePlansPanelState extends State<UpgradePlansPanel> {
 
   Future<void> _handleSubscribe(PackageInfo package) async {
     final loc = AppLocalizations.of(context);
+    final platform = Theme.of(context).platform;
+    if (platform == TargetPlatform.iOS) {
+      await _handleApplePurchase(package, loc);
+      return;
+    }
+
     if (!StripePaymentService.isConfigured) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -135,11 +219,75 @@ class _UpgradePlansPanelState extends State<UpgradePlansPanel> {
     }
   }
 
+  Future<void> _handleApplePurchase(
+    PackageInfo package,
+    AppLocalizations? loc,
+  ) async {
+    final product = _iosProductsByPackageId[package.id.toString()];
+    if (product == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'This iOS build is missing the App Store product configuration for this package.',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _activePackageId = package.id.toString();
+    });
+
+    try {
+      final result = await AppleIapService.buy(product);
+      if (!mounted) return;
+      if (!result.success) {
+        throw Exception(result.message ?? 'Unable to start Apple purchase.');
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Purchase started in the App Store. Confirmation will finish after Apple completes the transaction.',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            (loc?.translate('upgrade_subscription_failed') ??
+                    'Subscription failed: {error}')
+                .replaceAll('{error}', '$e'),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _activePackageId = null;
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _purchaseSubscription?.cancel();
+    _purchaseSubscription = null;
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final loc = AppLocalizations.of(context);
+    final platform = Theme.of(context).platform;
     final visiblePackages = _visiblePackages;
     final featured = _featuredPackage;
 
@@ -212,19 +360,25 @@ class _UpgradePlansPanelState extends State<UpgradePlansPanel> {
                     children: [
                       _SignalPill(
                         icon: Icons.apple,
-                        label:
-                            loc?.translate('topup_method_apple_pay') ??
-                            'Apple Pay',
+                        label: platform == TargetPlatform.iOS
+                            ? 'App Store'
+                            : (loc?.translate('topup_method_apple_pay') ??
+                                  'Apple Pay'),
                       ),
                       const SizedBox(width: 8),
-                      _SignalPill(
-                        icon: Icons.android,
-                        label:
-                            loc?.translate('topup_method_google_pay') ??
-                            'Google Pay',
-                      ),
-                      const SizedBox(width: 8),
-                      _SignalPill(icon: Icons.lock_outline, label: 'Stripe'),
+                      if (platform != TargetPlatform.iOS) ...[
+                        _SignalPill(
+                          icon: Icons.android,
+                          label:
+                              loc?.translate('topup_method_google_pay') ??
+                              'Google Pay',
+                        ),
+                        const SizedBox(width: 8),
+                        _SignalPill(
+                          icon: Icons.lock_outline,
+                          label: 'Stripe',
+                        ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 18),

@@ -1,5 +1,12 @@
 # d1vai_app 对齐 d1vai 最近 5 次提交（排除 admin）执行计划
 
+## 最高优先设计原则（全阶段强约束）
+- `macOS` 新增逻辑必须与 `iOS / Android` 逻辑隔离；凡是本地工作区、`.d1v`、Finder / Open With / CLI / 本地目录访问能力，都只能在 `macOS` 分支启用。
+- 任何桌面端能力落地前，都要先确认“不改变 iOS / Android 现有用户路径、不改变现有移动端支付/聊天/订单逻辑、不引入移动端新权限”。
+- 与本地文件系统、CLI、Finder 相关的代码，优先放在独立模型 / service / widget 中，避免渗透到通用业务层。
+- 每完成一个阶段性 TODO，必须先做针对性 `flutter analyze` 或等价检查，通过后才能在计划中打勾。
+- 如需真实接入 `d1v-cli`，先做骨架与协议，再接真实执行；在真实执行前，Flutter 端不得假设 CLI 一定存在。
+
 ## 设计思考与逻辑（最小改动 + 高体验 + 国际化优先）
 
 ### 1) 本轮基线：d1vai 最近 5 次提交（仅看非 admin）
@@ -218,3 +225,225 @@
   `https://support.google.com/googleplay/android-developer/answer/16558241`
   `https://developer.android.com/studio/publish/`
   `https://developer.android.com/studio/publish/upload-bundle`
+
+---
+
+## 第五阶段：macOS 本地工作区（`.d1v`）与云端绑定基础
+
+### 设计思考（严格限制在 macOS，不影响 iOS / Android）
+- 目标不是立即做完整 IDE，而是先把“本地文件夹 -> d1v 工作区”这条链路打通。
+- 第一阶段只做本地工作区元数据层：识别目录、检查 `.d1v`、读取绑定状态、返回统一模型；不改动现有聊天、订单、支付、iOS IAP、Android 流程。
+- 所有新逻辑默认只在 `macOS` 分支启用；其它平台只保留现有行为。
+- 优先做可验证的小步：每完成一个小点立即 `flutter analyze`，通过后再勾选。
+
+### TODO（逐项检查后勾选）
+- [x] M1：定义本地工作区数据模型（`.d1v/project.toml` 对应模型、工作区状态模型），并补 `WorkspaceLocalService` 的只读检测能力。
+- [x] M2：实现 macOS 专用 `.d1v` 检查逻辑：给定目录后返回“未绑定 / 已绑定 / 配置损坏 / 非 macOS”状态，不接入其它平台。
+- [x] M3：补一个最小 CLI 桥接层设计占位（先不依赖真实 `d1v-cli` 执行），统一后续 `workspace status/init/scan` 调用入口。
+- [x] M4：补一个 macOS 专用入口状态卡/调试入口，用于在 App 内验证本地目录的 `.d1v` 检查结果。
+- [x] M5：把当前已完成的 macOS 文档外跳、网络权限、图标、工作区检测一并联检，确认不影响 iOS / Android 代码路径。
+
+### 第五阶段代码检查记录
+- M1：`flutter analyze lib/models/local_workspace.dart lib/services/workspace_local_service.dart` ✅
+- M2：`flutter analyze lib/models/local_workspace.dart lib/models/workspace_cli_result.dart lib/services/workspace_local_service.dart lib/services/workspace_cli_service.dart` ✅
+- M3：`flutter analyze lib/models/local_workspace.dart lib/models/workspace_cli_result.dart lib/services/workspace_local_service.dart lib/services/workspace_cli_service.dart` ✅
+- M4：`flutter analyze lib/models/local_workspace.dart lib/models/workspace_cli_result.dart lib/services/workspace_local_service.dart lib/services/workspace_cli_service.dart lib/widgets/macos_workspace_inspector_card.dart lib/screens/settings/api_settings_screen.dart` ✅
+- M5：联检确认
+  1) 新增工作区能力仅挂在 `macOS` 分支与 `API Settings` 调试入口；
+  2) 文档外跳逻辑仍仅在 `TargetPlatform.macOS` 生效；
+  3) 网络权限与图标改动仅位于 `macos/` 宿主工程；
+  4) 本轮未改动任何 iOS / Android 运行分支逻辑。✅
+
+---
+
+## 第六阶段：`.d1v` 协议与真实 CLI 桥接准备
+
+### 设计思考（先协议，后执行）
+- 先固定 `.d1v/project.toml` 的字段结构和 App 侧模型，避免后续 CLI / backend / Flutter 三边各自发散。
+- 先做“真实 CLI 调用骨架 + 回退策略”，但默认不改变现有 App 主流程，不要求用户机器已经安装 `d1v`。
+- 所有真实 CLI 执行入口都必须是 `macOS` 限定，并提供“CLI 不存在 / 命令失败 / JSON 无效”的显式结果。
+
+### TODO（逐项检查后勾选）
+- [x] N1：补 `.d1v/project.toml` 正式字段草案与示例文件模型，统一 App 端字段定义。
+- [x] N2：在 Flutter 端新增真实 CLI 执行器骨架（`d1v workspace status`），但先不接入用户主流程。
+- [x] N3：为 CLI 执行器补“命令不存在 / 非 macOS / JSON 解析失败”回退结果，保证不会影响移动端。
+- [x] N4：让 macOS 调试卡支持切换“本地解析模式 / CLI 模式”，用于本地验证真实桥接。
+- [x] N5：完成本阶段联检，并确认新增 CLI 骨架未影响现有 iOS / Android 编译路径。
+
+### 第六阶段代码检查记录
+- N1：`flutter analyze lib/models/d1v_project_file.dart lib/models/local_workspace.dart lib/models/workspace_cli_result.dart lib/services/workspace_local_service.dart lib/services/workspace_cli_service.dart lib/services/workspace_cli_executor.dart` ✅
+- N2：`flutter analyze lib/models/d1v_project_file.dart lib/models/local_workspace.dart lib/models/workspace_cli_result.dart lib/services/workspace_local_service.dart lib/services/workspace_cli_service.dart lib/services/workspace_cli_executor.dart` ✅
+- N3：`flutter analyze lib/models/d1v_project_file.dart lib/models/local_workspace.dart lib/models/workspace_cli_result.dart lib/services/workspace_local_service.dart lib/services/workspace_cli_service.dart lib/services/workspace_cli_executor.dart` ✅
+- N4：`flutter analyze lib/models/d1v_project_file.dart lib/models/local_workspace.dart lib/models/workspace_cli_result.dart lib/services/workspace_local_service.dart lib/services/workspace_cli_service.dart lib/services/workspace_cli_executor.dart lib/widgets/macos_workspace_inspector_card.dart lib/screens/settings/api_settings_screen.dart` ✅
+- N5：联检确认
+  1) 真实 CLI 骨架仅位于独立 service，不会被 iOS / Android 主流程主动调用；
+  2) 调试卡仅在 `macOS` 下显示，并支持 Local Parse / CLI 双模式验证；
+  3) CLI 缺失、JSON 解析失败、非 macOS 都有显式回退结果；
+  4) 本轮新增代码未改动任何移动端既有业务逻辑。✅
+
+---
+
+## 第七阶段：真实 `d1v-cli workspace` MVP
+
+### 设计思考（先打通链路，再接云端）
+- 本阶段先做最小可用闭环：`d1v workspace status` 和 `d1v workspace init`。
+- `init` 只负责在本地目录生成 `.d1v/project.toml`，不在 CLI 内耦合云端绑定；云端绑定后续单独接。
+- Flutter 端只在 macOS 调试入口暴露 `init`，不把未完成的本地工作区流程带进 iOS / Android 或现有主路径。
+
+### TODO（逐项检查后勾选）
+- [x] W1：在 `d1v-cli` 中新增 `workspace status` 子命令，输出标准 JSON / text 状态。
+- [x] W2：在 `d1v-cli` 中新增 `workspace init` 子命令，生成最小 `.d1v/project.toml`。
+- [x] W3：在 Flutter 端新增 `workspace init` CLI 执行器，并接入 macOS 调试卡。
+- [x] W4：让调试卡支持“选目录 -> inspect -> init -> re-inspect”的最小闭环。
+- [x] W5：完成 `cargo check`、Flutter analyze 联检，并确认仍未影响 iOS / Android 逻辑。
+
+### 第七阶段代码检查记录
+- W1：`cargo check -p d1v-cli` ✅
+- W2：`cargo check -p d1v-cli` ✅
+- W3：`flutter analyze lib/models/d1v_project_file.dart lib/models/local_workspace.dart lib/models/workspace_cli_result.dart lib/services/workspace_local_service.dart lib/services/workspace_cli_service.dart lib/services/workspace_cli_executor.dart lib/widgets/macos_workspace_inspector_card.dart lib/screens/settings/api_settings_screen.dart` ✅
+- W4：`cargo check -p d1v-cli` + `flutter analyze lib/models/d1v_project_file.dart lib/models/local_workspace.dart lib/models/workspace_cli_result.dart lib/services/workspace_local_service.dart lib/services/workspace_cli_service.dart lib/services/workspace_cli_executor.dart lib/widgets/macos_workspace_inspector_card.dart lib/screens/settings/api_settings_screen.dart` ✅
+- W5：联检确认
+  1) `workspace status/init` 已在 `d1v-cli` 中具备最小可用实现；
+  2) Flutter 调试卡已支持 `CLI` 模式和 `Init .d1v` 闭环；
+  3) 当前闭环仍只暴露在 macOS 调试入口，不进入 iOS / Android 主路径；
+  4) Rust 与 Flutter 两侧检查均通过。✅
+
+---
+
+## 第八阶段：macOS 文件夹打开 / 拖拽导入最小闭环
+
+### 设计原则（醒目约束，继续生效）
+- `macOS` 新增“Open With / 文件夹拖拽 / 本地打包上传 / 自动跳转项目页”逻辑，必须继续严格隔离在桌面宿主与独立 service 中，不能影响 `iOS / Android` 主流程。
+- 不新增移动端文件系统权限，不修改既有 iOS / Android 项目创建、聊天、支付、订单链路。
+- 优先复用现有后端成熟能力：当前后端已有“导入本地 zip”为项目，因此 `macOS` 侧采用“文件夹 -> 本地 zip -> 复用 import API”的最小改动方案，而不是新造一条云端协议。
+
+### TODO（逐项检查后勾选）
+- [x] D1：把 macOS 收到的目录打开事件从“跳转设置页”升级为独立处理入口，不再依赖调试卡触发。
+- [x] D2：新增 macOS 专用导入协调器，收到文件夹后显示处理中弹窗，并执行“本地压缩 -> 上传导入 -> 刷新项目列表”。
+- [x] D3：导入成功后直接跳转到项目详情页 `tab=chat&chatTab=code`，对齐用户期望路径。
+- [x] D4：保持 native 拖拽层改动最小，仅补目录拖入转发，不改动 Flutter 主窗口控制器结构，避免再次引入黑屏 / dead channel。
+- [ ] D5：在真实运行中的 macOS App 上完成手工 e2e：拖入文件夹后确认弹窗出现、导入成功并跳转 chat code。
+
+### 第八阶段代码检查记录
+- D1-D4：`flutter analyze lib/main.dart lib/services/macos_open_service.dart lib/services/macos_folder_import_service.dart lib/widgets/macos_workspace_inspector_card.dart` ✅
+- D5：待在真实 macOS 运行态手工验证。当前未自动化完成，因为本地已有 `flutter run -d macos` 调试会话占用 Flutter startup lock，且拖拽/Finder 打开属于宿主级交互，无法在当前无头命令环境内完整模拟。⏳
+
+---
+
+## 第九阶段：macOS 桌面自适应布局（高频 10 点）
+
+### 设计原则（继续严格限制影响面）
+- 桌面布局增强优先发生在 `macOS` 大屏断点；手机端与 iOS / Android 现有交互保持原样。
+- 优先改“信息架构”，不是只加 `maxWidth`：左侧主导航、左侧页内导航、主内容双栏/三栏、右侧常驻工作区/聊天侧栏。
+- 先覆盖高频主路径，再处理长尾页面；每完成一组页面都先做 `flutter analyze`。
+
+### 目标 10 点
+- [x] R1：主框架从底部 Tab 升级为桌面左侧主导航（Dashboard / Community / Docs / Settings）。
+- [x] R2：Settings 页面桌面左侧标签导航（Profile / GitHub / Invites）。
+- [x] R3：Projects 页面桌面搜索 + 摘要区 + 网格化项目卡片。
+- [x] R4：Docs 页面桌面双栏布局（左侧 Hero / Search / Recent，右侧文档目录）。
+- [x] R5：Orders 页面桌面左侧 Billing rail。
+- [x] R6：Dashboard 页面桌面双栏布局（左侧 welcome / stats / workspace，右侧 heatmap / recent projects）。
+- [x] R7：Community 页面桌面左侧过滤 rail + 右侧 feed。
+- [x] R8：Project Detail 页面桌面左侧项目级导航 rail。
+- [x] R9：Project Chat 页面宽屏右侧常驻聊天侧栏，预览 / 代码留在主工作区。
+- [x] R10：补统一桌面断点与内容容器工具，避免后续继续散落写死宽度。
+
+### 第九阶段代码检查记录
+- R1-R10：`flutter analyze lib/utils/desktop_layout.dart lib/screens/main_screen.dart lib/screens/settings_screen.dart lib/screens/projects_screen.dart lib/screens/docs_screen.dart lib/screens/order_screen.dart lib/screens/dashboard_screen.dart lib/screens/community_screen.dart lib/screens/project_detail_screen.dart lib/widgets/chat/project_chat/project_chat_tab_ui.dart` ✅
+
+### 当前验证结论
+- 以上 10 个高频桌面适配点已完成首轮落地，且静态检查通过。
+- 本轮重点是桌面信息架构调整，不涉及移动端路由、支付、聊天协议、本地工作区协议变更。
+- 下一轮如果继续优化，优先建议补：Docs detail 桌面目录、Project Overview 更强三栏、Project API / Payment / Analytics 子页宽屏细化。 
+
+---
+
+## 第十阶段：高价值 UX 优化（当前基础上最值得做的 10 点）
+
+### 设计原则
+- 优先修“已经有功能但不好用”的点，不为凑功能堆新入口。
+- 桌面优化优先关注效率、可发现性、减少误解与减少多余点击。
+- 继续保证 `macOS` / 桌面增强不破坏 iOS / Android 既有路径。
+
+### 完成项
+- [x] U1：通用搜索框支持 `Esc` 清空或退出焦点，降低桌面搜索摩擦。
+- [x] U2：搜索清空按钮 Tooltip 明确为 `Clear (Esc)`，提高快捷键可发现性。
+- [x] U3：桌面主导航支持 `Cmd+1..4` 快速切页。
+- [x] U4：主导航底部明确展示 `Desktop mode · Cmd+1-4`，减少隐藏能力。
+- [x] U5：修复 Orders 桌面 rail 点击不切页的问题（之前 controller 没接入桌面内容区）。
+- [x] U6：Dashboard 桌面 workspace 卡新增明确 CTA：`Wake workspace / Refresh workspace`。
+- [x] U7：Projects 与 Dashboard 的创建入口补 Tooltip，提升桌面可发现性。
+- [x] U8：Docs 桌面左栏新增明确 CTA：`Browse all docs`，减少用户被“近期/搜索”困住。
+- [x] U9：Community 桌面左栏新增 `New post` CTA 和 filter 使用说明，减少操作路径绕行。
+- [x] U10：Project Detail / Chat / Settings / Orders 左侧栏补说明文字，让桌面侧栏不再只是“能点但不解释”。
+
+### 第十阶段代码检查记录
+- U1-U10：`flutter analyze lib/widgets/search_field.dart lib/screens/main_screen.dart lib/screens/projects_screen.dart lib/screens/order_screen.dart lib/screens/dashboard_screen.dart lib/screens/docs_screen.dart lib/screens/community_screen.dart lib/screens/settings_screen.dart lib/screens/project_detail_screen.dart lib/widgets/chat/project_chat/project_chat_tab_ui.dart` ✅
+
+### 本轮结论
+- 本轮 UX 改动主要解决了桌面端效率与可发现性问题，而不是继续堆布局花样。
+- 当前最有价值的下一步不再是全局大改，而是深挖 3 条高频路径：
+  1) Docs detail 的目录与返回链路；
+  2) Project Chat 的消息筛选 / 锚点 / 跳转；
+  3) Project Overview / Deploy / Analytics 子页的桌面流程指引。 
+
+---
+
+## 第十一阶段：桌面列表多列化（最值得先做的 3 个地方）
+
+### 目标选择依据
+- 优先处理当前在 macOS 上仍然“单列长条往下滚”的高频列表。
+- 只在桌面断点下切换为网格，多列化后提升浏览密度，不改变移动端阅读节奏。
+
+### 完成项
+- [x] G1：Docs 文档卡片列表改为桌面网格卡片，减少长列表滚动。
+- [x] G2：Community 帖子流改为桌面双列卡片流，提升内容浏览效率。
+- [x] G3：Orders 购买记录改为桌面双列卡片流，减少账单页纵向拖拽。
+
+### 代码位置
+- G1：[`lib/screens/docs_screen.dart`](/Users/apple/project/d1v_sever/d1vai_app/lib/screens/docs_screen.dart)
+- G2：[`lib/screens/community_screen.dart`](/Users/apple/project/d1v_sever/d1vai_app/lib/screens/community_screen.dart)
+- G3：[`lib/widgets/order_history.dart`](/Users/apple/project/d1v_sever/d1vai_app/lib/widgets/order_history.dart)
+
+### 第十一阶段代码检查记录
+- G1-G3：`flutter analyze lib/screens/docs_screen.dart lib/screens/community_screen.dart lib/widgets/order_history.dart` ✅
+
+---
+
+## 第十二阶段：macOS Chat Code 可拖拽分栏
+
+### 目标
+- 在 `chat code` 桌面布局下，让左侧文件列表栏和右侧文件预览栏之间有可拖拽分隔条。
+- 仅在 `macOS` 桌面分支启用，不影响移动端与其它平台已有布局。
+
+### 完成项
+- [x] C1：把桌面 code tab 从固定 `320px + Expanded` 改为可调宽 split view。
+- [x] C2：新增中间拖拽 handle，支持用户水平拖动调整左右视图宽度。
+- [x] C3：限制最小/最大宽度，避免拖拽后把文件树或预览挤坏。
+
+### 代码位置
+- [`lib/widgets/chat/project_chat/code_tab/project_chat_code_tab.dart`](/Users/apple/project/d1v_sever/d1vai_app/lib/widgets/chat/project_chat/code_tab/project_chat_code_tab.dart)
+
+### 第十二阶段代码检查记录
+- C1-C3：`flutter analyze lib/widgets/chat/project_chat/code_tab/project_chat_code_tab.dart` ✅
+
+---
+
+## 第十三阶段：Chat Code 高亮增强
+
+### 目标
+- 让 `chat code` 里的文件预览对更多常见代码/配置文件类型启用语法高亮。
+- 复用现有高亮组件，不引入新渲染链路。
+
+### 完成项
+- [x] H1：确认 `FilePreview` 已走 `CodeTabCodeBlock`，不重复造轮子。
+- [x] H2：补齐常见文件类型语言识别：`kotlin/swift/java/go/c/cpp/toml/ini/less/xml/vue/svg/env/zsh`。
+- [x] H3：保持大文件保护逻辑不变，避免高亮导致滚动卡顿。
+
+### 代码位置
+- [`lib/widgets/chat/project_chat/code_tab/code_tab_code_block.dart`](/Users/apple/project/d1v_sever/d1vai_app/lib/widgets/chat/project_chat/code_tab/code_tab_code_block.dart)
+- [`lib/widgets/chat/file_preview.dart`](/Users/apple/project/d1v_sever/d1vai_app/lib/widgets/chat/file_preview.dart)
+
+### 第十三阶段代码检查记录
+- H1-H3：`flutter analyze lib/widgets/chat/project_chat/code_tab/code_tab_code_block.dart lib/widgets/chat/file_preview.dart lib/widgets/chat/project_chat/code_tab/code_tab_file_viewer.dart lib/widgets/chat/project_chat/code_tab/code_tab_file_viewer_page.dart` ✅

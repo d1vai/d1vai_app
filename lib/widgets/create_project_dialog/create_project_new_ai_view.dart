@@ -457,21 +457,12 @@ class _ModelDropdownLabel extends StatelessWidget {
     final scheme = theme.colorScheme;
     final badge = model.badgeLabel;
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Expanded(
-          child: Text(
-            model.displayName,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: compact ? FontWeight.w600 : FontWeight.w500,
-            ),
-          ),
-        ),
-        if (badge != null) ...[
-          SizedBox(width: compact ? 6 : 8),
-          Container(
+    final labelStyle = theme.textTheme.bodyMedium?.copyWith(
+      fontWeight: compact ? FontWeight.w600 : FontWeight.w500,
+    );
+    final badgeWidget = badge == null
+        ? null
+        : Container(
             padding: EdgeInsets.symmetric(
               horizontal: compact ? 5 : 6,
               vertical: compact ? 1.5 : 2.5,
@@ -493,7 +484,42 @@ class _ModelDropdownLabel extends StatelessWidget {
                 height: 1,
               ),
             ),
+          );
+
+    if (compact) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            fit: FlexFit.loose,
+            child: Text(
+              model.displayName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: labelStyle,
+            ),
           ),
+          if (badgeWidget != null) ...[
+            const SizedBox(width: 6),
+            badgeWidget,
+          ],
+        ],
+      );
+    }
+
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            model.displayName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: labelStyle,
+          ),
+        ),
+        if (badgeWidget != null) ...[
+          const SizedBox(width: 8),
+          badgeWidget,
         ],
       ],
     );

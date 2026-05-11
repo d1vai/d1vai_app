@@ -8,6 +8,7 @@ import '../screens/main_screen.dart';
 import '../screens/project_detail_screen.dart';
 import '../screens/app_detail_screen.dart';
 import '../screens/profile_screen.dart';
+import '../screens/pricing_screen.dart';
 import '../screens/language_settings_screen.dart';
 import '../screens/chat_screen.dart';
 import '../screens/chat_playground_screen.dart';
@@ -29,6 +30,13 @@ const String _initialRouteOverride = String.fromEnvironment(
   'APP_INITIAL_ROUTE',
   defaultValue: '/',
 );
+
+bool _isHideHeaderQuery(GoRouterState state) {
+  final value =
+      state.uri.queryParameters['hideheader'] ??
+      state.uri.queryParameters['hideHeader'];
+  return (value ?? '').toLowerCase() == 'true';
+}
 
 Page<dynamic> _buildPageWithTransition(
   BuildContext context,
@@ -119,6 +127,7 @@ GoRouter createAppRouter() {
       final isSplashPage = state.matchedLocation == '/';
       final isOnboardingPage = state.matchedLocation == '/onboarding';
       final inviteCode = state.uri.queryParameters['invite']?.trim();
+      final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
       final isMainTab =
           state.matchedLocation == '/dashboard' ||
           state.matchedLocation == '/community' ||
@@ -127,6 +136,7 @@ GoRouter createAppRouter() {
           state.matchedLocation == '/settings';
 
       final isPublicStandalone =
+          (!isIOS && state.matchedLocation == '/pricing') ||
           state.matchedLocation == '/api-docs' ||
           state.matchedLocation == '/openapi' ||
           state.matchedLocation.startsWith('/apps/') ||
@@ -224,7 +234,10 @@ GoRouter createAppRouter() {
         pageBuilder: (context, state) => _buildPageWithTransition(
           context,
           state,
-          DocDetailScreen(slug: state.pathParameters['slug']!),
+          DocDetailScreen(
+            slug: state.pathParameters['slug']!,
+            hideHeader: _isHideHeaderQuery(state),
+          ),
         ),
       ),
       GoRoute(
@@ -370,6 +383,11 @@ GoRouter createAppRouter() {
             _buildPageWithTransition(context, state, const ProfileScreen()),
       ),
       GoRoute(
+        path: '/pricing',
+        pageBuilder: (context, state) =>
+            _buildPageWithTransition(context, state, const PricingScreen()),
+      ),
+      GoRoute(
         path: '/api-docs',
         pageBuilder: (context, state) => _buildPageWithTransition(
           context,
@@ -377,6 +395,7 @@ GoRouter createAppRouter() {
           ApiDocsScreen(
             title: state.uri.queryParameters['prompt'],
             specUrl: state.uri.queryParameters['spec'],
+            hideHeader: _isHideHeaderQuery(state),
           ),
         ),
       ),
@@ -389,6 +408,7 @@ GoRouter createAppRouter() {
             title: state.uri.queryParameters['prompt'],
             specUrl: state.uri.queryParameters['spec'],
             preferOpenApiShell: true,
+            hideHeader: _isHideHeaderQuery(state),
           ),
         ),
       ),

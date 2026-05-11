@@ -211,7 +211,8 @@ class CompactSelector extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Expanded(
+                            Flexible(
+                              fit: FlexFit.loose,
                               child: Text(
                                 option.label,
                                 maxLines: 1,
@@ -278,7 +279,8 @@ class CompactSelector extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Expanded(
+                        Flexible(
+                          fit: FlexFit.loose,
                           child: Text(
                             label,
                             maxLines: 1,

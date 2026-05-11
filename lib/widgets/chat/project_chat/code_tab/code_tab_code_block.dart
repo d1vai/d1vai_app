@@ -22,18 +22,39 @@ class CodeTabCodeBlock extends StatelessWidget {
     final p = path.toLowerCase();
 
     if (p.endsWith('.dart')) return 'dart';
+    if (p.endsWith('.kt') || p.endsWith('.kts')) return 'kotlin';
+    if (p.endsWith('.swift')) return 'swift';
     if (p.endsWith('.ts') || p.endsWith('.tsx')) return 'typescript';
     if (p.endsWith('.js') || p.endsWith('.jsx')) return 'javascript';
+    if (p.endsWith('.java')) return 'java';
+    if (p.endsWith('.go')) return 'go';
+    if (p.endsWith('.c')) return 'c';
+    if (p.endsWith('.cc') || p.endsWith('.cpp') || p.endsWith('.cxx')) {
+      return 'cpp';
+    }
+    if (p.endsWith('.h') || p.endsWith('.hpp')) return 'cpp';
     if (p.endsWith('.json')) return 'json';
+    if (p.endsWith('.toml')) return 'toml';
+    if (p.endsWith('.ini') || p.endsWith('.cfg') || p.endsWith('.conf')) {
+      return 'ini';
+    }
     if (p.endsWith('.md') || p.endsWith('.markdown')) return 'markdown';
     if (p.endsWith('.css')) return 'css';
     if (p.endsWith('.scss')) return 'scss';
+    if (p.endsWith('.less')) return 'less';
     if (p.endsWith('.html') || p.endsWith('.htm')) return 'xml';
+    if (p.endsWith('.xml') || p.endsWith('.svg') || p.endsWith('.vue')) {
+      return 'xml';
+    }
     if (p.endsWith('.yml') || p.endsWith('.yaml')) return 'yaml';
     if (p.endsWith('.py')) return 'python';
     if (p.endsWith('.rs')) return 'rust';
     if (p.endsWith('.sql')) return 'sql';
     if (p.endsWith('.sh') || p.endsWith('.bash')) return 'bash';
+    if (p.endsWith('.zsh')) return 'bash';
+    if (p.endsWith('.env') || p.endsWith('.env.local') || p.endsWith('.env.production')) {
+      return 'bash';
+    }
 
     return null;
   }

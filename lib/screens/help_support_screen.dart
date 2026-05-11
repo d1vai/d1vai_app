@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../l10n/app_localizations.dart';
 import '../widgets/snackbar_helper.dart';
+import '../widgets/share_sheet.dart';
 
 class HelpSupportScreen extends StatelessWidget {
   const HelpSupportScreen({super.key});
@@ -22,11 +23,6 @@ class HelpSupportScreen extends StatelessWidget {
   static const String supportEmail = 'support@d1v.ai';
 
   // 文档链接
-  static const String docsUrl = 'https://www.d1v.ai/docs/overview';
-
-  // 用户指南链接
-  static const String userGuideUrl = 'https://www.d1v.ai/docs/getting-started';
-
   String _t(BuildContext context, String key, String fallback) {
     final value = AppLocalizations.of(context)?.translate(key);
     if (value == null || value == key) return fallback;
@@ -48,7 +44,9 @@ class HelpSupportScreen extends StatelessWidget {
       'payment_methods': {
         'question': 'What payment methods are supported?',
         'answer':
-            'Billing and purchase management are currently handled outside the iOS app. In-app purchase support is planned for a future release.',
+            Theme.of(context).platform == TargetPlatform.iOS
+            ? 'Billing and purchase management are currently handled outside the iOS app. In-app purchase support is planned for a future release.'
+            : 'We currently support credit/debit cards through Stripe. More payment methods will be added in future updates.',
       },
       'invite_friends': {
         'question': 'How do I invite friends?',
@@ -219,7 +217,10 @@ class HelpSupportScreen extends StatelessWidget {
               ),
               onTap: () => _launchUrl(
                 context,
-                userGuideUrl,
+                ShareLinks.docsBySlug(
+                  'getting-started',
+                  hideHeader: true,
+                ).toString(),
                 _t(context, 'help_support_user_guide_title', 'User Guide'),
               ),
               accent: const Color(0xFF0EA5E9),
@@ -236,7 +237,7 @@ class HelpSupportScreen extends StatelessWidget {
               ),
               onTap: () => _launchUrl(
                 context,
-                docsUrl,
+                ShareLinks.docsBySlug('overview', hideHeader: true).toString(),
                 _t(context, 'docs', 'Documentation'),
               ),
               accent: const Color(0xFFEC4899),

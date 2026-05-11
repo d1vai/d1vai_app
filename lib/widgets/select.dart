@@ -203,7 +203,8 @@ class _SelectState<T> extends State<Select<T>> {
                 ? MainAxisSize.max
                 : MainAxisSize.min,
             children: [
-              Expanded(
+              Flexible(
+                fit: widget.isExpanded ? FlexFit.tight : FlexFit.loose,
                 child: _selectedValue != null
                     ? selectedItem
                     : widget.hint ??

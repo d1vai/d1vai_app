@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// 可复用的搜索组件
 /// 支持在 AppBar 中作为 title 使用，也可以独立使用
@@ -125,61 +126,75 @@ class _SearchFieldState extends State<SearchField> {
       ),
       child: ClipRRect(
         borderRadius: borderRadius,
-        child: TextField(
-          controller: _controller,
-          focusNode: _focusNode,
-          autofocus: widget.autofocus,
-          textInputAction: TextInputAction.search,
-          onSubmitted: widget.onSubmitted,
-          decoration: InputDecoration(
-            hintText: widget.hintText,
-            hintStyle: TextStyle(
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
-              fontSize: 14,
-            ),
-            prefixIcon: Icon(
-              Icons.search,
-              size: 20,
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
-            ),
-            suffixIcon: SizedBox(
-              width: 40,
-              child: Center(
-                child: AnimatedOpacity(
-                  opacity: _showClear ? 1 : 0,
-                  duration: const Duration(milliseconds: 120),
-                  curve: Curves.easeOut,
-                  child: IgnorePointer(
-                    ignoring: !_showClear,
-                    child: IconButton(
-                      onPressed: _clear,
-                      icon: Icon(
-                        Icons.close_rounded,
-                        size: 18,
-                        color: colorScheme.onSurfaceVariant.withValues(
-                          alpha: 0.8,
+        child: Focus(
+          onKeyEvent: (node, event) {
+            if (event is! KeyDownEvent) return KeyEventResult.ignored;
+            if (event.logicalKey == LogicalKeyboardKey.escape) {
+              if (_controller.text.isNotEmpty) {
+                _clear();
+              } else {
+                _focusNode.unfocus();
+              }
+              return KeyEventResult.handled;
+            }
+            return KeyEventResult.ignored;
+          },
+          child: TextField(
+            controller: _controller,
+            focusNode: _focusNode,
+            autofocus: widget.autofocus,
+            textInputAction: TextInputAction.search,
+            onSubmitted: widget.onSubmitted,
+            decoration: InputDecoration(
+              hintText: widget.hintText,
+              hintStyle: TextStyle(
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
+                fontSize: 14,
+              ),
+              prefixIcon: Icon(
+                Icons.search,
+                size: 20,
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+              ),
+              suffixIcon: SizedBox(
+                width: 40,
+                child: Center(
+                  child: AnimatedOpacity(
+                    opacity: _showClear ? 1 : 0,
+                    duration: const Duration(milliseconds: 120),
+                    curve: Curves.easeOut,
+                    child: IgnorePointer(
+                      ignoring: !_showClear,
+                      child: IconButton(
+                        onPressed: _clear,
+                        icon: Icon(
+                          Icons.close_rounded,
+                          size: 18,
+                          color: colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.8,
+                          ),
                         ),
-                      ),
-                      tooltip: 'Clear',
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(
-                        minWidth: 32,
-                        minHeight: 32,
+                        tooltip: 'Clear (Esc)',
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 32,
+                          minHeight: 32,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
+              border: InputBorder.none,
+              filled: true,
+              fillColor: fillColor,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
             ),
-            border: InputBorder.none,
-            filled: true,
-            fillColor: fillColor,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 10,
-            ),
+            style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
           ),
-          style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
         ),
       ),
     );

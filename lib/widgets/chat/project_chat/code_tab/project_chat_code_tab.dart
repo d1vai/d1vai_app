@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../../services/d1vai_service.dart';
 import '../../../snackbar_helper.dart';
@@ -43,6 +44,7 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
   bool _hasUnsavedChanges = false;
   bool _isSaving = false;
   String _editOriginal = '';
+  double _desktopTreePaneWidth = 320;
 
   @override
   void initState() {
@@ -65,6 +67,9 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
 
   bool _isMobile(BuildContext context) =>
       MediaQuery.of(context).size.width < 768;
+
+  bool _isMacDesktop(BuildContext context) =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS && !_isMobile(context);
 
   Future<void> _loadTree() async {
     if (_loadingTree) return;
@@ -446,78 +451,173 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
                       );
                     },
                   )
-                : Row(
-                    children: [
-                      SizedBox(
-                        width: 320,
-                        child: CodeTabTreePanel(
-                          loading: _loadingTree,
-                          error: _treeError,
-                          searchQuery: q,
-                          list: _flat,
-                          selectedFilePath: _selectedFilePath,
-                          expandedDirs: _expandedDirs,
-                          onReload: _loadTree,
-                          onToggleDir: _toggleDir,
-                          onOpenFile: (p) async {
-                            final ok = await _confirmLeaveEdit();
-                            if (!ok) return;
-                            await _openFile(p);
-                          },
+                : LayoutBuilder(
+                    builder: (context, constraints) {
+                      const handleWidth = 18.0;
+                      const minTreeWidth = 220.0;
+                      const maxTreeWidth = 560.0;
+                      final available = constraints.maxWidth;
+                      final clampedTreeWidth = _desktopTreePaneWidth.clamp(
+                        minTreeWidth,
+                        (available - handleWidth - 280).clamp(
+                          minTreeWidth,
+                          maxTreeWidth,
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: CodeTabFileViewer(
-                          theme: theme,
-                          filePath: _selectedFilePath,
-                          loading: _loadingFile,
-                          error: _fileError,
-                          content: _fileContent,
-                          isEditing: _isEditing,
-                          editController: _editController,
-                          hasUnsavedChanges: _hasUnsavedChanges,
-                          saving: _isSaving,
-                          onEnterEdit: _enterEditMode,
-                          onCancelEdit: () async {
-                            final ok = await _confirmLeaveEdit();
-                            if (!ok) return;
-                            setState(() {
-                              _isEditing = false;
-                              _hasUnsavedChanges = false;
-                              _editController.text = _editOriginal;
-                            });
-                          },
-                          onChange: (v) {
-                            setState(() {
-                              _hasUnsavedChanges = v != _editOriginal;
-                            });
-                          },
-                          onSave: _saveEdits,
-                          onCopy: _fileContent == null
-                              ? null
-                              : () async {
-                                  final ctx = context;
-                                  await Clipboard.setData(
-                                    ClipboardData(text: _fileContent!.content),
-                                  );
-                                  if (!ctx.mounted) return;
-                                  SnackBarHelper.showSuccess(
-                                    ctx,
-                                    title: 'Copied',
-                                    message: 'File content copied',
-                                    duration: const Duration(seconds: 2),
-                                  );
-                                },
-                          onAsk: _selectedFilePath == null
-                              ? null
-                              : _askAboutSelected,
-                        ),
-                      ),
-                    ],
+                      );
+                      if (clampedTreeWidth != _desktopTreePaneWidth) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (!mounted) return;
+                          setState(() {
+                            _desktopTreePaneWidth = clampedTreeWidth;
+                          });
+                        });
+                      }
+
+                      return Row(
+                        children: [
+                          SizedBox(
+                            width: clampedTreeWidth,
+                            child: CodeTabTreePanel(
+                              loading: _loadingTree,
+                              error: _treeError,
+                              searchQuery: q,
+                              list: _flat,
+                              selectedFilePath: _selectedFilePath,
+                              expandedDirs: _expandedDirs,
+                              onReload: _loadTree,
+                              onToggleDir: _toggleDir,
+                              onOpenFile: (p) async {
+                                final ok = await _confirmLeaveEdit();
+                                if (!ok) return;
+                                await _openFile(p);
+                              },
+                            ),
+                          ),
+                          _isMacDesktop(context)
+                              ? _CodePaneResizeHandle(
+                                  onDragDelta: (delta) {
+                                    setState(() {
+                                      _desktopTreePaneWidth = (_desktopTreePaneWidth + delta)
+                                          .clamp(minTreeWidth, maxTreeWidth);
+                                    });
+                                  },
+                                )
+                              : const SizedBox(width: 12),
+                          Expanded(
+                            child: CodeTabFileViewer(
+                              theme: theme,
+                              filePath: _selectedFilePath,
+                              loading: _loadingFile,
+                              error: _fileError,
+                              content: _fileContent,
+                              isEditing: _isEditing,
+                              editController: _editController,
+                              hasUnsavedChanges: _hasUnsavedChanges,
+                              saving: _isSaving,
+                              onEnterEdit: _enterEditMode,
+                              onCancelEdit: () async {
+                                final ok = await _confirmLeaveEdit();
+                                if (!ok) return;
+                                setState(() {
+                                  _isEditing = false;
+                                  _hasUnsavedChanges = false;
+                                  _editController.text = _editOriginal;
+                                });
+                              },
+                              onChange: (v) {
+                                setState(() {
+                                  _hasUnsavedChanges = v != _editOriginal;
+                                });
+                              },
+                              onSave: _saveEdits,
+                              onCopy: _fileContent == null
+                                  ? null
+                                  : () async {
+                                      final ctx = context;
+                                      await Clipboard.setData(
+                                        ClipboardData(text: _fileContent!.content),
+                                      );
+                                      if (!ctx.mounted) return;
+                                      SnackBarHelper.showSuccess(
+                                        ctx,
+                                        title: 'Copied',
+                                        message: 'File content copied',
+                                        duration: const Duration(seconds: 2),
+                                      );
+                                    },
+                              onAsk: _selectedFilePath == null
+                                  ? null
+                                  : _askAboutSelected,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CodePaneResizeHandle extends StatefulWidget {
+  final ValueChanged<double> onDragDelta;
+
+  const _CodePaneResizeHandle({required this.onDragDelta});
+
+  @override
+  State<_CodePaneResizeHandle> createState() => _CodePaneResizeHandleState();
+}
+
+class _CodePaneResizeHandleState extends State<_CodePaneResizeHandle> {
+  bool _hovering = false;
+  bool _dragging = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final accent = theme.colorScheme.primary.withValues(
+      alpha: _dragging ? 0.90 : _hovering ? 0.55 : 0.24,
+    );
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.resizeLeftRight,
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onHorizontalDragStart: (_) {
+          setState(() {
+            _dragging = true;
+          });
+        },
+        onHorizontalDragUpdate: (details) {
+          widget.onDragDelta(details.delta.dx);
+        },
+        onHorizontalDragEnd: (_) {
+          setState(() {
+            _dragging = false;
+          });
+        },
+        onHorizontalDragCancel: () {
+          setState(() {
+            _dragging = false;
+          });
+        },
+        child: SizedBox(
+          width: 18,
+          child: Center(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 120),
+              width: _dragging ? 4 : 3,
+              decoration: BoxDecoration(
+                color: accent,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

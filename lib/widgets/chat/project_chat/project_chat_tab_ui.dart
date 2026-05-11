@@ -721,50 +721,93 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
   }
 
   Widget _buildChatTabDesktop(BuildContext context) {
-    return Stack(
+    return Row(
       children: [
-        Column(
-          children: [
-            ProjectChatTopBar(
-              currentIndex: _currentChatTabIndex,
-              onTabSelected: (index) {
-                setState(() {
-                  _currentChatTabIndex = index;
-                });
-              },
-              onRefreshPreview: _handleRefreshPreview,
-              onOpenInNewTab: _handleOpenInNewTab,
-            ),
-            Expanded(
-              child: IndexedStack(
-                index: _currentChatTabIndex,
-                children: [_buildChatPreviewTab(), _buildChatCodeTab()],
+        Expanded(
+          flex: 8,
+          child: Column(
+            children: [
+              ProjectChatTopBar(
+                currentIndex: _currentChatTabIndex,
+                onTabSelected: (index) {
+                  setState(() {
+                    _currentChatTabIndex = index;
+                  });
+                },
+                onRefreshPreview: _handleRefreshPreview,
+                onOpenInNewTab: _handleOpenInNewTab,
               ),
-            ),
-          ],
-        ),
-        Positioned(
-          bottom: 12,
-          right: 12,
-          child: FloatingChatButton(
-            onPressed: _openMobileChat,
-            statusLabel: _statusLabel(),
-            isError: _sessionError,
-            isDone: _sessionDone,
-            isWorking:
-                _isChatLoading ||
-                _wsConnState == WsConnectionState.connecting ||
-                (_wsConnState == WsConnectionState.connected &&
-                    !_autoConnectDisabled &&
-                    !_sessionDone &&
-                    !_sessionError &&
-                    (_activeWsSessionId ?? '').trim().isNotEmpty),
-            isThinking: _sessionThinking,
-            isDeploying: _isDeploying,
-            secondaryLabel: _statusBannerTitle(),
+              Expanded(
+                child: IndexedStack(
+                  index: _currentChatTabIndex,
+                  children: [_buildChatPreviewTab(), _buildChatCodeTab()],
+                ),
+              ),
+            ],
           ),
         ),
-        if (_showMobileChat) _buildChatSheetOverlay(context, maxWidth: 720),
+        Container(
+          width: 420,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            border: Border(
+              left: BorderSide(
+                color: Theme.of(
+                  context,
+                ).colorScheme.outlineVariant.withValues(alpha: 0.6),
+              ),
+            ),
+          ),
+          child: Column(
+            children: [
+              Expanded(
+                child: ChatBottomSheet(
+                  messages: _chatMessages,
+                  isLoading: _isChatLoading,
+                  isLoadingHistory: _isLoadingHistory,
+                  isDeploying: _isDeploying,
+                  outboxItems: _outboxItems,
+                  outboxMode: _outboxMode,
+                  onOutboxClear: _outboxClear,
+                  onOutboxDelete: _outboxDelete,
+                  onOutboxUpdate: _outboxUpdate,
+                  heroTag: 'project-chat-messages-${widget.projectId}',
+                  statusLabel: _statusLabel(),
+                  statusToken: _statusToken(),
+                  statusIsError: _sessionError,
+                  bannerTitle: _statusBannerTitle(),
+                  bannerMessage: _statusBannerMessage(),
+                  bannerIcon: _statusBannerIcon(),
+                  bannerAccent: _statusBannerAccent(context),
+                  bannerBusy: _statusBannerBusy(),
+                  messageStatuses: _messageStatuses,
+                  onRetry: _retryMessage,
+                  onLoadMore: _loadMoreHistory,
+                  hasMoreHistory: _hasMoreHistory,
+                  isLoadingMore: _isLoadingMoreHistory,
+                  scrollController: _chatScrollController,
+                  inputController: _chatInputController,
+                  inputFocusNode: _chatInputFocusNode,
+                  onInputChanged: (text) => unawaited(_persistChatDraft(text)),
+                  quickActions: _quickActions(),
+                  quickActionsTitle: _quickActionsTitle(),
+                  onSendMessage: _sendChatMessage,
+                  isModelReady: _selectedModelId.trim().isNotEmpty,
+                  isModelLoading:
+                      _isLoadingModels ||
+                      _isSwitchingModel ||
+                      _workspacePhase != WorkspacePhase.ready ||
+                      !_hasLoadedModelConfig,
+                  models: _availableModels,
+                  selectedModelId: _selectedModelId,
+                  selectedEngineMode: _selectedEngineMode,
+                  onModelChanged: (v) => unawaited(_handleModelChanged(v)),
+                  onEngineChanged: (v) => unawaited(_handleEngineChanged(v)),
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }

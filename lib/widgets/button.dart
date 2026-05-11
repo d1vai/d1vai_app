@@ -149,12 +149,15 @@ class _ButtonState extends State<Button> with SingleTickerProviderStateMixin {
 
       if (widget.text != null) {
         widgets.add(
-          Text(
-            widget.text!,
-            textAlign: TextAlign.center,
-            softWrap: false,
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
+          Flexible(
+            fit: FlexFit.loose,
+            child: Text(
+              widget.text!,
+              textAlign: TextAlign.center,
+              softWrap: false,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
           ),
         );
       }

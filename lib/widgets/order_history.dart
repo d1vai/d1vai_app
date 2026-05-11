@@ -5,6 +5,7 @@ import 'order_detail_dialog.dart';
 import 'snackbar_helper.dart';
 import 'card.dart';
 import 'skeletons/order_history_skeleton.dart';
+import '../utils/desktop_layout.dart';
 
 class OrderHistory extends StatefulWidget {
   const OrderHistory({super.key});
@@ -62,6 +63,7 @@ class _OrderHistoryState extends State<OrderHistory> {
 
   @override
   Widget build(BuildContext context) {
+    final desktop = isDesktopLayout(context);
     if (_isLoading) {
       return const OrderHistorySkeleton();
     }
@@ -72,15 +74,27 @@ class _OrderHistoryState extends State<OrderHistory> {
 
     return RefreshIndicator(
       onRefresh: _loadOrders,
-      child: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: _orders.length,
-        itemBuilder: (context, index) {
-          final order = _orders[index];
-          return _buildOrderCard(order);
-        },
-        separatorBuilder: (context, index) => const SizedBox(height: 12),
-      ),
+      child: desktop
+          ? GridView.builder(
+              padding: const EdgeInsets.all(16),
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 520,
+                mainAxisExtent: 172,
+                crossAxisSpacing: 14,
+                mainAxisSpacing: 14,
+              ),
+              itemCount: _orders.length,
+              itemBuilder: (context, index) => _buildOrderCard(_orders[index]),
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: _orders.length,
+              itemBuilder: (context, index) {
+                final order = _orders[index];
+                return _buildOrderCard(order);
+              },
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
+            ),
     );
   }
 

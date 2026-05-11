@@ -2245,6 +2245,8 @@ class _ChatScreenState extends State<ChatScreen> {
     final thinkHardHint =
         loc?.translate('project_chat_engine_think_hard_hint') ??
         'Think Hard mode uses Codex engine';
+    final desktopModelWidth =
+        MediaQuery.of(context).size.width >= 900 ? 156.0 : 132.0;
 
     return Scaffold(
       appBar: AppBar(
@@ -2289,8 +2291,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 selectedModelId: _selectedModelId,
                 isLoading: _isLoadingModels || _isSwitchingModel,
                 minWidth: 104,
-                maxWidth: 132,
-                width: 132,
+                maxWidth: desktopModelWidth,
+                width: desktopModelWidth,
                 onChanged:
                     (_isLoadingModels ||
                         _isSwitchingModel ||

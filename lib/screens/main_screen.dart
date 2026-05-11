@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../l10n/app_localizations.dart';
+import '../utils/desktop_layout.dart';
 import 'dashboard_screen.dart';
 import 'community_screen.dart';
 import 'docs_screen.dart';
@@ -99,8 +100,52 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final desktop = isDesktopLayout(context);
     final theme = Theme.of(context);
     final items = _navBarsItems(context);
+    if (desktop) {
+      return Shortcuts(
+        shortcuts: const <ShortcutActivator, Intent>{
+          SingleActivator(LogicalKeyboardKey.digit1, meta: true): _NavIntent(0),
+          SingleActivator(LogicalKeyboardKey.digit2, meta: true): _NavIntent(1),
+          SingleActivator(LogicalKeyboardKey.digit3, meta: true): _NavIntent(2),
+          SingleActivator(LogicalKeyboardKey.digit4, meta: true): _NavIntent(3),
+        },
+        child: Actions(
+          actions: <Type, Action<Intent>>{
+            _NavIntent: CallbackAction<_NavIntent>(
+              onInvoke: (intent) {
+                _handleTabSelected(intent.index);
+                return null;
+              },
+            ),
+          },
+          child: Scaffold(
+            body: Row(
+              children: [
+                _D1VDesktopSideNav(
+                  items: items,
+                  selectedIndex: _controller.index,
+                  onItemSelected: _handleTabSelected,
+                ),
+                Expanded(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerLowest,
+                    ),
+                    child: IndexedStack(
+                      index: _controller.index,
+                      children: _buildScreens(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     const navContainerHeight = 64.0;
     const navOuterPadding = EdgeInsets.fromLTRB(12, 6, 12, 6);
     final navBarHeight =
@@ -120,6 +165,176 @@ class _MainScreenState extends State<MainScreen> {
         items: items,
         selectedIndex: _controller.index,
         onItemSelected: _handleTabSelected,
+      ),
+    );
+  }
+}
+
+class _NavIntent extends Intent {
+  final int index;
+
+  const _NavIntent(this.index);
+}
+
+class _D1VDesktopSideNav extends StatelessWidget {
+  final List<PersistentBottomNavBarItem> items;
+  final int selectedIndex;
+  final ValueChanged<int> onItemSelected;
+
+  const _D1VDesktopSideNav({
+    required this.items,
+    required this.selectedIndex,
+    required this.onItemSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      width: 264,
+      padding: const EdgeInsets.fromLTRB(18, 24, 18, 18),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        border: Border(
+          right: BorderSide(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.65),
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: isDark ? 0.12 : 0.06),
+            blurRadius: 24,
+            offset: const Offset(8, 0),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'd1v',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.8,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Workspace',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 24),
+          for (var i = 0; i < items.length; i++) ...[
+            _D1VDesktopNavItem(
+              item: items[i],
+              selected: i == selectedIndex,
+              onTap: () => onItemSelected(i),
+            ),
+            const SizedBox(height: 8),
+          ],
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              color: colorScheme.surfaceContainerLow,
+              border: Border.all(
+                color: colorScheme.outlineVariant.withValues(alpha: 0.55),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  PhosphorIcons.desktop(),
+                  size: 18,
+                  color: colorScheme.primary,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Desktop mode · Cmd+1-4',
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _D1VDesktopNavItem extends StatelessWidget {
+  final PersistentBottomNavBarItem item;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _D1VDesktopNavItem({
+    required this.item,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final activeColor = item.activeColorPrimary;
+    final inactiveColor =
+        item.inactiveColorPrimary ?? colorScheme.onSurfaceVariant;
+    final icon = selected ? item.icon : (item.inactiveIcon ?? item.icon);
+    final title = item.title ?? '';
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            color: selected
+                ? colorScheme.primary.withValues(alpha: 0.10)
+                : Colors.transparent,
+            border: Border.all(
+              color: selected
+                  ? colorScheme.primary.withValues(alpha: 0.16)
+                  : colorScheme.outlineVariant.withValues(alpha: 0.0),
+            ),
+          ),
+          child: Row(
+            children: [
+              IconTheme(
+                data: IconThemeData(
+                  size: 22,
+                  color: selected ? activeColor : inactiveColor,
+                ),
+                child: icon,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: selected ? activeColor : inactiveColor,
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../core/theme/app_colors.dart';
+import '../utils/desktop_layout.dart';
 import '../widgets/snackbar_helper.dart';
+import '../widgets/share_sheet.dart';
 
 class DocsScreen extends StatefulWidget {
   const DocsScreen({super.key});
@@ -81,12 +85,6 @@ class _DocsScreenState extends State<DocsScreen> {
       icon: Icons.map,
     ),
     DocItem(
-      href: '/docs/pricing',
-      title: 'Pricing & Plans',
-      desc: 'Plan selection guidance and billing expectations.',
-      icon: Icons.attach_money,
-    ),
-    DocItem(
       href: '/docs/refund-policy',
       title: 'Refund and Dispute Policy',
       desc: 'Refund/dispute process and timelines.',
@@ -151,6 +149,7 @@ class _DocsScreenState extends State<DocsScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final showRecent = _searchController.text.trim().isEmpty;
+    final desktop = isDesktopLayout(context);
     return Scaffold(
       appBar: AppBar(title: const Text('Documentation')),
       body: Container(
@@ -164,47 +163,151 @@ class _DocsScreenState extends State<DocsScreen> {
             ],
           ),
         ),
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-          children: [
-            _buildHero(context),
-            const SizedBox(height: 16),
-            _buildSearchField(context),
-            const SizedBox(height: 20),
-            if (_filteredPages.isEmpty)
-              _buildEmptyState(context)
-            else ...[
-              if (showRecent && _recentSlugs.isNotEmpty) ...[
-                _buildSectionHeader(
-                  context,
-                  eyebrow: 'History',
-                  title: 'Recently viewed',
-                  action: TextButton(
-                    onPressed: _clearRecent,
-                    child: const Text('Clear'),
-                  ),
+        child: desktop
+            ? DesktopContentFrame(
+                maxWidth: 1440,
+                padding: const EdgeInsets.fromLTRB(24, 18, 24, 28),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 4,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildHero(context),
+                          const SizedBox(height: 16),
+                          _buildSearchField(context),
+                          const SizedBox(height: 18),
+                          if (showRecent && _recentSlugs.isNotEmpty) ...[
+                            _buildSectionHeader(
+                              context,
+                              eyebrow: 'History',
+                              title: 'Recently viewed',
+                              action: TextButton(
+                                onPressed: _clearRecent,
+                                child: const Text('Clear'),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Expanded(child: SingleChildScrollView(child: _buildRecent(context))),
+                          ] else
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(18),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.surface.withValues(
+                                    alpha: 0.78,
+                                  ),
+                                  borderRadius: BorderRadius.circular(24),
+                                  border: Border.all(
+                                    color: theme.colorScheme.outlineVariant
+                                        .withValues(alpha: 0.55),
+                                  ),
+                                ),
+                                child: Text(
+                                  'Search by task, workflow, or page title. Recent documents will appear here when you start browsing.',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          const SizedBox(height: 14),
+                          FilledButton.icon(
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() {});
+                            },
+                            icon: const Icon(Icons.menu_book_outlined),
+                            label: const Text('Browse all docs'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    Expanded(
+                      flex: 6,
+                      child: SingleChildScrollView(
+                        child: _buildDocsCatalog(context),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                _buildRecent(context),
-                const SizedBox(height: 22),
-              ],
-              _buildSectionHeader(
-                context,
-                eyebrow: 'Library',
-                title: _searchController.text.trim().isEmpty
-                    ? 'Browse all documents'
-                    : 'Search results',
-                trailingText:
-                    '${_filteredPages.length.toString().padLeft(2, '0')} items',
+              )
+            : ListView(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                children: [
+                  _buildHero(context),
+                  const SizedBox(height: 16),
+                  _buildSearchField(context),
+                  const SizedBox(height: 20),
+                  _buildDocsCatalog(context),
+                ],
               ),
-              const SizedBox(height: 12),
-              ..._filteredPages.asMap().entries.map(
-                (entry) => _buildDocCard(context, entry.value, entry.key),
-              ),
-            ],
-          ],
-        ),
       ),
+    );
+  }
+
+  Widget _buildDocsCatalog(BuildContext context) {
+    final showRecent = _searchController.text.trim().isEmpty;
+    final desktop = isDesktopLayout(context);
+    if (_filteredPages.isEmpty) {
+      return _buildEmptyState(context);
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (!isDesktopLayout(context) && showRecent && _recentSlugs.isNotEmpty) ...[
+          _buildSectionHeader(
+            context,
+            eyebrow: 'History',
+            title: 'Recently viewed',
+            action: TextButton(onPressed: _clearRecent, child: const Text('Clear')),
+          ),
+          const SizedBox(height: 12),
+          _buildRecent(context),
+          const SizedBox(height: 22),
+        ],
+        _buildSectionHeader(
+          context,
+          eyebrow: 'Library',
+          title: _searchController.text.trim().isEmpty
+              ? 'Browse all documents'
+              : 'Search results',
+          trailingText:
+              '${_filteredPages.length.toString().padLeft(2, '0')} items',
+        ),
+        const SizedBox(height: 12),
+        if (isDesktopLayout(context))
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              'Tip: open a page, then use history on the left to jump back without re-searching.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        if (desktop)
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 420,
+              mainAxisExtent: 184,
+              crossAxisSpacing: 14,
+              mainAxisSpacing: 14,
+            ),
+            itemCount: _filteredPages.length,
+            itemBuilder: (context, index) =>
+                _buildDocCard(context, _filteredPages[index], index),
+          )
+        else
+          ..._filteredPages.asMap().entries.map(
+            (entry) => _buildDocCard(context, entry.value, entry.key),
+          ),
+      ],
     );
   }
 
@@ -511,7 +614,6 @@ class _DocsScreenState extends State<DocsScreen> {
     final tag = _tagForItem(page);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         gradient: LinearGradient(
@@ -675,6 +777,9 @@ class _DocsScreenState extends State<DocsScreen> {
       return;
     }
     final router = GoRouter.of(context);
+    final state = GoRouterState.of(context);
+    final hideHeader =
+        (state.uri.queryParameters['hideheader'] ?? '').toLowerCase() == 'true';
 
     // Persist recent list locally (also updated by DocDetailScreen).
     final prefs = await _prefsFuture;
@@ -691,8 +796,21 @@ class _DocsScreenState extends State<DocsScreen> {
       });
     }
 
-    // Open in-app doc viewer to reduce context switching.
-    await router.push('/docs/$slug');
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.macOS) {
+      final uri = ShareLinks.docsBySlug(slug, hideHeader: true);
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok && context.mounted) {
+        SnackBarHelper.showError(
+          context,
+          title: 'Open failed',
+          message: 'Cannot open link: $uri',
+        );
+      }
+      await _loadRecent();
+      return;
+    }
+
+    await router.push(hideHeader ? '/docs/$slug?hideheader=true' : '/docs/$slug');
     await _loadRecent();
   }
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,8 +16,13 @@ import '../widgets/web_subpage_app_bar.dart';
 
 class DocDetailScreen extends StatefulWidget {
   final String slug;
+  final bool hideHeader;
 
-  const DocDetailScreen({super.key, required this.slug});
+  const DocDetailScreen({
+    super.key,
+    required this.slug,
+    this.hideHeader = false,
+  });
 
   @override
   State<DocDetailScreen> createState() => _DocDetailScreenState();
@@ -33,9 +39,9 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
   Uri get _docUrl {
     final slug = widget.slug.trim();
     if (slug.isEmpty) {
-      return Uri.parse('https://www.d1v.ai/docs/overview');
+      return ShareLinks.docsBySlug('overview', hideHeader: widget.hideHeader);
     }
-    return Uri.parse('https://www.d1v.ai/docs/$slug');
+    return ShareLinks.docsBySlug(slug, hideHeader: widget.hideHeader);
   }
 
   static const _jsHandlerCopyCode = 'd1vCopyCode';
@@ -45,12 +51,19 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
   Timer? _scrollDebounce;
   int _lastSavedScrollY = -1;
   bool _didRestoreScroll = false;
+  bool _didOpenExternally = false;
 
   @override
   void initState() {
     super.initState();
     _prefsFuture = SharedPreferences.getInstance();
     unawaited(_recordRecent());
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.macOS) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        unawaited(_openExternalOnMacOS());
+      });
+      return;
+    }
     _pullToRefreshController = PullToRefreshController(
       settings: PullToRefreshSettings(color: Colors.deepPurple),
       onRefresh: () async {
@@ -61,6 +74,14 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
         }
       },
     );
+  }
+
+  Future<void> _openExternalOnMacOS() async {
+    if (_didOpenExternally || !mounted) return;
+    _didOpenExternally = true;
+    await _openExternal();
+    if (!mounted) return;
+    await Navigator.of(context).maybePop();
   }
 
   @override
@@ -226,18 +247,53 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.macOS) {
+      return Scaffold(
+        backgroundColor: isDark
+            ? const Color(0xFF0B1220)
+            : const Color(0xFFF8FAFC),
+        appBar: widget.hideHeader
+            ? null
+            : WebSubPageAppBar(
+                title: Text(
+                  (loc?.translate('docs_title_slug') ?? 'Docs: {slug}')
+                      .replaceAll('{slug}', widget.slug),
+                ),
+              ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(
+                  'Opening documentation in your browser...',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: isDark
           ? const Color(0xFF0B1220)
           : const Color(0xFFF8FAFC),
-      appBar: WebSubPageAppBar(
-        title: Text(
-          (loc?.translate('docs_title_slug') ?? 'Docs: {slug}').replaceAll(
-            '{slug}',
-            widget.slug,
-          ),
-        ),
-        actions: [
+      appBar: widget.hideHeader
+          ? null
+          : WebSubPageAppBar(
+              title: Text(
+                (loc?.translate('docs_title_slug') ?? 'Docs: {slug}')
+                    .replaceAll('{slug}', widget.slug),
+              ),
+              actions: [
           IconButton(
             tooltip: loc?.translate('docs_share') ?? 'Share',
             icon: const Icon(Icons.share),
@@ -256,11 +312,11 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
             icon: const Icon(Icons.open_in_new),
             onPressed: _openExternal,
           ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(13),
-          child: _isLoading
-              ? Padding(
+              ],
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(13),
+                child: _isLoading
+                    ? Padding(
                   padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(999),
@@ -276,9 +332,9 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
                     ),
                   ),
                 )
-              : const SizedBox(height: 10),
-        ),
-      ),
+                    : const SizedBox(height: 10),
+              ),
+            ),
       body: Stack(
         children: [
           Container(

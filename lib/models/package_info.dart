@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class PackageInfo {
   final int id;
   final String name;
@@ -9,6 +11,8 @@ class PackageInfo {
   final int? intervalCount;
   final String stripeCurrency;
   final int creditCents;
+  final String? iosProductId;
+  final String? androidProductId;
 
   const PackageInfo({
     required this.id,
@@ -21,6 +25,8 @@ class PackageInfo {
     required this.intervalCount,
     required this.stripeCurrency,
     required this.creditCents,
+    this.iosProductId,
+    this.androidProductId,
   });
 
   factory PackageInfo.fromJson(Map<String, dynamic> json) {
@@ -35,6 +41,8 @@ class PackageInfo {
       intervalCount: json['interval_count'] as int?,
       stripeCurrency: (json['stripe_currency'] ?? 'usd').toString(),
       creditCents: json['credit_cents'] as int? ?? 0,
+      iosProductId: json['ios_product_id']?.toString(),
+      androidProductId: json['android_product_id']?.toString(),
     );
   }
 
@@ -45,6 +53,18 @@ class PackageInfo {
   bool get isYearly => interval == 'year' && (intervalCount ?? 1) == 1;
 
   double get priceUsd => price / 100.0;
+
+  String? productIdForPlatform(TargetPlatform platform) {
+    switch (platform) {
+      case TargetPlatform.iOS:
+      case TargetPlatform.macOS:
+        return iosProductId;
+      case TargetPlatform.android:
+        return androidProductId;
+      default:
+        return null;
+    }
+  }
 
   String get billingLabel {
     if (isYearly) return '/year';

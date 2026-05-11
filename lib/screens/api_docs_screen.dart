@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -12,12 +13,14 @@ class ApiDocsScreen extends StatefulWidget {
   final String? title;
   final String? specUrl;
   final bool preferOpenApiShell;
+  final bool hideHeader;
 
   const ApiDocsScreen({
     super.key,
     this.title,
     this.specUrl,
     this.preferOpenApiShell = false,
+    this.hideHeader = false,
   });
 
   @override
@@ -35,6 +38,7 @@ class _ApiDocsScreenState extends State<ApiDocsScreen> {
   bool _isLoading = true;
   bool _hasError = false;
   double _progress = 0;
+  bool _didOpenExternally = false;
 
   Uri get _docsUrl {
     final base = Uri.tryParse(ApiClient.baseUrl);
@@ -59,12 +63,26 @@ class _ApiDocsScreenState extends State<ApiDocsScreen> {
   Uri get _viewUrl {
     final spec = _resolvedSpecUrl;
     if (spec == null) return _docsUrl;
-    return ShareLinks.openApiDocs(prompt: _resolvedTitle, spec: spec);
+    return ShareLinks.openApiDocs(
+      prompt: _resolvedTitle,
+      spec: spec,
+      hideHeader: widget.hideHeader,
+    );
   }
 
   @override
   void initState() {
     super.initState();
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.macOS) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (_didOpenExternally || !mounted) return;
+        _didOpenExternally = true;
+        await _openExternal();
+        if (!mounted) return;
+        await Navigator.of(context).maybePop();
+      });
+      return;
+    }
     _pull = PullToRefreshController(
       settings: PullToRefreshSettings(color: Colors.deepPurple),
       onRefresh: () async {
@@ -100,10 +118,41 @@ class _ApiDocsScreenState extends State<ApiDocsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.macOS) {
+      final theme = Theme.of(context);
+      final colorScheme = theme.colorScheme;
+      return Scaffold(
+        appBar: widget.hideHeader
+            ? null
+            : WebSubPageAppBar(title: Text(_resolvedTitle)),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(
+                  'Opening API docs in your browser...',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
-      appBar: WebSubPageAppBar(
-        title: Text(_resolvedTitle),
-        actions: [
+      appBar: widget.hideHeader
+          ? null
+          : WebSubPageAppBar(
+              title: Text(_resolvedTitle),
+              actions: [
           IconButton(
             tooltip: 'Share',
             icon: const Icon(Icons.share),
@@ -121,17 +170,17 @@ class _ApiDocsScreenState extends State<ApiDocsScreen> {
             icon: const Icon(Icons.open_in_new),
             onPressed: _openExternal,
           ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(2),
-          child: _isLoading
-              ? LinearProgressIndicator(
+              ],
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(2),
+                child: _isLoading
+                    ? LinearProgressIndicator(
                   value: _progress > 0 && _progress < 1 ? _progress : null,
                   minHeight: 2,
                 )
-              : const SizedBox(height: 2),
-        ),
-      ),
+                    : const SizedBox(height: 2),
+              ),
+            ),
       body: Stack(
         children: [
           InAppWebView(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 
 import '../models/project.dart';
 import '../providers/auth_provider.dart';
@@ -20,6 +21,7 @@ import '../widgets/snackbar_helper.dart';
 import '../theme/d1v_theme_colors.dart';
 import '../core/auth_expiry_bus.dart';
 import '../l10n/app_localizations.dart';
+import '../utils/desktop_layout.dart';
 import 'dart:ui';
 import '../widgets/skeletons/project_overview_skeleton.dart';
 
@@ -249,13 +251,16 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final desktop = isDesktopLayout(context);
 
     if (_isLoading) {
       return Scaffold(
-        appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(kToolbarHeight),
-          child: _buildGlassmorphicAppBar(context),
-        ),
+        appBar: desktop
+            ? null
+            : PreferredSize(
+                preferredSize: const Size.fromHeight(kToolbarHeight),
+                child: _buildGlassmorphicAppBar(context),
+              ),
         body: const ProjectOverviewSkeleton(),
       );
     }
@@ -299,44 +304,80 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     }
 
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: _buildGlassmorphicAppBar(context),
-      ),
-      body: D1VTabBarView(
-        controller: _tabController,
-        children: [
-          ProjectOverviewTab(project: project, onRefreshProject: _loadProject),
-          ProjectChatTab(
-            key: _chatTabKey,
-            projectId: project.id,
-            previewUrl: project.preferredPreviewUrl,
-            initialSubTab: widget.initialChatTab,
-          ),
-          ProjectApiTab(projectId: project.id),
-          ProjectDatabaseTab(
-            project: project,
-            onAskAi: _handleAskAi,
-            onRefreshProject: _loadProject,
-          ),
-          ProjectPaymentTab(
-            projectId: project.id,
-            projectPayId: project.projectPayId,
-            onRefreshProject: _loadProject,
-            onAskAi: _handleAskAi,
-          ),
-          ProjectDeployTab(
-            project: project,
-            onAskAi: _handleAskAi,
-            onRefreshProject: _loadProject,
-          ),
-          ProjectAnalyticsTab(
-            project: project,
-            onAskAi: _handleAskAi,
-            onRefreshProject: _loadProject,
-          ),
-        ],
-      ),
+      appBar: desktop
+          ? null
+          : PreferredSize(
+              preferredSize: const Size.fromHeight(kToolbarHeight),
+              child: _buildGlassmorphicAppBar(context),
+            ),
+      body: desktop
+          ? DesktopContentFrame(
+              maxWidth: 1520,
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 250,
+                    child: _ProjectDesktopRail(
+                      tabs: _tabs
+                          .map((tab) => (tab.icon, _t(tab.labelKey, tab.fallback)))
+                          .toList(),
+                      controller: _tabController,
+                      projectName: project.projectName,
+                      onBack: () {
+                        final router = GoRouter.of(context);
+                        if (router.canPop()) {
+                          router.pop();
+                        } else {
+                          router.go('/projects');
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 24),
+                  Expanded(child: _buildProjectTabViews(project)),
+                ],
+              ),
+            )
+          : _buildProjectTabViews(project),
+    );
+  }
+
+  Widget _buildProjectTabViews(UserProject project) {
+    return D1VTabBarView(
+      controller: _tabController,
+      children: [
+        ProjectOverviewTab(project: project, onRefreshProject: _loadProject),
+        ProjectChatTab(
+          key: _chatTabKey,
+          projectId: project.id,
+          previewUrl: project.preferredPreviewUrl,
+          initialSubTab: widget.initialChatTab,
+        ),
+        ProjectApiTab(projectId: project.id),
+        ProjectDatabaseTab(
+          project: project,
+          onAskAi: _handleAskAi,
+          onRefreshProject: _loadProject,
+        ),
+        ProjectPaymentTab(
+          projectId: project.id,
+          projectPayId: project.projectPayId,
+          onRefreshProject: _loadProject,
+          onAskAi: _handleAskAi,
+        ),
+        ProjectDeployTab(
+          project: project,
+          onAskAi: _handleAskAi,
+          onRefreshProject: _loadProject,
+        ),
+        ProjectAnalyticsTab(
+          project: project,
+          onAskAi: _handleAskAi,
+          onRefreshProject: _loadProject,
+        ),
+      ],
     );
   }
 
@@ -408,6 +449,125 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ProjectDesktopRail extends StatelessWidget {
+  final List<(IconData, String)> tabs;
+  final TabController controller;
+  final String projectName;
+  final VoidCallback onBack;
+
+  const _ProjectDesktopRail({
+    required this.tabs,
+    required this.controller,
+    required this.projectName,
+    required this.onBack,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: colorScheme.outlineVariant.withValues(alpha: 0.55),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: onBack,
+                    icon: const Icon(Icons.arrow_back, size: 16),
+                    label: const Text('Back'),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      projectName.trim().isEmpty ? 'Project' : projectName,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Use the left rail to jump across overview, chat, environment, billing, deploy, and analytics.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 16),
+              for (var i = 0; i < tabs.length; i++) ...[
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => controller.animateTo(i),
+                    borderRadius: BorderRadius.circular(16),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      curve: Curves.easeOutCubic,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 14,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        color: controller.index == i
+                            ? colorScheme.primary.withValues(alpha: 0.10)
+                            : Colors.transparent,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            tabs[i].$1,
+                            size: 18,
+                            color: controller.index == i
+                                ? colorScheme.primary
+                                : colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              tabs[i].$2,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: controller.index == i
+                                    ? FontWeight.w800
+                                    : FontWeight.w600,
+                                color: controller.index == i
+                                    ? colorScheme.primary
+                                    : colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                if (i != tabs.length - 1) const SizedBox(height: 8),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 }

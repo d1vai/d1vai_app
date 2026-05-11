@@ -12,6 +12,7 @@ import 'package:d1vai_app/core/theme/app_colors.dart';
 import 'package:d1vai_app/screens/settings/profile_tab.dart';
 import 'package:d1vai_app/screens/settings/github_tab.dart';
 import 'package:d1vai_app/screens/settings/invites_tab.dart';
+import 'package:d1vai_app/utils/desktop_layout.dart';
 
 class SettingsScreen extends StatefulWidget {
   final String? initialTab;
@@ -62,63 +63,115 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
+    final desktop = isDesktopLayout(context);
+    final tabs = [
+      (
+        label: loc?.translate('profile') ?? 'Profile',
+        icon: Icons.person,
+        child: SettingsProfileTab(
+          onShowThemeDialog: _showThemeDialog,
+          onShowBindEmailDialog: _showBindEmailDialog,
+          onShowResetPasswordDialog: _showResetPasswordDialog,
+          onShowAboutDialog: _showAboutDialog,
+        ),
+      ),
+      (
+        label: loc?.translate('github') ?? 'GitHub',
+        icon: Icons.code,
+        child: const SettingsGithubTab(),
+      ),
+      (
+        label: loc?.translate('invites') ?? 'Invites',
+        icon: Icons.group_add,
+        child: const SettingsInvitesTab(),
+      ),
+    ];
 
     return Scaffold(
       appBar: AppBar(
         title: Text(loc?.translate('settings') ?? 'Settings'),
-        // actions: [
-        //   IconButton(
-        //     icon: const Icon(Icons.close),
-        //     onPressed: () => context.pop(),
-        //   ),
-        // ],
       ),
-      body: Column(
-        children: [
-          // Tab 导航
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-            child: Row(
+      body: desktop
+          ? DesktopContentFrame(
+              maxWidth: 1380,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 240,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerLow,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .outlineVariant
+                                  .withValues(alpha: 0.55),
+                            ),
+                          ),
+                          child: Text(
+                            'Profile manages account basics, GitHub handles repo access, Invites covers growth and referrals.',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        for (var i = 0; i < tabs.length; i++) ...[
+                          _buildDesktopTabButton(
+                            i,
+                            tabs[i].label,
+                            tabs[i].icon,
+                          ),
+                          const SizedBox(height: 10),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 24),
+                  Expanded(
+                    child: IndexedStack(
+                      index: _currentTab,
+                      children: tabs.map((tab) => tab.child).toList(),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : Column(
               children: [
-                _buildTabButton(
-                  0,
-                  loc?.translate('profile') ?? 'Profile',
-                  Icons.person,
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 16,
+                  ),
+                  child: Row(
+                    children: [
+                      _buildTabButton(0, tabs[0].label, tabs[0].icon),
+                      const SizedBox(width: 8),
+                      _buildTabButton(1, tabs[1].label, tabs[1].icon),
+                      const SizedBox(width: 8),
+                      _buildTabButton(2, tabs[2].label, tabs[2].icon),
+                    ],
+                  ),
                 ),
-                const SizedBox(width: 8),
-                _buildTabButton(
-                  1,
-                  loc?.translate('github') ?? 'GitHub',
-                  Icons.code,
-                ),
-                const SizedBox(width: 8),
-                _buildTabButton(
-                  2,
-                  loc?.translate('invites') ?? 'Invites',
-                  Icons.group_add,
+                Expanded(
+                  child: IndexedStack(
+                    index: _currentTab,
+                    children: tabs.map((tab) => tab.child).toList(),
+                  ),
                 ),
               ],
             ),
-          ),
-
-          // 内容区域
-          Expanded(
-            child: IndexedStack(
-              index: _currentTab,
-              children: [
-                SettingsProfileTab(
-                  onShowThemeDialog: _showThemeDialog,
-                  onShowBindEmailDialog: _showBindEmailDialog,
-                  onShowResetPasswordDialog: _showResetPasswordDialog,
-                  onShowAboutDialog: _showAboutDialog,
-                ),
-                const SettingsGithubTab(),
-                const SettingsInvitesTab(),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -139,6 +192,63 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _currentTab = index;
           });
         },
+      ),
+    );
+  }
+
+  Widget _buildDesktopTabButton(int index, String label, IconData icon) {
+    final isSelected = _currentTab == index;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _currentTab = index;
+          });
+        },
+        borderRadius: BorderRadius.circular(18),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            color: isSelected
+                ? colorScheme.primary.withValues(alpha: 0.10)
+                : colorScheme.surfaceContainerLow,
+            border: Border.all(
+              color: isSelected
+                  ? colorScheme.primary.withValues(alpha: 0.18)
+                  : colorScheme.outlineVariant.withValues(alpha: 0.55),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: 18,
+                color: isSelected
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  label,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                    color: isSelected
+                        ? colorScheme.primary
+                        : colorScheme.onSurface,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

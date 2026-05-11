@@ -441,8 +441,9 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
                           ),
                           const SizedBox(width: 12),
                           OutlinedButton.icon(
-                            onPressed: () =>
-                                context.push('/docs/legal-restrictions'),
+                            onPressed: () => context.push(
+                              '/docs/legal-restrictions?hideheader=true',
+                            ),
                             icon: const Icon(Icons.gavel, size: 18),
                             label: Text(
                               loc?.translate('account_data_legal') ?? 'Legal',

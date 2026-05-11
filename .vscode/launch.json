@@ -1,34 +1,71 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "d1vai_app",
-            "request": "launch",
-            "type": "dart",
-            "toolArgs": [
-                "--dart-define-from-file=.env/dev.json"
-            ]
-        },
-        {
-            "name": "d1vai_app (profile mode)",
-            "request": "launch",
-            "type": "dart",
-            "flutterMode": "profile",
-            "toolArgs": [
-                "--dart-define-from-file=.env/dev.json"
-            ]
-        },
-        {
-            "name": "d1vai_app (release mode)",
-            "request": "launch",
-            "type": "dart",
-            "flutterMode": "release",
-            "toolArgs": [
-                "--dart-define-from-file=.env/dev.json"
-            ]
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Flutter: macOS",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "macos",
+      "toolArgs": [
+        "--dart-define-from-file=.env/dev.json"
+      ]
+    },
+    {
+      "name": "Flutter: iOS",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "ios",
+      "toolArgs": [
+        "--dart-define-from-file=.env/dev.json"
+      ]
+    },
+    {
+      "name": "Flutter: Current Device",
+      "request": "launch",
+      "type": "dart",
+      "toolArgs": [
+        "--dart-define-from-file=.env/dev.json"
+      ]
+    },
+    {
+      "name": "Flutter: macOS (profile)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "macos",
+      "flutterMode": "profile",
+      "toolArgs": [
+        "--dart-define-from-file=.env/dev.json"
+      ]
+    },
+    {
+      "name": "Flutter: iOS (profile)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "ios",
+      "flutterMode": "profile",
+      "toolArgs": [
+        "--dart-define-from-file=.env/dev.json"
+      ]
+    },
+    {
+      "name": "Flutter: macOS (release)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "macos",
+      "flutterMode": "release",
+      "toolArgs": [
+        "--dart-define-from-file=.env/dev.json"
+      ]
+    },
+    {
+      "name": "Flutter: iOS (release)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "ios",
+      "flutterMode": "release",
+      "toolArgs": [
+        "--dart-define-from-file=.env/dev.json"
+      ]
+    }
+  ]
 }

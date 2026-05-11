@@ -88,6 +88,29 @@ class WalletService {
     );
   }
 
+  Future<Map<String, dynamic>> confirmApplePurchase({
+    required String packageId,
+    required String productId,
+    required String transactionId,
+    String? verificationData,
+    String? serverVerificationData,
+    String? status,
+  }) async {
+    return _apiClient.post<Map<String, dynamic>>(
+      '/api/package_order/apple-iap/confirm',
+      {
+        'package_id': packageId,
+        'product_id': productId,
+        'transaction_id': transactionId,
+        if (verificationData != null && verificationData.isNotEmpty)
+          'verification_data': verificationData,
+        if (serverVerificationData != null && serverVerificationData.isNotEmpty)
+          'server_verification_data': serverVerificationData,
+        if (status != null && status.isNotEmpty) 'status': status,
+      },
+    );
+  }
+
   Future<List<PackageInfo>> getPackages() async {
     final List<dynamic> data = await _apiClient.get<List<dynamic>>(
       '/api/package_info/package_info',

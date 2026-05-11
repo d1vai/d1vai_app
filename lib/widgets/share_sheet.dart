@@ -31,6 +31,7 @@ class ShareLinks {
   // Keep this centralized so future domain/deep-link changes are one-liners.
   static const String webBaseUrl = 'https://www.d1v.ai';
   static const String marketplaceBaseUrl = 'https://d1vai.com';
+  static const String _hideHeaderValue = 'true';
 
   // d1vai_app currently opens app detail via the marketplace domain.
   static Uri marketplaceAppBySlug(String slug) =>
@@ -41,13 +42,23 @@ class ShareLinks {
 
   static Uri publicUserBySlug(String slug) => Uri.parse('$webBaseUrl/u/$slug');
 
-  static Uri openApiDocs({String? prompt, String? spec}) => Uri(
+  static Uri docsBySlug(String slug, {bool hideHeader = false}) => Uri(
+    scheme: 'https',
+    host: 'www.d1v.ai',
+    path: '/docs/$slug',
+    queryParameters: {
+      if (hideHeader) 'hideheader': _hideHeaderValue,
+    },
+  );
+
+  static Uri openApiDocs({String? prompt, String? spec, bool hideHeader = false}) => Uri(
     scheme: 'https',
     host: 'www.d1v.ai',
     path: '/openapi',
     queryParameters: {
       if ((prompt ?? '').trim().isNotEmpty) 'prompt': prompt!.trim(),
       if ((spec ?? '').trim().isNotEmpty) 'spec': spec!.trim(),
+      if (hideHeader) 'hideheader': _hideHeaderValue,
     },
   );
 }

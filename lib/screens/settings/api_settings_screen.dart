@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/api_client.dart';
 import '../../services/workspace_service.dart';
+import '../../widgets/macos_workspace_inspector_card.dart';
 import '../../widgets/snackbar_helper.dart';
 
 class ApiSettingsScreen extends StatefulWidget {
@@ -414,6 +415,8 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
               ),
             ),
           ),
+          const SizedBox(height: 16),
+          const MacosWorkspaceInspectorCard(),
         ],
       ),
     );

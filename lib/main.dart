@@ -13,9 +13,14 @@ import 'router/app_router.dart';
 import 'l10n/app_localizations.dart';
 import 'core/theme/app_theme.dart';
 import 'core/auth_expiry_bus.dart';
+import 'services/apple_iap_service.dart';
+import 'services/macos_folder_import_service.dart';
+import 'services/macos_open_service.dart';
 import 'services/stripe_payment_service.dart';
 
 final _appRouter = createAppRouter();
+final _macosOpenService = MacosOpenService.instance;
+final _macosFolderImportService = MacosFolderImportService.instance;
 
 Future<void> main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -36,11 +41,23 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => ProjectProvider()),
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider.value(value: _macosOpenService),
+        ChangeNotifierProvider.value(value: _macosFolderImportService),
       ],
       child: const _AuthExpiryGate(child: MyApp()),
     ),
   );
 
+  unawaited(_macosOpenService.initialize(onDirectoryOpened: () {
+    final context = _appRouter.routerDelegate.navigatorKey.currentContext;
+    final pendingPath = _macosOpenService.consumePendingDirectoryPath();
+    if (context == null || pendingPath == null || pendingPath.isEmpty) {
+      return;
+    }
+    unawaited(_macosFolderImportService.importDirectory(context, pendingPath));
+  }));
+
+  unawaited(AppleIapService.ensureInitialized());
   unawaited(StripePaymentService.initialize());
 
   Future.delayed(const Duration(seconds: 1), () {

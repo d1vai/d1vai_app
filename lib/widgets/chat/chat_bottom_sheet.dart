@@ -170,9 +170,16 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
             ),
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final modelWidth = math.min(128.0, constraints.maxWidth * 0.28);
-
-                return Row(
+                final compactHeader = constraints.maxWidth < 460;
+                final regularModelWidth = math.min(
+                  172.0,
+                  constraints.maxWidth * 0.36,
+                );
+                final compactModelWidth = math.min(
+                  112.0,
+                  constraints.maxWidth * 0.32,
+                );
+                final titleRow = Row(
                   children: [
                     Text(
                       'Chat',
@@ -190,7 +197,19 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                         visualDensity: VisualDensity.compact,
                       ),
                     ],
-                    const SizedBox(width: 8),
+                    if (widget.onClose != null) ...[
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: widget.onClose,
+                        iconSize: 20,
+                        tooltip: 'Close',
+                      ),
+                    ],
+                  ],
+                );
+                final controlsRow = Row(
+                  children: [
                     Flexible(
                       child: Align(
                         alignment: Alignment.centerLeft,
@@ -199,20 +218,34 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                           selectedModelId: widget.selectedModelId,
                           isLoading: widget.isModelLoading,
                           onChanged: widget.onModelChanged,
-                          minWidth: 92,
-                          maxWidth: modelWidth,
-                          width: modelWidth,
+                          minWidth: compactHeader ? 72 : 92,
+                          maxWidth: compactHeader
+                              ? compactModelWidth
+                              : regularModelWidth,
+                          width: compactHeader
+                              ? compactModelWidth
+                              : regularModelWidth,
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
-                    ProjectChatEngineModeSegment(
-                      value: widget.selectedEngineMode,
-                      fastTooltip: fastHint,
-                      thinkHardTooltip: thinkHardHint,
-                      onChanged: widget.isModelLoading
-                          ? null
-                          : widget.onEngineChanged,
+                    Flexible(
+                      flex: compactHeader ? 2 : 1,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: ProjectChatEngineModeSegment(
+                            value: widget.selectedEngineMode,
+                            fastTooltip: fastHint,
+                            thinkHardTooltip: thinkHardHint,
+                            onChanged: widget.isModelLoading
+                                ? null
+                                : widget.onEngineChanged,
+                          ),
+                        ),
+                      ),
                     ),
                     if (showStatus) ...[
                       const SizedBox(width: 8),
@@ -242,13 +275,25 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                         ),
                       ),
                     ],
-                    const SizedBox(width: 4),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: widget.onClose,
-                      iconSize: 20,
-                      tooltip: 'Close',
-                    ),
+                  ],
+                );
+
+                if (compactHeader) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      titleRow,
+                      const SizedBox(height: 8),
+                      controlsRow,
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(child: titleRow),
+                    const SizedBox(width: 8),
+                    Flexible(child: controlsRow),
                   ],
                 );
               },
@@ -359,49 +404,57 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final maxH = (constraints.maxHeight * 0.48).clamp(0.0, 420.0);
+        final compact = maxH < 180;
         return Center(
           child: ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxH, maxWidth: 520),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.smart_toy,
-                  size: 44.0,
-                  color: theme.colorScheme.primary.withValues(alpha: 0.55),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Ask',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              padding: EdgeInsets.symmetric(
+                vertical: compact ? 6 : 0,
+                horizontal: 0,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.smart_toy,
+                    size: compact ? 36.0 : 44.0,
+                    color: theme.colorScheme.primary.withValues(alpha: 0.55),
                   ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Ask about the project or paste code.',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant.withValues(
-                      alpha: 0.9,
+                  SizedBox(height: compact ? 8 : 12),
+                  Text(
+                    'Ask',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
                     ),
-                    height: 1.2,
                   ),
-                ),
-                const SizedBox(height: 12),
-                QuickActions(
-                  onSelect: _handleSubmitted,
-                  actions: widget.quickActions.isEmpty
-                      ? null
-                      : widget.quickActions,
-                  title: widget.quickActionsTitle,
-                  dense: true,
-                  showTitle: false,
-                  animateIn: false,
-                  enableBreathing: false,
-                  padding: EdgeInsets.zero,
-                ),
-              ],
+                  const SizedBox(height: 6),
+                  Text(
+                    'Ask about the project or paste code.',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.9,
+                      ),
+                      height: 1.2,
+                    ),
+                  ),
+                  SizedBox(height: compact ? 8 : 12),
+                  QuickActions(
+                    onSelect: _handleSubmitted,
+                    actions: widget.quickActions.isEmpty
+                        ? null
+                        : widget.quickActions,
+                    title: widget.quickActionsTitle,
+                    dense: true,
+                    showTitle: false,
+                    animateIn: false,
+                    enableBreathing: false,
+                    padding: EdgeInsets.zero,
+                  ),
+                ],
+              ),
             ),
           ),
         );
