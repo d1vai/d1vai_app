@@ -12,6 +12,7 @@ import 'package:d1vai_app/core/theme/app_colors.dart';
 import 'package:d1vai_app/screens/settings/profile_tab.dart';
 import 'package:d1vai_app/screens/settings/github_tab.dart';
 import 'package:d1vai_app/screens/settings/invites_tab.dart';
+import 'package:d1vai_app/screens/settings/api_keys_tab.dart';
 import 'package:d1vai_app/utils/desktop_layout.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -28,10 +29,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   int _tabIndexFromValue(String? value) {
     switch ((value ?? '').trim().toLowerCase()) {
-      case 'github':
-        return 1;
       case 'invites':
+        return 1;
+      case 'github':
         return 2;
+      case 'api-key':
+      case 'api_key':
+      case 'apikey':
+        return 3;
       case 'profile':
       default:
         return 0;
@@ -76,14 +81,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
       (
+        label: loc?.translate('invites') ?? 'Invites',
+        icon: Icons.group_add,
+        child: const SettingsInvitesTab(),
+      ),
+      (
         label: loc?.translate('github') ?? 'GitHub',
         icon: Icons.code,
         child: const SettingsGithubTab(),
       ),
       (
-        label: loc?.translate('invites') ?? 'Invites',
-        icon: Icons.group_add,
-        child: const SettingsInvitesTab(),
+        label: loc?.translate('settings_api_key') ?? 'API Key',
+        icon: Icons.key_rounded,
+        child: const SettingsApiKeysTab(),
       ),
     ];
 
@@ -102,30 +112,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerLow,
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .outlineVariant
-                                  .withValues(alpha: 0.55),
-                            ),
-                          ),
-                          child: Text(
-                            'Profile manages account basics, GitHub handles repo access, Invites covers growth and referrals.',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 14),
                         for (var i = 0; i < tabs.length; i++) ...[
                           _buildDesktopTabButton(
                             i,
@@ -161,6 +147,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _buildTabButton(1, tabs[1].label, tabs[1].icon),
                       const SizedBox(width: 8),
                       _buildTabButton(2, tabs[2].label, tabs[2].icon),
+                      const SizedBox(width: 8),
+                      _buildTabButton(3, tabs[3].label, tabs[3].icon),
                     ],
                   ),
                 ),
