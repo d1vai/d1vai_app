@@ -27,6 +27,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final user = Provider.of<AuthProvider>(context, listen: false).user;
       if (user == null) {
         _showLoginRequiredDialog();

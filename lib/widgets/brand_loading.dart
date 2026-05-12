@@ -87,6 +87,7 @@ class _BrandLoadingState extends State<BrandLoading>
 
   void _animationComplete() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       if (_lockedCount >= _targetChars.length && !_isComplete) {
         _isComplete = true;
         widget.onComplete?.call();

@@ -43,6 +43,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final provider = Provider.of<ProjectProvider>(context, listen: false);
       final initialQuery = widget.initialSearchQuery?.trim() ?? '';
       if (initialQuery.isNotEmpty && provider.searchQuery.trim().isEmpty) {

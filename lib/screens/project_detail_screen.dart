@@ -93,6 +93,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     final user = Provider.of<AuthProvider>(context, listen: false).user;
     if (user == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
         _showLoginRequiredDialog();
       });
       return;
@@ -110,6 +111,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       _loadProject();
     });
   }
@@ -220,6 +222,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
 
     // 等待 Tab 构建完成后再发送消息
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final state = _chatTabKey.currentState;
       state?.sendInitialPrompt(prompt);
     });

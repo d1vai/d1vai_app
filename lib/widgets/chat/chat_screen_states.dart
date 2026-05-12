@@ -15,45 +15,50 @@ class ChatScreenEmptyState extends StatelessWidget {
     final theme = Theme.of(context);
     return LayoutBuilder(
       builder: (context, constraints) {
-        final maxH = (constraints.maxHeight * 0.48).clamp(0.0, 420.0);
-        return Center(
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: maxH, maxWidth: 520),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.smart_toy,
-                  size: 44.0,
-                  color: theme.colorScheme.primary.withValues(alpha: 0.55),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  loc?.translate('chat_empty_title') ?? 'Ask AI',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  loc?.translate('chat_empty_subtitle') ??
-                      'Ask about this project or paste code.',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant.withValues(
-                      alpha: 0.9,
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.smart_toy,
+                      size: 44.0,
+                      color: theme.colorScheme.primary.withValues(alpha: 0.55),
                     ),
-                    height: 1.2,
-                  ),
+                    const SizedBox(height: 12),
+                    Text(
+                      loc?.translate('chat_empty_title') ?? 'Ask AI',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      loc?.translate('chat_empty_subtitle') ??
+                          'Ask about this project or paste code.',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.9,
+                        ),
+                        height: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    QuickActions(
+                      onSelect: onQuickAction,
+                      dense: true,
+                      showTitle: false,
+                      padding: EdgeInsets.zero,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                QuickActions(
-                  onSelect: onQuickAction,
-                  dense: true,
-                  showTitle: false,
-                  padding: EdgeInsets.zero,
-                ),
-              ],
+              ),
             ),
           ),
         );

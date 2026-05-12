@@ -127,6 +127,7 @@ class _MessageListState extends State<MessageList> {
   void _scrollToBottom({bool animated = true}) {
     final controller = widget.scrollController ?? _scrollController;
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       if (controller.hasClients) {
         if (animated) {
           controller.animateTo(

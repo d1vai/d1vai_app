@@ -80,6 +80,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final D1vaiService _d1vaiService = D1vaiService();
   final WorkspaceService _workspaceService = WorkspaceService();
   final ModelConfigService _modelConfigService = ModelConfigService();
+  late final MacosMenuController _macosMenuController;
   final ScrollController _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
   final Map<String, MessageStatus> _messageStatuses = {};
@@ -151,10 +152,15 @@ class _ChatScreenState extends State<ChatScreen> {
 
   String? _miniPreviewUrl;
   int _miniPreviewReloadVersion = 0;
+  late BuildContext _stableUiContext;
 
   @override
   void initState() {
     super.initState();
+    _macosMenuController = Provider.of<MacosMenuController>(
+      context,
+      listen: false,
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final cached = Provider.of<ProjectProvider>(
@@ -162,17 +168,22 @@ class _ChatScreenState extends State<ChatScreen> {
         listen: false,
       ).getProjectById(widget.projectId);
       if (cached == null) return;
-      Provider.of<MacosMenuController>(
-        context,
-        listen: false,
-      ).setCurrentProjectContext(
+      _macosMenuController.setCurrentProjectContext(
         id: cached.id,
-        name: cached.projectName.trim().isEmpty ? cached.id : cached.projectName,
+        name: cached.projectName.trim().isEmpty
+            ? cached.id
+            : cached.projectName,
       );
     });
     unawaited(_bootstrapWorkspace());
     unawaited(_initialize());
     unawaited(_syncMiniPreviewUrl());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _stableUiContext = Navigator.of(context, rootNavigator: true).context;
   }
 
   @override
@@ -189,10 +200,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
-    Provider.of<MacosMenuController>(
-      context,
-      listen: false,
-    ).clearCurrentProjectContext(expectedId: widget.projectId);
+    _macosMenuController.clearCurrentProjectContext(
+      expectedId: widget.projectId,
+    );
     _assistantDeltaFlushTimer?.cancel();
     _pendingAppendTimer?.cancel();
     _reconnectTimer?.cancel();
@@ -756,7 +766,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _showWorkspaceWarmupUi() {
-    final loc = AppLocalizations.of(context);
+    final loc = AppLocalizations.of(_stableUiContext);
     if (_workspaceWarmupVisible) return;
     if (!mounted) return;
     setState(() {
@@ -767,7 +777,7 @@ class _ChatScreenState extends State<ChatScreen> {
           'Workspace is starting. Your message will send automatically.';
     });
     SnackBarHelper.showInfo(
-      context,
+      _stableUiContext,
       title: loc?.translate('workspace_title') ?? 'Workspace',
       message:
           loc?.translate('workspace_warmup_notice_starting') ??
@@ -778,7 +788,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _completeWorkspaceWarmupUi() {
-    final loc = AppLocalizations.of(context);
+    final loc = AppLocalizations.of(_stableUiContext);
     if (!_workspaceWarmupVisible || !mounted) return;
     setState(() {
       _workspaceWarmupCompleted = true;
@@ -897,14 +907,14 @@ class _ChatScreenState extends State<ChatScreen> {
       await _resetExecuteSessionForModelSwitch();
       if (!mounted) return;
       final switchedLabel = _modelLabelFor(next);
-      final loc = AppLocalizations.of(context);
+      final loc = AppLocalizations.of(_stableUiContext);
       final template =
           loc?.translate('model_switch_success') ?? 'Switched to {model}';
       setState(() {
         _selectedModelId = next;
       });
       SnackBarHelper.showSuccess(
-        context,
+        _stableUiContext,
         title: loc?.translate('model_switch_title') ?? 'Model',
         message: template.replaceAll('{model}', switchedLabel),
         position: SnackBarPosition.top,
@@ -912,8 +922,8 @@ class _ChatScreenState extends State<ChatScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      final loc = AppLocalizations.of(context);
-      ScaffoldMessenger.of(context).showSnackBar(
+      final loc = AppLocalizations.of(_stableUiContext);
+      ScaffoldMessenger.of(_stableUiContext).showSnackBar(
         SnackBar(
           content: Text(
             (loc?.translate('model_switch_failed') ??
@@ -935,7 +945,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (nextMode == _selectedEngineMode || _isSwitchingModel) return;
     if (!mounted) return;
 
-    final loc = AppLocalizations.of(context);
+    final loc = AppLocalizations.of(_stableUiContext);
     setState(() {
       _selectedEngineMode = nextMode;
     });
@@ -956,7 +966,7 @@ class _ChatScreenState extends State<ChatScreen> {
           loc?.translate('project_chat_engine_switch_success') ??
           'Switched to {mode}';
       SnackBarHelper.showSuccess(
-        context,
+        _stableUiContext,
         title: loc?.translate('project_chat_engine_title') ?? 'Engine',
         message: template.replaceAll('{mode}', modeLabel),
         position: SnackBarPosition.top,
@@ -966,13 +976,13 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _redeployPreviewFromChatScreen() async {
-    final loc = AppLocalizations.of(context);
+    final loc = AppLocalizations.of(_stableUiContext);
     try {
       final res = await _d1vaiService.deployProjectPreview(widget.projectId);
       final nextUrl = (preferredPreviewUrlFromPayload(res) ?? '').trim();
       if (!mounted) return;
       SnackBarHelper.showSuccess(
-        context,
+        _stableUiContext,
         title: loc?.translate('redeploy_started_title') ?? 'Redeploy started',
         message: nextUrl.isNotEmpty
             ? nextUrl
@@ -984,7 +994,7 @@ class _ChatScreenState extends State<ChatScreen> {
     } catch (e) {
       if (!mounted) return;
       SnackBarHelper.showError(
-        context,
+        _stableUiContext,
         title: loc?.translate('redeploy_failed_title') ?? 'Redeploy failed',
         message: humanizeError(e),
         position: SnackBarPosition.top,
@@ -1198,9 +1208,9 @@ class _ChatScreenState extends State<ChatScreen> {
         _isLoadingHistory = false;
       });
       final msg = humanizeError(e);
-      final loc = AppLocalizations.of(context);
+      final loc = AppLocalizations.of(_stableUiContext);
       showDialog(
-        context: context,
+        context: _stableUiContext,
         builder: (context) => Alert(
           variant: AlertVariant.destructive,
           child: AlertDescription(
@@ -2210,6 +2220,7 @@ class _ChatScreenState extends State<ChatScreen> {
   /// Scroll to bottom of messages
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           0,
@@ -2296,8 +2307,9 @@ class _ChatScreenState extends State<ChatScreen> {
     final thinkHardHint =
         loc?.translate('project_chat_engine_think_hard_hint') ??
         'Think Hard mode uses Codex engine';
-    final desktopModelWidth =
-        MediaQuery.of(context).size.width >= 900 ? 156.0 : 132.0;
+    final desktopModelWidth = MediaQuery.of(context).size.width >= 900
+        ? 156.0
+        : 132.0;
 
     return Scaffold(
       appBar: AppBar(

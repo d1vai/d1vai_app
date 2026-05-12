@@ -80,6 +80,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     // 加载项目数据
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       _maybeLoadData();
     });
   }
@@ -559,7 +560,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _t('dashboard_welcome', 'Welcome, {user}!').replaceAll(
+                          _t(
+                            'dashboard_welcome',
+                            'Welcome, {user}!',
+                          ).replaceAll(
                             '{user}',
                             user?.email ??
                                 _t('dashboard_user_fallback', 'User'),
@@ -569,7 +573,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                         const SizedBox(height: 20),
                         _buildStatsCards(stats, context),
                         const SizedBox(height: 20),
-                        _buildDesktopWorkspacePanel(context),
                       ],
                     ),
                   ),
@@ -599,9 +602,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                                       loc?.translate('failed_to_load') ??
                                           'Failed to load',
                                       style: TextStyle(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .error,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.error,
                                       ),
                                     ),
                                   ),
@@ -609,9 +612,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                               }
                               return PromptActivityHeatmap(
                                 activity: snapshot.data!,
-                                headerTrailing: _buildPromptActivityHeaderTrailing(
-                                  projectProvider,
-                                ),
+                                headerTrailing:
+                                    _buildPromptActivityHeaderTrailing(
+                                      projectProvider,
+                                    ),
                                 onDayTap: (isoDate, count) {
                                   final message =
                                       _t(
@@ -828,48 +832,6 @@ class _DashboardScreenState extends State<DashboardScreen>
         await projectProvider.refresh();
       },
       child: content,
-    );
-  }
-
-  Widget _buildDesktopWorkspacePanel(BuildContext context) {
-    final theme = Theme.of(context);
-    return CustomCard(
-      glass: true,
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _t('dashboard_workspace_title', 'Workspace'),
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 10),
-            _buildWorkspaceStatusWidget(),
-            const SizedBox(height: 12),
-            Text(
-              _workspaceTooltip(),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 14),
-            FilledButton.icon(
-              onPressed: _workspaceActiveInFlight
-                  ? null
-                  : () => unawaited(_requestWorkspaceActive(fromTap: true)),
-              icon: const Icon(Icons.sync),
-              label: Text(
-                _workspacePhase == WorkspacePhase.ready
-                    ? 'Refresh workspace'
-                    : 'Wake workspace',
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
