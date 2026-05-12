@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/locale_font_helper.dart';
+import '../l10n/app_localizations.dart';
 import '../models/community_post.dart';
 import '../services/d1vai_service.dart';
 import 'post_detail_screen.dart';
@@ -55,6 +57,7 @@ class _CommunityPostLinkScreenState extends State<CommunityPostLinkScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -65,7 +68,15 @@ class _CommunityPostLinkScreenState extends State<CommunityPostLinkScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Post')),
+      appBar: AppBar(
+        title: Text(
+          loc?.translate('community_post_title') ?? 'Post',
+          style: LocaleFontHelper.localizedTitleStyle(
+            context,
+            Theme.of(context).textTheme.titleLarge,
+          ),
+        ),
+      ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -74,12 +85,16 @@ class _CommunityPostLinkScreenState extends State<CommunityPostLinkScreen> {
             children: [
               const Icon(Icons.error_outline, size: 48),
               const SizedBox(height: 12),
-              Text(_error ?? 'Failed to load post'),
+              Text(
+                _error ??
+                    (loc?.translate('community_post_load_failed') ??
+                        'Failed to load post'),
+              ),
               const SizedBox(height: 12),
               ElevatedButton.icon(
                 onPressed: _load,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
+                label: Text(loc?.translate('retry') ?? 'Retry'),
               ),
             ],
           ),

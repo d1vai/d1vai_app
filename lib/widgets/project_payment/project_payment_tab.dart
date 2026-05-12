@@ -13,7 +13,7 @@ import '../snackbar_helper.dart';
 /// 项目详情页 - Payment Tab
 class ProjectPaymentTab extends StatefulWidget {
   final String projectId;
-  final int? projectPayId;
+  final String? projectPayId;
   final Future<void> Function()? onRefreshProject;
   final void Function(String prompt)? onAskAi;
 
@@ -69,7 +69,8 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
   }
 
   bool get _isPaymentActivated =>
-      _paymentActivatedOverride || widget.projectPayId != null;
+      _paymentActivatedOverride ||
+      (widget.projectPayId != null && widget.projectPayId!.trim().isNotEmpty);
 
   bool _isPaymentNotActivatedError(String message) {
     final normalized = message.toLowerCase();

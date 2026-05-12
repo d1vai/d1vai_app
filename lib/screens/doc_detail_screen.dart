@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:d1vai_app/l10n/app_localizations.dart';
 
+import '../core/theme/locale_font_helper.dart';
 import '../utils/link_navigator.dart';
 import '../widgets/share_sheet.dart';
 import '../widgets/snackbar_helper.dart';
@@ -258,7 +259,12 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
                 title: Text(
                   (loc?.translate('docs_title_slug') ?? 'Docs: {slug}')
                       .replaceAll('{slug}', widget.slug),
+                  style: LocaleFontHelper.localizedTitleStyle(
+                    context,
+                    theme.textTheme.titleLarge,
+                  ),
                 ),
+                fallbackRoute: '/docs',
               ),
         body: Center(
           child: Padding(
@@ -269,7 +275,8 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
                 const CircularProgressIndicator(),
                 const SizedBox(height: 16),
                 Text(
-                  'Opening documentation in your browser...',
+                  loc?.translate('docs_opening_in_browser') ??
+                      'Opening documentation in your browser...',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -292,46 +299,57 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
               title: Text(
                 (loc?.translate('docs_title_slug') ?? 'Docs: {slug}')
                     .replaceAll('{slug}', widget.slug),
+                style: LocaleFontHelper.localizedTitleStyle(
+                  context,
+                  theme.textTheme.titleLarge,
+                ),
               ),
+              fallbackRoute: '/docs',
               actions: [
-          IconButton(
-            tooltip: loc?.translate('docs_share') ?? 'Share',
-            icon: const Icon(Icons.share),
-            onPressed: () {
-              ShareSheet.show(
-                context,
-                url: _docUrl,
-                title: loc?.translate('docs_share_title') ?? 'd1v.ai docs',
-                message: '/docs/${widget.slug}',
-              );
-            },
-          ),
-          IconButton(
-            tooltip:
-                loc?.translate('docs_open_in_browser') ?? 'Open in browser',
-            icon: const Icon(Icons.open_in_new),
-            onPressed: _openExternal,
-          ),
+                IconButton(
+                  tooltip: loc?.translate('docs_share') ?? 'Share',
+                  icon: const Icon(Icons.share),
+                  onPressed: () {
+                    ShareSheet.show(
+                      context,
+                      url: _docUrl,
+                      title:
+                          loc?.translate('docs_share_title') ?? 'd1v.ai docs',
+                      message: '/docs/${widget.slug}',
+                    );
+                  },
+                ),
+                IconButton(
+                  tooltip:
+                      loc?.translate('docs_open_in_browser') ??
+                      'Open in browser',
+                  icon: const Icon(Icons.open_in_new),
+                  onPressed: _openExternal,
+                ),
               ],
               bottom: PreferredSize(
                 preferredSize: const Size.fromHeight(13),
                 child: _isLoading
                     ? Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(999),
-                    child: LinearProgressIndicator(
-                      value: _progress > 0 && _progress < 1 ? _progress : null,
-                      minHeight: 3,
-                      backgroundColor: isDark
-                          ? Colors.white.withValues(alpha: 0.06)
-                          : colorScheme.outlineVariant.withValues(alpha: 0.28),
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                )
+                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(999),
+                          child: LinearProgressIndicator(
+                            value: _progress > 0 && _progress < 1
+                                ? _progress
+                                : null,
+                            minHeight: 3,
+                            backgroundColor: isDark
+                                ? Colors.white.withValues(alpha: 0.06)
+                                : colorScheme.outlineVariant.withValues(
+                                    alpha: 0.28,
+                                  ),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                      )
                     : const SizedBox(height: 10),
               ),
             ),
@@ -527,9 +545,10 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
                           Text(
                             loc?.translate('docs_load_failed_title') ??
                                 'Failed to load doc',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
-                            ),
+                            style: LocaleFontHelper.localizedTitleStyle(
+                              context,
+                              theme.textTheme.titleMedium,
+                            )?.copyWith(fontWeight: FontWeight.w800),
                           ),
                           const SizedBox(height: 8),
                           Text(

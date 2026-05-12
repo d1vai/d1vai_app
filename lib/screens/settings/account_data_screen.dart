@@ -7,6 +7,7 @@ import '../../l10n/app_localizations.dart';
 import '../../models/project.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/d1vai_service.dart';
+import '../../utils/navigation_utils.dart';
 import '../../widgets/login_required_view.dart';
 import '../../widgets/snackbar_helper.dart';
 
@@ -324,6 +325,10 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(loc?.translate('account_data_title') ?? 'Account & Data'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => NavigationUtils.popOrGo(context, '/settings'),
+        ),
       ),
       body: Consumer<AuthProvider>(
         builder: (context, auth, _) {

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -295,10 +296,30 @@ class _MacosFolderImportProgressDialog extends StatelessWidget {
                 ],
                 if ((service.error ?? '').isNotEmpty) ...[
                   const SizedBox(height: 12),
-                  SelectableText(
-                    service.error!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
+                  Container(
+                    constraints: const BoxConstraints(maxHeight: 180),
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.errorContainer
+                          .withValues(alpha: 0.35),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.error.withValues(alpha: 0.25),
+                      ),
+                    ),
+                    child: Scrollbar(
+                      thumbVisibility: true,
+                      child: SingleChildScrollView(
+                        child: SelectableText(
+                          service.error!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -306,6 +327,20 @@ class _MacosFolderImportProgressDialog extends StatelessWidget {
             ),
           ),
           actions: [
+            if (isFailed && (service.error ?? '').isNotEmpty)
+              TextButton.icon(
+                onPressed: () async {
+                  await Clipboard.setData(
+                    ClipboardData(text: service.error!.trim()),
+                  );
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Error copied')),
+                  );
+                },
+                icon: const Icon(Icons.copy, size: 16),
+                label: const Text('Copy Error'),
+              ),
             if (isFailed)
               TextButton(
                 onPressed: () => Navigator.of(context, rootNavigator: true).pop(),

@@ -13,6 +13,7 @@ import 'package:d1vai_app/services/d1vai_service.dart';
 import 'package:d1vai_app/services/model_config_service.dart';
 import 'package:d1vai_app/services/workspace_service.dart';
 import 'package:d1vai_app/l10n/app_localizations.dart';
+import 'package:d1vai_app/providers/macos_menu_controller.dart';
 import 'package:d1vai_app/providers/project_provider.dart';
 import 'package:d1vai_app/utils/billing_errors.dart';
 import 'package:d1vai_app/utils/error_utils.dart';
@@ -154,6 +155,21 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final cached = Provider.of<ProjectProvider>(
+        context,
+        listen: false,
+      ).getProjectById(widget.projectId);
+      if (cached == null) return;
+      Provider.of<MacosMenuController>(
+        context,
+        listen: false,
+      ).setCurrentProjectContext(
+        id: cached.id,
+        name: cached.projectName.trim().isEmpty ? cached.id : cached.projectName,
+      );
+    });
     unawaited(_bootstrapWorkspace());
     unawaited(_initialize());
     unawaited(_syncMiniPreviewUrl());
@@ -173,6 +189,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
+    Provider.of<MacosMenuController>(
+      context,
+      listen: false,
+    ).clearCurrentProjectContext(expectedId: widget.projectId);
     _assistantDeltaFlushTimer?.cancel();
     _pendingAppendTimer?.cancel();
     _reconnectTimer?.cancel();
@@ -522,6 +542,15 @@ class _ChatScreenState extends State<ChatScreen> {
       final next =
           (project.preferredPreviewUrl ?? project.latestProdDeploymentUrl ?? '')
               .trim();
+      final projectName = project.projectName.trim().isEmpty
+          ? project.id
+          : project.projectName.trim();
+      if (mounted) {
+        Provider.of<MacosMenuController>(
+          context,
+          listen: false,
+        ).setCurrentProjectContext(id: project.id, name: projectName);
+      }
       if (!mounted) return;
       if (next.isEmpty) {
         if ((_miniPreviewUrl ?? '').isNotEmpty || bumpVersion) {

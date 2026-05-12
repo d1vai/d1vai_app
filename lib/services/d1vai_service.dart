@@ -198,6 +198,32 @@ class D1vaiService {
     );
   }
 
+  Future<List<Map<String, dynamic>>> getUserApiKeys() async {
+    return _apiClient.get<List<Map<String, dynamic>>>(
+      '/api/user/api-keys',
+      fromJsonT: (json) => (json as List)
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList(),
+    );
+  }
+
+  Future<Map<String, dynamic>> createUserApiKey({
+    required String name,
+    String? description,
+  }) async {
+    return _apiClient.post<Map<String, dynamic>>('/api/user/api-keys', {
+      'name': name,
+      if ((description ?? '').trim().isNotEmpty) 'description': description,
+    });
+  }
+
+  Future<Map<String, dynamic>> revokeUserApiKey(int apiKeyId) async {
+    return _apiClient.delete<Map<String, dynamic>>(
+      '/api/user/api-keys/$apiKeyId',
+      fromJsonT: (json) => Map<String, dynamic>.from(json as Map),
+    );
+  }
+
   /// 设置 onboarding 状态
   Future<void> postUserOnboardedSet(bool isOnboarded) async {
     return _apiClient.post<void>('/api/user/onboarded/set', {

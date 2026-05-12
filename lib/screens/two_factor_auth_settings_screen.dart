@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:d1vai_app/core/theme/locale_font_helper.dart';
 import 'package:d1vai_app/widgets/adaptive_modal.dart';
 import 'package:d1vai_app/widgets/snackbar_helper.dart';
 
@@ -255,8 +256,9 @@ class _TwoFactorAuthSettingsScreenState
                       Expanded(
                         child: Text(
                           secret,
-                          style: const TextStyle(
-                            fontFamily: 'monospace',
+                          style: TextStyle(
+                            fontFamily:
+                                LocaleFontHelper.chineseMonospace(context),
                             fontSize: 14,
                           ),
                         ),
@@ -323,8 +325,11 @@ class _TwoFactorAuthSettingsScreenState
                                 ),
                                 child: Text(
                                   code,
-                                  style: const TextStyle(
-                                    fontFamily: 'monospace',
+                                  style: TextStyle(
+                                    fontFamily:
+                                        LocaleFontHelper.chineseMonospace(
+                                          context,
+                                        ),
                                     fontSize: 12,
                                   ),
                                 ),

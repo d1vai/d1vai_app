@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../core/api_client.dart';
+import '../core/theme/locale_font_helper.dart';
 import '../services/d1vai_service.dart';
 import '../widgets/snackbar_helper.dart';
 
@@ -316,7 +317,7 @@ class _ProjectApiKeysScreenState extends State<ProjectApiKeysScreen> {
                     child: SelectableText(
                       curl,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        fontFamily: 'monospace',
+                        fontFamily: LocaleFontHelper.chineseMonospace(context),
                       ),
                     ),
                   ),

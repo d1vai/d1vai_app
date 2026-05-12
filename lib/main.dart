@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'dart:async';
@@ -11,6 +12,7 @@ import 'providers/locale_provider.dart';
 import 'providers/project_provider.dart';
 import 'providers/profile_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/macos_menu_controller.dart';
 import 'router/app_router.dart';
 import 'l10n/app_localizations.dart';
 import 'core/theme/app_theme.dart';
@@ -19,10 +21,12 @@ import 'services/apple_iap_service.dart';
 import 'services/macos_folder_import_service.dart';
 import 'services/macos_open_service.dart';
 import 'services/stripe_payment_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 final _appRouter = createAppRouter();
 final _macosOpenService = MacosOpenService.instance;
 final _macosFolderImportService = MacosFolderImportService.instance;
+final _macosMenuController = MacosMenuController();
 
 Future<void> main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -43,6 +47,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => ProjectProvider()),
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider.value(value: _macosMenuController),
         ChangeNotifierProvider.value(value: _macosOpenService),
         ChangeNotifierProvider.value(value: _macosFolderImportService),
       ],
@@ -51,6 +56,7 @@ Future<void> main() async {
   );
 
   unawaited(_macosOpenService.initialize());
+  unawaited(_macosMenuController.load());
 
   unawaited(AppleIapService.ensureInitialized());
   unawaited(StripePaymentService.initialize());
@@ -66,9 +72,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<LocaleProvider, ThemeProvider>(
-      builder: (context, localeProvider, themeProvider, child) {
-        return MaterialApp.router(
+    return Consumer3<LocaleProvider, ThemeProvider, MacosMenuController>(
+      builder: (context, localeProvider, themeProvider, menuController, child) {
+        Widget app = MaterialApp.router(
           debugShowCheckedModeBanner: false,
           title: 'd1vai',
           builder: (context, child) {
@@ -89,9 +95,238 @@ class MyApp extends StatelessWidget {
           darkTheme: AppTheme.dark(localeProvider.locale),
           routerConfig: _appRouter,
         );
+
+        final isMacos =
+            !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
+        if (!isMacos) return app;
+
+        return PlatformMenuBar(
+          menus: _buildMacosMenus(context, menuController),
+          child: app,
+        );
       },
     );
   }
+
+  List<PlatformMenuItem> _buildMacosMenus(
+    BuildContext context,
+    MacosMenuController menuController,
+  ) {
+    final recentMenus = menuController.recentProjects.isEmpty
+        ? <PlatformMenuItem>[
+            const PlatformMenuItem(label: 'No Recent Projects'),
+          ]
+        : menuController.recentProjects
+              .map(
+                (item) => PlatformMenuItem(
+                  label: item.name,
+                  onSelected: () => _appRouter.push('/projects/${item.id}'),
+                ),
+              )
+              .toList(growable: false);
+
+    final recentProjectMenuItems = menuController.recentProjects.isEmpty
+        ? recentMenus
+        : <PlatformMenuItem>[
+            ...recentMenus,
+            PlatformMenuItemGroup(
+              members: <PlatformMenuItem>[
+                PlatformMenuItem(
+                  label: 'Clear Recent Projects',
+                  onSelected: () => unawaited(menuController.clearRecentProjects()),
+                ),
+              ],
+            ),
+          ];
+
+    return <PlatformMenuItem>[
+      PlatformMenu(
+        label: 'File',
+        menus: <PlatformMenuItem>[
+          PlatformMenuItem(
+            label: 'New Project',
+            shortcut: const SingleActivator(
+              LogicalKeyboardKey.keyN,
+              meta: true,
+            ),
+            onSelected: () => _appRouter.push('/projects?create=1'),
+          ),
+          PlatformMenu(
+            label: 'Recent Projects',
+            menus: recentProjectMenuItems,
+          ),
+          PlatformMenuItemGroup(
+            members: <PlatformMenuItem>[
+              PlatformMenuItem(
+                label: 'Refresh Projects',
+                shortcut: const SingleActivator(
+                  LogicalKeyboardKey.keyR,
+                  meta: true,
+                  shift: true,
+                ),
+                onSelected: () async {
+                  final ctx = _appRouter.routerDelegate.navigatorKey.currentContext;
+                  if (ctx == null) return;
+                  await Provider.of<ProjectProvider>(
+                    ctx,
+                    listen: false,
+                  ).refresh();
+                },
+              ),
+              PlatformMenuItem(
+                label: 'Projects',
+                shortcut: const SingleActivator(
+                  LogicalKeyboardKey.keyP,
+                  meta: true,
+                ),
+                onSelected: () => _appRouter.go('/projects'),
+              ),
+            ],
+          ),
+        ],
+      ),
+      PlatformMenu(
+        label: 'Go',
+        menus: <PlatformMenuItem>[
+          PlatformMenuItem(
+            label: 'Dashboard',
+            shortcut: const SingleActivator(
+              LogicalKeyboardKey.digit1,
+              meta: true,
+            ),
+            onSelected: () => _appRouter.go('/'),
+          ),
+          PlatformMenuItem(
+            label: 'Community',
+            shortcut: const SingleActivator(
+              LogicalKeyboardKey.digit2,
+              meta: true,
+            ),
+            onSelected: () => _appRouter.go('/community'),
+          ),
+          PlatformMenuItem(
+            label: 'Docs',
+            shortcut: const SingleActivator(
+              LogicalKeyboardKey.digit3,
+              meta: true,
+            ),
+            onSelected: () => _appRouter.go('/docs'),
+          ),
+          PlatformMenuItem(
+            label: 'Settings',
+            shortcut: const SingleActivator(
+              LogicalKeyboardKey.digit4,
+              meta: true,
+            ),
+            onSelected: () => _appRouter.go('/settings'),
+          ),
+        ],
+      ),
+      PlatformMenu(
+        label: 'Window',
+        menus: <PlatformMenuItem>[
+          if (PlatformProvidedMenuItem.hasMenu(
+            PlatformProvidedMenuItemType.minimizeWindow,
+          ))
+            const PlatformProvidedMenuItem(
+              type: PlatformProvidedMenuItemType.minimizeWindow,
+            ),
+          if (PlatformProvidedMenuItem.hasMenu(
+            PlatformProvidedMenuItemType.zoomWindow,
+          ))
+            const PlatformProvidedMenuItem(
+              type: PlatformProvidedMenuItemType.zoomWindow,
+            ),
+          if (PlatformProvidedMenuItem.hasMenu(
+            PlatformProvidedMenuItemType.toggleFullScreen,
+          ))
+            const PlatformProvidedMenuItem(
+              type: PlatformProvidedMenuItemType.toggleFullScreen,
+            ),
+        ],
+      ),
+      PlatformMenu(
+        label: 'Project',
+        menus: <PlatformMenuItem>[
+          PlatformMenuItem(
+            label: 'Open Overview',
+            onSelected: menuController.hasCurrentProject
+                ? () => _appRouter.go(
+                    '/projects/${menuController.currentProjectId}?tab=overview',
+                  )
+                : null,
+          ),
+          PlatformMenuItem(
+            label: 'Open Chat',
+            onSelected: menuController.hasCurrentProject
+                ? () => _appRouter.go(
+                    '/projects/${menuController.currentProjectId}?tab=chat',
+                  )
+                : null,
+          ),
+          PlatformMenuItem(
+            label: 'Open Environment',
+            onSelected: menuController.hasCurrentProject
+                ? () => _appRouter.go(
+                    '/projects/${menuController.currentProjectId}?tab=environment',
+                  )
+                : null,
+          ),
+          PlatformMenuItem(
+            label: 'Open Database',
+            onSelected: menuController.hasCurrentProject
+                ? () => _appRouter.go(
+                    '/projects/${menuController.currentProjectId}?tab=database',
+                  )
+                : null,
+          ),
+          PlatformMenuItem(
+            label: 'Open Deploy',
+            onSelected: menuController.hasCurrentProject
+                ? () => _appRouter.go(
+                    '/projects/${menuController.currentProjectId}?tab=deployment',
+                  )
+                : null,
+          ),
+        ],
+      ),
+      PlatformMenu(
+        label: 'Help',
+        menus: <PlatformMenuItem>[
+          PlatformMenuItem(
+            label: 'Docs',
+            onSelected: () => _appRouter.go('/docs'),
+          ),
+          PlatformMenuItem(
+            label: 'API Settings',
+            onSelected: () => _appRouter.go('/settings/api'),
+          ),
+          PlatformMenuItemGroup(
+            members: <PlatformMenuItem>[
+              PlatformMenuItem(
+                label: 'Report Issue',
+                onSelected: () => unawaited(
+                  _launchMacosMenuUri(
+                    Uri(
+                      scheme: 'mailto',
+                      path: 'support@d1v.ai',
+                      query: 'subject=Issue Report',
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ];
+  }
+}
+
+Future<void> _launchMacosMenuUri(Uri uri) async {
+  try {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } catch (_) {}
 }
 
 class _MacosImportListener extends StatefulWidget {

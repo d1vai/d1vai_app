@@ -87,6 +87,7 @@ class _AppDetailScreenState extends State<AppDetailScreen> {
     return Scaffold(
       appBar: WebSubPageAppBar(
         title: Text('App: ${widget.slug}'),
+        fallbackRoute: '/chat',
         actions: [
           IconButton(
             tooltip: 'Share',

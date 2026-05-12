@@ -6,6 +6,7 @@ import '../widgets/avatar_image.dart';
 import '../widgets/card.dart';
 import '../utils/error_utils.dart';
 import '../l10n/app_localizations.dart';
+import '../utils/navigation_utils.dart';
 
 class InvitesListScreen extends StatefulWidget {
   const InvitesListScreen({super.key});
@@ -65,6 +66,10 @@ class _InvitesListScreenState extends State<InvitesListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_t('my_invites', 'My Invites')),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => NavigationUtils.popOrGo(context, '/settings'),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),

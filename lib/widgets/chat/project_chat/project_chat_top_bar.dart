@@ -32,28 +32,33 @@ class ProjectChatTopBar extends StatelessWidget {
           ),
         ),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Row(
-              children: [
-                _TabButton(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 420;
+          final tabRow = Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: _TabButton(
                   isSelected: currentIndex == 0,
-                  label: null,
+                  label: compact ? 'Prev' : null,
                   icon: Icons.preview,
                   onTap: () => onTabSelected(0),
                 ),
-                const SizedBox(width: 8),
-                _TabButton(
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: _TabButton(
                   isSelected: currentIndex == 1,
-                  label: null,
+                  label: 'Code',
                   icon: Icons.code,
                   onTap: () => onTabSelected(1),
                 ),
-              ],
-            ),
-          ),
-          Row(
+              ),
+            ],
+          );
+          final actionsRow = Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               _ActionIconButton(
                 icon: Icons.restart_alt,
@@ -65,8 +70,36 @@ class ProjectChatTopBar extends StatelessWidget {
                 onPressed: onOpenInNewTab,
               ),
             ],
-          ),
-        ],
+          );
+
+          if (compact) {
+            return Row(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: tabRow,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                actionsRow,
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: tabRow,
+                ),
+              ),
+              const SizedBox(width: 12),
+              actionsRow,
+            ],
+          );
+        },
       ),
     );
   }

@@ -169,14 +169,14 @@ class ProjectOverviewHealthMetricsCard extends StatelessWidget {
           const Divider(height: 32),
           _HealthMetricItem(
             title: _t(context, 'project_overview_health_payments', 'Payments'),
-            status: project.projectPayId != null ? enabledLabel : disabledLabel,
+            status: project.hasPaymentEnabled ? enabledLabel : disabledLabel,
             description: _t(
               context,
               'project_overview_health_payments_desc',
               'User-scoped Pay API',
             ),
             icon: Icons.payment,
-            isEnabled: project.projectPayId != null,
+            isEnabled: project.hasPaymentEnabled,
           ),
         ],
       ),

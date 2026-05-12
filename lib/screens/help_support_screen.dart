@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../l10n/app_localizations.dart';
+import '../utils/navigation_utils.dart';
 import '../widgets/snackbar_helper.dart';
 import '../widgets/share_sheet.dart';
 
@@ -43,8 +44,7 @@ class HelpSupportScreen extends StatelessWidget {
       },
       'payment_methods': {
         'question': 'What payment methods are supported?',
-        'answer':
-            Theme.of(context).platform == TargetPlatform.iOS
+        'answer': Theme.of(context).platform == TargetPlatform.iOS
             ? 'Billing and purchase management are currently handled outside the iOS app. In-app purchase support is planned for a future release.'
             : 'We currently support credit/debit cards through Stripe. More payment methods will be added in future updates.',
       },
@@ -170,6 +170,10 @@ class HelpSupportScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(_t(context, 'help_support', 'Help & Support')),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => NavigationUtils.popOrGo(context, '/settings'),
+        ),
       ),
       body: Container(
         decoration: BoxDecoration(

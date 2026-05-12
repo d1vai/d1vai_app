@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/theme/locale_font_helper.dart';
 
 /// OTP风格的邀请码展示组件
 ///
@@ -73,7 +74,7 @@ class InviteCodeDisplay extends StatelessWidget {
           fontWeight: FontWeight.bold,
           letterSpacing: 0,
           color: theme.colorScheme.onSurface,
-          fontFamily: 'monospace',
+          fontFamily: LocaleFontHelper.chineseMonospace(context),
         ),
       ),
     );

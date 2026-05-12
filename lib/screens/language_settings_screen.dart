@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
 import '../providers/locale_provider.dart';
+import '../utils/navigation_utils.dart';
 
 class LanguageSettingsScreen extends StatelessWidget {
   const LanguageSettingsScreen({super.key});
@@ -14,7 +15,13 @@ class LanguageSettingsScreen extends StatelessWidget {
     final locales = LocaleProvider.supportedLocales;
 
     return Scaffold(
-      appBar: AppBar(title: Text(loc?.translate('language') ?? 'Language')),
+      appBar: AppBar(
+        title: Text(loc?.translate('language') ?? 'Language'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => NavigationUtils.popOrGo(context, '/settings'),
+        ),
+      ),
       body: ListView.separated(
         itemCount: locales.length,
         separatorBuilder: (context, index) => const Divider(height: 1),
@@ -37,7 +44,7 @@ class LanguageSettingsScreen extends StatelessWidget {
             onTap: () async {
               await localeProvider.setLocale(locale);
               if (context.mounted) {
-                Navigator.of(context).pop();
+                NavigationUtils.popOrGo(context, '/settings');
               }
             },
           );

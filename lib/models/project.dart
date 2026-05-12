@@ -17,7 +17,7 @@ class UserProject {
   final int? projectDatabaseId;
   final String? projectDatabaseIdRaw;
   final bool hasProjectDatabase;
-  final int? projectPayId;
+  final String? projectPayId;
   final String? vercelProdDomain;
   final String? latestProdDeploymentUrl;
   final String? workspaceCurrentBranch;
@@ -115,7 +115,7 @@ class UserProject {
       projectDatabaseId: parseInt(rawProjectDatabaseId),
       projectDatabaseIdRaw: rawProjectDatabaseId?.toString(),
       hasProjectDatabase: parseJsTruthy(rawProjectDatabaseId),
-      projectPayId: parseInt(json['project_pay_id']),
+      projectPayId: json['project_pay_id']?.toString(),
       vercelProdDomain: json['vercel_prod_domain']?.toString(),
       latestProdDeploymentUrl: json['latest_prod_deployment_url']?.toString(),
       workspaceCurrentBranch: json['workspace_current_branch']?.toString(),
@@ -186,6 +186,10 @@ class UserProject {
   /// Keep parity with Web's truthy check on `project_database_id`.
   bool get hasDatabaseEnabled => hasProjectDatabase;
 
+  /// Keep parity with Web's truthy check on `project_pay_id`.
+  bool get hasPaymentEnabled =>
+      projectPayId != null && projectPayId!.trim().isNotEmpty;
+
   /// 创建副本
   UserProject copyWith({
     String? id,
@@ -205,7 +209,7 @@ class UserProject {
     int? projectDatabaseId,
     String? projectDatabaseIdRaw,
     bool? hasProjectDatabase,
-    int? projectPayId,
+    String? projectPayId,
     String? vercelProdDomain,
     String? latestProdDeploymentUrl,
     String? workspaceCurrentBranch,

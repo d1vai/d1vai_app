@@ -4,11 +4,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
-import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/api_client.dart';
+import '../../core/theme/locale_font_helper.dart';
 import '../../services/workspace_service.dart';
+import '../../utils/navigation_utils.dart';
 import '../../widgets/macos_workspace_inspector_card.dart';
 import '../../widgets/snackbar_helper.dart';
 
@@ -265,7 +266,7 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
         title: const Text('API Settings'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+          onPressed: () => NavigationUtils.popOrGo(context, '/settings'),
         ),
       ),
       body: ListView(
@@ -406,7 +407,9 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
                         'ip=${_status!.ip ?? '—'}\n'
                         'port=${_status!.port?.toString() ?? '—'}',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          fontFamily: 'monospace',
+                          fontFamily: LocaleFontHelper.chineseMonospace(
+                            context,
+                          ),
                         ),
                       ),
                     ),
@@ -448,7 +451,9 @@ class _KeyValueRow extends StatelessWidget {
         Expanded(
           child: Text(
             value,
-            style: theme.textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontFamily: LocaleFontHelper.chineseMonospace(context),
+            ),
           ),
         ),
       ],

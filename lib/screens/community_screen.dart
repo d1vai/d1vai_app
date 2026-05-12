@@ -7,15 +7,15 @@ import 'dart:async';
 import 'package:d1vai_app/services/d1vai_service.dart';
 import 'package:d1vai_app/models/community_post.dart';
 import 'package:d1vai_app/widgets/search_field.dart';
-import 'package:d1vai_app/screens/create_post_screen.dart';
 import 'package:d1vai_app/screens/post_detail_screen.dart';
 import 'package:d1vai_app/widgets/post_card.dart';
 import 'package:d1vai_app/utils/error_utils.dart';
 import 'package:d1vai_app/providers/auth_provider.dart';
 import 'package:d1vai_app/widgets/login_required_dialog.dart';
-import 'package:d1vai_app/l10n/app_localizations.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:d1vai_app/utils/desktop_layout.dart';
+import 'package:d1vai_app/l10n/app_localizations.dart';
+import 'package:d1vai_app/core/theme/locale_font_helper.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -47,6 +47,12 @@ class _CommunityScreenState extends State<CommunityScreen>
 
   static const _prefsHiddenPostsKey = 'community_hidden_post_slugs';
   static const _prefsBlockedAuthorsKey = 'community_blocked_author_slugs';
+
+  String _t(String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
 
   void _finishRefreshNextFrame() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -225,52 +231,35 @@ class _CommunityScreenState extends State<CommunityScreen>
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context);
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: _isSearching
             ? AppBarSearchField(
-                hintText: 'Search posts...',
+                hintText: _t(
+                  'community_search_hint',
+                  'Search posts...',
+                ),
                 autofocus: true,
                 onChanged: (value) {
                   _scheduleSearch(value);
                 },
                 onClear: _clearSearch,
               )
-            : const Text('Community'),
+            : Text(
+                _t('community', 'Community'),
+                style: LocaleFontHelper.localizedTitleStyle(
+                  context,
+                  theme.textTheme.titleLarge,
+                ),
+              ),
         actions: [
           IconButton(
-            tooltip: _isSearching ? 'Close search' : 'Search posts',
+            tooltip: _isSearching
+                ? _t('community_close_search', 'Close search')
+                : _t('community_search_posts', 'Search posts'),
             icon: Icon(_isSearching ? Icons.close : Icons.search),
             onPressed: _toggleSearch,
-          ),
-          IconButton(
-            tooltip: 'Create post',
-            icon: const Icon(Icons.add),
-            onPressed: () async {
-              final auth = Provider.of<AuthProvider>(context, listen: false);
-              if (!auth.isAuthenticated) {
-                await showDialog<void>(
-                  context: context,
-                  builder: (context) => LoginRequiredDialog(
-                    message:
-                        loc?.translate('login_required_create_post_message') ??
-                        'Please login first to create a post.',
-                  ),
-                );
-                return;
-              }
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CreatePostScreen(),
-                ),
-              );
-
-              if (result == true) {
-                _controller.callRefresh();
-              }
-            },
           ),
         ],
       ),
@@ -294,7 +283,7 @@ class _CommunityScreenState extends State<CommunityScreen>
             const Icon(Icons.error_outline, size: 48, color: Colors.grey),
             const SizedBox(height: 16),
             Text(
-              'Failed to load posts',
+              _t('failed_to_load_posts', 'Failed to load posts'),
               style: TextStyle(color: Colors.grey.shade600),
             ),
             const SizedBox(height: 8),
@@ -309,7 +298,7 @@ class _CommunityScreenState extends State<CommunityScreen>
             const SizedBox(height: 8),
             ElevatedButton(
               onPressed: () => _loadPosts(refresh: true),
-              child: const Text('Retry'),
+              child: Text(_t('retry', 'Retry')),
             ),
           ],
         ),
@@ -328,14 +317,19 @@ class _CommunityScreenState extends State<CommunityScreen>
             ),
             const SizedBox(height: 16),
             Text(
-              _searchQuery.isNotEmpty ? 'No results found' : 'No posts yet',
+              _searchQuery.isNotEmpty
+                  ? _t('community_no_results', 'No results found')
+                  : _t('no_posts_yet', 'No posts yet'),
               style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
             ),
             const SizedBox(height: 8),
             Text(
               _searchQuery.isNotEmpty
-                  ? 'Try a different search term'
-                  : 'Be the first to share something!',
+                  ? _t(
+                      'community_try_different_search',
+                      'Try a different search term',
+                    )
+                  : _t('be_first_to_share', 'Be the first to share something!'),
               style: TextStyle(color: Colors.grey.shade500),
             ),
           ],
@@ -413,38 +407,9 @@ class _CommunityScreenState extends State<CommunityScreen>
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
-            child: Row(
-              children: [
-                Expanded(child: _buildFilterBar()),
-                const SizedBox(width: 12),
-                FilledButton.icon(
-                  onPressed: () async {
-                    final auth = Provider.of<AuthProvider>(
-                      context,
-                      listen: false,
-                    );
-                    if (!auth.isAuthenticated) {
-                      await showDialog<void>(
-                        context: context,
-                        builder: (context) => const LoginRequiredDialog(),
-                      );
-                      return;
-                    }
-                    if (!mounted) return;
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const CreatePostScreen(),
-                      ),
-                    );
-                    if (result == true) {
-                      _controller.callRefresh();
-                    }
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text('New post'),
-                ),
-              ],
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: SizedBox(width: 196, child: _buildFilterBar()),
             ),
           ),
           Expanded(child: feed),
@@ -483,8 +448,11 @@ class _CommunityScreenState extends State<CommunityScreen>
   Widget _buildFilteredEmptyCard(BuildContext context) {
     final theme = Theme.of(context);
     final text = switch (_filter) {
-      _CommunityFeedFilter.all => 'No posts.',
-      _CommunityFeedFilter.mine => 'No posts created by you yet.',
+      _CommunityFeedFilter.all => _t('community_empty_all', 'No posts.'),
+      _CommunityFeedFilter.mine => _t(
+        'community_empty_mine',
+        'No posts created by you yet.',
+      ),
     };
 
     return Container(
@@ -712,12 +680,15 @@ class _CommunityFilterTabs extends StatelessWidget {
     final tabs = [
       (
         filter: _CommunityFeedFilter.all,
-        label: 'All',
+        label: AppLocalizations.of(context)?.translate('community_filter_all') ??
+            'All',
         icon: PhosphorIcons.squaresFour(),
       ),
       (
         filter: _CommunityFeedFilter.mine,
-        label: isAuthed ? 'My posts' : 'My posts',
+        label:
+            AppLocalizations.of(context)?.translate('community_filter_mine') ??
+            'My posts',
         icon: PhosphorIcons.notePencil(),
       ),
     ];
@@ -731,21 +702,22 @@ class _CommunityFilterTabs extends StatelessWidget {
     );
 
     return Container(
-      height: 54,
-      padding: const EdgeInsets.all(4),
+      height: 46,
+      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         color: shellColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
             color: colorScheme.shadow.withValues(alpha: isDark ? 0.16 : 0.05),
-            blurRadius: isDark ? 18 : 14,
-            offset: const Offset(0, 8),
+            blurRadius: isDark ? 14 : 10,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           for (final tab in tabs)
             Expanded(
@@ -790,7 +762,7 @@ class _CommunityFilterTabButton extends StatelessWidget {
         duration: const Duration(milliseconds: 220),
         curve: Curves.easeOutCubic,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           gradient: selected
               ? LinearGradient(
                   colors: [
@@ -825,14 +797,14 @@ class _CommunityFilterTabButton extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final compact = constraints.maxWidth < 108;
-                  final iconSize = compact ? 14.0 : 16.0;
-                  final spacing = compact ? 4.0 : 6.0;
+                  final compact = constraints.maxWidth < 96;
+                  final iconSize = compact ? 12.0 : 14.0;
+                  final spacing = compact ? 3.0 : 4.0;
 
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -851,7 +823,8 @@ class _CommunityFilterTabButton extends StatelessWidget {
                               fontWeight: selected
                                   ? FontWeight.w800
                                   : FontWeight.w700,
-                              letterSpacing: compact ? -0.15 : 0.1,
+                              fontSize: compact ? 11 : 12,
+                              letterSpacing: compact ? -0.1 : 0.05,
                             ),
                           ),
                         ),

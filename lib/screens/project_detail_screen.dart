@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 
 import '../models/project.dart';
 import '../providers/auth_provider.dart';
+import '../providers/macos_menu_controller.dart';
 import '../providers/project_provider.dart';
 import '../services/d1vai_service.dart';
 import '../utils/error_utils.dart';
@@ -44,6 +46,8 @@ class ProjectDetailScreen extends StatefulWidget {
 class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
+  late final MacosMenuController _macosMenuController;
+  late BuildContext _stableUiContext;
   final GlobalKey<ProjectChatTabState> _chatTabKey =
       GlobalKey<ProjectChatTabState>();
 
@@ -67,9 +71,19 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     return value;
   }
 
+  String _translateWithContext(BuildContext context, String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
+
   @override
   void initState() {
     super.initState();
+    _macosMenuController = Provider.of<MacosMenuController>(
+      context,
+      listen: false,
+    );
     _tabController = TabController(
       length: _tabs.length,
       vsync: this,
@@ -98,6 +112,12 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadProject();
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _stableUiContext = Navigator.of(context, rootNavigator: true).context;
   }
 
   int _tabIndexFromName(String? raw) {
@@ -157,6 +177,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           _project = project;
           _isLoading = false;
         });
+        unawaited(_macosMenuController.registerProjectVisit(project));
       }
 
       // Force a fresh detail fetch when requested (for example after enabling
@@ -170,6 +191,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           _project = fresh;
           _isLoading = false;
         });
+        unawaited(_macosMenuController.registerProjectVisit(fresh));
       }
     } catch (e) {
       final message = humanizeError(e);
@@ -205,6 +227,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
 
   @override
   void dispose() {
+    _macosMenuController.clearCurrentProjectContext(expectedId: widget.projectId);
     _tabController.dispose();
     super.dispose();
   }
@@ -212,14 +235,21 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   void _shareProject() {
     final project = _project;
     if (project == null) return;
+    final uiContext = _stableUiContext;
+    final shareTitle = _translateWithContext(
+      uiContext,
+      'project_detail_share_title',
+      'Share',
+    );
     final prod = (project.latestProdDeploymentUrl ?? '').trim();
     final preview = (project.preferredPreviewUrl ?? '').trim();
     final raw = (prod.isNotEmpty ? prod : preview).trim();
     if (raw.isEmpty) {
       SnackBarHelper.showInfo(
-        context,
-        title: _t('project_detail_share_title', 'Share'),
-        message: _t(
+        uiContext,
+        title: shareTitle,
+        message: _translateWithContext(
+          uiContext,
           'project_detail_share_no_url',
           'No preview/production URL available yet.',
         ),
@@ -229,9 +259,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     final uri = Uri.tryParse(raw);
     if (uri == null || (!uri.isScheme('http') && !uri.isScheme('https'))) {
       SnackBarHelper.showError(
-        context,
-        title: _t('project_detail_share_title', 'Share'),
-        message: _t(
+        uiContext,
+        title: shareTitle,
+        message: _translateWithContext(
+          uiContext,
           'project_detail_share_invalid_url',
           'Invalid URL: {url}',
         ).replaceAll('{url}', raw),
@@ -239,14 +270,22 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
       return;
     }
     ShareSheet.show(
-      context,
+      uiContext,
       url: uri,
       title: project.projectName,
       message: project.projectDescription.trim().isNotEmpty
           ? project.projectDescription.trim()
           : (prod.isNotEmpty
-                ? _t('project_detail_share_production_link', 'Production link')
-                : _t('project_detail_share_preview_link', 'Preview link')),
+                ? _translateWithContext(
+                    uiContext,
+                    'project_detail_share_production_link',
+                    'Production link',
+                  )
+                : _translateWithContext(
+                    uiContext,
+                    'project_detail_share_preview_link',
+                    'Preview link',
+                  )),
     );
   }
 
@@ -492,16 +531,24 @@ class _ProjectDesktopRail extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    OutlinedButton.icon(
+                    OutlinedButton(
                       onPressed: onBack,
-                      icon: const Icon(Icons.arrow_back, size: 16),
-                      label: const Text('Back'),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(42, 42),
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: const Icon(Icons.arrow_back, size: 18),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         projectName.trim().isEmpty ? 'Project' : projectName,
-                        style: theme.textTheme.titleLarge?.copyWith(
+                        style: TextStyle(
+                          fontSize: theme.textTheme.titleLarge?.fontSize ?? 22,
+                          height: theme.textTheme.titleLarge?.height,
+                          letterSpacing:
+                              theme.textTheme.titleLarge?.letterSpacing,
+                          color: colorScheme.onSurface,
                           fontWeight: FontWeight.w800,
                         ),
                         maxLines: 2,

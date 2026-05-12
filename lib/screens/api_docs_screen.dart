@@ -4,6 +4,8 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../core/api_client.dart';
+import '../core/theme/locale_font_helper.dart';
+import '../l10n/app_localizations.dart';
 import '../utils/link_navigator.dart';
 import '../widgets/share_sheet.dart';
 import '../widgets/snackbar_helper.dart';
@@ -49,8 +51,11 @@ class _ApiDocsScreenState extends State<ApiDocsScreen> {
   String get _resolvedTitle {
     final next = (widget.title ?? '').trim();
     if (next.isNotEmpty) return next;
-    if (widget.preferOpenApiShell) return _defaultOpenApiTitle;
-    return 'API Documentation';
+    final loc = AppLocalizations.of(context);
+    if (widget.preferOpenApiShell) {
+      return loc?.translate('api_docs_openapi_title') ?? _defaultOpenApiTitle;
+    }
+    return loc?.translate('api_docs_title') ?? 'API Documentation';
   }
 
   String? get _resolvedSpecUrl {
@@ -103,6 +108,7 @@ class _ApiDocsScreenState extends State<ApiDocsScreen> {
   }
 
   Future<void> _openExternal() async {
+    final loc = AppLocalizations.of(context);
     final uri = _viewUrl;
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -110,21 +116,32 @@ class _ApiDocsScreenState extends State<ApiDocsScreen> {
       if (!mounted) return;
       SnackBarHelper.showError(
         context,
-        title: 'Open failed',
-        message: 'Cannot open link',
+        title: loc?.translate('docs_open_failed_title') ?? 'Open failed',
+        message:
+            loc?.translate('docs_open_failed_message') ?? 'Cannot open link',
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.macOS) {
       final theme = Theme.of(context);
       final colorScheme = theme.colorScheme;
       return Scaffold(
         appBar: widget.hideHeader
             ? null
-            : WebSubPageAppBar(title: Text(_resolvedTitle)),
+            : WebSubPageAppBar(
+                title: Text(
+                  _resolvedTitle,
+                  style: LocaleFontHelper.localizedTitleStyle(
+                    context,
+                    theme.textTheme.titleLarge,
+                  ),
+                ),
+                fallbackRoute: '/docs',
+              ),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -134,7 +151,8 @@ class _ApiDocsScreenState extends State<ApiDocsScreen> {
                 const CircularProgressIndicator(),
                 const SizedBox(height: 16),
                 Text(
-                  'Opening API docs in your browser...',
+                  loc?.translate('api_docs_opening_in_browser') ??
+                      'Opening API docs in your browser...',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -151,33 +169,44 @@ class _ApiDocsScreenState extends State<ApiDocsScreen> {
       appBar: widget.hideHeader
           ? null
           : WebSubPageAppBar(
-              title: Text(_resolvedTitle),
+              title: Text(
+                _resolvedTitle,
+                style: LocaleFontHelper.localizedTitleStyle(
+                  context,
+                  Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+              fallbackRoute: '/docs',
               actions: [
-          IconButton(
-            tooltip: 'Share',
-            icon: const Icon(Icons.share),
-            onPressed: () {
-              ShareSheet.show(
-                context,
-                url: _viewUrl,
-                title: _resolvedTitle,
-                message: _resolvedSpecUrl ?? _viewUrl.toString(),
-              );
-            },
-          ),
-          IconButton(
-            tooltip: 'Open in browser',
-            icon: const Icon(Icons.open_in_new),
-            onPressed: _openExternal,
-          ),
+                IconButton(
+                  tooltip: loc?.translate('docs_share') ?? 'Share',
+                  icon: const Icon(Icons.share),
+                  onPressed: () {
+                    ShareSheet.show(
+                      context,
+                      url: _viewUrl,
+                      title: _resolvedTitle,
+                      message: _resolvedSpecUrl ?? _viewUrl.toString(),
+                    );
+                  },
+                ),
+                IconButton(
+                  tooltip:
+                      loc?.translate('docs_open_in_browser') ??
+                      'Open in browser',
+                  icon: const Icon(Icons.open_in_new),
+                  onPressed: _openExternal,
+                ),
               ],
               bottom: PreferredSize(
                 preferredSize: const Size.fromHeight(2),
                 child: _isLoading
                     ? LinearProgressIndicator(
-                  value: _progress > 0 && _progress < 1 ? _progress : null,
-                  minHeight: 2,
-                )
+                        value: _progress > 0 && _progress < 1
+                            ? _progress
+                            : null,
+                        minHeight: 2,
+                      )
                     : const SizedBox(height: 2),
               ),
             ),
@@ -241,7 +270,14 @@ class _ApiDocsScreenState extends State<ApiDocsScreen> {
                     children: [
                       const Icon(Icons.error_outline, size: 48),
                       const SizedBox(height: 12),
-                      const Text('Failed to load API docs'),
+                      Text(
+                        loc?.translate('api_docs_load_failed_title') ??
+                            'Failed to load API docs',
+                        style: LocaleFontHelper.localizedTitleStyle(
+                          context,
+                          Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ),
                       const SizedBox(height: 12),
                       Wrap(
                         spacing: 12,
@@ -251,12 +287,14 @@ class _ApiDocsScreenState extends State<ApiDocsScreen> {
                           ElevatedButton.icon(
                             onPressed: () => _controller?.reload(),
                             icon: const Icon(Icons.refresh),
-                            label: const Text('Retry'),
+                            label: Text(loc?.translate('retry') ?? 'Retry'),
                           ),
                           OutlinedButton.icon(
                             onPressed: _openExternal,
                             icon: const Icon(Icons.open_in_new),
-                            label: const Text('Browser'),
+                            label: Text(
+                              loc?.translate('docs_browser') ?? 'Browser',
+                            ),
                           ),
                         ],
                       ),

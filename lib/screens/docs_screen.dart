@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/theme/app_colors.dart';
+import '../core/theme/locale_font_helper.dart';
 import '../utils/desktop_layout.dart';
 import '../widgets/snackbar_helper.dart';
 import '../widgets/share_sheet.dart';
+import '../l10n/app_localizations.dart';
 
 class DocsScreen extends StatefulWidget {
   const DocsScreen({super.key});
@@ -22,85 +24,131 @@ class _DocsScreenState extends State<DocsScreen> {
   late final Future<SharedPreferences> _prefsFuture;
   List<String> _recentSlugs = <String>[];
 
-  final List<DocItem> _pages = [
+  String _t(String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
+
+  List<DocItem> get _pages => [
     DocItem(
       href: '/docs/overview',
-      title: 'Overview',
-      desc: 'What the platform is and how the workflow fits together.',
+      title: _t('docs_page_overview_title', 'Overview'),
+      desc: _t(
+        'docs_page_overview_desc',
+        'What the platform is and how the workflow fits together.',
+      ),
       icon: Icons.info_outline,
     ),
     DocItem(
       href: '/docs/product',
-      title: 'Product',
-      desc: 'Outcomes by role (PM / Business / Developers).',
+      title: _t('docs_page_product_title', 'Product'),
+      desc: _t(
+        'docs_page_product_desc',
+        'Outcomes by role (PM / Business / Developers).',
+      ),
       icon: Icons.apps,
     ),
     DocItem(
       href: '/docs/getting-started',
-      title: 'Getting Started',
-      desc: 'Prompt → preview → production, with verification steps.',
+      title: _t('docs_page_getting_started_title', 'Getting Started'),
+      desc: _t(
+        'docs_page_getting_started_desc',
+        'Prompt -> preview -> production, with verification steps.',
+      ),
       icon: Icons.play_circle_outline,
     ),
     DocItem(
       href: '/docs/workspace',
-      title: 'Workspace Guide',
-      desc:
-          'Where to go in the Project workspace (Chat, Deploy, Pay, Analytics).',
+      title: _t('docs_page_workspace_title', 'Workspace Guide'),
+      desc: _t(
+        'docs_page_workspace_desc',
+        'Where to go in the Project workspace (Chat, Deploy, Pay, Analytics).',
+      ),
       icon: Icons.workspaces_outline,
     ),
     DocItem(
       href: '/docs/use-cases',
-      title: 'Use Cases',
-      desc: 'Playbooks: prompts + acceptance criteria for common products.',
+      title: _t('docs_page_use_cases_title', 'Use Cases'),
+      desc: _t(
+        'docs_page_use_cases_desc',
+        'Playbooks: prompts + acceptance criteria for common products.',
+      ),
       icon: Icons.lightbulb_outline,
     ),
     DocItem(
       href: '/docs/architecture',
-      title: 'Architecture',
-      desc: 'Environments, promotion model, and failure modes.',
+      title: _t('docs_page_architecture_title', 'Architecture'),
+      desc: _t(
+        'docs_page_architecture_desc',
+        'Environments, promotion model, and failure modes.',
+      ),
       icon: Icons.architecture,
     ),
     DocItem(
       href: '/docs/integrations',
-      title: 'Integrations',
-      desc: 'GitHub/Auth/Payments/Analytics: setup and verification.',
+      title: _t('docs_page_integrations_title', 'Integrations'),
+      desc: _t(
+        'docs_page_integrations_desc',
+        'GitHub/Auth/Payments/Analytics: setup and verification.',
+      ),
       icon: Icons.integration_instructions,
     ),
     DocItem(
       href: '/docs/api',
-      title: 'API',
-      desc: 'OpenAPI, auth, errors, pagination, webhooks.',
+      title: _t('docs_page_api_title', 'API'),
+      desc: _t(
+        'docs_page_api_desc',
+        'OpenAPI, auth, errors, pagination, webhooks.',
+      ),
       icon: Icons.api,
     ),
     DocItem(
       href: '/docs/faq',
-      title: 'FAQ',
-      desc: 'Troubleshooting and tips.',
+      title: _t('docs_page_faq_title', 'FAQ'),
+      desc: _t('docs_page_faq_desc', 'Troubleshooting and tips.'),
       icon: Icons.help_outline,
     ),
     DocItem(
       href: '/docs/roadmap',
-      title: 'Roadmap',
-      desc: 'Now / Next priorities (subject to change).',
+      title: _t('docs_page_roadmap_title', 'Roadmap'),
+      desc: _t(
+        'docs_page_roadmap_desc',
+        'Now / Next priorities (subject to change).',
+      ),
       icon: Icons.map,
     ),
     DocItem(
       href: '/docs/refund-policy',
-      title: 'Refund and Dispute Policy',
-      desc: 'Refund/dispute process and timelines.',
+      title: _t(
+        'docs_page_refund_policy_title',
+        'Refund and Dispute Policy',
+      ),
+      desc: _t(
+        'docs_page_refund_policy_desc',
+        'Refund/dispute process and timelines.',
+      ),
       icon: Icons.money_off,
     ),
     DocItem(
       href: '/docs/privacy-policy',
-      title: 'Privacy Policy',
-      desc:
-          'What data we collect, how we use it, and how to request export or deletion.',
+      title: _t('docs_page_privacy_policy_title', 'Privacy Policy'),
+      desc: _t(
+        'docs_page_privacy_policy_desc',
+        'What data we collect, how we use it, and how to request export or deletion.',
+      ),
       icon: Icons.privacy_tip_outlined,
     ),
     DocItem(
       href: '/docs/legal-restrictions',
-      title: 'Legal and Export Restrictions',
-      desc: 'Compliance and export restrictions (high-level).',
+      title: _t(
+        'docs_page_legal_restrictions_title',
+        'Legal and Export Restrictions',
+      ),
+      desc: _t(
+        'docs_page_legal_restrictions_desc',
+        'Compliance and export restrictions (high-level).',
+      ),
       icon: Icons.gavel,
     ),
   ];
@@ -151,7 +199,15 @@ class _DocsScreenState extends State<DocsScreen> {
     final showRecent = _searchController.text.trim().isEmpty;
     final desktop = isDesktopLayout(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Documentation')),
+      appBar: AppBar(
+        title: Text(
+          _t('docs_title', 'Documentation'),
+          style: LocaleFontHelper.localizedTitleStyle(
+            context,
+            theme.textTheme.titleLarge,
+          ),
+        ),
+      ),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -166,7 +222,7 @@ class _DocsScreenState extends State<DocsScreen> {
         child: desktop
             ? DesktopContentFrame(
                 maxWidth: 1440,
-                padding: const EdgeInsets.fromLTRB(24, 18, 24, 28),
+                padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -176,20 +232,23 @@ class _DocsScreenState extends State<DocsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildHero(context),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
                           _buildSearchField(context),
-                          const SizedBox(height: 18),
+                          const SizedBox(height: 14),
                           if (showRecent && _recentSlugs.isNotEmpty) ...[
                             _buildSectionHeader(
                               context,
-                              eyebrow: 'History',
-                              title: 'Recently viewed',
+                              eyebrow: _t('docs_history_eyebrow', 'History'),
+                              title: _t(
+                                'docs_recently_viewed',
+                                'Recently viewed',
+                              ),
                               action: TextButton(
                                 onPressed: _clearRecent,
-                                child: const Text('Clear'),
+                                child: Text(_t('clear', 'Clear')),
                               ),
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 10),
                             Expanded(child: SingleChildScrollView(child: _buildRecent(context))),
                           ] else
                             Expanded(
@@ -206,21 +265,26 @@ class _DocsScreenState extends State<DocsScreen> {
                                   ),
                                 ),
                                 child: Text(
-                                  'Search by task, workflow, or page title. Recent documents will appear here when you start browsing.',
+                                  _t(
+                                    'docs_recent_placeholder',
+                                    'Search by task, workflow, or page title. Recent documents will appear here when you start browsing.',
+                                  ),
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     color: theme.colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ),
                             ),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 10),
                           FilledButton.icon(
                             onPressed: () {
                               _searchController.clear();
                               setState(() {});
                             },
                             icon: const Icon(Icons.menu_book_outlined),
-                            label: const Text('Browse all docs'),
+                            label: Text(
+                              _t('docs_browse_all', 'Browse all docs'),
+                            ),
                           ),
                         ],
                       ),
@@ -236,12 +300,12 @@ class _DocsScreenState extends State<DocsScreen> {
                 ),
               )
             : ListView(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                padding: const EdgeInsets.fromLTRB(14, 10, 14, 18),
                 children: [
                   _buildHero(context),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   _buildSearchField(context),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 14),
                   _buildDocsCatalog(context),
                 ],
               ),
@@ -261,32 +325,41 @@ class _DocsScreenState extends State<DocsScreen> {
         if (!isDesktopLayout(context) && showRecent && _recentSlugs.isNotEmpty) ...[
           _buildSectionHeader(
             context,
-            eyebrow: 'History',
-            title: 'Recently viewed',
-            action: TextButton(onPressed: _clearRecent, child: const Text('Clear')),
+            eyebrow: _t('docs_history_eyebrow', 'History'),
+            title: _t('docs_recently_viewed', 'Recently viewed'),
+            action: TextButton(
+              onPressed: _clearRecent,
+              child: Text(_t('clear', 'Clear')),
+            ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           _buildRecent(context),
-          const SizedBox(height: 22),
+          const SizedBox(height: 16),
         ],
         _buildSectionHeader(
           context,
-          eyebrow: 'Library',
+          eyebrow: _t('docs_library_eyebrow', 'Library'),
           title: _searchController.text.trim().isEmpty
-              ? 'Browse all documents'
-              : 'Search results',
+              ? _t('docs_browse_all_documents', 'Browse all documents')
+              : _t('docs_search_results', 'Search results'),
           trailingText:
-              '${_filteredPages.length.toString().padLeft(2, '0')} items',
+              (_t('docs_items_count', '{count} items')).replaceAll(
+                '{count}',
+                _filteredPages.length.toString().padLeft(2, '0'),
+              ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         if (isDesktopLayout(context))
           Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Text(
-              'Tip: open a page, then use history on the left to jump back without re-searching.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  _t(
+                    'docs_tip_history',
+                    'Tip: open a page, then use history on the left to jump back without re-searching.',
+                  ),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
             ),
           ),
         if (desktop)
@@ -295,9 +368,9 @@ class _DocsScreenState extends State<DocsScreen> {
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
               maxCrossAxisExtent: 420,
-              mainAxisExtent: 184,
-              crossAxisSpacing: 14,
-              mainAxisSpacing: 14,
+              mainAxisExtent: 170,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
             ),
             itemCount: _filteredPages.length,
             itemBuilder: (context, index) =>
@@ -317,7 +390,7 @@ class _DocsScreenState extends State<DocsScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
         gradient: LinearGradient(
@@ -367,26 +440,36 @@ class _DocsScreenState extends State<DocsScreen> {
               ),
             ),
             child: Text(
-              'd1v.ai docs',
+              _t('docs_brand_label', 'd1v.ai docs'),
               style: theme.textTheme.labelMedium?.copyWith(
                 color: colorScheme.primary,
                 fontWeight: FontWeight.w700,
               ),
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           Text(
-            'Operational guidance, product context, and implementation references.',
-            style: theme.textTheme.titleLarge?.copyWith(
+            _t(
+              'docs_hero_title',
+              'Operational guidance, product context, and implementation references.',
+            ),
+            style: LocaleFontHelper.localizedTitleStyle(
+              context,
+              theme.textTheme.titleLarge,
+            )?.copyWith(
               height: 1.15,
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Text(
-            'Use the docs like a product index: scan by outcome, reopen what you touched recently, and jump straight into the detail view.',
+            _t(
+              'docs_hero_subtitle',
+              'Use the docs like a product index: scan by outcome, reopen what you touched recently, and jump straight into the detail view.',
+            ),
             style: theme.textTheme.bodyMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
+              height: 1.3,
             ),
           ),
         ],
@@ -401,7 +484,7 @@ class _DocsScreenState extends State<DocsScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(18),
         color: isDark
             ? Colors.white.withValues(alpha: 0.04)
             : Colors.white.withValues(alpha: 0.86),
@@ -415,20 +498,23 @@ class _DocsScreenState extends State<DocsScreen> {
             color: isDark
                 ? Colors.black.withValues(alpha: 0.12)
                 : const Color(0xFF0F172A).withValues(alpha: 0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: TextField(
         controller: _searchController,
         decoration: InputDecoration(
-          hintText: 'Search docs, workflows, API, setup...',
+          hintText: _t(
+            'docs_search_hint',
+            'Search docs, workflows, API, setup...',
+          ),
           prefixIcon: const Icon(Icons.search),
           suffixIcon: _searchController.text.trim().isEmpty
               ? null
               : IconButton(
-                  tooltip: 'Clear',
+                  tooltip: _t('clear', 'Clear'),
                   icon: const Icon(Icons.clear),
                   onPressed: () {
                     _searchController.clear();
@@ -436,22 +522,22 @@ class _DocsScreenState extends State<DocsScreen> {
                   },
                 ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(18),
             borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(18),
             borderSide: BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(18),
             borderSide: BorderSide.none,
           ),
           filled: true,
           fillColor: Colors.transparent,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 6,
-            vertical: 18,
+            vertical: 14,
           ),
           prefixIconColor: colorScheme.onSurfaceVariant,
           suffixIconColor: colorScheme.onSurfaceVariant,
@@ -469,7 +555,7 @@ class _DocsScreenState extends State<DocsScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         color: isDark
@@ -488,11 +574,20 @@ class _DocsScreenState extends State<DocsScreen> {
             size: 44,
             color: colorScheme.onSurfaceVariant,
           ),
-          const SizedBox(height: 12),
-          Text('No matching documents', style: theme.textTheme.titleMedium),
-          const SizedBox(height: 6),
+          const SizedBox(height: 10),
           Text(
-            'Try broader keywords or search by product area, workflow, or API topic.',
+            _t('docs_no_matching_documents', 'No matching documents'),
+            style: LocaleFontHelper.localizedTitleStyle(
+              context,
+              theme.textTheme.titleMedium,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _t(
+              'docs_no_matching_documents_hint',
+              'Try broader keywords or search by product area, workflow, or API topic.',
+            ),
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
@@ -528,8 +623,14 @@ class _DocsScreenState extends State<DocsScreen> {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(title, style: theme.textTheme.titleLarge),
+              const SizedBox(height: 2),
+              Text(
+                title,
+                style: LocaleFontHelper.localizedTitleStyle(
+                  context,
+                  theme.textTheme.titleLarge,
+                ),
+              ),
             ],
           ),
         ),
@@ -566,7 +667,7 @@ class _DocsScreenState extends State<DocsScreen> {
     if (items.isEmpty) return const SizedBox.shrink();
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         color: isDark
@@ -579,8 +680,8 @@ class _DocsScreenState extends State<DocsScreen> {
         ),
       ),
       child: Wrap(
-        spacing: 10,
-        runSpacing: 10,
+        spacing: 8,
+        runSpacing: 8,
         children: items.map((p) {
           return ActionChip(
             avatar: Icon(p.icon, size: 16, color: colorScheme.primary),
@@ -615,7 +716,7 @@ class _DocsScreenState extends State<DocsScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -636,24 +737,24 @@ class _DocsScreenState extends State<DocsScreen> {
             color: isDark
                 ? Colors.black.withValues(alpha: 0.10)
                 : const Color(0xFF0F172A).withValues(alpha: 0.035),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: InkWell(
         onTap: () => _navigateToDoc(context, page.href),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 14, 16),
+          padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 52,
-                height: 52,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(14),
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -666,9 +767,9 @@ class _DocsScreenState extends State<DocsScreen> {
                     color: accent.withValues(alpha: isDark ? 0.32 : 0.18),
                   ),
                 ),
-                child: Icon(page.icon, color: accent, size: 24),
+                child: Icon(page.icon, color: accent, size: 20),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -677,8 +778,8 @@ class _DocsScreenState extends State<DocsScreen> {
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
+                            horizontal: 7,
+                            vertical: 3,
                           ),
                           decoration: BoxDecoration(
                             color: isDark
@@ -691,7 +792,8 @@ class _DocsScreenState extends State<DocsScreen> {
                             style: theme.textTheme.labelSmall?.copyWith(
                               color: accent,
                               fontWeight: FontWeight.w700,
-                              letterSpacing: 0.3,
+                              fontSize: 10.5,
+                              letterSpacing: 0.2,
                             ),
                           ),
                         ),
@@ -700,34 +802,45 @@ class _DocsScreenState extends State<DocsScreen> {
                           (index + 1).toString().padLeft(2, '0'),
                           style: theme.textTheme.labelMedium?.copyWith(
                             color: colorScheme.onSurfaceVariant,
+                            fontSize: 11,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     Text(
                       page.title,
-                      style: theme.textTheme.titleMedium?.copyWith(
+                      style: LocaleFontHelper.localizedTitleStyle(
+                        context,
+                        theme.textTheme.titleMedium,
+                      )?.copyWith(
                         color: colorScheme.onSurface,
                         fontWeight: FontWeight.w800,
+                        height: 1.05,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     Text(
                       page.desc,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: colorScheme.onSurfaceVariant,
+                        fontSize: 13,
+                        height: 1.28,
                       ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Padding(
-                padding: const EdgeInsets.only(top: 4),
+                padding: const EdgeInsets.only(top: 2),
                 child: Icon(
                   Icons.north_east_rounded,
-                  size: 18,
+                  size: 16,
                   color: colorScheme.onSurfaceVariant,
                 ),
               ),

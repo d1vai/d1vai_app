@@ -8,6 +8,7 @@ import '../widgets/snackbar_helper.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/login_required_view.dart';
 import '../l10n/app_localizations.dart';
+import '../core/theme/locale_font_helper.dart';
 
 class CreatePostScreen extends StatefulWidget {
   const CreatePostScreen({super.key});
@@ -75,6 +76,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     if (_didOfferRestore) return;
     _didOfferRestore = true;
 
+    final loc = AppLocalizations.of(context);
     final auth = Provider.of<AuthProvider>(context, listen: false);
     if (!auth.isAuthenticated) return;
 
@@ -90,21 +92,28 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: const Text('Restore draft?'),
+          title: Text(
+            loc?.translate('create_post_restore_draft_title') ??
+                'Restore draft?',
+            style: LocaleFontHelper.localizedTitleStyle(
+              context,
+              Theme.of(context).textTheme.titleLarge,
+            ),
+          ),
           content: Text(
-            'We found an unsent draft.\n\n'
-            'Title: ${draftTitle.trim().isEmpty ? '(empty)' : draftTitle.trim()}',
+            '${loc?.translate('create_post_restore_draft_message') ?? 'We found an unsent draft.'}\n\n'
+            '${loc?.translate('create_post_restore_draft_title_label') ?? 'Title'}: ${draftTitle.trim().isEmpty ? (loc?.translate('create_post_empty_placeholder') ?? '(empty)') : draftTitle.trim()}',
           ),
           actions: [
             TextButton(
               onPressed: () =>
                   Navigator.of(ctx).pop(_DraftRestoreAction.discard),
-              child: const Text('Discard'),
+              child: Text(loc?.translate('create_post_discard') ?? 'Discard'),
             ),
             ElevatedButton(
               onPressed: () =>
                   Navigator.of(ctx).pop(_DraftRestoreAction.restore),
-              child: const Text('Restore'),
+              child: Text(loc?.translate('create_post_restore') ?? 'Restore'),
             ),
           ],
         );
@@ -171,8 +180,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
       SnackBarHelper.showSuccess(
         context,
-        title: 'Success',
-        message: 'Post created successfully',
+        title: AppLocalizations.of(context)?.translate('success') ?? 'Success',
+        message:
+            AppLocalizations.of(context)?.translate('create_post_success') ??
+            'Post created successfully',
       );
 
       Navigator.pop(context, true); // Return true to indicate refresh needed
@@ -180,9 +191,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       if (!mounted) return;
       SnackBarHelper.showError(
         context,
-        title: 'Error',
-        message: 'Failed to create post: $e',
-        actionLabel: 'Retry',
+        title: AppLocalizations.of(context)?.translate('error') ?? 'Error',
+        message:
+            '${AppLocalizations.of(context)?.translate('create_post_failed') ?? 'Failed to create post'}: $e',
+        actionLabel: AppLocalizations.of(context)?.translate('retry') ?? 'Retry',
         onActionPressed: () {
           if (!_isLoading) _submitPost();
         },
@@ -204,7 +216,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Post'),
+        title: Text(
+          loc?.translate('create_post_title') ?? 'Create Post',
+          style: LocaleFontHelper.localizedTitleStyle(
+            context,
+            theme.textTheme.titleLarge,
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: (!authed || _isLoading) ? null : _submitPost,
@@ -214,8 +232,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text(
-                    'Post',
+                : Text(
+                    loc?.translate('create_post_action') ?? 'Post',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
           ),
@@ -234,15 +252,19 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 children: [
                   TextFormField(
                     controller: _titleController,
-                    decoration: const InputDecoration(
-                      hintText: 'Title',
+                    decoration: InputDecoration(
+                      hintText: loc?.translate('create_post_title_hint') ?? 'Title',
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.zero,
                     ),
-                    style: theme.textTheme.headlineSmall,
+                    style: LocaleFontHelper.localizedTitleStyle(
+                      context,
+                      theme.textTheme.headlineSmall,
+                    ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return 'Please enter a title';
+                        return loc?.translate('create_post_title_required') ??
+                            'Please enter a title';
                       }
                       return null;
                     },
@@ -251,8 +273,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   const Divider(),
                   TextFormField(
                     controller: _contentController,
-                    decoration: const InputDecoration(
-                      hintText: 'What\'s on your mind?',
+                    decoration: InputDecoration(
+                      hintText:
+                          loc?.translate('create_post_content_hint') ??
+                          'What\'s on your mind?',
                       border: InputBorder.none,
                     ),
                     style: theme.textTheme.bodyLarge,
@@ -260,7 +284,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                     minLines: 10,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return 'Please enter some content';
+                        return loc?.translate('create_post_content_required') ??
+                            'Please enter some content';
                       }
                       return null;
                     },

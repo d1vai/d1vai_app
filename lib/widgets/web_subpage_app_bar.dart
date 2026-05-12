@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../utils/navigation_utils.dart';
+
 class WebSubPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   const WebSubPageAppBar({
     super.key,
@@ -8,6 +10,7 @@ class WebSubPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.bottom,
     this.centerTitle,
     this.onClose,
+    this.fallbackRoute,
     this.closeTooltip = 'Close',
   });
 
@@ -16,6 +19,7 @@ class WebSubPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   final PreferredSizeWidget? bottom;
   final bool? centerTitle;
   final VoidCallback? onClose;
+  final String? fallbackRoute;
   final String closeTooltip;
 
   @override
@@ -71,7 +75,11 @@ class WebSubPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                         tooltip: closeTooltip,
                         icon: Icons.close_rounded,
                         onPressed:
-                            onClose ?? () => Navigator.of(context).maybePop(),
+                            onClose ??
+                            () => NavigationUtils.popOrGo(
+                              context,
+                              fallbackRoute ?? '/',
+                            ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
