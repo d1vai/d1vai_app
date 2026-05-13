@@ -228,14 +228,13 @@ class _DocsScreenState extends State<DocsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildHero(context),
+                          // _buildHero(context),
                           const SizedBox(height: 12),
                           _buildSearchField(context),
                           const SizedBox(height: 14),
                           if (showRecent && _recentSlugs.isNotEmpty) ...[
                             _buildSectionHeader(
                               context,
-                              eyebrow: _t('docs_history_eyebrow', 'History'),
                               title: _t(
                                 'docs_recently_viewed',
                                 'Recently viewed',
@@ -303,7 +302,7 @@ class _DocsScreenState extends State<DocsScreen> {
             : ListView(
                 padding: const EdgeInsets.fromLTRB(14, 10, 14, 18),
                 children: [
-                  _buildHero(context),
+                  // _buildHero(context),
                   const SizedBox(height: 12),
                   _buildSearchField(context),
                   const SizedBox(height: 14),
@@ -328,7 +327,6 @@ class _DocsScreenState extends State<DocsScreen> {
             _recentSlugs.isNotEmpty) ...[
           _buildSectionHeader(
             context,
-            eyebrow: _t('docs_history_eyebrow', 'History'),
             title: _t('docs_recently_viewed', 'Recently viewed'),
             action: TextButton(
               onPressed: _clearRecent,
@@ -341,7 +339,6 @@ class _DocsScreenState extends State<DocsScreen> {
         ],
         _buildSectionHeader(
           context,
-          eyebrow: _t('docs_library_eyebrow', 'Library'),
           title: _searchController.text.trim().isEmpty
               ? _t('docs_browse_all_documents', 'Browse all documents')
               : _t('docs_search_results', 'Search results'),
@@ -599,7 +596,7 @@ class _DocsScreenState extends State<DocsScreen> {
 
   Widget _buildSectionHeader(
     BuildContext context, {
-    required String eyebrow,
+    String? eyebrow,
     required String title,
     Widget? action,
     String? trailingText,
@@ -614,15 +611,17 @@ class _DocsScreenState extends State<DocsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                eyebrow.toUpperCase(),
-                style: theme.textTheme.labelMedium?.copyWith(
-                  letterSpacing: 1.1,
-                  color: colorScheme.primary,
-                  fontWeight: FontWeight.w700,
+              if ((eyebrow ?? '').trim().isNotEmpty) ...[
+                Text(
+                  eyebrow!.toUpperCase(),
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    letterSpacing: 1.1,
+                    color: colorScheme.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
+                const SizedBox(height: 2),
+              ],
               Text(
                 title,
                 style: LocaleFontHelper.localizedTitleStyle(
