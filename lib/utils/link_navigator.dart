@@ -15,12 +15,11 @@ class LinkNavigator {
   static String _appendHideHeader(String route, Uri uri) {
     if (!_isHideHeaderEnabled(uri)) return route;
     final next = Uri.parse(route);
-    return next.replace(
-      queryParameters: {
-        ...next.queryParameters,
-        'hideheader': 'true',
-      },
-    ).toString();
+    return next
+        .replace(
+          queryParameters: {...next.queryParameters, 'hideheader': 'true'},
+        )
+        .toString();
   }
 
   static String? routeFor(Uri uri) {
@@ -94,13 +93,31 @@ class LinkNavigator {
   static Future<bool> tryNavigate(BuildContext context, Uri uri) async {
     final route = routeFor(uri);
     if (route == null) return false;
-    final current = GoRouterState.of(context).matchedLocation;
-    if (current == route) {
+    final state = GoRouterState.of(context);
+    final currentUri = state.uri;
+    final targetUri = Uri.parse(route);
+    final samePath = currentUri.path == targetUri.path;
+    final sameQuery = _sameQueryParameters(
+      currentUri.queryParameters,
+      targetUri.queryParameters,
+    );
+    if (samePath && sameQuery) {
       // Keep the current webview navigation when it already points to
       // the same in-app route (prevents blank page from canceled initial load).
       return false;
     }
     context.go(route);
+    return true;
+  }
+
+  static bool _sameQueryParameters(
+    Map<String, String> a,
+    Map<String, String> b,
+  ) {
+    if (a.length != b.length) return false;
+    for (final entry in a.entries) {
+      if (b[entry.key] != entry.value) return false;
+    }
     return true;
   }
 

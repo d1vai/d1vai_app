@@ -130,18 +130,16 @@ class _ApiDocsScreenState extends State<ApiDocsScreen> {
       final theme = Theme.of(context);
       final colorScheme = theme.colorScheme;
       return Scaffold(
-        appBar: widget.hideHeader
-            ? null
-            : WebSubPageAppBar(
-                title: Text(
-                  _resolvedTitle,
-                  style: LocaleFontHelper.localizedTitleStyle(
-                    context,
-                    theme.textTheme.titleLarge,
-                  ),
-                ),
-                fallbackRoute: '/docs',
-              ),
+        appBar: WebSubPageAppBar(
+          title: Text(
+            _resolvedTitle,
+            style: LocaleFontHelper.localizedTitleStyle(
+              context,
+              theme.textTheme.titleLarge,
+            ),
+          ),
+          fallbackRoute: '/docs',
+        ),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -166,50 +164,45 @@ class _ApiDocsScreenState extends State<ApiDocsScreen> {
     }
 
     return Scaffold(
-      appBar: widget.hideHeader
-          ? null
-          : WebSubPageAppBar(
-              title: Text(
-                _resolvedTitle,
-                style: LocaleFontHelper.localizedTitleStyle(
-                  context,
-                  Theme.of(context).textTheme.titleLarge,
-                ),
-              ),
-              fallbackRoute: '/docs',
-              actions: [
-                IconButton(
-                  tooltip: loc?.translate('docs_share') ?? 'Share',
-                  icon: const Icon(Icons.share),
-                  onPressed: () {
-                    ShareSheet.show(
-                      context,
-                      url: _viewUrl,
-                      title: _resolvedTitle,
-                      message: _resolvedSpecUrl ?? _viewUrl.toString(),
-                    );
-                  },
-                ),
-                IconButton(
-                  tooltip:
-                      loc?.translate('docs_open_in_browser') ??
-                      'Open in browser',
-                  icon: const Icon(Icons.open_in_new),
-                  onPressed: _openExternal,
-                ),
-              ],
-              bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(2),
-                child: _isLoading
-                    ? LinearProgressIndicator(
-                        value: _progress > 0 && _progress < 1
-                            ? _progress
-                            : null,
-                        minHeight: 2,
-                      )
-                    : const SizedBox(height: 2),
-              ),
-            ),
+      appBar: WebSubPageAppBar(
+        title: Text(
+          _resolvedTitle,
+          style: LocaleFontHelper.localizedTitleStyle(
+            context,
+            Theme.of(context).textTheme.titleLarge,
+          ),
+        ),
+        fallbackRoute: '/docs',
+        actions: [
+          IconButton(
+            tooltip: loc?.translate('docs_share') ?? 'Share',
+            icon: const Icon(Icons.share),
+            onPressed: () {
+              ShareSheet.show(
+                context,
+                url: _viewUrl,
+                title: _resolvedTitle,
+                message: _resolvedSpecUrl ?? _viewUrl.toString(),
+              );
+            },
+          ),
+          IconButton(
+            tooltip:
+                loc?.translate('docs_open_in_browser') ?? 'Open in browser',
+            icon: const Icon(Icons.open_in_new),
+            onPressed: _openExternal,
+          ),
+        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(2),
+          child: _isLoading
+              ? LinearProgressIndicator(
+                  value: _progress > 0 && _progress < 1 ? _progress : null,
+                  minHeight: 2,
+                )
+              : const SizedBox(height: 2),
+        ),
+      ),
       body: Stack(
         children: [
           InAppWebView(

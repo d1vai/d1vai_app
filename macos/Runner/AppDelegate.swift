@@ -4,7 +4,9 @@ import FlutterMacOS
 @main
 class AppDelegate: FlutterAppDelegate {
   private let openChannelName = "ai.d1v.d1vai/open"
+  private let windowChannelName = "ai.d1v.d1vai/window"
   private var openChannel: FlutterMethodChannel?
+  private var windowChannel: FlutterMethodChannel?
   private var pendingImportPaths: [String] = []
 
   override func applicationDidFinishLaunching(_ notification: Notification) {
@@ -18,8 +20,39 @@ class AppDelegate: FlutterAppDelegate {
       name: openChannelName,
       binaryMessenger: binaryMessenger
     )
+    windowChannel = FlutterMethodChannel(
+      name: windowChannelName,
+      binaryMessenger: binaryMessenger
+    )
+    windowChannel?.setMethodCallHandler { [weak self] call, result in
+      guard let self = self else {
+        result(FlutterError(code: "window_unavailable", message: nil, details: nil))
+        return
+      }
+      switch call.method {
+      case "beginWindowDrag":
+        self.beginWindowDrag(result: result)
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
     NSLog("[d1vai-drop] appDelegate configured open channel")
     flushPendingImportPaths()
+  }
+
+  private func beginWindowDrag(result: @escaping FlutterResult) {
+    DispatchQueue.main.async {
+      guard let window = self.mainFlutterWindow ?? NSApp.mainWindow else {
+        result(FlutterError(code: "window_unavailable", message: "Main window not found", details: nil))
+        return
+      }
+      guard let event = NSApp.currentEvent else {
+        result(FlutterError(code: "event_unavailable", message: "No current mouse event", details: nil))
+        return
+      }
+      window.performDrag(with: event)
+      result(nil)
+    }
   }
 
   private func configureOpenChannelIfPossible() {

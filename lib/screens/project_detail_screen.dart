@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 
@@ -45,6 +47,12 @@ class ProjectDetailScreen extends StatefulWidget {
 
 class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     with SingleTickerProviderStateMixin {
+  static const MethodChannel _windowChannel = MethodChannel(
+    'ai.d1v.d1vai/window',
+  );
+  static const double _macosTitleBarHeight = 34;
+  static const double _macosTrafficLightsInset = 80;
+
   late final TabController _tabController;
   late final MacosMenuController _macosMenuController;
   late BuildContext _stableUiContext;
@@ -71,7 +79,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     return value;
   }
 
-  String _translateWithContext(BuildContext context, String key, String fallback) {
+  String _translateWithContext(
+    BuildContext context,
+    String key,
+    String fallback,
+  ) {
     final value = AppLocalizations.of(context)?.translate(key);
     if (value == null || value == key) return fallback;
     return value;
@@ -230,7 +242,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
 
   @override
   void dispose() {
-    _macosMenuController.clearCurrentProjectContext(expectedId: widget.projectId);
+    _macosMenuController.clearCurrentProjectContext(
+      expectedId: widget.projectId,
+    );
     _tabController.dispose();
     super.dispose();
   }
@@ -296,21 +310,21 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final desktop = isDesktopLayout(context);
+    final isMacosDesktop =
+        desktop && !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
 
     if (_isLoading) {
-      return Scaffold(
-        appBar: desktop
-            ? null
-            : PreferredSize(
-                preferredSize: const Size.fromHeight(kToolbarHeight),
-                child: _buildGlassmorphicAppBar(context),
-              ),
+      return _buildScaffold(
+        context,
+        isMacosDesktop: isMacosDesktop,
         body: const ProjectOverviewSkeleton(),
       );
     }
 
     if (_error != null) {
-      return Scaffold(
+      return _buildScaffold(
+        context,
+        isMacosDesktop: isMacosDesktop,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -340,51 +354,55 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
 
     final project = _project;
     if (project == null) {
-      return Scaffold(
+      return _buildScaffold(
+        context,
+        isMacosDesktop: isMacosDesktop,
         body: Center(
           child: Text(_t('project_detail_not_found', 'Project not found')),
         ),
       );
     }
 
-    return Scaffold(
-      appBar: desktop
-          ? null
-          : PreferredSize(
-              preferredSize: const Size.fromHeight(kToolbarHeight),
-              child: _buildGlassmorphicAppBar(context),
-            ),
+    return _buildScaffold(
+      context,
+      isMacosDesktop: isMacosDesktop,
+      project: project,
       body: desktop
           ? DesktopContentFrame(
               maxWidth: 1520,
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: 250,
-                    child: _ProjectDesktopRail(
-                      tabs: _tabs
-                          .map((tab) => (tab.icon, _t(tab.labelKey, tab.fallback)))
-                          .toList(),
-                      controller: _tabController,
-                      projectName: project.projectName,
-                      onBack: () {
-                        final router = GoRouter.of(context);
-                        if (router.canPop()) {
-                          router.pop();
-                        } else {
-                          router.go('/projects');
-                        }
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 24),
-                  Expanded(child: _buildProjectTabViews(project)),
-                ],
-              ),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+              child: _buildProjectTabViews(project),
             )
           : _buildProjectTabViews(project),
+    );
+  }
+
+  Widget _buildScaffold(
+    BuildContext context, {
+    required bool isMacosDesktop,
+    required Widget body,
+    UserProject? project,
+  }) {
+    if (!isMacosDesktop) {
+      return Scaffold(
+        appBar: isDesktopLayout(context)
+            ? null
+            : PreferredSize(
+                preferredSize: const Size.fromHeight(kToolbarHeight),
+                child: _buildGlassmorphicAppBar(context),
+              ),
+        body: body,
+      );
+    }
+
+    return Scaffold(
+      appBar: null,
+      body: Column(
+        children: [
+          _buildMacosProjectTitleBar(context, project),
+          Expanded(child: body),
+        ],
+      ),
     );
   }
 
@@ -495,19 +513,181 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
       ),
     );
   }
+
+  Widget _buildMacosProjectTitleBar(
+    BuildContext context,
+    UserProject? project,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final title = project?.projectName.trim().isNotEmpty == true
+        ? project!.projectName.trim()
+        : 'Project';
+
+    return Container(
+      height: _macosTitleBarHeight,
+      decoration: BoxDecoration(
+        color: colorScheme.surface.withValues(alpha: 0.92),
+        border: Border(
+          bottom: BorderSide(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.55),
+          ),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        bottom: false,
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1520),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+              child: Row(
+                children: [
+                  const SizedBox(width: _macosTrafficLightsInset),
+                  _MacosHeaderBackButton(onPressed: _handleBack),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: AnimatedBuilder(
+                      animation: _tabController,
+                      builder: (context, _) {
+                        return Row(
+                          children: [
+                            Flexible(
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w400,
+                                    letterSpacing: 0.05,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  children: [
+                                    for (var i = 0; i < _tabs.length; i++) ...[
+                                      if (i > 0) const SizedBox(width: 8),
+                                      _MacosProjectTabChip(
+                                        label: _t(
+                                          _tabs[i].labelKey,
+                                          _tabs[i].fallback,
+                                        ),
+                                        icon: _tabs[i].icon,
+                                        selected: _tabController.index == i,
+                                        onTap: () =>
+                                            _tabController.animateTo(i),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    tooltip: _t('project_detail_share_title', 'Share'),
+                    icon: const Icon(Icons.share, size: 18),
+                    constraints: const BoxConstraints.tightFor(
+                      width: 32,
+                      height: 32,
+                    ),
+                    padding: EdgeInsets.zero,
+                    splashRadius: 16,
+                    onPressed: project == null ? null : _shareProject,
+                  ),
+                  const SizedBox(width: 6),
+                  _MacosWindowDragArea(
+                    onDragStart: _beginMacosWindowDrag,
+                    child: const SizedBox(width: 28, height: double.infinity),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _beginMacosWindowDrag() async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.macOS) return;
+    try {
+      await _windowChannel.invokeMethod<void>('beginWindowDrag');
+    } catch (_) {}
+  }
 }
 
-class _ProjectDesktopRail extends StatelessWidget {
-  final List<(IconData, String)> tabs;
-  final TabController controller;
-  final String projectName;
-  final VoidCallback onBack;
+extension on _ProjectDetailScreenState {
+  void _handleBack() {
+    final router = GoRouter.of(context);
+    if (router.canPop()) {
+      router.pop();
+    } else {
+      router.go('/projects');
+    }
+  }
+}
 
-  const _ProjectDesktopRail({
-    required this.tabs,
-    required this.controller,
-    required this.projectName,
-    required this.onBack,
+class _MacosHeaderBackButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _MacosHeaderBackButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          width: 20,
+          height: 20,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(7),
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.72),
+            border: Border.all(
+              color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+            ),
+          ),
+          child: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 10,
+            color: colorScheme.onSurface,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MacosProjectTabChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _MacosProjectTabChip({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
   });
 
   @override
@@ -515,106 +695,69 @@ class _ProjectDesktopRail extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (context, _) {
-        return Container(
-          padding: const EdgeInsets.all(16),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(10),
+            color: selected
+                ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.92)
+                : Colors.transparent,
             border: Border.all(
-              color: colorScheme.outlineVariant.withValues(alpha: 0.55),
+              color: selected
+                  ? colorScheme.outlineVariant.withValues(alpha: 0.65)
+                  : colorScheme.outlineVariant.withValues(alpha: 0.28),
             ),
           ),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    OutlinedButton(
-                      onPressed: onBack,
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(42, 42),
-                        padding: EdgeInsets.zero,
-                      ),
-                      child: const Icon(Icons.arrow_back, size: 18),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        projectName.trim().isEmpty ? 'Project' : projectName,
-                        style: TextStyle(
-                          fontSize: theme.textTheme.titleLarge?.fontSize ?? 22,
-                          height: theme.textTheme.titleLarge?.height,
-                          letterSpacing:
-                              theme.textTheme.titleLarge?.letterSpacing,
-                          color: colorScheme.onSurface,
-                          fontWeight: FontWeight.w800,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 13,
+                color: selected
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w400,
+                  color: selected
+                      ? colorScheme.onSurface
+                      : colorScheme.onSurfaceVariant,
                 ),
-                const SizedBox(height: 16),
-                for (var i = 0; i < tabs.length; i++) ...[
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () => controller.animateTo(i),
-                      borderRadius: BorderRadius.circular(16),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 180),
-                        curve: Curves.easeOutCubic,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 14,
-                        ),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          color: controller.index == i
-                              ? colorScheme.primary.withValues(alpha: 0.10)
-                              : Colors.transparent,
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              tabs[i].$1,
-                              size: 18,
-                              color: controller.index == i
-                                  ? colorScheme.primary
-                                  : colorScheme.onSurfaceVariant,
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                tabs[i].$2,
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontWeight: controller.index == i
-                                      ? FontWeight.w800
-                                      : FontWeight.w600,
-                                  color: controller.index == i
-                                      ? colorScheme.primary
-                                      : colorScheme.onSurface,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (i != tabs.length - 1) const SizedBox(height: 8),
-                ],
-              ],
-            ),
+              ),
+            ],
           ),
-        );
+        ),
+      ),
+    );
+  }
+}
+
+class _MacosWindowDragArea extends StatelessWidget {
+  final Widget child;
+  final Future<void> Function() onDragStart;
+
+  const _MacosWindowDragArea({required this.child, required this.onDragStart});
+
+  @override
+  Widget build(BuildContext context) {
+    return Listener(
+      behavior: HitTestBehavior.translucent,
+      onPointerDown: (_) {
+        unawaited(onDragStart());
       },
+      child: child,
     );
   }
 }

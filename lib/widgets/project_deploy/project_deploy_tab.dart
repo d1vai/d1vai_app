@@ -868,6 +868,8 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _buildDeploySummaryStrip(project),
+                const SizedBox(height: 12),
                 _buildDeployControlDeck(project, isWide: isWide),
                 const SizedBox(height: 16),
                 if (isWide)
@@ -889,6 +891,65 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
           );
         },
       ),
+    );
+  }
+
+  Widget _buildDeploySummaryStrip(UserProject project) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final previewReady = (project.preferredPreviewUrl ?? '').trim().isNotEmpty;
+    final prodReady = (project.latestProdDeploymentUrl ?? '').trim().isNotEmpty;
+    final activeFlow = _activeFlowHint();
+
+    Widget item(String label, String value, {bool mono = false}) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.45),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                letterSpacing: 0.2,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                fontFamily: mono ? 'monospace' : null,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: [
+        item(
+          _t('project_deploy_control_title', 'Release control'),
+          activeFlow ??
+              _t('project_deploy_idle_short', 'Ready for next deployment'),
+        ),
+        item(_t('project_deploy_filter_preview', 'Preview'), previewReady ? 'Ready' : 'Missing'),
+        item(_t('project_deploy_filter_production', 'Production'), prodReady ? 'Live' : 'Not live'),
+        item(_t('project_deploy_branch', 'Branch'), _resolveDevBranch(), mono: true),
+        item(_t('project_deploy_release_branch', 'Release'), _resolveMainBranch(), mono: true),
+      ],
     );
   }
 
@@ -923,102 +984,67 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
     final releaseBranch = _resolveMainBranch();
 
     return CustomCard(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            _t('project_deploy_control_title', 'Release control'),
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.35,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            activeHint ??
+                (prodReady
+                    ? _t(
+                        'project_deploy_coach_prod_live',
+                        'Production is live. Keep shipping with small preview iterations.',
+                      )
+                    : previewReady
+                    ? _t(
+                        'project_deploy_coach_preview_ready',
+                        'Preview is ready. Recommended next step: release to production.',
+                      )
+                    : _t(
+                        'project_deploy_coach_no_preview',
+                        'No preview yet. Start with a preview deploy to reduce release risk.',
+                      )),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 10),
           Wrap(
-            spacing: 14,
-            runSpacing: 14,
-            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
             children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
-                  color: Color.alphaBlend(
-                    colorScheme.primary.withValues(alpha: 0.12),
-                    colorScheme.surface,
-                  ),
-                  border: Border.all(
-                    color: colorScheme.primary.withValues(alpha: 0.18),
-                  ),
-                ),
-                child: Icon(
-                  Icons.rocket_launch_rounded,
-                  color: colorScheme.primary,
-                  size: 28,
-                ),
+              _DeployInlinePill(
+                icon: Icons.alt_route,
+                text: '$branch -> $releaseBranch',
+                monospace: true,
               ),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 620),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _t('project_deploy_control_title', 'Release control'),
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.5,
-                        height: 1.0,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      activeHint ??
-                          (prodReady
-                              ? _t(
-                                  'project_deploy_coach_prod_live',
-                                  'Production is live. Keep shipping with small preview iterations.',
-                                )
-                              : previewReady
-                              ? _t(
-                                  'project_deploy_coach_preview_ready',
-                                  'Preview is ready. Recommended next step: release to production.',
-                                )
-                              : _t(
-                                  'project_deploy_coach_no_preview',
-                                  'No preview yet. Start with a preview deploy to reduce release risk.',
-                                )),
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: colorScheme.onSurfaceVariant.withValues(
-                          alpha: 0.92,
-                        ),
-                        height: 1.45,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: [
-                        _DeployInlinePill(
-                          icon: Icons.alt_route,
-                          text: '$branch -> $releaseBranch',
-                          monospace: true,
-                        ),
-                        _DeployInlinePill(
-                          icon: Icons.history_toggle_off,
-                          text:
-                              '${_deployments.length} ${_t('project_deploy_history', 'History').toLowerCase()}',
-                        ),
-                        if (_isLoadingReleases)
-                          _DeployInlinePill(
-                            icon: Icons.sync,
-                            text: _t(
-                              'project_deploy_loading_releases',
-                              'Refreshing releases',
-                            ),
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
+              _DeployInlinePill(
+                icon: Icons.history_toggle_off,
+                text:
+                    '${_deployments.length} ${_t('project_deploy_history', 'History').toLowerCase()}',
               ),
+              if (_isLoadingReleases)
+                _DeployInlinePill(
+                  icon: Icons.sync,
+                  text: _t(
+                    'project_deploy_loading_releases',
+                    'Refreshing releases',
+                  ),
+                ),
             ],
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 16),
           Wrap(
             spacing: 12,
             runSpacing: 12,
@@ -1148,24 +1174,14 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
               ),
             ),
           ],
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
           Text(
             _t('project_deploy_troubleshooting', 'Failure triage'),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            _t(
-              'project_deploy_troubleshooting_hint',
-              'Start with the shortest path to isolate build, config, and permission issues.',
-            ),
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Wrap(
             spacing: 18,
             runSpacing: 10,
@@ -1246,7 +1262,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
     final previewUrl = _normalizeHttpUrl(project.preferredPreviewUrl);
 
     return CustomCard(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1256,17 +1272,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 6),
-          Text(
-            _t(
-              'project_deploy_snapshot_hint',
-              'Use this as the source of truth for what is live now and what is safe to release next.',
-            ),
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
           _buildDeploymentSurfaceTile(
             title: _t('project_deploy_filter_production', 'Production'),
             url: productionUrl,

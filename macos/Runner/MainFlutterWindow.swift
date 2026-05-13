@@ -1,6 +1,50 @@
 import Cocoa
 import FlutterMacOS
 
+final class NonDraggableHostingView: NSView {
+  override var mouseDownCanMoveWindow: Bool {
+    return false
+  }
+
+  override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
+    return true
+  }
+}
+
+final class RootContainerViewController: NSViewController {
+  private let flutterViewController: FlutterViewController
+
+  init(flutterViewController: FlutterViewController) {
+    self.flutterViewController = flutterViewController
+    super.init(nibName: nil, bundle: nil)
+  }
+
+  @available(*, unavailable)
+  required init?(coder: NSCoder) {
+    fatalError("init(coder:) has not been implemented")
+  }
+
+  override func loadView() {
+    self.view = NonDraggableHostingView()
+  }
+
+  override func viewDidLoad() {
+    super.viewDidLoad()
+
+    addChild(flutterViewController)
+    let flutterView = flutterViewController.view
+    flutterView.translatesAutoresizingMaskIntoConstraints = false
+    view.addSubview(flutterView)
+
+    NSLayoutConstraint.activate([
+      flutterView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      flutterView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      flutterView.topAnchor.constraint(equalTo: view.topAnchor),
+      flutterView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+    ])
+  }
+}
+
 final class DirectoryDropOverlayView: NSView {
   private let messageField = NSTextField(labelWithString: "Drop folder or file to import")
   private let detailField = NSTextField(labelWithString: "Imports to cloud, then opens Code chat")
@@ -162,9 +206,19 @@ class MainFlutterWindow: NSWindow {
 
   override func awakeFromNib() {
     let flutterViewController = FlutterViewController()
+    let rootViewController = RootContainerViewController(
+      flutterViewController: flutterViewController
+    )
     let windowFrame = self.frame
-    self.contentViewController = flutterViewController
+    self.contentViewController = rootViewController
     self.setFrame(windowFrame, display: true)
+    self.titleVisibility = .hidden
+    self.titlebarAppearsTransparent = true
+    self.isMovableByWindowBackground = false
+    self.styleMask.insert(.fullSizeContentView)
+    if #available(macOS 11.0, *) {
+      self.toolbarStyle = .unifiedCompact
+    }
 
     RegisterGeneratedPlugins(registry: flutterViewController)
     registerForDraggedTypes([.fileURL])

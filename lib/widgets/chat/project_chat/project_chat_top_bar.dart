@@ -23,7 +23,7 @@ class ProjectChatTopBar extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
@@ -42,16 +42,16 @@ class ProjectChatTopBar extends StatelessWidget {
                 child: _TabButton(
                   isSelected: currentIndex == 0,
                   label: compact ? 'Prev' : null,
-                  icon: Icons.preview,
+                  icon: Icons.remove_red_eye_outlined,
                   onTap: () => onTabSelected(0),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Flexible(
                 child: _TabButton(
                   isSelected: currentIndex == 1,
-                  label: 'Code',
-                  icon: Icons.code,
+                  label: 'Files',
+                  icon: Icons.folder_outlined,
                   onTap: () => onTabSelected(1),
                 ),
               ),
@@ -64,7 +64,7 @@ class ProjectChatTopBar extends StatelessWidget {
                 icon: Icons.restart_alt,
                 onPressed: onRefreshPreview,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               _ActionIconButton(
                 icon: Icons.open_in_new,
                 onPressed: onOpenInNewTab,
@@ -81,7 +81,7 @@ class ProjectChatTopBar extends StatelessWidget {
                     child: tabRow,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 actionsRow,
               ],
             );
@@ -95,7 +95,7 @@ class ProjectChatTopBar extends StatelessWidget {
                   child: tabRow,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               actionsRow,
             ],
           );
@@ -322,20 +322,20 @@ class _TabButton extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(7),
       child: Container(
         padding: hasLabel
-            ? const EdgeInsets.symmetric(horizontal: 12, vertical: 8)
-            : const EdgeInsets.all(10),
+            ? const EdgeInsets.symmetric(horizontal: 10, vertical: 6)
+            : const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: isSelected
               ? theme.colorScheme.primary.withValues(alpha: 0.12)
               : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(7),
           border: isSelected
               ? Border.all(
                   color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                  width: 1.5,
+                  width: 1,
                 )
               : null,
         ),
@@ -344,18 +344,18 @@ class _TabButton extends StatelessWidget {
           children: [
             Icon(
               icon,
-              size: 18,
+              size: 15,
               color: isSelected
                   ? theme.colorScheme.primary
                   : theme.colorScheme.onSurfaceVariant,
             ),
             if (hasLabel) ...[
-              const SizedBox(width: 6),
+              const SizedBox(width: 5),
               Text(
                 label!,
                 style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w400,
                   color: isSelected
                       ? theme.colorScheme.primary
                       : theme.colorScheme.onSurfaceVariant,
@@ -384,7 +384,7 @@ class _ActionIconButton extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(7),
         border: Border.all(
           color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
           width: 1,
@@ -394,12 +394,12 @@ class _ActionIconButton extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onPressed,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(7),
           child: Padding(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(7),
             child:
                 iconWidget ??
-                Icon(icon, size: 20, color: theme.colorScheme.onSurfaceVariant),
+                Icon(icon, size: 16, color: theme.colorScheme.onSurfaceVariant),
           ),
         ),
       ),

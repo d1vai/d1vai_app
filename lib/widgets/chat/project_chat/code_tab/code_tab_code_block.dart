@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_highlight/flutter_highlight.dart';
-import 'package:flutter_highlight/themes/atom-one-dark.dart';
-import 'package:flutter_highlight/themes/atom-one-light.dart';
+import 'package:flutter_highlight/themes/vs.dart';
+import 'package:flutter_highlight/themes/vs2015.dart';
 
 class CodeTabCodeBlock extends StatelessWidget {
   final String? filePath;
@@ -52,7 +52,9 @@ class CodeTabCodeBlock extends StatelessWidget {
     if (p.endsWith('.sql')) return 'sql';
     if (p.endsWith('.sh') || p.endsWith('.bash')) return 'bash';
     if (p.endsWith('.zsh')) return 'bash';
-    if (p.endsWith('.env') || p.endsWith('.env.local') || p.endsWith('.env.production')) {
+    if (p.endsWith('.env') ||
+        p.endsWith('.env.local') ||
+        p.endsWith('.env.production')) {
       return 'bash';
     }
 
@@ -74,7 +76,7 @@ class CodeTabCodeBlock extends StatelessWidget {
     final enableHighlight =
         !isBinary && highlightLanguage != null && text.length <= 200000;
     final highlightTheme = Map<String, TextStyle>.from(
-      isDark ? atomOneDarkTheme : atomOneLightTheme,
+      isDark ? vs2015Theme : vsTheme,
     );
     final root = highlightTheme['root'];
     highlightTheme['root'] = (root ?? const TextStyle()).copyWith(

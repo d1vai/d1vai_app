@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_highlight/flutter_highlight.dart';
-import 'package:flutter_highlight/themes/atom-one-dark.dart';
-import 'package:flutter_highlight/themes/atom-one-light.dart';
+import 'package:flutter_highlight/themes/vs.dart';
+import 'package:flutter_highlight/themes/vs2015.dart';
 
 class CodeHighlightBlock extends StatelessWidget {
   final String text;
@@ -57,7 +57,7 @@ class CodeHighlightBlock extends StatelessWidget {
         : theme.colorScheme.outlineVariant.withValues(alpha: 0.7);
 
     final highlightTheme = Map<String, TextStyle>.from(
-      isDark ? atomOneDarkTheme : atomOneLightTheme,
+      isDark ? vs2015Theme : vsTheme,
     );
     final root = highlightTheme['root'] ?? const TextStyle();
     highlightTheme['root'] = root.copyWith(

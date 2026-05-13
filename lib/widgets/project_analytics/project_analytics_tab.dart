@@ -945,6 +945,10 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       length: 7,
       child: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            child: _buildAnalyticsSummaryStrip(),
+          ),
           Material(
             color: Theme.of(context).colorScheme.surface,
             child: TabBar(
@@ -1010,6 +1014,60 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildAnalyticsSummaryStrip() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final values = _values ?? const <String, dynamic>{};
+    final pageviews = _asInt(values['pageviews'] ?? values['views']);
+    final visitors = _asInt(values['visitors'] ?? values['uniqueVisitors']);
+    final sessions = _asInt(values['sessions'] ?? values['visits']);
+    final activeNow = _activeNow();
+
+    Widget item(String label, String value) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.45),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                letterSpacing: 0.2,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: [
+        item(_t('project_analytics_period', 'Period: {range}').replaceAll('{range}', ''), _timeRangeLabel(_timeRange)),
+        item(_t('project_analytics_pageviews', 'Pageviews'), pageviews.toString()),
+        item(_t('project_analytics_visitors', 'Visitors'), visitors.toString()),
+        item(_t('project_analytics_sessions', 'Sessions'), sessions.toString()),
+        item(_t('project_analytics_active_now', 'Active Now'), activeNow.toString()),
+      ],
     );
   }
 
@@ -1088,10 +1146,29 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildFiltersCard(),
-            const SizedBox(height: 16),
-            _buildPeriodCard(),
-            const SizedBox(height: 16),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth >= 960;
+                if (isWide) {
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(flex: 7, child: _buildFiltersCard()),
+                      const SizedBox(width: 12),
+                      Expanded(flex: 5, child: _buildPeriodCard()),
+                    ],
+                  );
+                }
+                return Column(
+                  children: [
+                    _buildFiltersCard(),
+                    const SizedBox(height: 12),
+                    _buildPeriodCard(),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 12),
             _buildKeyMetricsRow(),
             const SizedBox(height: 16),
             if (_pageviews != null) ...[
@@ -2315,15 +2392,16 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
   }
 
   Widget _buildPeriodCard() {
+    final theme = Theme.of(context);
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.calendar_today,
-              color: Colors.deepPurple,
-              size: 24,
+              color: theme.colorScheme.primary,
+              size: 20,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -2335,9 +2413,8 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                       'project_analytics_period',
                       'Period: {range}',
                     ).replaceAll('{range}', _timeRangeLabel(_timeRange)),
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -2370,84 +2447,80 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
     final sessions = _asInt(values['sessions'] ?? values['visits']);
     final activeNow = _activeNow();
 
-    return Column(
-      children: [
-        Row(
+    final cards = [
+      _AnalyticsMetricCard(
+        title: _t('project_analytics_pageviews', 'Pageviews'),
+        value: pageviews.toString(),
+        icon: Icons.visibility,
+        color: Colors.blue,
+        onTap: () {
+          widget.onAskAi?.call(
+            _t(
+              'project_analytics_ai_prompt_pageviews',
+              'Can you analyze my pageviews trend and suggest ways to increase traffic and retention?',
+            ),
+          );
+        },
+      ),
+      _AnalyticsMetricCard(
+        title: _t('project_analytics_visitors', 'Visitors'),
+        value: visitors.toString(),
+        icon: Icons.people,
+        color: Colors.purple,
+        onTap: () {
+          widget.onAskAi?.call(
+            _t(
+              'project_analytics_ai_prompt_visitors',
+              'Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?',
+            ),
+          );
+        },
+      ),
+      _AnalyticsMetricCard(
+        title: _t('project_analytics_sessions', 'Sessions'),
+        value: sessions.toString(),
+        icon: Icons.timeline,
+        color: Colors.teal,
+        onTap: () {
+          widget.onAskAi?.call(
+            _t(
+              'project_analytics_ai_prompt_sessions',
+              'Can you analyze my sessions and suggest how to increase engagement and session duration?',
+            ),
+          );
+        },
+      ),
+      _AnalyticsMetricCard(
+        title: _t('project_analytics_active_now', 'Active Now'),
+        value: activeNow.toString(),
+        icon: Icons.bolt,
+        color: Colors.indigo,
+        onTap: () {
+          widget.onAskAi?.call(
+            _t(
+              'project_analytics_ai_prompt_active_now',
+              'Can you help me interpret my real-time active users and recommend actions to improve conversion?',
+            ),
+          );
+        },
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 980;
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
           children: [
-            Expanded(
-              child: _AnalyticsMetricCard(
-                title: _t('project_analytics_pageviews', 'Pageviews'),
-                value: pageviews.toString(),
-                icon: Icons.visibility,
-                color: Colors.blue,
-                onTap: () {
-                  widget.onAskAi?.call(
-                    _t(
-                      'project_analytics_ai_prompt_pageviews',
-                      'Can you analyze my pageviews trend and suggest ways to increase traffic and retention?',
-                    ),
-                  );
-                },
+            for (final card in cards)
+              SizedBox(
+                width: wide ? (constraints.maxWidth - 36) / 4 : (constraints.maxWidth - 12) / 2,
+                child: card,
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _AnalyticsMetricCard(
-                title: _t('project_analytics_visitors', 'Visitors'),
-                value: visitors.toString(),
-                icon: Icons.people,
-                color: Colors.purple,
-                onTap: () {
-                  widget.onAskAi?.call(
-                    _t(
-                      'project_analytics_ai_prompt_visitors',
-                      'Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?',
-                    ),
-                  );
-                },
-              ),
-            ),
           ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _AnalyticsMetricCard(
-                title: _t('project_analytics_sessions', 'Sessions'),
-                value: sessions.toString(),
-                icon: Icons.timeline,
-                color: Colors.teal,
-                onTap: () {
-                  widget.onAskAi?.call(
-                    _t(
-                      'project_analytics_ai_prompt_sessions',
-                      'Can you analyze my sessions and suggest how to increase engagement and session duration?',
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _AnalyticsMetricCard(
-                title: _t('project_analytics_active_now', 'Active Now'),
-                value: activeNow.toString(),
-                icon: Icons.bolt,
-                color: Colors.indigo,
-                onTap: () {
-                  widget.onAskAi?.call(
-                    _t(
-                      'project_analytics_ai_prompt_active_now',
-                      'Can you help me interpret my real-time active users and recommend actions to improve conversion?',
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -2604,6 +2677,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       );
     }
 
+    final theme = Theme.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -2615,9 +2689,11 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                 'project_analytics_top_traffic_sources',
                 'Top Traffic Sources',
               ),
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -2639,6 +2715,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
   }
 
   Widget _buildActionsCard() {
+    final theme = Theme.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -2647,7 +2724,9 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
           children: [
             Text(
               _t('project_analytics_actions', 'Actions'),
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
             ),
             const SizedBox(height: 12),
             ListTile(
@@ -2956,28 +3035,39 @@ class _AnalyticsMetricCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final card = Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.75),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(icon, color: color, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
           Text(
             value,
             style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ],

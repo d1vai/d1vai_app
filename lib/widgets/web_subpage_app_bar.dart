@@ -22,9 +22,13 @@ class WebSubPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String? fallbackRoute;
   final String closeTooltip;
 
+  static const double _toolbarHeight = 56;
+  static const double _statusBarAllowance = 12;
+
   @override
-  Size get preferredSize =>
-      Size.fromHeight(kToolbarHeight + (bottom?.preferredSize.height ?? 0));
+  Size get preferredSize => Size.fromHeight(
+    _toolbarHeight + _statusBarAllowance + (bottom?.preferredSize.height ?? 0),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -61,14 +65,15 @@ class WebSubPageAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ),
         child: SafeArea(
+          top: true,
           bottom: false,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
-                height: kToolbarHeight,
+                height: _toolbarHeight,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: const EdgeInsets.fromLTRB(10, 4, 10, 8),
                   child: Row(
                     children: [
                       _AppBarGlassIconButton(
@@ -87,7 +92,7 @@ class WebSubPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                           style:
                               theme.textTheme.titleMedium?.copyWith(
                                 color: colorScheme.onSurface,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w700,
                               ) ??
                               const TextStyle(),
                           child: Align(

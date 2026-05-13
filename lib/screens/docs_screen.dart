@@ -120,10 +120,7 @@ class _DocsScreenState extends State<DocsScreen> {
     ),
     DocItem(
       href: '/docs/refund-policy',
-      title: _t(
-        'docs_page_refund_policy_title',
-        'Refund and Dispute Policy',
-      ),
+      title: _t('docs_page_refund_policy_title', 'Refund and Dispute Policy'),
       desc: _t(
         'docs_page_refund_policy_desc',
         'Refund/dispute process and timelines.',
@@ -249,7 +246,11 @@ class _DocsScreenState extends State<DocsScreen> {
                               ),
                             ),
                             const SizedBox(height: 10),
-                            Expanded(child: SingleChildScrollView(child: _buildRecent(context))),
+                            Expanded(
+                              child: SingleChildScrollView(
+                                child: _buildRecent(context),
+                              ),
+                            ),
                           ] else
                             Expanded(
                               child: Container(
@@ -322,7 +323,9 @@ class _DocsScreenState extends State<DocsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (!isDesktopLayout(context) && showRecent && _recentSlugs.isNotEmpty) ...[
+        if (!isDesktopLayout(context) &&
+            showRecent &&
+            _recentSlugs.isNotEmpty) ...[
           _buildSectionHeader(
             context,
             eyebrow: _t('docs_history_eyebrow', 'History'),
@@ -342,24 +345,23 @@ class _DocsScreenState extends State<DocsScreen> {
           title: _searchController.text.trim().isEmpty
               ? _t('docs_browse_all_documents', 'Browse all documents')
               : _t('docs_search_results', 'Search results'),
-          trailingText:
-              (_t('docs_items_count', '{count} items')).replaceAll(
-                '{count}',
-                _filteredPages.length.toString().padLeft(2, '0'),
-              ),
+          trailingText: (_t('docs_items_count', '{count} items')).replaceAll(
+            '{count}',
+            _filteredPages.length.toString().padLeft(2, '0'),
+          ),
         ),
         const SizedBox(height: 8),
         if (isDesktopLayout(context))
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  _t(
-                    'docs_tip_history',
-                    'Tip: open a page, then use history on the left to jump back without re-searching.',
-                  ),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+            child: Text(
+              _t(
+                'docs_tip_history',
+                'Tip: open a page, then use history on the left to jump back without re-searching.',
+              ),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
         if (desktop)
@@ -456,10 +458,7 @@ class _DocsScreenState extends State<DocsScreen> {
             style: LocaleFontHelper.localizedTitleStyle(
               context,
               theme.textTheme.titleLarge,
-            )?.copyWith(
-              height: 1.15,
-              fontWeight: FontWeight.w800,
-            ),
+            )?.copyWith(height: 1.15, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
           Text(
@@ -810,14 +809,15 @@ class _DocsScreenState extends State<DocsScreen> {
                     const SizedBox(height: 8),
                     Text(
                       page.title,
-                      style: LocaleFontHelper.localizedTitleStyle(
-                        context,
-                        theme.textTheme.titleMedium,
-                      )?.copyWith(
-                        color: colorScheme.onSurface,
-                        fontWeight: FontWeight.w800,
-                        height: 1.05,
-                      ),
+                      style:
+                          LocaleFontHelper.localizedTitleStyle(
+                            context,
+                            theme.textTheme.titleMedium,
+                          )?.copyWith(
+                            color: colorScheme.onSurface,
+                            fontWeight: FontWeight.w800,
+                            height: 1.05,
+                          ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -890,9 +890,6 @@ class _DocsScreenState extends State<DocsScreen> {
       return;
     }
     final router = GoRouter.of(context);
-    final state = GoRouterState.of(context);
-    final hideHeader =
-        (state.uri.queryParameters['hideheader'] ?? '').toLowerCase() == 'true';
 
     // Persist recent list locally (also updated by DocDetailScreen).
     final prefs = await _prefsFuture;
@@ -923,7 +920,7 @@ class _DocsScreenState extends State<DocsScreen> {
       return;
     }
 
-    await router.push(hideHeader ? '/docs/$slug?hideheader=true' : '/docs/$slug');
+    await router.push('/docs/$slug?hideheader=true');
     await _loadRecent();
   }
 }

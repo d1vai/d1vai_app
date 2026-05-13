@@ -102,8 +102,9 @@ class _ProjectOverviewTabState extends State<ProjectOverviewTab> {
             project: project,
             ownerEmail: ownerEmail,
             onOpenPreviewUrl: _openPreviewUrl,
+            isWide: isWide,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
         ];
 
         if (isWide) {
@@ -208,11 +209,13 @@ class _OverviewHeroPanel extends StatelessWidget {
   final UserProject project;
   final String? ownerEmail;
   final Future<void> Function(String url) onOpenPreviewUrl;
+  final bool isWide;
 
   const _OverviewHeroPanel({
     required this.project,
     required this.ownerEmail,
     required this.onOpenPreviewUrl,
+    required this.isWide,
   });
 
   String _t(BuildContext context, String key, String fallback) {
@@ -239,168 +242,220 @@ class _OverviewHeroPanel extends StatelessWidget {
               : null);
 
     return ProjectOverviewCardShell(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
       accentColor: cs.primary,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              Hero(
-                tag: 'project-emoji-${project.id}',
-                child: Material(
-                  color: Colors.transparent,
-                  child: Container(
-                    width: 76,
-                    height: 76,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(22),
-                      color: Color.alphaBlend(
-                        cs.primary.withValues(alpha: isDark ? 0.22 : 0.10),
-                        cs.surface,
-                      ),
-                      border: Border.all(
-                        color: cs.primary.withValues(
-                          alpha: isDark ? 0.28 : 0.18,
-                        ),
-                      ),
+          if (isWide)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(flex: 8, child: _buildSummaryColumn(context, theme, cs, isDark, branch, prodUrl)),
+                const SizedBox(width: 18),
+                SizedBox(
+                  width: 328,
+                  child: _buildMetaRail(context, previewUrl),
+                ),
+              ],
+            )
+          else ...[
+            _buildSummaryColumn(context, theme, cs, isDark, branch, prodUrl),
+            const SizedBox(height: 14),
+            _buildMetaRail(context, previewUrl),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryColumn(
+    BuildContext context,
+    ThemeData theme,
+    ColorScheme cs,
+    bool isDark,
+    String branch,
+    String? prodUrl,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Hero(
+              tag: 'project-emoji-${project.id}',
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  width: 54,
+                  height: 54,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: Color.alphaBlend(
+                      cs.primary.withValues(alpha: isDark ? 0.18 : 0.08),
+                      cs.surface,
                     ),
-                    child: Text(
-                      project.emoji ?? '🚀',
-                      style: const TextStyle(fontSize: 36),
+                    border: Border.all(
+                      color: cs.primary.withValues(alpha: isDark ? 0.24 : 0.14),
                     ),
+                  ),
+                  child: Text(
+                    project.emoji ?? '🚀',
+                    style: const TextStyle(fontSize: 26),
                   ),
                 ),
               ),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 620),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Text(
-                          project.projectName,
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.6,
-                            height: 1.0,
-                          ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        project.projectName.trim().isEmpty
+                            ? _t(context, 'project_detail_not_found', 'Project')
+                            : project.projectName,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
+                          height: 1.0,
                         ),
-                        _OverviewStatusPill(status: project.status),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      project.projectDescription.trim().isEmpty
-                          ? _t(
-                              context,
-                              'project_overview_no_description',
-                              'No description yet.',
-                            )
-                          : project.projectDescription,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: cs.onSurfaceVariant.withValues(alpha: 0.9),
-                        height: 1.45,
                       ),
+                      _OverviewStatusPill(status: project.status),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    project.projectDescription.trim().isEmpty
+                        ? _t(
+                            context,
+                            'project_overview_no_description',
+                            'No description yet.',
+                          )
+                        : project.projectDescription.trim(),
+                    maxLines: isWide ? 2 : 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: cs.onSurfaceVariant.withValues(alpha: 0.9),
+                      height: 1.35,
                     ),
-                    const SizedBox(height: 14),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: [
-                        _OverviewInlineTag(
-                          icon: Icons.schedule_rounded,
-                          text:
-                              _t(
-                                context,
-                                'project_overview_header_updated',
-                                'Updated {time}',
-                              ).replaceAll(
-                                '{time}',
-                                formatTimeAgo(context, project.updatedAt),
-                              ),
-                        ),
-                        if (branch.isNotEmpty)
-                          _OverviewInlineTag(
-                            icon: Icons.alt_route,
-                            text: branch,
-                            monospace: true,
-                          ),
-                        if (prodUrl != null)
-                          _OverviewInlineTag(
-                            icon: Icons.public,
-                            text: getDeploymentLabel(context, prodUrl),
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: 22),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              _OverviewMetricTile(
-                label: _t(context, 'project_overview_stats_created', 'Created'),
-                value: _safeDate(context, project.createdAt),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _OverviewInlineTag(
+              icon: Icons.schedule_rounded,
+              text: _t(
+                context,
+                'project_overview_header_updated',
+                'Updated {time}',
+              ).replaceAll('{time}', formatTimeAgo(context, project.updatedAt)),
+            ),
+            if (branch.isNotEmpty)
+              _OverviewInlineTag(
+                icon: Icons.alt_route,
+                text: branch,
+                monospace: true,
               ),
-              _OverviewMetricTile(
-                label: _t(context, 'project_overview_stats_owner', 'Owner'),
-                value: (ownerEmail ?? '').trim().isEmpty
-                    ? _t(context, 'project_overview_stats_unknown', 'Unknown')
-                    : ownerEmail!,
+            _OverviewInlineTag(
+              icon: Icons.preview_outlined,
+              text: getDeploymentLabel(
+                context,
+                preferredPreviewUrlFromProject(project),
               ),
-              _OverviewMetricTile(
-                label: _t(
-                  context,
-                  'project_overview_stats_deployment',
-                  'Deployment',
-                ),
-                value: getDeploymentLabel(context, previewUrl),
+            ),
+            if (prodUrl != null)
+              _OverviewInlineTag(
+                icon: Icons.public,
+                text: getDeploymentLabel(context, prodUrl),
               ),
-              _OverviewMetricTile(
-                label: _t(
-                  context,
-                  'project_overview_health_analytics',
-                  'Analytics',
-                ),
-                value: project.hasAnalyticsId
-                    ? _t(
-                        context,
-                        'project_overview_health_status_enabled',
-                        'Enabled',
-                      )
-                    : _t(
-                        context,
-                        'project_overview_health_status_disabled',
-                        'Disabled',
-                      ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMetaRail(BuildContext context, String? previewUrl) {
+    final owner = (ownerEmail ?? '').trim().isEmpty
+        ? _t(context, 'project_overview_stats_unknown', 'Unknown')
+        : ownerEmail!;
+    final analytics = project.hasAnalyticsId
+        ? _t(
+            context,
+            'project_overview_health_status_enabled',
+            'Enabled',
+          )
+        : _t(
+            context,
+            'project_overview_health_status_disabled',
+            'Disabled',
+          );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            _OverviewMetricTile(
+              label: _t(context, 'project_overview_stats_created', 'Created'),
+              value: _safeDate(context, project.createdAt),
+              compact: true,
+            ),
+            _OverviewMetricTile(
+              label: _t(context, 'project_overview_stats_owner', 'Owner'),
+              value: owner,
+              compact: true,
+            ),
+            _OverviewMetricTile(
+              label: _t(
+                context,
+                'project_overview_health_analytics',
+                'Analytics',
               ),
-            ],
-          ),
-          if (previewUrl != null && previewUrl.isNotEmpty) ...[
-            const SizedBox(height: 18),
-            FilledButton.tonalIcon(
+              value: analytics,
+              compact: true,
+            ),
+            _OverviewMetricTile(
+              label: _t(
+                context,
+                'project_overview_stats_deployment',
+                'Deployment',
+              ),
+              value: getDeploymentLabel(context, previewUrl),
+              compact: true,
+            ),
+          ],
+        ),
+        if (previewUrl != null && previewUrl.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.tonalIcon(
               onPressed: () => onOpenPreviewUrl(previewUrl),
-              icon: const Icon(Icons.open_in_new),
+              icon: const Icon(Icons.open_in_new, size: 18),
               label: Text(
                 _t(context, 'project_overview_open_preview', 'Open preview'),
               ),
             ),
-          ],
+          ),
         ],
-      ),
+      ],
     );
   }
 }
@@ -423,8 +478,13 @@ String _safeDate(BuildContext context, String raw) {
 class _OverviewMetricTile extends StatelessWidget {
   final String label;
   final String value;
+  final bool compact;
 
-  const _OverviewMetricTile({required this.label, required this.value});
+  const _OverviewMetricTile({
+    required this.label,
+    required this.value,
+    this.compact = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -432,14 +492,17 @@ class _OverviewMetricTile extends StatelessWidget {
     final width = (MediaQuery.sizeOf(context).width - 56) / 2;
     return ConstrainedBox(
       constraints: BoxConstraints(
-        minWidth: 150,
-        maxWidth: width.clamp(150, 240),
+        minWidth: compact ? 140 : 150,
+        maxWidth: width.clamp(compact ? 140 : 150, compact ? 196 : 240),
       ),
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? 12 : 14,
+          vertical: compact ? 11 : 14,
+        ),
         decoration: BoxDecoration(
           color: cs.surface.withValues(alpha: 0.55),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(compact ? 14 : 16),
           border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.35)),
         ),
         child: Column(
@@ -451,14 +514,17 @@ class _OverviewMetricTile extends StatelessWidget {
                 context,
               ).textTheme.labelMedium?.copyWith(color: cs.onSurfaceVariant),
             ),
-            const SizedBox(height: 6),
+            SizedBox(height: compact ? 4 : 6),
             Text(
               value,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(
                 context,
-              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+              ).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                fontSize: compact ? 13 : null,
+              ),
             ),
           ],
         ),

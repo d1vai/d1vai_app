@@ -253,19 +253,19 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
         backgroundColor: isDark
             ? const Color(0xFF0B1220)
             : const Color(0xFFF8FAFC),
-        appBar: widget.hideHeader
-            ? null
-            : WebSubPageAppBar(
-                title: Text(
-                  (loc?.translate('docs_title_slug') ?? 'Docs: {slug}')
-                      .replaceAll('{slug}', widget.slug),
-                  style: LocaleFontHelper.localizedTitleStyle(
-                    context,
-                    theme.textTheme.titleLarge,
-                  ),
-                ),
-                fallbackRoute: '/docs',
-              ),
+        appBar: WebSubPageAppBar(
+          title: Text(
+            (loc?.translate('docs_title_slug') ?? 'Docs: {slug}').replaceAll(
+              '{slug}',
+              widget.slug,
+            ),
+            style: LocaleFontHelper.localizedTitleStyle(
+              context,
+              theme.textTheme.titleLarge,
+            ),
+          ),
+          fallbackRoute: '/docs',
+        ),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -293,66 +293,60 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
       backgroundColor: isDark
           ? const Color(0xFF0B1220)
           : const Color(0xFFF8FAFC),
-      appBar: widget.hideHeader
-          ? null
-          : WebSubPageAppBar(
-              title: Text(
-                (loc?.translate('docs_title_slug') ?? 'Docs: {slug}')
-                    .replaceAll('{slug}', widget.slug),
-                style: LocaleFontHelper.localizedTitleStyle(
-                  context,
-                  theme.textTheme.titleLarge,
-                ),
-              ),
-              fallbackRoute: '/docs',
-              actions: [
-                IconButton(
-                  tooltip: loc?.translate('docs_share') ?? 'Share',
-                  icon: const Icon(Icons.share),
-                  onPressed: () {
-                    ShareSheet.show(
-                      context,
-                      url: _docUrl,
-                      title:
-                          loc?.translate('docs_share_title') ?? 'd1v.ai docs',
-                      message: '/docs/${widget.slug}',
-                    );
-                  },
-                ),
-                IconButton(
-                  tooltip:
-                      loc?.translate('docs_open_in_browser') ??
-                      'Open in browser',
-                  icon: const Icon(Icons.open_in_new),
-                  onPressed: _openExternal,
-                ),
-              ],
-              bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(13),
-                child: _isLoading
-                    ? Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(999),
-                          child: LinearProgressIndicator(
-                            value: _progress > 0 && _progress < 1
-                                ? _progress
-                                : null,
-                            minHeight: 3,
-                            backgroundColor: isDark
-                                ? Colors.white.withValues(alpha: 0.06)
-                                : colorScheme.outlineVariant.withValues(
-                                    alpha: 0.28,
-                                  ),
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              colorScheme.primary,
-                            ),
-                          ),
-                        ),
-                      )
-                    : const SizedBox(height: 10),
-              ),
-            ),
+      appBar: WebSubPageAppBar(
+        title: Text(
+          (loc?.translate('docs_title_slug') ?? 'Docs: {slug}').replaceAll(
+            '{slug}',
+            widget.slug,
+          ),
+          style: LocaleFontHelper.localizedTitleStyle(
+            context,
+            theme.textTheme.titleLarge,
+          ),
+        ),
+        fallbackRoute: '/docs',
+        actions: [
+          IconButton(
+            tooltip: loc?.translate('docs_share') ?? 'Share',
+            icon: const Icon(Icons.share),
+            onPressed: () {
+              ShareSheet.show(
+                context,
+                url: _docUrl,
+                title: loc?.translate('docs_share_title') ?? 'd1v.ai docs',
+                message: '/docs/${widget.slug}',
+              );
+            },
+          ),
+          IconButton(
+            tooltip:
+                loc?.translate('docs_open_in_browser') ?? 'Open in browser',
+            icon: const Icon(Icons.open_in_new),
+            onPressed: _openExternal,
+          ),
+        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(13),
+          child: _isLoading
+              ? Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      value: _progress > 0 && _progress < 1 ? _progress : null,
+                      minHeight: 3,
+                      backgroundColor: isDark
+                          ? Colors.white.withValues(alpha: 0.06)
+                          : colorScheme.outlineVariant.withValues(alpha: 0.28),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                )
+              : const SizedBox(height: 10),
+        ),
+      ),
       body: Stack(
         children: [
           Container(
