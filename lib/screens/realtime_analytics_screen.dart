@@ -251,11 +251,8 @@ class _RealtimeAnalyticsScreenState extends State<RealtimeAnalyticsScreen> {
       children: [
         // Time range selector
         _buildTimeRangeSelector(),
-        const SizedBox(height: 16),
-        // Real-time indicator
-        _buildRealtimeIndicator(),
         if (!_dismissedAnomalyCard && anomalies.isNotEmpty) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           _buildAnomalyCard(anomalies),
         ],
         const SizedBox(height: 24),
@@ -310,42 +307,6 @@ class _RealtimeAnalyticsScreenState extends State<RealtimeAnalyticsScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildRealtimeIndicator() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: _isRealTimeEnabled
-            ? Colors.green.withValues(alpha: 0.1)
-            : Colors.grey.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: _isRealTimeEnabled
-              ? Colors.green.withValues(alpha: 0.3)
-              : Colors.grey.withValues(alpha: 0.3),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            child: Icon(
-              Icons.circle,
-              key: ValueKey(_isRealTimeEnabled),
-              size: 12,
-              color: _isRealTimeEnabled ? Colors.green : Colors.grey,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            _isRealTimeEnabled ? 'Live Updates' : 'Paused',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        ],
       ),
     );
   }

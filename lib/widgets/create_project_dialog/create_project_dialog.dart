@@ -620,6 +620,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
         prompt: description,
         maxDescLen: 120,
         templateRepo: _selectedTemplateRepo,
+        autoDeployOnExecute: true,
         enablePay: false,
         enableDatabase: true,
       );
@@ -700,6 +701,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
             prompt: description,
             maxDescLen: 120,
             templateRepo: _selectedTemplateRepo,
+            autoDeployOnExecute: true,
             enablePay: false,
             enableDatabase: true,
           );

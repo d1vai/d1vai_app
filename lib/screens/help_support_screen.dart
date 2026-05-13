@@ -9,17 +9,6 @@ import '../widgets/share_sheet.dart';
 class HelpSupportScreen extends StatelessWidget {
   const HelpSupportScreen({super.key});
 
-  static const List<String> _faqIds = [
-    'create_project',
-    'connect_github',
-    'payment_methods',
-    'invite_friends',
-    'change_email',
-    'reset_password',
-    'light_dark_mode',
-    'delete_account',
-  ];
-
   // 联系支持邮箱
   static const String supportEmail = 'support@d1v.ai';
 
@@ -28,64 +17,6 @@ class HelpSupportScreen extends StatelessWidget {
     final value = AppLocalizations.of(context)?.translate(key);
     if (value == null || value == key) return fallback;
     return value;
-  }
-
-  List<Map<String, String>> _faqs(BuildContext context) {
-    final fallback = <String, Map<String, String>>{
-      'create_project': {
-        'question': 'How do I create a new project?',
-        'answer':
-            'Navigate to the Projects tab and tap the "+" button. You can either create a new project from scratch or import from GitHub.',
-      },
-      'connect_github': {
-        'question': 'How do I connect my GitHub account?',
-        'answer':
-            'Go to Settings > GitHub tab. Enter your Personal Access Token with the required permissions (repo, read:user, user:email, read:org, workflow).',
-      },
-      'payment_methods': {
-        'question': 'What payment methods are supported?',
-        'answer': Theme.of(context).platform == TargetPlatform.iOS
-            ? 'Billing and purchase management are currently handled outside the iOS app. In-app purchase support is planned for a future release.'
-            : 'We currently support credit/debit cards through Stripe. More payment methods will be added in future updates.',
-      },
-      'invite_friends': {
-        'question': 'How do I invite friends?',
-        'answer':
-            'Go to Settings > Invites tab. You can share your unique invite code or invitation link. You can invite up to 3 users within a 7-day window.',
-      },
-      'change_email': {
-        'question': 'Can I change my email address?',
-        'answer':
-            'Yes! Go to Settings > Profile tab and tap on the email field. You\'ll need to verify your new email address.',
-      },
-      'reset_password': {
-        'question': 'How do I reset my password?',
-        'answer':
-            'In Settings > Profile tab, tap on "Reset Password". You\'ll receive a verification code via email to complete the process.',
-      },
-      'light_dark_mode': {
-        'question': 'What is the difference between Light and Dark mode?',
-        'answer':
-            'Light mode uses a bright theme ideal for daytime use. Dark mode uses a darker theme that\'s easier on the eyes in low-light conditions. You can also set it to follow your system settings.',
-      },
-      'delete_account': {
-        'question': 'How do I delete my account?',
-        'answer':
-            'Please contact our support team at support@d1v.ai to request account deletion. We\'ll process your request within 48 hours.',
-      },
-    };
-
-    return _faqIds.map((id) {
-      final item = fallback[id]!;
-      return {
-        'question': _t(
-          context,
-          'help_support_faq_${id}_question',
-          item['question']!,
-        ),
-        'answer': _t(context, 'help_support_faq_${id}_answer', item['answer']!),
-      };
-    }).toList();
   }
 
   Future<void> _launchEmail(BuildContext context) async {
@@ -165,7 +96,6 @@ class HelpSupportScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    final faqs = _faqs(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -245,61 +175,6 @@ class HelpSupportScreen extends StatelessWidget {
                 _t(context, 'docs', 'Documentation'),
               ),
               accent: const Color(0xFFEC4899),
-            ),
-            const SizedBox(height: 24),
-            _buildSectionTitle(
-              context,
-              _t(
-                context,
-                'help_support_faq_title',
-                'Frequently Asked Questions',
-              ),
-              eyebrow: 'Answers',
-            ),
-            const SizedBox(height: 12),
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.04)
-                    : Colors.white.withValues(alpha: 0.84),
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.08)
-                      : colorScheme.outlineVariant.withValues(alpha: 0.8),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.12 : 0.04),
-                    blurRadius: 18,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: faqs.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final faq = entry.value;
-                  return Column(
-                    children: [
-                      if (index > 0)
-                        Divider(
-                          height: 1,
-                          indent: 16,
-                          endIndent: 16,
-                          color: colorScheme.outlineVariant.withValues(
-                            alpha: isDark ? 0.35 : 0.55,
-                          ),
-                        ),
-                      _buildFaqItem(
-                        context,
-                        question: faq['question']!,
-                        answer: faq['answer']!,
-                      ),
-                    ],
-                  );
-                }).toList(),
-              ),
             ),
             const SizedBox(height: 24),
             _buildFooterCta(context),
@@ -585,50 +460,6 @@ class HelpSupportScreen extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildFaqItem(
-    BuildContext context, {
-    required String question,
-    required String answer,
-  }) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Theme(
-      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-      child: ExpansionTile(
-        tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        childrenPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 0,
-        ),
-        iconColor: colorScheme.primary,
-        collapsedIconColor: colorScheme.onSurfaceVariant,
-        title: Text(
-          question,
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: colorScheme.onSurface,
-          ),
-        ),
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 14),
-              child: Text(
-                answer,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                  height: 1.5,
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -153,8 +153,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(
         title: _isSearching
@@ -189,47 +187,22 @@ class _CommunityScreenState extends State<CommunityScreen> {
           ),
         ],
       ),
-      body: _isSearching && _searchQuery.isNotEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.search,
-                    size: 64,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Searching for "$_searchQuery"...',
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Press the search icon to start',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : EasyRefresh(
-              controller: _controller,
-              onRefresh: () async {
-                await _loadPosts(refresh: true);
-                if (!mounted) return;
-                _controller.finishRefresh();
-              },
-              onLoad: () async {
-                await _loadPosts();
-                if (!mounted) return;
-                _controller.finishLoad(
-                  _hasMore ? IndicatorResult.success : IndicatorResult.noMore,
-                );
-              },
-              child: _buildBody(),
-            ),
+      body: EasyRefresh(
+        controller: _controller,
+        onRefresh: () async {
+          await _loadPosts(refresh: true);
+          if (!mounted) return;
+          _controller.finishRefresh();
+        },
+        onLoad: () async {
+          await _loadPosts();
+          if (!mounted) return;
+          _controller.finishLoad(
+            _hasMore ? IndicatorResult.success : IndicatorResult.noMore,
+          );
+        },
+        child: _buildBody(),
+      ),
     );
   }
 
@@ -286,31 +259,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
       );
     }
 
-    return EasyRefresh(
-      controller: _controller,
-      header: const ClassicHeader(),
-      footer: const ClassicFooter(),
-      onRefresh: () async {
-        await _loadPosts(refresh: true);
-        _controller.finishRefresh();
+    return ListView.builder(
+      itemCount: _posts.length,
+      itemBuilder: (context, index) {
+        final post = _posts[index];
+        return _buildPostCard(post);
       },
-      onLoad: () async {
-        if (_hasMore) {
-          await _loadPosts();
-          _controller.finishLoad(
-            _hasMore ? IndicatorResult.success : IndicatorResult.noMore,
-          );
-        } else {
-          _controller.finishLoad(IndicatorResult.noMore);
-        }
-      },
-      child: ListView.builder(
-        itemCount: _posts.length,
-        itemBuilder: (context, index) {
-          final post = _posts[index];
-          return _buildPostCard(post);
-        },
-      ),
     );
   }
 

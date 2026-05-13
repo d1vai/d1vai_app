@@ -126,50 +126,37 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
             children: [
               Padding(
                 padding: const EdgeInsets.all(16),
-                child: desktop
-                    ? Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            flex: 7,
-                            child: SearchField(
-                              hintText: _t(
-                                'projects_search_hint',
-                                'Search projects...',
-                              ),
-                              initialValue: provider.searchQuery,
-                              onChanged: _onSearchChanged,
-                              onSubmitted: _handleSearch,
-                              onClear: () {
-                                Provider.of<ProjectProvider>(
-                                  context,
-                                  listen: false,
-                                ).setSearchQuery('');
-                              },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildPageIntro(
+                      context,
+                      title: _t('projects_title', 'Projects'),
+                      subtitle: provider.searchQuery.trim().isEmpty
+                          ? _t(
+                              'projects_intro_subtitle',
+                              'Search, open, and manage your active workspace.',
+                            )
+                          : _t(
+                              'projects_searching_subtitle',
+                              'Filtered results for your current query.',
                             ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            flex: 4,
-                            child: _buildProjectsDesktopSummary(provider),
-                          ),
-                        ],
-                      )
-                    : SearchField(
-                        hintText: _t(
-                          'projects_search_hint',
-                          'Search projects...',
-                        ),
-                        initialValue: provider.searchQuery,
-                        onChanged: _onSearchChanged,
-                        onSubmitted: _handleSearch,
-                        onClear: () {
-                          Provider.of<ProjectProvider>(
-                            context,
-                            listen: false,
-                          ).setSearchQuery('');
-                        },
-                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    SearchField(
+                      hintText: _t('projects_search_hint', 'Search projects...'),
+                      initialValue: provider.searchQuery,
+                      onChanged: _onSearchChanged,
+                      onSubmitted: _handleSearch,
+                      onClear: () {
+                        Provider.of<ProjectProvider>(
+                          context,
+                          listen: false,
+                        ).setSearchQuery('');
+                      },
+                    ),
+                  ],
+                ),
               ),
               Expanded(child: _buildProjectsBody(provider, desktop)),
             ],
@@ -245,14 +232,27 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
             const SizedBox(height: 16),
             Text(
               hasSearchQuery
-                  ? _t(
-                      'projects_empty_filtered',
-                      'No projects match your search',
-                    )
-                  : _t('projects_empty', 'No projects found'),
+                  ? _t('projects_empty_search_title', 'No matching projects')
+                  : _t('projects_title', 'Projects'),
               style: theme.textTheme.titleMedium?.copyWith(
                 color: theme.colorScheme.onSurface,
               ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              hasSearchQuery
+                  ? _t(
+                      'projects_empty_search_message',
+                      'Try a different keyword or clear the search.',
+                    )
+                  : _t(
+                      'projects_empty_state_message',
+                      'Create your first project to start building.',
+                    ),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
             ),
             if (!hasSearchQuery) ...[
               const SizedBox(height: 12),
@@ -326,51 +326,6 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     );
   }
 
-  Widget _buildProjectsDesktopSummary(ProjectProvider provider) {
-    final theme = Theme.of(context);
-    final stats = provider.getProjectStats();
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.65),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(child: _buildMiniStat('Total', stats['total'] ?? 0)),
-          Expanded(child: _buildMiniStat('Active', stats['active'] ?? 0)),
-          Expanded(child: _buildMiniStat('Archived', stats['archived'] ?? 0)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMiniStat(String label, int value) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          value.toString(),
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
-    );
-  }
-
   /// 构建项目卡片
   Widget _buildProjectCard(UserProject project, BuildContext context) {
     return ProjectCardTile(
@@ -378,6 +333,38 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       updatedText: _formatTimeAgo(project.updatedAt),
       onTap: () => context.push('/projects/${project.id}'),
       onChat: () => context.push('/projects/${project.id}/chat'),
+    );
+  }
+
+  Widget _buildPageIntro(
+    BuildContext context, {
+    required String title,
+    String? subtitle,
+  }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          if ((subtitle ?? '').isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              subtitle!,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 

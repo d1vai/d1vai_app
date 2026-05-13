@@ -104,6 +104,21 @@ class D1vaiService {
         .join('/');
   }
 
+  String? _canonicalD1vApiBaseUrl() {
+    final current = ApiClient.baseUrl.trim();
+    final uri = Uri.tryParse(current);
+    if (uri == null || uri.host.trim().isEmpty) return null;
+    final host = uri.host.toLowerCase();
+    if (host == 'api.d1v.ai') return null;
+    if (host == 'www.d1v.ai' || host == 'd1v.ai') {
+      return uri
+          .replace(host: 'api.d1v.ai')
+          .toString()
+          .replaceAll(RegExp(r'/$'), '');
+    }
+    return null;
+  }
+
   // ============================================
   // Auth Methods - 认证相关方法
   // ============================================
@@ -114,17 +129,13 @@ class D1vaiService {
     String? locale,
   }) async {
     final localeTag = _resolveLocaleTag(locale);
-    // 使用 POST 方法 + 查询参数（与 web 端完全一致）
-    // 验证码发送成功后返回 data: null，所以我们检查状态即可
+    // Match d1vai web exactly: POST with query params only and no JSON body.
+    // This avoids backend/gateway discrepancies on endpoints that bind from query.
     await _apiClient.postWithQuery<void>(
       '/api/user/verify-code',
       {'email': email, if (localeTag != null) 'locale': localeTag}, // 查询参数
-      {
-        'email': email,
-        if (localeTag != null) 'locale': localeTag,
-      }, // 请求体（与 web 端一致）
+      null,
     );
-    // 返回空 map 表示发送成功（与 Web 端逻辑一致）
     return {};
   }
 
@@ -199,29 +210,61 @@ class D1vaiService {
   }
 
   Future<List<Map<String, dynamic>>> getUserApiKeys() async {
-    return _apiClient.get<List<Map<String, dynamic>>>(
-      '/api/user/api-keys',
-      fromJsonT: (json) => (json as List)
-          .map((item) => Map<String, dynamic>.from(item as Map))
-          .toList(),
-    );
+    final canonicalApiBase = _canonicalD1vApiBaseUrl();
+
+    Future<List<Map<String, dynamic>>> fetch({String? baseUrlOverride}) {
+      return _apiClient.get<List<Map<String, dynamic>>>(
+        '/api/user/api-keys',
+        fromJsonT: (json) => (json as List)
+            .map((item) => Map<String, dynamic>.from(item as Map))
+            .toList(),
+        baseUrlOverride: baseUrlOverride,
+      );
+    }
+
+    try {
+      return await fetch(baseUrlOverride: canonicalApiBase);
+    } catch (e) {
+      rethrow;
+    }
   }
 
   Future<Map<String, dynamic>> createUserApiKey({
     required String name,
     String? description,
   }) async {
-    return _apiClient.post<Map<String, dynamic>>('/api/user/api-keys', {
-      'name': name,
-      if ((description ?? '').trim().isNotEmpty) 'description': description,
-    });
+    final canonicalApiBase = _canonicalD1vApiBaseUrl();
+
+    Future<Map<String, dynamic>> create({String? baseUrlOverride}) {
+      return _apiClient.post<Map<String, dynamic>>('/api/user/api-keys', {
+        'name': name,
+        if ((description ?? '').trim().isNotEmpty) 'description': description,
+      }, baseUrlOverride: baseUrlOverride);
+    }
+
+    try {
+      return await create(baseUrlOverride: canonicalApiBase);
+    } catch (e) {
+      rethrow;
+    }
   }
 
   Future<Map<String, dynamic>> revokeUserApiKey(int apiKeyId) async {
-    return _apiClient.delete<Map<String, dynamic>>(
-      '/api/user/api-keys/$apiKeyId',
-      fromJsonT: (json) => Map<String, dynamic>.from(json as Map),
-    );
+    final canonicalApiBase = _canonicalD1vApiBaseUrl();
+
+    Future<Map<String, dynamic>> revoke({String? baseUrlOverride}) {
+      return _apiClient.delete<Map<String, dynamic>>(
+        '/api/user/api-keys/$apiKeyId',
+        fromJsonT: (json) => Map<String, dynamic>.from(json as Map),
+        baseUrlOverride: baseUrlOverride,
+      );
+    }
+
+    try {
+      return await revoke(baseUrlOverride: canonicalApiBase);
+    } catch (e) {
+      rethrow;
+    }
   }
 
   /// 设置 onboarding 状态
@@ -450,6 +493,7 @@ class D1vaiService {
     required String prompt,
     int? maxDescLen,
     String? templateRepo,
+    bool? autoDeployOnExecute,
     bool? enablePay,
     bool? enableDatabase,
     bool? enableResend,
@@ -461,6 +505,8 @@ class D1vaiService {
         if (maxDescLen != null) 'max_desc_len': maxDescLen,
         if (templateRepo != null && templateRepo.trim().isNotEmpty)
           'template_repo': templateRepo.trim(),
+        if (autoDeployOnExecute != null)
+          'auto_deploy_on_execute': autoDeployOnExecute,
         if (enablePay != null) 'enable_pay': enablePay,
         if (enableDatabase != null) 'enable_database': enableDatabase,
         if (enableResend != null) 'enable_resend': enableResend,

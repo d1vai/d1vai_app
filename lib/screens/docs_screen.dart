@@ -195,6 +195,7 @@ class _DocsScreenState extends State<DocsScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final showRecent = _searchController.text.trim().isEmpty;
     final desktop = isDesktopLayout(context);
+    final hasRecent = _recentSlugs.isNotEmpty;
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -220,90 +221,62 @@ class _DocsScreenState extends State<DocsScreen> {
             ? DesktopContentFrame(
                 maxWidth: 1440,
                 padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 4,
-                      child: Column(
+                child: hasRecent && showRecent
+                    ? Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // _buildHero(context),
-                          const SizedBox(height: 12),
+                          Expanded(
+                            flex: 4,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildSearchField(context),
+                                const SizedBox(height: 18),
+                                _buildSectionHeader(
+                                  context,
+                                  title: _t(
+                                    'docs_recently_viewed',
+                                    'Recently viewed',
+                                  ),
+                                  action: TextButton(
+                                    onPressed: _clearRecent,
+                                    child: Text(_t('clear', 'Clear')),
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                Expanded(
+                                  child: SingleChildScrollView(
+                                    child: _buildRecent(context),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 24),
+                          Expanded(
+                            flex: 6,
+                            child: SingleChildScrollView(
+                              child: _buildDocsCatalog(context),
+                            ),
+                          ),
+                        ],
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           _buildSearchField(context),
-                          const SizedBox(height: 14),
-                          if (showRecent && _recentSlugs.isNotEmpty) ...[
-                            _buildSectionHeader(
-                              context,
-                              title: _t(
-                                'docs_recently_viewed',
-                                'Recently viewed',
-                              ),
-                              action: TextButton(
-                                onPressed: _clearRecent,
-                                child: Text(_t('clear', 'Clear')),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Expanded(
-                              child: SingleChildScrollView(
-                                child: _buildRecent(context),
-                              ),
-                            ),
-                          ] else
-                            Expanded(
-                              child: Container(
-                                padding: const EdgeInsets.all(18),
-                                decoration: BoxDecoration(
-                                  color: theme.colorScheme.surface.withValues(
-                                    alpha: 0.78,
-                                  ),
-                                  borderRadius: BorderRadius.circular(24),
-                                  border: Border.all(
-                                    color: theme.colorScheme.outlineVariant
-                                        .withValues(alpha: 0.55),
-                                  ),
-                                ),
-                                child: Text(
-                                  _t(
-                                    'docs_recent_placeholder',
-                                    'Search by task, workflow, or page title. Recent documents will appear here when you start browsing.',
-                                  ),
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          const SizedBox(height: 10),
-                          FilledButton.icon(
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() {});
-                            },
-                            icon: const Icon(Icons.menu_book_outlined),
-                            label: Text(
-                              _t('docs_browse_all', 'Browse all docs'),
+                          const SizedBox(height: 18),
+                          Expanded(
+                            child: SingleChildScrollView(
+                              child: _buildDocsCatalog(context),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(width: 24),
-                    Expanded(
-                      flex: 6,
-                      child: SingleChildScrollView(
-                        child: _buildDocsCatalog(context),
-                      ),
-                    ),
-                  ],
-                ),
               )
             : ListView(
                 padding: const EdgeInsets.fromLTRB(14, 10, 14, 18),
                 children: [
-                  // _buildHero(context),
-                  const SizedBox(height: 12),
                   _buildSearchField(context),
                   const SizedBox(height: 14),
                   _buildDocsCatalog(context),
@@ -348,19 +321,6 @@ class _DocsScreenState extends State<DocsScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        if (isDesktopLayout(context))
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              _t(
-                'docs_tip_history',
-                'Tip: open a page, then use history on the left to jump back without re-searching.',
-              ),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
         if (desktop)
           GridView.builder(
             shrinkWrap: true,
@@ -380,96 +340,6 @@ class _DocsScreenState extends State<DocsScreen> {
             (entry) => _buildDocCard(context, entry.value, entry.key),
           ),
       ],
-    );
-  }
-
-  Widget _buildHero(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [
-                  const Color(0xFF131D33),
-                  colorScheme.primary.withValues(alpha: 0.18),
-                  const Color(0xFF1A1330),
-                ]
-              : [
-                  Colors.white,
-                  const Color(0xFFF7F3FF),
-                  const Color(0xFFFFF3F8),
-                ],
-        ),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : colorScheme.outlineVariant.withValues(alpha: 0.7),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.22)
-                : const Color(0xFF8B5CF6).withValues(alpha: 0.07),
-            blurRadius: 28,
-            offset: const Offset(0, 16),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.06)
-                  : const Color(0xFFF4F0FF),
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.10)
-                    : const Color(0xFFD9CCFF),
-              ),
-            ),
-            child: Text(
-              _t('docs_brand_label', 'd1v.ai docs'),
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: colorScheme.primary,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            _t(
-              'docs_hero_title',
-              'Operational guidance, product context, and implementation references.',
-            ),
-            style: LocaleFontHelper.localizedTitleStyle(
-              context,
-              theme.textTheme.titleLarge,
-            )?.copyWith(height: 1.15, fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _t(
-              'docs_hero_subtitle',
-              'Use the docs like a product index: scan by outcome, reopen what you touched recently, and jump straight into the detail view.',
-            ),
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-              height: 1.3,
-            ),
-          ),
-        ],
-      ),
     );
   }
 

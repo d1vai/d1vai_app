@@ -103,7 +103,6 @@ class _OrderScreenState extends State<OrderScreen>
             ),
       appBar: D1VAppBar(
         title: Text(loc?.translate('orders_title') ?? 'Orders'),
-        controller: _tabController,
         actions: isIOS
             ? null
             : [
@@ -114,11 +113,6 @@ class _OrderScreenState extends State<OrderScreen>
                   ),
                 ),
               ],
-        tabs: [
-          D1VTab(text: loc?.translate('orders_tab_balance') ?? 'Balance'),
-          D1VTab(text: loc?.translate('orders_tab_orders') ?? 'Orders'),
-          D1VTab(text: loc?.translate('orders_tab_usage') ?? 'Usage'),
-        ],
       ),
       body: desktop
           ? DesktopContentFrame(
@@ -139,22 +133,88 @@ class _OrderScreenState extends State<OrderScreen>
                   ),
                   const SizedBox(width: 24),
                   Expanded(
-                    child: D1VTabBarView(
-                      controller: _tabController,
-                      children: const [
-                        BalanceCard(),
-                        OrdersTabContent(),
-                        UsageStats(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildPageIntro(context),
+                        const SizedBox(height: 18),
+                        Expanded(
+                          child: D1VTabBarView(
+                            controller: _tabController,
+                            children: const [
+                              BalanceCard(),
+                              OrdersTabContent(),
+                              UsageStats(),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ],
               ),
             )
-          : D1VTabBarView(
-              controller: _tabController,
-              children: const [BalanceCard(), OrdersTabContent(), UsageStats()],
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: _buildPageIntro(context),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: D1VTabBar(
+                    controller: _tabController,
+                    tabs: [
+                      D1VTab(
+                        text: loc?.translate('orders_tab_balance') ?? 'Balance',
+                      ),
+                      D1VTab(
+                        text: loc?.translate('orders_tab_orders') ?? 'Orders',
+                      ),
+                      D1VTab(
+                        text: loc?.translate('orders_tab_usage') ?? 'Usage',
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: D1VTabBarView(
+                    controller: _tabController,
+                    children: const [
+                      BalanceCard(),
+                      OrdersTabContent(),
+                      UsageStats(),
+                    ],
+                  ),
+                ),
+              ],
             ),
+    );
+  }
+
+  Widget _buildPageIntro(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            AppLocalizations.of(context)?.translate('orders_title') ?? 'Orders',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Review balance, payments, and usage from one place.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -188,20 +248,6 @@ class _OrdersDesktopRail extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Billing',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Balance for funds, Orders for transaction history, Usage for burn and runtime costs.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 14),
               for (var i = 0; i < labels.length; i++) ...[
                 Material(
                   color: Colors.transparent,

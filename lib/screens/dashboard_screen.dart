@@ -475,20 +475,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   _performSearch(query);
                 },
               )
-            : Row(
-                children: [
-                  Text(_t('dashboard', 'Dashboard')),
-                  if (user != null) ...[
-                    const SizedBox(width: 10),
-                    Flexible(
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: _buildWorkspaceStatusWidget(inAppBar: true),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+            : Text(_t('dashboard', 'Dashboard')),
         actions: [
           IconButton(
             tooltip: _t('dashboard_action_chat', 'Chat'),
@@ -559,18 +546,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          _t(
-                            'dashboard_welcome',
-                            'Welcome, {user}!',
-                          ).replaceAll(
-                            '{user}',
-                            user?.email ??
-                                _t('dashboard_user_fallback', 'User'),
-                          ),
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
-                        const SizedBox(height: 20),
+                        if (user != null) ...[
+                          _buildWorkspaceStatusWidget(),
+                          const SizedBox(height: 20),
+                        ],
                         _buildStatsCards(stats, context),
                         const SizedBox(height: 20),
                       ],
@@ -612,6 +591,14 @@ class _DashboardScreenState extends State<DashboardScreen>
                               }
                               return PromptActivityHeatmap(
                                 activity: snapshot.data!,
+                                title: _t(
+                                  'dashboard_activity_title',
+                                  'Activity',
+                                ),
+                                subtitle: _t(
+                                  'dashboard_activity_subtitle',
+                                  'Recent prompt usage across your workspace.',
+                                ),
                                 headerTrailing:
                                     _buildPromptActivityHeaderTrailing(
                                       projectProvider,
@@ -642,36 +629,36 @@ class _DashboardScreenState extends State<DashboardScreen>
                             },
                           ),
                         const SizedBox(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              _isSearching && _searchController.text.isNotEmpty
-                                  ? _t(
-                                      'dashboard_search_results',
-                                      'Search Results ({count})',
-                                    ).replaceAll(
-                                      '{count}',
-                                      _searchResults.length.toString(),
-                                    )
-                                  : (_t('recent_projects', 'Recent Projects')),
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
-                            TextButton(
-                              onPressed: user == null
-                                  ? () => context.go('/login')
-                                  : () {
-                                      final q = _isSearching
-                                          ? _searchController.text.trim()
-                                          : '';
-                                      final location = q.isEmpty
-                                          ? '/projects'
-                                          : '/projects?q=${Uri.encodeQueryComponent(q)}';
-                                      context.push(location);
-                                    },
-                              child: Text(_t('dashboard_view_all', 'View All')),
-                            ),
-                          ],
+                        _buildPageSectionHeader(
+                          context,
+                          title: _isSearching &&
+                                  _searchController.text.isNotEmpty
+                              ? _t(
+                                  'dashboard_search_results',
+                                  'Search Results ({count})',
+                                ).replaceAll(
+                                  '{count}',
+                                  _searchResults.length.toString(),
+                                )
+                              : _t('recent_projects', 'Recent Projects'),
+                          subtitle: _t(
+                            'dashboard_projects_subtitle',
+                            'Continue from the most recently touched projects.',
+                          ),
+                          action: TextButton(
+                            onPressed: user == null
+                                ? () => context.go('/login')
+                                : () {
+                                    final q = _isSearching
+                                        ? _searchController.text.trim()
+                                        : '';
+                                    final location = q.isEmpty
+                                        ? '/projects'
+                                        : '/projects?q=${Uri.encodeQueryComponent(q)}';
+                                    context.push(location);
+                                  },
+                            child: Text(_t('dashboard_view_all', 'View All')),
+                          ),
                         ),
                         const SizedBox(height: 8),
                         if (user == null)
@@ -692,7 +679,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                 _isSearching &&
                                 _searchController.text.isNotEmpty,
                           ),
-                        const SizedBox(height: 80),
+                        const SizedBox(height: 48),
                       ],
                     ),
                   ),
@@ -702,14 +689,10 @@ class _DashboardScreenState extends State<DashboardScreen>
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  _t('dashboard_welcome', 'Welcome, {user}!').replaceAll(
-                    '{user}',
-                    user?.email ?? _t('dashboard_user_fallback', 'User'),
-                  ),
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 20),
+                if (user != null) ...[
+                  _buildWorkspaceStatusWidget(),
+                  const SizedBox(height: 20),
+                ],
                 _buildStatsCards(stats, context),
                 const SizedBox(height: 24),
                 if (user == null)
@@ -741,6 +724,11 @@ class _DashboardScreenState extends State<DashboardScreen>
                       }
                       return PromptActivityHeatmap(
                         activity: snapshot.data!,
+                        title: _t('dashboard_activity_title', 'Activity'),
+                        subtitle: _t(
+                          'dashboard_activity_subtitle',
+                          'Recent prompt usage across your workspace.',
+                        ),
                         headerTrailing: _buildPromptActivityHeaderTrailing(
                           projectProvider,
                         ),
@@ -767,36 +755,35 @@ class _DashboardScreenState extends State<DashboardScreen>
                     },
                   ),
                 const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      _isSearching && _searchController.text.isNotEmpty
-                          ? _t(
-                              'dashboard_search_results',
-                              'Search Results ({count})',
-                            ).replaceAll(
-                              '{count}',
-                              _searchResults.length.toString(),
-                            )
-                          : (_t('recent_projects', 'Recent Projects')),
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    TextButton(
-                      onPressed: user == null
-                          ? () => context.go('/login')
-                          : () {
-                              final q = _isSearching
-                                  ? _searchController.text.trim()
-                                  : '';
-                              final location = q.isEmpty
-                                  ? '/projects'
-                                  : '/projects?q=${Uri.encodeQueryComponent(q)}';
-                              context.push(location);
-                            },
-                      child: Text(_t('dashboard_view_all', 'View All')),
-                    ),
-                  ],
+                _buildPageSectionHeader(
+                  context,
+                  title: _isSearching && _searchController.text.isNotEmpty
+                      ? _t(
+                          'dashboard_search_results',
+                          'Search Results ({count})',
+                        ).replaceAll(
+                          '{count}',
+                          _searchResults.length.toString(),
+                        )
+                      : _t('recent_projects', 'Recent Projects'),
+                  subtitle: _t(
+                    'dashboard_projects_subtitle',
+                    'Continue from the most recently touched projects.',
+                  ),
+                  action: TextButton(
+                    onPressed: user == null
+                        ? () => context.go('/login')
+                        : () {
+                            final q = _isSearching
+                                ? _searchController.text.trim()
+                                : '';
+                            final location = q.isEmpty
+                                ? '/projects'
+                                : '/projects?q=${Uri.encodeQueryComponent(q)}';
+                            context.push(location);
+                          },
+                    child: Text(_t('dashboard_view_all', 'View All')),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 if (user == null)
@@ -814,7 +801,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                     isSearchResults:
                         _isSearching && _searchController.text.isNotEmpty,
                   ),
-                const SizedBox(height: 80),
+                const SizedBox(height: 48),
               ],
             ),
     );
@@ -882,6 +869,47 @@ class _DashboardScreenState extends State<DashboardScreen>
       icon: icon,
       valueColor: color,
       glass: true,
+    );
+  }
+
+  Widget _buildPageSectionHeader(
+    BuildContext context, {
+    required String title,
+    String? subtitle,
+    Widget? action,
+  }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              if ((subtitle ?? '').isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  subtitle!,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        if (action != null) ...[
+          const SizedBox(width: 16),
+          action,
+        ],
+      ],
     );
   }
 

@@ -183,21 +183,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           user.inviteCode,
           Icons.group_add,
         ),
-
-        const SizedBox(height: 24),
-
-        // 编辑按钮
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: profileProvider.toggleEditMode,
-            icon: const Icon(Icons.edit),
-            label: Text(loc?.translate('edit_profile') ?? 'Edit Profile'),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-            ),
-          ),
-        ),
       ],
     );
   }

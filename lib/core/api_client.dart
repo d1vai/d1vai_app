@@ -125,8 +125,12 @@ class ApiClient {
   /// The app historically used endpoints that include `/api/...`, but some builds
   /// or runtime overrides may set a base URL that already ends with `/api`.
   /// This helper prevents accidental double prefixes like `/api/api/...`.
-  Uri _buildUri(String endpoint, {Map<String, String>? queryParams}) {
-    final base = Uri.parse(baseUrl);
+  Uri _buildUri(
+    String endpoint, {
+    Map<String, String>? queryParams,
+    String? baseUrlOverride,
+  }) {
+    final base = Uri.parse((baseUrlOverride ?? baseUrl).trim());
     final endpointUri = Uri.parse(endpoint);
 
     // Path normalize
@@ -248,10 +252,15 @@ class ApiClient {
     Map<String, String>? queryParams,
     int retries = 3,
     Duration? timeout,
+    String? baseUrlOverride,
   }) async {
     final headers = await _getHeaders();
     final hasAuthToken = headers.containsKey('Authorization');
-    final uri = _buildUri(endpoint, queryParams: queryParams);
+    final uri = _buildUri(
+      endpoint,
+      queryParams: queryParams,
+      baseUrlOverride: baseUrlOverride,
+    );
 
     debugPrint('🌐 API Request: GET $uri');
 
@@ -275,10 +284,15 @@ class ApiClient {
     T Function(dynamic)? fromJsonT,
     int retries = 3,
     Duration? timeout,
+    String? baseUrlOverride,
   }) async {
     final headers = await _getHeaders();
     final hasAuthToken = headers.containsKey('Authorization');
-    final uri = _buildUri(endpoint, queryParams: queryParams);
+    final uri = _buildUri(
+      endpoint,
+      queryParams: queryParams,
+      baseUrlOverride: baseUrlOverride,
+    );
 
     debugPrint('🌐 API Request: POST $uri');
     debugPrint('📤 Request Body: ${jsonEncode(body)}');
@@ -302,10 +316,11 @@ class ApiClient {
     T Function(dynamic)? fromJsonT,
     int retries = 3,
     Duration? timeout,
+    String? baseUrlOverride,
   }) async {
     final headers = await _getHeaders();
     final hasAuthToken = headers.containsKey('Authorization');
-    final uri = _buildUri(endpoint);
+    final uri = _buildUri(endpoint, baseUrlOverride: baseUrlOverride);
 
     debugPrint('🌐 API Request: POST $uri');
     debugPrint('📤 Request Body: ${jsonEncode(body)}');
@@ -329,10 +344,11 @@ class ApiClient {
     T Function(dynamic)? fromJsonT,
     int retries = 3,
     Duration? timeout,
+    String? baseUrlOverride,
   }) async {
     final headers = await _getHeaders();
     final hasAuthToken = headers.containsKey('Authorization');
-    final uri = _buildUri(endpoint);
+    final uri = _buildUri(endpoint, baseUrlOverride: baseUrlOverride);
 
     debugPrint('🌐 API Request: PUT $uri');
     debugPrint('📤 Request Body: ${jsonEncode(body)}');
@@ -357,10 +373,11 @@ class ApiClient {
     T Function(dynamic)? fromJsonT,
     int retries = 3,
     Duration? timeout,
+    String? baseUrlOverride,
   }) async {
     final headers = await _getHeaders();
     final hasAuthToken = headers.containsKey('Authorization');
-    final uri = _buildUri(endpoint);
+    final uri = _buildUri(endpoint, baseUrlOverride: baseUrlOverride);
 
     debugPrint('🌐 API Request: PATCH $uri');
     debugPrint('📤 Request Body: ${jsonEncode(body)}');
@@ -383,10 +400,11 @@ class ApiClient {
     T Function(dynamic)? fromJsonT,
     int retries = 3,
     Duration? timeout,
+    String? baseUrlOverride,
   }) async {
     final headers = await _getHeaders();
     final hasAuthToken = headers.containsKey('Authorization');
-    final uri = _buildUri(endpoint);
+    final uri = _buildUri(endpoint, baseUrlOverride: baseUrlOverride);
 
     debugPrint('🌐 API Request: DELETE $uri');
 

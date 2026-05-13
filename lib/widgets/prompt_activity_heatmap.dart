@@ -13,6 +13,8 @@ class PromptActivityHeatmap extends StatelessWidget {
   final double cellSize;
   final double gap;
   final int? weeks;
+  final String? title;
+  final String? subtitle;
   final Widget? headerTrailing;
   final void Function(String isoDate, int count)? onDayTap;
 
@@ -22,6 +24,8 @@ class PromptActivityHeatmap extends StatelessWidget {
     this.cellSize = 12,
     this.gap = 4,
     this.weeks,
+    this.title,
+    this.subtitle,
     this.headerTrailing,
     this.onDayTap,
   });
@@ -145,7 +149,8 @@ class PromptActivityHeatmap extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    loc?.translate('prompt_activity_title') ??
+                    title ??
+                        loc?.translate('prompt_activity_title') ??
                         'Prompt activity',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
@@ -156,7 +161,14 @@ class PromptActivityHeatmap extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 4),
-            if (!isCompact)
+            if ((subtitle ?? '').isNotEmpty)
+              Text(
+                subtitle!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
+              )
+            else if (!isCompact)
               Text(
                 '${_fmtDate(locale, startIso, compact: false)} - ${_fmtDate(locale, endIso, compact: false)}',
                 style: theme.textTheme.bodySmall?.copyWith(
