@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../models/community_component.dart';
 import '../models/community_post.dart';
 import '../providers/auth_provider.dart';
 import '../services/d1vai_service.dart';
@@ -15,6 +16,7 @@ import '../utils/error_utils.dart';
 import '../widgets/login_required_dialog.dart';
 import '../widgets/post_card.dart';
 import '../widgets/search_field.dart';
+import 'community_component_preview_screen.dart';
 import 'post_detail_screen.dart';
 
 class CommunityScreen extends StatefulWidget {
@@ -34,14 +36,19 @@ class _CommunityScreenState extends State<CommunityScreen>
   int _loadRequestId = 0;
 
   List<CommunityPost> _posts = [];
+  List<CommunityComponent> _components = [];
   bool _isLoading = true;
   String? _error;
   int _offset = 0;
+  int _componentOffset = 0;
   final int _limit = 20;
+  final int _componentLimit = 12;
   bool _hasMore = true;
+  bool _hasMoreComponents = true;
   String _searchQuery = '';
   bool _isSearching = false;
   _CommunityFeedFilter _filter = _CommunityFeedFilter.all;
+  _CommunityView _view = _CommunityView.posts;
   final Set<String> _hiddenPostSlugs = <String>{};
   final Set<String> _blockedAuthorSlugs = <String>{};
 
@@ -187,11 +194,56 @@ class _CommunityScreenState extends State<CommunityScreen>
     }
   }
 
+  Future<void> _loadComponents({bool refresh = false}) async {
+    final requestId = ++_loadRequestId;
+    if (refresh) {
+      _componentOffset = 0;
+      _hasMoreComponents = true;
+    }
+
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final components = await _d1vaiService.getCommunityComponents(
+        limit: _componentLimit,
+        offset: _componentOffset,
+        searchQuery: _searchQuery.isNotEmpty ? _searchQuery : null,
+      );
+
+      if (!mounted || requestId != _loadRequestId) return;
+
+      setState(() {
+        if (refresh) {
+          _components = components;
+        } else {
+          _components.addAll(components);
+        }
+        _isLoading = false;
+        _hasMoreComponents = components.length >= _componentLimit;
+        _componentOffset += components.length;
+        _animationController.forward(from: 0);
+      });
+    } catch (e) {
+      if (!mounted || requestId != _loadRequestId) return;
+      setState(() {
+        _isLoading = false;
+        _error = humanizeError(e);
+      });
+    }
+  }
+
   Future<void> _performSearch(String query) async {
     setState(() {
       _searchQuery = query;
     });
-    await _loadPosts(refresh: true);
+    if (_view == _CommunityView.posts) {
+      await _loadPosts(refresh: true);
+    } else {
+      await _loadComponents(refresh: true);
+    }
   }
 
   void _scheduleSearch(String query) {
@@ -201,7 +253,11 @@ class _CommunityScreenState extends State<CommunityScreen>
     _searchDebounce?.cancel();
     _searchDebounce = Timer(const Duration(milliseconds: 300), () {
       if (!mounted) return;
-      unawaited(_loadPosts(refresh: true));
+      unawaited(
+        _view == _CommunityView.posts
+            ? _loadPosts(refresh: true)
+            : _loadComponents(refresh: true),
+      );
     });
   }
 
@@ -234,6 +290,29 @@ class _CommunityScreenState extends State<CommunityScreen>
             : const Text('Community'),
         actions: [
           IconButton(
+            tooltip: _view == _CommunityView.posts
+                ? 'Show components'
+                : 'Show posts',
+            icon: Icon(
+              _view == _CommunityView.posts
+                  ? Icons.widgets_outlined
+                  : Icons.forum_outlined,
+            ),
+            onPressed: () {
+              final next = _view == _CommunityView.posts
+                  ? _CommunityView.components
+                  : _CommunityView.posts;
+              setState(() {
+                _view = next;
+              });
+              unawaited(
+                next == _CommunityView.posts
+                    ? _loadPosts(refresh: true)
+                    : _loadComponents(refresh: true),
+              );
+            },
+          ),
+          IconButton(
             tooltip: _isSearching ? 'Close search' : 'Search posts',
             icon: Icon(_isSearching ? Icons.close : Icons.search),
             onPressed: _toggleSearch,
@@ -247,12 +326,14 @@ class _CommunityScreenState extends State<CommunityScreen>
   Widget _buildBody() {
     final visiblePosts = _applyFilter(_posts);
     final desktop = isDesktopLayout(context);
+    final isPostsView = _view == _CommunityView.posts;
+    final hasEmptyState = isPostsView ? _posts.isEmpty : _components.isEmpty;
 
-    if (_isLoading && _posts.isEmpty) {
+    if (_isLoading && hasEmptyState) {
       return _buildShimmer();
     }
 
-    if (_error != null && _posts.isEmpty) {
+    if (_error != null && hasEmptyState) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -260,7 +341,7 @@ class _CommunityScreenState extends State<CommunityScreen>
             const Icon(Icons.error_outline, size: 48, color: Colors.grey),
             const SizedBox(height: 16),
             Text(
-              'Failed to load posts',
+              isPostsView ? 'Failed to load posts' : 'Failed to load components',
               style: TextStyle(color: Colors.grey.shade600),
             ),
             const SizedBox(height: 8),
@@ -274,7 +355,9 @@ class _CommunityScreenState extends State<CommunityScreen>
             ),
             const SizedBox(height: 8),
             ElevatedButton(
-              onPressed: () => _loadPosts(refresh: true),
+              onPressed: () => isPostsView
+                  ? _loadPosts(refresh: true)
+                  : _loadComponents(refresh: true),
               child: const Text('Retry'),
             ),
           ],
@@ -282,7 +365,7 @@ class _CommunityScreenState extends State<CommunityScreen>
       );
     }
 
-    if (_posts.isEmpty) {
+    if (hasEmptyState) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -294,14 +377,20 @@ class _CommunityScreenState extends State<CommunityScreen>
             ),
             const SizedBox(height: 16),
             Text(
-              _searchQuery.isNotEmpty ? 'No results found' : 'No posts yet',
+              _searchQuery.isNotEmpty
+                  ? 'No results found'
+                  : isPostsView
+                      ? 'No posts yet'
+                      : 'No components yet',
               style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
             ),
             const SizedBox(height: 8),
             Text(
               _searchQuery.isNotEmpty
                   ? 'Try a different search term'
-                  : 'Be the first to share something!',
+                  : isPostsView
+                      ? 'Be the first to share something!'
+                      : 'Browse public reusable components.',
               style: TextStyle(color: Colors.grey.shade500),
             ),
           ],
@@ -319,11 +408,18 @@ class _CommunityScreenState extends State<CommunityScreen>
         _finishRefreshNextFrame();
       },
       onLoad: () async {
-        if (_hasMore) {
-          await _loadPosts();
+        final hasMore = isPostsView ? _hasMore : _hasMoreComponents;
+        if (hasMore) {
+          if (isPostsView) {
+            await _loadPosts();
+          } else {
+            await _loadComponents();
+          }
           if (!mounted) return;
           _finishLoadNextFrame(
-            _hasMore ? IndicatorResult.success : IndicatorResult.noMore,
+            (isPostsView ? _hasMore : _hasMoreComponents)
+                ? IndicatorResult.success
+                : IndicatorResult.noMore,
           );
         } else {
           if (!mounted) return;
@@ -339,27 +435,49 @@ class _CommunityScreenState extends State<CommunityScreen>
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
               ),
-              itemCount: visiblePosts.isEmpty ? 1 : visiblePosts.length,
+              itemCount: isPostsView
+                  ? (visiblePosts.isEmpty ? 1 : visiblePosts.length)
+                  : (_components.isEmpty ? 1 : _components.length),
               itemBuilder: (context, index) {
-                if (visiblePosts.isEmpty) {
+                if (isPostsView && visiblePosts.isEmpty) {
                   return Padding(
                     padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
                     child: _buildFilteredEmptyCard(context),
                   );
                 }
-                return _buildAnimatedPostCard(visiblePosts[index], index);
+                if (isPostsView) {
+                  return _buildAnimatedPostCard(visiblePosts[index], index);
+                }
+                if (_components.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                    child: _buildFilteredEmptyCard(context),
+                  );
+                }
+                return _buildAnimatedComponentCard(_components[index], index);
               },
             )
           : ListView.builder(
-              itemCount: visiblePosts.isEmpty ? 1 : visiblePosts.length,
+              itemCount: isPostsView
+                  ? (visiblePosts.isEmpty ? 1 : visiblePosts.length)
+                  : (_components.isEmpty ? 1 : _components.length),
               itemBuilder: (context, index) {
-                if (visiblePosts.isEmpty) {
+                if (isPostsView && visiblePosts.isEmpty) {
                   return Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                     child: _buildFilteredEmptyCard(context),
                   );
                 }
-                return _buildAnimatedPostCard(visiblePosts[index], index);
+                if (isPostsView) {
+                  return _buildAnimatedPostCard(visiblePosts[index], index);
+                }
+                if (_components.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: _buildFilteredEmptyCard(context),
+                  );
+                }
+                return _buildAnimatedComponentCard(_components[index], index);
               },
             ),
     );
@@ -404,13 +522,31 @@ class _CommunityScreenState extends State<CommunityScreen>
       });
     }
 
-    return Padding(
-      padding: EdgeInsets.zero,
-      child: _CommunityFilterTabs(
-        selectedFilter: _filter,
-        isAuthed: isAuthed,
-        onSelected: setFilter,
-      ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _CommunityViewTabs(
+          selectedView: _view,
+          onSelected: (next) {
+            if (_view == next) return;
+            setState(() {
+              _view = next;
+            });
+            unawaited(
+              next == _CommunityView.posts
+                  ? _loadPosts(refresh: true)
+                  : _loadComponents(refresh: true),
+            );
+          },
+        ),
+        const SizedBox(height: 10),
+        if (_view == _CommunityView.posts)
+          _CommunityFilterTabs(
+            selectedFilter: _filter,
+            isAuthed: isAuthed,
+            onSelected: setFilter,
+          ),
+      ],
     );
   }
 
@@ -476,6 +612,87 @@ class _CommunityScreenState extends State<CommunityScreen>
         onBlockAuthor: _handleBlockAuthor,
       ),
     );
+  }
+
+  Widget _buildAnimatedComponentCard(CommunityComponent component, int index) {
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        final safeIndex = index > 10 ? 10 : index;
+        final start = safeIndex * 0.1;
+        final end = (start + 0.4).clamp(0.0, 1.0);
+
+        final animation = CurvedAnimation(
+          parent: _animationController,
+          curve: Interval(start, end, curve: Curves.easeOut),
+        );
+
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 0.2),
+              end: Offset.zero,
+            ).animate(animation),
+            child: child,
+          ),
+        );
+      },
+      child: _CommunityComponentCard(
+        component: component,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CommunityComponentPreviewScreen(
+                slug: component.slug,
+                title: component.title,
+              ),
+            ),
+          );
+        },
+        onToggleLike: () => _toggleComponentLike(component),
+      ),
+    );
+  }
+
+  Future<void> _toggleComponentLike(CommunityComponent component) async {
+    final index = _components.indexWhere((item) => item.id == component.id);
+    if (index < 0) return;
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    if (!auth.isAuthenticated) {
+      await showDialog<void>(
+        context: context,
+        builder: (_) => const LoginRequiredDialog(),
+      );
+      return;
+    }
+    final previous = _components[index];
+    setState(() {
+      _components[index] = previous.copyWith(
+        isLiked: !previous.isLiked,
+        likeCount:
+            (previous.likeCount + (previous.isLiked ? -1 : 1)).clamp(0, 1 << 30),
+      );
+    });
+    try {
+      final result = await _d1vaiService.toggleCommunityComponentLike(
+        component.id,
+      );
+      if (!mounted) return;
+      setState(() {
+        _components[index] = _components[index].copyWith(
+          isLiked: result['liked'] == true,
+          likeCount: (result['like_count'] as num?)?.toInt() ??
+              _components[index].likeCount,
+        );
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _components[index] = previous;
+      });
+    }
   }
 
   Widget _buildShimmer() {
@@ -601,6 +818,198 @@ class _CommunityScreenState extends State<CommunityScreen>
 }
 
 enum _CommunityFeedFilter { all, mine }
+
+enum _CommunityView { posts, components }
+
+class _CommunityViewTabs extends StatelessWidget {
+  final _CommunityView selectedView;
+  final ValueChanged<_CommunityView> onSelected;
+
+  const _CommunityViewTabs({
+    required this.selectedView,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colorScheme.outlineVariant),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _CommunityViewTabButton(
+              label: 'Posts',
+              selected: selectedView == _CommunityView.posts,
+              onTap: () => onSelected(_CommunityView.posts),
+            ),
+          ),
+          Expanded(
+            child: _CommunityViewTabButton(
+              label: 'Components',
+              selected: selectedView == _CommunityView.components,
+              onTap: () => onSelected(_CommunityView.components),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CommunityViewTabButton extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _CommunityViewTabButton({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: selected ? colorScheme.primary.withValues(alpha: 0.12) : null,
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: selected
+                ? colorScheme.primary
+                : colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CommunityComponentCard extends StatelessWidget {
+  final CommunityComponent component;
+  final VoidCallback onTap;
+  final VoidCallback onToggleLike;
+
+  const _CommunityComponentCard({
+    required this.component,
+    required this.onTap,
+    required this.onToggleLike,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: component.previewImageUrl?.isNotEmpty == true
+                  ? Image.network(
+                      component.previewImageUrl!,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    )
+                  : Container(
+                      width: double.infinity,
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Color(0x3322D3EE),
+                            Color(0x331D4ED8),
+                            Color(0x33C026D3),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                    ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          component.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: onToggleLike,
+                        icon: Icon(
+                          component.isLiked
+                              ? Icons.favorite
+                              : Icons.favorite_border,
+                          color: component.isLiked ? Colors.red : null,
+                        ),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    component.description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Text(
+                        component.category,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '${component.likeCount}',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class _CommunityFilterTabs extends StatelessWidget {
   final _CommunityFeedFilter selectedFilter;

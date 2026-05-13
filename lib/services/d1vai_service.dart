@@ -4,6 +4,7 @@ import '../core/locale_bus.dart';
 import '../models/user.dart';
 import '../models/project.dart';
 import '../models/community_post.dart';
+import '../models/community_component.dart';
 import '../models/prompt_activity.dart';
 
 import '../models/deployment.dart';
@@ -744,6 +745,84 @@ class D1vaiService {
     return _apiClient.get<CommunityPost>(
       '/api/community/posts/$slug',
       fromJsonT: (json) => CommunityPost.fromJson(json),
+    );
+  }
+
+  Future<Map<String, dynamic>> toggleCommunityPostLike(int postId) async {
+    await _cacheService.clearCommunityCache();
+    return _apiClient.post<Map<String, dynamic>>(
+      '/api/likes/toggle',
+      {
+        'content_type': 'community_post',
+        'content_id': postId.toString(),
+      },
+    );
+  }
+
+  Future<List<CommunityComponent>> getCommunityComponents({
+    int limit = 12,
+    int offset = 0,
+    String? searchQuery,
+    String? category,
+  }) async {
+    final params = <String>[
+      'limit=$limit',
+      'offset=$offset',
+    ];
+    if ((searchQuery ?? '').trim().isNotEmpty) {
+      params.add('q=${Uri.encodeQueryComponent(searchQuery!.trim())}');
+    }
+    if ((category ?? '').trim().isNotEmpty && category != 'all') {
+      params.add('category=${Uri.encodeQueryComponent(category!.trim())}');
+    }
+    final listData = await _apiClient.get<List<dynamic>>(
+      '/api/community-components?${params.join('&')}',
+      fromJsonT: (json) {
+        if (json is Map<String, dynamic> && json['items'] is List) {
+          return List<dynamic>.from(json['items'] as List);
+        }
+        if (json is List) return json;
+        return <dynamic>[];
+      },
+    );
+
+    final items = listData
+        .whereType<Map>()
+        .map((item) => CommunityComponent.fromJson(item.cast<String, dynamic>()))
+        .toList();
+
+    final ids = items.map((item) => item.id).where((id) => id.isNotEmpty).toList();
+    if (ids.isEmpty) return items;
+
+    final stats = await _apiClient.get<List<dynamic>>(
+      '/api/likes/stats?content_type=community_component&content_ids=${Uri.encodeQueryComponent(ids.join(','))}',
+      fromJsonT: (json) => json as List,
+    );
+    final statsMap = <String, Map<String, dynamic>>{};
+    for (final raw in stats.whereType<Map>()) {
+      final item = raw.cast<String, dynamic>();
+      statsMap[(item['content_id'] ?? '').toString()] = item;
+    }
+
+    return items
+        .map((item) {
+          final stat = statsMap[item.id];
+          if (stat == null) return item;
+          return item.copyWith(
+            likeCount: (stat['like_count'] as num?)?.toInt() ?? item.likeCount,
+            isLiked: stat['is_liked'] == true,
+          );
+        })
+        .toList();
+  }
+
+  Future<Map<String, dynamic>> toggleCommunityComponentLike(String componentId) {
+    return _apiClient.post<Map<String, dynamic>>(
+      '/api/likes/toggle',
+      {
+        'content_type': 'community_component',
+        'content_id': componentId,
+      },
     );
   }
 
