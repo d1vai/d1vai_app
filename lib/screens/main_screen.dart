@@ -2,12 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import '../core/theme/locale_font_helper.dart';
 import '../l10n/app_localizations.dart';
 import '../utils/desktop_layout.dart';
 import 'dashboard_screen.dart';
 import 'community_screen.dart';
 import 'docs_screen.dart';
 import 'settings_screen.dart';
+
+String _t(BuildContext context, String key, String fallback) {
+  final value = AppLocalizations.of(context)?.translate(key);
+  if (value == null || value == key) return fallback;
+  return value;
+}
 
 class MainScreen extends StatefulWidget {
   final int initialIndex;
@@ -223,8 +230,11 @@ class _D1VDesktopSideNav extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Workspace',
-            style: theme.textTheme.bodyMedium?.copyWith(
+            _t(context, 'main_nav_workspace', 'Workspace'),
+            style: LocaleFontHelper.localizedTitleStyle(
+              context,
+              theme.textTheme.bodyMedium,
+            )?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
           ),
@@ -298,7 +308,10 @@ class _D1VDesktopNavItem extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: theme.textTheme.titleSmall?.copyWith(
+                  style: LocaleFontHelper.localizedTitleStyle(
+                    context,
+                    theme.textTheme.titleSmall,
+                  )?.copyWith(
                     color: selected ? activeColor : inactiveColor,
                     fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                   ),
@@ -509,7 +522,10 @@ class _D1VBottomNavItemState extends State<_D1VBottomNavItem>
                   AnimatedDefaultTextStyle(
                     duration: const Duration(milliseconds: 220),
                     curve: Curves.easeOutCubic,
-                    style: theme.textTheme.labelSmall!.copyWith(
+                    style: LocaleFontHelper.localizedTitleStyle(
+                      context,
+                      theme.textTheme.labelSmall,
+                    )!.copyWith(
                       color: selected ? activeColor : inactiveColor,
                       fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
                       letterSpacing: 0.15,

@@ -25,6 +25,7 @@ import 'package:d1vai_app/screens/projects/widgets/project_card_tile.dart';
 import 'package:d1vai_app/widgets/skeletons/dashboard_skeleton.dart';
 import 'package:d1vai_app/widgets/skeletons/prompt_activity_skeleton.dart';
 import 'package:d1vai_app/utils/desktop_layout.dart';
+import 'package:d1vai_app/core/theme/locale_font_helper.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -475,7 +476,13 @@ class _DashboardScreenState extends State<DashboardScreen>
                   _performSearch(query);
                 },
               )
-            : Text(_t('dashboard', 'Dashboard')),
+            : Text(
+                _t('dashboard', 'Dashboard'),
+                style: LocaleFontHelper.localizedTitleStyle(
+                  context,
+                  Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
         actions: [
           IconButton(
             tooltip: _t('dashboard_action_chat', 'Chat'),

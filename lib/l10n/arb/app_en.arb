@@ -1208,5 +1208,16 @@
   "api_keys_confirm_create": "Create key",
   "api_keys_dialog_revoke_title": "Revoke API key",
   "api_keys_dialog_revoke_description": "Revoke \"{name}\"? This action cannot be undone.",
-  "api_keys_confirm_revoke": "Confirm revoke"
+  "api_keys_confirm_revoke": "Confirm revoke",
+  "community_search_components_hint": "Search components...",
+  "community_search_components": "Search components",
+  "community_empty_my_posts_sentence": "You have not published any posts yet.",
+  "community_empty_components": "No components.",
+  "community_tab_posts": "Posts",
+  "community_tab_components": "Components",
+  "community_tab_my_posts": "My posts",
+  "community_failed_to_load_components": "Failed to load components",
+  "community_no_components_yet": "No components yet",
+  "community_browse_components": "Browse public reusable components.",
+  "main_nav_workspace": "Workspace"
 }

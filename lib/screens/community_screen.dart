@@ -2,11 +2,12 @@ import 'dart:async';
 
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../core/theme/locale_font_helper.dart';
+import '../l10n/app_localizations.dart';
 import '../models/community_component.dart';
 import '../models/community_post.dart';
 import '../providers/auth_provider.dart';
@@ -47,13 +48,18 @@ class _CommunityScreenState extends State<CommunityScreen>
   bool _hasMoreComponents = true;
   String _searchQuery = '';
   bool _isSearching = false;
-  _CommunityFeedFilter _filter = _CommunityFeedFilter.all;
-  _CommunityView _view = _CommunityView.posts;
+  _CommunityTab _tab = _CommunityTab.posts;
   final Set<String> _hiddenPostSlugs = <String>{};
   final Set<String> _blockedAuthorSlugs = <String>{};
 
   static const _prefsHiddenPostsKey = 'community_hidden_post_slugs';
   static const _prefsBlockedAuthorsKey = 'community_blocked_author_slugs';
+
+  String _t(String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
 
   void _finishRefreshNextFrame() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -69,7 +75,7 @@ class _CommunityScreenState extends State<CommunityScreen>
     });
   }
 
-  List<CommunityPost> _applyFilter(List<CommunityPost> list) {
+  List<CommunityPost> _visiblePosts(List<CommunityPost> list) {
     final base = list.where((p) {
       if (_hiddenPostSlugs.contains(p.slug)) return false;
       final authorSlug = (p.author?.slug ?? '').trim();
@@ -79,15 +85,13 @@ class _CommunityScreenState extends State<CommunityScreen>
       return true;
     }).toList();
 
-    switch (_filter) {
-      case _CommunityFeedFilter.all:
-        return base;
-      case _CommunityFeedFilter.mine:
-        final auth = Provider.of<AuthProvider>(context, listen: false);
-        final uid = auth.user?.id;
-        if (uid == null) return const <CommunityPost>[];
-        return base.where((p) => p.userId == uid).toList();
+    if (_tab == _CommunityTab.myPosts) {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final uid = auth.user?.id;
+      if (uid == null) return const <CommunityPost>[];
+      return base.where((p) => p.userId == uid).toList();
     }
+    return base;
   }
 
   @override
@@ -239,7 +243,7 @@ class _CommunityScreenState extends State<CommunityScreen>
     setState(() {
       _searchQuery = query;
     });
-    if (_view == _CommunityView.posts) {
+    if (_isPostsTab) {
       await _loadPosts(refresh: true);
     } else {
       await _loadComponents(refresh: true);
@@ -254,7 +258,7 @@ class _CommunityScreenState extends State<CommunityScreen>
     _searchDebounce = Timer(const Duration(milliseconds: 300), () {
       if (!mounted) return;
       unawaited(
-        _view == _CommunityView.posts
+        _isPostsTab
             ? _loadPosts(refresh: true)
             : _loadComponents(refresh: true),
       );
@@ -278,42 +282,39 @@ class _CommunityScreenState extends State<CommunityScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isPostsView = _isPostsTab;
     return Scaffold(
       appBar: AppBar(
         title: _isSearching
             ? AppBarSearchField(
-                hintText: 'Search posts...',
+                hintText: isPostsView
+                    ? _t('community_search_hint', 'Search posts...')
+                    : _t(
+                        'community_search_components_hint',
+                        'Search components...',
+                      ),
                 autofocus: true,
                 onChanged: _scheduleSearch,
                 onClear: _clearSearch,
               )
-            : const Text('Community'),
+            : Text(
+                _t('community', 'Community'),
+                style: LocaleFontHelper.localizedTitleStyle(
+                  context,
+                  theme.textTheme.titleLarge,
+                ),
+              ),
         actions: [
           IconButton(
-            tooltip: _view == _CommunityView.posts
-                ? 'Show components'
-                : 'Show posts',
-            icon: Icon(
-              _view == _CommunityView.posts
-                  ? Icons.widgets_outlined
-                  : Icons.forum_outlined,
-            ),
-            onPressed: () {
-              final next = _view == _CommunityView.posts
-                  ? _CommunityView.components
-                  : _CommunityView.posts;
-              setState(() {
-                _view = next;
-              });
-              unawaited(
-                next == _CommunityView.posts
-                    ? _loadPosts(refresh: true)
-                    : _loadComponents(refresh: true),
-              );
-            },
-          ),
-          IconButton(
-            tooltip: _isSearching ? 'Close search' : 'Search posts',
+            tooltip: _isSearching
+                ? _t('community_close_search', 'Close search')
+                : isPostsView
+                ? _t('community_search_posts', 'Search posts')
+                : _t(
+                    'community_search_components',
+                    'Search components',
+                  ),
             icon: Icon(_isSearching ? Icons.close : Icons.search),
             onPressed: _toggleSearch,
           ),
@@ -324,24 +325,31 @@ class _CommunityScreenState extends State<CommunityScreen>
   }
 
   Widget _buildBody() {
-    final visiblePosts = _applyFilter(_posts);
+    final visiblePosts = _visiblePosts(_posts);
     final desktop = isDesktopLayout(context);
-    final isPostsView = _view == _CommunityView.posts;
-    final hasEmptyState = isPostsView ? _posts.isEmpty : _components.isEmpty;
+    final isPostsView = _isPostsTab;
+    final hasEmptyState = isPostsView
+        ? visiblePosts.isEmpty
+        : _components.isEmpty;
+
+    Widget content;
 
     if (_isLoading && hasEmptyState) {
-      return _buildShimmer();
-    }
-
-    if (_error != null && hasEmptyState) {
-      return Center(
+      content = _buildShimmer();
+    } else if (_error != null && hasEmptyState) {
+      content = Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.error_outline, size: 48, color: Colors.grey),
             const SizedBox(height: 16),
             Text(
-              isPostsView ? 'Failed to load posts' : 'Failed to load components',
+              isPostsView
+                  ? _t('failed_to_load_posts', 'Failed to load posts')
+                  : _t(
+                      'community_failed_to_load_components',
+                      'Failed to load components',
+                    ),
               style: TextStyle(color: Colors.grey.shade600),
             ),
             const SizedBox(height: 8),
@@ -358,15 +366,13 @@ class _CommunityScreenState extends State<CommunityScreen>
               onPressed: () => isPostsView
                   ? _loadPosts(refresh: true)
                   : _loadComponents(refresh: true),
-              child: const Text('Retry'),
+              child: Text(_t('retry', 'Retry')),
             ),
           ],
         ),
       );
-    }
-
-    if (hasEmptyState) {
-      return Center(
+    } else if (hasEmptyState) {
+      content = Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -378,115 +384,133 @@ class _CommunityScreenState extends State<CommunityScreen>
             const SizedBox(height: 16),
             Text(
               _searchQuery.isNotEmpty
-                  ? 'No results found'
+                  ? _t('community_no_results', 'No results found')
                   : isPostsView
-                      ? 'No posts yet'
-                      : 'No components yet',
+                  ? _t('no_posts_yet', 'No posts yet')
+                  : _t('community_no_components_yet', 'No components yet'),
               style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
             ),
             const SizedBox(height: 8),
             Text(
               _searchQuery.isNotEmpty
-                  ? 'Try a different search term'
+                  ? _t(
+                      'community_try_different_search',
+                      'Try a different search term',
+                    )
                   : isPostsView
-                      ? 'Be the first to share something!'
-                      : 'Browse public reusable components.',
+                  ? (_tab == _CommunityTab.myPosts
+                        ? _t(
+                            'community_empty_my_posts_sentence',
+                            'You have not published any posts yet.',
+                          )
+                        : _t(
+                            'be_first_to_share',
+                            'Be the first to share something!',
+                          ))
+                  : _t(
+                      'community_browse_components',
+                      'Browse public reusable components.',
+                    ),
               style: TextStyle(color: Colors.grey.shade500),
             ),
           ],
         ),
       );
-    }
-
-    final feed = EasyRefresh(
-      controller: _controller,
-      header: const ClassicHeader(),
-      footer: const ClassicFooter(),
-      onRefresh: () async {
-        await _loadPosts(refresh: true);
-        if (!mounted) return;
-        _finishRefreshNextFrame();
-      },
-      onLoad: () async {
-        final hasMore = isPostsView ? _hasMore : _hasMoreComponents;
-        if (hasMore) {
+    } else {
+      content = EasyRefresh(
+        controller: _controller,
+        header: const ClassicHeader(),
+        footer: const ClassicFooter(),
+        onRefresh: () async {
           if (isPostsView) {
-            await _loadPosts();
+            await _loadPosts(refresh: true);
           } else {
-            await _loadComponents();
+            await _loadComponents(refresh: true);
           }
           if (!mounted) return;
-          _finishLoadNextFrame(
-            (isPostsView ? _hasMore : _hasMoreComponents)
-                ? IndicatorResult.success
-                : IndicatorResult.noMore,
-          );
-        } else {
-          if (!mounted) return;
-          _finishLoadNextFrame(IndicatorResult.noMore);
-        }
-      },
-      child: desktop
-          ? GridView.builder(
-              padding: const EdgeInsets.fromLTRB(8, 8, 8, 24),
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 520,
-                mainAxisExtent: 238,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
+          _finishRefreshNextFrame();
+        },
+        onLoad: () async {
+          final hasMore = isPostsView ? _hasMore : _hasMoreComponents;
+          if (hasMore) {
+            if (isPostsView) {
+              await _loadPosts();
+            } else {
+              await _loadComponents();
+            }
+            if (!mounted) return;
+            _finishLoadNextFrame(
+              (isPostsView ? _hasMore : _hasMoreComponents)
+                  ? IndicatorResult.success
+                  : IndicatorResult.noMore,
+            );
+          } else {
+            if (!mounted) return;
+            _finishLoadNextFrame(IndicatorResult.noMore);
+          }
+        },
+        child: desktop
+            ? GridView.builder(
+                padding: const EdgeInsets.fromLTRB(8, 8, 8, 24),
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 520,
+                  mainAxisExtent: 238,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                ),
+                itemCount: isPostsView
+                    ? (visiblePosts.isEmpty ? 1 : visiblePosts.length)
+                    : (_components.isEmpty ? 1 : _components.length),
+                itemBuilder: (context, index) {
+                  if (isPostsView && visiblePosts.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                      child: _buildFilteredEmptyCard(context),
+                    );
+                  }
+                  if (isPostsView) {
+                    return _buildAnimatedPostCard(visiblePosts[index], index);
+                  }
+                  if (_components.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                      child: _buildFilteredEmptyCard(context),
+                    );
+                  }
+                  return _buildAnimatedComponentCard(_components[index], index);
+                },
+              )
+            : ListView.builder(
+                itemCount: isPostsView
+                    ? (visiblePosts.isEmpty ? 1 : visiblePosts.length)
+                    : (_components.isEmpty ? 1 : _components.length),
+                itemBuilder: (context, index) {
+                  if (isPostsView && visiblePosts.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      child: _buildFilteredEmptyCard(context),
+                    );
+                  }
+                  if (isPostsView) {
+                    return _buildAnimatedPostCard(visiblePosts[index], index);
+                  }
+                  if (_components.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      child: _buildFilteredEmptyCard(context),
+                    );
+                  }
+                  return _buildAnimatedComponentCard(_components[index], index);
+                },
               ),
-              itemCount: isPostsView
-                  ? (visiblePosts.isEmpty ? 1 : visiblePosts.length)
-                  : (_components.isEmpty ? 1 : _components.length),
-              itemBuilder: (context, index) {
-                if (isPostsView && visiblePosts.isEmpty) {
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-                    child: _buildFilteredEmptyCard(context),
-                  );
-                }
-                if (isPostsView) {
-                  return _buildAnimatedPostCard(visiblePosts[index], index);
-                }
-                if (_components.isEmpty) {
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-                    child: _buildFilteredEmptyCard(context),
-                  );
-                }
-                return _buildAnimatedComponentCard(_components[index], index);
-              },
-            )
-          : ListView.builder(
-              itemCount: isPostsView
-                  ? (visiblePosts.isEmpty ? 1 : visiblePosts.length)
-                  : (_components.isEmpty ? 1 : _components.length),
-              itemBuilder: (context, index) {
-                if (isPostsView && visiblePosts.isEmpty) {
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                    child: _buildFilteredEmptyCard(context),
-                  );
-                }
-                if (isPostsView) {
-                  return _buildAnimatedPostCard(visiblePosts[index], index);
-                }
-                if (_components.isEmpty) {
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                    child: _buildFilteredEmptyCard(context),
-                  );
-                }
-                return _buildAnimatedComponentCard(_components[index], index);
-              },
-            ),
-    );
+      );
+    }
 
     if (!desktop) {
       return Column(
         children: [
           _buildFilterBar(),
-          Expanded(child: feed),
+          Expanded(child: content),
         ],
       );
     }
@@ -499,7 +523,7 @@ class _CommunityScreenState extends State<CommunityScreen>
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
             child: _buildFilterBar(),
           ),
-          Expanded(child: feed),
+          Expanded(child: content),
         ],
       ),
     );
@@ -509,52 +533,40 @@ class _CommunityScreenState extends State<CommunityScreen>
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final isAuthed = auth.user != null;
 
-    Future<void> setFilter(_CommunityFeedFilter next) async {
-      if (next == _CommunityFeedFilter.mine && !isAuthed) {
+    Future<void> setTab(_CommunityTab next) async {
+      if (next == _CommunityTab.myPosts && !isAuthed) {
         await showDialog<void>(
           context: context,
           builder: (_) => const LoginRequiredDialog(),
         );
         return;
       }
+      if (_tab == next) return;
       setState(() {
-        _filter = next;
+        _tab = next;
       });
+      unawaited(
+        next == _CommunityTab.components
+            ? _loadComponents(refresh: true)
+            : _loadPosts(refresh: true),
+      );
     }
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _CommunityViewTabs(
-          selectedView: _view,
-          onSelected: (next) {
-            if (_view == next) return;
-            setState(() {
-              _view = next;
-            });
-            unawaited(
-              next == _CommunityView.posts
-                  ? _loadPosts(refresh: true)
-                  : _loadComponents(refresh: true),
-            );
-          },
-        ),
-        const SizedBox(height: 10),
-        if (_view == _CommunityView.posts)
-          _CommunityFilterTabs(
-            selectedFilter: _filter,
-            isAuthed: isAuthed,
-            onSelected: setFilter,
-          ),
-      ],
-    );
+    return _CommunityTabs(selectedTab: _tab, onSelected: setTab);
   }
 
   Widget _buildFilteredEmptyCard(BuildContext context) {
     final theme = Theme.of(context);
-    final text = switch (_filter) {
-      _CommunityFeedFilter.all => 'No posts.',
-      _CommunityFeedFilter.mine => 'No posts created by you yet.',
+    final text = switch (_tab) {
+      _CommunityTab.posts => _t('community_empty_all', 'No posts.'),
+      _CommunityTab.myPosts => _t(
+        'community_empty_mine',
+        'No posts created by you yet.',
+      ),
+      _CommunityTab.components => _t(
+        'community_empty_components',
+        'No components.',
+      ),
     };
 
     return Container(
@@ -671,8 +683,10 @@ class _CommunityScreenState extends State<CommunityScreen>
     setState(() {
       _components[index] = previous.copyWith(
         isLiked: !previous.isLiked,
-        likeCount:
-            (previous.likeCount + (previous.isLiked ? -1 : 1)).clamp(0, 1 << 30),
+        likeCount: (previous.likeCount + (previous.isLiked ? -1 : 1)).clamp(
+          0,
+          1 << 30,
+        ),
       );
     });
     try {
@@ -683,7 +697,8 @@ class _CommunityScreenState extends State<CommunityScreen>
       setState(() {
         _components[index] = _components[index].copyWith(
           isLiked: result['liked'] == true,
-          likeCount: (result['like_count'] as num?)?.toInt() ??
+          likeCount:
+              (result['like_count'] as num?)?.toInt() ??
               _components[index].likeCount,
         );
       });
@@ -817,23 +832,28 @@ class _CommunityScreenState extends State<CommunityScreen>
   }
 }
 
-enum _CommunityFeedFilter { all, mine }
+enum _CommunityTab { posts, components, myPosts }
 
-enum _CommunityView { posts, components }
+extension on _CommunityScreenState {
+  bool get _isPostsTab =>
+      _tab == _CommunityTab.posts || _tab == _CommunityTab.myPosts;
+}
 
-class _CommunityViewTabs extends StatelessWidget {
-  final _CommunityView selectedView;
-  final ValueChanged<_CommunityView> onSelected;
+class _CommunityTabs extends StatelessWidget {
+  final _CommunityTab selectedTab;
+  final ValueChanged<_CommunityTab> onSelected;
 
-  const _CommunityViewTabs({
-    required this.selectedView,
-    required this.onSelected,
-  });
+  const _CommunityTabs({required this.selectedTab, required this.onSelected});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    String t(String key, String fallback) {
+      final value = AppLocalizations.of(context)?.translate(key);
+      if (value == null || value == key) return fallback;
+      return value;
+    }
     return Container(
       height: 48,
       padding: const EdgeInsets.all(4),
@@ -845,17 +865,24 @@ class _CommunityViewTabs extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: _CommunityViewTabButton(
-              label: 'Posts',
-              selected: selectedView == _CommunityView.posts,
-              onTap: () => onSelected(_CommunityView.posts),
+            child: _CommunityTabButton(
+              label: t('community_tab_posts', 'Posts'),
+              selected: selectedTab == _CommunityTab.posts,
+              onTap: () => onSelected(_CommunityTab.posts),
             ),
           ),
           Expanded(
-            child: _CommunityViewTabButton(
-              label: 'Components',
-              selected: selectedView == _CommunityView.components,
-              onTap: () => onSelected(_CommunityView.components),
+            child: _CommunityTabButton(
+              label: t('community_tab_components', 'Components'),
+              selected: selectedTab == _CommunityTab.components,
+              onTap: () => onSelected(_CommunityTab.components),
+            ),
+          ),
+          Expanded(
+            child: _CommunityTabButton(
+              label: t('community_tab_my_posts', 'My posts'),
+              selected: selectedTab == _CommunityTab.myPosts,
+              onTap: () => onSelected(_CommunityTab.myPosts),
             ),
           ),
         ],
@@ -864,12 +891,12 @@ class _CommunityViewTabs extends StatelessWidget {
   }
 }
 
-class _CommunityViewTabButton extends StatelessWidget {
+class _CommunityTabButton extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
 
-  const _CommunityViewTabButton({
+  const _CommunityTabButton({
     required this.label,
     required this.selected,
     required this.onTap,
@@ -892,7 +919,10 @@ class _CommunityViewTabButton extends StatelessWidget {
         alignment: Alignment.center,
         child: Text(
           label,
-          style: theme.textTheme.labelLarge?.copyWith(
+          style: LocaleFontHelper.localizedTitleStyle(
+            context,
+            theme.textTheme.labelLarge,
+          )?.copyWith(
             color: selected
                 ? colorScheme.primary
                 : colorScheme.onSurfaceVariant,
@@ -923,9 +953,11 @@ class _CommunityComponentCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
+            AspectRatio(
+              aspectRatio: 16 / 9,
               child: component.previewImageUrl?.isNotEmpty == true
                   ? Image.network(
                       component.previewImageUrl!,
@@ -964,15 +996,26 @@ class _CommunityComponentCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      IconButton(
-                        onPressed: onToggleLike,
-                        icon: Icon(
-                          component.isLiked
-                              ? Icons.favorite
-                              : Icons.favorite_border,
-                          color: component.isLiked ? Colors.red : null,
-                        ),
-                        visualDensity: VisualDensity.compact,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            onPressed: onToggleLike,
+                            icon: Icon(
+                              component.isLiked
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: component.isLiked ? Colors.red : null,
+                            ),
+                            visualDensity: VisualDensity.compact,
+                          ),
+                          Text(
+                            '${component.likeCount}',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -986,17 +1029,12 @@ class _CommunityComponentCard extends StatelessWidget {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Text(
-                        component.category,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        '${component.likeCount}',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                      Expanded(
+                        child: Text(
+                          component.category,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ),
                     ],
@@ -1005,181 +1043,6 @@ class _CommunityComponentCard extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CommunityFilterTabs extends StatelessWidget {
-  final _CommunityFeedFilter selectedFilter;
-  final bool isAuthed;
-  final ValueChanged<_CommunityFeedFilter> onSelected;
-
-  const _CommunityFilterTabs({
-    required this.selectedFilter,
-    required this.isAuthed,
-    required this.onSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final tabs = [
-      (
-        filter: _CommunityFeedFilter.all,
-        label: 'All',
-        icon: PhosphorIcons.squaresFour(),
-      ),
-      (
-        filter: _CommunityFeedFilter.mine,
-        label: 'My posts',
-        icon: PhosphorIcons.notePencil(),
-      ),
-    ];
-
-    final shellColor = Color.alphaBlend(
-      colorScheme.primary.withValues(alpha: isDark ? 0.08 : 0.05),
-      colorScheme.surfaceContainerHighest.withValues(
-        alpha: isDark ? 0.88 : 0.96,
-      ),
-    );
-    final borderColor = colorScheme.outlineVariant.withValues(
-      alpha: isDark ? 0.48 : 0.72,
-    );
-
-    return Container(
-      height: 54,
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: shellColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: borderColor),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: isDark ? 0.16 : 0.05),
-            blurRadius: isDark ? 18 : 14,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          for (final tab in tabs)
-            Expanded(
-              child: _CommunityFilterTabButton(
-                label: tab.label,
-                icon: tab.icon,
-                selected: tab.filter == selectedFilter,
-                onTap: () => onSelected(tab.filter),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CommunityFilterTabButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _CommunityFilterTabButton({
-    required this.label,
-    required this.icon,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final foregroundColor = selected
-        ? colorScheme.primary
-        : colorScheme.onSurfaceVariant.withValues(alpha: isDark ? 0.86 : 0.92);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 2),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOutCubic,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: selected
-              ? LinearGradient(
-                  colors: [
-                    colorScheme.primary.withValues(alpha: isDark ? 0.26 : 0.14),
-                    colorScheme.primary.withValues(alpha: isDark ? 0.12 : 0.06),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : null,
-          color: selected ? null : Colors.transparent,
-          border: Border.all(
-            color: selected
-                ? colorScheme.primary.withValues(alpha: isDark ? 0.34 : 0.16)
-                : Colors.transparent,
-          ),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: colorScheme.primary.withValues(
-                      alpha: isDark ? 0.14 : 0.08,
-                    ),
-                    blurRadius: isDark ? 16 : 12,
-                    offset: const Offset(0, 6),
-                  ),
-                ]
-              : null,
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(16),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final compact = constraints.maxWidth < 108;
-                  final iconSize = compact ? 14.0 : 16.0;
-                  final spacing = compact ? 4.0 : 6.0;
-
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(icon, size: iconSize, color: foregroundColor),
-                      SizedBox(width: spacing),
-                      Flexible(
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            label,
-                            maxLines: 1,
-                            softWrap: false,
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              color: foregroundColor,
-                              fontWeight: selected
-                                  ? FontWeight.w800
-                                  : FontWeight.w700,
-                              letterSpacing: compact ? -0.15 : 0.1,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ),
         ),
       ),
     );

@@ -1208,5 +1208,16 @@
   "api_keys_confirm_create": "创建 Key",
   "api_keys_dialog_revoke_title": "撤销 API Key",
   "api_keys_dialog_revoke_description": "确认撤销“{name}”吗？该操作不可恢复。",
-  "api_keys_confirm_revoke": "确认撤销"
+  "api_keys_confirm_revoke": "确认撤销",
+  "community_search_components_hint": "搜索组件...",
+  "community_search_components": "搜索组件",
+  "community_empty_my_posts_sentence": "你还没有发布任何帖子。",
+  "community_empty_components": "暂无组件。",
+  "community_tab_posts": "帖子",
+  "community_tab_components": "组件",
+  "community_tab_my_posts": "我的帖子",
+  "community_failed_to_load_components": "加载组件失败",
+  "community_no_components_yet": "暂无组件",
+  "community_browse_components": "浏览公开的可复用组件。",
+  "main_nav_workspace": "工作台"
 }

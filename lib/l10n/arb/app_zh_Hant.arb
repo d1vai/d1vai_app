@@ -1208,5 +1208,16 @@
   "api_keys_confirm_create": "建立 Key",
   "api_keys_dialog_revoke_title": "撤銷 API Key",
   "api_keys_dialog_revoke_description": "確定要撤銷「{name}」嗎？此操作無法復原。",
-  "api_keys_confirm_revoke": "確認撤銷"
+  "api_keys_confirm_revoke": "確認撤銷",
+  "community_search_components_hint": "搜尋元件...",
+  "community_search_components": "搜尋元件",
+  "community_empty_my_posts_sentence": "你還沒有發佈任何貼文。",
+  "community_empty_components": "暫無元件。",
+  "community_tab_posts": "貼文",
+  "community_tab_components": "元件",
+  "community_tab_my_posts": "我的貼文",
+  "community_failed_to_load_components": "載入元件失敗",
+  "community_no_components_yet": "暫無元件",
+  "community_browse_components": "瀏覽公開的可重用元件。",
+  "main_nav_workspace": "工作台"
 }

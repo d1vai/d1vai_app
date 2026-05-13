@@ -9,6 +9,7 @@ import 'package:d1vai_app/widgets/adaptive_modal.dart';
 import 'package:d1vai_app/widgets/snackbar_helper.dart';
 import 'package:d1vai_app/widgets/button.dart';
 import 'package:d1vai_app/core/theme/app_colors.dart';
+import 'package:d1vai_app/core/theme/locale_font_helper.dart';
 import 'package:d1vai_app/screens/settings/profile_tab.dart';
 import 'package:d1vai_app/screens/settings/github_tab.dart';
 import 'package:d1vai_app/screens/settings/invites_tab.dart';
@@ -99,7 +100,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(loc?.translate('settings') ?? 'Settings'),
+        title: Text(
+          loc?.translate('settings') ?? 'Settings',
+          style: LocaleFontHelper.localizedTitleStyle(
+            context,
+            Theme.of(context).textTheme.titleLarge,
+          ),
+        ),
       ),
       body: desktop
           ? DesktopContentFrame(
