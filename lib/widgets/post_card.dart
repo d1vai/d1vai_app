@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'dart:ui' as ui;
 import '../models/community_post.dart';
 import '../providers/auth_provider.dart';
+import '../services/d1vai_service.dart';
 import '../utils/community_post_display.dart';
 import 'avatar_image.dart';
 import 'login_required_dialog.dart';
@@ -36,6 +37,7 @@ class PostCard extends StatefulWidget {
 }
 
 class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
+  final D1vaiService _service = D1vaiService();
   late final AnimationController _pressController;
   late final AnimationController _shineController;
 
@@ -89,13 +91,35 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
     return false;
   }
 
-  void _toggleLike() {
+  Future<void> _toggleLike() async {
     if (!_ensureLoggedIn()) return;
     HapticFeedback.selectionClick();
+    final previousLiked = _isLiked;
+    final previousCount = _likeCount;
     setState(() {
       _isLiked = !_isLiked;
       _likeCount = (_likeCount + (_isLiked ? 1 : -1)).clamp(0, 1 << 30);
     });
+    try {
+      final result = await _service.toggleCommunityPostLike(widget.post.id);
+      if (!mounted) return;
+      setState(() {
+        _isLiked = result['liked'] == true;
+        _likeCount = (result['like_count'] as num?)?.toInt() ?? _likeCount;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLiked = previousLiked;
+        _likeCount = previousCount;
+      });
+      SnackBarHelper.showError(
+        context,
+        title: 'Like failed',
+        message: '$e',
+      );
+      return;
+    }
     SnackBarHelper.showSuccess(
       context,
       title: _isLiked ? 'Liked' : 'Unliked',
@@ -182,7 +206,7 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
 
     final coverUrl = post.coverUrl?.trim() ?? '';
     final hasCover = coverUrl.isNotEmpty;
-    final height = hasCover ? 220.0 : 170.0;
+    final height = hasCover ? 240.0 : 184.0;
     final glassBg = Colors.black.withValues(alpha: isDark ? 0.35 : 0.26);
     final glassBorder = Colors.white.withValues(alpha: isDark ? 0.14 : 0.18);
     final titleText = _displayTitle(post.title);
@@ -345,7 +369,9 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
                                           fontWeight: FontWeight.w900,
                                           color: Colors.white,
                                         ),
-                                    maxLines: constraints.maxWidth < 320 ? 2 : 1,
+                                    maxLines: constraints.maxWidth < 320
+                                        ? 2
+                                        : 1,
                                     overflow: TextOverflow.ellipsis,
                                   );
                                   final trailingWidget = Row(
@@ -362,8 +388,9 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
                                             color: Colors.white.withValues(
                                               alpha: isDark ? 0.10 : 0.12,
                                             ),
-                                            borderRadius:
-                                                BorderRadius.circular(999),
+                                            borderRadius: BorderRadius.circular(
+                                              999,
+                                            ),
                                             border: Border.all(
                                               color: Colors.white.withValues(
                                                 alpha: isDark ? 0.12 : 0.16,
@@ -371,14 +398,15 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
                                             ),
                                           ),
                                           child: InkWell(
-                                            borderRadius:
-                                                BorderRadius.circular(999),
+                                            borderRadius: BorderRadius.circular(
+                                              999,
+                                            ),
                                             onTap:
                                                 (post.author?.slug ?? '')
-                                                        .trim()
-                                                        .isEmpty
-                                                    ? null
-                                                    : _openAuthorProfile,
+                                                    .trim()
+                                                    .isEmpty
+                                                ? null
+                                                : _openAuthorProfile,
                                             child: Padding(
                                               padding:
                                                   const EdgeInsets.symmetric(
@@ -400,7 +428,9 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
                                                                   ?.picture
                                                                   ?.isNotEmpty ==
                                                               true
-                                                          ? post.author!.picture!
+                                                          ? post
+                                                                .author!
+                                                                .picture!
                                                           : 'placeholder',
                                                       size: 20,
                                                       borderRadius:
@@ -422,7 +452,8 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
                                                       child: Text(
                                                         post.author?.slug ??
                                                             'Anonymous',
-                                                        style: theme
+                                                        style:
+                                                            theme
                                                                 .textTheme
                                                                 .labelMedium
                                                                 ?.copyWith(

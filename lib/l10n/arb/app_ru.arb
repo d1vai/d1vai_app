@@ -1145,7 +1145,6 @@
   "create_post_content_hint": "What's on your mind?",
   "create_post_content_required": "Please enter some content",
   "create_post_success": "Post created successfully",
-  "create_post_failed": "Failed to create post",
   "create_post_restore_draft_title": "Restore draft?",
   "create_post_restore_draft_message": "We found an unsent draft.",
   "create_post_restore_draft_title_label": "Title",

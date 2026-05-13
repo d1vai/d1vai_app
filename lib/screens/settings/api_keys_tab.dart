@@ -147,94 +147,16 @@ class _SettingsApiKeysTabState extends State<SettingsApiKeysTab> {
     BuildContext context,
     AppLocalizations? loc,
   ) async {
-    final nameController = TextEditingController();
-    final descriptionController = TextEditingController();
-
     await showDialog<void>(
       context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (dialogContext, setDialogState) {
-            final canSubmit = nameController.text.trim().isNotEmpty && !_creating;
-            return AlertDialog(
-              title: Text(
-                loc?.translate('api_keys_dialog_create_title') ?? 'Create API key',
-              ),
-              content: SizedBox(
-                width: 420,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      loc?.translate('api_keys_dialog_create_description') ??
-                          'Add a name and an optional description so you can recognize this key later.',
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: nameController,
-                      onChanged: (_) => setDialogState(() {}),
-                      decoration: InputDecoration(
-                        labelText:
-                            loc?.translate('api_keys_name_label') ?? 'Key name',
-                        hintText:
-                            loc?.translate('api_keys_name_placeholder') ??
-                            'Production script',
-                        border: const OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: descriptionController,
-                      maxLines: 2,
-                      decoration: InputDecoration(
-                        labelText:
-                            loc?.translate('api_keys_description_label') ??
-                            'Description',
-                        hintText:
-                            loc?.translate('optional_description') ??
-                            'Optional description',
-                        border: const OutlineInputBorder(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: _creating
-                      ? null
-                      : () => Navigator.of(dialogContext).pop(),
-                  child: Text(loc?.translate('cancel') ?? 'Cancel'),
-                ),
-                FilledButton(
-                  onPressed: canSubmit
-                      ? () async {
-                          await _create(
-                            name: nameController.text,
-                            description: descriptionController.text,
-                            loc: loc,
-                          );
-                          if (!dialogContext.mounted || _creating) return;
-                          Navigator.of(dialogContext).pop();
-                        }
-                      : null,
-                  child: Text(
-                    _creating
-                        ? (loc?.translate('api_keys_creating') ?? 'Creating...')
-                        : (loc?.translate('api_keys_confirm_create') ??
-                            'Create key'),
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (dialogContext) => _CreateApiKeyDialog(
+        loc: loc,
+        creating: _creating,
+        onCreate: ({required String name, required String description}) async {
+          await _create(name: name, description: description, loc: loc);
+        },
+      ),
     );
-
-    nameController.dispose();
-    descriptionController.dispose();
   }
 
   Future<void> _confirmRevoke(
@@ -329,7 +251,7 @@ class _SettingsApiKeysTabState extends State<SettingsApiKeysTab> {
                   text: _creating
                       ? (loc?.translate('api_keys_creating') ?? 'Creating...')
                       : (loc?.translate('api_keys_create_button') ??
-                          'Create key'),
+                            'Create key'),
                 ),
                 if ((_latestSecret ?? '').isNotEmpty) ...[
                   const SizedBox(height: 16),
@@ -408,8 +330,10 @@ class _SettingsApiKeysTabState extends State<SettingsApiKeysTab> {
                   )
                 else
                   ..._items.map((item) {
-                    final revoked =
-                        (item['revoked_at'] ?? '').toString().trim().isNotEmpty;
+                    final revoked = (item['revoked_at'] ?? '')
+                        .toString()
+                        .trim()
+                        .isNotEmpty;
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.all(14),
@@ -497,6 +421,127 @@ class _SettingsApiKeysTabState extends State<SettingsApiKeysTab> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _CreateApiKeyDialog extends StatefulWidget {
+  final AppLocalizations? loc;
+  final bool creating;
+  final Future<void> Function({
+    required String name,
+    required String description,
+  })
+  onCreate;
+
+  const _CreateApiKeyDialog({
+    required this.loc,
+    required this.creating,
+    required this.onCreate,
+  });
+
+  @override
+  State<_CreateApiKeyDialog> createState() => _CreateApiKeyDialogState();
+}
+
+class _CreateApiKeyDialogState extends State<_CreateApiKeyDialog> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _descriptionController;
+  bool _submitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController();
+    _descriptionController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = widget.loc;
+    final creating = widget.creating || _submitting;
+    final canSubmit = _nameController.text.trim().isNotEmpty && !creating;
+
+    return AlertDialog(
+      title: Text(
+        loc?.translate('api_keys_dialog_create_title') ?? 'Create API key',
+      ),
+      content: SizedBox(
+        width: 420,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              loc?.translate('api_keys_dialog_create_description') ??
+                  'Add a name and an optional description so you can recognize this key later.',
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _nameController,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                labelText: loc?.translate('api_keys_name_label') ?? 'Key name',
+                hintText:
+                    loc?.translate('api_keys_name_placeholder') ??
+                    'Production script',
+                border: const OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _descriptionController,
+              maxLines: 2,
+              decoration: InputDecoration(
+                labelText:
+                    loc?.translate('api_keys_description_label') ??
+                    'Description',
+                hintText:
+                    loc?.translate('optional_description') ??
+                    'Optional description',
+                border: const OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: creating ? null : () => Navigator.of(context).pop(),
+          child: Text(loc?.translate('cancel') ?? 'Cancel'),
+        ),
+        FilledButton(
+          onPressed: canSubmit
+              ? () async {
+                  final navigator = Navigator.of(context);
+                  setState(() {
+                    _submitting = true;
+                  });
+                  await widget.onCreate(
+                    name: _nameController.text,
+                    description: _descriptionController.text,
+                  );
+                  if (!mounted) return;
+                  setState(() {
+                    _submitting = false;
+                  });
+                  navigator.pop();
+                }
+              : null,
+          child: Text(
+            creating
+                ? (loc?.translate('api_keys_creating') ?? 'Creating...')
+                : (loc?.translate('api_keys_confirm_create') ?? 'Create key'),
+          ),
+        ),
+      ],
     );
   }
 }

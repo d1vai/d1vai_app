@@ -1145,7 +1145,6 @@
   "create_post_content_hint": "想分享点什么？",
   "create_post_content_required": "请输入正文内容",
   "create_post_success": "帖子发布成功",
-  "create_post_failed": "发布帖子失败",
   "create_post_restore_draft_title": "恢复草稿？",
   "create_post_restore_draft_message": "我们发现了一份未发送的草稿。",
   "create_post_restore_draft_title_label": "标题",

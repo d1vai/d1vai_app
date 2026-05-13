@@ -1145,7 +1145,6 @@
   "create_post_content_hint": "想分享些什麼？",
   "create_post_content_required": "請輸入正文內容",
   "create_post_success": "貼文發佈成功",
-  "create_post_failed": "發佈貼文失敗",
   "create_post_restore_draft_title": "要恢復草稿嗎？",
   "create_post_restore_draft_message": "我們找到一份尚未送出的草稿。",
   "create_post_restore_draft_title_label": "標題",
