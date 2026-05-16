@@ -167,6 +167,7 @@ class _AuthOtpInputState extends State<AuthOtpInput> {
   final List<TextEditingController> _controllers = [];
   final List<FocusNode> _focusNodes = [];
   final List<String> _otpValues = [];
+  bool _isAutoAdvancing = false;
 
   @override
   void initState() {
@@ -198,6 +199,7 @@ class _AuthOtpInputState extends State<AuthOtpInput> {
   }
 
   void _onTextChanged(int index) {
+    if (_isAutoAdvancing) return;
     final currentValue = _controllers[index].text;
 
     if (currentValue.length > 1) {
@@ -213,15 +215,23 @@ class _AuthOtpInputState extends State<AuthOtpInput> {
     widget.onChanged?.call(otpCode);
 
     if (currentValue.isNotEmpty && index < widget.count - 1) {
+      _isAutoAdvancing = true;
       FocusScope.of(context).requestFocus(_focusNodes[index + 1]);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _isAutoAdvancing = false;
+      });
     }
 
     if (currentValue.isEmpty && index > 0) {
+      _isAutoAdvancing = true;
       FocusScope.of(context).requestFocus(_focusNodes[index - 1]);
       _controllers[index - 1].selection = TextSelection(
         baseOffset: 0,
         extentOffset: _controllers[index - 1].text.length,
       );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _isAutoAdvancing = false;
+      });
     }
 
     if (otpCode.length == widget.count && widget.autoSubmit) {
@@ -319,7 +329,6 @@ class _AuthOtpInputState extends State<AuthOtpInput> {
                   autofocus: widget.autoFocus && index == 0,
                   keyboardType: TextInputType.number,
                   textAlign: TextAlign.center,
-                  maxLength: widget.count,
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.5,

@@ -8,6 +8,7 @@ import 'package:d1vai_app/widgets/auth/login_legal_links.dart';
 import 'package:d1vai_app/widgets/auth/session_expired_banner.dart';
 import 'package:d1vai_app/widgets/auth/auth_input_fields.dart';
 import 'package:d1vai_app/widgets/auth/auth_display_controls.dart';
+import 'package:d1vai_app/widgets/share_sheet.dart';
 import 'package:d1vai_app/l10n/app_localizations.dart';
 
 /// 登录模式枚举
@@ -669,7 +670,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   agreementText:
                       loc?.translate('agree_terms') ?? '登录即表示您同意我们的服务条款和隐私政策',
                   legalLabel: loc?.translate('account_data_legal') ?? 'Legal',
-                  onOpenLegal: () => context.push('/docs/privacy-policy'),
+                  onOpenLegal: () => context.push(
+                    ShareLinks.docsBySlug(
+                      'privacy-policy',
+                      hideHeader: true,
+                    ).toString(),
+                  ),
                 ),
               ],
             ),

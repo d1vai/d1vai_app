@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../providers/auth_provider.dart';
+import '../l10n/app_localizations.dart';
 import 'ai_avatar_selector_dialog.dart';
 import 'avatar_image.dart';
 import 'auth/auth_display_controls.dart';
@@ -40,18 +41,23 @@ class _OnboardingWizardState extends State<OnboardingWizard>
   bool _isGeneratingAvatars = false;
   final List<String> _aiAvatars = [];
 
-  // 行业列表
-  final List<String> _industries = [
-    'Technology',
-    'Finance',
-    'Healthcare',
-    'Education',
-    'E-commerce',
-    'Manufacturing',
-    'Media & Entertainment',
-    'Real Estate',
-    'Energy',
-    'Other',
+  List<_IndustryOption> get _industries => [
+    _IndustryOption('technology', _t('industry_technology', 'Technology')),
+    _IndustryOption('finance', _t('industry_finance', 'Finance')),
+    _IndustryOption('healthcare', _t('industry_healthcare', 'Healthcare')),
+    _IndustryOption('education', _t('industry_education', 'Education')),
+    _IndustryOption('ecommerce', _t('industry_ecommerce', 'E-commerce')),
+    _IndustryOption(
+      'manufacturing',
+      _t('industry_manufacturing', 'Manufacturing'),
+    ),
+    _IndustryOption('media', _t('industry_media', 'Media & Entertainment')),
+    _IndustryOption('real_estate', _t('industry_real_estate', 'Real Estate')),
+    _IndustryOption('energy', _t('industry_energy', 'Energy')),
+    _IndustryOption('saas', _t('industry_saas', 'SaaS')),
+    _IndustryOption('consulting', _t('industry_consulting', 'Consulting')),
+    _IndustryOption('retail', _t('industry_retail', 'Retail')),
+    _IndustryOption('other', _t('other', 'Other')),
   ];
 
   @override
@@ -88,6 +94,12 @@ class _OnboardingWizardState extends State<OnboardingWizard>
     _enterController.dispose();
     _breathController.dispose();
     super.dispose();
+  }
+
+  String _t(String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
   }
 
   /// 处理步骤完成
@@ -400,16 +412,28 @@ class _OnboardingWizardState extends State<OnboardingWizard>
   Widget _buildStepTitle(ThemeData theme) {
     final colorScheme = theme.colorScheme;
     final titles = [
-      'Welcome to d1v.ai 🎉',
-      'Tell us about your organization',
-      'Add your avatar',
-      'Finish setup',
+      _t('onboarding_title_welcome', 'Welcome to d1v.ai'),
+      _t('onboarding_title_org', 'Tell us about your organization'),
+      _t('onboarding_title_avatar', 'Add your avatar'),
+      _t('onboarding_title_finish', 'Finish setup'),
     ];
     final subtitles = [
-      'Enter your invite code to join your team.',
-      'This helps us tailor templates and recommendations for your team.',
-      'Upload a profile image so collaborators can recognize you at a glance.',
-      'You are almost ready to start building.',
+      _t(
+        'onboarding_subtitle_invite',
+        'Enter an invite code to join your team.',
+      ),
+      _t(
+        'onboarding_subtitle_org',
+        'This helps us tailor templates and recommendations for your team.',
+      ),
+      _t(
+        'onboarding_subtitle_avatar',
+        'Upload a profile image so collaborators can recognize you at a glance.',
+      ),
+      _t(
+        'onboarding_subtitle_finish',
+        'You are almost ready to start building.',
+      ),
     ];
 
     return AnimatedSwitcher(
@@ -503,7 +527,9 @@ class _OnboardingWizardState extends State<OnboardingWizard>
         );
       },
       child: d1v.Button(
-        text: _currentStep == 3 ? '完成' : '下一步',
+        text: _currentStep == 3
+            ? _t('onboarding_action_finish', 'Finish')
+            : _t('onboarding_action_next', 'Next'),
         onPressed: _isLoading ? null : _handleNext,
         height: 48,
         borderRadius: 14,
@@ -513,7 +539,7 @@ class _OnboardingWizardState extends State<OnboardingWizard>
     final secondaryButton = _currentStep > 0
         ? d1v.Button(
             variant: d1v.ButtonVariant.outline,
-            text: '上一步',
+            text: _t('onboarding_action_back', 'Back'),
             onPressed: _isLoading ? null : _handlePrevious,
             height: 48,
             borderRadius: 14,
@@ -609,8 +635,8 @@ class _OnboardingWizardState extends State<OnboardingWizard>
         const SizedBox(height: 24),
         TextField(
           decoration: InputDecoration(
-            labelText: '邀请码',
-            hintText: '请输入您的邀请码',
+            labelText: _t('onboarding_invite_label', 'Invite code'),
+            hintText: _t('onboarding_invite_hint', 'Enter invite code'),
             border: const OutlineInputBorder(),
             filled: true,
             fillColor: colorScheme.surfaceContainerHighest.withValues(
@@ -623,7 +649,10 @@ class _OnboardingWizardState extends State<OnboardingWizard>
         ),
         const SizedBox(height: 16),
         Text(
-          '提示：邀请码已发送到您的邮箱，请查收',
+          _t(
+            'onboarding_invite_helper',
+            'Optional. Add an invite code if someone referred you.',
+          ),
           style:
               theme.textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
@@ -650,8 +679,8 @@ class _OnboardingWizardState extends State<OnboardingWizard>
           // 公司名称
           TextField(
             decoration: InputDecoration(
-              labelText: '公司名称 *',
-              hintText: '请输入您的公司名称',
+              labelText: _t('company_name', 'Company Name'),
+              hintText: _t('company_name_hint', 'Enter your company name'),
               border: const OutlineInputBorder(),
               filled: true,
               fillColor: colorScheme.surfaceContainerHighest.withValues(
@@ -667,7 +696,7 @@ class _OnboardingWizardState extends State<OnboardingWizard>
           // 公司网站
           TextField(
             decoration: InputDecoration(
-              labelText: '公司网站',
+              labelText: _t('company_website', 'Company Website'),
               hintText: 'https://example.com',
               border: const OutlineInputBorder(),
               filled: true,
@@ -684,7 +713,7 @@ class _OnboardingWizardState extends State<OnboardingWizard>
           // 所属行业
           DropdownButtonFormField<String>(
             decoration: InputDecoration(
-              labelText: '所属行业',
+              labelText: _t('industry', 'Industry'),
               border: const OutlineInputBorder(),
               filled: true,
               fillColor: colorScheme.surfaceContainerHighest.withValues(
@@ -693,8 +722,10 @@ class _OnboardingWizardState extends State<OnboardingWizard>
             ),
             items: _industries
                 .map(
-                  (industry) =>
-                      DropdownMenuItem(value: industry, child: Text(industry)),
+                  (industry) => DropdownMenuItem(
+                    value: industry.value,
+                    child: Text(industry.label),
+                  ),
                 )
                 .toList(),
             onChanged: (value) {
@@ -707,7 +738,10 @@ class _OnboardingWizardState extends State<OnboardingWizard>
           ),
           const SizedBox(height: 10),
           Text(
-            '这将帮助我们提供更适合你的模板与建议。',
+            _t(
+              'onboarding_org_helper',
+              'This helps us tailor templates and recommendations for your team.',
+            ),
             style:
                 theme.textTheme.bodySmall?.copyWith(
                   color: colorScheme.onSurfaceVariant.withValues(alpha: 0.85),
@@ -746,7 +780,7 @@ class _OnboardingWizardState extends State<OnboardingWizard>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Profile picture',
+                      _t('onboarding_avatar_title', 'Profile picture'),
                       style:
                           theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w800,
@@ -755,7 +789,10 @@ class _OnboardingWizardState extends State<OnboardingWizard>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Recommended: square image, PNG/JPG/WEBP, up to 5MB.',
+                      _t(
+                        'onboarding_avatar_hint',
+                        'Recommended: square image, PNG/JPG/WEBP, up to 5MB.',
+                      ),
                       style:
                           theme.textTheme.bodySmall?.copyWith(
                             color: colorScheme.onSurfaceVariant.withValues(
@@ -784,7 +821,7 @@ class _OnboardingWizardState extends State<OnboardingWizard>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'AI Avatar Cards',
+                    _t('onboarding_ai_avatar_title', 'AI Avatar Cards'),
                     style:
                         theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w800,
@@ -810,7 +847,9 @@ class _OnboardingWizardState extends State<OnboardingWizard>
                         child: AnimatedSwitcher(
                           duration: const Duration(milliseconds: 160),
                           child: Text(
-                            _isGeneratingAvatars ? 'Generating…' : 'AI Random',
+                            _isGeneratingAvatars
+                                ? _t('generating', 'Generating...')
+                                : _t('onboarding_ai_random', 'AI Random'),
                             key: ValueKey(_isGeneratingAvatars),
                             style: const TextStyle(fontWeight: FontWeight.w800),
                           ),
@@ -883,7 +922,10 @@ class _OnboardingWizardState extends State<OnboardingWizard>
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Tap "AI Random" to draw your AI avatar cards.',
+                        _t(
+                          'onboarding_ai_avatar_hint',
+                          'Tap "AI Random" to draw your AI avatar cards.',
+                        ),
                         style:
                             theme.textTheme.bodySmall?.copyWith(
                               color: colorScheme.onSurfaceVariant.withValues(
@@ -908,7 +950,7 @@ class _OnboardingWizardState extends State<OnboardingWizard>
           d1v.Button(
             variant: d1v.ButtonVariant.outline,
             icon: Icon(Icons.upload, color: colorScheme.onSurface),
-            text: '选择文件',
+            text: _t('choose_file', 'Choose file'),
             onPressed: _pickImageFromGallery,
             height: 48,
             borderRadius: 14,
@@ -941,7 +983,7 @@ class _OnboardingWizardState extends State<OnboardingWizard>
         ),
         const SizedBox(height: 24),
         Text(
-          '设置完成！',
+          _t('onboarding_complete_title', 'Setup complete'),
           style:
               theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w900,
@@ -950,7 +992,10 @@ class _OnboardingWizardState extends State<OnboardingWizard>
         ),
         const SizedBox(height: 8),
         Text(
-          '欢迎加入 d1vai，您即将进入应用',
+          _t(
+            'onboarding_complete_subtitle',
+            'Welcome aboard. You are ready to continue.',
+          ),
           style:
               theme.textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
@@ -965,4 +1010,11 @@ class _OnboardingWizardState extends State<OnboardingWizard>
       ],
     );
   }
+}
+
+class _IndustryOption {
+  final String value;
+  final String label;
+
+  const _IndustryOption(this.value, this.label);
 }
