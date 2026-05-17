@@ -49,3 +49,8 @@ app.*.map.json
 # Local compile-time env files for Flutter `--dart-define-from-file`
 .env/
 !.env/*.example.json
+
+# Local signing materials and filing backups
+/secrets/
+/android/key.properties
+/local-backups/
