@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart' as apple_sign_in;
 import 'package:d1vai_app/providers/auth_provider.dart';
 import 'package:d1vai_app/widgets/snackbar_helper.dart';
@@ -642,11 +642,13 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildOAuthButton({
     required String label,
     required VoidCallback onPressed,
+    required Widget leading,
     Color? backgroundColor,
     Color? foregroundColor,
     BorderSide? side,
   }) {
     final cs = Theme.of(context).colorScheme;
+    final resolvedForegroundColor = foregroundColor ?? cs.onSurface;
 
     return OutlinedButton(
       onPressed: _isLoading ? null : onPressed,
@@ -658,47 +660,82 @@ class _LoginScreenState extends State<LoginScreen> {
         side: side ?? BorderSide(color: cs.outlineVariant),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       ),
-      child: Text(
-        label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+      child: Row(
+        children: [
+          SizedBox(width: 22, height: 22, child: Center(child: leading)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+            ),
+          ),
+          SizedBox(
+            width: 22,
+            height: 22,
+            child: Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 14,
+              color: resolvedForegroundColor.withValues(alpha: 0.64),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildOfficialSvgButton({
-    required String label,
-    required String assetPath,
-    required VoidCallback onPressed,
-  }) {
-    return Semantics(
-      button: true,
-      label: label,
-      child: SizedBox(
-        width: double.infinity,
-        height: 44,
-        child: InkWell(
-          onTap: _isLoading ? null : onPressed,
-          borderRadius: BorderRadius.circular(8),
-          child: Opacity(
-            opacity: _isLoading ? 0.72 : 1,
-            child: IgnorePointer(
-              child: SvgPicture.asset(
-                assetPath,
-                fit: BoxFit.fill,
-                semanticsLabel: label,
-              ),
-            ),
+  Widget _buildGoogleMark() {
+    return Text(
+      'G',
+      style: const TextStyle(
+        fontSize: 19,
+        fontWeight: FontWeight.w800,
+        color: Color(0xFF4285F4),
+      ),
+    );
+  }
+
+  Widget _buildMicrosoftMark() {
+    const tileSize = 8.0;
+    const gap = 2.0;
+
+    Widget square(Color color) {
+      return Container(width: tileSize, height: tileSize, color: color);
+    }
+
+    return SizedBox(
+      width: tileSize * 2 + gap,
+      height: tileSize * 2 + gap,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              square(const Color(0xFFF25022)),
+              const SizedBox(width: gap),
+              square(const Color(0xFF7FBA00)),
+            ],
           ),
-        ),
+          const SizedBox(height: gap),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              square(const Color(0xFF00A4EF)),
+              const SizedBox(width: gap),
+              square(const Color(0xFFFFB900)),
+            ],
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildMobileOAuthSection() {
     final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -721,28 +758,35 @@ class _LoginScreenState extends State<LoginScreen> {
           ],
         ),
         const SizedBox(height: 14),
-        _buildOfficialSvgButton(
+        _buildOAuthButton(
           label: 'Sign in with Google',
-          assetPath: isDark
-              ? 'assets/auth/google_signin_dark.svg'
-              : 'assets/auth/google_signin_light.svg',
           onPressed: () => _loginWithOAuth('google'),
+          leading: _buildGoogleMark(),
+          backgroundColor: cs.surface,
+          foregroundColor: cs.onSurface,
+          side: BorderSide(color: cs.outlineVariant),
         ),
         const SizedBox(height: 12),
         _buildOAuthButton(
           label: 'Continue with GitHub',
           onPressed: () => _loginWithOAuth('github'),
+          leading: Icon(
+            PhosphorIcons.githubLogo(),
+            size: 18,
+            color: Colors.white,
+          ),
           backgroundColor: Colors.black,
           foregroundColor: Colors.white,
           side: const BorderSide(color: Colors.black),
         ),
         const SizedBox(height: 12),
-        _buildOfficialSvgButton(
+        _buildOAuthButton(
           label: 'Sign in with Microsoft',
-          assetPath: isDark
-              ? 'assets/auth/microsoft_signin_dark.svg'
-              : 'assets/auth/microsoft_signin_light.svg',
           onPressed: () => _loginWithOAuth('microsoft'),
+          leading: _buildMicrosoftMark(),
+          backgroundColor: cs.surface,
+          foregroundColor: cs.onSurface,
+          side: BorderSide(color: cs.outlineVariant),
         ),
       ],
     );
