@@ -14,6 +14,8 @@ import '../widgets/avatar_image.dart';
 import '../core/auth_expiry_bus.dart';
 
 class AuthProvider extends ChangeNotifier {
+  static const String _defaultInviteCode = 'D1VLAB';
+
   final D1vaiService _d1vaiService = D1vaiService();
   final StorageService _storageService = StorageService();
   final CacheService _cacheService = CacheService();
@@ -265,6 +267,7 @@ class AuthProvider extends ChangeNotifier {
 
     _user = await _d1vaiService.getUserProfile();
     _user = _user?.copyWith(bearerToken: token);
+    await _applyDefaultInvitationIfNeeded(token);
     if (_user != null) {
       await _storageService.saveAuthUser(_user!);
     }
@@ -276,6 +279,35 @@ class AuthProvider extends ChangeNotifier {
     } else {
       _onboardingData = null;
     }
+  }
+
+  bool _hasReferralCode(User? user) {
+    final referralCode = user?.referralCode.trim() ?? '';
+    return referralCode.isNotEmpty && referralCode != '-';
+  }
+
+  String _resolveInvitationCode() {
+    final stagedInviteCode = _onboardingData?.inviteCode?.trim() ?? '';
+    if (stagedInviteCode.isNotEmpty) {
+      return stagedInviteCode;
+    }
+    return _defaultInviteCode;
+  }
+
+  Future<void> _applyDefaultInvitationIfNeeded(String token) async {
+    _onboardingData ??= _storageService.getOnboardingData();
+    if (_hasReferralCode(_user)) return;
+
+    final inviteCode = _resolveInvitationCode();
+    if (inviteCode.isEmpty) return;
+
+    await _d1vaiService.postUserAcceptInvitation(inviteCode);
+    _onboardingData ??= OnboardingData();
+    _onboardingData = _onboardingData!.copyWith(inviteCode: inviteCode);
+    await _storageService.saveOnboardingData(_onboardingData!);
+
+    final refreshedUser = await _d1vaiService.getUserProfile();
+    _user = refreshedUser.copyWith(bearerToken: token);
   }
 
   /// 发送验证码
