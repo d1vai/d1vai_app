@@ -6,5 +6,9 @@
 	<array>
 		<string>merchant.ai.d1v.d1vaiapp</string>
 	</array>
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
 </dict>
 </plist>

@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../core/api_client.dart';
 import '../core/avatar_generator.dart';
 import '../models/user.dart';
@@ -161,6 +163,92 @@ class AuthProvider extends ChangeNotifier {
 
       if (token == null) {
         throw Exception('Login failed: invalid response');
+      }
+
+      await _completeLogin(token);
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> loginWithApple() async {
+    try {
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: const [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+
+      final token = await _d1vaiService.postAppleLogin({
+        'identity_token': credential.identityToken ?? '',
+        'authorization_code': credential.authorizationCode,
+        'user_identifier': credential.userIdentifier ?? '',
+        'email': credential.email ?? '',
+        'given_name': credential.givenName ?? '',
+        'family_name': credential.familyName ?? '',
+      });
+
+      if (token == null) {
+        throw Exception('Login failed: invalid Apple response');
+      }
+
+      await _completeLogin(token);
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> loginWithOAuth({
+    required String provider,
+    String? inviteCode,
+  }) async {
+    const supportedProviders = {'google', 'github', 'microsoft'};
+    if (!supportedProviders.contains(provider)) {
+      throw Exception('Unsupported OAuth provider: $provider');
+    }
+
+    try {
+      final callbackUrl = await FlutterWebAuth2.authenticate(
+        url: _d1vaiService
+            .buildOAuthStartUri(
+              provider: provider,
+              redirectTo: 'd1vai://login',
+              inviteCode: inviteCode,
+            )
+            .toString(),
+        callbackUrlScheme: 'd1vai',
+      );
+
+      final callbackUri = Uri.parse(callbackUrl);
+      final error =
+          (callbackUri.queryParameters['oauth_error'] ??
+                  callbackUri.queryParameters['error'] ??
+                  '')
+              .trim();
+      if (error.isNotEmpty) {
+        final detail =
+            (callbackUri.queryParameters['oauth_error_description'] ??
+                    callbackUri.queryParameters['error_description'] ??
+                    '')
+                .trim();
+        throw Exception(detail.isEmpty ? error : '$error: $detail');
+      }
+
+      final code = (callbackUri.queryParameters['code'] ?? '').trim();
+      if (code.isEmpty) {
+        throw Exception('OAuth login failed: missing exchange code');
+      }
+
+      final token = await _d1vaiService.postOAuthExchange(
+        provider: provider,
+        code: code,
+      );
+
+      if (token == null) {
+        throw Exception('Login failed: invalid $provider response');
       }
 
       await _completeLogin(token);

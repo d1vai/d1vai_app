@@ -189,6 +189,51 @@ class D1vaiService {
     }, fromJsonT: (json) => json as String?);
   }
 
+  /// Apple 原生登录
+  Future<String?> postAppleLogin(Map<String, dynamic> payload) async {
+    return _apiClient.post<String?>(
+      '/api/oauth/apple/app-login',
+      payload,
+      fromJsonT: (json) => json as String?,
+    );
+  }
+
+  Future<String?> postOAuthExchange({
+    required String provider,
+    required String code,
+  }) async {
+    return _apiClient.post<String?>('/api/oauth/$provider/exchange', {
+      'code': code,
+    }, fromJsonT: (json) => json as String?);
+  }
+
+  Uri buildOAuthStartUri({
+    required String provider,
+    required String redirectTo,
+    String? inviteCode,
+  }) {
+    final base = Uri.parse(ApiClient.baseUrl);
+
+    var basePath = base.path;
+    if (basePath.endsWith('/')) {
+      basePath = basePath.substring(0, basePath.length - 1);
+    }
+
+    var epPath = '/api/oauth/$provider/start';
+    if (basePath.endsWith('/api') && epPath.startsWith('/api/')) {
+      epPath = epPath.substring('/api'.length);
+    }
+
+    return base.replace(
+      path: '${basePath.isEmpty ? '' : basePath}$epPath',
+      queryParameters: {
+        ...base.queryParameters,
+        'redirectTo': redirectTo,
+        if ((inviteCode ?? '').trim().isNotEmpty) 'invite': inviteCode!.trim(),
+      },
+    );
+  }
+
   // ============================================
   // User Methods - 用户相关方法
   // ============================================
@@ -750,13 +795,10 @@ class D1vaiService {
 
   Future<Map<String, dynamic>> toggleCommunityPostLike(int postId) async {
     await _cacheService.clearCommunityCache();
-    return _apiClient.post<Map<String, dynamic>>(
-      '/api/likes/toggle',
-      {
-        'content_type': 'community_post',
-        'content_id': postId.toString(),
-      },
-    );
+    return _apiClient.post<Map<String, dynamic>>('/api/likes/toggle', {
+      'content_type': 'community_post',
+      'content_id': postId.toString(),
+    });
   }
 
   Future<List<CommunityComponent>> getCommunityComponents({
@@ -765,10 +807,7 @@ class D1vaiService {
     String? searchQuery,
     String? category,
   }) async {
-    final params = <String>[
-      'limit=$limit',
-      'offset=$offset',
-    ];
+    final params = <String>['limit=$limit', 'offset=$offset'];
     if ((searchQuery ?? '').trim().isNotEmpty) {
       params.add('q=${Uri.encodeQueryComponent(searchQuery!.trim())}');
     }
@@ -788,10 +827,15 @@ class D1vaiService {
 
     final items = listData
         .whereType<Map>()
-        .map((item) => CommunityComponent.fromJson(item.cast<String, dynamic>()))
+        .map(
+          (item) => CommunityComponent.fromJson(item.cast<String, dynamic>()),
+        )
         .toList();
 
-    final ids = items.map((item) => item.id).where((id) => id.isNotEmpty).toList();
+    final ids = items
+        .map((item) => item.id)
+        .where((id) => id.isNotEmpty)
+        .toList();
     if (ids.isEmpty) return items;
 
     final stats = await _apiClient.get<List<dynamic>>(
@@ -804,26 +848,23 @@ class D1vaiService {
       statsMap[(item['content_id'] ?? '').toString()] = item;
     }
 
-    return items
-        .map((item) {
-          final stat = statsMap[item.id];
-          if (stat == null) return item;
-          return item.copyWith(
-            likeCount: (stat['like_count'] as num?)?.toInt() ?? item.likeCount,
-            isLiked: stat['is_liked'] == true,
-          );
-        })
-        .toList();
+    return items.map((item) {
+      final stat = statsMap[item.id];
+      if (stat == null) return item;
+      return item.copyWith(
+        likeCount: (stat['like_count'] as num?)?.toInt() ?? item.likeCount,
+        isLiked: stat['is_liked'] == true,
+      );
+    }).toList();
   }
 
-  Future<Map<String, dynamic>> toggleCommunityComponentLike(String componentId) {
-    return _apiClient.post<Map<String, dynamic>>(
-      '/api/likes/toggle',
-      {
-        'content_type': 'community_component',
-        'content_id': componentId,
-      },
-    );
+  Future<Map<String, dynamic>> toggleCommunityComponentLike(
+    String componentId,
+  ) {
+    return _apiClient.post<Map<String, dynamic>>('/api/likes/toggle', {
+      'content_type': 'community_component',
+      'content_id': componentId,
+    });
   }
 
   // ============================================

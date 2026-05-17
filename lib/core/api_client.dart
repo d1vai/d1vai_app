@@ -172,6 +172,7 @@ class ApiClient {
         endpoint.startsWith('/api/user/public/') ||
         endpoint.startsWith('/api/user/activity/prompt-daily/slug/') ||
         endpoint.startsWith('/api/upload/pic') ||
+        endpoint.startsWith('/api/oauth/') ||
         endpoint.startsWith('/api/solana/login') ||
         endpoint.startsWith('/api/sui/login');
   }

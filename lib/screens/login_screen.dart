@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart' as apple_sign_in;
 import 'package:d1vai_app/providers/auth_provider.dart';
 import 'package:d1vai_app/widgets/snackbar_helper.dart';
 import 'package:d1vai_app/widgets/auth/login_legal_links.dart';
@@ -329,6 +332,41 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _loginWithApple() async {
+    final loc = AppLocalizations.of(context);
+    setState(() => _isLoading = true);
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.stageInvitationCode(widget.inviteCode ?? '');
+      await authProvider.loginWithApple();
+      _showSuccess(loc?.translate('login_success') ?? '登录成功');
+      if (mounted) context.go('/dashboard');
+    } catch (e) {
+      _showError(e.toString());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _loginWithOAuth(String provider) async {
+    final loc = AppLocalizations.of(context);
+    setState(() => _isLoading = true);
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.stageInvitationCode(widget.inviteCode ?? '');
+      await authProvider.loginWithOAuth(
+        provider: provider,
+        inviteCode: widget.inviteCode,
+      );
+      _showSuccess(loc?.translate('login_success') ?? '登录成功');
+      if (mounted) context.go('/dashboard');
+    } catch (e) {
+      _showError(e.toString());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   /// 发送验证码
   Future<void> _sendCode() async {
     final loc = AppLocalizations.of(context);
@@ -562,6 +600,154 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  Widget _buildAppleLoginButton() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return SizedBox(
+      width: double.infinity,
+      height: 44,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          IgnorePointer(
+            ignoring: _isLoading,
+            child: Opacity(
+              opacity: _isLoading ? 0.72 : 1,
+              child: apple_sign_in.SignInWithAppleButton(
+                onPressed: _loginWithApple,
+                text: 'Sign in with Apple',
+                height: 44,
+                borderRadius: const BorderRadius.all(Radius.circular(8)),
+                style: isDark
+                    ? apple_sign_in.SignInWithAppleButtonStyle.whiteOutlined
+                    : apple_sign_in.SignInWithAppleButtonStyle.black,
+                iconAlignment: apple_sign_in.IconAlignment.left,
+              ),
+            ),
+          ),
+          if (_isLoading)
+            const Center(
+              child: SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOAuthButton({
+    required String label,
+    required VoidCallback onPressed,
+    Color? backgroundColor,
+    Color? foregroundColor,
+    BorderSide? side,
+  }) {
+    final cs = Theme.of(context).colorScheme;
+
+    return OutlinedButton(
+      onPressed: _isLoading ? null : onPressed,
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(double.infinity, 48),
+        backgroundColor: backgroundColor,
+        foregroundColor: foregroundColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        side: side ?? BorderSide(color: cs.outlineVariant),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+
+  Widget _buildOfficialSvgButton({
+    required String label,
+    required String assetPath,
+    required VoidCallback onPressed,
+  }) {
+    return Semantics(
+      button: true,
+      label: label,
+      child: SizedBox(
+        width: double.infinity,
+        height: 44,
+        child: InkWell(
+          onTap: _isLoading ? null : onPressed,
+          borderRadius: BorderRadius.circular(8),
+          child: Opacity(
+            opacity: _isLoading ? 0.72 : 1,
+            child: IgnorePointer(
+              child: SvgPicture.asset(
+                assetPath,
+                fit: BoxFit.fill,
+                semanticsLabel: label,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileOAuthSection() {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(child: Divider(color: cs.outlineVariant)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                'Other sign-in options',
+                style: TextStyle(
+                  color: cs.onSurfaceVariant,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            Expanded(child: Divider(color: cs.outlineVariant)),
+          ],
+        ),
+        const SizedBox(height: 14),
+        _buildOfficialSvgButton(
+          label: 'Sign in with Google',
+          assetPath: isDark
+              ? 'assets/auth/google_signin_dark.svg'
+              : 'assets/auth/google_signin_light.svg',
+          onPressed: () => _loginWithOAuth('google'),
+        ),
+        const SizedBox(height: 12),
+        _buildOAuthButton(
+          label: 'Continue with GitHub',
+          onPressed: () => _loginWithOAuth('github'),
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
+          side: const BorderSide(color: Colors.black),
+        ),
+        const SizedBox(height: 12),
+        _buildOfficialSvgButton(
+          label: 'Sign in with Microsoft',
+          assetPath: isDark
+              ? 'assets/auth/microsoft_signin_dark.svg'
+              : 'assets/auth/microsoft_signin_light.svg',
+          onPressed: () => _loginWithOAuth('microsoft'),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
@@ -664,6 +850,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
 
+                if (Platform.isIOS || Platform.isMacOS) ...[
+                  const SizedBox(height: 18),
+                  _buildAppleLoginButton(),
+                ],
+                if (Platform.isIOS || Platform.isAndroid) ...[
+                  const SizedBox(height: 18),
+                  _buildMobileOAuthSection(),
+                ],
                 const SizedBox(height: 48),
 
                 LoginLegalLinks(
