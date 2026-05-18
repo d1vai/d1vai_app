@@ -1276,5 +1276,12 @@
   "project_deploy_no_diff_files": "沒有檔案差異",
   "project_deploy_no_diff_files_hint": "這個提交沒有回傳可顯示的檔案 patch。",
   "project_deploy_patch_unavailable": "此檔案目前無法預覽 patch。",
-  "project_deployment_tab_deployments": "部署紀錄"
+  "project_deployment_tab_deployments": "部署紀錄",
+  "onboarding_complete_failed": "完成 Onboarding 失敗: {error}",
+  "onboarding_ai_avatar_generate_failed": "生成 AI 頭像失敗",
+  "onboarding_avatar_select_success": "頭像選擇成功",
+  "onboarding_avatar_select_failed": "選擇頭像失敗: {error}",
+  "onboarding_avatar_refresh_failed": "刷新頭像失敗: {error}",
+  "onboarding_avatar_pick_failed": "選擇圖片失敗: {error}",
+  "login_change_email": "修改郵箱"
 }

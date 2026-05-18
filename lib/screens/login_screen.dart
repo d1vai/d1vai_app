@@ -547,7 +547,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 foregroundColor: cs.primary,
                 textStyle: const TextStyle(fontWeight: FontWeight.w600),
               ),
-              child: Text(loc?.translate('change_email') ?? '修改邮箱'),
+              child: Text(loc?.translate('login_change_email') ?? '修改邮箱'),
             ),
           ],
         ),

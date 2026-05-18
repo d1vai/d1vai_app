@@ -1276,5 +1276,12 @@
   "project_deploy_no_diff_files": "No file diff",
   "project_deploy_no_diff_files_hint": "This commit did not return any changed file patches.",
   "project_deploy_patch_unavailable": "Patch preview is unavailable for this file.",
-  "project_deployment_tab_deployments": "Deployments"
+  "project_deployment_tab_deployments": "Deployments",
+  "onboarding_complete_failed": "Failed to complete onboarding: {error}",
+  "onboarding_ai_avatar_generate_failed": "Failed to generate AI avatars",
+  "onboarding_avatar_select_success": "Avatar selected successfully",
+  "onboarding_avatar_select_failed": "Failed to select avatar: {error}",
+  "onboarding_avatar_refresh_failed": "Failed to refresh avatars: {error}",
+  "onboarding_avatar_pick_failed": "Failed to pick image: {error}",
+  "login_change_email": "Change Email"
 }

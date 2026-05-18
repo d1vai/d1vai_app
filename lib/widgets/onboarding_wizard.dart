@@ -178,7 +178,7 @@ class _OnboardingWizardState extends State<OnboardingWizard>
         if (mounted) Navigator.of(context).pop();
       }
     } catch (e) {
-      _showError('完成 Onboarding 失败: $e');
+      _showError(_t('onboarding_complete_failed', 'Failed to complete onboarding: $e'));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -199,7 +199,7 @@ class _OnboardingWizardState extends State<OnboardingWizard>
       setState(() => _isGeneratingAvatars = false);
 
       if (avatars.isEmpty) {
-        _showError('生成 AI 头像失败');
+        _showError(_t('onboarding_ai_avatar_generate_failed', 'Failed to generate AI avatars'));
         return;
       }
 
@@ -242,14 +242,14 @@ class _OnboardingWizardState extends State<OnboardingWizard>
                     await Future.delayed(const Duration(milliseconds: 100));
 
                     if (!mounted) return;
-                    _showSuccess('头像选择成功');
+                    _showSuccess(_t('onboarding_avatar_select_success', 'Avatar selected successfully'));
                   } catch (e) {
                     if (!mounted) return;
 
                     await Future.delayed(const Duration(milliseconds: 100));
 
                     if (!mounted) return;
-                    _showError('选择头像失败: $e');
+                    _showError(_t('onboarding_avatar_select_failed', 'Failed to select avatar: $e'));
                   }
                 },
                 onRefresh: () async {
@@ -279,7 +279,7 @@ class _OnboardingWizardState extends State<OnboardingWizard>
                     });
 
                     if (!mounted) return;
-                    _showError('刷新头像失败: $e');
+                    _showError(_t('onboarding_avatar_refresh_failed', 'Failed to refresh avatars: $e'));
                   }
                 },
               );
@@ -336,7 +336,7 @@ class _OnboardingWizardState extends State<OnboardingWizard>
       }
     } catch (e) {
       if (!mounted) return;
-      _showError('选择图片失败: $e');
+      _showError(_t('onboarding_avatar_pick_failed', 'Failed to pick image: $e'));
     }
   }
 
