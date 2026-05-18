@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../expandable_text.dart';
 
@@ -108,47 +107,10 @@ class _ChatThinkingCardState extends State<ChatThinkingCard>
                       : null,
                 ),
               ),
-              const SizedBox(height: 8),
-              _ThinkingCopyAction(text: widget.text),
             ],
           ),
         );
       },
-    );
-  }
-}
-
-class _ThinkingCopyAction extends StatelessWidget {
-  final String text;
-
-  const _ThinkingCopyAction({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return InkWell(
-      onTap: () async {
-        await Clipboard.setData(ClipboardData(text: text));
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Copied thinking'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
-      },
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
-        child: Text(
-          'Copy',
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.72),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
     );
   }
 }

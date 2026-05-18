@@ -20,8 +20,7 @@ class ChatGitCommitCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final files = content.files ?? const <String>[];
-    final projectId =
-        (fallbackProjectId ?? content.projectId ?? '').trim();
+    final projectId = (fallbackProjectId ?? content.projectId ?? '').trim();
     final sqlFiles = files
         .where((f) => f.toLowerCase().endsWith('.sql'))
         .toList();
@@ -318,14 +317,17 @@ class ChatGitPushRow extends StatelessWidget {
               ),
             ),
             if (content.branch.isNotEmpty)
-              Text(
-                content.branch,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  fontFamily: 'monospace',
-                  color: theme.colorScheme.onSurfaceVariant.withValues(
-                    alpha: 0.85,
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Text(
+                  content.branch,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontFamily: 'monospace',
+                    color: theme.colorScheme.onSurfaceVariant.withValues(
+                      alpha: 0.85,
+                    ),
+                    fontWeight: FontWeight.w600,
                   ),
-                  fontWeight: FontWeight.w600,
                 ),
               ),
           ],

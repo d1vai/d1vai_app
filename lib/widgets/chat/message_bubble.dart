@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../../models/message.dart';
 import 'expandable_text.dart';
 import 'message_bubble/alert_text_cards.dart';
@@ -7,6 +8,7 @@ import 'message_bubble/git_cards.dart';
 import 'message_bubble/result_cards.dart';
 import 'message_bubble/status_cards.dart';
 import 'message_bubble/thinking_card.dart';
+import 'message_context_menu.dart';
 import 'tools/enhanced_tool_message.dart';
 
 /// Message bubble widget for displaying chat messages
@@ -38,7 +40,7 @@ class MessageBubble extends StatelessWidget {
     final theme = Theme.of(context);
     final role = message.role;
     final contents = overrideContents ?? message.contents;
-    final contentColumn = Column(
+    final rawContentColumn = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ...contents.map((content) {
@@ -52,10 +54,18 @@ class MessageBubble extends StatelessWidget {
         }),
       ],
     );
+    final contentColumn = _shouldUseSelectionArea(isUser)
+        ? SelectionArea(child: rawContentColumn)
+        : rawContentColumn;
 
     return GestureDetector(
       onTap: onTap,
-      // Long press is available for message actions (copy, etc.)
+      onLongPress: _isMobilePlatform
+          ? () => MessageContextMenu.showMobileActionSheet(
+              context,
+              message: message,
+            )
+          : null,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
         child: Row(
@@ -94,6 +104,17 @@ class MessageBubble extends StatelessWidget {
       ),
     );
   }
+
+  bool _shouldUseSelectionArea(bool isUser) {
+    if (_isMobilePlatform || isUser) return false;
+    return defaultTargetPlatform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.linux;
+  }
+
+  bool get _isMobilePlatform =>
+      defaultTargetPlatform == TargetPlatform.iOS ||
+      defaultTargetPlatform == TargetPlatform.android;
 
   Widget _buildMessageContent(
     MessageContent content,
@@ -172,10 +193,7 @@ class MessageBubble extends StatelessWidget {
     } else if (content is ToolMessageContent) {
       return EnhancedToolMessage(content: content);
     } else if (content is GitCommitMessageContent) {
-      return ChatGitCommitCard(
-        content: content,
-        fallbackProjectId: projectId,
-      );
+      return ChatGitCommitCard(content: content, fallbackProjectId: projectId);
     } else if (content is GitPushMessageContent) {
       return ChatGitPushRow(content: content);
     } else if (content is ResultMessageContent) {
