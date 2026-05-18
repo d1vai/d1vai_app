@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('InsertionCodeModifier', () {
     const modifier = InsertionCodeModifier(openChar: '1', closeString: '23');
-    const editorParams = EditorParams();
+    final editorParams = EditorParams();
 
     test('inserts at the start of string correctly', () {
       const text = 'Hello World';

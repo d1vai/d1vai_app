@@ -104,7 +104,7 @@ class CodeWorkbenchController extends ChangeNotifier {
     if (previewPath == null || previewPath == path) return true;
     final preview = _editorsByPath[previewPath];
     if (preview == null) return true;
-    return !preview.hasUnsavedChanges && !preview.isEditing && !preview.saving;
+    return !preview.hasUnsavedChanges && !preview.saving;
   }
 
   bool hasUnsavedChanges(String path) =>

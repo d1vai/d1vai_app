@@ -284,7 +284,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     const SizedBox(height: 18),
                     Text(
-                      'Editor Engine',
+                      loc?.translate('settings_editor_engine') ??
+                          'Editor Engine',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -296,7 +297,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       children: [
                         for (final engine in EditorEngine.values)
                           ChoiceChip(
-                            label: Text(engine.label),
+                            label: Text(switch (engine) {
+                              EditorEngine.flutterCodeEditor =>
+                                loc?.translate(
+                                      'settings_editor_engine_flutter_code_editor',
+                                    ) ??
+                                    'Flutter Code Editor',
+                              EditorEngine.flutterMonaco =>
+                                loc?.translate(
+                                      'settings_editor_engine_flutter_monaco',
+                                    ) ??
+                                    'Flutter Monaco',
+                            }),
                             selected: editorPrefs.engine == engine,
                             onSelected: (_) => editorPrefs.setEngine(engine),
                           ),
@@ -305,8 +317,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(height: 8),
                     Text(
                       editorPrefs.engine == EditorEngine.flutterMonaco
-                          ? 'Monaco uses a platform WebView/iframe backend for better large-file behavior.'
-                          : 'Flutter Code Editor stays fully native in Flutter and keeps the current folding workflow.',
+                          ? loc?.translate(
+                                  'settings_editor_engine_flutter_monaco_hint',
+                                ) ??
+                                'Monaco uses a platform WebView/iframe backend for better large-file behavior.'
+                          : loc?.translate(
+                                  'settings_editor_engine_flutter_code_editor_hint',
+                                ) ??
+                                'Flutter Code Editor stays fully native in Flutter and keeps the current folding workflow.',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),

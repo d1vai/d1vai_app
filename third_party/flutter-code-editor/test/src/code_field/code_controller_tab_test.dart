@@ -54,7 +54,7 @@ public class MyClass {
       () {
         const tabSpaces = 3;
         final controller = CodeController(
-          params: const EditorParams(tabSpaces: tabSpaces),
+          params: EditorParams(tabSpaces: tabSpaces),
           text: snippetWithTabs,
           language: go,
           modifiers: [const TabModifier()],

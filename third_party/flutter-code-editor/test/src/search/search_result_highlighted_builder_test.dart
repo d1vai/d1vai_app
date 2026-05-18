@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_code_editor/src/code_field/search_result_highlighted_builder.dart';
+import 'package:flutter_code_editor/src/code_theme/code_theme_data.dart';
 import 'package:flutter_code_editor/src/search/match.dart';
 import 'package:flutter_code_editor/src/search/result.dart';
 import 'package:flutter_code_editor/src/search/search_navigation_state.dart';
@@ -398,6 +399,7 @@ void main() {
           final result = SearchResultHighlightedBuilder(
             searchResult: example.visibleSearchResult,
             rootStyle: _default,
+            theme: CodeThemeData(),
             textSpan: example.visibleTextSpan,
             searchNavigationState: example.navigationState,
           ).build();
@@ -468,6 +470,7 @@ void main() {
           final result = SearchResultHighlightedBuilder(
             searchResult: example.visibleSearchResult,
             rootStyle: _default,
+            theme: CodeThemeData(),
             textSpan: example.visibleTextSpan,
             searchNavigationState: example.navigationState,
           ).build();
