@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import '../../models/message.dart';
 import 'expandable_text.dart';
+import 'desktop_selection_shell.dart';
 import 'message_bubble/alert_text_cards.dart';
 import 'message_bubble/code_card.dart';
 import 'message_bubble/git_cards.dart';
@@ -55,7 +56,7 @@ class MessageBubble extends StatelessWidget {
       ],
     );
     final contentColumn = _shouldUseSelectionArea(isUser)
-        ? SelectionArea(child: rawContentColumn)
+        ? DesktopSelectionShell(child: rawContentColumn)
         : rawContentColumn;
 
     return GestureDetector(

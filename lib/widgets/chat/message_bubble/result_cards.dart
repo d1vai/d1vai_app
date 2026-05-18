@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 
+import '../desktop_selection_shell.dart';
 import '../markdown_text.dart';
 import '../tools/tool_utils.dart';
 import 'message_card_base.dart';
@@ -248,7 +249,7 @@ class _SelectableBody extends StatelessWidget {
     if (defaultTargetPlatform == TargetPlatform.macOS ||
         defaultTargetPlatform == TargetPlatform.windows ||
         defaultTargetPlatform == TargetPlatform.linux) {
-      return SelectionArea(child: body);
+      return DesktopSelectionShell(child: body);
     }
     return body;
   }

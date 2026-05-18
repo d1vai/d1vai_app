@@ -46,6 +46,11 @@ class AppTheme {
         color: AppColors.borderLight,
         thickness: 1,
       ),
+      textSelectionTheme: TextSelectionThemeData(
+        cursorColor: AppColors.primaryBrand,
+        selectionColor: AppColors.primaryBrand.withValues(alpha: 0.22),
+        selectionHandleColor: AppColors.primaryBrand,
+      ),
     );
   }
 
@@ -87,6 +92,11 @@ class AppTheme {
       dividerTheme: const DividerThemeData(
         color: AppColors.borderDark,
         thickness: 1,
+      ),
+      textSelectionTheme: TextSelectionThemeData(
+        cursorColor: AppColors.primaryBrand,
+        selectionColor: AppColors.primaryBrand.withValues(alpha: 0.32),
+        selectionHandleColor: AppColors.primaryBrand,
       ),
     );
   }

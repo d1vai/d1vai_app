@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../../models/message.dart';
+import '../desktop_selection_shell.dart';
 import '../expandable_text.dart';
 import 'message_card_base.dart';
 import '../tools/tool_utils.dart';
@@ -197,7 +198,7 @@ class ChatDeploymentCard extends StatelessWidget {
                 Icon(Icons.link, size: 14, color: tint),
                 const SizedBox(width: 6),
                 Expanded(
-                  child: SelectionArea(
+                  child: DesktopSelectionShell(
                     child: Text(
                       content.url!,
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -240,7 +241,7 @@ class _SelectableBody extends StatelessWidget {
     if (defaultTargetPlatform == TargetPlatform.macOS ||
         defaultTargetPlatform == TargetPlatform.windows ||
         defaultTargetPlatform == TargetPlatform.linux) {
-      return SelectionArea(child: body);
+      return DesktopSelectionShell(child: body);
     }
     return body;
   }

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:d1vai_app/l10n/app_localizations.dart';
 
 import '../expandable_text.dart';
+import '../desktop_selection_shell.dart';
 import 'message_card_base.dart';
 
 enum ChatAlertKind { error, warning }
@@ -137,7 +138,7 @@ class _SelectableBody extends StatelessWidget {
     if (defaultTargetPlatform == TargetPlatform.macOS ||
         defaultTargetPlatform == TargetPlatform.windows ||
         defaultTargetPlatform == TargetPlatform.linux) {
-      return SelectionArea(child: content);
+      return DesktopSelectionShell(child: content);
     }
     return content;
   }
