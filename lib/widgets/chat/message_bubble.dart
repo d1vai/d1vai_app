@@ -106,7 +106,8 @@ class MessageBubble extends StatelessWidget {
   }
 
   bool _shouldUseSelectionArea(bool isUser) {
-    if (_isMobilePlatform || isUser) return false;
+    if (_isMobilePlatform) return false;
+    if (isUser) return true;
     return defaultTargetPlatform == TargetPlatform.macOS ||
         defaultTargetPlatform == TargetPlatform.windows ||
         defaultTargetPlatform == TargetPlatform.linux;
