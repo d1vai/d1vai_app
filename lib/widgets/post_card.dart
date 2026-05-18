@@ -113,11 +113,7 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
         _isLiked = previousLiked;
         _likeCount = previousCount;
       });
-      SnackBarHelper.showError(
-        context,
-        title: 'Like failed',
-        message: '$e',
-      );
+      SnackBarHelper.showError(context, title: 'Like failed', message: '$e');
       return;
     }
     SnackBarHelper.showSuccess(
@@ -516,9 +512,11 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
                                     children: [
                                       Expanded(child: titleWidget),
                                       const SizedBox(width: 10),
-                                      Flexible(
-                                        fit: FlexFit.loose,
-                                        child: trailingWidget,
+                                      Expanded(
+                                        child: Align(
+                                          alignment: Alignment.centerRight,
+                                          child: trailingWidget,
+                                        ),
                                       ),
                                     ],
                                   );

@@ -741,7 +741,7 @@ class _UsageStatsState extends State<UsageStats>
               child: Row(
                 children: [
                   Text(
-                    project.emoji ?? '🧠',
+                    project.emoji ?? '💭',
                     style: const TextStyle(fontSize: 24),
                   ),
                   const SizedBox(width: 12),

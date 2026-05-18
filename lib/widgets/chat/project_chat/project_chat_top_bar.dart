@@ -6,6 +6,7 @@ import 'chat_engine_mode.dart';
 
 class ProjectChatTopBar extends StatelessWidget {
   final int currentIndex;
+  final String? previewUrl;
   final ValueChanged<int> onTabSelected;
   final VoidCallback onRefreshPreview;
   final VoidCallback onOpenInNewTab;
@@ -13,6 +14,7 @@ class ProjectChatTopBar extends StatelessWidget {
   const ProjectChatTopBar({
     super.key,
     required this.currentIndex,
+    this.previewUrl,
     required this.onTabSelected,
     required this.onRefreshPreview,
     required this.onOpenInNewTab,
@@ -21,6 +23,8 @@ class ProjectChatTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final trimmedPreviewUrl = previewUrl?.trim() ?? '';
+    final showPreviewMeta = currentIndex == 0 && trimmedPreviewUrl.isNotEmpty;
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
@@ -39,11 +43,22 @@ class ProjectChatTopBar extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Flexible(
-                child: _TabButton(
-                  isSelected: currentIndex == 0,
-                  label: compact ? 'Prev' : null,
-                  icon: Icons.remove_red_eye_outlined,
-                  onTap: () => onTabSelected(0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _TabButton(
+                      isSelected: currentIndex == 0,
+                      label: compact ? 'Prev' : null,
+                      icon: Icons.remove_red_eye_outlined,
+                      onTap: () => onTabSelected(0),
+                    ),
+                    if (showPreviewMeta) ...[
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: _PreviewInlineMeta(url: trimmedPreviewUrl),
+                      ),
+                    ],
+                  ],
                 ),
               ),
               const SizedBox(width: 6),
@@ -105,6 +120,57 @@ class ProjectChatTopBar extends StatelessWidget {
   }
 }
 
+class _PreviewInlineMeta extends StatelessWidget {
+  final String url;
+
+  const _PreviewInlineMeta({required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    return Tooltip(
+      message: url,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: cs.primary.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: cs.primary.withValues(alpha: 0.16)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.public, size: 14, color: cs.primary),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                _previewHost(url),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: cs.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _previewHost(String url) {
+  if (url.isEmpty) return 'Preview';
+  try {
+    return Uri.parse(url).host;
+  } catch (_) {
+    return url;
+  }
+}
+
 class ProjectChatModelSelector extends StatelessWidget {
   final List<ModelInfo> models;
   final String selectedModelId;
@@ -154,7 +220,7 @@ class ProjectChatModelSelector extends StatelessWidget {
         minWidth: minWidth,
         maxWidth: maxWidth,
         borderRadius: 13,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         backgroundColor: isDark
             ? Color.alphaBlend(
                 cs.primary.withValues(alpha: 0.12),
@@ -181,7 +247,7 @@ class ProjectChatModelSelector extends StatelessWidget {
             : cs.outlineVariant.withValues(alpha: 0.7),
         menuBorderRadius: 18,
         menuPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
-        itemHeight: 48,
+        itemHeight: 30,
         textColor: isDark ? cs.onSurface : cs.onSurface.withValues(alpha: 0.92),
         iconColor: isDark
             ? cs.primary.withValues(alpha: 0.9)

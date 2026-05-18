@@ -330,7 +330,7 @@ class _SettingsGithubTabState extends State<SettingsGithubTab>
                     builder: (context, constraints) {
                       final compact = constraints.maxWidth < 380;
                       final mainButton = SizedBox(
-                        width: compact ? double.infinity : null,
+                        width: compact ? double.infinity : 186,
                         child: Button(
                           onPressed: _actionLoading
                               ? null
@@ -347,7 +347,7 @@ class _SettingsGithubTabState extends State<SettingsGithubTab>
                         ),
                       );
                       final refreshButton = SizedBox(
-                        width: compact ? double.infinity : 104,
+                        width: compact ? double.infinity : 132,
                         child: Button(
                           variant: ButtonVariant.secondary,
                           onPressed: _actionLoading
@@ -371,7 +371,7 @@ class _SettingsGithubTabState extends State<SettingsGithubTab>
 
                       return Row(
                         children: [
-                          Expanded(child: mainButton),
+                          mainButton,
                           const SizedBox(width: 12),
                           refreshButton,
                         ],

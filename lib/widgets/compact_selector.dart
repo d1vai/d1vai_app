@@ -53,7 +53,7 @@ class CompactSelector extends StatelessWidget {
     this.maxWidth = 160,
     this.textAlign = TextAlign.right,
     this.borderRadius = 10,
-    this.padding = const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+    this.padding = const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
     this.backgroundColor,
     this.borderColor,
     this.textColor,

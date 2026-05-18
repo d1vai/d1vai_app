@@ -638,8 +638,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                         const SizedBox(height: 24),
                         _buildPageSectionHeader(
                           context,
-                          title: _isSearching &&
-                                  _searchController.text.isNotEmpty
+                          title:
+                              _isSearching && _searchController.text.isNotEmpty
                               ? _t(
                                   'dashboard_search_results',
                                   'Search Results ({count})',
@@ -912,10 +912,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             ],
           ),
         ),
-        if (action != null) ...[
-          const SizedBox(width: 16),
-          action,
-        ],
+        if (action != null) ...[const SizedBox(width: 16), action],
       ],
     );
   }
@@ -999,7 +996,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           child: ProjectCardTile(
             project: project,
             updatedText: _formatTimeAgo(project.updatedAt),
-            onTap: () => context.push('/projects/${project.id}'),
+            onTap: () => context.push('/projects/${project.id}?tab=chat'),
             onChat: () => context.push('/projects/${project.id}/chat'),
           ),
         );

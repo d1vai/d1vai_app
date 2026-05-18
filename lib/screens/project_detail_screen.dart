@@ -64,13 +64,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   String? _error;
 
   final List<_TabItem> _tabs = const [
-    _TabItem('project_detail_tab_overview', 'Overview', Icons.dashboard),
     _TabItem('project_detail_tab_chat', 'Chat', Icons.chat),
     _TabItem('project_detail_tab_environment', 'Environment', Icons.key),
     _TabItem('project_detail_tab_database', 'Database', Icons.storage),
     _TabItem('project_detail_tab_payment', 'Payment', Icons.payment),
     _TabItem('project_detail_tab_deploy', 'Deploy', Icons.cloud_upload),
     _TabItem('project_detail_tab_analytics', 'Analytics', Icons.analytics),
+    _TabItem('project_detail_tab_overview', 'Overview', Icons.dashboard),
   ];
 
   String _t(String key, String fallback) {
@@ -138,26 +138,26 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     final t = (raw ?? '').trim().toLowerCase();
     if (t.isEmpty) return 0;
     switch (t) {
-      case 'overview':
-        return 0;
       case 'chat':
-        return 1;
+        return 0;
       case 'environment':
       case 'env':
       case 'variables':
       case 'api':
-        return 2;
+        return 1;
       case 'database':
       case 'db':
-        return 3;
+        return 2;
       case 'payment':
       case 'billing':
-        return 4;
+        return 3;
       case 'deploy':
       case 'deployment':
       case 'logs':
-        return 5;
+        return 4;
       case 'analytics':
+        return 5;
+      case 'overview':
         return 6;
       default:
         return 0;
@@ -229,8 +229,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
 
   /// 供子 Tab 调用，发送一个问题到 Chat Tab 并自动切换过去
   void _handleAskAi(String prompt) {
-    // 切换到 Chat Tab（索引 1）
-    _tabController.animateTo(1);
+    // 切换到 Chat Tab（索引 0）
+    _tabController.animateTo(0);
 
     // 等待 Tab 构建完成后再发送消息
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -410,7 +410,6 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     return D1VTabBarView(
       controller: _tabController,
       children: [
-        ProjectOverviewTab(project: project, onRefreshProject: _loadProject),
         ProjectChatTab(
           key: _chatTabKey,
           projectId: project.id,
@@ -439,6 +438,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           onAskAi: _handleAskAi,
           onRefreshProject: _loadProject,
         ),
+        ProjectOverviewTab(project: project, onRefreshProject: _loadProject),
       ],
     );
   }

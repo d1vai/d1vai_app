@@ -118,56 +118,68 @@ class _ToolCallGroupState extends State<ToolCallGroup> {
                     ),
                     const SizedBox(width: 6),
                     Expanded(
-                      child: Text(
-                        summaryText,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.88,
-                          ),
-                          letterSpacing: 0.1,
-                        ),
-                      ),
-                    ),
-                    if (latestTool != null) ...[
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 160),
-                          switchInCurve: Curves.easeOutCubic,
-                          switchOutCurve: Curves.easeOutCubic,
-                          child: Row(
-                            key: ValueKey(latestTool.key),
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                latestTool.icon,
-                                size: 12,
-                                color: latestTool.iconColor,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              summaryText,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.labelMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.88,
+                                ),
+                                letterSpacing: 0.1,
                               ),
-                              const SizedBox(width: 4),
-                              Flexible(
-                                child: Text(
-                                  latestTool.title,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant
-                                        .withValues(alpha: 0.80),
-                                    fontWeight: FontWeight.w500,
-                                    fontFamily: latestTool.monospace
-                                        ? 'monospace'
-                                        : null,
+                            ),
+                          ),
+                          if (latestTool != null) ...[
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 160),
+                                  switchInCurve: Curves.easeOutCubic,
+                                  switchOutCurve: Curves.easeOutCubic,
+                                  child: Row(
+                                    key: ValueKey(latestTool.key),
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        latestTool.icon,
+                                        size: 12,
+                                        color: latestTool.iconColor,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Flexible(
+                                        child: Text(
+                                          latestTool.title,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: theme.textTheme.labelSmall
+                                              ?.copyWith(
+                                                color: theme
+                                                    .colorScheme
+                                                    .onSurfaceVariant
+                                                    .withValues(alpha: 0.80),
+                                                fontWeight: FontWeight.w500,
+                                                fontFamily: latestTool.monospace
+                                                    ? 'monospace'
+                                                    : null,
+                                              ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
+                            ),
+                          ],
+                        ],
                       ),
-                    ],
+                    ),
                     if (hasProcessing) ...[
                       const SizedBox(width: 6),
                       SizedBox(

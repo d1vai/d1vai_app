@@ -119,7 +119,7 @@ class ChatGitCommitCard extends StatelessWidget {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxHeight: 160),
                       child: SingleChildScrollView(
@@ -216,7 +216,7 @@ class _FileRow extends StatelessWidget {
           onTap: onOpen,
           borderRadius: BorderRadius.circular(10),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -227,7 +227,7 @@ class _FileRow extends StatelessWidget {
                     child: Icon(visual.icon, size: 14, color: iconColor),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     filePath,

@@ -144,7 +144,10 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                     ),
                     const SizedBox(height: 14),
                     SearchField(
-                      hintText: _t('projects_search_hint', 'Search projects...'),
+                      hintText: _t(
+                        'projects_search_hint',
+                        'Search projects...',
+                      ),
                       initialValue: provider.searchQuery,
                       onChanged: _onSearchChanged,
                       onSubmitted: _handleSearch,
@@ -331,7 +334,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     return ProjectCardTile(
       project: project,
       updatedText: _formatTimeAgo(project.updatedAt),
-      onTap: () => context.push('/projects/${project.id}'),
+      onTap: () => context.push('/projects/${project.id}?tab=chat'),
       onChat: () => context.push('/projects/${project.id}/chat'),
     );
   }

@@ -678,6 +678,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
           children: [
             ProjectChatTopBar(
               currentIndex: _currentChatTabIndex,
+              previewUrl: _previewUrl,
               onTabSelected: (index) {
                 setState(() {
                   _currentChatTabIndex = index;
@@ -738,6 +739,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
                 children: [
                   ProjectChatTopBar(
                     currentIndex: _currentChatTabIndex,
+                    previewUrl: _previewUrl,
                     onTabSelected: (index) {
                       setState(() {
                         _currentChatTabIndex = index;
@@ -884,11 +886,6 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
 
     return Column(
       children: [
-        ProjectChatPreviewHeader(
-          previewUrl: previewUrl.trim(),
-          onRefreshPreview: _handleRefreshPreview,
-          onOpenInNewTab: _handleOpenInNewTab,
-        ),
         Expanded(
           child: Container(
             color: theme.colorScheme.surfaceContainerHighest,

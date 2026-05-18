@@ -111,8 +111,8 @@ class ChatStatusPill extends StatelessWidget {
         builder: (context, constraints) {
           final compact =
               constraints.maxWidth.isFinite && constraints.maxWidth < 110;
-          final horizontalPadding = compact ? 8.0 : 10.0;
-          final verticalPadding = compact ? 5.0 : 6.0;
+          final horizontalPadding = compact ? 6.0 : 8.0;
+          final verticalPadding = compact ? 1.0 : 2.0;
           final spacing = compact ? 4.0 : 6.0;
 
           return Container(

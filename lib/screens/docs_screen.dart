@@ -583,6 +583,7 @@ class _DocsScreenState extends State<DocsScreen> {
     final tag = _tagForItem(page);
 
     return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         gradient: LinearGradient(
