@@ -308,7 +308,7 @@ class AppCodeEditorController extends ChangeNotifier {
 
     _monacoOptions = nextOptions;
     _lastMonacoPresentationKey = presentationKey;
-    await monacoController.defineTheme(
+    final didRegisterTheme = await monacoController.tryDefineTheme(
       themeId,
       buildMonacoThemeDataForPreset(
         preset,
@@ -316,7 +316,9 @@ class AppCodeEditorController extends ChangeNotifier {
       ),
     );
     await monacoController.updateOptions(nextOptions);
-    await monacoController.setThemeById(themeId);
+    await monacoController.setThemeById(
+      didRegisterTheme ? themeId : (prefersDark ? 'vs-dark' : 'vs'),
+    );
   }
 
   void showSearch() {
