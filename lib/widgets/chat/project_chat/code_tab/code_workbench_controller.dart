@@ -30,6 +30,8 @@ class CodeWorkbenchEditorState {
   bool get isBinary => content?.isBinary == true;
 }
 
+enum CodeWorkbenchSourceMode { cloudOnly, localAttached, hybrid }
+
 class CodeWorkbenchController extends ChangeNotifier {
   CodeWorkbenchController({required D1vaiService service}) : _service = service;
 
@@ -41,6 +43,9 @@ class CodeWorkbenchController extends ChangeNotifier {
   String? _activePath;
   String? _previewPath;
   String? _selectedTreePath;
+  CodeWorkbenchSourceMode _sourceMode = CodeWorkbenchSourceMode.cloudOnly;
+  String? _localRootPath;
+  String? _localRootName;
 
   List<CodeWorkbenchEditorState> get openEditors => _openPaths
       .map((path) => _editorsByPath[path])
@@ -50,6 +55,12 @@ class CodeWorkbenchController extends ChangeNotifier {
   String? get activePath => _activePath;
   String? get previewPath => _previewPath;
   String? get selectedTreePath => _selectedTreePath;
+  CodeWorkbenchSourceMode get sourceMode => _sourceMode;
+  String? get localRootPath => _localRootPath;
+  String? get localRootName => _localRootName;
+  bool get hasLocalWorkspace =>
+      (_localRootPath ?? '').trim().isNotEmpty &&
+      _sourceMode != CodeWorkbenchSourceMode.cloudOnly;
   CodeWorkbenchEditorState? get activeEditor =>
       _activePath == null ? null : _editorsByPath[_activePath!];
 
@@ -73,6 +84,26 @@ class CodeWorkbenchController extends ChangeNotifier {
       _editorsByPath[path]?.hasUnsavedChanges == true;
 
   bool isPreviewOnly(String path) => _previewPath == path;
+
+  void attachLocalWorkspace({
+    required String rootPath,
+    required String rootName,
+    bool hybrid = true,
+  }) {
+    _localRootPath = rootPath;
+    _localRootName = rootName;
+    _sourceMode = hybrid
+        ? CodeWorkbenchSourceMode.hybrid
+        : CodeWorkbenchSourceMode.localAttached;
+    notifyListeners();
+  }
+
+  void clearLocalWorkspace() {
+    _localRootPath = null;
+    _localRootName = null;
+    _sourceMode = CodeWorkbenchSourceMode.cloudOnly;
+    notifyListeners();
+  }
 
   Future<void> openFile(
     String projectId,
@@ -177,6 +208,22 @@ class CodeWorkbenchController extends ChangeNotifier {
       selection: TextSelection.collapsed(offset: text.length),
       composing: TextRange.empty,
     );
+    notifyListeners();
+  }
+
+  void setFileContent(
+    String path, {
+    required CodeTabFileContent content,
+    bool keepEditing = false,
+  }) {
+    final editor = _editorsByPath[path];
+    if (editor == null) return;
+    editor.content = content;
+    editor.error = null;
+    editor.loading = false;
+    editor.originalContent = content.isBinary ? '' : content.content;
+    editor.controller.text = content.isBinary ? '' : content.content;
+    editor.isEditing = keepEditing && !content.isBinary;
     notifyListeners();
   }
 

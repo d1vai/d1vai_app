@@ -1,8 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:file_picker/file_picker.dart';
 
 import '../../../../services/d1vai_service.dart';
+import '../../../../services/local_workspace_service.dart';
 import '../../../snackbar_helper.dart';
 import 'code_tab_file_viewer.dart';
 import 'code_tab_file_viewer_page.dart';
@@ -27,6 +29,7 @@ class ProjectChatCodeTab extends StatefulWidget {
 
 class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
   final D1vaiService _service = D1vaiService();
+  final LocalWorkspaceService _localWorkspaceService = const LocalWorkspaceService();
   final TextEditingController _searchController = TextEditingController();
   late final CodeWorkbenchController _workbench;
   late final VoidCallback _searchListener;
@@ -38,6 +41,7 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
   final Set<String> _expandedDirs = <String>{''};
   List<CodeTabFlatNode> _flat = const [];
   double _desktopTreePaneWidth = 320;
+  bool _loadingLocalWorkspace = false;
 
   @override
   void initState() {
@@ -85,7 +89,9 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
         ..add('');
     });
     try {
-      final raw = await _service.getProjectStorageStructure(widget.projectId);
+      final raw = _workbench.hasLocalWorkspace
+          ? (await _localWorkspaceService.readTree(_workbench.localRootPath!)).root
+          : await _service.getProjectStorageStructure(widget.projectId);
       if (!mounted) return;
       final node = CodeTabFileNode.fromJson(raw);
       setState(() {
@@ -221,7 +227,18 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
 
   Future<bool> _saveEditor(String path) async {
     try {
-      final commitSha = await _workbench.saveEditor(widget.projectId, path);
+      final active = _workbench.editorForPath(path);
+      String? commitSha;
+      if (_workbench.hasLocalWorkspace &&
+          _workbench.localRootPath != null &&
+          active != null) {
+        await _localWorkspaceService.writeFile(
+          _workbench.localRootPath!,
+          path,
+          active.controller.text,
+        );
+      }
+      commitSha = await _workbench.saveEditor(widget.projectId, path);
       if (!mounted) return false;
       final shortSha = (commitSha != null && commitSha.length >= 7)
           ? commitSha.substring(0, 7)
@@ -260,6 +277,30 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
       if (!ok) return;
     }
 
+    if (_workbench.hasLocalWorkspace && _workbench.localRootPath != null) {
+      final existing = _workbench.editorForPath(path);
+      if (existing == null) {
+        await _workbench.openFile(widget.projectId, path, preview: preview);
+        final raw = await _localWorkspaceService.readFile(
+          _workbench.localRootPath!,
+          path,
+        );
+        final editor = _workbench.editorForPath(path);
+        if (editor != null) {
+          _workbench.setFileContent(
+            path,
+            content: CodeTabFileContent(
+              path: raw.path,
+              content: raw.content,
+              size: raw.size,
+              isBinary: raw.isBinary,
+            ),
+          );
+        }
+        return;
+      }
+    }
+
     await _workbench.openFile(widget.projectId, path, preview: preview);
   }
 
@@ -280,6 +321,75 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
       'Please review the file "$p". Summarize what it does and propose improvements. '
       'If there are bugs or missing pieces, suggest concrete edits.',
     );
+  }
+
+  Future<void> _pickAndAttachLocalFolder() async {
+    if (_loadingLocalWorkspace || !_isMacDesktop(context)) return;
+    final selected = await FilePicker.platform.getDirectoryPath();
+    if (selected == null || selected.trim().isEmpty) return;
+    await _attachLocalFolder(selected);
+  }
+
+  Future<void> _attachLocalFolder(String path) async {
+    if (_loadingLocalWorkspace) return;
+    setState(() {
+      _loadingLocalWorkspace = true;
+    });
+    try {
+      final normalized = path.trim().replaceAll(RegExp(r'/+$'), '');
+      if (normalized.isEmpty) return;
+      final name = normalized.split('/').last;
+      _workbench.attachLocalWorkspace(rootPath: normalized, rootName: name);
+      await _loadTree();
+      if (!mounted) return;
+      SnackBarHelper.showSuccess(
+        context,
+        title: 'Local folder attached',
+        message: 'Browsing $name with local-first edits on macOS.',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      SnackBarHelper.showError(
+        context,
+        title: 'Attach failed',
+        message: e.toString(),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loadingLocalWorkspace = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _detachLocalFolder() async {
+    if (_loadingLocalWorkspace) return;
+    final dirty = _workbench.openEditors.any((editor) => editor.hasUnsavedChanges);
+    if (dirty) {
+      final discard = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Detach local folder'),
+          content: const Text(
+            'Unsaved local changes will remain in open tabs. Detach the folder now?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Detach'),
+            ),
+          ],
+        ),
+      );
+      if (discard != true) return;
+    }
+    _workbench.clearLocalWorkspace();
+    await _loadTree();
   }
 
   Future<void> _copyActiveFile() async {
@@ -305,12 +415,64 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
     final activeEditor = _workbench.activeEditor;
     final hasSelection =
         _workbench.activePath != null && _workbench.activePath!.isNotEmpty;
+    final localWorkspaceLabel = _workbench.localRootName;
 
     return Padding(
       padding: EdgeInsets.all(compact ? 12 : 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (compact) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: theme.colorScheme.outlineVariant),
+              ),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  _WorkbenchBadge(
+                    label: _workbench.sourceMode == CodeWorkbenchSourceMode.cloudOnly
+                        ? 'Cloud workspace'
+                        : 'Hybrid workspace',
+                    icon: _workbench.sourceMode == CodeWorkbenchSourceMode.cloudOnly
+                        ? Icons.cloud_done_outlined
+                        : Icons.sync_outlined,
+                  ),
+                  if (localWorkspaceLabel != null && localWorkspaceLabel.isNotEmpty)
+                    _WorkbenchBadge(
+                      label: localWorkspaceLabel,
+                      icon: Icons.folder_open,
+                    ),
+                  TextButton.icon(
+                    onPressed: _loadingLocalWorkspace ? null : _pickAndAttachLocalFolder,
+                    icon: _loadingLocalWorkspace
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.folder),
+                    label: Text(
+                      _workbench.hasLocalWorkspace ? 'Switch Folder' : 'Open Folder',
+                    ),
+                  ),
+                  if (_workbench.hasLocalWorkspace)
+                    TextButton.icon(
+                      onPressed: _detachLocalFolder,
+                      icon: const Icon(Icons.link_off),
+                      label: const Text('Detach'),
+                    ),
+                ],
+              ),
+            ),
+            SizedBox(height: compact ? 8 : 12),
+          ],
           Row(
             children: [
               Expanded(
@@ -588,6 +750,41 @@ class _CodePaneResizeHandleState extends State<_CodePaneResizeHandle> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _WorkbenchBadge extends StatelessWidget {
+  final String label;
+  final IconData icon;
+
+  const _WorkbenchBadge({required this.label, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: theme.colorScheme.onSurfaceVariant),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11.5,
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }

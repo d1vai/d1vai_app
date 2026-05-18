@@ -70,7 +70,7 @@ Scope: finish now.
 Scope: detail after M1 is complete.
 
 #### M2 draft TODO
-- [ ] M2.1 Add a macOS-only workbench open mode switch:
+- [x] M2.1 Add a macOS-only workbench open mode switch:
   - `Open local folder`
   - `Import to cloud project`
   - `Attach local folder to current project`
@@ -133,6 +133,12 @@ Scope: detail after M1 is complete.
 - `flutter analyze lib/widgets/chat/project_chat/code_tab/project_chat_code_tab.dart lib/widgets/chat/project_chat/code_tab/code_workbench_controller.dart lib/widgets/chat/project_chat/code_tab/code_tab_editor_tabs.dart lib/widgets/chat/project_chat/code_tab/code_tab_tree_panel.dart lib/widgets/chat/project_chat/code_tab/code_tab_file_viewer.dart lib/widgets/chat/project_chat/code_tab/code_tab_editor.dart lib/l10n/generated_localizations.dart test/widget_test.dart` ✅
 - `flutter test` ✅
 
+## M2 progress
+- Added `LocalWorkspaceService` with macOS-only tree scan, file read, and file write helpers.
+- Extended `CodeWorkbenchController` with `cloudOnly | localAttached | hybrid` source mode and local root metadata.
+- Added a macOS-only workbench header strip with `Open Folder`, `Switch Folder`, and `Detach` actions.
+- Wired local folder attach into the current code tab so tree/file actions can use a local root.
+
 ## Current Focus
 - Active milestone: `M2`
-- Immediate next task: `M2.1 Add a macOS-only workbench open mode switch`
+- Immediate next task: `M2.2 Accept drag-and-drop into the app window`
