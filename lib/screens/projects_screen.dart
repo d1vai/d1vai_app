@@ -9,6 +9,7 @@ import '../widgets/create_project_dialog.dart';
 import '../widgets/snackbar_helper.dart';
 import '../widgets/search_field.dart';
 import '../utils/error_utils.dart';
+import '../utils/chat_entry.dart';
 import '../utils/desktop_layout.dart';
 import '../core/auth_expiry_bus.dart';
 import '../l10n/app_localizations.dart';
@@ -334,8 +335,8 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     return ProjectCardTile(
       project: project,
       updatedText: _formatTimeAgo(project.updatedAt),
-      onTap: () => context.push('/projects/${project.id}?tab=chat'),
-      onChat: () => context.push('/projects/${project.id}/chat'),
+      onTap: () => context.push(buildProjectChatDetailRoute(project)),
+      onChat: () => context.push(buildProjectChatDetailRoute(project)),
     );
   }
 

@@ -98,7 +98,12 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   final double _desktopPrimaryPaneMinWidth = 420;
 
   int _chatSubTabIndexFromName(String? raw) {
-    switch ((raw ?? '').trim().toLowerCase()) {
+    final normalized = (raw ?? '').trim().toLowerCase();
+    if (normalized.isEmpty) {
+      final preview = (widget.previewUrl ?? '').trim();
+      return preview.isNotEmpty ? 0 : 1;
+    }
+    switch (normalized) {
       case 'code':
       case 'files':
       case 'file':

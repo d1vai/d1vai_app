@@ -24,6 +24,7 @@ import 'package:d1vai_app/widgets/snackbar_helper.dart';
 import 'package:d1vai_app/screens/projects/widgets/project_card_tile.dart';
 import 'package:d1vai_app/widgets/skeletons/dashboard_skeleton.dart';
 import 'package:d1vai_app/widgets/skeletons/prompt_activity_skeleton.dart';
+import 'package:d1vai_app/utils/chat_entry.dart';
 import 'package:d1vai_app/utils/desktop_layout.dart';
 import 'package:d1vai_app/core/theme/locale_font_helper.dart';
 
@@ -996,8 +997,8 @@ class _DashboardScreenState extends State<DashboardScreen>
           child: ProjectCardTile(
             project: project,
             updatedText: _formatTimeAgo(project.updatedAt),
-            onTap: () => context.push('/projects/${project.id}?tab=chat'),
-            onChat: () => context.push('/projects/${project.id}/chat'),
+            onTap: () => context.push(buildProjectChatDetailRoute(project)),
+            onChat: () => context.push(buildProjectChatDetailRoute(project)),
           ),
         );
       },
