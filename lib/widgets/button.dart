@@ -251,9 +251,16 @@ class _ButtonState extends State<Button> with SingleTickerProviderStateMixin {
   ButtonColors _getColors(ColorScheme colorScheme) {
     switch (widget.variant) {
       case ButtonVariant.defaultVariant:
+        final background = widget.backgroundColor ?? colorScheme.primary;
         return ButtonColors(
-          background: widget.backgroundColor ?? colorScheme.primary,
-          foreground: widget.foregroundColor ?? colorScheme.onPrimary,
+          background: background,
+          foreground:
+              widget.foregroundColor ??
+              _foregroundForBackground(
+                background,
+                preferredLight: colorScheme.onPrimary,
+                preferredDark: colorScheme.onSurface,
+              ),
           border: widget.borderColor ?? Colors.transparent,
           disabledBackground:
               widget.disabledBackgroundColor ??
@@ -266,9 +273,16 @@ class _ButtonState extends State<Button> with SingleTickerProviderStateMixin {
               colorScheme.onSurface.withValues(alpha: 0.12),
         );
       case ButtonVariant.destructive:
+        final background = widget.backgroundColor ?? colorScheme.error;
         return ButtonColors(
-          background: widget.backgroundColor ?? colorScheme.error,
-          foreground: widget.foregroundColor ?? colorScheme.onError,
+          background: background,
+          foreground:
+              widget.foregroundColor ??
+              _foregroundForBackground(
+                background,
+                preferredLight: colorScheme.onError,
+                preferredDark: colorScheme.onSurface,
+              ),
           border: widget.borderColor ?? Colors.transparent,
           disabledBackground:
               widget.disabledBackgroundColor ??
@@ -295,9 +309,16 @@ class _ButtonState extends State<Button> with SingleTickerProviderStateMixin {
               colorScheme.onSurface.withValues(alpha: 0.12),
         );
       case ButtonVariant.secondary:
+        final background = widget.backgroundColor ?? colorScheme.secondary;
         return ButtonColors(
-          background: widget.backgroundColor ?? colorScheme.secondary,
-          foreground: widget.foregroundColor ?? colorScheme.onSecondary,
+          background: background,
+          foreground:
+              widget.foregroundColor ??
+              _foregroundForBackground(
+                background,
+                preferredLight: colorScheme.onSecondary,
+                preferredDark: colorScheme.onSurface,
+              ),
           border: widget.borderColor ?? Colors.transparent,
           disabledBackground:
               widget.disabledBackgroundColor ??
@@ -334,6 +355,17 @@ class _ButtonState extends State<Button> with SingleTickerProviderStateMixin {
           disabledBorder: widget.borderColor ?? Colors.transparent,
         );
     }
+  }
+
+  Color _foregroundForBackground(
+    Color background, {
+    required Color preferredLight,
+    required Color preferredDark,
+  }) {
+    if (background.a == 0) return preferredDark;
+    return background.computeLuminance() > 0.45
+        ? preferredDark
+        : preferredLight;
   }
 
   double _getHeight() {
