@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import '../core/avatar_generator.dart';
 import '../models/user.dart';
 import '../models/onboarding.dart';
 import '../services/d1vai_service.dart';
+import '../services/oauth_callback_service.dart';
 import '../services/storage_service.dart';
 import '../services/cache_service.dart';
 import '../widgets/avatar_image.dart';
@@ -17,6 +19,7 @@ class AuthProvider extends ChangeNotifier {
   static const String _defaultInviteCode = 'D1VLAB';
 
   final D1vaiService _d1vaiService = D1vaiService();
+  final OAuthCallbackService _oauthCallbackService = OAuthCallbackService();
   final StorageService _storageService = StorageService();
   final CacheService _cacheService = CacheService();
   final DeveloperAvatarGenerator _avatarGenerator = DeveloperAvatarGenerator();
@@ -213,16 +216,19 @@ class AuthProvider extends ChangeNotifier {
     }
 
     try {
-      final callbackUrl = await FlutterWebAuth2.authenticate(
-        url: _d1vaiService
-            .buildOAuthStartUri(
-              provider: provider,
-              redirectTo: 'd1vai://login',
-              inviteCode: inviteCode,
-            )
-            .toString(),
-        callbackUrlScheme: 'd1vai',
+      final startUri = _d1vaiService.buildOAuthStartUri(
+        provider: provider,
+        redirectTo: 'd1vai://login',
+        inviteCode: inviteCode,
       );
+      final callbackUrl = Platform.isIOS
+          ? await _oauthCallbackService.authenticateWithExternalBrowser(
+              url: startUri,
+            )
+          : await FlutterWebAuth2.authenticate(
+              url: startUri.toString(),
+              callbackUrlScheme: 'd1vai',
+            );
 
       final callbackUri = Uri.parse(callbackUrl);
       final error =
