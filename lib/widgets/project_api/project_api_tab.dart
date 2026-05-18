@@ -7,6 +7,7 @@ import '../../models/env_var.dart';
 import '../../services/d1vai_service.dart';
 import '../../core/auth_expiry_bus.dart';
 import '../../utils/error_utils.dart';
+import '../app_menu_button.dart';
 import '../adaptive_modal.dart';
 import '../snackbar_helper.dart';
 import 'env_var_editor_dialog.dart';
@@ -596,35 +597,19 @@ class _EnvVarItem extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert, size: 20),
-                itemBuilder: (context) => [
-                  PopupMenuItem(
+              AppMenuButton<String>(
+                tooltip: _t(context, 'more', 'More'),
+                actions: [
+                  AppMenuAction(
                     value: 'edit',
-                    child: Row(
-                      children: [
-                        const Icon(Icons.edit, size: 18),
-                        const SizedBox(width: 8),
-                        Text(_t(context, 'edit', 'Edit')),
-                      ],
-                    ),
+                    label: _t(context, 'edit', 'Edit'),
+                    icon: Icons.edit,
                   ),
-                  PopupMenuItem(
+                  AppMenuAction(
                     value: 'delete',
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.delete,
-                          size: 18,
-                          color: theme.colorScheme.error,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          _t(context, 'delete', 'Delete'),
-                          style: TextStyle(color: theme.colorScheme.error),
-                        ),
-                      ],
-                    ),
+                    label: _t(context, 'delete', 'Delete'),
+                    icon: Icons.delete,
+                    destructive: true,
                   ),
                 ],
                 onSelected: (value) {

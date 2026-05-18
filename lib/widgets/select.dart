@@ -63,6 +63,23 @@ class _SelectState<T> extends State<Select<T>> {
   final GlobalKey _containerKey = GlobalKey();
   OverlayEntry? _overlayEntry;
 
+  bool get _canOpen => widget.onChanged != null && widget.items.isNotEmpty;
+
+  SelectItem<T>? get _selectedItemOrNull {
+    for (final item in widget.items) {
+      if (item.value == _selectedValue) return item;
+    }
+    return null;
+  }
+
+  double _triggerWidth() {
+    final context = _containerKey.currentContext;
+    if (context == null) return 240;
+    final box = context.findRenderObject();
+    if (box is RenderBox) return box.size.width;
+    return 240;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -78,15 +95,27 @@ class _SelectState<T> extends State<Select<T>> {
   }
 
   void _showDropdown() {
+    if (!_canOpen) return;
     _hideDropdown();
 
     _overlayEntry = OverlayEntry(
-      builder: (context) => CompositedTransformFollower(
-        link: _layerLink,
-        showWhenUnlinked: false,
-        targetAnchor: Alignment.bottomLeft,
-        followerAnchor: Alignment.topLeft,
-        child: _buildDropdown(),
+      builder: (context) => Stack(
+        children: [
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: _hideDropdown,
+            ),
+          ),
+          CompositedTransformFollower(
+            link: _layerLink,
+            showWhenUnlinked: false,
+            targetAnchor: Alignment.bottomLeft,
+            followerAnchor: Alignment.topLeft,
+            offset: widget.offset ?? const Offset(0, 8),
+            child: _buildDropdown(),
+          ),
+        ],
       ),
     );
 
@@ -100,31 +129,46 @@ class _SelectState<T> extends State<Select<T>> {
 
   Widget _buildDropdown() {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final effectiveBackgroundColor =
-        widget.backgroundColor ?? theme.colorScheme.surface;
+        widget.backgroundColor ??
+        Color.alphaBlend(
+          colorScheme.surfaceContainerHigh.withValues(alpha: 0.96),
+          colorScheme.surface,
+        );
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      margin: widget.padding,
+      duration: const Duration(milliseconds: 180),
+      width: _triggerWidth(),
       child: Material(
         elevation: widget.elevation.toDouble(),
         color: effectiveBackgroundColor,
         surfaceTintColor: widget.surfaceTintColor,
-        borderRadius: BorderRadius.circular(8.0),
+        shadowColor: colorScheme.shadow.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(16.0),
         child: ConstrainedBox(
           constraints: BoxConstraints(maxHeight: widget.menuMaxHeight ?? 300.0),
           child: ListView(
-            padding: const EdgeInsets.symmetric(vertical: 4.0),
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
             children: widget.items.map((item) {
               if (item.isDisabled) {
-                return item;
+                return Opacity(
+                  opacity: 0.5,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14.0,
+                      vertical: 10.0,
+                    ),
+                    child: item,
+                  ),
+                );
               }
 
               final isSelected = _selectedValue == item.value;
 
               return Material(
                 color: isSelected
-                    ? theme.colorScheme.primary.withValues(alpha: 0.1)
+                    ? colorScheme.primary.withValues(alpha: 0.10)
                     : Colors.transparent,
                 child: InkWell(
                   onTap: () {
@@ -136,18 +180,57 @@ class _SelectState<T> extends State<Select<T>> {
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 12.0,
+                      horizontal: 14.0,
+                      vertical: 11.0,
+                    ),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 8.0,
+                      vertical: 2.0,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: isSelected
+                          ? Border.all(
+                              color: colorScheme.primary.withValues(
+                                alpha: 0.18,
+                              ),
+                            )
+                          : null,
                     ),
                     child: Row(
                       children: [
                         Expanded(child: item),
-                        if (isSelected)
-                          Icon(
-                            Icons.check,
-                            size: widget.iconSize ?? 16,
-                            color: theme.colorScheme.primary,
+                        const SizedBox(width: 8),
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 140),
+                          width: 18,
+                          height: 18,
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? colorScheme.primary
+                                : colorScheme.surfaceContainerHighest
+                                      .withValues(alpha: 0.88),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: isSelected
+                                  ? colorScheme.primary.withValues(alpha: 0.9)
+                                  : colorScheme.outlineVariant.withValues(
+                                      alpha: 0.72,
+                                    ),
+                            ),
                           ),
+                          child: Icon(
+                            isSelected
+                                ? Icons.check_rounded
+                                : Icons.keyboard_arrow_right_rounded,
+                            size: widget.iconSize ?? 12,
+                            color: isSelected
+                                ? colorScheme.onPrimary
+                                : colorScheme.onSurfaceVariant.withValues(
+                                    alpha: 0.68,
+                                  ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -168,35 +251,50 @@ class _SelectState<T> extends State<Select<T>> {
 
   Widget _buildTrigger() {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final effectivePadding =
         widget.padding ??
-        const EdgeInsets.symmetric(horizontal: 12, vertical: 8);
-
-    final selectedItem = widget.items.firstWhere(
-      (item) => item.value == _selectedValue,
-      orElse: () => widget.items.first,
-    );
+        const EdgeInsets.symmetric(horizontal: 14, vertical: 12);
+    final selectedItem = _selectedItemOrNull;
+    final hasValue = _selectedValue != null && selectedItem != null;
+    final disabled = !_canOpen;
+    final backgroundColor = disabled
+        ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.38)
+        : colorScheme.surfaceContainerHighest.withValues(
+            alpha: theme.brightness == Brightness.dark ? 0.24 : 0.52,
+          );
+    final borderColor = widget.errorText != null
+        ? colorScheme.error
+        : (disabled
+              ? colorScheme.outlineVariant.withValues(alpha: 0.42)
+              : colorScheme.outlineVariant.withValues(alpha: 0.72));
 
     return CompositedTransformTarget(
       link: _layerLink,
-      child: GestureDetector(
-        onTap: () {
-          if (widget.items.isNotEmpty) {
-            _showDropdown();
-          }
-        },
+      child: InkWell(
+        onTap: _canOpen ? _showDropdown : null,
+        borderRadius: BorderRadius.circular(14),
         child: Container(
           key: _containerKey,
           padding: effectivePadding,
+          constraints: const BoxConstraints(minHeight: 48),
           decoration: BoxDecoration(
-            border: Border.all(
-              color: widget.errorText != null
-                  ? theme.colorScheme.error
-                  : theme.colorScheme.outline,
-              width: 1.0,
-            ),
-            borderRadius: BorderRadius.circular(8.0),
-            color: theme.colorScheme.surface,
+            border: Border.all(color: borderColor, width: 1.0),
+            borderRadius: BorderRadius.circular(14.0),
+            color: backgroundColor,
+            boxShadow: disabled
+                ? null
+                : [
+                    BoxShadow(
+                      color: colorScheme.shadow.withValues(
+                        alpha: theme.brightness == Brightness.dark
+                            ? 0.10
+                            : 0.04,
+                      ),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
           ),
           child: Row(
             mainAxisSize: widget.isExpanded
@@ -205,24 +303,44 @@ class _SelectState<T> extends State<Select<T>> {
             children: [
               Flexible(
                 fit: widget.isExpanded ? FlexFit.tight : FlexFit.loose,
-                child: _selectedValue != null
-                    ? selectedItem
+                child: hasValue
+                    ? DefaultTextStyle.merge(
+                        style:
+                            theme.textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurface,
+                              fontWeight: FontWeight.w600,
+                            ) ??
+                            TextStyle(
+                              color: colorScheme.onSurface,
+                              fontWeight: FontWeight.w600,
+                            ),
+                        child: selectedItem,
+                      )
                     : widget.hint ??
                           Text(
                             'Select an option',
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(
+                              color: colorScheme.onSurface.withValues(
                                 alpha: 0.6,
                               ),
                             ),
                           ),
               ),
-              Icon(
-                widget.icon ?? Icons.keyboard_arrow_down,
-                size: widget.iconSize ?? 20,
-                color:
-                    widget.iconEnabledColor ??
-                    theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              const SizedBox(width: 10),
+              AnimatedRotation(
+                turns: _overlayEntry != null ? 0.5 : 0.0,
+                duration: const Duration(milliseconds: 160),
+                child: Icon(
+                  widget.icon ?? Icons.keyboard_arrow_down_rounded,
+                  size: widget.iconSize ?? 20,
+                  color:
+                      (disabled
+                          ? widget.iconDisabledColor
+                          : widget.iconEnabledColor) ??
+                      colorScheme.onSurfaceVariant.withValues(
+                        alpha: disabled ? 0.52 : 0.82,
+                      ),
+                ),
               ),
             ],
           ),

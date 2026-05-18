@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
+import '../app_menu_button.dart';
 import '../../models/message.dart';
 
 /// Message context menu actions
@@ -32,91 +33,38 @@ class MessageContextMenu extends StatelessWidget {
 
     final theme = Theme.of(context);
 
-    return PopupMenuButton<MessageAction>(
+    return AppMenuButton<MessageAction>(
       position: PopupMenuPosition.under,
       offset: position ?? Offset.zero,
+      padding: const EdgeInsets.all(4),
+      borderRadius: 10,
       icon: Icon(
         Icons.more_vert,
         size: 16,
         color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
       ),
-      itemBuilder: (context) => [
-        // Copy action
-        PopupMenuItem<MessageAction>(
+      actions: [
+        const AppMenuAction(
           value: MessageAction.copy,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.copy, size: 18, color: theme.colorScheme.onSurface),
-              const SizedBox(width: 12),
-              Text(
-                'Copy',
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
+          label: 'Copy',
+          icon: Icons.copy,
         ),
-        // Reply action
-        PopupMenuItem<MessageAction>(
+        const AppMenuAction(
           value: MessageAction.reply,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.reply, size: 18, color: theme.colorScheme.onSurface),
-              const SizedBox(width: 12),
-              Text(
-                'Reply',
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
+          label: 'Reply',
+          icon: Icons.reply,
         ),
-        // Forward action
-        PopupMenuItem<MessageAction>(
+        const AppMenuAction(
           value: MessageAction.forward,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.forward, size: 18, color: theme.colorScheme.onSurface),
-              const SizedBox(width: 12),
-              Text(
-                'Forward',
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
+          label: 'Forward',
+          icon: Icons.forward,
         ),
-        // Delete action (if enabled)
         if (showDelete)
-          PopupMenuItem<MessageAction>(
+          const AppMenuAction(
             value: MessageAction.delete,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.delete_outline,
-                  size: 18,
-                  color: theme.colorScheme.error,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Delete',
-                  style: TextStyle(
-                    color: theme.colorScheme.error,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
+            label: 'Delete',
+            icon: Icons.delete_outline,
+            destructive: true,
           ),
       ],
       onSelected: (action) {

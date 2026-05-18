@@ -26,6 +26,7 @@ import 'package:d1vai_app/widgets/chat/floating_preview_dock.dart';
 import 'package:d1vai_app/widgets/insufficient_balance_dialog.dart';
 import 'package:d1vai_app/widgets/chat/status_pill.dart';
 import 'package:d1vai_app/widgets/alert.dart';
+import 'package:d1vai_app/widgets/app_menu_button.dart';
 import 'package:d1vai_app/widgets/progress_widget.dart';
 import 'package:d1vai_app/widgets/snackbar_helper.dart';
 import 'package:d1vai_app/utils/preview_url.dart';
@@ -2378,128 +2379,68 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
           ),
-          PopupMenuButton<_ChatAppBarAction>(
+          AppMenuButton<_ChatAppBarAction>(
             tooltip: loc?.translate('chat_menu_more') ?? 'More',
-            icon: const Icon(Icons.more_vert),
-            onSelected: _handleAppBarAction,
-            itemBuilder: (context) => [
-              PopupMenuItem<_ChatAppBarAction>(
+            actions: [
+              AppMenuAction(
                 value: _ChatAppBarAction.openOverview,
-                child: Row(
-                  children: [
-                    const Icon(Icons.dashboard_outlined, size: 18),
-                    const SizedBox(width: 10),
-                    Text(loc?.translate('chat_menu_overview') ?? 'Overview'),
-                  ],
-                ),
+                label: loc?.translate('chat_menu_overview') ?? 'Overview',
+                icon: Icons.dashboard_outlined,
               ),
-              PopupMenuItem<_ChatAppBarAction>(
+              AppMenuAction(
                 value: _ChatAppBarAction.openFiles,
-                child: Row(
-                  children: [
-                    const Icon(Icons.folder_open_outlined, size: 18),
-                    const SizedBox(width: 10),
-                    Text(
-                      loc?.translate('chat_menu_view_files') ?? 'View Files',
-                    ),
-                  ],
-                ),
+                label: loc?.translate('chat_menu_view_files') ?? 'View Files',
+                icon: Icons.folder_open_outlined,
               ),
-              PopupMenuItem<_ChatAppBarAction>(
+              AppMenuAction(
                 value: _ChatAppBarAction.openEnvironment,
-                child: Row(
-                  children: [
-                    const Icon(Icons.key_outlined, size: 18),
-                    const SizedBox(width: 10),
-                    Text(
-                      loc?.translate('chat_menu_environment') ?? 'Environment',
-                    ),
-                  ],
-                ),
+                label: loc?.translate('chat_menu_environment') ?? 'Environment',
+                icon: Icons.key_outlined,
               ),
-              PopupMenuItem<_ChatAppBarAction>(
+              AppMenuAction(
                 value: _ChatAppBarAction.openDatabase,
-                child: Row(
-                  children: [
-                    const Icon(Icons.storage_outlined, size: 18),
-                    const SizedBox(width: 10),
-                    Text(loc?.translate('chat_menu_database') ?? 'Database'),
-                  ],
-                ),
+                label: loc?.translate('chat_menu_database') ?? 'Database',
+                icon: Icons.storage_outlined,
               ),
-              PopupMenuItem<_ChatAppBarAction>(
+              AppMenuAction(
                 value: _ChatAppBarAction.openPayment,
-                child: Row(
-                  children: [
-                    const Icon(Icons.payment_outlined, size: 18),
-                    const SizedBox(width: 10),
-                    Text(loc?.translate('chat_menu_payment') ?? 'Payment'),
-                  ],
-                ),
+                label: loc?.translate('chat_menu_payment') ?? 'Payment',
+                icon: Icons.payment_outlined,
               ),
-              PopupMenuItem<_ChatAppBarAction>(
+              AppMenuAction(
                 value: _ChatAppBarAction.openDeployHistory,
-                child: Row(
-                  children: [
-                    const Icon(Icons.history_outlined, size: 18),
-                    const SizedBox(width: 10),
-                    Text(
-                      loc?.translate('chat_menu_deploy_history') ??
-                          'Deploy History',
-                    ),
-                  ],
-                ),
+                label:
+                    loc?.translate('chat_menu_deploy_history') ??
+                    'Deploy History',
+                icon: Icons.history_outlined,
               ),
-              PopupMenuItem<_ChatAppBarAction>(
+              AppMenuAction(
                 value: _ChatAppBarAction.openAnalytics,
-                child: Row(
-                  children: [
-                    const Icon(Icons.analytics_outlined, size: 18),
-                    const SizedBox(width: 10),
-                    Text(loc?.translate('chat_menu_analytics') ?? 'Analytics'),
-                  ],
-                ),
+                label: loc?.translate('chat_menu_analytics') ?? 'Analytics',
+                icon: Icons.analytics_outlined,
               ),
-              const PopupMenuDivider(),
-              PopupMenuItem<_ChatAppBarAction>(
+              const AppMenuAction.divider(),
+              AppMenuAction(
                 value: _ChatAppBarAction.redeployPreview,
-                child: Row(
-                  children: [
-                    Icon(Icons.rocket_launch_outlined, size: 18),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        loc?.translate('chat_menu_redeploy_preview') ??
-                            'Redeploy Preview',
-                      ),
-                    ),
-                  ],
-                ),
+                label:
+                    loc?.translate('chat_menu_redeploy_preview') ??
+                    'Redeploy Preview',
+                icon: Icons.rocket_launch_outlined,
               ),
-              PopupMenuItem<_ChatAppBarAction>(
+              AppMenuAction(
                 value: _ChatAppBarAction.refresh,
-                child: Row(
-                  children: [
-                    const Icon(Icons.refresh, size: 18),
-                    const SizedBox(width: 10),
-                    Text(
-                      loc?.translate('chat_menu_refresh_history') ??
-                          'Refresh History',
-                    ),
-                  ],
-                ),
+                label:
+                    loc?.translate('chat_menu_refresh_history') ??
+                    'Refresh History',
+                icon: Icons.refresh,
               ),
-              PopupMenuItem<_ChatAppBarAction>(
+              AppMenuAction(
                 value: _ChatAppBarAction.clearChat,
-                child: Row(
-                  children: [
-                    const Icon(Icons.clear_all, size: 18),
-                    const SizedBox(width: 10),
-                    Text(loc?.translate('chat_clear_title') ?? 'Clear Chat'),
-                  ],
-                ),
+                label: loc?.translate('chat_clear_title') ?? 'Clear Chat',
+                icon: Icons.clear_all,
               ),
             ],
+            onSelected: _handleAppBarAction,
           ),
         ],
       ),

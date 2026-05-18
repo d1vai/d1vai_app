@@ -7,6 +7,7 @@ import '../providers/auth_provider.dart';
 import '../l10n/app_localizations.dart';
 import 'ai_avatar_selector_dialog.dart';
 import 'avatar_image.dart';
+import 'select.dart';
 import 'auth/auth_display_controls.dart';
 import 'button.dart' as d1v;
 import 'snackbar_helper.dart';
@@ -711,18 +712,23 @@ class _OnboardingWizardState extends State<OnboardingWizard>
           const SizedBox(height: 16),
 
           // 所属行业
-          DropdownButtonFormField<String>(
-            decoration: InputDecoration(
-              labelText: _t('industry', 'Industry'),
-              border: const OutlineInputBorder(),
-              filled: true,
-              fillColor: colorScheme.surfaceContainerHighest.withValues(
-                alpha: 0.5,
+          Select<String>(
+            value: _industry.isEmpty ? null : _industry,
+            label: _t('industry', 'Industry'),
+            isExpanded: true,
+            backgroundColor: colorScheme.surfaceContainerHighest.withValues(
+              alpha: 0.5,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            hint: Text(
+              _t('industry', 'Industry'),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
             items: _industries
                 .map(
-                  (industry) => DropdownMenuItem(
+                  (industry) => SelectItem<String>(
                     value: industry.value,
                     child: Text(industry.label),
                   ),

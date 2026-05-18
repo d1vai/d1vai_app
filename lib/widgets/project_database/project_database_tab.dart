@@ -13,6 +13,7 @@ import '../../utils/error_utils.dart';
 import '../snackbar_helper.dart';
 import '../table_detail_dialog.dart';
 import '../../widgets/select.dart';
+import '../../widgets/compact_selector.dart';
 import 'package:d1vai_app/widgets/skeletons/project_database_skeleton.dart';
 
 /// 项目详情页 - Database Tab
@@ -60,6 +61,85 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
     final value = AppLocalizations.of(context)?.translate(key);
     if (value == null || value == key) return fallback;
     return value;
+  }
+
+  Widget _buildBranchOption(ThemeData theme, _DbBranchItem branch) {
+    final cs = theme.colorScheme;
+    final nameStyle = theme.textTheme.bodyMedium?.copyWith(
+      fontWeight: FontWeight.w700,
+      color: cs.onSurface,
+    );
+    final subtitleStyle = theme.textTheme.bodySmall?.copyWith(
+      color: cs.onSurfaceVariant.withValues(alpha: 0.82),
+      height: 1.15,
+    );
+
+    return Row(
+      children: [
+        Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            color: cs.primary.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(9),
+          ),
+          child: Icon(
+            branch.primary
+                ? Icons.account_tree_rounded
+                : Icons.alt_route_rounded,
+            size: 16,
+            color: cs.primary,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                branch.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: nameStyle,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                branch.primary
+                    ? _t('project_database_branch_primary', 'Primary branch')
+                    : _t(
+                        'project_database_branch_context',
+                        'Neon branch context',
+                      ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: subtitleStyle,
+              ),
+            ],
+          ),
+        ),
+        if (branch.primary) ...[
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: cs.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: cs.primary.withValues(alpha: 0.18)),
+            ),
+            child: Text(
+              'PRIMARY',
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontSize: 9,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.5,
+                color: cs.primary,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
   }
 
   @override
@@ -917,6 +997,11 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                 child: Select<String>(
                   value: selected.isEmpty ? null : selected,
                   label: _t('project_database_branch', 'Branch'),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  menuMaxHeight: 320,
                   hint: Text(
                     _isLoadingBranches
                         ? _t(
@@ -935,15 +1020,7 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                       .map(
                         (b) => SelectItem<String>(
                           value: b.name,
-                          child: Text(
-                            b.primary
-                                ? _t(
-                                    'project_database_branch_primary',
-                                    '{name} (primary)',
-                                  ).replaceAll('{name}', b.name)
-                                : b.name,
-                            style: theme.textTheme.bodyMedium,
-                          ),
+                          child: _buildBranchOption(theme, b),
                         ),
                       )
                       .toList(),
@@ -1211,24 +1288,30 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                 ),
               ),
               const Spacer(),
-              DropdownButton<int>(
-                value: _rowsPageSize,
-                items: const [20, 50, 100]
+              CompactSelector(
+                value: _rowsPageSize.toString(),
+                placeholder: _t(
+                  'project_database_page_size_short',
+                  'Page size',
+                ),
+                tooltip: _t(
+                  'project_database_page_size_tooltip',
+                  'Rows per page',
+                ),
+                minWidth: 110,
+                maxWidth: 132,
+                options: const [20, 50, 100]
                     .map(
-                      (size) => DropdownMenuItem<int>(
-                        value: size,
-                        child: Text(
-                          _t(
-                            'project_database_page_size',
-                            '{size} / page',
-                          ).replaceAll('{size}', size.toString()),
-                        ),
+                      (size) => CompactSelectorOption(
+                        value: '$size',
+                        label: '$size / page',
                       ),
                     )
                     .toList(),
                 onChanged: (value) {
-                  if (value == null) return;
-                  unawaited(_onRowsPageSizeChanged(value));
+                  final parsed = int.tryParse(value);
+                  if (parsed == null) return;
+                  unawaited(_onRowsPageSizeChanged(parsed));
                 },
               ),
               const SizedBox(width: 6),

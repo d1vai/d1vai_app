@@ -6,6 +6,7 @@ import '../../models/payment.dart';
 import '../../services/d1vai_service.dart';
 import '../../core/auth_expiry_bus.dart';
 import '../../utils/error_utils.dart';
+import '../app_menu_button.dart';
 import '../adaptive_modal.dart';
 import '../select.dart';
 import '../snackbar_helper.dart';
@@ -534,30 +535,18 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        PopupMenuButton<String>(
-                          icon: const Icon(Icons.more_vert, size: 20),
-                          itemBuilder: (context) => [
-                            PopupMenuItem(
+                        AppMenuButton<String>(
+                          tooltip: _t('more', 'More'),
+                          actions: [
+                            AppMenuAction(
                               value: 'edit',
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.edit, size: 18),
-                                  const SizedBox(width: 8),
-                                  Text(_t('project_payment_edit', 'Edit')),
-                                ],
-                              ),
+                              label: _t('project_payment_edit', 'Edit'),
+                              icon: Icons.edit,
                             ),
-                            PopupMenuItem(
+                            AppMenuAction(
                               value: 'link',
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.link, size: 18),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    _t('project_payment_get_link', 'Get Link'),
-                                  ),
-                                ],
-                              ),
+                              label: _t('project_payment_get_link', 'Get Link'),
+                              icon: Icons.link,
                             ),
                           ],
                           onSelected: (value) {

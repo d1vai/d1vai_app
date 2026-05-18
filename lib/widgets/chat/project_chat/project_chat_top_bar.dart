@@ -43,14 +43,23 @@ class ProjectChatTopBar extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Flexible(
+                child: _TabButton(
+                  isSelected: currentIndex == 0,
+                  label: compact ? 'Prev' : null,
+                  icon: Icons.remove_red_eye_outlined,
+                  onTap: () => onTabSelected(0),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Flexible(
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _TabButton(
-                      isSelected: currentIndex == 0,
-                      label: compact ? 'Prev' : null,
-                      icon: Icons.remove_red_eye_outlined,
-                      onTap: () => onTabSelected(0),
+                      isSelected: currentIndex == 1,
+                      label: 'Files',
+                      icon: Icons.folder_outlined,
+                      onTap: () => onTabSelected(1),
                     ),
                     if (showPreviewMeta) ...[
                       const SizedBox(width: 8),
@@ -59,15 +68,6 @@ class ProjectChatTopBar extends StatelessWidget {
                       ),
                     ],
                   ],
-                ),
-              ),
-              const SizedBox(width: 6),
-              Flexible(
-                child: _TabButton(
-                  isSelected: currentIndex == 1,
-                  label: 'Files',
-                  icon: Icons.folder_outlined,
-                  onTap: () => onTabSelected(1),
                 ),
               ),
             ],
@@ -151,7 +151,7 @@ class _PreviewInlineMeta extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: cs.primary,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),

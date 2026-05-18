@@ -6,6 +6,7 @@ import '../../models/project.dart';
 import '../../utils/project_template_localizations.dart';
 import '../button.dart';
 import '../input.dart';
+import '../select.dart';
 
 class CreateProjectNewAiView extends StatelessWidget {
   final TextEditingController descriptionController;
@@ -177,16 +178,33 @@ class CreateProjectNewAiView extends StatelessWidget {
         Stack(
           alignment: Alignment.centerRight,
           children: [
-            DropdownButtonFormField<String>(
+            Select<String>(
               key: ValueKey('create-project-template-$selectedTemplateRepo'),
-              initialValue: selectedTemplateRepo,
+              value: selectedTemplateRepo,
+              isExpanded: true,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              backgroundColor: scheme.surfaceContainerHighest.withValues(
+                alpha: isDark ? 0.2 : 0.28,
+              ),
+              hint: Text(
+                isTemplateLoading
+                    ? (loc?.translate('loading') ?? 'Loading...')
+                    : (loc?.translate('create_project_select_template') ??
+                          'Select template'),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
               items: templateOptions
                   .map(
-                    (template) => DropdownMenuItem<String>(
+                    (template) => SelectItem<String>(
                       value: template.templateRepo,
                       child: Text(
                         localizeProjectTemplate(template, locale).name,
                         overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   )
@@ -197,35 +215,6 @@ class CreateProjectNewAiView extends StatelessWidget {
                       if (v == null) return;
                       onTemplateChanged!(v);
                     },
-              decoration: InputDecoration(
-                hintText: isTemplateLoading
-                    ? (loc?.translate('loading') ?? 'Loading...')
-                    : (loc?.translate('create_project_select_template') ??
-                          'Select template'),
-                filled: true,
-                fillColor: scheme.surfaceContainerHighest.withValues(
-                  alpha: isDark ? 0.2 : 0.28,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: scheme.outlineVariant.withValues(
-                      alpha: isDark ? 0.45 : 0.7,
-                    ),
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: scheme.primary, width: 1.3),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 12,
-                ),
-              ),
             ),
             if (isTemplateLoading)
               Padding(
@@ -340,23 +329,30 @@ class CreateProjectNewAiView extends StatelessWidget {
         Stack(
           alignment: Alignment.centerRight,
           children: [
-            DropdownButtonFormField<String>(
+            Select<String>(
               key: ValueKey('create-project-model-$selectedModelId'),
-              initialValue: selectedModelId.trim().isEmpty
-                  ? null
-                  : selectedModelId,
+              value: selectedModelId.trim().isEmpty ? null : selectedModelId,
+              isExpanded: true,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              backgroundColor: scheme.surfaceContainerHighest.withValues(
+                alpha: isDark ? 0.2 : 0.28,
+              ),
+              hint: Text(
+                isWorkspaceReady
+                    ? (isModelLoading
+                          ? (loc?.translate('loading') ?? 'Loading...')
+                          : (loc?.translate('create_project_select_model') ??
+                                'Select model'))
+                    : (loc?.translate('create_project_waiting_workspace') ??
+                          'Waiting workspace ready…'),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
               items: models
                   .map(
-                    (m) => DropdownMenuItem<String>(
+                    (m) => SelectItem<String>(
                       value: m.id,
-                      child: _ModelDropdownLabel(model: m),
-                    ),
-                  )
-                  .toList(),
-              selectedItemBuilder: (context) => models
-                  .map(
-                    (m) => Align(
-                      alignment: Alignment.centerLeft,
                       child: _ModelDropdownLabel(model: m, compact: true),
                     ),
                   )
@@ -370,39 +366,6 @@ class CreateProjectNewAiView extends StatelessWidget {
                       if (v == null) return;
                       onModelChanged!(v);
                     },
-              decoration: InputDecoration(
-                hintText: isWorkspaceReady
-                    ? (isModelLoading
-                          ? (loc?.translate('loading') ?? 'Loading...')
-                          : (loc?.translate('create_project_select_model') ??
-                                'Select model'))
-                    : (loc?.translate('create_project_waiting_workspace') ??
-                          'Waiting workspace ready…'),
-                filled: true,
-                fillColor: scheme.surfaceContainerHighest.withValues(
-                  alpha: isDark ? 0.2 : 0.28,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: scheme.outlineVariant.withValues(
-                      alpha: isDark ? 0.45 : 0.7,
-                    ),
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: scheme.primary, width: 1.3),
-                ),
-                isDense: false,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 12,
-                ),
-              ),
             ),
             if (isModelLoading)
               Padding(
@@ -499,10 +462,7 @@ class _ModelDropdownLabel extends StatelessWidget {
               style: labelStyle,
             ),
           ),
-          if (badgeWidget != null) ...[
-            const SizedBox(width: 6),
-            badgeWidget,
-          ],
+          if (badgeWidget != null) ...[const SizedBox(width: 6), badgeWidget],
         ],
       );
     }
@@ -517,10 +477,7 @@ class _ModelDropdownLabel extends StatelessWidget {
             style: labelStyle,
           ),
         ),
-        if (badgeWidget != null) ...[
-          const SizedBox(width: 8),
-          badgeWidget,
-        ],
+        if (badgeWidget != null) ...[const SizedBox(width: 8), badgeWidget],
       ],
     );
   }

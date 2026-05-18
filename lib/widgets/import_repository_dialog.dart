@@ -9,6 +9,7 @@ import '../services/github_service.dart';
 import 'adaptive_modal.dart';
 import 'button.dart';
 import 'progress_widget.dart';
+import 'select.dart';
 import 'snackbar_helper.dart';
 
 class ImportRepositoryDialog extends StatefulWidget {
@@ -635,16 +636,33 @@ class _ImportRepositoryDialogState extends State<ImportRepositoryDialog> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        initialValue:
-                            _rootDirectoryController.text.trim().isEmpty
+                      Select<String>(
+                        value: _rootDirectoryController.text.trim().isEmpty
                             ? null
                             : _rootDirectoryController.text.trim(),
+                        label: _t(
+                          'github_import_root_directory',
+                          'Root Directory',
+                        ),
+                        isExpanded: true,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        hint: Text(
+                          _t('github_import_root_directory', 'Root Directory'),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurface.withValues(alpha: 0.6),
+                          ),
+                        ),
                         items: monorepoCandidates
                             .map(
-                              (item) => DropdownMenuItem<String>(
+                              (item) => SelectItem<String>(
                                 value: item,
-                                child: Text(item),
+                                child: Text(
+                                  item,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                             )
                             .toList(),
@@ -654,13 +672,6 @@ class _ImportRepositoryDialogState extends State<ImportRepositoryDialog> {
                                 _rootDirectoryController.text = (value ?? '')
                                     .trim();
                               },
-                        decoration: InputDecoration(
-                          labelText: _t(
-                            'github_import_root_directory',
-                            'Root Directory',
-                          ),
-                          border: const OutlineInputBorder(),
-                        ),
                       ),
                     ],
                   ],

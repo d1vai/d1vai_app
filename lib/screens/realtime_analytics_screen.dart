@@ -7,6 +7,8 @@ import 'package:d1vai_app/models/analytics.dart';
 import 'package:d1vai_app/services/analytics_service.dart';
 import 'package:d1vai_app/widgets/analytics/metric_card.dart';
 import 'package:d1vai_app/widgets/analytics/realtime_chart.dart';
+import 'package:d1vai_app/widgets/app_menu_button.dart';
+import 'package:d1vai_app/widgets/compact_selector.dart';
 import 'package:d1vai_app/widgets/snackbar_helper.dart';
 
 /// Real-time analytics dashboard screen
@@ -224,13 +226,34 @@ class _RealtimeAnalyticsScreenState extends State<RealtimeAnalyticsScreen> {
             onPressed: _toggleRealtime,
             tooltip: _isRealTimeEnabled ? 'Pause' : 'Resume',
           ),
-          PopupMenuButton<String>(
-            onSelected: _exportData,
-            itemBuilder: (context) => [
-              const PopupMenuItem(value: 'json', child: Text('Export as JSON')),
-              const PopupMenuItem(value: 'csv', child: Text('Export as CSV')),
-              const PopupMenuItem(value: 'pdf', child: Text('Export as PDF')),
+          AppMenuButton<String>(
+            tooltip: 'Export',
+            useFilledBackground: true,
+            icon: Icon(
+              Icons.download_rounded,
+              size: 18,
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurfaceVariant.withValues(alpha: 0.86),
+            ),
+            actions: const [
+              AppMenuAction(
+                value: 'json',
+                label: 'Export as JSON',
+                icon: Icons.data_object_rounded,
+              ),
+              AppMenuAction(
+                value: 'csv',
+                label: 'Export as CSV',
+                icon: Icons.table_chart_rounded,
+              ),
+              AppMenuAction(
+                value: 'pdf',
+                label: 'Export as PDF',
+                icon: Icons.picture_as_pdf_outlined,
+              ),
             ],
+            onSelected: _exportData,
           ),
         ],
       ),
@@ -283,27 +306,28 @@ class _RealtimeAnalyticsScreenState extends State<RealtimeAnalyticsScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text('Time Range:'),
-            DropdownButton<TimeRange>(
-              value: _selectedTimeRange,
-              icon: const Icon(Icons.arrow_drop_down),
-              elevation: 16,
-              underline: Container(),
-              onChanged: (TimeRange? newValue) {
-                if (newValue != null) {
-                  setState(() {
-                    _selectedTimeRange = newValue;
-                  });
-                  _loadData();
-                }
-              },
-              items: TimeRange.values.map<DropdownMenuItem<TimeRange>>((
-                TimeRange value,
-              ) {
-                return DropdownMenuItem<TimeRange>(
-                  value: value,
-                  child: Text(value.label),
+            CompactSelector(
+              value: _selectedTimeRange.name,
+              minWidth: 116,
+              maxWidth: 168,
+              options: TimeRange.values
+                  .map(
+                    (value) => CompactSelectorOption(
+                      value: value.name,
+                      label: value.label,
+                    ),
+                  )
+                  .toList(),
+              onChanged: (newValue) {
+                final next = TimeRange.values.firstWhere(
+                  (value) => value.name == newValue,
+                  orElse: () => _selectedTimeRange,
                 );
-              }).toList(),
+                setState(() {
+                  _selectedTimeRange = next;
+                });
+                _loadData();
+              },
             ),
           ],
         ),

@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../l10n/app_localizations.dart';
 import '../../services/d1vai_service.dart';
 import '../../utils/error_utils.dart';
+import '../app_menu_button.dart';
 import 'deployment_log_viewer.dart';
 import '../snackbar_helper.dart';
 
@@ -186,8 +187,36 @@ class _DeploymentLogScreenState extends State<DeploymentLogScreen> {
                   )
                 : const Icon(Icons.refresh),
           ),
-          PopupMenuButton<String>(
+          AppMenuButton<String>(
             tooltip: _t('project_deploy_more', 'More'),
+            useFilledBackground: true,
+            actions: [
+              AppMenuAction(
+                value: 'copy_all',
+                label: _t('project_deploy_copy_all', 'Copy all'),
+                icon: Icons.copy,
+                enabled: !(_loading || _log.trim().isEmpty),
+              ),
+              AppMenuAction(
+                value: 'copy_errors',
+                label: _t('project_deploy_copy_errors', 'Copy errors'),
+                icon: Icons.warning_amber,
+                enabled: !(_loading || _log.trim().isEmpty),
+              ),
+              const AppMenuAction.divider(),
+              AppMenuAction(
+                value: 'share_all',
+                label: _t('project_deploy_share_all', 'Share all'),
+                icon: Icons.share,
+                enabled: !(_loading || _log.trim().isEmpty),
+              ),
+              AppMenuAction(
+                value: 'share_errors',
+                label: _t('project_deploy_share_errors', 'Share errors'),
+                icon: Icons.report,
+                enabled: !(_loading || _log.trim().isEmpty),
+              ),
+            ],
             onSelected: (value) {
               switch (value) {
                 case 'copy_all':
@@ -203,56 +232,6 @@ class _DeploymentLogScreenState extends State<DeploymentLogScreen> {
                   _shareLog(errorsOnly: true);
                   break;
               }
-            },
-            itemBuilder: (context) {
-              final disabled = _loading || _log.trim().isEmpty;
-              return [
-                PopupMenuItem(
-                  value: 'copy_all',
-                  enabled: !disabled,
-                  child: Row(
-                    children: [
-                      const Icon(Icons.copy, size: 18),
-                      const SizedBox(width: 10),
-                      Text(_t('project_deploy_copy_all', 'Copy all')),
-                    ],
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'copy_errors',
-                  enabled: !disabled,
-                  child: Row(
-                    children: [
-                      const Icon(Icons.warning_amber, size: 18),
-                      const SizedBox(width: 10),
-                      Text(_t('project_deploy_copy_errors', 'Copy errors')),
-                    ],
-                  ),
-                ),
-                const PopupMenuDivider(),
-                PopupMenuItem(
-                  value: 'share_all',
-                  enabled: !disabled,
-                  child: Row(
-                    children: [
-                      const Icon(Icons.share, size: 18),
-                      const SizedBox(width: 10),
-                      Text(_t('project_deploy_share_all', 'Share all')),
-                    ],
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'share_errors',
-                  enabled: !disabled,
-                  child: Row(
-                    children: [
-                      const Icon(Icons.report, size: 18),
-                      const SizedBox(width: 10),
-                      Text(_t('project_deploy_share_errors', 'Share errors')),
-                    ],
-                  ),
-                ),
-              ];
             },
           ),
         ],

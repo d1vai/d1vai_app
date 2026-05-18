@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/analytics.dart';
+import '../compact_selector.dart';
 
 /// Real-time line chart widget
 class RealtimeChart extends StatefulWidget {
@@ -47,25 +48,27 @@ class _RealtimeChartState extends State<RealtimeChart> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                DropdownButton<TimeRange>(
-                  value: widget.timeRange,
-                  icon: const Icon(Icons.arrow_drop_down),
-                  elevation: 16,
-                  style: theme.textTheme.bodyMedium,
-                  underline: Container(height: 0),
-                  onChanged: (TimeRange? newValue) {
-                    if (newValue != null && widget.onTimeRangeChanged != null) {
-                      widget.onTimeRangeChanged!(newValue);
-                    }
-                  },
-                  items: TimeRange.values.map<DropdownMenuItem<TimeRange>>((
-                    TimeRange value,
-                  ) {
-                    return DropdownMenuItem<TimeRange>(
-                      value: value,
-                      child: Text(value.label),
-                    );
-                  }).toList(),
+                CompactSelector(
+                  value: widget.timeRange.name,
+                  minWidth: 112,
+                  maxWidth: 164,
+                  options: TimeRange.values
+                      .map(
+                        (value) => CompactSelectorOption(
+                          value: value.name,
+                          label: value.label,
+                        ),
+                      )
+                      .toList(),
+                  onChanged: widget.onTimeRangeChanged == null
+                      ? null
+                      : (newValue) {
+                          final next = TimeRange.values.firstWhere(
+                            (value) => value.name == newValue,
+                            orElse: () => widget.timeRange,
+                          );
+                          widget.onTimeRangeChanged!(next);
+                        },
                 ),
               ],
             ),
