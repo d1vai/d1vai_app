@@ -53,7 +53,6 @@ class _ChatThinkingCardState extends State<ChatThinkingCard>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final emoji = theme.brightness == Brightness.dark ? '🧠' : '💭';
     final platinum = theme.brightness == Brightness.dark
         ? const Color(0xFFEAF1FF)
         : const Color(0xFFF7FBFF);
@@ -71,81 +70,48 @@ class _ChatThinkingCardState extends State<ChatThinkingCard>
 
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _FloatingEmoji(emoji: emoji, highlight: widget.highlight),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ExpandableText(
-                      text: widget.text,
-                      maxLines: 4,
-                      isMarkdown: false,
-                      expandText: 'Show more',
-                      collapseText: 'Show less',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        fontStyle: FontStyle.italic,
-                        height: 1.35,
-                        fontSize: 13,
-                        color: widget.highlight
-                            ? null
-                            : theme.colorScheme.onSurfaceVariant.withValues(
-                                alpha: 0.88,
+              ExpandableText(
+                text: '💭 ${widget.text}',
+                maxLines: 4,
+                isMarkdown: false,
+                expandText: 'Show more',
+                collapseText: 'Show less',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontStyle: FontStyle.italic,
+                  height: 1.35,
+                  fontSize: 13,
+                  color: widget.highlight
+                      ? null
+                      : theme.colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.88,
+                        ),
+                  foreground: widget.highlight
+                      ? (Paint()
+                          ..shader = LinearGradient(
+                            begin: shimmerCenter,
+                            end: Alignment(shimmerCenter.x + 1.35, 0),
+                            colors: [
+                              theme.colorScheme.onSurfaceVariant.withValues(
+                                alpha: 0.82,
                               ),
-                        foreground: widget.highlight
-                            ? (Paint()
-                                ..shader =
-                                    LinearGradient(
-                                      begin: shimmerCenter,
-                                      end: Alignment(shimmerCenter.x + 1.35, 0),
-                                      colors: [
-                                        theme.colorScheme.onSurfaceVariant
-                                            .withValues(alpha: 0.82),
-                                        platinum.withValues(alpha: 0.96),
-                                        glow.withValues(alpha: 0.88),
-                                        theme.colorScheme.onSurfaceVariant
-                                            .withValues(alpha: 0.86),
-                                      ],
-                                      stops: const [0.0, 0.38, 0.58, 1.0],
-                                    ).createShader(
-                                      const Rect.fromLTWH(0, 0, 420, 48),
-                                    ))
-                            : null,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    _ThinkingCopyAction(text: widget.text),
-                  ],
+                              platinum.withValues(alpha: 0.96),
+                              glow.withValues(alpha: 0.88),
+                              theme.colorScheme.onSurfaceVariant.withValues(
+                                alpha: 0.86,
+                              ),
+                            ],
+                            stops: const [0.0, 0.38, 0.58, 1.0],
+                          ).createShader(const Rect.fromLTWH(0, 0, 420, 48)))
+                      : null,
                 ),
               ),
+              const SizedBox(height: 8),
+              _ThinkingCopyAction(text: widget.text),
             ],
           ),
-        );
-      },
-    );
-  }
-}
-
-class _FloatingEmoji extends StatelessWidget {
-  final String emoji;
-  final bool highlight;
-
-  const _FloatingEmoji({required this.emoji, required this.highlight});
-
-  @override
-  Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: highlight ? 1 : 0),
-      duration: const Duration(milliseconds: 1200),
-      curve: Curves.easeInOut,
-      builder: (context, value, child) {
-        final dy = highlight ? -2.0 + (value * 4.0) : 0.0;
-        return Transform.translate(
-          offset: Offset(0, dy),
-          child: Text(emoji, style: const TextStyle(fontSize: 18)),
         );
       },
     );
