@@ -226,7 +226,7 @@ class AuthProvider extends ChangeNotifier {
         redirectTo: 'd1vai://login',
         inviteCode: inviteCode,
       );
-      final callbackUrl = Platform.isIOS
+      final callbackUrl = _shouldUseExternalBrowserForOAuth(provider)
           ? await _oauthCallbackService.authenticateWithExternalBrowser(
               url: startUri,
             )
@@ -269,6 +269,13 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       rethrow;
     }
+  }
+
+  bool _shouldUseExternalBrowserForOAuth(String provider) {
+    if (!Platform.isIOS) return false;
+    // Google's post-login handoff is more reliable through ASWebAuthenticationSession
+    // than Safari external-app redirects on iOS.
+    return provider != 'google';
   }
 
   Future<void> _completeLogin(String token) async {
