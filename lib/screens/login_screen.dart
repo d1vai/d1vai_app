@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart' as apple_sign_in;
 import 'package:d1vai_app/providers/auth_provider.dart';
 import 'package:d1vai_app/widgets/snackbar_helper.dart';
@@ -616,7 +616,7 @@ class _LoginScreenState extends State<LoginScreen> {
               opacity: _isLoading ? 0.72 : 1,
               child: apple_sign_in.SignInWithAppleButton(
                 onPressed: _loginWithApple,
-                text: 'Sign in with Apple',
+                text: 'Continue with Apple',
                 height: 44,
                 borderRadius: const BorderRadius.all(Radius.circular(8)),
                 style: isDark
@@ -734,6 +734,15 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  Widget _buildGitHubMark() {
+    return SvgPicture.asset(
+      'assets/auth/github-mark.svg',
+      width: 18,
+      height: 18,
+      colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+    );
+  }
+
   Widget _buildMobileOAuthSection() {
     final cs = Theme.of(context).colorScheme;
 
@@ -770,11 +779,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _buildOAuthButton(
           label: 'Continue with GitHub',
           onPressed: () => _loginWithOAuth('github'),
-          leading: Icon(
-            PhosphorIcons.githubLogo(),
-            size: 18,
-            color: Colors.white,
-          ),
+          leading: _buildGitHubMark(),
           backgroundColor: Colors.black,
           foregroundColor: Colors.white,
           side: const BorderSide(color: Colors.black),
