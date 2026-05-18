@@ -1,6 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart';
 
 import '../../../../services/d1vai_service.dart';
 import '../../../snackbar_helper.dart';
@@ -9,6 +9,7 @@ import 'code_tab_file_viewer_page.dart';
 import 'code_tab_models.dart';
 import 'code_tab_tree_panel.dart';
 import 'code_tab_types.dart';
+import 'code_workbench_controller.dart';
 
 class ProjectChatCodeTab extends StatefulWidget {
   final String projectId;
@@ -27,28 +28,26 @@ class ProjectChatCodeTab extends StatefulWidget {
 class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
   final D1vaiService _service = D1vaiService();
   final TextEditingController _searchController = TextEditingController();
-  final TextEditingController _editController = TextEditingController();
+  late final CodeWorkbenchController _workbench;
   late final VoidCallback _searchListener;
+  late final VoidCallback _workbenchListener;
 
   bool _loadingTree = false;
   String? _treeError;
   CodeTabFileNode? _root;
   final Set<String> _expandedDirs = <String>{''};
   List<CodeTabFlatNode> _flat = const [];
-
-  String? _selectedFilePath;
-  bool _loadingFile = false;
-  String? _fileError;
-  CodeTabFileContent? _fileContent;
-  bool _isEditing = false;
-  bool _hasUnsavedChanges = false;
-  bool _isSaving = false;
-  String _editOriginal = '';
   double _desktopTreePaneWidth = 320;
 
   @override
   void initState() {
     super.initState();
+    _workbench = CodeWorkbenchController(service: _service);
+    _workbenchListener = () {
+      if (!mounted) return;
+      setState(() {});
+    };
+    _workbench.addListener(_workbenchListener);
     _loadTree();
     _searchListener = () {
       if (!mounted) return;
@@ -61,7 +60,8 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
   void dispose() {
     _searchController.removeListener(_searchListener);
     _searchController.dispose();
-    _editController.dispose();
+    _workbench.removeListener(_workbenchListener);
+    _workbench.dispose();
     super.dispose();
   }
 
@@ -69,7 +69,9 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
       MediaQuery.of(context).size.width < 768;
 
   bool _isMacDesktop(BuildContext context) =>
-      !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS && !_isMobile(context);
+      !kIsWeb &&
+      defaultTargetPlatform == TargetPlatform.macOS &&
+      !_isMobile(context);
 
   Future<void> _loadTree() async {
     if (_loadingTree) return;
@@ -162,47 +164,6 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
     return out;
   }
 
-  Future<void> _openFile(String relPath) async {
-    if (_loadingFile && _selectedFilePath == relPath) return;
-
-    setState(() {
-      _selectedFilePath = relPath;
-      _loadingFile = true;
-      _fileError = null;
-      _fileContent = null;
-      _isEditing = false;
-      _hasUnsavedChanges = false;
-      _isSaving = false;
-      _editOriginal = '';
-      _editController.clear();
-    });
-
-    try {
-      final raw = await _service.getProjectStorageFile(
-        widget.projectId,
-        relPath,
-      );
-      final content = CodeTabFileContent.fromJson(raw);
-      if (!mounted) return;
-      setState(() {
-        _fileContent = content;
-        _editOriginal = content.content;
-        _editController.text = content.content;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _fileError = e.toString();
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _loadingFile = false;
-        });
-      }
-    }
-  }
-
   void _toggleDir(String dirPath) {
     setState(() {
       if (_expandedDirs.contains(dirPath)) {
@@ -214,94 +175,20 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
     _rebuildFlatList();
   }
 
-  void _enterEditMode() {
-    final file = _fileContent;
-    final path = _selectedFilePath;
-    if (path == null || path.isEmpty) return;
-    if (file == null || file.isBinary) return;
-    if (_isEditing) return;
-    setState(() {
-      _isEditing = true;
-      _hasUnsavedChanges = false;
-      _editOriginal = file.content;
-      _editController.text = file.content;
-    });
-  }
-
-  Future<void> _saveEdits() async {
-    final path = _selectedFilePath;
-    final file = _fileContent;
-    if (path == null || path.isEmpty) return;
-    if (file == null || file.isBinary) return;
-    if (!_isEditing || !_hasUnsavedChanges) return;
-    if (_isSaving) return;
-
-    setState(() {
-      _isSaving = true;
-    });
-
-    try {
-      final fileName = path.split('/').isEmpty ? 'file' : path.split('/').last;
-      final result = await _service.syncFileToGitHub(
-        widget.projectId,
-        filePath: path,
-        content: _editController.text,
-        commitMessage: 'feat: update $fileName',
-      );
-
-      final commit = result['commit'];
-      final commitSha = commit is Map<String, dynamic>
-          ? commit['sha']?.toString()
-          : null;
-      final shortSha = (commitSha != null && commitSha.length >= 7)
-          ? commitSha.substring(0, 7)
-          : null;
-
-      if (!mounted) return;
-      SnackBarHelper.showSuccess(
-        context,
-        title: 'Saved',
-        message: shortSha == null
-            ? 'Saved successfully'
-            : 'Saved (commit: $shortSha)',
-      );
-
-      setState(() {
-        _fileContent = CodeTabFileContent(
-          path: file.path,
-          content: _editController.text,
-          size: _editController.text.length,
-          isBinary: false,
-        );
-        _editOriginal = _editController.text;
-        _hasUnsavedChanges = false;
-        _isEditing = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      SnackBarHelper.showError(
-        context,
-        title: 'Save failed',
-        message: e.toString(),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSaving = false;
-        });
-      }
-    }
-  }
-
-  Future<bool> _confirmLeaveEdit() async {
-    if (!_isEditing || !_hasUnsavedChanges) return true;
+  Future<bool> _confirmActionForPath(
+    String path, {
+    required String title,
+    required String message,
+  }) async {
+    final editor = _workbench.editorForPath(path);
+    if (editor == null || !editor.hasUnsavedChanges) return true;
 
     final result = await showDialog<CodeTabEditLeaveAction>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Unsaved changes'),
-          content: const Text('Save changes before leaving?'),
+          title: Text(title),
+          content: Text(message),
           actions: [
             TextButton(
               onPressed: () =>
@@ -325,19 +212,69 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
 
     if (result == null || result == CodeTabEditLeaveAction.cancel) return false;
     if (result == CodeTabEditLeaveAction.discard) {
-      setState(() {
-        _isEditing = false;
-        _hasUnsavedChanges = false;
-        _editController.text = _editOriginal;
-      });
+      _workbench.discardChanges(path);
       return true;
     }
-    await _saveEdits();
-    return !_isEditing;
+
+    return await _saveEditor(path);
+  }
+
+  Future<bool> _saveEditor(String path) async {
+    try {
+      final commitSha = await _workbench.saveEditor(widget.projectId, path);
+      if (!mounted) return false;
+      final shortSha = (commitSha != null && commitSha.length >= 7)
+          ? commitSha.substring(0, 7)
+          : null;
+      SnackBarHelper.showSuccess(
+        context,
+        title: 'Saved',
+        message: shortSha == null
+            ? 'Saved successfully'
+            : 'Saved (commit: $shortSha)',
+      );
+      return true;
+    } catch (e) {
+      if (!mounted) return false;
+      SnackBarHelper.showError(
+        context,
+        title: 'Save failed',
+        message: e.toString(),
+      );
+      return false;
+    }
+  }
+
+  Future<void> _openDesktopFile(
+    String path, {
+    required bool preview,
+  }) async {
+    if (preview && !_workbench.canReplacePreviewWith(path)) {
+      final previewPath = _workbench.previewPath;
+      if (previewPath == null) return;
+      final ok = await _confirmActionForPath(
+        previewPath,
+        title: 'Unsaved changes',
+        message: 'Save changes before replacing the preview tab?',
+      );
+      if (!ok) return;
+    }
+
+    await _workbench.openFile(widget.projectId, path, preview: preview);
+  }
+
+  Future<void> _closeEditor(String path) async {
+    final ok = await _confirmActionForPath(
+      path,
+      title: 'Unsaved changes',
+      message: 'Save changes before closing this file?',
+    );
+    if (!ok) return;
+    _workbench.closeEditor(path);
   }
 
   void _askAboutSelected() {
-    final p = _selectedFilePath;
+    final p = _workbench.activePath;
     if (p == null || p.isEmpty) return;
     widget.onAsk(
       'Please review the file "$p". Summarize what it does and propose improvements. '
@@ -345,16 +282,32 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
     );
   }
 
+  Future<void> _copyActiveFile() async {
+    final active = _workbench.activeEditor;
+    final content = active?.content;
+    if (active == null || content == null) return;
+    await Clipboard.setData(ClipboardData(text: active.controller.text));
+    if (!mounted) return;
+    SnackBarHelper.showSuccess(
+      context,
+      title: 'Copied',
+      message: 'File content copied',
+      duration: const Duration(seconds: 2),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final mobile = _isMobile(context);
+    final compact = _isMacDesktop(context);
     final q = _searchController.text.trim();
+    final activeEditor = _workbench.activeEditor;
     final hasSelection =
-        _selectedFilePath != null && _selectedFilePath!.isNotEmpty;
+        _workbench.activePath != null && _workbench.activePath!.isNotEmpty;
 
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(compact ? 12 : 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -369,20 +322,24 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
                     isDense: true,
                     filled: true,
                     fillColor: theme.colorScheme.surfaceContainerHighest,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: compact ? 10 : 12,
+                    ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(compact ? 10 : 12),
                       borderSide: BorderSide(
                         color: theme.colorScheme.outlineVariant,
                       ),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(compact ? 10 : 12),
                       borderSide: BorderSide(
                         color: theme.colorScheme.outlineVariant,
                       ),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(compact ? 10 : 12),
                       borderSide: BorderSide(color: theme.colorScheme.primary),
                     ),
                     suffixIcon: q.isEmpty
@@ -395,19 +352,20 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: compact ? 8 : 10),
               IconButton(
                 onPressed: _loadingTree ? null : _loadTree,
                 icon: const Icon(Icons.refresh),
                 tooltip: 'Refresh',
               ),
-              const SizedBox(width: 6),
-              if (_isEditing) ...[
+              SizedBox(width: compact ? 2 : 6),
+              if (activeEditor != null && activeEditor.isEditing) ...[
                 IconButton(
-                  onPressed: _isSaving || !_hasUnsavedChanges
+                  onPressed:
+                      activeEditor.saving || !activeEditor.hasUnsavedChanges
                       ? null
-                      : _saveEdits,
-                  icon: _isSaving
+                      : () => _saveEditor(activeEditor.path),
+                  icon: activeEditor.saving
                       ? const SizedBox(
                           width: 18,
                           height: 18,
@@ -425,7 +383,7 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: compact ? 8 : 12),
           Expanded(
             child: mobile
                 ? CodeTabTreePanel(
@@ -433,10 +391,24 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
                     error: _treeError,
                     searchQuery: q,
                     list: _flat,
-                    selectedFilePath: _selectedFilePath,
+                    selectedFilePath: _workbench.selectedTreePath,
                     expandedDirs: _expandedDirs,
+                    compact: false,
                     onReload: _loadTree,
                     onToggleDir: _toggleDir,
+                    onPreviewFile: (p) async {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => CodeTabFileViewerPage(
+                            projectId: widget.projectId,
+                            filePath: p,
+                            onAsk: (prompt) {
+                              widget.onAsk(prompt);
+                            },
+                          ),
+                        ),
+                      );
+                    },
                     onOpenFile: (p) async {
                       await Navigator.of(context).push(
                         MaterialPageRoute<void>(
@@ -482,14 +454,16 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
                               error: _treeError,
                               searchQuery: q,
                               list: _flat,
-                              selectedFilePath: _selectedFilePath,
+                              selectedFilePath: _workbench.selectedTreePath,
                               expandedDirs: _expandedDirs,
+                              compact: compact,
                               onReload: _loadTree,
                               onToggleDir: _toggleDir,
+                              onPreviewFile: (p) async {
+                                await _openDesktopFile(p, preview: true);
+                              },
                               onOpenFile: (p) async {
-                                final ok = await _confirmLeaveEdit();
-                                if (!ok) return;
-                                await _openFile(p);
+                                await _openDesktopFile(p, preview: false);
                               },
                             ),
                           ),
@@ -497,8 +471,11 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
                               ? _CodePaneResizeHandle(
                                   onDragDelta: (delta) {
                                     setState(() {
-                                      _desktopTreePaneWidth = (_desktopTreePaneWidth + delta)
-                                          .clamp(minTreeWidth, maxTreeWidth);
+                                      _desktopTreePaneWidth =
+                                          (_desktopTreePaneWidth + delta).clamp(
+                                            minTreeWidth,
+                                            maxTreeWidth,
+                                          );
                                     });
                                   },
                                 )
@@ -506,48 +483,41 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
                           Expanded(
                             child: CodeTabFileViewer(
                               theme: theme,
-                              filePath: _selectedFilePath,
-                              loading: _loadingFile,
-                              error: _fileError,
-                              content: _fileContent,
-                              isEditing: _isEditing,
-                              editController: _editController,
-                              hasUnsavedChanges: _hasUnsavedChanges,
-                              saving: _isSaving,
-                              onEnterEdit: _enterEditMode,
-                              onCancelEdit: () async {
-                                final ok = await _confirmLeaveEdit();
-                                if (!ok) return;
-                                setState(() {
-                                  _isEditing = false;
-                                  _hasUnsavedChanges = false;
-                                  _editController.text = _editOriginal;
-                                });
+                              editors: _workbench.openEditors,
+                              activeEditor: activeEditor,
+                              compact: compact,
+                              onSelectTab: _workbench.activateEditor,
+                              onPinTab: _workbench.pinEditor,
+                              onCloseTab: (path) async {
+                                await _closeEditor(path);
                               },
-                              onChange: (v) {
-                                setState(() {
-                                  _hasUnsavedChanges = v != _editOriginal;
-                                });
-                              },
-                              onSave: _saveEdits,
-                              onCopy: _fileContent == null
+                              onEnterEdit: activeEditor == null
+                                  ? null
+                                  : () {
+                                      _workbench.enterEditMode(activeEditor.path);
+                                    },
+                              onCancelEdit: activeEditor == null
                                   ? null
                                   : () async {
-                                      final ctx = context;
-                                      await Clipboard.setData(
-                                        ClipboardData(text: _fileContent!.content),
+                                      final ok = await _confirmActionForPath(
+                                        activeEditor.path,
+                                        title: 'Unsaved changes',
+                                        message:
+                                            'Save changes before leaving edit mode?',
                                       );
-                                      if (!ctx.mounted) return;
-                                      SnackBarHelper.showSuccess(
-                                        ctx,
-                                        title: 'Copied',
-                                        message: 'File content copied',
-                                        duration: const Duration(seconds: 2),
-                                      );
+                                      if (!ok) return;
+                                      _workbench.cancelEdit(activeEditor.path);
                                     },
-                              onAsk: _selectedFilePath == null
+                              onChange: activeEditor == null
                                   ? null
-                                  : _askAboutSelected,
+                                  : (v) {
+                                      setState(() {});
+                                    },
+                              onSave: activeEditor == null
+                                  ? null
+                                  : () => _saveEditor(activeEditor.path),
+                              onCopy: activeEditor == null ? null : _copyActiveFile,
+                              onAsk: hasSelection ? _askAboutSelected : null,
                             ),
                           ),
                         ],

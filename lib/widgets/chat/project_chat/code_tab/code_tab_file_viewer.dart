@@ -3,19 +3,18 @@ import 'package:flutter/material.dart';
 import '../../file_preview.dart';
 import '../../file_preview_utils.dart';
 import 'code_tab_editor.dart';
-import 'code_tab_models.dart';
+import 'code_tab_editor_tabs.dart';
 import 'code_tab_views.dart';
+import 'code_workbench_controller.dart';
 
 class CodeTabFileViewer extends StatelessWidget {
   final ThemeData theme;
-  final String? filePath;
-  final bool loading;
-  final String? error;
-  final CodeTabFileContent? content;
-  final bool isEditing;
-  final TextEditingController editController;
-  final bool hasUnsavedChanges;
-  final bool saving;
+  final List<CodeWorkbenchEditorState> editors;
+  final CodeWorkbenchEditorState? activeEditor;
+  final bool compact;
+  final ValueChanged<String>? onSelectTab;
+  final ValueChanged<String>? onPinTab;
+  final ValueChanged<String>? onCloseTab;
   final VoidCallback? onEnterEdit;
   final VoidCallback? onCancelEdit;
   final ValueChanged<String>? onChange;
@@ -26,14 +25,12 @@ class CodeTabFileViewer extends StatelessWidget {
   const CodeTabFileViewer({
     super.key,
     required this.theme,
-    required this.filePath,
-    required this.loading,
-    required this.error,
-    required this.content,
-    required this.isEditing,
-    required this.editController,
-    required this.hasUnsavedChanges,
-    required this.saving,
+    required this.editors,
+    required this.activeEditor,
+    required this.compact,
+    required this.onSelectTab,
+    required this.onPinTab,
+    required this.onCloseTab,
     required this.onEnterEdit,
     required this.onCancelEdit,
     required this.onChange,
@@ -44,25 +41,44 @@ class CodeTabFileViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final p = filePath;
+    final editor = activeEditor;
+    final p = editor?.path;
+    final content = editor?.content;
+    final loading = editor?.loading == true;
+    final error = editor?.error;
+    final isEditing = editor?.isEditing == true;
+    final hasUnsavedChanges = editor?.hasUnsavedChanges == true;
+    final saving = editor?.saving == true;
+    final editController = editor?.controller;
     final canEditCurrent =
         p != null &&
         content != null &&
-        isEditableFilePreview(p, content!.isBinary);
+        isEditableFilePreview(p, content.isBinary);
     final canCopyCurrent =
         p != null &&
         content != null &&
-        isCopyableFilePreview(p, content!.isBinary);
+        isCopyableFilePreview(p, content.isBinary);
     return Container(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(14),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(compact ? 8 : 14),
         border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Column(
         children: [
+          CodeTabEditorTabs(
+            editors: editors,
+            activePath: editor?.path,
+            compact: compact,
+            onSelect: onSelectTab ?? (_) {},
+            onPin: onPinTab ?? (_) {},
+            onClose: onCloseTab ?? (_) {},
+          ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: EdgeInsets.symmetric(
+              horizontal: compact ? 10 : 12,
+              vertical: compact ? 8 : 10,
+            ),
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(color: theme.colorScheme.outlineVariant),
@@ -118,10 +134,10 @@ class CodeTabFileViewer extends StatelessWidget {
                 : error != null
                 ? CodeTabErrorView(
                     title: 'Failed to open file',
-                    message: error!,
+                    message: error,
                     onRetry: null,
                   )
-                : content == null
+                : content == null || editController == null
                 ? const CodeTabEmptyView(text: 'Pick a file from the tree')
                 : GestureDetector(
                     onDoubleTap: onEnterEdit,
@@ -131,12 +147,13 @@ class CodeTabFileViewer extends StatelessWidget {
                             onChanged: onChange,
                             onCancel: onCancelEdit,
                             dirty: hasUnsavedChanges,
+                            compact: compact,
                           )
                         : FilePreview(
-                            path: p ?? content!.path,
-                            content: content!.content,
-                            isBinary: content!.isBinary,
-                            sizeBytes: content!.size,
+                            path: p ?? content.path,
+                            content: content.content,
+                            isBinary: content.isBinary,
+                            sizeBytes: content.size,
                           ),
                   ),
           ),

@@ -5,6 +5,7 @@ class CodeTabEditor extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final VoidCallback? onCancel;
   final bool dirty;
+  final bool compact;
 
   const CodeTabEditor({
     super.key,
@@ -12,6 +13,7 @@ class CodeTabEditor extends StatelessWidget {
     required this.onChanged,
     required this.onCancel,
     required this.dirty,
+    this.compact = false,
   });
 
   @override
@@ -24,7 +26,10 @@ class CodeTabEditor extends StatelessWidget {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? 10 : 12,
+            vertical: compact ? 6 : 8,
+          ),
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(color: colorScheme.outlineVariant),
@@ -42,7 +47,7 @@ class CodeTabEditor extends StatelessWidget {
                 child: Text(
                   dirty ? 'Editing (unsaved changes)' : 'Editing',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: compact ? 11.5 : 12,
                     color: colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
@@ -59,7 +64,7 @@ class CodeTabEditor extends StatelessWidget {
             expands: true,
             decoration: InputDecoration(
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.all(12),
+              contentPadding: EdgeInsets.all(compact ? 10 : 12),
               filled: true,
               fillColor: Color.alphaBlend(
                 colorScheme.primary.withValues(alpha: isDark ? 0.06 : 0.04),

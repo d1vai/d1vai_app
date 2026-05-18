@@ -11,8 +11,10 @@ class CodeTabTreePanel extends StatelessWidget {
   final List<CodeTabFlatNode> list;
   final String? selectedFilePath;
   final Set<String> expandedDirs;
+  final bool compact;
   final VoidCallback onReload;
   final void Function(String dirPath) onToggleDir;
+  final Future<void> Function(String path) onPreviewFile;
   final Future<void> Function(String path) onOpenFile;
 
   const CodeTabTreePanel({
@@ -23,8 +25,10 @@ class CodeTabTreePanel extends StatelessWidget {
     required this.list,
     required this.selectedFilePath,
     required this.expandedDirs,
+    required this.compact,
     required this.onReload,
     required this.onToggleDir,
+    required this.onPreviewFile,
     required this.onOpenFile,
   });
 
@@ -35,6 +39,9 @@ class CodeTabTreePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final rowVertical = compact ? 6.0 : 10.0;
+    final rowHorizontal = compact ? 8.0 : 10.0;
+    final indentUnit = compact ? 8.0 : 10.0;
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
@@ -68,13 +75,18 @@ class CodeTabTreePanel extends StatelessWidget {
                       onToggleDir(path);
                       return;
                     }
-                    await onOpenFile(path);
+                    await onPreviewFile(path);
                   },
+                  onDoubleTap: isDir
+                      ? null
+                      : () async {
+                          await onOpenFile(path);
+                        },
                   borderRadius: BorderRadius.circular(10),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 10,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: rowHorizontal,
+                      vertical: rowVertical,
                     ),
                     decoration: BoxDecoration(
                       color: selected
@@ -91,12 +103,12 @@ class CodeTabTreePanel extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        SizedBox(width: 10.0 * item.depth),
+                        SizedBox(width: indentUnit * item.depth),
                         Icon(
                           isDir
                               ? (dirExpanded ? Icons.folder_open : Icons.folder)
                               : _iconForFile(context, item.node.name),
-                          size: 18,
+                          size: compact ? 16 : 18,
                           color: isDir
                               ? theme.colorScheme.secondary
                               : theme.colorScheme.onSurface.withValues(
@@ -110,7 +122,7 @@ class CodeTabTreePanel extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: compact ? 12 : 13,
                               fontWeight: selected
                                   ? FontWeight.w700
                                   : FontWeight.w500,
@@ -120,7 +132,7 @@ class CodeTabTreePanel extends StatelessWidget {
                         if (isDir)
                           Icon(
                             dirExpanded ? Icons.expand_less : Icons.expand_more,
-                            size: 18,
+                            size: compact ? 16 : 18,
                             color: theme.colorScheme.onSurface.withValues(
                               alpha: 0.55,
                             ),
@@ -128,7 +140,7 @@ class CodeTabTreePanel extends StatelessWidget {
                         else
                           Icon(
                             Icons.chevron_right,
-                            size: 18,
+                            size: compact ? 16 : 18,
                             color: theme.colorScheme.onSurface.withValues(
                               alpha: 0.45,
                             ),
