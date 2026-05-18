@@ -1,36 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_code_editor/flutter_code_editor.dart';
 
 import '../../../../services/d1vai_service.dart';
+import 'code_tab_editor_language.dart';
 import 'code_tab_models.dart';
 
 class CodeWorkbenchEditorState {
   final String path;
-  final TextEditingController controller;
+  final CodeController controller;
+  final VoidCallback controllerListener;
   CodeTabFileContent? content;
   String? error;
   bool loading;
   bool saving;
   bool isEditing;
   bool isPreview;
+  bool wrapEnabled;
   String originalContent;
+  bool lastKnownDirty;
 
   CodeWorkbenchEditorState({
     required this.path,
     required this.controller,
+    required this.controllerListener,
     required this.isPreview,
     this.content,
     this.error,
     this.loading = false,
     this.saving = false,
     this.isEditing = false,
+    this.wrapEnabled = false,
     this.originalContent = '',
+    this.lastKnownDirty = false,
   });
 
-  bool get hasUnsavedChanges => controller.text != originalContent;
+  String get currentText => controller.fullText;
+  bool get hasUnsavedChanges => currentText != originalContent;
   bool get isBinary => content?.isBinary == true;
 }
 
 enum CodeWorkbenchSourceMode { cloudOnly, localAttached, hybrid }
+
 enum CodeWorkbenchSyncState {
   idle,
   localSaved,
@@ -146,6 +156,8 @@ class CodeWorkbenchController extends ChangeNotifier {
     String projectId,
     String path, {
     bool preview = true,
+    bool wrapEnabled = false,
+    int tabSize = 2,
   }) async {
     selectTreePath(path);
 
@@ -170,12 +182,20 @@ class CodeWorkbenchController extends ChangeNotifier {
       _previewPath = path;
     }
 
-    final editor = CodeWorkbenchEditorState(
+    late final CodeWorkbenchEditorState editor;
+    final controller = CodeController(
+      language: languageModeForPath(path),
+      params: EditorParams(tabSpaces: tabSize),
+    );
+    editor = CodeWorkbenchEditorState(
       path: path,
-      controller: TextEditingController(),
+      controller: controller,
+      controllerListener: () => _handleControllerChanged(editor),
       isPreview: preview,
       loading: true,
+      wrapEnabled: wrapEnabled,
     );
+    controller.addListener(editor.controllerListener);
     _editorsByPath[path] = editor;
     _openPaths.add(path);
     _activePath = path;
@@ -188,7 +208,9 @@ class CodeWorkbenchController extends ChangeNotifier {
       editor.error = null;
       editor.loading = false;
       editor.originalContent = content.content;
-      editor.controller.text = content.content;
+      editor.controller.language = languageModeForPath(path);
+      editor.controller.fullText = content.content;
+      editor.lastKnownDirty = editor.hasUnsavedChanges;
     } catch (e) {
       editor.error = e.toString();
       editor.loading = false;
@@ -228,31 +250,46 @@ class CodeWorkbenchController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void toggleWrap(String path) {
+    final editor = _editorsByPath[path];
+    if (editor == null) return;
+    editor.wrapEnabled = !editor.wrapEnabled;
+    notifyListeners();
+  }
+
+  void applyEditorPreferences({
+    required bool defaultWrap,
+    required int tabSize,
+  }) {
+    for (final editor in _editorsByPath.values) {
+      editor.wrapEnabled = defaultWrap;
+      editor.controller.setTabSpaces(tabSize);
+    }
+    notifyListeners();
+  }
+
   void cancelEdit(String path) {
     final editor = _editorsByPath[path];
     if (editor == null) return;
-    editor.controller.text = editor.originalContent;
+    editor.controller.fullText = editor.originalContent;
     editor.isEditing = false;
     if (_syncedPaths.contains(path)) {
       _syncStates[path] = CodeWorkbenchSyncState.synced;
     } else {
       _syncStates[path] = CodeWorkbenchSyncState.idle;
     }
+    editor.lastKnownDirty = editor.hasUnsavedChanges;
     notifyListeners();
   }
 
   void updateText(String path, String text) {
     final editor = _editorsByPath[path];
     if (editor == null) return;
-    if (editor.controller.text == text) return;
-    editor.controller.value = editor.controller.value.copyWith(
-      text: text,
-      selection: TextSelection.collapsed(offset: text.length),
-      composing: TextRange.empty,
-    );
+    if (editor.currentText == text) return;
+    editor.controller.fullText = text;
+    editor.controller.selection = TextSelection.collapsed(offset: text.length);
     _syncedPaths.remove(path);
     _syncStates[path] = CodeWorkbenchSyncState.queued;
-    notifyListeners();
   }
 
   void setFileContent(
@@ -266,11 +303,13 @@ class CodeWorkbenchController extends ChangeNotifier {
     editor.error = null;
     editor.loading = false;
     editor.originalContent = content.isBinary ? '' : content.content;
-    editor.controller.text = content.isBinary ? '' : content.content;
+    editor.controller.language = languageModeForPath(path);
+    editor.controller.fullText = content.isBinary ? '' : content.content;
     editor.isEditing = keepEditing && !content.isBinary;
     _syncedPaths.add(path);
     _syncStates[path] = CodeWorkbenchSyncState.synced;
     _queuedAt.remove(path);
+    editor.lastKnownDirty = editor.hasUnsavedChanges;
     notifyListeners();
   }
 
@@ -307,7 +346,7 @@ class CodeWorkbenchController extends ChangeNotifier {
       final result = await _service.syncFileToGitHub(
         projectId,
         filePath: path,
-        content: editor.controller.text,
+        content: editor.currentText,
         commitMessage: 'feat: update $fileName',
       );
       final commit = result['commit'];
@@ -316,15 +355,16 @@ class CodeWorkbenchController extends ChangeNotifier {
           : null;
       editor.content = CodeTabFileContent(
         path: content.path,
-        content: editor.controller.text,
-        size: editor.controller.text.length,
+        content: editor.currentText,
+        size: editor.currentText.length,
         isBinary: false,
       );
-      editor.originalContent = editor.controller.text;
+      editor.originalContent = editor.currentText;
       editor.isEditing = false;
       _syncedPaths.add(path);
       _syncStates[path] = CodeWorkbenchSyncState.synced;
       _queuedAt.remove(path);
+      editor.lastKnownDirty = editor.hasUnsavedChanges;
       return commitSha;
     } catch (_) {
       _syncedPaths.remove(path);
@@ -340,11 +380,12 @@ class CodeWorkbenchController extends ChangeNotifier {
   void discardChanges(String path) {
     final editor = _editorsByPath[path];
     if (editor == null) return;
-    editor.controller.text = editor.originalContent;
+    editor.controller.fullText = editor.originalContent;
     editor.isEditing = false;
     _syncedPaths.add(path);
     _syncStates[path] = CodeWorkbenchSyncState.synced;
     _queuedAt.remove(path);
+    editor.lastKnownDirty = editor.hasUnsavedChanges;
     notifyListeners();
   }
 
@@ -373,7 +414,18 @@ class CodeWorkbenchController extends ChangeNotifier {
   void _removeEditor(String path) {
     final editor = _editorsByPath.remove(path);
     _openPaths.remove(path);
+    if (editor != null) {
+      editor.controller.removeListener(editor.controllerListener);
+    }
     editor?.controller.dispose();
+  }
+
+  void _handleControllerChanged(CodeWorkbenchEditorState editor) {
+    if (!_editorsByPath.containsKey(editor.path)) return;
+    final dirty = editor.hasUnsavedChanges;
+    if (dirty == editor.lastKnownDirty) return;
+    editor.lastKnownDirty = dirty;
+    notifyListeners();
   }
 
   @override

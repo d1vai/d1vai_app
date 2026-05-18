@@ -1,37 +1,40 @@
 # flutter-code-editor
 
-Third-party editor fork tracked for `d1vai` customization work.
+Vendored third-party editor source tracked inside this repository.
 
-## Repositories
+## Source Repositories
 
-- Upstream: `git@github.com:akvelon/flutter-code-editor.git`
-- Fork: `git@github.com:d1vai/flutter-code-editor.git`
-- Local clone: `third_party/flutter-code-editor`
+- Fork repo: `git@github.com:d1vai/flutter-code-editor.git`
+- Original source repo: `git@github.com:akvelon/flutter-code-editor.git`
+- Vendored path in this app: `third_party/flutter-code-editor`
 
-## Current Local State
+## Tracking Model
 
-- Default branch: `main`
-- Checked out commit: `bad3c52`
-- Upstream remote configured locally as `upstream`
+- The source under `third_party/flutter-code-editor` is committed directly in `d1vai_app`.
+- This is intentionally not a nested Git repository.
+- When we patch vendored editor code, the app repo and the fork repo should both be updated.
 
-## Customization Policy
+## Update Rules
 
-- Keep upstream history intact in the fork.
-- Put `d1vai`-specific patches on dedicated branches or clearly labeled commits.
-- Record every behavior change here before shipping it into the app.
-- Prefer consuming the fork through a git dependency or a path dependency during active development.
+1. Make editor changes under `third_party/flutter-code-editor`.
+2. Commit the vendored changes in `d1vai_app`.
+3. Push the same vendored content back to `d1vai/flutter-code-editor`.
+4. Record the reason for the patch here.
 
-## Suggested Workflow
+## Sync Command
 
-1. Fetch upstream in `third_party/flutter-code-editor`.
-2. Merge or rebase from `upstream/main` into the fork branch you are using.
-3. Implement `d1vai` changes in the fork repo, not in copied source under `lib/`.
-4. Update this file with:
-   - changed files
-   - purpose of the patch
-   - upstreamability decision
-   - app integration status
+Use:
 
-## Planned Customization Log
+```bash
+tool/sync_flutter_code_editor_fork.sh "your commit message"
+```
 
-No `d1vai`-specific patches recorded yet.
+This script clones `d1vai/flutter-code-editor`, copies the vendored source from this app repo, commits if needed, and pushes to the fork.
+
+## Patch Log
+
+### 2026-05-19
+
+- Switched `d1vai_app` code editor integration from plain `TextField` to vendored `flutter_code_editor`.
+- Added local path dependency on `third_party/flutter-code-editor`.
+- No fork-only patch has been applied to the vendored package yet.

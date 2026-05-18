@@ -18,12 +18,14 @@ class SettingsProfileTab extends StatelessWidget {
   const SettingsProfileTab({
     super.key,
     required this.onShowThemeDialog,
+    required this.onShowEditorPreferencesDialog,
     required this.onShowBindEmailDialog,
     required this.onShowResetPasswordDialog,
     required this.onShowAboutDialog,
   });
 
   final VoidCallback onShowThemeDialog;
+  final VoidCallback onShowEditorPreferencesDialog;
   final VoidCallback onShowBindEmailDialog;
   final VoidCallback onShowResetPasswordDialog;
   final VoidCallback onShowAboutDialog;
@@ -100,6 +102,28 @@ class SettingsProfileTab extends StatelessWidget {
                       color: AppColors.textSecondaryLight,
                     ),
                     onTap: onShowThemeDialog,
+                  ),
+                  Divider(
+                    height: 1,
+                    color: isDark
+                        ? AppColors.borderSubtleDark
+                        : AppColors.borderLight,
+                  ),
+                  ListTile(
+                    leading: const Icon(
+                      Icons.code,
+                      color: AppColors.secondaryBrand,
+                    ),
+                    title: const Text('Code Editor'),
+                    subtitle: const Text(
+                      'Theme, font size, rulers, and workspace editing feel',
+                    ),
+                    trailing: const Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: AppColors.textSecondaryLight,
+                    ),
+                    onTap: onShowEditorPreferencesDialog,
                   ),
                   Divider(
                     height: 1,

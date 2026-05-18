@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../services/d1vai_service.dart';
 import '../../../../services/local_workspace_service.dart';
+import '../../../../providers/editor_preferences_provider.dart';
 import '../../../snackbar_helper.dart';
 import 'code_tab_file_viewer.dart';
 import 'code_tab_file_viewer_page.dart';
@@ -30,11 +32,13 @@ class ProjectChatCodeTab extends StatefulWidget {
 
 class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
   final D1vaiService _service = D1vaiService();
-  final LocalWorkspaceService _localWorkspaceService = const LocalWorkspaceService();
+  final LocalWorkspaceService _localWorkspaceService =
+      const LocalWorkspaceService();
   final TextEditingController _searchController = TextEditingController();
   late final CodeWorkbenchController _workbench;
   late final VoidCallback _searchListener;
   late final VoidCallback _workbenchListener;
+  EditorPreferencesProvider? _editorPreferences;
 
   bool _loadingTree = false;
   String? _treeError;
@@ -69,9 +73,30 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
     _syncTimers.clear();
     _searchController.removeListener(_searchListener);
     _searchController.dispose();
+    _editorPreferences?.removeListener(_handleEditorPreferencesChanged);
     _workbench.removeListener(_workbenchListener);
     _workbench.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final next = context.read<EditorPreferencesProvider>();
+    if (identical(_editorPreferences, next)) return;
+    _editorPreferences?.removeListener(_handleEditorPreferencesChanged);
+    _editorPreferences = next;
+    _editorPreferences?.addListener(_handleEditorPreferencesChanged);
+    _handleEditorPreferencesChanged();
+  }
+
+  void _handleEditorPreferencesChanged() {
+    final prefs = _editorPreferences;
+    if (prefs == null) return;
+    _workbench.applyEditorPreferences(
+      defaultWrap: prefs.defaultWrap,
+      tabSize: prefs.tabSize,
+    );
   }
 
   bool _isMobile(BuildContext context) =>
@@ -95,7 +120,9 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
     });
     try {
       final raw = _workbench.hasLocalWorkspace
-          ? (await _localWorkspaceService.readTree(_workbench.localRootPath!)).root
+          ? (await _localWorkspaceService.readTree(
+              _workbench.localRootPath!,
+            )).root
           : await _service.getProjectStorageStructure(widget.projectId);
       if (!mounted) return;
       final node = CodeTabFileNode.fromJson(raw);
@@ -240,7 +267,7 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
         await _localWorkspaceService.writeFile(
           _workbench.localRootPath!,
           path,
-          active.controller.text,
+          active.currentText,
         );
         _scheduleDeferredGitHubSync(path);
         _workbench.markPathLocalSaved(path);
@@ -282,7 +309,7 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
       if (!mounted) return;
       final editor = _workbench.editorForPath(path);
       if (editor == null) return;
-      if (editor.controller.text != editor.originalContent) {
+      if (editor.currentText != editor.originalContent) {
         _workbench.markPathQueued(path);
         _scheduleDeferredGitHubSync(path);
         return;
@@ -300,7 +327,7 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
       final result = await _service.syncFileToGitHub(
         widget.projectId,
         filePath: path,
-        content: editor.controller.text,
+        content: editor.currentText,
         commitMessage: 'feat: update $fileName',
       );
       final commit = result['commit'];
@@ -337,40 +364,40 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
     final theme = Theme.of(context);
     final (icon, label, color) = switch (state) {
       CodeWorkbenchSyncState.localSaved => (
-          Icons.save_outlined,
-          'Saved locally',
-          theme.colorScheme.primary,
-        ),
+        Icons.save_outlined,
+        'Saved locally',
+        theme.colorScheme.primary,
+      ),
       CodeWorkbenchSyncState.queued => (
-          Icons.schedule,
-          'Queued to sync',
-          Colors.orange,
-        ),
+        Icons.schedule,
+        'Queued to sync',
+        Colors.orange,
+      ),
       CodeWorkbenchSyncState.syncingGitHub => (
-          Icons.sync,
-          'Syncing to GitHub',
-          theme.colorScheme.tertiary,
-        ),
+        Icons.sync,
+        'Syncing to GitHub',
+        theme.colorScheme.tertiary,
+      ),
       CodeWorkbenchSyncState.syncingCloud => (
-          Icons.cloud_sync_outlined,
-          'Syncing cloud',
-          theme.colorScheme.secondary,
-        ),
+        Icons.cloud_sync_outlined,
+        'Syncing cloud',
+        theme.colorScheme.secondary,
+      ),
       CodeWorkbenchSyncState.synced => (
-          Icons.check_circle_outline,
-          'Synced',
-          Colors.green,
-        ),
+        Icons.check_circle_outline,
+        'Synced',
+        Colors.green,
+      ),
       CodeWorkbenchSyncState.failed => (
-          Icons.error_outline,
-          'Sync failed',
-          Colors.redAccent,
-        ),
+        Icons.error_outline,
+        'Sync failed',
+        Colors.redAccent,
+      ),
       CodeWorkbenchSyncState.idle => (
-          Icons.cloud_outlined,
-          _workbench.hasLocalWorkspace ? 'Local workspace' : 'Cloud workspace',
-          theme.colorScheme.onSurfaceVariant,
-        ),
+        Icons.cloud_outlined,
+        _workbench.hasLocalWorkspace ? 'Local workspace' : 'Cloud workspace',
+        theme.colorScheme.onSurfaceVariant,
+      ),
     };
 
     return Container(
@@ -398,10 +425,8 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
     );
   }
 
-  Future<void> _openDesktopFile(
-    String path, {
-    required bool preview,
-  }) async {
+  Future<void> _openDesktopFile(String path, {required bool preview}) async {
+    final prefs = context.read<EditorPreferencesProvider>();
     if (preview && !_workbench.canReplacePreviewWith(path)) {
       final previewPath = _workbench.previewPath;
       if (previewPath == null) return;
@@ -416,7 +441,13 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
     if (_workbench.hasLocalWorkspace && _workbench.localRootPath != null) {
       final existing = _workbench.editorForPath(path);
       if (existing == null) {
-        await _workbench.openFile(widget.projectId, path, preview: preview);
+        await _workbench.openFile(
+          widget.projectId,
+          path,
+          preview: preview,
+          wrapEnabled: prefs.defaultWrap,
+          tabSize: prefs.tabSize,
+        );
         final raw = await _localWorkspaceService.readFile(
           _workbench.localRootPath!,
           path,
@@ -437,7 +468,13 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
       }
     }
 
-    await _workbench.openFile(widget.projectId, path, preview: preview);
+    await _workbench.openFile(
+      widget.projectId,
+      path,
+      preview: preview,
+      wrapEnabled: prefs.defaultWrap,
+      tabSize: prefs.tabSize,
+    );
   }
 
   Future<void> _closeEditor(String path) async {
@@ -463,7 +500,7 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
     final active = _workbench.activeEditor;
     final content = active?.content;
     if (active == null || content == null) return;
-    await Clipboard.setData(ClipboardData(text: active.controller.text));
+    await Clipboard.setData(ClipboardData(text: active.currentText));
     if (!mounted) return;
     SnackBarHelper.showSuccess(
       context,
@@ -544,18 +581,71 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
               SizedBox(width: compact ? 2 : 6),
               if (activeEditor != null && activeEditor.isEditing) ...[
                 IconButton(
-                  onPressed:
-                      activeEditor.saving || !activeEditor.hasUnsavedChanges
-                      ? null
-                      : () => _saveEditor(activeEditor.path),
-                  icon: activeEditor.saving
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.save),
-                  tooltip: 'Save',
+                  onPressed: activeEditor.controller.showSearch,
+                  icon: const Icon(Icons.search),
+                  tooltip: 'Find',
+                ),
+                const SizedBox(width: 2),
+                IconButton(
+                  onPressed: () => _workbench.toggleWrap(activeEditor.path),
+                  icon: Icon(
+                    activeEditor.wrapEnabled ? Icons.wrap_text : Icons.code,
+                  ),
+                  tooltip: activeEditor.wrapEnabled
+                      ? 'Disable wrap'
+                      : 'Enable wrap',
+                ),
+                const SizedBox(width: 2),
+                if (activeEditor.controller.code.foldableBlocks.isNotEmpty)
+                  IconButton(
+                    onPressed: activeEditor.controller.foldAll,
+                    icon: const Icon(Icons.unfold_less),
+                    tooltip: 'Fold all',
+                  ),
+                if (activeEditor.controller.code.foldableBlocks.isNotEmpty)
+                  const SizedBox(width: 2),
+                if (activeEditor.controller.code.foldableBlocks.isNotEmpty)
+                  IconButton(
+                    onPressed: activeEditor.controller.unfoldAll,
+                    icon: const Icon(Icons.unfold_more),
+                    tooltip: 'Unfold all',
+                  ),
+                if (activeEditor.controller.code.foldableBlocks.isNotEmpty)
+                  const SizedBox(width: 2),
+                if (activeEditor.controller.code.foldableBlocks.isNotEmpty)
+                  IconButton(
+                    onPressed: activeEditor.controller.foldImports,
+                    icon: const Icon(Icons.vertical_align_top),
+                    tooltip: 'Fold imports',
+                  ),
+                if (activeEditor.controller.code.foldableBlocks.isNotEmpty)
+                  const SizedBox(width: 2),
+                if (activeEditor.controller.code.foldableBlocks.isNotEmpty)
+                  IconButton(
+                    onPressed: activeEditor.controller.foldCommentAtLineZero,
+                    icon: const Icon(Icons.notes),
+                    tooltip: 'Fold header comment',
+                  ),
+                if (activeEditor.controller.code.foldableBlocks.isNotEmpty)
+                  const SizedBox(width: 2),
+                ListenableBuilder(
+                  listenable: activeEditor.controller,
+                  builder: (context, _) {
+                    return IconButton(
+                      onPressed:
+                          activeEditor.saving || !activeEditor.hasUnsavedChanges
+                          ? null
+                          : () => _saveEditor(activeEditor.path),
+                      icon: activeEditor.saving
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.save),
+                      tooltip: 'Save',
+                    );
+                  },
                 ),
                 const SizedBox(width: 2),
               ],
@@ -669,7 +759,7 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
                                 )
                               : const SizedBox(width: 12),
                           Expanded(
-      child: CodeTabFileViewer(
+                            child: CodeTabFileViewer(
                               theme: theme,
                               editors: _workbench.openEditors,
                               activeEditor: activeEditor,
@@ -685,7 +775,9 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
                               onEnterEdit: activeEditor == null
                                   ? null
                                   : () {
-                                      _workbench.enterEditMode(activeEditor.path);
+                                      _workbench.enterEditMode(
+                                        activeEditor.path,
+                                      );
                                     },
                               onCancelEdit: activeEditor == null
                                   ? null
@@ -699,16 +791,18 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
                                       if (!ok) return;
                                       _workbench.cancelEdit(activeEditor.path);
                                     },
-                              onChange: activeEditor == null
+                              onToggleWrap: activeEditor == null
                                   ? null
-                                  : (v) {
-                                      setState(() {});
-                                    },
+                                  : () => _workbench.toggleWrap(
+                                      activeEditor.path,
+                                    ),
+                              onChange: null,
                               onSave: activeEditor == null
                                   ? null
                                   : () => _saveEditor(activeEditor.path),
-                              onCopy: activeEditor == null ? null : _copyActiveFile,
-                              onAsk: hasSelection ? _askAboutSelected : null,
+                              onCopy: activeEditor == null
+                                  ? null
+                                  : _copyActiveFile,
                             ),
                           ),
                         ],
@@ -739,7 +833,11 @@ class _CodePaneResizeHandleState extends State<_CodePaneResizeHandle> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final accent = theme.colorScheme.primary.withValues(
-      alpha: _dragging ? 0.90 : _hovering ? 0.55 : 0.24,
+      alpha: _dragging
+          ? 0.90
+          : _hovering
+          ? 0.55
+          : 0.24,
     );
 
     return MouseRegion(

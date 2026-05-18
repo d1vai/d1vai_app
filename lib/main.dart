@@ -8,6 +8,7 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'dart:async';
 import 'core/api_client.dart';
 import 'providers/auth_provider.dart';
+import 'providers/editor_preferences_provider.dart';
 import 'providers/locale_provider.dart';
 import 'providers/project_provider.dart';
 import 'providers/profile_provider.dart';
@@ -47,6 +48,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => ProjectProvider()),
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => EditorPreferencesProvider()),
         ChangeNotifierProvider.value(value: _macosMenuController),
         ChangeNotifierProvider.value(value: _macosOpenService),
         ChangeNotifierProvider.value(value: _macosFolderImportService),
@@ -133,7 +135,8 @@ class MyApp extends StatelessWidget {
               members: <PlatformMenuItem>[
                 PlatformMenuItem(
                   label: 'Clear Recent Projects',
-                  onSelected: () => unawaited(menuController.clearRecentProjects()),
+                  onSelected: () =>
+                      unawaited(menuController.clearRecentProjects()),
                 ),
               ],
             ),
@@ -151,10 +154,7 @@ class MyApp extends StatelessWidget {
             ),
             onSelected: () => _appRouter.push('/projects?create=1'),
           ),
-          PlatformMenu(
-            label: 'Recent Projects',
-            menus: recentProjectMenuItems,
-          ),
+          PlatformMenu(label: 'Recent Projects', menus: recentProjectMenuItems),
           PlatformMenuItemGroup(
             members: <PlatformMenuItem>[
               PlatformMenuItem(
@@ -165,7 +165,8 @@ class MyApp extends StatelessWidget {
                   shift: true,
                 ),
                 onSelected: () async {
-                  final ctx = _appRouter.routerDelegate.navigatorKey.currentContext;
+                  final ctx =
+                      _appRouter.routerDelegate.navigatorKey.currentContext;
                   if (ctx == null) return;
                   await Provider.of<ProjectProvider>(
                     ctx,

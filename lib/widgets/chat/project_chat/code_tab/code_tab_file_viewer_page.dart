@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_code_editor/flutter_code_editor.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../services/d1vai_service.dart';
+import '../../../../providers/editor_preferences_provider.dart';
 import '../../file_preview.dart';
 import '../../file_preview_utils.dart';
 import '../../../snackbar_helper.dart';
-import 'code_tab_editor.dart';
+import 'code_tab_editing_pane.dart';
+import 'code_tab_editor_language.dart';
 import 'code_tab_models.dart';
 import 'code_tab_types.dart';
 import 'code_tab_views.dart';
@@ -35,19 +39,37 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
   bool _isEditing = false;
   bool _hasUnsavedChanges = false;
   bool _isSaving = false;
+  bool _wrapEnabled = false;
   String _editOriginal = '';
-  final TextEditingController _editController = TextEditingController();
+  late final CodeController _editController;
 
   @override
   void initState() {
     super.initState();
+    final prefs = context.read<EditorPreferencesProvider>();
+    _editController = CodeController(
+      language: languageModeForPath(widget.filePath),
+      params: EditorParams(tabSpaces: prefs.tabSize),
+    );
+    _wrapEnabled = prefs.defaultWrap;
+    _editController.addListener(_handleEditorChanged);
     _load();
   }
 
   @override
   void dispose() {
+    _editController.removeListener(_handleEditorChanged);
     _editController.dispose();
     super.dispose();
+  }
+
+  void _handleEditorChanged() {
+    final dirty = _editController.fullText != _editOriginal;
+    if (dirty == _hasUnsavedChanges) return;
+    if (!mounted) return;
+    setState(() {
+      _hasUnsavedChanges = dirty;
+    });
   }
 
   Future<void> _load() async {
@@ -60,7 +82,7 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
       _hasUnsavedChanges = false;
       _isSaving = false;
       _editOriginal = '';
-      _editController.clear();
+      _editController.fullText = '';
     });
     try {
       final raw = await _service.getProjectStorageFile(
@@ -71,7 +93,9 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
       setState(() {
         _content = CodeTabFileContent.fromJson(raw);
         _editOriginal = _content!.content;
-        _editController.text = _content!.content;
+        _editController.language = languageModeForPath(widget.filePath);
+        _editController.fullText = _content!.content;
+        _hasUnsavedChanges = false;
       });
     } catch (e) {
       if (!mounted) return;
@@ -95,9 +119,10 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
     if (_isEditing) return;
     setState(() {
       _isEditing = true;
-      _hasUnsavedChanges = false;
       _editOriginal = c.content;
-      _editController.text = c.content;
+      _editController.language = languageModeForPath(widget.filePath);
+      _editController.fullText = c.content;
+      _hasUnsavedChanges = false;
     });
   }
 
@@ -119,7 +144,7 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
       final result = await _service.syncFileToGitHub(
         widget.projectId,
         filePath: widget.filePath,
-        content: _editController.text,
+        content: _editController.fullText,
         commitMessage: 'feat: update $fileName',
       );
 
@@ -143,11 +168,11 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
       setState(() {
         _content = CodeTabFileContent(
           path: c.path,
-          content: _editController.text,
-          size: _editController.text.length,
+          content: _editController.fullText,
+          size: _editController.fullText.length,
           isBinary: false,
         );
-        _editOriginal = _editController.text;
+        _editOriginal = _editController.fullText;
         _hasUnsavedChanges = false;
         _isEditing = false;
       });
@@ -200,7 +225,7 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
       setState(() {
         _isEditing = false;
         _hasUnsavedChanges = false;
-        _editController.text = _editOriginal;
+        _editController.fullText = _editOriginal;
       });
       return true;
     }
@@ -210,6 +235,10 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
 
   @override
   Widget build(BuildContext context) {
+    final editorPrefs = context.watch<EditorPreferencesProvider>();
+    if (_editController.params.tabSpaces != editorPrefs.tabSize) {
+      _editController.setTabSpaces(editorPrefs.tabSize);
+    }
     final theme = Theme.of(context);
     final content = _content;
     final isSqlFile = widget.filePath.toLowerCase().trim().endsWith('.sql');
@@ -267,10 +296,56 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
                   : const Icon(Icons.edit),
               tooltip: _isEditing ? 'Save' : 'Edit',
             ),
+          if (_isEditing)
+            IconButton(
+              onPressed: _editController.showSearch,
+              icon: const Icon(Icons.search),
+              tooltip: 'Find',
+            ),
+          if (_isEditing)
+            IconButton(
+              onPressed: () {
+                setState(() {
+                  _wrapEnabled = !_wrapEnabled;
+                });
+              },
+              icon: Icon(_wrapEnabled ? Icons.wrap_text : Icons.code),
+              tooltip: _wrapEnabled ? 'Disable wrap' : 'Enable wrap',
+            ),
+          if (_isEditing && _editController.code.foldableBlocks.isNotEmpty)
+            IconButton(
+              onPressed: _editController.foldAll,
+              icon: const Icon(Icons.unfold_less),
+              tooltip: 'Fold all',
+            ),
+          if (_isEditing && _editController.code.foldableBlocks.isNotEmpty)
+            IconButton(
+              onPressed: _editController.unfoldAll,
+              icon: const Icon(Icons.unfold_more),
+              tooltip: 'Unfold all',
+            ),
+          if (_isEditing && _editController.code.foldableBlocks.isNotEmpty)
+            IconButton(
+              onPressed: _editController.foldImports,
+              icon: const Icon(Icons.vertical_align_top),
+              tooltip: 'Fold imports',
+            ),
+          if (_isEditing && _editController.code.foldableBlocks.isNotEmpty)
+            IconButton(
+              onPressed: _editController.foldCommentAtLineZero,
+              icon: const Icon(Icons.notes),
+              tooltip: 'Fold header comment',
+            ),
           if (canCopyCurrent)
             IconButton(
               onPressed: () async {
-                await Clipboard.setData(ClipboardData(text: content.content));
+                await Clipboard.setData(
+                  ClipboardData(
+                    text: _isEditing
+                        ? _editController.fullText
+                        : content.content,
+                  ),
+                );
                 if (!context.mounted) return;
                 SnackBarHelper.showSuccess(
                   context,
@@ -314,23 +389,29 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
                 : GestureDetector(
                     onDoubleTap: _enterEdit,
                     child: _isEditing
-                        ? CodeTabEditor(
+                        ? CodeTabEditingPane(
                             controller: _editController,
-                            onChanged: (v) {
-                              setState(() {
-                                _hasUnsavedChanges = v != _editOriginal;
-                              });
-                            },
+                            originalText: _editOriginal,
+                            languageLabel: languageLabelForPath(
+                              widget.filePath,
+                            ),
+                            wrapEnabled: _wrapEnabled,
+                            onChanged: null,
                             onCancel: () async {
                               final ok = await _confirmLeave();
                               if (!ok) return;
                               setState(() {
                                 _isEditing = false;
                                 _hasUnsavedChanges = false;
-                                _editController.text = _editOriginal;
+                                _editController.fullText = _editOriginal;
                               });
                             },
-                            dirty: _hasUnsavedChanges,
+                            onToggleWrap: () {
+                              setState(() {
+                                _wrapEnabled = !_wrapEnabled;
+                              });
+                            },
+                            compact: false,
                           )
                         : FilePreview(
                             path: widget.filePath,

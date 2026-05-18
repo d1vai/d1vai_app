@@ -63,7 +63,10 @@ dependencies:
   share_plus: ^10.0.0
   path_provider: ^2.1.5
   crypto: ^3.0.7
+  flutter_code_editor:
+    path: third_party/flutter-code-editor
   flutter_highlight: ^0.7.0
+  highlight: ^0.7.0
   file_picker: ^10.3.2
   desktop_drop: ^0.7.1
   sign_in_with_apple: ^6.1.4
