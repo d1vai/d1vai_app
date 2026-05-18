@@ -381,9 +381,11 @@ packages:
   flutter_monaco:
     dependency: "direct main"
     description:
-      path: "third_party/flutter_monaco"
-      relative: true
-    source: path
+      path: "."
+      ref: main
+      resolved-ref: "9d6550a748814bcf49e92c45a8456fa85f199a69"
+      url: "git@github.com:d1vai/flutter_monaco.git"
+    source: git
     version: "1.6.0"
   flutter_native_splash:
     dependency: "direct main"

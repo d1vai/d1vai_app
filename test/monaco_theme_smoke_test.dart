@@ -5,7 +5,7 @@ import 'package:d1vai_app/widgets/chat/project_chat/code_tab/code_editor_theme_p
 import 'package:flutter_monaco/flutter_monaco.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../third_party/flutter_monaco/test/fakes/fake_platform_webview_controller.dart';
+import 'fakes/fake_monaco_platform_webview_controller.dart';
 
 void main() {
   test('all app editor presets produce json-encodable monaco themes', () {
@@ -24,7 +24,7 @@ void main() {
   test(
     'all app editor presets can be registered through monaco controller',
     () async {
-      final webview = FakePlatformWebViewController();
+      final webview = FakeMonacoPlatformWebViewController();
       final controller = await MonacoController.createForTesting(
         webViewController: webview,
         markReady: true,
