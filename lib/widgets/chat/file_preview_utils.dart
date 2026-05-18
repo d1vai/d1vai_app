@@ -44,6 +44,11 @@ bool isVideoPreview(String path) {
   return _videoExtensions.any((suffix) => lower.endsWith('.$suffix'));
 }
 
+bool isAudioPreview(String path) {
+  final lower = path.toLowerCase();
+  return _audioExtensions.any((suffix) => lower.endsWith('.$suffix'));
+}
+
 String? mimeTypeForPath(String path) {
   final lower = path.toLowerCase();
   for (final entry in _mimeTypes.entries) {
@@ -88,6 +93,17 @@ const Set<String> _videoExtensions = <String>{
   'wmv',
 };
 
+const Set<String> _audioExtensions = <String>{
+  'mp3',
+  'wav',
+  'm4a',
+  'flac',
+  'aac',
+  'ogg',
+  'opus',
+  'weba',
+};
+
 const Map<String, String> _mimeTypes = <String, String>{
   'png': 'image/png',
   'jpg': 'image/jpeg',
@@ -110,6 +126,14 @@ const Map<String, String> _mimeTypes = <String, String>{
   'mpeg': 'video/mpeg',
   'mpg': 'video/mpeg',
   'wmv': 'video/x-ms-wmv',
+  'mp3': 'audio/mpeg',
+  'wav': 'audio/wav',
+  'm4a': 'audio/mp4',
+  'flac': 'audio/flac',
+  'aac': 'audio/aac',
+  'ogg': 'audio/ogg',
+  'opus': 'audio/opus',
+  'weba': 'audio/webm',
 };
 
 extension on List<String> {

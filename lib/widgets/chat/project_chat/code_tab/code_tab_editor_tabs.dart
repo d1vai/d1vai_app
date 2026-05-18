@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../file_type_visual.dart';
 import 'code_workbench_controller.dart';
 
 class CodeTabEditorTabs extends StatelessWidget {
@@ -68,7 +69,6 @@ class CodeTabEditorTabs extends StatelessWidget {
                       ? theme.colorScheme.surface
                       : theme.colorScheme.surfaceContainerLowest,
                   border: Border(
-                    right: BorderSide(color: theme.colorScheme.outlineVariant),
                     top: active
                         ? BorderSide(color: theme.colorScheme.primary, width: 2)
                         : BorderSide.none,
@@ -91,7 +91,14 @@ class CodeTabEditorTabs extends StatelessWidget {
                       compact: compact,
                       color: theme.colorScheme.primary,
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 7),
+                    buildFileTypeIcon(
+                      context,
+                      editor.path,
+                      size: compact ? 14 : 15,
+                      fallbackColor: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 7),
                     Expanded(
                       child: Text(
                         name,
@@ -120,7 +127,7 @@ class CodeTabEditorTabs extends StatelessWidget {
                         ),
                       ),
                     InkWell(
-                      borderRadius: BorderRadius.circular(999),
+                      onHover: (_) {},
                       onTap: () => onClose(editor.path),
                       child: Padding(
                         padding: EdgeInsets.all(compact ? 2 : 3),

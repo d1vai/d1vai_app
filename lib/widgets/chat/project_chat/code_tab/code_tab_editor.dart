@@ -20,6 +20,9 @@ class CodeTabEditor extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final tint = dirty ? colorScheme.tertiary : colorScheme.primary;
+    final text = controller.text;
+    final lineCount = '\n'.allMatches(text).length + 1;
+    final charCount = text.characters.length;
 
     return Column(
       children: [
@@ -30,9 +33,6 @@ class CodeTabEditor extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             color: colorScheme.surface,
-            border: Border(
-              bottom: BorderSide(color: colorScheme.outlineVariant),
-            ),
           ),
           child: Row(
             children: [
@@ -79,10 +79,50 @@ class CodeTabEditor extends StatelessWidget {
             ),
             style: const TextStyle(
               fontFamily: 'monospace',
-              fontSize: 12.5,
+              fontSize: 12.25,
               height: 1.3,
             ),
           ),
+        ),
+        Container(
+          height: compact ? 24 : 26,
+          padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 12),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerLowest,
+          ),
+          child: Row(
+            children: [
+              Text(
+                dirty ? 'LOCAL CHANGES' : 'EDITOR',
+                style: TextStyle(
+                  fontSize: compact ? 10 : 10.5,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
+                  color: tint,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '$lineCount lines',
+                style: TextStyle(
+                  fontSize: compact ? 10 : 10.5,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                '$charCount chars',
+                style: TextStyle(
+                  fontSize: compact ? 10 : 10.5,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          height: 2,
+          color: dirty ? tint.withValues(alpha: 0.85) : colorScheme.primary.withValues(alpha: 0.28),
         ),
       ],
     );

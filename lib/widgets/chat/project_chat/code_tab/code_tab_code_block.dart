@@ -66,6 +66,8 @@ class CodeTabCodeBlock extends StatelessWidget {
     final theme = Theme.of(context);
     final highlightLanguage = _languageForPath(filePath);
     final isDark = theme.brightness == Brightness.dark;
+    final lines = text.split('\n');
+    final gutterDigits = lines.length.toString().length.clamp(2, 5);
     final codeTextStyle = const TextStyle(
       fontFamily: 'monospace',
       fontSize: 12.25,
@@ -84,20 +86,19 @@ class CodeTabCodeBlock extends StatelessWidget {
     );
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (isBinary)
             Container(
               width: double.infinity,
+              margin: const EdgeInsets.all(10),
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: theme.colorScheme.tertiaryContainer.withValues(
                   alpha: 0.6,
                 ),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: theme.colorScheme.outlineVariant),
               ),
               child: Text(
                 'Binary file ($sizeBytes bytes). Showing placeholder content.',
@@ -107,22 +108,59 @@ class CodeTabCodeBlock extends StatelessWidget {
                 ),
               ),
             ),
-          if (isBinary) const SizedBox(height: 10),
-          if (enableHighlight)
-            RepaintBoundary(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: HighlightView(
-                  text,
-                  language: highlightLanguage,
-                  theme: highlightTheme,
-                  padding: EdgeInsets.zero,
-                  textStyle: codeTextStyle,
+          if (!isBinary)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: gutterDigits * 8.0 + 22,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerLowest,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: List<Widget>.generate(lines.length, (index) {
+                      return SizedBox(
+                        height: 16,
+                        child: Text(
+                          '${index + 1}',
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 11,
+                            height: 1.3,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
                 ),
-              ),
-            )
-          else
-            SelectableText(text, style: codeTextStyle),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    scrollDirection: Axis.horizontal,
+                    child: enableHighlight
+                        ? RepaintBoundary(
+                            child: HighlightView(
+                              text,
+                              language: highlightLanguage,
+                              theme: highlightTheme,
+                              padding: EdgeInsets.zero,
+                              textStyle: codeTextStyle,
+                            ),
+                          )
+                        : SelectableText(text, style: codeTextStyle),
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../file_preview.dart';
 import '../../file_preview_utils.dart';
+import '../../file_type_visual.dart';
 import 'code_tab_editor.dart';
 import 'code_tab_editor_tabs.dart';
 import 'code_tab_views.dart';
@@ -70,8 +71,6 @@ class CodeTabFileViewer extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(compact ? 6 : 10),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Column(
         children: [
@@ -85,92 +84,6 @@ class CodeTabFileViewer extends StatelessWidget {
             onSelect: onSelectTab ?? (_) {},
             onPin: onPinTab ?? (_) {},
             onClose: onCloseTab ?? (_) {},
-          ),
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: compact ? 10 : 12,
-              vertical: compact ? 7 : 9,
-            ),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              border: Border(
-                bottom: BorderSide(color: theme.colorScheme.outlineVariant),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.code,
-                  size: compact ? 15 : 17,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        p == null || p.isEmpty ? 'Select a file' : (p.split('/').last),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: compact ? 12.25 : 13,
-                        ),
-                      ),
-                      if (p != null && p.isNotEmpty)
-                        Text(
-                          p,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: compact ? 10.5 : 11,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                _SyncPill(
-                  state: syncState,
-                  compact: compact,
-                ),
-                const SizedBox(width: 4),
-                IconButton(
-                  onPressed: onAsk,
-                  visualDensity: VisualDensity.compact,
-                  icon: const Icon(Icons.auto_awesome_outlined),
-                  tooltip: 'Ask AI',
-                ),
-                if (p != null && p.isNotEmpty && canEditCurrent)
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    onPressed: isEditing
-                        ? (saving || !hasUnsavedChanges ? null : onSave)
-                        : onEnterEdit,
-                    icon: isEditing
-                        ? (saving
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Icon(Icons.save))
-                        : const Icon(Icons.edit_outlined),
-                    tooltip: isEditing ? 'Save' : 'Edit',
-                  ),
-                if (canCopyCurrent)
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    onPressed: onCopy,
-                    icon: const Icon(Icons.copy_outlined),
-                    tooltip: 'Copy',
-                  ),
-              ],
-            ),
           ),
           Expanded(
             child: loading
@@ -186,12 +99,95 @@ class CodeTabFileViewer extends StatelessWidget {
                 : GestureDetector(
                     onDoubleTap: onEnterEdit,
                     child: isEditing
-                        ? CodeTabEditor(
-                            controller: editController,
-                            onChanged: onChange,
-                            onCancel: onCancelEdit,
-                            dirty: hasUnsavedChanges,
-                            compact: compact,
+                        ? Column(
+                            children: [
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: compact ? 10 : 12,
+                                  vertical: compact ? 7 : 9,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.surface,
+                                  border: Border(
+                                    bottom: BorderSide(
+                                      color: theme.colorScheme.outlineVariant,
+                                    ),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    if (p != null && p.isNotEmpty) ...[
+                                      buildFileTypeIcon(
+                                        context,
+                                        p,
+                                        size: compact ? 15 : 17,
+                                        fallbackColor: theme.colorScheme.onSurfaceVariant,
+                                      ),
+                                      const SizedBox(width: 8),
+                                    ],
+                                    Expanded(
+                                      child: Text(
+                                        p == null || p.isEmpty
+                                            ? 'Editing'
+                                            : p.split('/').last,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: compact ? 12.25 : 13,
+                                        ),
+                                      ),
+                                    ),
+                                    _SyncPill(
+                                      state: syncState,
+                                      compact: compact,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    IconButton(
+                                      onPressed: onAsk,
+                                      visualDensity: VisualDensity.compact,
+                                      icon: const Icon(Icons.auto_awesome_outlined),
+                                      tooltip: 'Ask AI',
+                                    ),
+                                    if (p != null &&
+                                        p.isNotEmpty &&
+                                        canEditCurrent)
+                                      IconButton(
+                                        visualDensity: VisualDensity.compact,
+                                        onPressed: saving || !hasUnsavedChanges
+                                            ? null
+                                            : onSave,
+                                        icon: saving
+                                            ? const SizedBox(
+                                                width: 18,
+                                                height: 18,
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                ),
+                                              )
+                                            : const Icon(Icons.save),
+                                        tooltip: 'Save',
+                                      ),
+                                    if (canCopyCurrent)
+                                      IconButton(
+                                        visualDensity: VisualDensity.compact,
+                                        onPressed: onCopy,
+                                        icon: const Icon(Icons.copy_outlined),
+                                        tooltip: 'Copy',
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                child: CodeTabEditor(
+                                  controller: editController,
+                                  onChanged: onChange,
+                                  onCancel: onCancelEdit,
+                                  dirty: hasUnsavedChanges,
+                                  compact: compact,
+                                ),
+                              ),
+                            ],
                           )
                         : FilePreview(
                             path: p ?? content.path,
@@ -234,7 +230,6 @@ class _SyncPill extends StatelessWidget {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Text(
         label,

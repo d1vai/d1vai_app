@@ -16,6 +16,9 @@ class AppTheme {
             .surfaceDark, // Using dark surface as primary for contrast in light mode
         onPrimary: Colors.white,
         secondary: AppColors.success,
+        onSecondary: Colors.white,
+        tertiary: AppColors.secondaryBrand,
+        onTertiary: Colors.white,
         surface: AppColors.surfaceLight,
         onSurface: AppColors.textPrimaryLight,
         error: AppColors.error,
@@ -63,6 +66,9 @@ class AppTheme {
         primary: AppColors.primaryBrand, // Brand color pops in dark mode
         onPrimary: Colors.white,
         secondary: AppColors.secondaryBrand,
+        onSecondary: Colors.white,
+        tertiary: AppColors.secondaryBrand,
+        onTertiary: Colors.white,
         surface: AppColors.surfaceDark,
         onSurface: AppColors.textPrimaryDark,
         error: AppColors.error,

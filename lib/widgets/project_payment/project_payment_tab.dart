@@ -288,10 +288,19 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
         'project_payment_enable_description',
         'Payments are not activated for this project yet. Initialize payments first, then manage products, transactions, bank accounts, withdrawals, and webhooks.',
       ),
-      features: const [
-        'Stripe checkout and payment links',
-        'Products, balances, and withdrawals',
-        'Webhook-ready order lifecycle',
+      features: [
+        _t(
+          'project_payment_enable_feature_checkout',
+          'Stripe checkout and payment links',
+        ),
+        _t(
+          'project_payment_enable_feature_products',
+          'Products, balances, and withdrawals',
+        ),
+        _t(
+          'project_payment_enable_feature_webhooks',
+          'Webhook-ready order lifecycle',
+        ),
       ],
       actionLabel: _isActivating
           ? _t('project_payment_enable_loading', 'Initializing…')

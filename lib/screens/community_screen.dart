@@ -1015,6 +1015,12 @@ class _CommunityComponentCard extends StatelessWidget {
                                         ? Colors.red
                                         : null,
                                   ),
+                                  iconSize: 18,
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(
+                                    minWidth: 28,
+                                    minHeight: 28,
+                                  ),
                                   visualDensity: VisualDensity.compact,
                                 ),
                                 Text(

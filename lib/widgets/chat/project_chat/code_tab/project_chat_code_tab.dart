@@ -535,6 +535,9 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
               SizedBox(width: compact ? 8 : 10),
               IconButton(
                 onPressed: _loadingTree ? null : _loadTree,
+                visualDensity: VisualDensity.compact,
+                iconSize: compact ? 18 : 20,
+                padding: EdgeInsets.all(compact ? 6 : 8),
                 icon: const Icon(Icons.refresh),
                 tooltip: 'Refresh',
               ),
@@ -558,6 +561,9 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
               ],
               IconButton(
                 onPressed: hasSelection ? _askAboutSelected : null,
+                visualDensity: VisualDensity.compact,
+                iconSize: compact ? 18 : 20,
+                padding: EdgeInsets.all(compact ? 6 : 8),
                 icon: const Icon(Icons.auto_awesome),
                 tooltip: 'Ask AI about file',
               ),

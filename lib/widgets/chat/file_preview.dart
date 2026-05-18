@@ -9,6 +9,10 @@ import 'file_preview_utils.dart';
 import 'markdown_text.dart';
 import 'project_chat/code_tab/code_tab_code_block.dart';
 
+const int _maxInlineImageBytes = 12 * 1024 * 1024;
+const int _maxInlineAudioBytes = 24 * 1024 * 1024;
+const int _maxInlineVideoBytes = 40 * 1024 * 1024;
+
 class FilePreview extends StatelessWidget {
   final String path;
   final String content;
@@ -59,6 +63,15 @@ class FilePreview extends StatelessWidget {
     }
 
     if (isImagePreview(path) && binaryBytes != null) {
+      if (sizeBytes > _maxInlineImageBytes) {
+        return Center(
+          child: _BinaryUnavailableCard(
+            path: path,
+            sizeBytes: sizeBytes,
+            title: 'Image too large to preview inline',
+          ),
+        );
+      }
       return InteractiveViewer(
         minScale: 0.5,
         maxScale: 6,
@@ -83,9 +96,36 @@ class FilePreview extends StatelessWidget {
     }
 
     if (isVideoPreview(path) && binaryBytes != null) {
+      if (sizeBytes > _maxInlineVideoBytes) {
+        return Center(
+          child: _BinaryUnavailableCard(
+            path: path,
+            sizeBytes: sizeBytes,
+            title: 'Video too large to preview inline',
+          ),
+        );
+      }
       final mimeType = mimeTypeForPath(path) ?? 'video/mp4';
-      return _VideoPreview(
+      return _MediaWebPreview(
         dataUri: Uri.dataFromBytes(binaryBytes, mimeType: mimeType).toString(),
+        kind: _MediaPreviewKind.video,
+      );
+    }
+
+    if (isAudioPreview(path) && binaryBytes != null) {
+      if (sizeBytes > _maxInlineAudioBytes) {
+        return Center(
+          child: _BinaryUnavailableCard(
+            path: path,
+            sizeBytes: sizeBytes,
+            title: 'Audio too large to preview inline',
+          ),
+        );
+      }
+      final mimeType = mimeTypeForPath(path) ?? 'audio/mpeg';
+      return _MediaWebPreview(
+        dataUri: Uri.dataFromBytes(binaryBytes, mimeType: mimeType).toString(),
+        kind: _MediaPreviewKind.audio,
       );
     }
 
@@ -211,14 +251,19 @@ class _BinaryUnavailableCard extends StatelessWidget {
   }
 }
 
-class _VideoPreview extends StatelessWidget {
-  final String dataUri;
+enum _MediaPreviewKind { video, audio }
 
-  const _VideoPreview({required this.dataUri});
+class _MediaWebPreview extends StatelessWidget {
+  final String dataUri;
+  final _MediaPreviewKind kind;
+
+  const _MediaWebPreview({required this.dataUri, required this.kind});
 
   @override
   Widget build(BuildContext context) {
-    const html = '''
+    final isVideo = kind == _MediaPreviewKind.video;
+    final html = isVideo
+        ? '''
 <!DOCTYPE html>
 <html>
   <head>
@@ -252,6 +297,54 @@ class _VideoPreview extends StatelessWidget {
       <video controls playsinline preload="metadata">
         <source src="__DATA_URI__">
       </video>
+    </div>
+  </body>
+</html>
+'''
+        : '''
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background: #111;
+        color: #fff;
+        overflow: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+      .wrap {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        box-sizing: border-box;
+      }
+      .panel {
+        width: min(640px, 100%);
+        padding: 20px;
+        border-radius: 16px;
+        background: #1a1a1a;
+        border: 1px solid #333;
+      }
+      audio {
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="panel">
+        <audio controls preload="metadata">
+          <source src="__DATA_URI__">
+        </audio>
+      </div>
     </div>
   </body>
 </html>
