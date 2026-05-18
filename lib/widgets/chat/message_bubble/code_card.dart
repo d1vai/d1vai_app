@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-
 import '../code_highlight_block.dart';
 import 'message_card_base.dart';
 
@@ -31,23 +29,7 @@ class ChatCodeCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ChatCardHeader(
-            icon: Icons.code,
-            iconColor: iconColor,
-            title: title,
-            onCopy: () async {
-              await Clipboard.setData(ClipboardData(text: code));
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Code copied to clipboard'),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-              }
-            },
-            copyLabel: 'Copy code',
-          ),
+          ChatCardHeader(icon: Icons.code, iconColor: iconColor, title: title),
           const SizedBox(height: 8),
           if (isToolResult)
             RepaintBoundary(

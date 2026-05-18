@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../markdown_text.dart';
 import '../tools/tool_utils.dart';
@@ -219,18 +218,6 @@ class ChatRawCard extends StatelessWidget {
             icon: Icons.data_object,
             iconColor: theme.colorScheme.onSurfaceVariant,
             title: typeLabel != null ? 'Raw · $typeLabel' : 'Raw',
-            onCopy: () async {
-              await Clipboard.setData(ClipboardData(text: text));
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Copied raw payload'),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-              }
-            },
-            copyLabel: 'Copy raw payload',
           ),
           const SizedBox(height: 8),
           ChatExpandableSelectableBlock(
