@@ -1916,16 +1916,6 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                           ) ??
                           const TextStyle(fontWeight: FontWeight.w800),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _t(
-                        'project_deploy_history_hint',
-                        'Review recent deploy outcomes, open logs, and roll back specific commits when needed.',
-                      ),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
                   ],
                 ),
               ),
