@@ -178,6 +178,11 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> loginWithApple() async {
+    if (Platform.isMacOS) {
+      await loginWithOAuth(provider: 'apple');
+      return;
+    }
+
     try {
       final credential = await SignInWithApple.getAppleIDCredential(
         scopes: const [
@@ -210,7 +215,7 @@ class AuthProvider extends ChangeNotifier {
     required String provider,
     String? inviteCode,
   }) async {
-    const supportedProviders = {'google', 'github', 'microsoft'};
+    const supportedProviders = {'google', 'github', 'microsoft', 'apple'};
     if (!supportedProviders.contains(provider)) {
       throw Exception('Unsupported OAuth provider: $provider');
     }
@@ -221,7 +226,7 @@ class AuthProvider extends ChangeNotifier {
         redirectTo: 'd1vai://login',
         inviteCode: inviteCode,
       );
-      final callbackUrl = (Platform.isIOS || Platform.isMacOS)
+      final callbackUrl = Platform.isIOS
           ? await _oauthCallbackService.authenticateWithExternalBrowser(
               url: startUri,
             )
