@@ -74,6 +74,7 @@ Scope: detail after M1 is complete.
   - `Open local folder`
   - `Import to cloud project`
   - `Attach local folder to current project`
+  - later move this entry out of project detail and into Dashboard / dedicated local workspace entry
 - [ ] M2.2 Accept drag-and-drop into the app window:
   - app shell detects dropped file/folder path
   - if no active project, reuse import flow
@@ -104,11 +105,13 @@ Scope: detail after M1 is complete.
   - current mobile file page flow stays intact
 
 ### M3: Hybrid sync model
-- [ ] local save first
-- [ ] debounced cloud sync
-- [ ] explicit GitHub sync state
-- [ ] per-file sync indicators
-- [ ] conflict/error presentation
+- [x] local save first
+- [x] debounced cloud sync
+- [x] explicit GitHub sync state
+- [x] per-file sync indicators
+- [x] conflict/error presentation
+- [x] synced / queued / failed recovery actions
+- [x] unify save feedback copy for local-first + GitHub sync
 
 ### M4: Further interaction polish
 - [ ] quick open
@@ -139,6 +142,16 @@ Scope: detail after M1 is complete.
 - Added a macOS-only workbench header strip with `Open Folder`, `Switch Folder`, and `Detach` actions.
 - Wired local folder attach into the current code tab so tree/file actions can use a local root.
 
+## M3 progress
+- Added file-level sync state tracking in `CodeWorkbenchController`.
+- Added visible sync status chrome in the workbench header.
+- Added per-tab sync indicators driven by controller state.
+- Kept the current save path cheap and deterministic: local-first save signal, then GitHub sync signal, without extra polling.
+- Removed the local folder entry from project detail; it should live in Dashboard or a dedicated workspace entry instead.
+- Added debounced background GitHub sync for local workspace saves.
+- Added explicit queued / syncing / failed / synced recovery signaling in the workbench state.
+- Unified save feedback into local-first and GitHub sync states.
+
 ## Current Focus
-- Active milestone: `M2`
-- Immediate next task: `M2.2 Accept drag-and-drop into the app window`
+- Active milestone: `M4`
+- Immediate next task: `M4 quick open`

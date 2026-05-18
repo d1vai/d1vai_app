@@ -15,6 +15,9 @@ class CodeTabFileViewer extends StatelessWidget {
   final ValueChanged<String>? onSelectTab;
   final ValueChanged<String>? onPinTab;
   final ValueChanged<String>? onCloseTab;
+  final bool Function(String path)? isSynced;
+  final CodeWorkbenchSyncState Function(String path)? syncStateFor;
+  final Duration? Function(String path)? queuedDurationFor;
   final VoidCallback? onEnterEdit;
   final VoidCallback? onCancelEdit;
   final ValueChanged<String>? onChange;
@@ -28,6 +31,9 @@ class CodeTabFileViewer extends StatelessWidget {
     required this.editors,
     required this.activeEditor,
     required this.compact,
+    required this.isSynced,
+    required this.syncStateFor,
+    required this.queuedDurationFor,
     required this.onSelectTab,
     required this.onPinTab,
     required this.onCloseTab,
@@ -50,6 +56,9 @@ class CodeTabFileViewer extends StatelessWidget {
     final hasUnsavedChanges = editor?.hasUnsavedChanges == true;
     final saving = editor?.saving == true;
     final editController = editor?.controller;
+    final syncState = p == null
+        ? CodeWorkbenchSyncState.idle
+        : (syncStateFor?.call(p) ?? CodeWorkbenchSyncState.idle);
     final canEditCurrent =
         p != null &&
         content != null &&
@@ -60,8 +69,8 @@ class CodeTabFileViewer extends StatelessWidget {
         isCopyableFilePreview(p, content.isBinary);
     return Container(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(compact ? 8 : 14),
+        color: theme.colorScheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(compact ? 6 : 10),
         border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Column(
@@ -70,6 +79,9 @@ class CodeTabFileViewer extends StatelessWidget {
             editors: editors,
             activePath: editor?.path,
             compact: compact,
+            isSynced: isSynced ?? (_) => false,
+            syncStateFor: syncStateFor ?? (_) => CodeWorkbenchSyncState.idle,
+            queuedDurationFor: queuedDurationFor,
             onSelect: onSelectTab ?? (_) {},
             onPin: onPinTab ?? (_) {},
             onClose: onCloseTab ?? (_) {},
@@ -77,32 +89,63 @@ class CodeTabFileViewer extends StatelessWidget {
           Container(
             padding: EdgeInsets.symmetric(
               horizontal: compact ? 10 : 12,
-              vertical: compact ? 8 : 10,
+              vertical: compact ? 7 : 9,
             ),
             decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
               border: Border(
                 bottom: BorderSide(color: theme.colorScheme.outlineVariant),
               ),
             ),
             child: Row(
               children: [
-                const Icon(Icons.code, size: 18),
+                Icon(
+                  Icons.code,
+                  size: compact ? 15 : 17,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    p == null || p.isEmpty ? 'Select a file' : p,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        p == null || p.isEmpty ? 'Select a file' : (p.split('/').last),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: compact ? 12.25 : 13,
+                        ),
+                      ),
+                      if (p != null && p.isNotEmpty)
+                        Text(
+                          p,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: compact ? 10.5 : 11,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
+                _SyncPill(
+                  state: syncState,
+                  compact: compact,
+                ),
+                const SizedBox(width: 4),
                 IconButton(
                   onPressed: onAsk,
-                  icon: const Icon(Icons.auto_awesome),
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(Icons.auto_awesome_outlined),
                   tooltip: 'Ask AI',
                 ),
                 if (p != null && p.isNotEmpty && canEditCurrent)
                   IconButton(
+                    visualDensity: VisualDensity.compact,
                     onPressed: isEditing
                         ? (saving || !hasUnsavedChanges ? null : onSave)
                         : onEnterEdit,
@@ -116,13 +159,14 @@ class CodeTabFileViewer extends StatelessWidget {
                                   ),
                                 )
                               : const Icon(Icons.save))
-                        : const Icon(Icons.edit),
+                        : const Icon(Icons.edit_outlined),
                     tooltip: isEditing ? 'Save' : 'Edit',
                   ),
                 if (canCopyCurrent)
                   IconButton(
+                    visualDensity: VisualDensity.compact,
                     onPressed: onCopy,
-                    icon: const Icon(Icons.copy),
+                    icon: const Icon(Icons.copy_outlined),
                     tooltip: 'Copy',
                   ),
               ],
@@ -158,6 +202,47 @@ class CodeTabFileViewer extends StatelessWidget {
                   ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SyncPill extends StatelessWidget {
+  final CodeWorkbenchSyncState state;
+  final bool compact;
+
+  const _SyncPill({required this.state, required this.compact});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final (label, color) = switch (state) {
+      CodeWorkbenchSyncState.idle => ('Ready', theme.colorScheme.onSurfaceVariant),
+      CodeWorkbenchSyncState.localSaved => ('Local', theme.colorScheme.primary),
+      CodeWorkbenchSyncState.queued => ('Queued', Colors.orange),
+      CodeWorkbenchSyncState.syncingCloud => ('Cloud', theme.colorScheme.secondary),
+      CodeWorkbenchSyncState.syncingGitHub => ('Syncing', theme.colorScheme.tertiary),
+      CodeWorkbenchSyncState.synced => ('Synced', Colors.green),
+      CodeWorkbenchSyncState.failed => ('Failed', Colors.redAccent),
+    };
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 8 : 9,
+        vertical: compact ? 4 : 5,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: compact ? 10.5 : 11,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
       ),
     );
   }

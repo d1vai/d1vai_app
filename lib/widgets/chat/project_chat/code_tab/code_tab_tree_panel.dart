@@ -32,10 +32,6 @@ class CodeTabTreePanel extends StatelessWidget {
     required this.onOpenFile,
   });
 
-  IconData _iconForFile(BuildContext context, String name) {
-    return fileTypeVisual(Theme.of(context), name).icon;
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -104,16 +100,26 @@ class CodeTabTreePanel extends StatelessWidget {
                     child: Row(
                       children: [
                         SizedBox(width: indentUnit * item.depth),
-                        Icon(
-                          isDir
-                              ? (dirExpanded ? Icons.folder_open : Icons.folder)
-                              : _iconForFile(context, item.node.name),
-                          size: compact ? 16 : 18,
-                          color: isDir
-                              ? theme.colorScheme.secondary
-                              : theme.colorScheme.onSurface.withValues(
-                                  alpha: 0.75,
-                                ),
+                        SizedBox(
+                          width: compact ? 16 : 18,
+                          height: compact ? 16 : 18,
+                          child: Center(
+                            child: isDir
+                                ? buildFolderTypeIcon(
+                                    context,
+                                    path,
+                                    expanded: dirExpanded,
+                                    size: compact ? 16 : 18,
+                                    fallbackColor: theme.colorScheme.secondary,
+                                  )
+                                : buildFileTypeIcon(
+                                    context,
+                                    item.node.name,
+                                    size: compact ? 16 : 18,
+                                    fallbackColor: theme.colorScheme.onSurface
+                                        .withValues(alpha: 0.75),
+                                  ),
+                          ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(

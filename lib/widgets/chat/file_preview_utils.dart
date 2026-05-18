@@ -34,6 +34,24 @@ bool isHtmlPreview(String path) {
   return lower.endsWith('.html') || lower.endsWith('.htm');
 }
 
+bool isImagePreview(String path) {
+  final lower = path.toLowerCase();
+  return _imageExtensions.any((suffix) => lower.endsWith('.$suffix'));
+}
+
+bool isVideoPreview(String path) {
+  final lower = path.toLowerCase();
+  return _videoExtensions.any((suffix) => lower.endsWith('.$suffix'));
+}
+
+String? mimeTypeForPath(String path) {
+  final lower = path.toLowerCase();
+  for (final entry in _mimeTypes.entries) {
+    if (lower.endsWith('.${entry.key}')) return entry.value;
+  }
+  return null;
+}
+
 const Set<String> _markdownExtensions = <String>{
   'md',
   'markdown',
@@ -42,6 +60,57 @@ const Set<String> _markdownExtensions = <String>{
 };
 
 const List<String> _nonEditableExtensions = <String>['.svg', '.html', '.htm'];
+
+const Set<String> _imageExtensions = <String>{
+  'png',
+  'jpg',
+  'jpeg',
+  'gif',
+  'webp',
+  'bmp',
+  'ico',
+  'tif',
+  'tiff',
+  'avif',
+  'heic',
+  'heif',
+};
+
+const Set<String> _videoExtensions = <String>{
+  'mp4',
+  'm4v',
+  'mov',
+  'avi',
+  'mkv',
+  'webm',
+  'mpeg',
+  'mpg',
+  'wmv',
+};
+
+const Map<String, String> _mimeTypes = <String, String>{
+  'png': 'image/png',
+  'jpg': 'image/jpeg',
+  'jpeg': 'image/jpeg',
+  'gif': 'image/gif',
+  'webp': 'image/webp',
+  'bmp': 'image/bmp',
+  'ico': 'image/x-icon',
+  'tif': 'image/tiff',
+  'tiff': 'image/tiff',
+  'avif': 'image/avif',
+  'heic': 'image/heic',
+  'heif': 'image/heif',
+  'mp4': 'video/mp4',
+  'm4v': 'video/x-m4v',
+  'mov': 'video/quicktime',
+  'avi': 'video/x-msvideo',
+  'mkv': 'video/x-matroska',
+  'webm': 'video/webm',
+  'mpeg': 'video/mpeg',
+  'mpg': 'video/mpeg',
+  'wmv': 'video/x-ms-wmv',
+};
 
 extension on List<String> {
   String? get lastOrNull => isEmpty ? null : last;

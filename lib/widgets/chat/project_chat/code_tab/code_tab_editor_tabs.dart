@@ -6,6 +6,9 @@ class CodeTabEditorTabs extends StatelessWidget {
   final List<CodeWorkbenchEditorState> editors;
   final String? activePath;
   final bool compact;
+  final bool Function(String path)? isSynced;
+  final CodeWorkbenchSyncState Function(String path)? syncStateFor;
+  final Duration? Function(String path)? queuedDurationFor;
   final ValueChanged<String> onSelect;
   final ValueChanged<String> onPin;
   final ValueChanged<String> onClose;
@@ -15,6 +18,9 @@ class CodeTabEditorTabs extends StatelessWidget {
     required this.editors,
     required this.activePath,
     required this.compact,
+    required this.isSynced,
+    required this.syncStateFor,
+    required this.queuedDurationFor,
     required this.onSelect,
     required this.onPin,
     required this.onClose,
@@ -23,7 +29,7 @@ class CodeTabEditorTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final height = compact ? 34.0 : 40.0;
+    final height = compact ? 31.0 : 38.0;
     if (editors.isEmpty) {
       return SizedBox(height: height);
     }
@@ -31,7 +37,7 @@ class CodeTabEditorTabs extends StatelessWidget {
     return Container(
       height: height,
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+        color: theme.colorScheme.surfaceContainerLowest,
         border: Border(
           bottom: BorderSide(color: theme.colorScheme.outlineVariant),
         ),
@@ -50,17 +56,17 @@ class CodeTabEditorTabs extends StatelessWidget {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 120),
                 constraints: BoxConstraints(
-                  minWidth: compact ? 132 : 148,
-                  maxWidth: compact ? 224 : 260,
+                  minWidth: compact ? 126 : 142,
+                  maxWidth: compact ? 216 : 252,
                 ),
                 padding: EdgeInsets.symmetric(
-                  horizontal: compact ? 10 : 12,
-                  vertical: compact ? 5 : 7,
+                  horizontal: compact ? 9 : 11,
+                  vertical: compact ? 4 : 6,
                 ),
                 decoration: BoxDecoration(
                   color: active
-                      ? theme.colorScheme.surfaceContainerHighest
-                      : theme.colorScheme.surface,
+                      ? theme.colorScheme.surface
+                      : theme.colorScheme.surfaceContainerLowest,
                   border: Border(
                     right: BorderSide(color: theme.colorScheme.outlineVariant),
                     top: active
@@ -76,13 +82,23 @@ class CodeTabEditorTabs extends StatelessWidget {
                       color: theme.colorScheme.tertiary,
                     ),
                     const SizedBox(width: 8),
+                    _SyncDot(
+                      state: syncStateFor?.call(editor.path) ??
+                          (isSynced?.call(editor.path) == true
+                              ? CodeWorkbenchSyncState.synced
+                              : CodeWorkbenchSyncState.idle),
+                      queuedDuration: queuedDurationFor?.call(editor.path),
+                      compact: compact,
+                      color: theme.colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: compact ? 12 : 12.5,
+                          fontSize: compact ? 11.75 : 12.25,
                           fontWeight: active ? FontWeight.w700 : FontWeight.w500,
                           fontStyle: editor.isPreview
                               ? FontStyle.italic
@@ -96,7 +112,7 @@ class CodeTabEditorTabs extends StatelessWidget {
                         child: Text(
                           'Preview',
                           style: TextStyle(
-                            fontSize: compact ? 10 : 10.5,
+                            fontSize: compact ? 9.5 : 10,
                             color: theme.colorScheme.onSurface.withValues(
                               alpha: 0.58,
                             ),
@@ -107,10 +123,10 @@ class CodeTabEditorTabs extends StatelessWidget {
                       borderRadius: BorderRadius.circular(999),
                       onTap: () => onClose(editor.path),
                       child: Padding(
-                        padding: EdgeInsets.all(compact ? 2 : 4),
+                        padding: EdgeInsets.all(compact ? 2 : 3),
                         child: Icon(
                           Icons.close,
-                          size: compact ? 14 : 16,
+                          size: compact ? 13 : 15,
                           color: theme.colorScheme.onSurface.withValues(
                             alpha: 0.72,
                           ),
@@ -148,6 +164,45 @@ class _DirtyDot extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: visible ? color : Colors.transparent,
+      ),
+    );
+  }
+}
+
+class _SyncDot extends StatelessWidget {
+  final CodeWorkbenchSyncState state;
+  final Duration? queuedDuration;
+  final bool compact;
+  final Color color;
+
+  const _SyncDot({
+    required this.state,
+    required this.queuedDuration,
+    required this.compact,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final visible = state == CodeWorkbenchSyncState.synced;
+    final stateColor = switch (state) {
+      CodeWorkbenchSyncState.idle => Colors.transparent,
+      CodeWorkbenchSyncState.localSaved => color.withValues(alpha: 0.5),
+      CodeWorkbenchSyncState.queued => Colors.orange,
+      CodeWorkbenchSyncState.syncingCloud => Colors.orangeAccent,
+      CodeWorkbenchSyncState.syncingGitHub => color,
+      CodeWorkbenchSyncState.synced => color,
+      CodeWorkbenchSyncState.failed => Colors.redAccent,
+    };
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 120),
+      width: compact ? 6 : 7,
+      height: compact ? 6 : 7,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: visible || state != CodeWorkbenchSyncState.idle
+            ? stateColor
+            : Colors.transparent,
       ),
     );
   }

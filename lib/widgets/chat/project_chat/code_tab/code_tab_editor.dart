@@ -18,9 +18,7 @@ class CodeTabEditor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
     final tint = dirty ? colorScheme.tertiary : colorScheme.primary;
 
     return Column(
@@ -28,9 +26,10 @@ class CodeTabEditor extends StatelessWidget {
         Container(
           padding: EdgeInsets.symmetric(
             horizontal: compact ? 10 : 12,
-            vertical: compact ? 6 : 8,
+            vertical: compact ? 5 : 7,
           ),
           decoration: BoxDecoration(
+            color: colorScheme.surface,
             border: Border(
               bottom: BorderSide(color: colorScheme.outlineVariant),
             ),
@@ -45,14 +44,21 @@ class CodeTabEditor extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  dirty ? 'Editing (unsaved changes)' : 'Editing',
+                  dirty ? 'Unsaved changes' : 'Editing',
                   style: TextStyle(
-                    fontSize: compact ? 11.5 : 12,
+                    fontSize: compact ? 11 : 11.5,
                     color: colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ),
-              TextButton(onPressed: onCancel, child: const Text('Cancel')),
+              TextButton(
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                ),
+                onPressed: onCancel,
+                child: const Text('Revert'),
+              ),
             ],
           ),
         ),
@@ -64,12 +70,12 @@ class CodeTabEditor extends StatelessWidget {
             expands: true,
             decoration: InputDecoration(
               border: InputBorder.none,
-              contentPadding: EdgeInsets.all(compact ? 10 : 12),
-              filled: true,
-              fillColor: Color.alphaBlend(
-                colorScheme.primary.withValues(alpha: isDark ? 0.06 : 0.04),
-                colorScheme.surface,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: compact ? 10 : 12,
+                vertical: compact ? 9 : 11,
               ),
+              filled: true,
+              fillColor: colorScheme.surface,
             ),
             style: const TextStyle(
               fontFamily: 'monospace',

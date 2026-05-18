@@ -31,6 +31,15 @@ class CodeWorkbenchEditorState {
 }
 
 enum CodeWorkbenchSourceMode { cloudOnly, localAttached, hybrid }
+enum CodeWorkbenchSyncState {
+  idle,
+  localSaved,
+  queued,
+  syncingCloud,
+  syncingGitHub,
+  synced,
+  failed,
+}
 
 class CodeWorkbenchController extends ChangeNotifier {
   CodeWorkbenchController({required D1vaiService service}) : _service = service;
@@ -46,6 +55,10 @@ class CodeWorkbenchController extends ChangeNotifier {
   CodeWorkbenchSourceMode _sourceMode = CodeWorkbenchSourceMode.cloudOnly;
   String? _localRootPath;
   String? _localRootName;
+  final Set<String> _syncedPaths = <String>{};
+  final Map<String, CodeWorkbenchSyncState> _syncStates =
+      <String, CodeWorkbenchSyncState>{};
+  final Map<String, DateTime> _queuedAt = <String, DateTime>{};
 
   List<CodeWorkbenchEditorState> get openEditors => _openPaths
       .map((path) => _editorsByPath[path])
@@ -63,6 +76,9 @@ class CodeWorkbenchController extends ChangeNotifier {
       _sourceMode != CodeWorkbenchSourceMode.cloudOnly;
   CodeWorkbenchEditorState? get activeEditor =>
       _activePath == null ? null : _editorsByPath[_activePath!];
+  bool isPathSynced(String path) => _syncedPaths.contains(path);
+  CodeWorkbenchSyncState syncStateFor(String path) =>
+      _syncStates[path] ?? CodeWorkbenchSyncState.idle;
 
   void selectTreePath(String? path) {
     if (_selectedTreePath == path) return;
@@ -102,6 +118,27 @@ class CodeWorkbenchController extends ChangeNotifier {
     _localRootPath = null;
     _localRootName = null;
     _sourceMode = CodeWorkbenchSourceMode.cloudOnly;
+    notifyListeners();
+  }
+
+  void markPathQueued(String path) {
+    _syncedPaths.remove(path);
+    _syncStates[path] = CodeWorkbenchSyncState.queued;
+    _queuedAt[path] = DateTime.now();
+    notifyListeners();
+  }
+
+  void markPathSynced(String path) {
+    _syncedPaths.add(path);
+    _syncStates[path] = CodeWorkbenchSyncState.synced;
+    _queuedAt.remove(path);
+    notifyListeners();
+  }
+
+  void markPathDirty(String path) {
+    _syncedPaths.remove(path);
+    _syncStates[path] = CodeWorkbenchSyncState.failed;
+    _queuedAt.remove(path);
     notifyListeners();
   }
 
@@ -196,6 +233,11 @@ class CodeWorkbenchController extends ChangeNotifier {
     if (editor == null) return;
     editor.controller.text = editor.originalContent;
     editor.isEditing = false;
+    if (_syncedPaths.contains(path)) {
+      _syncStates[path] = CodeWorkbenchSyncState.synced;
+    } else {
+      _syncStates[path] = CodeWorkbenchSyncState.idle;
+    }
     notifyListeners();
   }
 
@@ -208,6 +250,8 @@ class CodeWorkbenchController extends ChangeNotifier {
       selection: TextSelection.collapsed(offset: text.length),
       composing: TextRange.empty,
     );
+    _syncedPaths.remove(path);
+    _syncStates[path] = CodeWorkbenchSyncState.queued;
     notifyListeners();
   }
 
@@ -224,6 +268,23 @@ class CodeWorkbenchController extends ChangeNotifier {
     editor.originalContent = content.isBinary ? '' : content.content;
     editor.controller.text = content.isBinary ? '' : content.content;
     editor.isEditing = keepEditing && !content.isBinary;
+    _syncedPaths.add(path);
+    _syncStates[path] = CodeWorkbenchSyncState.synced;
+    _queuedAt.remove(path);
+    notifyListeners();
+  }
+
+  void markPathLocalSaved(String path) {
+    _syncedPaths.remove(path);
+    _syncStates[path] = CodeWorkbenchSyncState.localSaved;
+    _queuedAt[path] = DateTime.now();
+    notifyListeners();
+  }
+
+  void markPathSyncingGitHub(String path) {
+    _syncedPaths.remove(path);
+    _syncStates[path] = CodeWorkbenchSyncState.syncingGitHub;
+    _queuedAt[path] = DateTime.now();
     notifyListeners();
   }
 
@@ -236,9 +297,12 @@ class CodeWorkbenchController extends ChangeNotifier {
     }
 
     editor.saving = true;
-    notifyListeners();
+    markPathLocalSaved(path);
+    markPathQueued(path);
 
     try {
+      await Future<void>.delayed(const Duration(milliseconds: 180));
+      markPathSyncingGitHub(path);
       final fileName = path.split('/').isEmpty ? 'file' : path.split('/').last;
       final result = await _service.syncFileToGitHub(
         projectId,
@@ -258,7 +322,15 @@ class CodeWorkbenchController extends ChangeNotifier {
       );
       editor.originalContent = editor.controller.text;
       editor.isEditing = false;
+      _syncedPaths.add(path);
+      _syncStates[path] = CodeWorkbenchSyncState.synced;
+      _queuedAt.remove(path);
       return commitSha;
+    } catch (_) {
+      _syncedPaths.remove(path);
+      _syncStates[path] = CodeWorkbenchSyncState.failed;
+      _queuedAt.remove(path);
+      rethrow;
     } finally {
       editor.saving = false;
       notifyListeners();
@@ -270,7 +342,18 @@ class CodeWorkbenchController extends ChangeNotifier {
     if (editor == null) return;
     editor.controller.text = editor.originalContent;
     editor.isEditing = false;
+    _syncedPaths.add(path);
+    _syncStates[path] = CodeWorkbenchSyncState.synced;
+    _queuedAt.remove(path);
     notifyListeners();
+  }
+
+  Duration? queuedDurationFor(String path) {
+    final startedAt = _queuedAt[path];
+    if (startedAt == null) return null;
+    final elapsed = DateTime.now().difference(startedAt);
+    if (elapsed.isNegative) return Duration.zero;
+    return elapsed;
   }
 
   void closeEditor(String path) {

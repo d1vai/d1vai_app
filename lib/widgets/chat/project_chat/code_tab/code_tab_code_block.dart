@@ -68,7 +68,7 @@ class CodeTabCodeBlock extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final codeTextStyle = const TextStyle(
       fontFamily: 'monospace',
-      fontSize: 12.5,
+      fontSize: 12.25,
       height: 1.3,
     );
 
@@ -80,11 +80,11 @@ class CodeTabCodeBlock extends StatelessWidget {
     );
     final root = highlightTheme['root'];
     highlightTheme['root'] = (root ?? const TextStyle()).copyWith(
-      backgroundColor: theme.colorScheme.surfaceContainerHighest,
+      backgroundColor: theme.colorScheme.surface,
     );
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -96,7 +96,7 @@ class CodeTabCodeBlock extends StatelessWidget {
                 color: theme.colorScheme.tertiaryContainer.withValues(
                   alpha: 0.6,
                 ),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: theme.colorScheme.outlineVariant),
               ),
               child: Text(

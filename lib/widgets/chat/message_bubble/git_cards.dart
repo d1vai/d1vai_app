@@ -224,7 +224,12 @@ class _FileRow extends StatelessWidget {
                   width: 18,
                   height: firstLineHeight,
                   child: Center(
-                    child: Icon(visual.icon, size: 14, color: iconColor),
+                    child: buildFileTypeIcon(
+                      context,
+                      filePath,
+                      size: 14,
+                      fallbackColor: iconColor,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 6),

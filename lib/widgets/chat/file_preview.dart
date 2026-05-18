@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import 'file_preview_utils.dart';
@@ -26,48 +28,19 @@ class FilePreview extends StatelessWidget {
     return const JsonEncoder.withIndent('  ').convert(decoded);
   }
 
+  Uint8List? _decodeBinaryBytes() {
+    if (!isBinary) return null;
+    try {
+      return base64Decode(content);
+    } catch (_) {
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
-    if (isBinary && !isSvgPreview(path, content)) {
-      return Center(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 420),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.tertiaryContainer.withValues(alpha: 0.55),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: theme.colorScheme.outlineVariant),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.insert_drive_file_outlined,
-                size: 28,
-                color: theme.colorScheme.onTertiaryContainer,
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'Binary preview unavailable',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '$path\n$sizeBytes bytes',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+    final binaryBytes = _decodeBinaryBytes();
 
     if (isSvgPreview(path, content)) {
       return InteractiveViewer(
@@ -81,6 +54,47 @@ class FilePreview extends StatelessWidget {
             placeholderBuilder: (_) =>
                 const Center(child: CircularProgressIndicator()),
           ),
+        ),
+      );
+    }
+
+    if (isImagePreview(path) && binaryBytes != null) {
+      return InteractiveViewer(
+        minScale: 0.5,
+        maxScale: 6,
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: theme.colorScheme.surface,
+          alignment: Alignment.center,
+          padding: const EdgeInsets.all(16),
+          child: Image.memory(
+            binaryBytes,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) =>
+                _BinaryUnavailableCard(
+                  path: path,
+                  sizeBytes: sizeBytes,
+                  title: 'Image preview unavailable',
+                ),
+          ),
+        ),
+      );
+    }
+
+    if (isVideoPreview(path) && binaryBytes != null) {
+      final mimeType = mimeTypeForPath(path) ?? 'video/mp4';
+      return _VideoPreview(
+        dataUri: Uri.dataFromBytes(binaryBytes, mimeType: mimeType).toString(),
+      );
+    }
+
+    if (isBinary) {
+      return Center(
+        child: _BinaryUnavailableCard(
+          path: path,
+          sizeBytes: sizeBytes,
+          title: 'Binary preview unavailable',
         ),
       );
     }
@@ -142,6 +156,118 @@ class FilePreview extends StatelessWidget {
       text: content,
       isBinary: isBinary,
       sizeBytes: sizeBytes,
+    );
+  }
+}
+
+class _BinaryUnavailableCard extends StatelessWidget {
+  final String path;
+  final int sizeBytes;
+  final String title;
+
+  const _BinaryUnavailableCard({
+    required this.path,
+    required this.sizeBytes,
+    required this.title,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 420),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.tertiaryContainer.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.insert_drive_file_outlined,
+            size: 28,
+            color: theme.colorScheme.onTertiaryContainer,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '$path\n$sizeBytes bytes',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VideoPreview extends StatelessWidget {
+  final String dataUri;
+
+  const _VideoPreview({required this.dataUri});
+
+  @override
+  Widget build(BuildContext context) {
+    const html = '''
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background: #111;
+        overflow: hidden;
+      }
+      .wrap {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background: #111;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <video controls playsinline preload="metadata">
+        <source src="__DATA_URI__">
+      </video>
+    </div>
+  </body>
+</html>
+''';
+
+    return InAppWebView(
+      initialData: InAppWebViewInitialData(
+        data: html.replaceFirst('__DATA_URI__', dataUri),
+        mimeType: 'text/html',
+        encoding: 'utf-8',
+      ),
+      initialSettings: InAppWebViewSettings(
+        mediaPlaybackRequiresUserGesture: false,
+        allowsInlineMediaPlayback: true,
+        transparentBackground: true,
+      ),
     );
   }
 }
