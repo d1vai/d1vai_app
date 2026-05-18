@@ -16,6 +16,7 @@ import '../../core/auth_expiry_bus.dart';
 import '../../utils/error_utils.dart';
 import '../../utils/message_parser.dart';
 import '../chat/message_list.dart';
+import '../project_activation_panel.dart';
 import '../snackbar_helper.dart';
 import '../analytics/realtime_chart.dart';
 import '../skeletons/analytics_data_skeleton.dart';
@@ -3094,143 +3095,39 @@ class _EnableAnalyticsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final muted = theme.colorScheme.onSurfaceVariant;
     String t(String key, String fallback) => _tr(context, key, fallback);
 
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide(
-                color: theme.dividerColor.withValues(alpha: 0.4),
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    height: 52,
-                    width: 52,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.10),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.analytics,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    t('project_analytics_enable_title', 'Enable Analytics'),
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    t(
-                      'project_analytics_enable_hint',
-                      "Track your website's visitors, page views, and custom events with Umami Analytics",
-                    ),
-                    style: theme.textTheme.bodyMedium?.copyWith(color: muted),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      t(
-                        'project_analytics_features_included',
-                        'Features included:',
-                      ),
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  _FeatureRow(
-                    icon: Icons.visibility_outlined,
-                    text: t(
-                      'project_analytics_feature_realtime_visitors',
-                      'Real-time visitor tracking',
-                    ),
-                    color: theme.colorScheme.primary,
-                  ),
-                  const SizedBox(height: 8),
-                  _FeatureRow(
-                    icon: Icons.mouse_outlined,
-                    text: t(
-                      'project_analytics_feature_pageviews_events',
-                      'Page views and events',
-                    ),
-                    color: theme.colorScheme.primary,
-                  ),
-                  const SizedBox(height: 8),
-                  _FeatureRow(
-                    icon: Icons.people_outline,
-                    text: t(
-                      'project_analytics_feature_unique_visitors',
-                      'Unique visitors analytics',
-                    ),
-                    color: theme.colorScheme.primary,
-                  ),
-                  const SizedBox(height: 8),
-                  _FeatureRow(
-                    icon: Icons.trending_up,
-                    text: t(
-                      'project_analytics_feature_traffic_trends',
-                      'Traffic trends over time',
-                    ),
-                    color: theme.colorScheme.primary,
-                  ),
-                  const SizedBox(height: 18),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: enabling ? null : onEnable,
-                      icon: enabling
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.bolt),
-                      label: Text(
-                        enabling
-                            ? t(
-                                'project_analytics_initializing',
-                                'Initializing...',
-                              )
-                            : t(
-                                'project_analytics_enable_action',
-                                'Enable Analytics',
-                              ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
+    return ProjectActivationPanel(
+      icon: Icons.analytics_rounded,
+      title: t('project_analytics_enable_title', 'Enable Analytics'),
+      description: t(
+        'project_analytics_enable_hint',
+        "Track your website's visitors, page views, and custom events with Umami Analytics",
       ),
+      features: [
+        t(
+          'project_analytics_feature_realtime_visitors',
+          'Real-time visitor tracking',
+        ),
+        t(
+          'project_analytics_feature_pageviews_events',
+          'Page views and events',
+        ),
+        t(
+          'project_analytics_feature_unique_visitors',
+          'Unique visitors analytics',
+        ),
+        t(
+          'project_analytics_feature_traffic_trends',
+          'Traffic trends over time',
+        ),
+      ],
+      actionLabel: enabling
+          ? t('project_analytics_initializing', 'Initializing...')
+          : t('project_analytics_enable_action', 'Enable Analytics'),
+      isLoading: enabling,
+      onPressed: onEnable,
+      accentColor: Theme.of(context).colorScheme.primary,
     );
   }
 }
@@ -3507,33 +3404,3 @@ class _AnalyticsInstallerView extends StatelessWidget {
   }
 }
 
-class _FeatureRow extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  final Color color;
-
-  const _FeatureRow({
-    required this.icon,
-    required this.text,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: color),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            text,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}

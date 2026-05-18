@@ -728,9 +728,11 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
           _desktopChatPaneMinWidth,
           _desktopChatPaneMaxWidth,
         );
-        final effectiveSidebarWidth = (constraints.maxWidth -
-                _desktopPrimaryPaneMinWidth)
-            .clamp(_desktopChatPaneMinWidth, sidebarWidth);
+        final effectiveSidebarWidth =
+            (constraints.maxWidth - _desktopPrimaryPaneMinWidth).clamp(
+              _desktopChatPaneMinWidth,
+              sidebarWidth,
+            );
 
         return Row(
           children: [
@@ -785,6 +787,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
                   Expanded(
                     child: ChatBottomSheet(
                       title: 'Messages',
+                      compactChrome: true,
                       messages: _chatMessages,
                       isLoading: _isChatLoading,
                       isLoadingHistory: _isLoadingHistory,
@@ -959,7 +962,11 @@ class _DesktopChatPaneResizeHandleState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final accent = theme.colorScheme.primary.withValues(
-      alpha: _dragging ? 0.92 : _hovering ? 0.58 : 0.22,
+      alpha: _dragging
+          ? 0.92
+          : _hovering
+          ? 0.58
+          : 0.22,
     );
 
     return MouseRegion(
@@ -988,12 +995,12 @@ class _DesktopChatPaneResizeHandleState
           });
         },
         child: SizedBox(
-          width: 18,
+          width: 10,
           child: Center(
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 120),
-              width: _dragging ? 5 : 3,
-              height: 72,
+              width: _dragging ? 3 : 2,
+              height: 60,
               decoration: BoxDecoration(
                 color: accent,
                 borderRadius: BorderRadius.circular(999),

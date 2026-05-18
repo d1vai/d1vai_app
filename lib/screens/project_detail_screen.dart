@@ -446,6 +446,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   Widget _buildGlassmorphicAppBar(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final isMobilePlatform =
+        defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.android;
+    final useSoftLightBackground = isMobilePlatform && !isDark;
     final gradient = D1VColors.getPrimaryGradient(context);
     final activeText = D1VColors.getActiveText(context);
     final inactiveText = D1VColors.getInactiveText(context);
@@ -457,8 +461,12 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
       child: ClipRRect(
         child: Stack(
           children: [
-            // 渐变背景
-            Container(decoration: BoxDecoration(gradient: gradient)),
+            if (useSoftLightBackground)
+              Container(
+                color: theme.colorScheme.surface.withValues(alpha: 0.98),
+              )
+            else
+              Container(decoration: BoxDecoration(gradient: gradient)),
             // 磨砂玻璃层 (Dark Mode)
             if (isDark)
               BackdropFilter(

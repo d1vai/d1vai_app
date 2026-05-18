@@ -12,6 +12,7 @@ import '../../core/auth_expiry_bus.dart';
 import '../../utils/error_utils.dart';
 import '../snackbar_helper.dart';
 import '../table_detail_dialog.dart';
+import '../project_activation_panel.dart';
 import '../../widgets/select.dart';
 import '../../widgets/compact_selector.dart';
 import 'package:d1vai_app/widgets/skeletons/project_database_skeleton.dart';
@@ -2438,162 +2439,46 @@ class _EnableDatabaseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final onSurface = theme.colorScheme.onSurface;
-    final muted = theme.colorScheme.onSurfaceVariant;
-
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide(
-                color: theme.dividerColor.withValues(alpha: 0.4),
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    height: 52,
-                    width: 52,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.10),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.storage,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    _t(
-                      context,
-                      'project_database_enable_title',
-                      'Enable Database',
-                    ),
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: onSurface,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _t(
-                      context,
-                      'project_database_enable_hint',
-                      'Provision a Neon PostgreSQL database for this project and start exploring your schema and data.',
-                    ),
-                    style: theme.textTheme.bodyMedium?.copyWith(color: muted),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  _FeatureRow(
-                    icon: Icons.cloud_outlined,
-                    text: _t(
-                      context,
-                      'project_database_feature_serverless',
-                      'Serverless Postgres on Neon',
-                    ),
-                    color: theme.colorScheme.primary,
-                  ),
-                  const SizedBox(height: 8),
-                  _FeatureRow(
-                    icon: Icons.lock_outline,
-                    text: _t(
-                      context,
-                      'project_database_feature_ssl',
-                      'Secure SSL connections',
-                    ),
-                    color: theme.colorScheme.primary,
-                  ),
-                  const SizedBox(height: 8),
-                  _FeatureRow(
-                    icon: Icons.alt_route_outlined,
-                    text: _t(
-                      context,
-                      'project_database_feature_branching',
-                      'Branching support',
-                    ),
-                    color: theme.colorScheme.primary,
-                  ),
-                  const SizedBox(height: 18),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: enabling ? null : onEnable,
-                      icon: enabling
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.bolt),
-                      label: Text(
-                        enabling
-                            ? _t(
-                                context,
-                                'project_database_enabling',
-                                'Enabling...',
-                              )
-                            : _t(
-                                context,
-                                'project_database_enable_action',
-                                'Enable Database',
-                              ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
+    return ProjectActivationPanel(
+      icon: Icons.storage_rounded,
+      title: _t(
+        context,
+        'project_database_enable_title',
+        'Enable Database',
       ),
-    );
-  }
-}
-
-class _FeatureRow extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  final Color color;
-
-  const _FeatureRow({
-    required this.icon,
-    required this.text,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: color),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            text,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
+      description: _t(
+        context,
+        'project_database_enable_hint',
+        'Provision a Neon PostgreSQL database for this project and start exploring your schema and data.',
+      ),
+      features: [
+        _t(
+          context,
+          'project_database_feature_serverless',
+          'Serverless Postgres on Neon',
+        ),
+        _t(
+          context,
+          'project_database_feature_ssl',
+          'Secure SSL connections',
+        ),
+        _t(
+          context,
+          'project_database_feature_branching',
+          'Branching support',
         ),
       ],
+      actionLabel: enabling
+          ? _t(context, 'project_database_enabling', 'Enabling...')
+          : _t(
+              context,
+              'project_database_enable_action',
+              'Enable Database',
+            ),
+      isLoading: enabling,
+      onPressed: onEnable,
+      accentColor: theme.colorScheme.primary,
     );
   }
 }
+

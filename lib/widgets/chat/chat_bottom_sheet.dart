@@ -55,6 +55,7 @@ class ChatBottomSheet extends StatefulWidget {
   final IconData bannerIcon;
   final Color? bannerAccent;
   final bool bannerBusy;
+  final bool compactChrome;
 
   const ChatBottomSheet({
     super.key,
@@ -98,6 +99,7 @@ class ChatBottomSheet extends StatefulWidget {
     this.bannerIcon = Icons.info_outline_rounded,
     this.bannerAccent,
     this.bannerBusy = false,
+    this.compactChrome = false,
   });
 
   @override
@@ -140,6 +142,7 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
     final bannerTitle = widget.bannerTitle?.trim() ?? '';
     final bannerMessage = widget.bannerMessage?.trim() ?? '';
     final showBanner = bannerTitle.isNotEmpty || bannerMessage.isNotEmpty;
+    final compactChrome = widget.compactChrome;
 
     return Container(
       decoration: BoxDecoration(
@@ -148,24 +151,28 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
       ),
       child: Column(
         children: [
-          // Drag handle
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.onSurfaceVariant.withValues(
-                  alpha: 0.25,
+          if (!compactChrome) ...[
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.onSurfaceVariant.withValues(
+                    alpha: 0.25,
+                  ),
+                  borderRadius: BorderRadius.circular(999),
                 ),
-                borderRadius: BorderRadius.circular(999),
               ),
             ),
-          ),
-          const SizedBox(height: 4),
+            const SizedBox(height: 4),
+          ],
           // Header
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: compactChrome ? 8 : 12,
+            ),
             decoration: BoxDecoration(
               color: theme.colorScheme.surface,
               border: Border(bottom: BorderSide(color: headerDividerColor)),
@@ -185,9 +192,16 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                   children: [
                     Text(
                       widget.title,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style:
+                          (compactChrome
+                                  ? theme.textTheme.labelLarge
+                                  : theme.textTheme.titleMedium)
+                              ?.copyWith(
+                                fontWeight: compactChrome
+                                    ? FontWeight.w700
+                                    : FontWeight.w600,
+                                fontSize: compactChrome ? 13 : null,
+                              ),
                     ),
                     if (widget.onOpenFullScreen != null) ...[
                       const SizedBox(width: 4),

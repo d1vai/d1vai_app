@@ -311,10 +311,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                 ? _t('community_close_search', 'Close search')
                 : isPostsView
                 ? _t('community_search_posts', 'Search posts')
-                : _t(
-                    'community_search_components',
-                    'Search components',
-                  ),
+                : _t('community_search_components', 'Search components'),
             icon: Icon(_isSearching ? Icons.close : Icons.search),
             onPressed: _toggleSearch,
           ),
@@ -454,7 +451,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                 padding: const EdgeInsets.fromLTRB(8, 8, 8, 24),
                 gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                   maxCrossAxisExtent: 520,
-                  mainAxisExtent: 238,
+                  mainAxisExtent: 258,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
                 ),
@@ -854,6 +851,7 @@ class _CommunityTabs extends StatelessWidget {
       if (value == null || value == key) return fallback;
       return value;
     }
+
     return Container(
       height: 48,
       padding: const EdgeInsets.all(4),
@@ -919,15 +917,16 @@ class _CommunityTabButton extends StatelessWidget {
         alignment: Alignment.center,
         child: Text(
           label,
-          style: LocaleFontHelper.localizedTitleStyle(
-            context,
-            theme.textTheme.labelLarge,
-          )?.copyWith(
-            color: selected
-                ? colorScheme.primary
-                : colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w700,
-          ),
+          style:
+              LocaleFontHelper.localizedTitleStyle(
+                context,
+                theme.textTheme.labelLarge,
+              )?.copyWith(
+                color: selected
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+              ),
         ),
       ),
     );
@@ -952,97 +951,105 @@ class _CommunityComponentCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              child: component.previewImageUrl?.isNotEmpty == true
-                  ? Image.network(
-                      component.previewImageUrl!,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    )
-                  : Container(
-                      width: double.infinity,
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Color(0x3322D3EE),
-                            Color(0x331D4ED8),
-                            Color(0x33C026D3),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final previewHeight = (constraints.maxWidth * 9 / 16).clamp(
+              120.0,
+              164.0,
+            );
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  height: previewHeight,
+                  width: double.infinity,
+                  child: component.previewImageUrl?.isNotEmpty == true
+                      ? Image.network(
+                          component.previewImageUrl!,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        )
+                      : Container(
+                          width: double.infinity,
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Color(0x3322D3EE),
+                                Color(0x331D4ED8),
+                                Color(0x33C026D3),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          component.title,
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                component.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  onPressed: onToggleLike,
+                                  icon: Icon(
+                                    component.isLiked
+                                        ? Icons.favorite
+                                        : Icons.favorite_border,
+                                    color: component.isLiked
+                                        ? Colors.red
+                                        : null,
+                                  ),
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                                Text(
+                                  '${component.likeCount}',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          component.description,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall,
+                        ),
+                        const Spacer(),
+                        Text(
+                          component.category,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            onPressed: onToggleLike,
-                            icon: Icon(
-                              component.isLiked
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
-                              color: component.isLiked ? Colors.red : null,
-                            ),
-                            visualDensity: VisualDensity.compact,
-                          ),
-                          Text(
-                            '${component.likeCount}',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    component.description,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          component.category,
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ],
-              ),
-            ),
-          ],
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

@@ -8,6 +8,7 @@ import '../../core/auth_expiry_bus.dart';
 import '../../utils/error_utils.dart';
 import '../app_menu_button.dart';
 import '../adaptive_modal.dart';
+import '../project_activation_panel.dart';
 import '../select.dart';
 import '../snackbar_helper.dart';
 
@@ -280,72 +281,24 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
 
   Widget _buildActivatePaymentsState() {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _t('project_payment_enable_title', 'Enable payments'),
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _t(
-                      'project_payment_enable_description',
-                      'Payments are not activated for this project yet. Initialize payments first, then manage products, transactions, bank accounts, withdrawals, and webhooks.',
-                    ),
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _isActivating ? null : _activatePayments,
-                      icon: _isActivating
-                          ? SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  colorScheme.onPrimary,
-                                ),
-                              ),
-                            )
-                          : const Icon(Icons.credit_score_outlined),
-                      label: Text(
-                        _isActivating
-                            ? _t(
-                                'project_payment_enable_loading',
-                                'Initializing…',
-                              )
-                            : _t(
-                                'project_payment_enable_button',
-                                'Enable Payments',
-                              ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
+    return ProjectActivationPanel(
+      icon: Icons.credit_score_rounded,
+      title: _t('project_payment_enable_title', 'Enable payments'),
+      description: _t(
+        'project_payment_enable_description',
+        'Payments are not activated for this project yet. Initialize payments first, then manage products, transactions, bank accounts, withdrawals, and webhooks.',
       ),
+      features: const [
+        'Stripe checkout and payment links',
+        'Products, balances, and withdrawals',
+        'Webhook-ready order lifecycle',
+      ],
+      actionLabel: _isActivating
+          ? _t('project_payment_enable_loading', 'Initializing…')
+          : _t('project_payment_enable_button', 'Enable Payments'),
+      isLoading: _isActivating,
+      onPressed: _activatePayments,
+      accentColor: theme.colorScheme.tertiary,
     );
   }
 
