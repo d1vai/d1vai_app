@@ -54,3 +54,4 @@ app.*.map.json
 /secrets/
 /android/key.properties
 /local-backups/
+/third_party/flutter_monaco/
