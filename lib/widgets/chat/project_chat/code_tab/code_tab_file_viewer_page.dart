@@ -257,7 +257,7 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
         ),
         actions: [
           if (isSqlFile && content != null && !content.isBinary)
-            IconButton(
+            _PageToolbarIconButton(
               onPressed: () {
                 showRunSqlMigrationBottomSheet(
                   context,
@@ -266,10 +266,10 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
                   sourcePath: widget.filePath,
                 );
               },
-              icon: const Icon(Icons.play_arrow),
+              icon: Icons.play_arrow_outlined,
               tooltip: 'Run SQL migration',
             ),
-          IconButton(
+          _PageToolbarIconButton(
             onPressed: () {
               widget.onAsk(
                 'Please review the file "${widget.filePath}". Summarize what it does and propose improvements. '
@@ -277,67 +277,43 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
               );
               Navigator.of(context).pop();
             },
-            icon: const Icon(Icons.auto_awesome),
+            icon: Icons.auto_awesome_outlined,
             tooltip: 'Ask AI',
           ),
           if (canEditCurrent)
-            IconButton(
+            _PageToolbarIconButton(
               onPressed: _isEditing
                   ? (_isSaving || !_hasUnsavedChanges ? null : _save)
                   : _enterEdit,
-              icon: _isEditing
-                  ? (_isSaving
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.save))
-                  : const Icon(Icons.edit),
+              icon: _isEditing ? Icons.save_outlined : Icons.edit_outlined,
               tooltip: _isEditing ? 'Save' : 'Edit',
+              busy: _isSaving,
             ),
           if (_isEditing)
-            IconButton(
+            _PageToolbarIconButton(
               onPressed: _editController.showSearch,
-              icon: const Icon(Icons.search),
+              icon: Icons.search_outlined,
               tooltip: 'Find',
             ),
           if (_isEditing)
-            IconButton(
+            _PageToolbarIconButton(
               onPressed: () {
                 setState(() {
                   _wrapEnabled = !_wrapEnabled;
                 });
               },
-              icon: Icon(_wrapEnabled ? Icons.wrap_text : Icons.code),
+              icon: _wrapEnabled ? Icons.wrap_text : Icons.wrap_text_outlined,
               tooltip: _wrapEnabled ? 'Disable wrap' : 'Enable wrap',
             ),
           if (_isEditing && _editController.code.foldableBlocks.isNotEmpty)
-            IconButton(
-              onPressed: _editController.foldAll,
-              icon: const Icon(Icons.unfold_less),
-              tooltip: 'Fold all',
-            ),
-          if (_isEditing && _editController.code.foldableBlocks.isNotEmpty)
-            IconButton(
-              onPressed: _editController.unfoldAll,
-              icon: const Icon(Icons.unfold_more),
-              tooltip: 'Unfold all',
-            ),
-          if (_isEditing && _editController.code.foldableBlocks.isNotEmpty)
-            IconButton(
-              onPressed: _editController.foldImports,
-              icon: const Icon(Icons.vertical_align_top),
-              tooltip: 'Fold imports',
-            ),
-          if (_isEditing && _editController.code.foldableBlocks.isNotEmpty)
-            IconButton(
-              onPressed: _editController.foldCommentAtLineZero,
-              icon: const Icon(Icons.notes),
-              tooltip: 'Fold header comment',
+            _PageFoldActionsMenu(
+              onFoldAll: _editController.foldAll,
+              onUnfoldAll: _editController.unfoldAll,
+              onFoldImports: _editController.foldImports,
+              onFoldHeader: _editController.foldCommentAtLineZero,
             ),
           if (canCopyCurrent)
-            IconButton(
+            _PageToolbarIconButton(
               onPressed: () async {
                 await Clipboard.setData(
                   ClipboardData(
@@ -354,7 +330,7 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
                   duration: const Duration(seconds: 2),
                 );
               },
-              icon: const Icon(Icons.copy),
+              icon: Icons.copy_outlined,
               tooltip: 'Copy',
             ),
         ],
@@ -423,6 +399,79 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _PageToolbarIconButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  final IconData icon;
+  final String tooltip;
+  final bool busy;
+
+  const _PageToolbarIconButton({
+    required this.onPressed,
+    required this.icon,
+    required this.tooltip,
+    this.busy = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return IconButton(
+      onPressed: onPressed,
+      visualDensity: VisualDensity.compact,
+      iconSize: 17,
+      splashRadius: 16,
+      padding: const EdgeInsets.all(5),
+      color: theme.colorScheme.onSurfaceVariant.withValues(
+        alpha: onPressed == null ? 0.38 : 0.78,
+      ),
+      icon: busy
+          ? const SizedBox(
+              width: 15,
+              height: 15,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Icon(icon),
+      tooltip: tooltip,
+    );
+  }
+}
+
+class _PageFoldActionsMenu extends StatelessWidget {
+  final VoidCallback onFoldAll;
+  final VoidCallback onUnfoldAll;
+  final VoidCallback onFoldImports;
+  final VoidCallback onFoldHeader;
+
+  const _PageFoldActionsMenu({
+    required this.onFoldAll,
+    required this.onUnfoldAll,
+    required this.onFoldImports,
+    required this.onFoldHeader,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return PopupMenuButton<VoidCallback>(
+      tooltip: 'Fold options',
+      padding: EdgeInsets.zero,
+      iconSize: 17,
+      splashRadius: 16,
+      icon: Icon(
+        Icons.unfold_more_outlined,
+        color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.78),
+      ),
+      onSelected: (action) => action(),
+      itemBuilder: (context) => [
+        PopupMenuItem(value: onFoldAll, child: const Text('Fold all')),
+        PopupMenuItem(value: onUnfoldAll, child: const Text('Unfold all')),
+        PopupMenuItem(value: onFoldImports, child: const Text('Fold imports')),
+        PopupMenuItem(value: onFoldHeader, child: const Text('Fold header')),
+      ],
     );
   }
 }

@@ -570,91 +570,63 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
                 ),
               ),
               SizedBox(width: compact ? 8 : 10),
-              IconButton(
+              _ToolbarIconButton(
                 onPressed: _loadingTree ? null : _loadTree,
-                visualDensity: VisualDensity.compact,
-                iconSize: compact ? 18 : 20,
-                padding: EdgeInsets.all(compact ? 6 : 8),
-                icon: const Icon(Icons.refresh),
+                compact: compact,
+                icon: Icons.refresh_outlined,
                 tooltip: 'Refresh',
               ),
               SizedBox(width: compact ? 2 : 6),
               if (activeEditor != null && activeEditor.isEditing) ...[
-                IconButton(
+                _ToolbarIconButton(
                   onPressed: activeEditor.controller.showSearch,
-                  icon: const Icon(Icons.search),
+                  compact: compact,
+                  icon: Icons.search_outlined,
                   tooltip: 'Find',
                 ),
                 const SizedBox(width: 2),
-                IconButton(
+                _ToolbarIconButton(
                   onPressed: () => _workbench.toggleWrap(activeEditor.path),
-                  icon: Icon(
-                    activeEditor.wrapEnabled ? Icons.wrap_text : Icons.code,
-                  ),
+                  compact: compact,
+                  icon: activeEditor.wrapEnabled
+                      ? Icons.wrap_text
+                      : Icons.wrap_text_outlined,
                   tooltip: activeEditor.wrapEnabled
                       ? 'Disable wrap'
                       : 'Enable wrap',
                 ),
                 const SizedBox(width: 2),
                 if (activeEditor.controller.code.foldableBlocks.isNotEmpty)
-                  IconButton(
-                    onPressed: activeEditor.controller.foldAll,
-                    icon: const Icon(Icons.unfold_less),
-                    tooltip: 'Fold all',
-                  ),
-                if (activeEditor.controller.code.foldableBlocks.isNotEmpty)
-                  const SizedBox(width: 2),
-                if (activeEditor.controller.code.foldableBlocks.isNotEmpty)
-                  IconButton(
-                    onPressed: activeEditor.controller.unfoldAll,
-                    icon: const Icon(Icons.unfold_more),
-                    tooltip: 'Unfold all',
-                  ),
-                if (activeEditor.controller.code.foldableBlocks.isNotEmpty)
-                  const SizedBox(width: 2),
-                if (activeEditor.controller.code.foldableBlocks.isNotEmpty)
-                  IconButton(
-                    onPressed: activeEditor.controller.foldImports,
-                    icon: const Icon(Icons.vertical_align_top),
-                    tooltip: 'Fold imports',
-                  ),
-                if (activeEditor.controller.code.foldableBlocks.isNotEmpty)
-                  const SizedBox(width: 2),
-                if (activeEditor.controller.code.foldableBlocks.isNotEmpty)
-                  IconButton(
-                    onPressed: activeEditor.controller.foldCommentAtLineZero,
-                    icon: const Icon(Icons.notes),
-                    tooltip: 'Fold header comment',
+                  _FoldActionsMenu(
+                    compact: compact,
+                    onFoldAll: activeEditor.controller.foldAll,
+                    onUnfoldAll: activeEditor.controller.unfoldAll,
+                    onFoldImports: activeEditor.controller.foldImports,
+                    onFoldHeader: activeEditor.controller.foldCommentAtLineZero,
                   ),
                 if (activeEditor.controller.code.foldableBlocks.isNotEmpty)
                   const SizedBox(width: 2),
                 ListenableBuilder(
                   listenable: activeEditor.controller,
                   builder: (context, _) {
-                    return IconButton(
+                    return _ToolbarIconButton(
                       onPressed:
                           activeEditor.saving || !activeEditor.hasUnsavedChanges
                           ? null
                           : () => _saveEditor(activeEditor.path),
-                      icon: activeEditor.saving
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.save),
+                      compact: compact,
+                      icon: Icons.save_outlined,
                       tooltip: 'Save',
+                      busy: activeEditor.saving,
                     );
                   },
                 ),
                 const SizedBox(width: 2),
               ],
-              IconButton(
+              _ToolbarIconButton(
                 onPressed: hasSelection ? _askAboutSelected : null,
-                visualDensity: VisualDensity.compact,
-                iconSize: compact ? 18 : 20,
-                padding: EdgeInsets.all(compact ? 6 : 8),
-                icon: const Icon(Icons.auto_awesome),
+                compact: compact,
+                icon: Icons.auto_awesome_outlined,
                 tooltip: 'Ask AI about file',
               ),
               const SizedBox(width: 8),
@@ -878,6 +850,83 @@ class _CodePaneResizeHandleState extends State<_CodePaneResizeHandle> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ToolbarIconButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  final IconData icon;
+  final String tooltip;
+  final bool compact;
+  final bool busy;
+
+  const _ToolbarIconButton({
+    required this.onPressed,
+    required this.icon,
+    required this.tooltip,
+    this.compact = false,
+    this.busy = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return IconButton(
+      onPressed: onPressed,
+      visualDensity: VisualDensity.compact,
+      iconSize: compact ? 15 : 16,
+      splashRadius: compact ? 15 : 16,
+      padding: EdgeInsets.all(compact ? 4 : 5),
+      color: theme.colorScheme.onSurfaceVariant.withValues(
+        alpha: onPressed == null ? 0.38 : 0.78,
+      ),
+      icon: busy
+          ? SizedBox(
+              width: compact ? 14 : 15,
+              height: compact ? 14 : 15,
+              child: const CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Icon(icon),
+      tooltip: tooltip,
+    );
+  }
+}
+
+class _FoldActionsMenu extends StatelessWidget {
+  final VoidCallback onFoldAll;
+  final VoidCallback onUnfoldAll;
+  final VoidCallback onFoldImports;
+  final VoidCallback onFoldHeader;
+  final bool compact;
+
+  const _FoldActionsMenu({
+    required this.onFoldAll,
+    required this.onUnfoldAll,
+    required this.onFoldImports,
+    required this.onFoldHeader,
+    this.compact = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return PopupMenuButton<VoidCallback>(
+      tooltip: 'Fold options',
+      padding: EdgeInsets.zero,
+      iconSize: compact ? 15 : 16,
+      splashRadius: compact ? 15 : 16,
+      icon: Icon(
+        Icons.unfold_more_outlined,
+        color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.78),
+      ),
+      onSelected: (action) => action(),
+      itemBuilder: (context) => [
+        PopupMenuItem(value: onFoldAll, child: const Text('Fold all')),
+        PopupMenuItem(value: onUnfoldAll, child: const Text('Unfold all')),
+        PopupMenuItem(value: onFoldImports, child: const Text('Fold imports')),
+        PopupMenuItem(value: onFoldHeader, child: const Text('Fold header')),
+      ],
     );
   }
 }

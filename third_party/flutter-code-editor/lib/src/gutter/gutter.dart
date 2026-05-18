@@ -30,11 +30,16 @@ class GutterWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
-      child: SingleChildScrollView(
-        controller: scrollController,
-        child: AnimatedBuilder(
-          animation: codeController,
-          builder: _buildOnChange,
+      child: ScrollConfiguration(
+        behavior: ScrollConfiguration.of(
+          context,
+        ).copyWith(scrollbars: false),
+        child: SingleChildScrollView(
+          controller: scrollController,
+          child: AnimatedBuilder(
+            animation: codeController,
+            builder: _buildOnChange,
+          ),
         ),
       ),
     );
