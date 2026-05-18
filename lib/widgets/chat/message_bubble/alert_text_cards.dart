@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:d1vai_app/l10n/app_localizations.dart';
 
 import '../expandable_text.dart';
@@ -52,14 +53,13 @@ class ChatAlertTextCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          ExpandableText(
+          _SelectableBody(
             text: text,
             maxLines: 3,
-            isMarkdown: false,
             style: theme.textTheme.bodySmall?.copyWith(
               color: tint.withValues(alpha: 0.92),
-              height: 1.3,
-              fontSize: 12.8,
+              height: 1.34,
+              fontSize: 12.9,
             ),
           ),
         ],
@@ -98,20 +98,47 @@ class ChatCompletionTextCard extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: ExpandableText(
+            child: _SelectableBody(
               text: text,
               maxLines: 3,
-              isMarkdown: false,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
                 fontWeight: FontWeight.w700,
-                height: 1.25,
-                fontSize: 12.8,
+                height: 1.28,
+                fontSize: 12.9,
               ),
             ),
           ),
         ],
       ),
     );
+  }
+}
+
+class _SelectableBody extends StatelessWidget {
+  final String text;
+  final int maxLines;
+  final TextStyle? style;
+
+  const _SelectableBody({
+    required this.text,
+    required this.maxLines,
+    required this.style,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final content = ExpandableText(
+      text: text,
+      maxLines: maxLines,
+      isMarkdown: false,
+      style: style,
+    );
+    if (defaultTargetPlatform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.linux) {
+      return SelectionArea(child: content);
+    }
+    return content;
   }
 }

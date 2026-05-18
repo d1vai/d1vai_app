@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../models/message.dart';
 import '../expandable_text.dart';
@@ -29,14 +30,13 @@ class ChatErrorCard extends StatelessWidget {
             title: title,
           ),
           const SizedBox(height: 8),
-          ExpandableText(
+          _SelectableBody(
             text: content.message,
             maxLines: 4,
-            isMarkdown: false,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.error.withValues(alpha: 0.9),
               fontSize: 13,
-              height: 1.3,
+              height: 1.32,
             ),
           ),
           if (detailsText != null && detailsText.isNotEmpty) ...[
@@ -102,16 +102,15 @@ class ChatCompletionCard extends StatelessWidget {
           if (content.details != null &&
               content.details!.trim().isNotEmpty) ...[
             const SizedBox(height: 8),
-            ExpandableText(
+            _SelectableBody(
               text: content.details!,
               maxLines: 4,
-              isMarkdown: false,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant.withValues(
                   alpha: 0.9,
                 ),
                 fontSize: 12.5,
-                height: 1.3,
+                height: 1.32,
               ),
             ),
           ],
@@ -181,12 +180,13 @@ class ChatDeploymentCard extends StatelessWidget {
           if (content.message != null &&
               content.message!.trim().isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text(
-              content.message!,
+            _SelectableBody(
+              text: content.message!,
+              maxLines: 4,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
                 fontSize: 13,
-                height: 1.3,
+                height: 1.32,
               ),
             ),
           ],
@@ -197,13 +197,15 @@ class ChatDeploymentCard extends StatelessWidget {
                 Icon(Icons.link, size: 14, color: tint),
                 const SizedBox(width: 6),
                 Expanded(
-                  child: SelectableText(
-                    content.url!,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.primary,
-                      decoration: TextDecoration.underline,
-                      fontSize: 12.5,
-                      height: 1.2,
+                  child: SelectionArea(
+                    child: Text(
+                      content.url!,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                        decoration: TextDecoration.underline,
+                        fontSize: 12.5,
+                        height: 1.22,
+                      ),
                     ),
                   ),
                 ),
@@ -213,5 +215,33 @@ class ChatDeploymentCard extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _SelectableBody extends StatelessWidget {
+  final String text;
+  final int maxLines;
+  final TextStyle? style;
+
+  const _SelectableBody({
+    required this.text,
+    required this.maxLines,
+    required this.style,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final body = ExpandableText(
+      text: text,
+      maxLines: maxLines,
+      isMarkdown: false,
+      style: style,
+    );
+    if (defaultTargetPlatform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.linux) {
+      return SelectionArea(child: body);
+    }
+    return body;
   }
 }

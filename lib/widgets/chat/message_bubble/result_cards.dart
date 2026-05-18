@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 import '../markdown_text.dart';
 import '../tools/tool_utils.dart';
@@ -173,12 +174,12 @@ class ChatResultCard extends StatelessWidget {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 224),
               child: SingleChildScrollView(
-                child: MarkdownText(
+                child: _SelectableBody(
                   text: resultText.isNotEmpty ? resultText : '🎉 Done',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
                     fontSize: 13,
-                    height: 1.3,
+                    height: 1.32,
                   ),
                 ),
               ),
@@ -220,18 +221,35 @@ class ChatRawCard extends StatelessWidget {
             title: typeLabel != null ? 'Raw · $typeLabel' : 'Raw',
           ),
           const SizedBox(height: 8),
-          ChatExpandableSelectableBlock(
+          _SelectableBody(
             text: text,
-            collapsedLines: 10,
             style: theme.textTheme.bodySmall?.copyWith(
               fontFamily: 'monospace',
-              fontSize: 11.5,
-              height: 1.25,
+              fontSize: 11.6,
+              height: 1.28,
               color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
             ),
           ),
         ],
       ),
     );
+  }
+}
+
+class _SelectableBody extends StatelessWidget {
+  final String text;
+  final TextStyle? style;
+
+  const _SelectableBody({required this.text, required this.style});
+
+  @override
+  Widget build(BuildContext context) {
+    final body = MarkdownText(text: text, style: style);
+    if (defaultTargetPlatform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.linux) {
+      return SelectionArea(child: body);
+    }
+    return body;
   }
 }

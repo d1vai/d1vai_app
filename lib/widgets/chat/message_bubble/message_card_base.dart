@@ -102,12 +102,14 @@ class ChatExpandableSelectableBlock extends StatefulWidget {
   final String text;
   final int collapsedLines;
   final TextStyle? style;
+  final bool allowSelection;
 
   const ChatExpandableSelectableBlock({
     super.key,
     required this.text,
     required this.collapsedLines,
     this.style,
+    this.allowSelection = false,
   });
 
   @override
