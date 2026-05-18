@@ -1,17 +1,61 @@
 import Cocoa
 import FlutterMacOS
 
+private final class OAuthCallbackStreamHandler: NSObject, FlutterStreamHandler {
+  private var eventSink: FlutterEventSink?
+  private var pendingCallbackURL: String?
+
+  func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
+    eventSink = events
+    if let pendingCallbackURL {
+      events(pendingCallbackURL)
+      self.pendingCallbackURL = nil
+    }
+    return nil
+  }
+
+  func onCancel(withArguments arguments: Any?) -> FlutterError? {
+    eventSink = nil
+    return nil
+  }
+
+  func handle(url: URL) {
+    let value = url.absoluteString
+    if let eventSink {
+      eventSink(value)
+      return
+    }
+    pendingCallbackURL = value
+  }
+
+  func takePendingCallback() -> String? {
+    let value = pendingCallbackURL
+    pendingCallbackURL = nil
+    return value
+  }
+
+  func clearPendingCallback() {
+    pendingCallbackURL = nil
+  }
+}
+
 @main
 class AppDelegate: FlutterAppDelegate {
   private let openChannelName = "ai.d1v.d1vai/open"
   private let windowChannelName = "ai.d1v.d1vai/window"
+  private let oauthCallbackChannelName = "ai.d1v.d1vaiapp/oauth_callback"
+  private let oauthCallbackControlChannelName = "ai.d1v.d1vaiapp/oauth_callback_control"
   private var openChannel: FlutterMethodChannel?
   private var windowChannel: FlutterMethodChannel?
+  private var oauthCallbackChannel: FlutterEventChannel?
+  private var oauthCallbackControlChannel: FlutterMethodChannel?
   private var pendingImportPaths: [String] = []
+  private let oauthCallbackStreamHandler = OAuthCallbackStreamHandler()
 
   override func applicationDidFinishLaunching(_ notification: Notification) {
     super.applicationDidFinishLaunching(notification)
     configureOpenChannelIfPossible()
+    configureOAuthChannelsIfPossible()
     flushPendingImportPaths()
   }
 
@@ -40,6 +84,39 @@ class AppDelegate: FlutterAppDelegate {
     flushPendingImportPaths()
   }
 
+  func configureOAuthChannels(binaryMessenger: FlutterBinaryMessenger) {
+    if oauthCallbackChannel == nil {
+      oauthCallbackChannel = FlutterEventChannel(
+        name: oauthCallbackChannelName,
+        binaryMessenger: binaryMessenger
+      )
+      oauthCallbackChannel?.setStreamHandler(oauthCallbackStreamHandler)
+    }
+
+    if oauthCallbackControlChannel == nil {
+      oauthCallbackControlChannel = FlutterMethodChannel(
+        name: oauthCallbackControlChannelName,
+        binaryMessenger: binaryMessenger
+      )
+      oauthCallbackControlChannel?.setMethodCallHandler { [weak self] call, result in
+        guard let self else {
+          result(FlutterMethodNotImplemented)
+          return
+        }
+
+        switch call.method {
+        case "takePending":
+          result(self.oauthCallbackStreamHandler.takePendingCallback())
+        case "clearPending":
+          self.oauthCallbackStreamHandler.clearPendingCallback()
+          result(nil)
+        default:
+          result(FlutterMethodNotImplemented)
+        }
+      }
+    }
+  }
+
   private func beginWindowDrag(result: @escaping FlutterResult) {
     DispatchQueue.main.async {
       guard let window = self.mainFlutterWindow ?? NSApp.mainWindow else {
@@ -56,7 +133,7 @@ class AppDelegate: FlutterAppDelegate {
   }
 
   private func configureOpenChannelIfPossible() {
-    if openChannel != nil {
+    if openChannel != nil, oauthCallbackChannel != nil, oauthCallbackControlChannel != nil {
       return
     }
     guard let flutterViewController = mainFlutterWindow?.contentViewController as? FlutterViewController else {
@@ -64,6 +141,17 @@ class AppDelegate: FlutterAppDelegate {
       return
     }
     configureOpenChannel(binaryMessenger: flutterViewController.engine.binaryMessenger)
+    configureOAuthChannels(binaryMessenger: flutterViewController.engine.binaryMessenger)
+  }
+
+  private func configureOAuthChannelsIfPossible() {
+    if oauthCallbackChannel != nil, oauthCallbackControlChannel != nil {
+      return
+    }
+    guard let flutterViewController = mainFlutterWindow?.contentViewController as? FlutterViewController else {
+      return
+    }
+    configureOAuthChannels(binaryMessenger: flutterViewController.engine.binaryMessenger)
   }
 
   override func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -80,6 +168,15 @@ class AppDelegate: FlutterAppDelegate {
     }
     flushPendingImportPaths()
     sender.reply(toOpenOrPrint: .success)
+  }
+
+  override func application(_ application: NSApplication, open urls: [URL]) {
+    for url in urls {
+      if url.scheme?.lowercased() == "d1vai" {
+        configureOAuthChannelsIfPossible()
+        oauthCallbackStreamHandler.handle(url: url)
+      }
+    }
   }
 
   func handleDroppedPaths(_ paths: [String]) {

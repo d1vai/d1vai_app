@@ -898,7 +898,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 18),
                   _buildAppleLoginButton(),
                 ],
-                if (Platform.isIOS || Platform.isAndroid) ...[
+                if (Platform.isIOS ||
+                    Platform.isAndroid ||
+                    Platform.isMacOS) ...[
                   const SizedBox(height: 18),
                   _buildMobileOAuthSection(),
                 ],

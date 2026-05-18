@@ -221,7 +221,7 @@ class AuthProvider extends ChangeNotifier {
         redirectTo: 'd1vai://login',
         inviteCode: inviteCode,
       );
-      final callbackUrl = Platform.isIOS
+      final callbackUrl = (Platform.isIOS || Platform.isMacOS)
           ? await _oauthCallbackService.authenticateWithExternalBrowser(
               url: startUri,
             )

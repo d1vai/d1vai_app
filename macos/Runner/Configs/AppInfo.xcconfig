@@ -8,7 +8,7 @@
 PRODUCT_NAME = d1vai_app
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = ai.d1v.d1vaiApp
+PRODUCT_BUNDLE_IDENTIFIER = ai.d1v.d1vaiapp
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 ai.d1v. All rights reserved.
