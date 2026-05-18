@@ -35,6 +35,8 @@ import 'actions/undo.dart';
 import 'search_result_highlighted_builder.dart';
 import 'span_builder.dart';
 
+final _defaultCodeTheme = CodeThemeData();
+
 class CodeController extends TextEditingController {
   Mode? _language;
 
@@ -124,6 +126,15 @@ class CodeController extends TextEditingController {
   /// requested by the widget and thus notifications are done right.
   @visibleForTesting
   TextSpan? lastTextSpan;
+
+  TextSpan? _cachedSpanBeforeSearch;
+  TextSpan? _cachedFinalTextSpan;
+  Code? _cachedCode;
+  CodeThemeData? _cachedTheme;
+  TextStyle? _cachedRootStyle;
+  SearchResult _cachedVisibleSearchResult = SearchResult.empty;
+  int? _cachedSearchMatchIndex;
+  int _cachedSearchMatchCount = 0;
 
   bool _disposed = false;
 
@@ -947,22 +958,53 @@ class CodeController extends TextEditingController {
     TextStyle? style,
     bool? withComposing,
   }) {
-    final spanBeforeSearch = _createTextSpan(
-      context: context,
-      style: style,
-    );
-
+    final theme = _getTheme(context);
     final visibleSearchResult =
         _code.hiddenRanges.cutSearchResult(fullSearchResult);
 
-    // TODO(alexeyinkin): Return cached if the value did not change, https://github.com/akvelon/flutter-code-editor/issues/127
+    final searchNavigationState = _searchNavigationController.value;
+    final isBaseSpanCacheHit = identical(_cachedCode, _code) &&
+        _cachedTheme == theme &&
+        _cachedRootStyle == style &&
+        _cachedSpanBeforeSearch != null;
+
+    final spanBeforeSearch = isBaseSpanCacheHit
+        ? _cachedSpanBeforeSearch!
+        : _createTextSpan(
+            context: context,
+            style: style,
+          );
+
+    if (!isBaseSpanCacheHit) {
+      _cachedCode = _code;
+      _cachedTheme = theme;
+      _cachedRootStyle = style;
+      _cachedSpanBeforeSearch = spanBeforeSearch;
+    }
+
+    final isFinalSpanCacheHit = isBaseSpanCacheHit &&
+        _cachedFinalTextSpan != null &&
+        _cachedVisibleSearchResult == visibleSearchResult &&
+        _cachedSearchMatchIndex == searchNavigationState.currentMatchIndex &&
+        _cachedSearchMatchCount == searchNavigationState.totalMatchCount;
+
+    if (isFinalSpanCacheHit) {
+      lastTextSpan = _cachedFinalTextSpan;
+      return lastTextSpan!;
+    }
+
     lastTextSpan = SearchResultHighlightedBuilder(
       searchResult: visibleSearchResult,
       rootStyle: style,
-      theme: _getTheme(context),
+      theme: theme,
       textSpan: spanBeforeSearch,
-      searchNavigationState: _searchNavigationController.value,
+      searchNavigationState: searchNavigationState,
     ).build();
+
+    _cachedVisibleSearchResult = visibleSearchResult;
+    _cachedSearchMatchIndex = searchNavigationState.currentMatchIndex;
+    _cachedSearchMatchCount = searchNavigationState.totalMatchCount;
+    _cachedFinalTextSpan = lastTextSpan;
 
     return lastTextSpan!;
   }
@@ -984,7 +1026,7 @@ class CodeController extends TextEditingController {
   }
 
   CodeThemeData _getTheme(BuildContext context) {
-    return CodeTheme.of(context) ?? CodeThemeData();
+    return CodeTheme.of(context) ?? _defaultCodeTheme;
   }
 
   void dismiss() {
