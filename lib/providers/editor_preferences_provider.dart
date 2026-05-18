@@ -9,6 +9,7 @@ class EditorPreferencesProvider with ChangeNotifier {
   static const _showRulersKey = 'editor_show_rulers';
   static const _defaultWrapKey = 'editor_default_wrap';
   static const _tabSizeKey = 'editor_tab_size';
+  static const _engineKey = 'editor_engine';
 
   String _lightThemePresetId = 'vscode_light';
   String _darkThemePresetId = 'vscode_dark';
@@ -17,6 +18,7 @@ class EditorPreferencesProvider with ChangeNotifier {
   bool _defaultWrap = false;
   int _tabSize = 2;
   EditorAppearanceMode _appearanceMode = EditorAppearanceMode.followApp;
+  EditorEngine _engine = EditorEngine.flutterCodeEditor;
 
   String get lightThemePresetId => _lightThemePresetId;
   String get darkThemePresetId => _darkThemePresetId;
@@ -25,6 +27,7 @@ class EditorPreferencesProvider with ChangeNotifier {
   bool get defaultWrap => _defaultWrap;
   int get tabSize => _tabSize;
   EditorAppearanceMode get appearanceMode => _appearanceMode;
+  EditorEngine get engine => _engine;
 
   EditorPreferencesProvider() {
     _load();
@@ -47,6 +50,13 @@ class EditorPreferencesProvider with ChangeNotifier {
       _showRulers = prefs.getBool(_showRulersKey) ?? _showRulers;
       _defaultWrap = prefs.getBool(_defaultWrapKey) ?? _defaultWrap;
       _tabSize = prefs.getInt(_tabSizeKey) ?? _tabSize;
+      final engine = prefs.getString(_engineKey);
+      if (engine != null) {
+        _engine = EditorEngine.values.firstWhere(
+          (value) => value.name == engine,
+          orElse: () => EditorEngine.flutterCodeEditor,
+        );
+      }
       final appearance = prefs.getString(_appearanceModeKey);
       if (appearance != null) {
         _appearanceMode = EditorAppearanceMode.values.firstWhere(
@@ -129,6 +139,31 @@ class EditorPreferencesProvider with ChangeNotifier {
       await prefs.setString(_appearanceModeKey, value.name);
     } catch (_) {}
   }
+
+  Future<void> setEngine(EditorEngine value) async {
+    if (_engine == value) return;
+    _engine = value;
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_engineKey, value.name);
+    } catch (_) {}
+  }
 }
 
 enum EditorAppearanceMode { followApp, forceLight, forceDark }
+
+enum EditorEngine {
+  flutterCodeEditor,
+  flutterMonaco;
+
+  String get label => switch (this) {
+    EditorEngine.flutterCodeEditor => 'Flutter Code Editor',
+    EditorEngine.flutterMonaco => 'Flutter Monaco',
+  };
+
+  String get shortLabel => switch (this) {
+    EditorEngine.flutterCodeEditor => 'Native',
+    EditorEngine.flutterMonaco => 'Monaco',
+  };
+}

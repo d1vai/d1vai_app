@@ -39,6 +39,7 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
   late final VoidCallback _searchListener;
   late final VoidCallback _workbenchListener;
   EditorPreferencesProvider? _editorPreferences;
+  EditorEngine? _lastEditorEngine;
 
   bool _loadingTree = false;
   String? _treeError;
@@ -93,10 +94,15 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
   void _handleEditorPreferencesChanged() {
     final prefs = _editorPreferences;
     if (prefs == null) return;
-    _workbench.applyEditorPreferences(
-      defaultWrap: prefs.defaultWrap,
-      tabSize: prefs.tabSize,
+    _lastEditorEngine ??= prefs.engine;
+    unawaited(
+      _workbench.applyEditorPreferences(
+        defaultWrap: prefs.defaultWrap,
+        tabSize: prefs.tabSize,
+        engine: prefs.engine,
+      ),
     );
+    _lastEditorEngine = prefs.engine;
   }
 
   bool _isMobile(BuildContext context) =>
@@ -250,7 +256,7 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
 
     if (result == null || result == CodeTabEditLeaveAction.cancel) return false;
     if (result == CodeTabEditLeaveAction.discard) {
-      _workbench.discardChanges(path);
+      await _workbench.discardChanges(path);
       return true;
     }
 
@@ -264,10 +270,11 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
       if (_workbench.hasLocalWorkspace &&
           _workbench.localRootPath != null &&
           active != null) {
+        final latestText = await active.controller.readText(refresh: true);
         await _localWorkspaceService.writeFile(
           _workbench.localRootPath!,
           path,
-          active.currentText,
+          latestText,
         );
         _scheduleDeferredGitHubSync(path);
         _workbench.markPathLocalSaved(path);
@@ -307,15 +314,18 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
     _syncTimers[path]?.cancel();
     _syncTimers[path] = Timer(const Duration(milliseconds: 650), () {
       if (!mounted) return;
-      final editor = _workbench.editorForPath(path);
-      if (editor == null) return;
-      if (editor.currentText != editor.originalContent) {
-        _workbench.markPathQueued(path);
-        _scheduleDeferredGitHubSync(path);
-        return;
-      }
-      _workbench.markPathSyncingGitHub(path);
-      unawaited(_syncLocalPathToGitHub(path));
+      unawaited(() async {
+        final editor = _workbench.editorForPath(path);
+        if (editor == null) return;
+        final latestText = await editor.controller.readText(refresh: true);
+        if (latestText != editor.originalContent) {
+          _workbench.markPathQueued(path);
+          _scheduleDeferredGitHubSync(path);
+          return;
+        }
+        _workbench.markPathSyncingGitHub(path);
+        await _syncLocalPathToGitHub(path);
+      }());
     });
   }
 
@@ -324,10 +334,11 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
     if (editor == null || editor.content == null) return;
     try {
       final fileName = path.split('/').isEmpty ? 'file' : path.split('/').last;
+      final latestText = await editor.controller.readText(refresh: true);
       final result = await _service.syncFileToGitHub(
         widget.projectId,
         filePath: path,
-        content: editor.currentText,
+        content: latestText,
         commitMessage: 'feat: update $fileName',
       );
       final commit = result['commit'];
@@ -447,6 +458,7 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
           preview: preview,
           wrapEnabled: prefs.defaultWrap,
           tabSize: prefs.tabSize,
+          engine: prefs.engine,
         );
         final raw = await _localWorkspaceService.readFile(
           _workbench.localRootPath!,
@@ -474,6 +486,7 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
       preview: preview,
       wrapEnabled: prefs.defaultWrap,
       tabSize: prefs.tabSize,
+      engine: prefs.engine,
     );
   }
 
@@ -500,7 +513,8 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
     final active = _workbench.activeEditor;
     final content = active?.content;
     if (active == null || content == null) return;
-    await Clipboard.setData(ClipboardData(text: active.currentText));
+    final latestText = await active.controller.readText(refresh: true);
+    await Clipboard.setData(ClipboardData(text: latestText));
     if (!mounted) return;
     SnackBarHelper.showSuccess(
       context,
@@ -586,7 +600,8 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
                 ),
                 const SizedBox(width: 2),
                 _ToolbarIconButton(
-                  onPressed: () => _workbench.toggleWrap(activeEditor.path),
+                  onPressed: () =>
+                      unawaited(_workbench.toggleWrap(activeEditor.path)),
                   compact: compact,
                   icon: activeEditor.wrapEnabled
                       ? Icons.wrap_text
@@ -596,15 +611,19 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
                       : 'Enable wrap',
                 ),
                 const SizedBox(width: 2),
-                if (activeEditor.controller.code.foldableBlocks.isNotEmpty)
+                if (activeEditor.controller.supportsFoldAll)
                   _FoldActionsMenu(
                     compact: compact,
                     onFoldAll: activeEditor.controller.foldAll,
                     onUnfoldAll: activeEditor.controller.unfoldAll,
-                    onFoldImports: activeEditor.controller.foldImports,
-                    onFoldHeader: activeEditor.controller.foldCommentAtLineZero,
+                    onFoldImports: activeEditor.controller.supportsFoldImports
+                        ? activeEditor.controller.foldImports
+                        : null,
+                    onFoldHeader: activeEditor.controller.supportsFoldHeader
+                        ? activeEditor.controller.foldHeader
+                        : null,
                   ),
-                if (activeEditor.controller.code.foldableBlocks.isNotEmpty)
+                if (activeEditor.controller.supportsFoldAll)
                   const SizedBox(width: 2),
                 ListenableBuilder(
                   listenable: activeEditor.controller,
@@ -761,12 +780,14 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
                                             'Save changes before leaving edit mode?',
                                       );
                                       if (!ok) return;
-                                      _workbench.cancelEdit(activeEditor.path);
+                                      await _workbench.cancelEdit(
+                                        activeEditor.path,
+                                      );
                                     },
                               onToggleWrap: activeEditor == null
                                   ? null
-                                  : () => _workbench.toggleWrap(
-                                      activeEditor.path,
+                                  : () => unawaited(
+                                      _workbench.toggleWrap(activeEditor.path),
                                     ),
                               onChange: null,
                               onSave: activeEditor == null
@@ -896,8 +917,8 @@ class _ToolbarIconButton extends StatelessWidget {
 class _FoldActionsMenu extends StatelessWidget {
   final VoidCallback onFoldAll;
   final VoidCallback onUnfoldAll;
-  final VoidCallback onFoldImports;
-  final VoidCallback onFoldHeader;
+  final VoidCallback? onFoldImports;
+  final VoidCallback? onFoldHeader;
   final bool compact;
 
   const _FoldActionsMenu({
@@ -921,12 +942,29 @@ class _FoldActionsMenu extends StatelessWidget {
         color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.78),
       ),
       onSelected: (action) => action(),
-      itemBuilder: (context) => [
-        PopupMenuItem(value: onFoldAll, child: const Text('Fold all')),
-        PopupMenuItem(value: onUnfoldAll, child: const Text('Unfold all')),
-        PopupMenuItem(value: onFoldImports, child: const Text('Fold imports')),
-        PopupMenuItem(value: onFoldHeader, child: const Text('Fold header')),
-      ],
+      itemBuilder: (context) {
+        final items = <PopupMenuEntry<VoidCallback>>[
+          PopupMenuItem(value: onFoldAll, child: const Text('Fold all')),
+          PopupMenuItem(value: onUnfoldAll, child: const Text('Unfold all')),
+        ];
+        if (onFoldImports != null) {
+          items.add(
+            PopupMenuItem(
+              value: onFoldImports!,
+              child: const Text('Fold imports'),
+            ),
+          );
+        }
+        if (onFoldHeader != null) {
+          items.add(
+            PopupMenuItem(
+              value: onFoldHeader!,
+              child: const Text('Fold header'),
+            ),
+          );
+        }
+        return items;
+      },
     );
   }
 }

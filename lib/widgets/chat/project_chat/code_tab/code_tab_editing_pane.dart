@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_code_editor/flutter_code_editor.dart';
 
+import 'app_code_editor_controller.dart';
 import 'code_tab_editor.dart';
 
 class CodeTabEditingPane extends StatelessWidget {
-  final CodeController controller;
+  final AppCodeEditorController controller;
   final String originalText;
   final String languageLabel;
   final bool wrapEnabled;

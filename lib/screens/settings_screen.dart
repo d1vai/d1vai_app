@@ -216,19 +216,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             label: Text(switch (mode) {
                               EditorAppearanceMode.followApp =>
                                 loc?.translate(
-                                  'settings_editor_appearance_follow_app',
-                                ) ??
-                                'Follow App',
+                                      'settings_editor_appearance_follow_app',
+                                    ) ??
+                                    'Follow App',
                               EditorAppearanceMode.forceLight =>
                                 loc?.translate(
-                                  'settings_editor_appearance_light',
-                                ) ??
-                                'Light',
+                                      'settings_editor_appearance_light',
+                                    ) ??
+                                    'Light',
                               EditorAppearanceMode.forceDark =>
                                 loc?.translate(
-                                  'settings_editor_appearance_dark',
-                                ) ??
-                                'Dark',
+                                      'settings_editor_appearance_dark',
+                                    ) ??
+                                    'Dark',
                             }),
                             selected: editorPrefs.appearanceMode == mode,
                             onSelected: (_) =>
@@ -281,6 +281,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 editorPrefs.setDarkThemePreset(preset.id),
                           ),
                       ],
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      'Editor Engine',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final engine in EditorEngine.values)
+                          ChoiceChip(
+                            label: Text(engine.label),
+                            selected: editorPrefs.engine == engine,
+                            onSelected: (_) => editorPrefs.setEngine(engine),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      editorPrefs.engine == EditorEngine.flutterMonaco
+                          ? 'Monaco uses a platform WebView/iframe backend for better large-file behavior.'
+                          : 'Flutter Code Editor stays fully native in Flutter and keeps the current folding workflow.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     const SizedBox(height: 18),
                     CustomCard(
@@ -1101,7 +1130,11 @@ class _EditorThemePresetCard extends StatelessWidget {
     final root = preset.highlightTheme['root'] ?? const TextStyle();
     final bg = root.backgroundColor ?? colorScheme.surface;
     final fg = root.color ?? colorScheme.onSurface;
-    final presetLabel = _localizedEditorThemeLabel(loc, preset.id, preset.label);
+    final presetLabel = _localizedEditorThemeLabel(
+      loc,
+      preset.id,
+      preset.label,
+    );
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),

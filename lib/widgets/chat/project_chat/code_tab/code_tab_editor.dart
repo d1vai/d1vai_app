@@ -1,12 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_code_editor/flutter_code_editor.dart';
+import 'package:flutter_monaco/flutter_monaco.dart' as monaco;
 import 'package:provider/provider.dart';
 
 import '../../../../providers/editor_preferences_provider.dart';
+import 'app_code_editor_controller.dart';
 import 'code_editor_theme_presets.dart';
 
-class CodeTabEditor extends StatelessWidget {
-  final CodeController controller;
+class CodeTabEditor extends StatefulWidget {
+  final AppCodeEditorController controller;
   final String originalText;
   final String languageLabel;
   final bool wrapEnabled;
@@ -26,6 +30,13 @@ class CodeTabEditor extends StatelessWidget {
     required this.onToggleWrap,
     this.compact = false,
   });
+
+  @override
+  State<CodeTabEditor> createState() => _CodeTabEditorState();
+}
+
+class _CodeTabEditorState extends State<CodeTabEditor> {
+  String? _lastMonacoSyncKey;
 
   @override
   Widget build(BuildContext context) {
@@ -60,17 +71,23 @@ class CodeTabEditor extends StatelessWidget {
       searchMatchTextColor: preset.searchMatchTextColor,
     );
 
+    _syncMonacoPresentationIfNeeded(
+      preferences: editorPrefs,
+      preset: preset,
+      prefersDark: prefersDark,
+    );
+
     return Column(
       children: [
         ListenableBuilder(
-          listenable: controller,
+          listenable: widget.controller,
           builder: (context, _) {
-            final dirty = controller.fullText != originalText;
+            final dirty = widget.controller.hasUnsavedChanges;
             final tint = dirty ? colorScheme.tertiary : colorScheme.primary;
             return Container(
               padding: EdgeInsets.symmetric(
-                horizontal: compact ? 10 : 12,
-                vertical: compact ? 5 : 7,
+                horizontal: widget.compact ? 10 : 12,
+                vertical: widget.compact ? 5 : 7,
               ),
               decoration: BoxDecoration(
                 color: root.backgroundColor ?? colorScheme.surface,
@@ -87,7 +104,7 @@ class CodeTabEditor extends StatelessWidget {
                     child: Text(
                       dirty ? 'Unsaved changes' : 'Editing',
                       style: TextStyle(
-                        fontSize: compact ? 11 : 11.5,
+                        fontSize: widget.compact ? 11 : 11.5,
                         color: (root.color ?? colorScheme.onSurface).withValues(
                           alpha: preset.isDark ? 0.72 : 0.84,
                         ),
@@ -102,7 +119,7 @@ class CodeTabEditor extends StatelessWidget {
                         vertical: 6,
                       ),
                     ),
-                    onPressed: onCancel,
+                    onPressed: widget.onCancel,
                     child: const Text('Revert'),
                   ),
                 ],
@@ -111,104 +128,85 @@ class CodeTabEditor extends StatelessWidget {
           },
         ),
         Expanded(
-          child: CodeTheme(
-            data: codeThemeData,
-            child: CodeField(
-              controller: controller,
-              onChanged: onChanged,
-              expands: true,
-              wrap: wrapEnabled,
-              textStyle: const TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 12.25,
-                height: 1.3,
-              ).copyWith(fontSize: editorPrefs.fontSize),
-              gutterStyle: GutterStyle(
-                width: compact ? 60 : 68,
-                margin: compact ? 8 : 10,
-                background: preset.gutterBackground,
-                activeLineBackground: preset.activeLineNumberBackground,
-                textStyle: TextStyle(
-                  color: preset.lineNumberColor,
-                  fontFamily: 'monospace',
+          child: widget.controller.isFlutterCodeEditor
+              ? CodeTheme(
+                  data: codeThemeData,
+                  child: CodeField(
+                    controller: widget.controller.flutterController!,
+                    onChanged: widget.onChanged,
+                    expands: true,
+                    wrap: widget.wrapEnabled,
+                    textStyle: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 12.25,
+                      height: 1.3,
+                    ).copyWith(fontSize: editorPrefs.fontSize),
+                    gutterStyle: GutterStyle(
+                      width: widget.compact ? 60 : 68,
+                      margin: widget.compact ? 8 : 10,
+                      background: preset.gutterBackground,
+                      activeLineBackground: preset.activeLineNumberBackground,
+                      textStyle: TextStyle(
+                        color: preset.lineNumberColor,
+                        fontFamily: 'monospace',
+                        fontSize: editorPrefs.fontSize,
+                        height: 1.3,
+                      ),
+                      activeLineTextStyle: TextStyle(
+                        color: preset.activeLineNumberColor,
+                        fontFamily: 'monospace',
+                        fontSize: editorPrefs.fontSize,
+                        height: 1.3,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      showErrors: false,
+                      showFoldingHandles: true,
+                      showLineNumbers: true,
+                    ),
+                    decoration: BoxDecoration(
+                      color: root.backgroundColor ?? colorScheme.surface,
+                    ),
+                    currentLineColor: preset.currentLineColor,
+                    highlightCurrentLine: true,
+                    showIndentGuides: true,
+                    indentGuideColor: preset.indentGuideColor,
+                    activeIndentGuideColor: preset.activeIndentGuideColor,
+                    highlightBracketPairs: true,
+                    bracketPairColor: preset.bracketPairColor,
+                    rulers: editorPrefs.showRulers ? const [80, 120] : const [],
+                    rulerColor: preset.rulerColor,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: widget.compact ? 10 : 12,
+                      vertical: widget.compact ? 9 : 11,
+                    ),
+                    smartDashesType: SmartDashesType.disabled,
+                    smartQuotesType: SmartQuotesType.disabled,
+                    textSelectionTheme: TextSelectionThemeData(
+                      selectionColor: preset.selectionColor,
+                      selectionHandleColor: colorScheme.primary,
+                      cursorColor: colorScheme.primary,
+                    ),
+                  ),
+                )
+              : _MonacoEditorSurface(
+                  controller: widget.controller,
+                  preset: preset,
                   fontSize: editorPrefs.fontSize,
-                  height: 1.3,
                 ),
-                activeLineTextStyle: TextStyle(
-                  color: preset.activeLineNumberColor,
-                  fontFamily: 'monospace',
-                  fontSize: editorPrefs.fontSize,
-                  height: 1.3,
-                  fontWeight: FontWeight.w700,
-                ),
-                showErrors: false,
-                showFoldingHandles: true,
-                showLineNumbers: true,
-              ),
-              decoration: BoxDecoration(
-                color: root.backgroundColor ?? colorScheme.surface,
-              ),
-              currentLineColor: preset.currentLineColor,
-              highlightCurrentLine: true,
-              showIndentGuides: true,
-              indentGuideColor: preset.indentGuideColor,
-              activeIndentGuideColor: preset.activeIndentGuideColor,
-              highlightBracketPairs: true,
-              bracketPairColor: preset.bracketPairColor,
-              rulers: editorPrefs.showRulers ? const [80, 120] : const [],
-              rulerColor: preset.rulerColor,
-              padding: EdgeInsets.symmetric(
-                horizontal: compact ? 10 : 12,
-                vertical: compact ? 9 : 11,
-              ),
-              smartDashesType: SmartDashesType.disabled,
-              smartQuotesType: SmartQuotesType.disabled,
-              textSelectionTheme: TextSelectionThemeData(
-                selectionColor: preset.selectionColor,
-                selectionHandleColor: colorScheme.primary,
-                cursorColor: colorScheme.primary,
-              ),
-            ),
-          ),
         ),
         ListenableBuilder(
-          listenable: controller,
+          listenable: widget.controller,
           builder: (context, _) {
-            final text = controller.fullText;
-            final dirty = text != originalText;
-            final lineCount = '\n'.allMatches(text).length + 1;
-            final charCount = text.characters.length;
+            final stats = widget.controller.stats;
+            final dirty = widget.controller.hasUnsavedChanges;
             final tint = dirty ? colorScheme.tertiary : colorScheme.primary;
-            final selection = controller.selection;
-            final visibleOffset =
-                selection.isValid && selection.extentOffset >= 0
-                ? selection.extentOffset.clamp(0, controller.text.length)
-                : 0;
-            final fullOffset = controller.code.hiddenRanges.recoverPosition(
-              visibleOffset,
-              placeHiddenRanges: TextAffinity.downstream,
-            );
-            final lineIndex = controller.code.lines.characterIndexToLineIndex(
-              fullOffset,
-            );
-            final lineStart =
-                controller.code.lines.lines[lineIndex].textRange.start;
-            final column = (fullOffset - lineStart) + 1;
-            final canFold = controller.code.foldableBlocks.isNotEmpty;
-            final selectionLength = selection.isValid && !selection.isCollapsed
-                ? (selection.end - selection.start).abs()
-                : 0;
-            final selectedLineRange = selectionLength > 0
-                ? controller.getSelectedLineRange()
-                : null;
-            final selectedLineCount = selectedLineRange == null
-                ? 0
-                : selectedLineRange.end - selectedLineRange.start;
             return Column(
               children: [
                 Container(
-                  height: compact ? 24 : 26,
-                  padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 12),
+                  height: widget.compact ? 24 : 26,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: widget.compact ? 10 : 12,
+                  ),
                   decoration: BoxDecoration(color: preset.gutterBackground),
                   child: Row(
                     children: [
@@ -220,7 +218,7 @@ class CodeTabEditor extends StatelessWidget {
                               Text(
                                 dirty ? 'LOCAL CHANGES' : 'EDITOR',
                                 style: TextStyle(
-                                  fontSize: compact ? 10 : 10.5,
+                                  fontSize: widget.compact ? 10 : 10.5,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.3,
                                   color: tint,
@@ -228,9 +226,9 @@ class CodeTabEditor extends StatelessWidget {
                               ),
                               const SizedBox(width: 12),
                               Text(
-                                'Ln ${lineIndex + 1}, Col $column',
+                                'Ln ${stats.cursorLine}, Col ${stats.cursorColumn}',
                                 style: TextStyle(
-                                  fontSize: compact ? 10 : 10.5,
+                                  fontSize: widget.compact ? 10 : 10.5,
                                   color: preset.activeLineNumberColor
                                       .withValues(
                                         alpha: preset.isDark ? 0.82 : 0.88,
@@ -239,9 +237,9 @@ class CodeTabEditor extends StatelessWidget {
                               ),
                               const SizedBox(width: 12),
                               Text(
-                                languageLabel,
+                                widget.languageLabel,
                                 style: TextStyle(
-                                  fontSize: compact ? 10 : 10.5,
+                                  fontSize: widget.compact ? 10 : 10.5,
                                   color: preset.activeLineNumberColor
                                       .withValues(
                                         alpha: preset.isDark ? 0.78 : 0.84,
@@ -250,9 +248,9 @@ class CodeTabEditor extends StatelessWidget {
                               ),
                               const SizedBox(width: 12),
                               Text(
-                                'Spaces: ${controller.params.tabSpaces}',
+                                'Spaces: ${widget.controller.tabSize}',
                                 style: TextStyle(
-                                  fontSize: compact ? 10 : 10.5,
+                                  fontSize: widget.compact ? 10 : 10.5,
                                   color: preset.activeLineNumberColor
                                       .withValues(
                                         alpha: preset.isDark ? 0.78 : 0.84,
@@ -261,27 +259,29 @@ class CodeTabEditor extends StatelessWidget {
                               ),
                               const SizedBox(width: 12),
                               _StatusAction(
-                                label: wrapEnabled ? 'Wrap On' : 'Wrap Off',
-                                onTap: onToggleWrap ?? () {},
+                                label: widget.wrapEnabled
+                                    ? 'Wrap On'
+                                    : 'Wrap Off',
+                                onTap: widget.onToggleWrap ?? () {},
                               ),
-                              if (selectionLength > 0) ...[
+                              if (stats.selectionLength > 0) ...[
                                 const SizedBox(width: 12),
                                 Text(
-                                  'Sel $selectionLength',
+                                  'Sel ${stats.selectionLength}',
                                   style: TextStyle(
-                                    fontSize: compact ? 10 : 10.5,
+                                    fontSize: widget.compact ? 10 : 10.5,
                                     color: preset.activeLineNumberColor
                                         .withValues(
                                           alpha: preset.isDark ? 0.78 : 0.84,
                                         ),
                                   ),
                                 ),
-                                if (selectedLineCount > 1) ...[
+                                if (stats.selectedLineCount > 1) ...[
                                   const SizedBox(width: 8),
                                   Text(
-                                    '$selectedLineCount lines',
+                                    '${stats.selectedLineCount} lines',
                                     style: TextStyle(
-                                      fontSize: compact ? 10 : 10.5,
+                                      fontSize: widget.compact ? 10 : 10.5,
                                       color: preset.activeLineNumberColor
                                           .withValues(
                                             alpha: preset.isDark ? 0.78 : 0.84,
@@ -290,26 +290,30 @@ class CodeTabEditor extends StatelessWidget {
                                   ),
                                 ],
                               ],
-                              if (canFold) ...[
+                              if (widget.controller.supportsFoldAll) ...[
                                 const SizedBox(width: 12),
                                 _StatusAction(
                                   label: 'Fold All',
-                                  onTap: controller.foldAll,
+                                  onTap: widget.controller.foldAll,
                                 ),
                                 const SizedBox(width: 8),
                                 _StatusAction(
                                   label: 'Unfold All',
-                                  onTap: controller.unfoldAll,
+                                  onTap: widget.controller.unfoldAll,
                                 ),
+                              ],
+                              if (widget.controller.supportsFoldImports) ...[
                                 const SizedBox(width: 8),
                                 _StatusAction(
                                   label: 'Fold Imports',
-                                  onTap: controller.foldImports,
+                                  onTap: widget.controller.foldImports,
                                 ),
+                              ],
+                              if (widget.controller.supportsFoldHeader) ...[
                                 const SizedBox(width: 8),
                                 _StatusAction(
                                   label: 'Fold Header',
-                                  onTap: controller.foldCommentAtLineZero,
+                                  onTap: widget.controller.foldHeader,
                                 ),
                               ],
                             ],
@@ -318,9 +322,9 @@ class CodeTabEditor extends StatelessWidget {
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        '$lineCount lines',
+                        '${stats.lineCount} lines',
                         style: TextStyle(
-                          fontSize: compact ? 10 : 10.5,
+                          fontSize: widget.compact ? 10 : 10.5,
                           color: preset.activeLineNumberColor.withValues(
                             alpha: preset.isDark ? 0.78 : 0.84,
                           ),
@@ -328,9 +332,9 @@ class CodeTabEditor extends StatelessWidget {
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        '$charCount chars',
+                        '${stats.charCount} chars',
                         style: TextStyle(
-                          fontSize: compact ? 10 : 10.5,
+                          fontSize: widget.compact ? 10 : 10.5,
                           color: preset.activeLineNumberColor.withValues(
                             alpha: preset.isDark ? 0.78 : 0.84,
                           ),
@@ -352,6 +356,74 @@ class CodeTabEditor extends StatelessWidget {
       ],
     );
   }
+
+  void _syncMonacoPresentationIfNeeded({
+    required EditorPreferencesProvider preferences,
+    required CodeEditorThemePreset preset,
+    required bool prefersDark,
+  }) {
+    if (!widget.controller.isMonaco) {
+      _lastMonacoSyncKey = null;
+      return;
+    }
+
+    final key = [
+      widget.controller.filePath,
+      preferences.engine.name,
+      preferences.fontSize.toStringAsFixed(2),
+      preferences.showRulers,
+      preferences.tabSize,
+      widget.wrapEnabled,
+      prefersDark,
+      preset.id,
+    ].join('|');
+    if (_lastMonacoSyncKey == key) return;
+    _lastMonacoSyncKey = key;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(
+        widget.controller.applyMonacoPresentation(
+          preferences: preferences,
+          preset: preset,
+          prefersDark: prefersDark,
+          readOnly: false,
+        ),
+      );
+    });
+  }
+}
+
+class _MonacoEditorSurface extends StatelessWidget {
+  final AppCodeEditorController controller;
+  final CodeEditorThemePreset preset;
+  final double fontSize;
+
+  const _MonacoEditorSurface({
+    required this.controller,
+    required this.preset,
+    required this.fontSize,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final monacoController = controller.monacoController;
+    final options = controller.monacoOptions;
+    if (monacoController == null || options == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return Container(
+      color: preset.gutterBackground,
+      child: monaco.MonacoEditor(
+        controller: monacoController,
+        options: options,
+        backgroundColor: preset.gutterBackground,
+        showStatusBar: false,
+        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+        loadingBuilder: (_) => const Center(child: CircularProgressIndicator()),
+      ),
+    );
+  }
 }
 
 class _StatusAction extends StatelessWidget {
@@ -362,29 +434,19 @@ class _StatusAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final editorPrefs = context.watch<EditorPreferencesProvider>();
-    final brightness = Theme.of(context).brightness;
-    final prefersDark = switch (editorPrefs.appearanceMode) {
-      EditorAppearanceMode.forceDark => true,
-      EditorAppearanceMode.forceLight => false,
-      EditorAppearanceMode.followApp => brightness == Brightness.dark,
-    };
-    final preset = codeEditorThemePresetById(
-      prefersDark
-          ? editorPrefs.darkThemePresetId
-          : editorPrefs.lightThemePresetId,
-    );
-    final color = preset.isDark
-        ? preset.bracketPairColor
-        : preset.activeLineNumberColor;
+    final theme = Theme.of(context);
     return InkWell(
       onTap: onTap,
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 10.5,
-          color: color,
-          fontWeight: FontWeight.w600,
+      borderRadius: BorderRadius.circular(999),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w600,
+            color: theme.colorScheme.primary,
+          ),
         ),
       ),
     );
