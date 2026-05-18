@@ -15,6 +15,7 @@ import 'deployment_log_screen.dart';
 import '../snackbar_helper.dart';
 import '../card.dart';
 import '../chat/project_chat/status_dot.dart';
+import '../compact_selector.dart';
 import '../skeleton.dart';
 
 /// 项目详情页 - Deploy Tab
@@ -37,6 +38,58 @@ class ProjectDeployTab extends StatefulWidget {
 enum _DeploymentEnvFilter { all, dev, prod }
 
 enum _ProductionReleasePhase { idle, checking, merging, deploying }
+
+enum _DeployWorkspaceTab { timeline, deployments, releases }
+
+class _TimelineCommit {
+  final String sha;
+  final String message;
+  final String authorName;
+  final String authoredAt;
+
+  const _TimelineCommit({
+    required this.sha,
+    required this.message,
+    required this.authorName,
+    required this.authoredAt,
+  });
+}
+
+class _CommitDiffFile {
+  final String filename;
+  final String status;
+  final int additions;
+  final int deletions;
+  final int changes;
+  final String? patch;
+
+  const _CommitDiffFile({
+    required this.filename,
+    required this.status,
+    required this.additions,
+    required this.deletions,
+    required this.changes,
+    this.patch,
+  });
+}
+
+class _CommitDiffBundle {
+  final String sha;
+  final String message;
+  final int additions;
+  final int deletions;
+  final int total;
+  final List<_CommitDiffFile> files;
+
+  const _CommitDiffBundle({
+    required this.sha,
+    required this.message,
+    required this.additions,
+    required this.deletions,
+    required this.total,
+    required this.files,
+  });
+}
 
 class _ReleaseCommit {
   final String sha;
@@ -83,6 +136,7 @@ class _TroubleRow extends StatelessWidget {
       ],
     );
   }
+
 }
 
 class _ProjectDeployTabState extends State<ProjectDeployTab>
@@ -95,9 +149,17 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
   bool _retryingLast = false;
   bool _revertingCommit = false;
   String? _revertingCommitSha;
+  bool _isLoadingTimeline = false;
+  bool _isLoadingDiff = false;
   bool _isLoadingReleases = false;
+  String? _timelineError;
   String? _releaseError;
+  final List<_TimelineCommit> _timelineCommits = [];
   final List<_ReleaseCommit> _releaseCommits = [];
+  _DeployWorkspaceTab _activeTab = _DeployWorkspaceTab.timeline;
+  String? _selectedTimelineSha;
+  _CommitDiffBundle? _selectedCommitDiff;
+  int _selectedDiffFileIndex = 0;
   _ProductionReleasePhase _productionReleasePhase =
       _ProductionReleasePhase.idle;
   _DeploymentEnvFilter _envFilter = _DeploymentEnvFilter.all;
@@ -114,6 +176,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
     super.didChangeDependencies();
     if (!_isInitialized) {
       _isInitialized = true;
+      _loadTimeline();
       _loadDeployments();
       _loadReleases();
     }
@@ -123,6 +186,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
   void didUpdateWidget(covariant ProjectDeployTab oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.project.id != widget.project.id) {
+      _loadTimeline();
       _loadDeployments();
       _loadReleases();
     }
@@ -247,6 +311,150 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
       authorName: authorName,
       authoredAt: authoredAt,
     );
+  }
+
+  _TimelineCommit? _parseTimelineCommit(dynamic raw) {
+    if (raw is! Map) return null;
+    final sha = (raw['sha'] ?? '').toString().trim();
+    if (sha.isEmpty) return null;
+    final message = (raw['message'] ?? '').toString().trim();
+    final author = raw['author'];
+    final authorName = author is Map
+        ? (author['name'] ?? '').toString().trim()
+        : '';
+    final authoredAt = author is Map
+        ? (author['date'] ?? '').toString().trim()
+        : '';
+    return _TimelineCommit(
+      sha: sha,
+      message: message.isEmpty
+          ? _t('project_deploy_no_message', '(no message)')
+          : message,
+      authorName: authorName,
+      authoredAt: authoredAt,
+    );
+  }
+
+  _CommitDiffBundle? _parseCommitDiff(dynamic raw) {
+    if (raw is! Map) return null;
+    final sha = (raw['sha'] ?? '').toString().trim();
+    if (sha.isEmpty) return null;
+    final message = (raw['message'] ?? '').toString().trim();
+    final stats = raw['stats'];
+    final statsMap = stats is Map ? stats : const <String, dynamic>{};
+    final filesRaw = raw['files'];
+    final files = filesRaw is List
+        ? filesRaw
+              .whereType<Map>()
+              .map(
+                (file) => _CommitDiffFile(
+                  filename: (file['filename'] ?? '').toString(),
+                  status: (file['status'] ?? 'modified').toString(),
+                  additions:
+                      int.tryParse((file['additions'] ?? 0).toString()) ?? 0,
+                  deletions:
+                      int.tryParse((file['deletions'] ?? 0).toString()) ?? 0,
+                  changes: int.tryParse((file['changes'] ?? 0).toString()) ?? 0,
+                  patch: file['patch']?.toString(),
+                ),
+              )
+              .toList()
+        : const <_CommitDiffFile>[];
+
+    return _CommitDiffBundle(
+      sha: sha,
+      message: message.isEmpty
+          ? _t('project_deploy_no_message', '(no message)')
+          : message,
+      additions: int.tryParse((statsMap['additions'] ?? 0).toString()) ?? 0,
+      deletions: int.tryParse((statsMap['deletions'] ?? 0).toString()) ?? 0,
+      total: int.tryParse((statsMap['total'] ?? 0).toString()) ?? 0,
+      files: files,
+    );
+  }
+
+  Future<void> _loadTimeline() async {
+    if (_isLoadingTimeline) return;
+    setState(() {
+      _isLoadingTimeline = true;
+      _timelineError = null;
+    });
+    try {
+      final service = D1vaiService();
+      final commits = await service.getGitHubBranchCommits(
+        widget.project.id,
+        branch: _resolveDevBranch(),
+        limit: 40,
+      );
+      final parsed = commits
+          .map(_parseTimelineCommit)
+          .whereType<_TimelineCommit>()
+          .toList();
+      if (!mounted) return;
+      setState(() {
+        _timelineCommits
+          ..clear()
+          ..addAll(parsed);
+        _selectedTimelineSha = parsed.isEmpty ? null : parsed.first.sha;
+        _isLoadingTimeline = false;
+      });
+      if (parsed.isNotEmpty) {
+        await _loadCommitDiff(parsed.first.sha);
+      } else if (mounted) {
+        setState(() {
+          _selectedCommitDiff = null;
+          _selectedDiffFileIndex = 0;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      final msg = humanizeError(e);
+      if (isAuthExpiredText(msg)) {
+        AuthExpiryBus.trigger(
+          endpoint: '/api/github-ops/${widget.project.id}/commits',
+        );
+        setState(() {
+          _isLoadingTimeline = false;
+          _timelineError = null;
+        });
+        return;
+      }
+      setState(() {
+        _isLoadingTimeline = false;
+        _timelineError = msg;
+      });
+    }
+  }
+
+  Future<void> _loadCommitDiff(String sha) async {
+    setState(() {
+      _selectedTimelineSha = sha;
+      _isLoadingDiff = true;
+      _selectedCommitDiff = null;
+      _selectedDiffFileIndex = 0;
+    });
+    try {
+      final service = D1vaiService();
+      final diff = await service.getGitHubCommitDiff(
+        widget.project.id,
+        commitSha: sha,
+      );
+      final parsed = _parseCommitDiff(
+        diff['data'] is Map ? diff['data'] : diff,
+      );
+      if (!mounted) return;
+      setState(() {
+        _selectedCommitDiff = parsed;
+        _isLoadingDiff = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      final msg = humanizeError(e);
+      setState(() {
+        _timelineError = msg;
+        _isLoadingDiff = false;
+      });
+    }
   }
 
   Future<void> _loadReleases() async {
@@ -856,6 +1064,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
 
     return RefreshIndicator(
       onRefresh: () async {
+        await _loadTimeline();
         await _loadDeployments();
         await _loadReleases();
       },
@@ -872,24 +1081,548 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                 const SizedBox(height: 12),
                 _buildDeployControlDeck(project, isWide: isWide),
                 const SizedBox(height: 16),
-                if (isWide)
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(flex: 5, child: _buildReleasesCard(project)),
-                      const SizedBox(width: 16),
-                      Expanded(flex: 7, child: _buildDeploymentHistoryCard()),
-                    ],
-                  )
-                else ...[
-                  _buildReleasesCard(project),
-                  const SizedBox(height: 16),
-                  _buildDeploymentHistoryCard(),
-                ],
+                _buildWorkspaceTabs(),
+                const SizedBox(height: 14),
+                _buildWorkspaceBody(project, isWide: isWide),
               ],
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildWorkspaceTabs() {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    Widget tab(_DeployWorkspaceTab value, IconData icon, String label) {
+      final active = _activeTab == value;
+      return Expanded(
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () async {
+            setState(() => _activeTab = value);
+            if (value == _DeployWorkspaceTab.timeline &&
+                _timelineCommits.isEmpty &&
+                !_isLoadingTimeline) {
+              await _loadTimeline();
+            } else if (value == _DeployWorkspaceTab.deployments &&
+                _deployments.isEmpty &&
+                !_isLoading) {
+              await _loadDeployments();
+            } else if (value == _DeployWorkspaceTab.releases &&
+                _releaseCommits.isEmpty &&
+                !_isLoadingReleases) {
+              await _loadReleases();
+            }
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(
+              color: active
+                  ? Color.alphaBlend(
+                      cs.primary.withValues(alpha: 0.14),
+                      cs.surface,
+                    )
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: active
+                    ? cs.primary.withValues(alpha: 0.24)
+                    : cs.outlineVariant.withValues(alpha: 0.22),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 16,
+                  color: active ? cs.primary : cs.onSurfaceVariant,
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: active ? cs.primary : cs.onSurfaceVariant,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        tab(
+          _DeployWorkspaceTab.timeline,
+          Icons.timeline_rounded,
+          _t('project_deploy_tab_timeline', 'Timeline'),
+        ),
+        const SizedBox(width: 10),
+        tab(
+          _DeployWorkspaceTab.deployments,
+          Icons.rocket_launch_outlined,
+          _t('project_deployment_tab_deployments', 'Deployments'),
+        ),
+        const SizedBox(width: 10),
+        tab(
+          _DeployWorkspaceTab.releases,
+          Icons.inventory_2_outlined,
+          _t('project_deploy_releases', 'Releases'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWorkspaceBody(UserProject project, {required bool isWide}) {
+    switch (_activeTab) {
+      case _DeployWorkspaceTab.timeline:
+        return _buildTimelineTab(project, isWide: isWide);
+      case _DeployWorkspaceTab.deployments:
+        return _buildDeploymentHistoryCard();
+      case _DeployWorkspaceTab.releases:
+        return _buildReleasesCard(project);
+    }
+  }
+
+  Widget _buildTimelineTab(UserProject project, {required bool isWide}) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final selectedCommit = _timelineCommits.cast<_TimelineCommit?>().firstWhere(
+      (item) => item?.sha == _selectedTimelineSha,
+      orElse: () => _timelineCommits.isEmpty ? null : _timelineCommits.first,
+    );
+    final latestSha = _timelineCommits.isEmpty ? null : _timelineCommits.first.sha;
+    final canRevert = selectedCommit != null && selectedCommit.sha != latestSha;
+
+    Widget commitRail() {
+      if (_isLoadingTimeline) {
+        return const Column(
+          children: [
+            SkeletonListTile(hasLeading: false, hasThreeLines: true),
+            SizedBox(height: 8),
+            SkeletonListTile(hasLeading: false, hasThreeLines: true),
+            SizedBox(height: 8),
+            SkeletonListTile(hasLeading: false, hasThreeLines: true),
+          ],
+        );
+      }
+      if (_timelineError != null) {
+        return _InlineDeployError(message: _timelineError!, onRetry: _loadTimeline);
+      }
+      if (_timelineCommits.isEmpty) {
+        return _EmptyDeployState(
+          icon: Icons.timeline_rounded,
+          title: _t('project_deploy_no_timeline', 'No timeline yet'),
+          message: _t(
+            'project_deploy_no_timeline_hint',
+            'No recent commits found on the development branch.',
+          ),
+        );
+      }
+      return Column(
+        children: _timelineCommits.asMap().entries.map((entry) {
+          final commit = entry.value;
+          final active = commit.sha == _selectedTimelineSha;
+          final title = commit.message.split('\n').first.trim();
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: entry.key == _timelineCommits.length - 1 ? 0 : 10,
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: () => _loadCommitDiff(commit.sha),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: active
+                      ? Color.alphaBlend(
+                          cs.primary.withValues(alpha: 0.12),
+                          cs.surface,
+                        )
+                      : cs.surfaceContainerLow.withValues(alpha: 0.72),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: active
+                        ? cs.primary.withValues(alpha: 0.24)
+                        : cs.outlineVariant.withValues(alpha: 0.28),
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: active ? cs.primary : cs.surfaceContainerHighest,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          (title.isNotEmpty ? title.substring(0, 1) : '•')
+                              .toUpperCase(),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: active ? cs.onPrimary : cs.onSurfaceVariant,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title.isEmpty
+                                ? _t('project_deploy_no_message', '(no message)')
+                                : title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${commit.sha.substring(0, 7)} • ${commit.authorName.isEmpty ? _t('project_deploy_unknown', 'unknown') : commit.authorName} • ${_formatTimeAgo(commit.authoredAt)}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: cs.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      );
+    }
+
+    return CustomCard(
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _t('project_deploy_dev_timeline', 'Dev Timeline'),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      _t(
+                        'project_deploy_dev_timeline_hint',
+                        'Inspect recent commits on the dev branch before you promote them to production.',
+                      ),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: _isLoadingTimeline ? null : _loadTimeline,
+                    icon: _isLoadingTimeline
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.refresh_rounded),
+                    label: Text(_t('refresh', 'Refresh')),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: canRevert && !_revertingCommit
+                        ? () => _revertCommitAndPreviewRedeploy(selectedCommit.sha)
+                        : null,
+                    icon: const Icon(Icons.rotate_left_rounded),
+                    label: Text(_t('project_deploy_revert_preview', 'Revert + Preview')),
+                  ),
+                  FilledButton.icon(
+                    onPressed: _deployingProduction
+                        ? null
+                        : () => _confirmAndDeploy(
+                              title: _t(
+                                'project_deploy_confirm_prod_title',
+                                'Deploy to production?',
+                              ),
+                              message: _t(
+                                'project_deploy_confirm_prod_message',
+                                'This will compare dev/main, merge if needed, then trigger a production deployment.',
+                              ),
+                              action: _triggerProductionDeploy,
+                            ),
+                    icon: const Icon(Icons.call_merge_rounded),
+                    label: Text(
+                      _t('project_deploy_action_deploy_prod', 'Deploy production'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (isWide)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(flex: 5, child: commitRail()),
+                const SizedBox(width: 16),
+                Expanded(
+                  flex: 7,
+                  child: CustomCard(
+                    padding: const EdgeInsets.all(16),
+                    child: _buildTimelineDiffPanel(),
+                  ),
+                ),
+              ],
+            )
+          else ...[
+            commitRail(),
+            const SizedBox(height: 16),
+            CustomCard(
+              padding: const EdgeInsets.all(16),
+              child: _buildTimelineDiffPanel(),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimelineDiffPanel() {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final selectedFile = (_selectedCommitDiff != null &&
+            _selectedCommitDiff!.files.isNotEmpty &&
+            _selectedDiffFileIndex >= 0 &&
+            _selectedDiffFileIndex < _selectedCommitDiff!.files.length)
+        ? _selectedCommitDiff!.files[_selectedDiffFileIndex]
+        : null;
+
+    if (_isLoadingDiff) {
+      return const Column(
+        children: [
+          SkeletonListTile(hasLeading: false, hasThreeLines: true),
+          SizedBox(height: 8),
+          SkeletonListTile(hasLeading: false, hasThreeLines: true),
+        ],
+      );
+    }
+    if (_selectedCommitDiff == null) {
+      return _EmptyDeployState(
+        icon: Icons.difference_outlined,
+        title: _t('project_deploy_select_commit', 'Select a commit'),
+        message: _t(
+          'project_deploy_select_commit_hint',
+          'Choose a commit on the left to inspect changed files and patches.',
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          _selectedCommitDiff!.message.split('\n').first.trim(),
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _DeployInlinePill(
+              icon: Icons.commit,
+              text: _selectedCommitDiff!.sha.substring(0, 7),
+              monospace: true,
+            ),
+            _DeployInlinePill(
+              icon: Icons.add,
+              text: '+${_selectedCommitDiff!.additions}',
+            ),
+            _DeployInlinePill(
+              icon: Icons.remove,
+              text: '-${_selectedCommitDiff!.deletions}',
+            ),
+            _DeployInlinePill(
+              icon: Icons.article_outlined,
+              text: '${_selectedCommitDiff!.files.length} files',
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        if (_selectedCommitDiff!.files.isEmpty)
+          _EmptyDeployState(
+            icon: Icons.insert_drive_file_outlined,
+            title: _t('project_deploy_no_diff_files', 'No file diff'),
+            message: _t(
+              'project_deploy_no_diff_files_hint',
+              'This commit did not return any changed file patches.',
+            ),
+          )
+        else ...[
+          SizedBox(
+            height: 42,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: _selectedCommitDiff!.files.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                final file = _selectedCommitDiff!.files[index];
+                final active = index == _selectedDiffFileIndex;
+                return InkWell(
+                  borderRadius: BorderRadius.circular(999),
+                  onTap: () => setState(() => _selectedDiffFileIndex = index),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: active
+                          ? cs.primary.withValues(alpha: 0.14)
+                          : cs.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: active
+                            ? cs.primary.withValues(alpha: 0.24)
+                            : cs.outlineVariant.withValues(alpha: 0.24),
+                      ),
+                    ),
+                    child: Text(
+                      file.filename.split('/').last,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: active ? cs.primary : cs.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildPatchViewer(selectedFile),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildPatchViewer(_CommitDiffFile? file) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    if (file == null) return const SizedBox.shrink();
+    final patch = (file.patch ?? '').trim();
+    if (patch.isEmpty) {
+      return _EmptyDeployState(
+        icon: Icons.notes_outlined,
+        title: file.filename,
+        message: _t(
+          'project_deploy_patch_unavailable',
+          'Patch preview is unavailable for this file.',
+        ),
+      );
+    }
+    final lines = patch.split('\n');
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerLowest.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.22)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            file.filename,
+            style: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+              fontFamily: 'monospace',
+            ),
+          ),
+          const SizedBox(height: 10),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 460),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: lines.map((line) {
+                  Color? bg;
+                  Color fg = cs.onSurfaceVariant;
+                  if (line.startsWith('+') && !line.startsWith('+++')) {
+                    bg = Colors.green.withValues(
+                      alpha: theme.brightness == Brightness.dark ? 0.12 : 0.08,
+                    );
+                    fg = theme.brightness == Brightness.dark
+                        ? Colors.green.shade200
+                        : Colors.green.shade800;
+                  } else if (line.startsWith('-') && !line.startsWith('---')) {
+                    bg = Colors.red.withValues(
+                      alpha: theme.brightness == Brightness.dark ? 0.12 : 0.08,
+                    );
+                    fg = theme.brightness == Brightness.dark
+                        ? Colors.red.shade200
+                        : Colors.red.shade800;
+                  } else if (line.startsWith('@@')) {
+                    bg = cs.primary.withValues(alpha: 0.10);
+                    fg = cs.primary;
+                  }
+                  return Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: bg,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: SelectableText(
+                      line,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontFamily: 'monospace',
+                        fontSize: 11.8,
+                        height: 1.32,
+                        color: fg,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -945,10 +1678,24 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
           activeFlow ??
               _t('project_deploy_idle_short', 'Ready for next deployment'),
         ),
-        item(_t('project_deploy_filter_preview', 'Preview'), previewReady ? 'Ready' : 'Missing'),
-        item(_t('project_deploy_filter_production', 'Production'), prodReady ? 'Live' : 'Not live'),
-        item(_t('project_deploy_branch', 'Branch'), _resolveDevBranch(), mono: true),
-        item(_t('project_deploy_release_branch', 'Release'), _resolveMainBranch(), mono: true),
+        item(
+          _t('project_deploy_filter_preview', 'Preview'),
+          previewReady ? 'Ready' : 'Missing',
+        ),
+        item(
+          _t('project_deploy_filter_production', 'Production'),
+          prodReady ? 'Live' : 'Not live',
+        ),
+        item(
+          _t('project_deploy_branch', 'Branch'),
+          _resolveDevBranch(),
+          mono: true,
+        ),
+        item(
+          _t('project_deploy_release_branch', 'Release'),
+          _resolveMainBranch(),
+          mono: true,
+        ),
       ],
     );
   }
@@ -1811,29 +2558,33 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                 ),
               ),
               const SizedBox(width: 10),
-              DropdownButton<_DeploymentEnvFilter>(
-                value: _envFilter,
-                onChanged: (v) async {
-                  if (v == null) return;
-                  setState(() => _envFilter = v);
-                  await _loadDeployments();
-                },
-                items: [
-                  DropdownMenuItem(
-                    value: _DeploymentEnvFilter.all,
-                    child: Text(_t('project_deploy_filter_all', 'All')),
+              CompactSelector(
+                value: _envFilter.name,
+                minWidth: 96,
+                maxWidth: 138,
+                placeholder: _t('project_deploy_filter_all', 'All'),
+                options: [
+                  CompactSelectorOption(
+                    value: _DeploymentEnvFilter.all.name,
+                    label: _t('project_deploy_filter_all', 'All'),
                   ),
-                  DropdownMenuItem(
-                    value: _DeploymentEnvFilter.dev,
-                    child: Text(_t('project_deploy_filter_preview', 'Preview')),
+                  CompactSelectorOption(
+                    value: _DeploymentEnvFilter.dev.name,
+                    label: _t('project_deploy_filter_preview', 'Preview'),
                   ),
-                  DropdownMenuItem(
-                    value: _DeploymentEnvFilter.prod,
-                    child: Text(
-                      _t('project_deploy_filter_production', 'Production'),
-                    ),
+                  CompactSelectorOption(
+                    value: _DeploymentEnvFilter.prod.name,
+                    label: _t('project_deploy_filter_production', 'Production'),
                   ),
                 ],
+                onChanged: (value) async {
+                  final next = _DeploymentEnvFilter.values.firstWhere(
+                    (item) => item.name == value,
+                    orElse: () => _DeploymentEnvFilter.all,
+                  );
+                  setState(() => _envFilter = next);
+                  await _loadDeployments();
+                },
               ),
               const Spacer(),
               IconButton(
@@ -2273,6 +3024,94 @@ class _StaggeredIn extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _EmptyDeployState extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String message;
+
+  const _EmptyDeployState({
+    required this.icon,
+    required this.title,
+    required this.message,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerLow.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.24)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: cs.onSurfaceVariant),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            message,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: cs.onSurfaceVariant,
+              height: 1.35,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InlineDeployError extends StatelessWidget {
+  final String message;
+  final Future<void> Function() onRetry;
+
+  const _InlineDeployError({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cs.error.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cs.error.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.error_outline, color: cs.error, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: cs.error,
+                height: 1.35,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          TextButton(onPressed: onRetry, child: const Text('Retry')),
+        ],
+      ),
     );
   }
 }

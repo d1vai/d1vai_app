@@ -1865,6 +1865,16 @@ class D1vaiService {
     );
   }
 
+  /// 获取指定 commit diff（对齐 Web: `GET /api/github-ops/{projectId}/commits/{sha}/diff`）
+  Future<Map<String, dynamic>> getGitHubCommitDiff(
+    String projectId, {
+    required String commitSha,
+  }) async {
+    return _apiClient.get<Map<String, dynamic>>(
+      '/api/github-ops/$projectId/commits/$commitSha/diff',
+    );
+  }
+
   /// 合并分支（对齐 Web: `POST /api/github-ops/{projectId}/merge`）
   Future<Map<String, dynamic>> mergeGitHubBranches(
     String projectId, {
