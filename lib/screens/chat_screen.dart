@@ -2528,6 +2528,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             onLoadMore: _loadMoreHistory,
                             hasMoreHistory: _hasMoreHistory,
                             isLoadingMore: _isLoadingMoreHistory,
+                            projectId: widget.projectId,
                           ),
                   ),
                 ),

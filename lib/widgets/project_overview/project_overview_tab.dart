@@ -555,15 +555,18 @@ class _OverviewInlineTag extends StatelessWidget {
         border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.34)),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 15, color: cs.onSurfaceVariant),
           const SizedBox(width: 8),
-          Text(
-            text,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-              fontFamily: monospace ? 'monospace' : null,
+          Flexible(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+                fontFamily: monospace ? 'monospace' : null,
+              ),
             ),
           ),
         ],

@@ -19,6 +19,7 @@ class MessageBubble extends StatelessWidget {
   final bool highlightThinking;
   final List<MessageContent>? overrideContents;
   final bool plainLayout;
+  final String? projectId;
 
   const MessageBubble({
     super.key,
@@ -29,6 +30,7 @@ class MessageBubble extends StatelessWidget {
     this.highlightThinking = false,
     this.overrideContents,
     this.plainLayout = false,
+    this.projectId,
   });
 
   @override
@@ -170,7 +172,10 @@ class MessageBubble extends StatelessWidget {
     } else if (content is ToolMessageContent) {
       return EnhancedToolMessage(content: content);
     } else if (content is GitCommitMessageContent) {
-      return ChatGitCommitCard(content: content);
+      return ChatGitCommitCard(
+        content: content,
+        fallbackProjectId: projectId,
+      );
     } else if (content is GitPushMessageContent) {
       return ChatGitPushRow(content: content);
     } else if (content is ResultMessageContent) {

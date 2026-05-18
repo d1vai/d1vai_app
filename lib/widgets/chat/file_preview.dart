@@ -86,9 +86,19 @@ class FilePreview extends StatelessWidget {
     }
 
     if (isMarkdownPreview(path)) {
-      return Padding(
-        padding: const EdgeInsets.all(14),
-        child: MarkdownText(text: content),
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(14),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: MarkdownText(text: content),
+              ),
+            ),
+          );
+        },
       );
     }
 
@@ -104,16 +114,26 @@ class FilePreview extends StatelessWidget {
     }
 
     if (isHtmlPreview(path)) {
-      return SingleChildScrollView(
-        padding: const EdgeInsets.all(14),
-        child: SelectableText(
-          content,
-          style: const TextStyle(
-            fontFamily: 'monospace',
-            fontSize: 12.5,
-            height: 1.35,
-          ),
-        ),
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(14),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: SelectableText(
+                  content,
+                  style: const TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 12.5,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       );
     }
 

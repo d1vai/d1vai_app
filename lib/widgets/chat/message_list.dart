@@ -19,6 +19,7 @@ class MessageList extends StatefulWidget {
   final bool hasMoreHistory;
   final bool isLoadingMore;
   final bool showTimestamps;
+  final String? projectId;
 
   const MessageList({
     super.key,
@@ -31,6 +32,7 @@ class MessageList extends StatefulWidget {
     this.hasMoreHistory = false,
     this.isLoadingMore = false,
     this.showTimestamps = false,
+    this.projectId,
   });
 
   @override
@@ -252,6 +254,7 @@ class _MessageListState extends State<MessageList> {
                     MessageBubble(
                       message: message,
                       isUser: isUser,
+                      projectId: widget.projectId,
                       highlightThinking: recentThinkingMessageIds.contains(
                         message.id,
                       ),

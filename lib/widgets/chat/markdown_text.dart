@@ -137,6 +137,7 @@ class _MarkdownTextState extends State<MarkdownText> {
     }
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: _buildBlocks(context, widget.text, baseStyle),
     );

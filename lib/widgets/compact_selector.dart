@@ -79,15 +79,6 @@ class CompactSelector extends StatelessWidget {
     return current;
   }
 
-  String? _selectedTagLabel() {
-    final current = value?.trim();
-    if (current == null || current.isEmpty) return null;
-    for (final option in options) {
-      if (option.value == current) return option.tagLabel?.trim();
-    }
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
@@ -95,7 +86,6 @@ class CompactSelector extends StatelessWidget {
     final cs = theme.colorScheme;
     final canOpen = onChanged != null && options.isNotEmpty;
     final label = _selectedLabel();
-    final selectedTagLabel = _selectedTagLabel();
     final tip = tooltip ?? label;
     final resolvedBackgroundColor =
         backgroundColor ?? cs.surfaceContainerHighest.withValues(alpha: 0.42);
@@ -271,10 +261,6 @@ class CompactSelector extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (leadingIcon != null) ...[
-                    Icon(leadingIcon, size: 15, color: resolvedIconColor),
-                    const SizedBox(width: 8),
-                  ],
                   Expanded(
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -294,16 +280,6 @@ class CompactSelector extends StatelessWidget {
                             ),
                           ),
                         ),
-                        if (selectedTagLabel != null &&
-                            selectedTagLabel.trim().isNotEmpty) ...[
-                          const SizedBox(width: 6),
-                          _CompactSelectorTag(
-                            label: selectedTagLabel.trim(),
-                            colorScheme: cs,
-                            emphasized: true,
-                            dense: true,
-                          ),
-                        ],
                       ],
                     ),
                   ),
@@ -326,23 +302,18 @@ class _CompactSelectorTag extends StatelessWidget {
   final String label;
   final ColorScheme colorScheme;
   final bool emphasized;
-  final bool dense;
 
   const _CompactSelectorTag({
     required this.label,
     required this.colorScheme,
     this.emphasized = false,
-    this.dense = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: dense ? 5 : 6,
-        vertical: dense ? 1.5 : 2.5,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
       decoration: BoxDecoration(
         color: colorScheme.tertiary.withValues(alpha: emphasized ? 0.18 : 0.11),
         borderRadius: BorderRadius.circular(999),
@@ -355,7 +326,7 @@ class _CompactSelectorTag extends StatelessWidget {
       child: Text(
         label.toUpperCase(),
         style: theme.textTheme.labelSmall?.copyWith(
-          fontSize: dense ? 8.5 : 9,
+          fontSize: 9,
           fontWeight: FontWeight.w800,
           letterSpacing: 0.45,
           color: colorScheme.tertiary,

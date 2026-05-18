@@ -526,6 +526,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     _loadChatDraft();
     unawaited(_loadDesktopChatPaneWidth());
     unawaited(_bootstrapWorkspace());
+    unawaited(_initializeChat());
   }
 
   @override
@@ -556,10 +557,22 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _isSwitchingModel = false;
         _hasLoadedModelConfig = false;
         _modelConfigError = null;
+        _historyLoaded = false;
+        _chatMessages.clear();
+        _messageStatuses.clear();
+        _currentSessionId = null;
+        _lastSessionModelId = null;
+        _lastSessionEngine = null;
+        _isChatLoading = false;
+        _isLoadingHistory = false;
+        _isLoadingMoreHistory = false;
+        _hasMoreHistory = true;
+        _oldestMessageAt = null;
       });
       _loadChatDraft();
       unawaited(_loadDesktopChatPaneWidth());
       unawaited(_bootstrapWorkspace());
+      unawaited(_initializeChat());
     } else if (oldWidget.initialSubTab != widget.initialSubTab) {
       final nextIndex = _chatSubTabIndexFromName(widget.initialSubTab);
       if (nextIndex != _currentChatTabIndex) {

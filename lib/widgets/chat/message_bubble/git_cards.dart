@@ -8,14 +8,20 @@ import '../../snackbar_helper.dart';
 
 class ChatGitCommitCard extends StatelessWidget {
   final GitCommitMessageContent content;
+  final String? fallbackProjectId;
 
-  const ChatGitCommitCard({super.key, required this.content});
+  const ChatGitCommitCard({
+    super.key,
+    required this.content,
+    this.fallbackProjectId,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final files = content.files ?? const <String>[];
-    final projectId = (content.projectId ?? '').trim();
+    final projectId =
+        (fallbackProjectId ?? content.projectId ?? '').trim();
     final sqlFiles = files
         .where((f) => f.toLowerCase().endsWith('.sql'))
         .toList();

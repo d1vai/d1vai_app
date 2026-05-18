@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../core/theme/locale_font_helper.dart';
 import '../l10n/app_localizations.dart';
 import '../utils/desktop_layout.dart';
@@ -59,7 +58,7 @@ class _MainScreenState extends State<MainScreen> {
     final theme = Theme.of(context);
     return [
       PersistentBottomNavBarItem(
-        icon: Icon(PhosphorIcons.house()),
+        icon: const Icon(Icons.home_rounded),
         title: (loc?.translate('dashboard') ?? 'Dashboard'),
         activeColorPrimary: theme.colorScheme.primary,
         inactiveColorPrimary: theme.colorScheme.onSurface.withValues(
@@ -67,7 +66,7 @@ class _MainScreenState extends State<MainScreen> {
         ),
       ),
       PersistentBottomNavBarItem(
-        icon: Icon(PhosphorIcons.users()),
+        icon: const Icon(Icons.people_alt_rounded),
         title: (loc?.translate('community') ?? 'Community'),
         activeColorPrimary: theme.colorScheme.primary,
         inactiveColorPrimary: theme.colorScheme.onSurface.withValues(
@@ -75,7 +74,7 @@ class _MainScreenState extends State<MainScreen> {
         ),
       ),
       PersistentBottomNavBarItem(
-        icon: Icon(PhosphorIcons.book()),
+        icon: const Icon(Icons.menu_book_rounded),
         title: (loc?.translate('docs') ?? 'Docs'),
         activeColorPrimary: theme.colorScheme.primary,
         inactiveColorPrimary: theme.colorScheme.onSurface.withValues(
@@ -83,7 +82,7 @@ class _MainScreenState extends State<MainScreen> {
         ),
       ),
       PersistentBottomNavBarItem(
-        icon: Icon(PhosphorIcons.gear()),
+        icon: const Icon(Icons.settings_rounded),
         title: (loc?.translate('settings') ?? 'Settings'),
         activeColorPrimary: theme.colorScheme.primary,
         inactiveColorPrimary: theme.colorScheme.onSurface.withValues(
