@@ -75,6 +75,7 @@ cd "${REPO_ROOT}"
 flutter config --no-analytics
 flutter --version
 flutter precache --ios
+rm -rf ios/Pods ios/.symlinks ios/Runner.xcworkspace ios/Podfile.lock
 flutter pub get
 
 append_dart_define "STRIPE_PUBLISHABLE_KEY" "${STRIPE_PUBLISHABLE_KEY:-}"
@@ -87,4 +88,4 @@ merge_dart_defines_into_file "${GENERATED_XCCONFIG}"
 merge_dart_defines_into_file "${FLUTTER_EXPORT_ENV}"
 
 cd ios
-pod install
+pod install --repo-update

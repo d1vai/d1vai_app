@@ -395,7 +395,7 @@ class _FilesInlineToolbar extends StatelessWidget {
                 ),
               if (controller.supportsFoldAll) const SizedBox(width: 4),
               _ActionIconButton(
-                icon: Icons.save_outlined,
+                icon: Icons.save_as_outlined,
                 onPressed: controller.activeSaving ? () {} : (controller.onSave ?? () {}),
                 tooltip:
                     loc?.translate('project_chat_save_file_tooltip') ??
@@ -408,7 +408,7 @@ class _FilesInlineToolbar extends StatelessWidget {
               const SizedBox(width: 4),
             ],
             _ActionIconButton(
-              icon: Icons.auto_awesome_outlined,
+              icon: Icons.tips_and_updates_outlined,
               onPressed: controller.onAsk ?? () {},
               tooltip:
                   loc?.translate('project_chat_ask_ai_file_tooltip') ??
@@ -547,18 +547,33 @@ class _FilesSyncChip extends StatelessWidget {
     };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.16)),
+        color: color.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.14)),
       ),
-      child: Text(
-        label,
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.15,
+            ),
+          ),
+        ],
       ),
     );
   }
