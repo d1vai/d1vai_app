@@ -856,6 +856,16 @@ Widget buildFileTypeIcon(
       width: size,
       height: size,
       fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) {
+        debugPrint(
+          '[file_type_visual] Failed to load file icon asset "${visual.assetPath}": $error',
+        );
+        return Icon(
+          visual.icon,
+          size: size,
+          color: fallbackColor ?? visual.color,
+        );
+      },
     );
   }
 
@@ -880,6 +890,16 @@ Widget buildFolderTypeIcon(
       width: size,
       height: size,
       fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) {
+        debugPrint(
+          '[file_type_visual] Failed to load folder icon asset "$assetPath": $error',
+        );
+        return Icon(
+          expanded ? Icons.folder_open : visual.icon,
+          size: size,
+          color: fallbackColor ?? visual.color,
+        );
+      },
     );
   }
 
