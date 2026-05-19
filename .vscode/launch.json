@@ -7,7 +7,7 @@
       "type": "dart",
       "deviceId": "macos",
       "toolArgs": [
-        "--dart-define-from-file=.env/dev.json"
+        "--dart-define-from-file=${workspaceFolder}/.env/dev.json"
       ]
     },
     {
@@ -16,7 +16,7 @@
       "type": "dart",
       "deviceId": "ios",
       "toolArgs": [
-        "--dart-define-from-file=.env/dev.json"
+        "--dart-define-from-file=${workspaceFolder}/.env/dev.json"
       ]
     },
     {
@@ -24,7 +24,7 @@
       "request": "launch",
       "type": "dart",
       "toolArgs": [
-        "--dart-define-from-file=.env/dev.json"
+        "--dart-define-from-file=${workspaceFolder}/.env/dev.json"
       ]
     },
     {
@@ -34,7 +34,7 @@
       "deviceId": "macos",
       "flutterMode": "profile",
       "toolArgs": [
-        "--dart-define-from-file=.env/dev.json"
+        "--dart-define-from-file=${workspaceFolder}/.env/dev.json"
       ]
     },
     {
@@ -44,7 +44,7 @@
       "deviceId": "ios",
       "flutterMode": "profile",
       "toolArgs": [
-        "--dart-define-from-file=.env/dev.json"
+        "--dart-define-from-file=${workspaceFolder}/.env/dev.json"
       ]
     },
     {
@@ -54,7 +54,7 @@
       "deviceId": "macos",
       "flutterMode": "release",
       "toolArgs": [
-        "--dart-define-from-file=.env/dev.json"
+        "--dart-define-from-file=${workspaceFolder}/.env/dev.json"
       ]
     },
     {
@@ -64,7 +64,7 @@
       "deviceId": "ios",
       "flutterMode": "release",
       "toolArgs": [
-        "--dart-define-from-file=.env/dev.json"
+        "--dart-define-from-file=${workspaceFolder}/.env/dev.json"
       ]
     }
   ]
