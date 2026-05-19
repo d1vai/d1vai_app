@@ -47,7 +47,6 @@ class ChatResultCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final successTint = chatSuccessTint(theme);
     final p = _unwrap(payload);
     final subtype = (p['subtype']?.toString() ?? 'unknown').toLowerCase();
     final isError = p['is_error'] == true || subtype == 'error';
@@ -69,124 +68,83 @@ class ChatResultCard extends StatelessWidget {
         _int(usage['output_tokens']) ??
         _int(usage['completion_tokens']);
 
-    final Color tint = isError
+    final tint = isError
         ? theme.colorScheme.error
-        : subtype == 'success'
-        ? successTint
-        : theme.colorScheme.primary;
+        : theme.colorScheme.onSurfaceVariant;
+    final title = isError ? 'Error' : 'Result';
+    final icon = isError ? Icons.cancel : Icons.notes_rounded;
 
-    final bg = tint.withValues(
-      alpha: theme.brightness == Brightness.dark ? 0.14 : 0.10,
-    );
-    final title = isError
-        ? 'Error'
-        : (subtype == 'success' ? 'Success' : 'Result');
-    final icon = isError
-        ? Icons.cancel
-        : (subtype == 'success'
-              ? Icons.check_circle
-              : Icons.smart_toy_outlined);
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4.0),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(10),
+    return ChatMessageCard(
+      backgroundColor: theme.colorScheme.surfaceContainerHighest.withValues(
+        alpha: theme.brightness == Brightness.dark ? 0.26 : 0.32,
       ),
-      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
-            child: Row(
+          ChatCardHeader(icon: icon, iconColor: tint, title: title),
+          if (inputTokens != null ||
+              outputTokens != null ||
+              numTurns > 0 ||
+              durationSec > 0) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
               children: [
-                Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: tint.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Icon(icon, size: 14, color: tint),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
-                    letterSpacing: 0.2,
-                  ),
-                ),
-                const Spacer(),
                 if (inputTokens != null || outputTokens != null)
-                  Text(
-                    '${inputTokens != null ? '↑${_formatCount(inputTokens)}' : ''}${inputTokens != null && outputTokens != null ? '  ' : ''}${outputTokens != null ? '↓${_formatCount(outputTokens)}' : ''}',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      fontFamily: 'monospace',
-                      color: theme.colorScheme.onSurfaceVariant.withValues(
-                        alpha: 0.85,
-                      ),
-                      fontWeight: FontWeight.w800,
-                    ),
+                  _MetaChip(
+                    label:
+                        '${inputTokens != null ? '↑${_formatCount(inputTokens)}' : ''}${inputTokens != null && outputTokens != null ? '  ' : ''}${outputTokens != null ? '↓${_formatCount(outputTokens)}' : ''}',
                   ),
-                if (numTurns > 0) ...[
-                  const SizedBox(width: 10),
-                  Icon(
-                    Icons.smart_toy_outlined,
-                    size: 13,
-                    color: theme.colorScheme.onSurfaceVariant.withValues(
-                      alpha: 0.8,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '$numTurns turns',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant.withValues(
-                        alpha: 0.85,
-                      ),
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-                if (durationSec > 0) ...[
-                  const SizedBox(width: 10),
-                  Text(
-                    '${durationSec}s',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant.withValues(
-                        alpha: 0.85,
-                      ),
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
+                if (numTurns > 0) _MetaChip(label: '$numTurns turns'),
+                if (durationSec > 0) _MetaChip(label: '${durationSec}s'),
               ],
             ),
-          ),
-          Container(
-            height: 1,
-            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.10),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(6),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 224),
-              child: SingleChildScrollView(
-                child: _SelectableBody(
-                  text: resultText.isNotEmpty ? resultText : '🎉 Done',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
-                    fontSize: 13,
-                    height: 1.32,
-                  ),
+          ],
+          const SizedBox(height: 8),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 224),
+            child: SingleChildScrollView(
+              child: _SelectableBody(
+                text: resultText.isNotEmpty ? resultText : 'Done',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.92),
+                  fontSize: 13,
+                  height: 1.34,
                 ),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _MetaChip extends StatelessWidget {
+  final String label;
+
+  const _MetaChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withValues(alpha: 0.75),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.55),
+        ),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          fontFamily: 'monospace',
+          color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.88),
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
