@@ -1,0 +1,3 @@
+[submodule "third_party/flutter_monaco"]
+	path = third_party/flutter_monaco
+	url = git@github.com:d1vai/flutter_monaco.git

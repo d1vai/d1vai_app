@@ -12,9 +12,9 @@ Local third-party editor checkout used directly by `d1vai_app` during developmen
 
 - `d1vai_app` depends on `flutter_monaco` through a local path dependency:
   - `third_party/flutter_monaco`
-- This directory is intentionally a standalone Git checkout, not vendored source.
+- `third_party/flutter_monaco` is tracked in `d1vai_app` as a Git submodule.
 - Local development should edit that checkout directly.
-- CI clones `d1vai/flutter_monaco` into the same path before `flutter pub get`.
+- CI checks out Git submodules before `flutter pub get`.
 
 ## Development Rules
 
@@ -35,8 +35,7 @@ This helper commits and pushes the local `third_party/flutter_monaco` checkout w
 
 ## CI Note
 
-- GitHub Actions does not have the local checkout by default.
-- The workflow clones `https://github.com/d1vai/flutter_monaco.git` into `third_party/flutter_monaco` before `flutter pub get`.
+- GitHub Actions checks out submodules recursively so `third_party/flutter_monaco` is present before `flutter pub get`.
 
 ## Patch Log
 
@@ -44,4 +43,4 @@ This helper commits and pushes the local `third_party/flutter_monaco` checkout w
 
 - Forked `omar-hanafy/flutter_monaco` into `d1vai/flutter_monaco`.
 - Adopted `third_party/flutter_monaco` as the app's local path dependency.
-- Added CI bootstrap so Actions clones the fork into the expected local path.
+- Added CI bootstrap so Actions checks out the forked submodule into the expected local path.
