@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_highlight/flutter_highlight.dart';
-import 'package:flutter_highlight/themes/vs.dart';
-import 'package:flutter_highlight/themes/vs2015.dart';
+
+import 'app_highlight_view.dart';
+import 'project_chat/code_tab/code_editor_theme_presets.dart';
 
 class CodeHighlightBlock extends StatelessWidget {
   final String text;
@@ -57,7 +57,8 @@ class CodeHighlightBlock extends StatelessWidget {
         : theme.colorScheme.outlineVariant.withValues(alpha: 0.7);
 
     final highlightTheme = Map<String, TextStyle>.from(
-      isDark ? vs2015Theme : vsTheme,
+      codeEditorThemePresetById(isDark ? 'vscode_dark' : 'vscode_light')
+          .highlightTheme,
     );
     final root = highlightTheme['root'] ?? const TextStyle();
     highlightTheme['root'] = root.copyWith(
@@ -79,11 +80,10 @@ class CodeHighlightBlock extends StatelessWidget {
     Widget inner;
     if (enableHighlight) {
       inner = SelectionArea(
-        child: HighlightView(
-          text,
+        child: AppHighlightView(
+          text: text,
           language: highlightLanguage,
           theme: highlightTheme,
-          padding: EdgeInsets.zero,
           textStyle: baseTextStyle,
         ),
       );

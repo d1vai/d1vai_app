@@ -14,7 +14,6 @@ dependencies:
   collection: ^1.17.2
   equatable: ^2.0.5
   flutter: { sdk: flutter }
-  flutter_highlight: ^0.7.0
   highlight: ^0.7.0
   http: ^1.1.0
   linked_scroll_controller: ^0.2.0

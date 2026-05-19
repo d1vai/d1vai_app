@@ -67,7 +67,6 @@ dependencies:
     path: third_party/flutter-code-editor
   flutter_monaco:
     path: third_party/flutter_monaco
-  flutter_highlight: ^0.7.0
   highlight: ^0.7.0
   file_picker: ^10.3.10
   desktop_drop: ^0.7.1

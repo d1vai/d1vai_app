@@ -1,12 +1,15 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../providers/editor_preferences_provider.dart';
 import 'file_preview_utils.dart';
 import 'markdown_text.dart';
+import 'monaco_code_preview.dart';
 import 'project_chat/code_tab/code_tab_code_block.dart';
 
 const int _maxInlineImageBytes = 12 * 1024 * 1024;
@@ -43,6 +46,7 @@ class FilePreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final editorPrefs = context.watch<EditorPreferencesProvider>();
     final theme = Theme.of(context);
     final binaryBytes = _decodeBinaryBytes();
 
@@ -156,39 +160,15 @@ class FilePreview extends StatelessWidget {
       );
     }
 
-    if (isJsonPreview(path)) {
-      try {
-        return CodeTabCodeBlock(
-          filePath: path,
-          text: _prettyJson(content),
-          isBinary: false,
-          sizeBytes: sizeBytes,
-        );
-      } catch (_) {}
-    }
-
-    if (isHtmlPreview(path)) {
-      return LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(14),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: Align(
-                alignment: Alignment.topLeft,
-                child: SelectableText(
-                  content,
-                  style: const TextStyle(
-                    fontFamily: 'monospace',
-                    fontSize: 12.5,
-                    height: 1.35,
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      );
+    if (editorPrefs.engine == EditorEngine.flutterMonaco &&
+        _supportsMonacoPreview(context)) {
+      String previewText = content;
+      if (isJsonPreview(path)) {
+        try {
+          previewText = _prettyJson(content);
+        } catch (_) {}
+      }
+      return MonacoCodePreview(path: path, content: previewText);
     }
 
     return CodeTabCodeBlock(
@@ -197,6 +177,18 @@ class FilePreview extends StatelessWidget {
       isBinary: isBinary,
       sizeBytes: sizeBytes,
     );
+  }
+
+  bool _supportsMonacoPreview(BuildContext context) {
+    if (kIsWeb) return true;
+    return switch (defaultTargetPlatform) {
+      TargetPlatform.macOS => true,
+      TargetPlatform.iOS => true,
+      TargetPlatform.android => true,
+      TargetPlatform.windows => true,
+      TargetPlatform.linux => false,
+      _ => false,
+    };
   }
 }
 

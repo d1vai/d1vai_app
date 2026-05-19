@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_highlight/flutter_highlight.dart';
-import 'package:flutter_highlight/themes/vs.dart';
-import 'package:flutter_highlight/themes/vs2015.dart';
 
+import '../../app_highlight_view.dart';
+import 'code_editor_theme_presets.dart';
 import 'code_tab_editor_language.dart';
 
 class CodeTabCodeBlock extends StatelessWidget {
@@ -36,7 +35,8 @@ class CodeTabCodeBlock extends StatelessWidget {
     final enableHighlight =
         !isBinary && highlightLanguage != null && text.length <= 200000;
     final highlightTheme = Map<String, TextStyle>.from(
-      isDark ? vs2015Theme : vsTheme,
+      codeEditorThemePresetById(isDark ? 'vscode_dark' : 'vscode_light')
+          .highlightTheme,
     );
     final root = highlightTheme['root'];
     highlightTheme['root'] = (root ?? const TextStyle()).copyWith(
@@ -106,11 +106,10 @@ class CodeTabCodeBlock extends StatelessWidget {
                     scrollDirection: Axis.horizontal,
                     child: enableHighlight
                         ? RepaintBoundary(
-                            child: HighlightView(
-                              text,
+                            child: AppHighlightView(
+                              text: text,
                               language: highlightLanguage,
                               theme: highlightTheme,
-                              padding: EdgeInsets.zero,
                               textStyle: codeTextStyle,
                             ),
                           )
