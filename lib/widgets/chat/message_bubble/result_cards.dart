@@ -217,12 +217,12 @@ class _SelectableBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final body = MarkdownText(text: text, style: style);
+    final body = MarkdownText(text: text, style: style, selectable: true);
     if (defaultTargetPlatform == TargetPlatform.macOS ||
         defaultTargetPlatform == TargetPlatform.windows ||
         defaultTargetPlatform == TargetPlatform.linux) {
       return DesktopSelectionShell(child: body);
     }
-    return body;
+    return MarkdownText(text: text, style: style);
   }
 }

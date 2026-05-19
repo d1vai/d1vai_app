@@ -4,6 +4,7 @@ import 'package:d1vai_app/l10n/app_localizations.dart';
 
 import '../expandable_text.dart';
 import '../desktop_selection_shell.dart';
+import '../markdown_text.dart';
 import 'message_card_base.dart';
 
 enum ChatAlertKind { error, warning }
@@ -129,17 +130,22 @@ class _SelectableBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final content = ExpandableText(
+    final content = MarkdownText(
       text: text,
       maxLines: maxLines,
-      isMarkdown: false,
       style: style,
+      selectable: true,
     );
     if (defaultTargetPlatform == TargetPlatform.macOS ||
         defaultTargetPlatform == TargetPlatform.windows ||
         defaultTargetPlatform == TargetPlatform.linux) {
       return DesktopSelectionShell(child: content);
     }
-    return content;
+    return ExpandableText(
+      text: text,
+      maxLines: maxLines,
+      isMarkdown: false,
+      style: style,
+    );
   }
 }

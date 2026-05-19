@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../../../models/message.dart';
 import '../desktop_selection_shell.dart';
 import '../expandable_text.dart';
+import '../markdown_text.dart';
 import 'message_card_base.dart';
 import '../tools/tool_utils.dart';
 
@@ -232,17 +233,22 @@ class _SelectableBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final body = ExpandableText(
+    final body = MarkdownText(
       text: text,
-      maxLines: maxLines,
-      isMarkdown: false,
       style: style,
+      maxLines: maxLines,
+      selectable: true,
     );
     if (defaultTargetPlatform == TargetPlatform.macOS ||
         defaultTargetPlatform == TargetPlatform.windows ||
         defaultTargetPlatform == TargetPlatform.linux) {
       return DesktopSelectionShell(child: body);
     }
-    return body;
+    return ExpandableText(
+      text: text,
+      maxLines: maxLines,
+      isMarkdown: false,
+      style: style,
+    );
   }
 }
