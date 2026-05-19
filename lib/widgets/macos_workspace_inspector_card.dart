@@ -10,10 +10,7 @@ import '../services/macos_open_service.dart';
 import '../services/workspace_cli_executor.dart';
 import '../services/workspace_cli_service.dart';
 
-enum _InspectorMode {
-  localParser,
-  cli,
-}
+enum _InspectorMode { localParser, cli }
 
 class MacosWorkspaceInspectorCard extends StatefulWidget {
   const MacosWorkspaceInspectorCard({super.key});
@@ -43,7 +40,9 @@ class _MacosWorkspaceInspectorCardState
     super.didChangeDependencies();
     final openService = context.watch<MacosOpenService>();
     final pending = openService.pendingImportPath;
-    if (pending == null || pending.isEmpty || pending == _lastConsumedPendingPath) {
+    if (pending == null ||
+        pending.isEmpty ||
+        pending == _lastConsumedPendingPath) {
       return;
     }
     _lastConsumedPendingPath = pending;
@@ -55,7 +54,7 @@ class _MacosWorkspaceInspectorCardState
   Future<void> _pickDirectory() async {
     if (!_enabled || _loading || _initializing) return;
 
-    final selected = await FilePicker.platform.getDirectoryPath();
+    final selected = await FilePicker.getDirectoryPath();
     if (selected == null || selected.trim().isEmpty) return;
 
     await _inspectDirectory(selected);
@@ -157,7 +156,9 @@ class _MacosWorkspaceInspectorCardState
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 ElevatedButton.icon(
-                  onPressed: (_loading || _initializing) ? null : _pickDirectory,
+                  onPressed: (_loading || _initializing)
+                      ? null
+                      : _pickDirectory,
                   icon: const Icon(Icons.folder_open),
                   label: Text(_loading ? 'Inspecting...' : 'Choose Folder'),
                 ),

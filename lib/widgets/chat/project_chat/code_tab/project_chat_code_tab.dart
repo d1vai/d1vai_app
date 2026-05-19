@@ -15,15 +15,18 @@ import 'code_tab_models.dart';
 import 'code_tab_tree_panel.dart';
 import 'code_tab_types.dart';
 import 'code_workbench_controller.dart';
+import '../project_chat_top_bar.dart';
 
 class ProjectChatCodeTab extends StatefulWidget {
   final String projectId;
   final ValueChanged<String> onAsk;
+  final CodeTabTopBarController? topBarController;
 
   const ProjectChatCodeTab({
     super.key,
     required this.projectId,
     required this.onAsk,
+    this.topBarController,
   });
 
   @override
@@ -103,6 +106,65 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
       ),
     );
     _lastEditorEngine = prefs.engine;
+  }
+
+  void _publishTopBarState() {
+    final controller = widget.topBarController;
+    if (controller == null) return;
+    final activeEditor = _workbench.activeEditor;
+    final hasSelection =
+        _workbench.activePath != null && _workbench.activePath!.isNotEmpty;
+    final syncState = activeEditor == null
+        ? CodeTabTopBarSyncState.idle
+        : switch (_workbench.syncStateFor(activeEditor.path)) {
+            CodeWorkbenchSyncState.idle => CodeTabTopBarSyncState.idle,
+            CodeWorkbenchSyncState.localSaved =>
+              CodeTabTopBarSyncState.localSaved,
+            CodeWorkbenchSyncState.queued => CodeTabTopBarSyncState.queued,
+            CodeWorkbenchSyncState.syncingCloud =>
+              CodeTabTopBarSyncState.syncingCloud,
+            CodeWorkbenchSyncState.syncingGitHub =>
+              CodeTabTopBarSyncState.syncingGitHub,
+            CodeWorkbenchSyncState.synced => CodeTabTopBarSyncState.synced,
+            CodeWorkbenchSyncState.failed => CodeTabTopBarSyncState.failed,
+          };
+    controller.update(
+      searchController: _searchController,
+      loadingTree: _loadingTree,
+      hasSelection: hasSelection,
+      activeEditing: activeEditor?.isEditing == true,
+      activeSaving: activeEditor?.saving == true,
+      activeHasUnsavedChanges: activeEditor?.hasUnsavedChanges == true,
+      activeWrapEnabled: activeEditor?.wrapEnabled == true,
+      supportsFoldAll: activeEditor?.controller.supportsFoldAll == true,
+      supportsFoldImports: activeEditor?.controller.supportsFoldImports == true,
+      supportsFoldHeader: activeEditor?.controller.supportsFoldHeader == true,
+      hasLocalWorkspace: _workbench.hasLocalWorkspace,
+      syncState: syncState,
+      onReload: _loadingTree ? null : _loadTree,
+      onAsk: hasSelection ? _askAboutSelected : null,
+      onFind: activeEditor?.isEditing == true
+          ? activeEditor!.controller.showSearch
+          : null,
+      onToggleWrap: activeEditor?.isEditing == true
+          ? () => unawaited(_workbench.toggleWrap(activeEditor!.path))
+          : null,
+      onSave: activeEditor?.isEditing == true
+          ? () => _saveEditor(activeEditor!.path)
+          : null,
+      onFoldAll: activeEditor?.controller.supportsFoldAll == true
+          ? activeEditor!.controller.foldAll
+          : null,
+      onUnfoldAll: activeEditor?.controller.supportsFoldAll == true
+          ? activeEditor!.controller.unfoldAll
+          : null,
+      onFoldImports: activeEditor?.controller.supportsFoldImports == true
+          ? activeEditor!.controller.foldImports
+          : null,
+      onFoldHeader: activeEditor?.controller.supportsFoldHeader == true
+          ? activeEditor!.controller.foldHeader
+          : null,
+    );
   }
 
   bool _isMobile(BuildContext context) =>
@@ -368,74 +430,6 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
     }
   }
 
-  Widget _buildSyncStatusPill(
-    BuildContext context,
-    CodeWorkbenchSyncState state,
-  ) {
-    final theme = Theme.of(context);
-    final (icon, label, color) = switch (state) {
-      CodeWorkbenchSyncState.localSaved => (
-        Icons.save_outlined,
-        'Saved locally',
-        theme.colorScheme.primary,
-      ),
-      CodeWorkbenchSyncState.queued => (
-        Icons.schedule,
-        'Queued to sync',
-        Colors.orange,
-      ),
-      CodeWorkbenchSyncState.syncingGitHub => (
-        Icons.sync,
-        'Syncing to GitHub',
-        theme.colorScheme.tertiary,
-      ),
-      CodeWorkbenchSyncState.syncingCloud => (
-        Icons.cloud_sync_outlined,
-        'Syncing cloud',
-        theme.colorScheme.secondary,
-      ),
-      CodeWorkbenchSyncState.synced => (
-        Icons.check_circle_outline,
-        'Synced',
-        Colors.green,
-      ),
-      CodeWorkbenchSyncState.failed => (
-        Icons.error_outline,
-        'Sync failed',
-        Colors.redAccent,
-      ),
-      CodeWorkbenchSyncState.idle => (
-        Icons.cloud_outlined,
-        _workbench.hasLocalWorkspace ? 'Local workspace' : 'Cloud workspace',
-        theme.colorScheme.onSurfaceVariant,
-      ),
-    };
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.25)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11.5,
-              color: color,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _openDesktopFile(String path, {required bool preview}) async {
     final prefs = context.read<EditorPreferencesProvider>();
     if (preview && !_workbench.canReplacePreviewWith(path)) {
@@ -531,128 +525,16 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
     final compact = _isMacDesktop(context);
     final q = _searchController.text.trim();
     final activeEditor = _workbench.activeEditor;
-    final hasSelection =
-        _workbench.activePath != null && _workbench.activePath!.isNotEmpty;
-    final activeSyncState = activeEditor == null
-        ? CodeWorkbenchSyncState.idle
-        : _workbench.syncStateFor(activeEditor.path);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _publishTopBarState();
+    });
 
     return Padding(
       padding: EdgeInsets.all(compact ? 12 : 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.search),
-                    hintText: 'Search files…',
-                    isDense: true,
-                    filled: true,
-                    fillColor: theme.colorScheme.surfaceContainerHighest,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: compact ? 10 : 12,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(compact ? 10 : 12),
-                      borderSide: BorderSide(
-                        color: theme.colorScheme.outlineVariant,
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(compact ? 10 : 12),
-                      borderSide: BorderSide(
-                        color: theme.colorScheme.outlineVariant,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(compact ? 10 : 12),
-                      borderSide: BorderSide(color: theme.colorScheme.primary),
-                    ),
-                    suffixIcon: q.isEmpty
-                        ? null
-                        : IconButton(
-                            onPressed: () => _searchController.clear(),
-                            icon: const Icon(Icons.clear),
-                            tooltip: 'Clear',
-                          ),
-                  ),
-                ),
-              ),
-              SizedBox(width: compact ? 8 : 10),
-              _ToolbarIconButton(
-                onPressed: _loadingTree ? null : _loadTree,
-                compact: compact,
-                icon: Icons.refresh_outlined,
-                tooltip: 'Refresh',
-              ),
-              SizedBox(width: compact ? 2 : 6),
-              if (activeEditor != null && activeEditor.isEditing) ...[
-                _ToolbarIconButton(
-                  onPressed: activeEditor.controller.showSearch,
-                  compact: compact,
-                  icon: Icons.search_outlined,
-                  tooltip: 'Find',
-                ),
-                const SizedBox(width: 2),
-                _ToolbarIconButton(
-                  onPressed: () =>
-                      unawaited(_workbench.toggleWrap(activeEditor.path)),
-                  compact: compact,
-                  icon: activeEditor.wrapEnabled
-                      ? Icons.wrap_text
-                      : Icons.wrap_text_outlined,
-                  tooltip: activeEditor.wrapEnabled
-                      ? 'Disable wrap'
-                      : 'Enable wrap',
-                ),
-                const SizedBox(width: 2),
-                if (activeEditor.controller.supportsFoldAll)
-                  _FoldActionsMenu(
-                    compact: compact,
-                    onFoldAll: activeEditor.controller.foldAll,
-                    onUnfoldAll: activeEditor.controller.unfoldAll,
-                    onFoldImports: activeEditor.controller.supportsFoldImports
-                        ? activeEditor.controller.foldImports
-                        : null,
-                    onFoldHeader: activeEditor.controller.supportsFoldHeader
-                        ? activeEditor.controller.foldHeader
-                        : null,
-                  ),
-                if (activeEditor.controller.supportsFoldAll)
-                  const SizedBox(width: 2),
-                ListenableBuilder(
-                  listenable: activeEditor.controller,
-                  builder: (context, _) {
-                    return _ToolbarIconButton(
-                      onPressed:
-                          activeEditor.saving || !activeEditor.hasUnsavedChanges
-                          ? null
-                          : () => _saveEditor(activeEditor.path),
-                      compact: compact,
-                      icon: Icons.save_outlined,
-                      tooltip: 'Save',
-                      busy: activeEditor.saving,
-                    );
-                  },
-                ),
-                const SizedBox(width: 2),
-              ],
-              _ToolbarIconButton(
-                onPressed: hasSelection ? _askAboutSelected : null,
-                compact: compact,
-                icon: Icons.auto_awesome_outlined,
-                tooltip: 'Ask AI about file',
-              ),
-              const SizedBox(width: 8),
-              _buildSyncStatusPill(context, activeSyncState),
-            ],
-          ),
-          SizedBox(height: compact ? 8 : 12),
           Expanded(
             child: mobile
                 ? CodeTabTreePanel(
@@ -871,100 +753,6 @@ class _CodePaneResizeHandleState extends State<_CodePaneResizeHandle> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _ToolbarIconButton extends StatelessWidget {
-  final VoidCallback? onPressed;
-  final IconData icon;
-  final String tooltip;
-  final bool compact;
-  final bool busy;
-
-  const _ToolbarIconButton({
-    required this.onPressed,
-    required this.icon,
-    required this.tooltip,
-    this.compact = false,
-    this.busy = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return IconButton(
-      onPressed: onPressed,
-      visualDensity: VisualDensity.compact,
-      iconSize: compact ? 15 : 16,
-      splashRadius: compact ? 15 : 16,
-      padding: EdgeInsets.all(compact ? 4 : 5),
-      color: theme.colorScheme.onSurfaceVariant.withValues(
-        alpha: onPressed == null ? 0.38 : 0.78,
-      ),
-      icon: busy
-          ? SizedBox(
-              width: compact ? 14 : 15,
-              height: compact ? 14 : 15,
-              child: const CircularProgressIndicator(strokeWidth: 2),
-            )
-          : Icon(icon),
-      tooltip: tooltip,
-    );
-  }
-}
-
-class _FoldActionsMenu extends StatelessWidget {
-  final VoidCallback onFoldAll;
-  final VoidCallback onUnfoldAll;
-  final VoidCallback? onFoldImports;
-  final VoidCallback? onFoldHeader;
-  final bool compact;
-
-  const _FoldActionsMenu({
-    required this.onFoldAll,
-    required this.onUnfoldAll,
-    required this.onFoldImports,
-    required this.onFoldHeader,
-    this.compact = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return PopupMenuButton<VoidCallback>(
-      tooltip: 'Fold options',
-      padding: EdgeInsets.zero,
-      iconSize: compact ? 15 : 16,
-      splashRadius: compact ? 15 : 16,
-      icon: Icon(
-        Icons.unfold_more_outlined,
-        color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.78),
-      ),
-      onSelected: (action) => action(),
-      itemBuilder: (context) {
-        final items = <PopupMenuEntry<VoidCallback>>[
-          PopupMenuItem(value: onFoldAll, child: const Text('Fold all')),
-          PopupMenuItem(value: onUnfoldAll, child: const Text('Unfold all')),
-        ];
-        if (onFoldImports != null) {
-          items.add(
-            PopupMenuItem(
-              value: onFoldImports!,
-              child: const Text('Fold imports'),
-            ),
-          );
-        }
-        if (onFoldHeader != null) {
-          items.add(
-            PopupMenuItem(
-              value: onFoldHeader!,
-              child: const Text('Fold header'),
-            ),
-          );
-        }
-        return items;
-      },
     );
   }
 }

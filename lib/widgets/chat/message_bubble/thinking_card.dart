@@ -52,12 +52,12 @@ class _ChatThinkingCardState extends State<ChatThinkingCard>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final platinum = theme.brightness == Brightness.dark
-        ? const Color(0xFFEAF1FF)
-        : const Color(0xFFF7FBFF);
-    final glow = theme.brightness == Brightness.dark
-        ? const Color(0xFFBDD0FF)
-        : const Color(0xFFD9E8FF);
+    final shimmerLight = theme.brightness == Brightness.dark
+        ? const Color(0xFFD8E4FF)
+        : const Color(0xFFEEF5FF);
+    final shimmerAccent = theme.brightness == Brightness.dark
+        ? const Color(0xFFAFC4F8)
+        : const Color(0xFFCFE0FB);
 
     return AnimatedBuilder(
       animation: _controller,
@@ -94,15 +94,15 @@ class _ChatThinkingCardState extends State<ChatThinkingCard>
                             end: Alignment(shimmerCenter.x + 1.35, 0),
                             colors: [
                               theme.colorScheme.onSurfaceVariant.withValues(
-                                alpha: 0.82,
+                                alpha: 0.84,
                               ),
-                              platinum.withValues(alpha: 0.96),
-                              glow.withValues(alpha: 0.88),
+                              shimmerLight.withValues(alpha: 0.78),
+                              shimmerAccent.withValues(alpha: 0.62),
                               theme.colorScheme.onSurfaceVariant.withValues(
-                                alpha: 0.86,
+                                alpha: 0.85,
                               ),
                             ],
-                            stops: const [0.0, 0.38, 0.58, 1.0],
+                            stops: const [0.0, 0.42, 0.56, 1.0],
                           ).createShader(const Rect.fromLTWH(0, 0, 420, 48)))
                       : null,
                 ),

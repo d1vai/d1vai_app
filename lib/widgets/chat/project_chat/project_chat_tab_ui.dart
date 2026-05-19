@@ -679,6 +679,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
             ProjectChatTopBar(
               currentIndex: _currentChatTabIndex,
               previewUrl: _previewUrl,
+              codeTabController: _codeTabTopBarController,
               onTabSelected: (index) {
                 setState(() {
                   _currentChatTabIndex = index;
@@ -742,6 +743,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
                   ProjectChatTopBar(
                     currentIndex: _currentChatTabIndex,
                     previewUrl: _previewUrl,
+                    codeTabController: _codeTabTopBarController,
                     onTabSelected: (index) {
                       setState(() {
                         _currentChatTabIndex = index;
@@ -905,6 +907,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
   Widget _buildChatCodeTab() {
     return ProjectChatCodeTab(
       projectId: widget.projectId,
+      topBarController: _codeTabTopBarController,
       onAsk: (question) {
         _sendFirstMessage(question);
         setState(() {

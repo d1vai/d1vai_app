@@ -854,7 +854,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
         'Failed to choose archive: {error}';
 
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: const ['zip'],
         withData: true,

@@ -14,6 +14,8 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   final FocusNode _chatInputFocusNode = FocusNode();
   final Map<String, MessageStatus> _messageStatuses = {};
   final D1vaiService _d1vaiService = D1vaiService();
+  final CodeTabTopBarController _codeTabTopBarController =
+      CodeTabTopBarController();
 
   bool _isChatLoading = false;
   bool _isLoadingHistory = false;

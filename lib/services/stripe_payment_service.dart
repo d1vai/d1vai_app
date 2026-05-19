@@ -36,7 +36,10 @@ class StripePaymentService {
   );
 
   static Future<void> initialize() async {
-    if (_initialized || kIsWeb || publishableKey.trim().isEmpty) {
+    if (_initialized ||
+        kIsWeb ||
+        !isSupportedPlatform ||
+        publishableKey.trim().isEmpty) {
       return;
     }
     try {

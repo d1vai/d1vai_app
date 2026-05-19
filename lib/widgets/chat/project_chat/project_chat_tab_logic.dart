@@ -598,6 +598,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     _outboxSignals.close();
     _manualWsClose = true;
     _webSocket?.close(1000, 'dispose');
+    _codeTabTopBarController.dispose();
     _chatScrollController.dispose();
     _chatInputController.dispose();
     _chatInputFocusNode.dispose();
