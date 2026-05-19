@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
 import '../providers/project_provider.dart';
+import '../utils/chat_entry.dart';
 import '../widgets/login_required_view.dart';
 
 class ChatPlaygroundScreen extends StatefulWidget {
@@ -116,11 +117,12 @@ class _ChatPlaygroundScreenState extends State<ChatPlaygroundScreen> {
                           ),
                           onTap: () {
                             final prompt = _promptController.text.trim();
+                            final base = buildProjectChatDetailRoute(p);
                             final qp = prompt.isEmpty
                                 ? ''
-                                : '?autoprompt=${Uri.encodeQueryComponent(prompt)}';
+                                : '${base.contains('?') ? '&' : '?'}autoprompt=${Uri.encodeQueryComponent(prompt)}';
                             // Keep navigation stack so Chat With AI can show a back button.
-                            context.push('/projects/${p.id}/chat$qp');
+                            context.push('$base$qp');
                           },
                         ),
                       );

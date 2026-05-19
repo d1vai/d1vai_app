@@ -154,7 +154,9 @@ class _ImportRepositoryDialogState extends State<ImportRepositoryDialog> {
           if (!mounted) return;
           final router = GoRouter.of(context);
           Navigator.of(context).pop(true);
-          Future.microtask(() => router.push('/projects/$projectId/chat'));
+          Future.microtask(
+            () => router.push('/projects/$projectId/chat?tab=preview'),
+          );
           return;
         }
       } catch (_) {}
@@ -175,7 +177,9 @@ class _ImportRepositoryDialogState extends State<ImportRepositoryDialog> {
     );
     final router = GoRouter.of(context);
     Navigator.of(context).pop(true);
-    Future.microtask(() => router.push('/projects/$projectId/chat'));
+    Future.microtask(
+      () => router.push('/projects/$projectId/chat?tab=code'),
+    );
   }
 
   Future<void> _finishImportNavigation(String projectId) async {
@@ -202,7 +206,9 @@ class _ImportRepositoryDialogState extends State<ImportRepositoryDialog> {
     if (!mounted) return;
     final router = GoRouter.of(context);
     Navigator.of(context).pop(true);
-    Future.microtask(() => router.push('/projects/$projectId/chat'));
+    Future.microtask(
+      () => router.push('/projects/$projectId/chat?tab=code'),
+    );
   }
 
   Future<void> _handleImport() async {

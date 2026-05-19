@@ -18,6 +18,7 @@ import '../../services/model_config_service.dart';
 import '../../services/workspace_service.dart';
 import '../../utils/billing_errors.dart';
 import '../snackbar_helper.dart';
+import '../../utils/chat_entry.dart';
 import '../adaptive_modal.dart';
 import '../insufficient_balance_dialog.dart';
 import '../../l10n/app_localizations.dart';
@@ -828,8 +829,12 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
 
       if (!mounted) return;
 
-      // 跳转到项目 chat（对齐“创建成功后进入 chat”）
-      GoRouter.of(context).push('/projects/$projectId/chat?tab=preview');
+      final refreshedProject = projectProvider.getProjectById(projectId);
+      if (refreshedProject != null) {
+        GoRouter.of(context).push(buildProjectChatDetailRoute(refreshedProject));
+      } else {
+        GoRouter.of(context).push('/projects/$projectId/chat?tab=code');
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -959,7 +964,12 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
       if (!mounted) return;
       Navigator.pop(context);
       if (!mounted) return;
-      GoRouter.of(context).push('/projects/$projectId/chat?tab=preview');
+      final refreshedProject = projectProvider.getProjectById(projectId);
+      if (refreshedProject != null) {
+        GoRouter.of(context).push(buildProjectChatDetailRoute(refreshedProject));
+      } else {
+        GoRouter.of(context).push('/projects/$projectId/chat?tab=code');
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -1237,7 +1247,12 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
 
       if (!mounted) return;
       Navigator.pop(context);
-      GoRouter.of(context).push('/projects/$projectId/chat?tab=preview');
+      final refreshedProject = projectProvider.getProjectById(projectId);
+      if (refreshedProject != null) {
+        GoRouter.of(context).push(buildProjectChatDetailRoute(refreshedProject));
+      } else {
+        GoRouter.of(context).push('/projects/$projectId/chat?tab=code');
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
