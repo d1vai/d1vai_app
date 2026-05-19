@@ -54,7 +54,7 @@ class _MacosWorkspaceInspectorCardState
   Future<void> _pickDirectory() async {
     if (!_enabled || _loading || _initializing) return;
 
-    final selected = await FilePicker.getDirectoryPath();
+    final selected = await FilePicker.platform.getDirectoryPath();
     if (selected == null || selected.trim().isEmpty) return;
 
     await _inspectDirectory(selected);
