@@ -105,7 +105,7 @@ class ChatResultCard extends StatelessWidget {
           ConstrainedBox(
             constraints: const BoxConstraints(maxHeight: 224),
             child: SingleChildScrollView(
-              child: _SelectableBody(
+              child: _PlainSelectableBody(
                 text: resultText.isNotEmpty ? resultText : 'Done',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.92),
@@ -147,6 +147,24 @@ class _MetaChip extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _PlainSelectableBody extends StatelessWidget {
+  final String text;
+  final TextStyle? style;
+
+  const _PlainSelectableBody({required this.text, required this.style});
+
+  @override
+  Widget build(BuildContext context) {
+    final content = SelectableText(text, style: style);
+    if (defaultTargetPlatform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.linux) {
+      return DesktopSelectionShell(child: content);
+    }
+    return Text(text, style: style);
   }
 }
 
