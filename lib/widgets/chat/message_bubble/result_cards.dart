@@ -68,11 +68,13 @@ class ChatResultCard extends StatelessWidget {
         _int(usage['output_tokens']) ??
         _int(usage['completion_tokens']);
 
-    final tint = isError
-        ? theme.colorScheme.error
-        : theme.colorScheme.onSurfaceVariant;
+    final tint = isError ? theme.colorScheme.error : chatSuccessTint(theme);
     final title = isError ? 'Error' : 'Result';
-    final icon = isError ? Icons.cancel : Icons.notes_rounded;
+    final icon = isError ? Icons.cancel : Icons.check_rounded;
+    final tokenLabel = (inputTokens != null || outputTokens != null)
+        ? '${inputTokens != null ? '↑${_formatCount(inputTokens)}' : ''}${inputTokens != null && outputTokens != null ? '  ' : ''}${outputTokens != null ? '↓${_formatCount(outputTokens)}' : ''}'
+        : null;
+    final showTokenLabel = tokenLabel != null && tokenLabel.trim() != '↑0  ↓0';
 
     return ChatMessageCard(
       backgroundColor: theme.colorScheme.surfaceContainerHighest.withValues(
@@ -81,26 +83,20 @@ class ChatResultCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ChatCardHeader(icon: icon, iconColor: tint, title: title),
-          if (inputTokens != null ||
-              outputTokens != null ||
-              numTurns > 0 ||
-              durationSec > 0) ...[
-            const SizedBox(height: 8),
-            Wrap(
+          ChatCardHeader(
+            icon: icon,
+            iconColor: tint,
+            title: title,
+            trailing: Wrap(
               spacing: 8,
-              runSpacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                if (inputTokens != null || outputTokens != null)
-                  _MetaChip(
-                    label:
-                        '${inputTokens != null ? '↑${_formatCount(inputTokens)}' : ''}${inputTokens != null && outputTokens != null ? '  ' : ''}${outputTokens != null ? '↓${_formatCount(outputTokens)}' : ''}',
-                  ),
+                if (showTokenLabel) _MetaChip(label: tokenLabel),
                 if (numTurns > 0) _MetaChip(label: '$numTurns turns'),
                 if (durationSec > 0) _MetaChip(label: '${durationSec}s'),
               ],
             ),
-          ],
+          ),
           const SizedBox(height: 8),
           ConstrainedBox(
             constraints: const BoxConstraints(maxHeight: 224),
