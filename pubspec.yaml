@@ -66,9 +66,7 @@ dependencies:
   flutter_code_editor:
     path: third_party/flutter-code-editor
   flutter_monaco:
-    git:
-      url: git@github.com:d1vai/flutter_monaco.git
-      ref: main
+    path: third_party/flutter_monaco
   flutter_highlight: ^0.7.0
   highlight: ^0.7.0
   file_picker: ^10.3.2

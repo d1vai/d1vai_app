@@ -101,6 +101,12 @@ jobs:
             echo "release_name=${release_name}"
           } >> "${GITHUB_OUTPUT}"
 
+      - name: Prepare local flutter_monaco checkout
+        shell: bash
+        run: |
+          rm -rf third_party/flutter_monaco
+          git clone --depth 1 --branch main https://github.com/d1vai/flutter_monaco.git third_party/flutter_monaco
+
       - name: Install dependencies
         run: flutter pub get
 
