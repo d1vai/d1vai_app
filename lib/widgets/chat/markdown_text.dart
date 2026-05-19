@@ -74,12 +74,14 @@ class MarkdownText extends StatefulWidget {
   final String text;
   final TextStyle? style;
   final int? maxLines;
+  final bool selectable;
 
   const MarkdownText({
     super.key,
     required this.text,
     this.style,
     this.maxLines,
+    this.selectable = false,
   });
 
   @override
@@ -133,14 +135,16 @@ class _MarkdownTextState extends State<MarkdownText> {
         widget.text,
         baseStyle,
         maxLines: widget.maxLines!,
+        selectable: widget.selectable,
       );
     }
 
-    return Column(
+    final content = Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: _buildBlocks(context, widget.text, baseStyle),
     );
+    return widget.selectable ? SelectionArea(child: content) : content;
   }
 
   List<Widget> _buildBlocks(
@@ -308,11 +312,11 @@ class _MarkdownTextState extends State<MarkdownText> {
             widgets.add(
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
-                child: RichText(
-                  text: TextSpan(
-                    style: baseStyle,
-                    children: _parseInline(context, b.text, baseStyle),
-                  ),
+                child: _buildInlineText(
+                  context,
+                  b.text,
+                  baseStyle,
+                  selectable: widget.selectable,
                 ),
               ),
             );
@@ -339,15 +343,11 @@ class _MarkdownTextState extends State<MarkdownText> {
                         child: Text(marker, style: bulletStyle),
                       ),
                       Expanded(
-                        child: RichText(
-                          text: TextSpan(
-                            style: baseStyle,
-                            children: _parseInline(
-                              context,
-                              b.items[idx],
-                              baseStyle,
-                            ),
-                          ),
+                        child: _buildInlineText(
+                          context,
+                          b.items[idx],
+                          baseStyle,
+                          selectable: widget.selectable,
                         ),
                       ),
                     ],
@@ -507,19 +507,13 @@ class _MarkdownTextState extends State<MarkdownText> {
                                     ),
                                   ),
                                 ),
-                                child: Text.rich(
-                                  TextSpan(
-                                    style: baseStyle.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                    children: _parseInline(
-                                      context,
-                                      b.headers[i],
-                                      baseStyle.copyWith(
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
+                                child: _buildInlineText(
+                                  context,
+                                  b.headers[i],
+                                  baseStyle.copyWith(
+                                    fontWeight: FontWeight.w700,
                                   ),
+                                  selectable: widget.selectable,
                                   textAlign: b.aligns[i],
                                 ),
                               ),
@@ -545,15 +539,11 @@ class _MarkdownTextState extends State<MarkdownText> {
                                       ),
                                     ),
                                   ),
-                                  child: Text.rich(
-                                    TextSpan(
-                                      style: baseStyle,
-                                      children: _parseInline(
-                                        context,
-                                        row[i],
-                                        baseStyle,
-                                      ),
-                                    ),
+                                  child: _buildInlineText(
+                                    context,
+                                    row[i],
+                                    baseStyle,
+                                    selectable: widget.selectable,
                                     textAlign: b.aligns[i],
                                   ),
                                 ),
@@ -577,17 +567,46 @@ class _MarkdownTextState extends State<MarkdownText> {
     String text,
     TextStyle baseStyle, {
     required int maxLines,
+    required bool selectable,
   }) {
     // Keep behavior close to previous implementation for truncation.
     final lines = text.split('\n');
     final limited = lines.take(maxLines).join('\n');
-    return RichText(
-      text: TextSpan(
-        style: baseStyle,
-        children: _parseInline(context, limited, baseStyle),
-      ),
+    return _buildInlineText(
+      context,
+      limited,
+      baseStyle,
+      selectable: selectable,
       maxLines: maxLines,
       overflow: TextOverflow.ellipsis,
+    );
+  }
+
+  Widget _buildInlineText(
+    BuildContext context,
+    String text,
+    TextStyle baseStyle, {
+    required bool selectable,
+    int? maxLines,
+    TextAlign textAlign = TextAlign.start,
+    TextOverflow overflow = TextOverflow.clip,
+  }) {
+    final span = TextSpan(
+      style: baseStyle,
+      children: _parseInline(context, text, baseStyle),
+    );
+    if (selectable) {
+      return SelectableText.rich(
+        span,
+        maxLines: maxLines,
+        textAlign: textAlign,
+      );
+    }
+    return RichText(
+      text: span,
+      maxLines: maxLines,
+      textAlign: textAlign,
+      overflow: overflow,
     );
   }
 
