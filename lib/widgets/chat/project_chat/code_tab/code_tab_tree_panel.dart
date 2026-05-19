@@ -144,13 +144,7 @@ class CodeTabTreePanel extends StatelessWidget {
                             ),
                           )
                         else
-                          Icon(
-                            Icons.chevron_right,
-                            size: compact ? 16 : 18,
-                            color: theme.colorScheme.onSurface.withValues(
-                              alpha: 0.45,
-                            ),
-                          ),
+                          const SizedBox.shrink(),
                       ],
                     ),
                   ),
