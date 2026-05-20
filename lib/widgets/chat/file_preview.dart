@@ -3,10 +3,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-import '../../providers/editor_preferences_provider.dart';
 import 'file_preview_utils.dart';
 import 'markdown_text.dart';
 import 'monaco_code_preview.dart';
@@ -46,7 +44,6 @@ class FilePreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final editorPrefs = context.watch<EditorPreferencesProvider>();
     final theme = Theme.of(context);
     final binaryBytes = _decodeBinaryBytes();
 
@@ -160,8 +157,7 @@ class FilePreview extends StatelessWidget {
       );
     }
 
-    if (editorPrefs.engine == EditorEngine.flutterMonaco &&
-        _supportsMonacoPreview(context)) {
+    if (_supportsMonacoPreview(context)) {
       String previewText = content;
       if (isJsonPreview(path)) {
         try {

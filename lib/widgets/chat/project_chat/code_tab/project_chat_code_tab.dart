@@ -42,7 +42,6 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
   late final VoidCallback _searchListener;
   late final VoidCallback _workbenchListener;
   EditorPreferencesProvider? _editorPreferences;
-  EditorEngine? _lastEditorEngine;
 
   bool _loadingTree = false;
   String? _treeError;
@@ -97,15 +96,12 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
   void _handleEditorPreferencesChanged() {
     final prefs = _editorPreferences;
     if (prefs == null) return;
-    _lastEditorEngine ??= prefs.engine;
     unawaited(
       _workbench.applyEditorPreferences(
         defaultWrap: prefs.defaultWrap,
         tabSize: prefs.tabSize,
-        engine: prefs.engine,
       ),
     );
-    _lastEditorEngine = prefs.engine;
   }
 
   void _publishTopBarState() {
@@ -453,7 +449,6 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
           preview: preview,
           wrapEnabled: prefs.defaultWrap,
           tabSize: prefs.tabSize,
-          engine: prefs.engine,
         );
         final raw = await _localWorkspaceService.readFile(
           _workbench.localRootPath!,
@@ -481,7 +476,6 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
       preview: preview,
       wrapEnabled: prefs.defaultWrap,
       tabSize: prefs.tabSize,
-      engine: prefs.engine,
     );
   }
 

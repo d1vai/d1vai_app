@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:flutter_monaco/flutter_monaco.dart' as monaco;
 import 'package:provider/provider.dart';
 
@@ -53,22 +52,13 @@ class _CodeTabEditorState extends State<CodeTabEditor> {
           : editorPrefs.lightThemePresetId,
     );
     final colorScheme = Theme.of(context).colorScheme;
-    final codeTheme = Map<String, TextStyle>.from(preset.highlightTheme);
-    final root = codeTheme['root'] ?? const TextStyle();
-    codeTheme['root'] = root.copyWith(
+    final root = (preset.highlightTheme['root'] ?? const TextStyle()).copyWith(
       backgroundColor:
-          root.backgroundColor ??
+          (preset.highlightTheme['root']?.backgroundColor) ??
           (preset.isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF)),
       fontFamily: 'monospace',
       fontSize: editorPrefs.fontSize,
       height: 1.3,
-    );
-    final codeThemeData = CodeThemeData(
-      styles: codeTheme,
-      searchMatchBackgroundColor: preset.searchMatchBackgroundColor,
-      currentSearchMatchBackgroundColor:
-          preset.currentSearchMatchBackgroundColor,
-      searchMatchTextColor: preset.searchMatchTextColor,
     );
 
     _syncMonacoPresentationIfNeeded(
@@ -128,71 +118,11 @@ class _CodeTabEditorState extends State<CodeTabEditor> {
           },
         ),
         Expanded(
-          child: widget.controller.isFlutterCodeEditor
-              ? CodeTheme(
-                  data: codeThemeData,
-                  child: CodeField(
-                    controller: widget.controller.flutterController!,
-                    onChanged: widget.onChanged,
-                    expands: true,
-                    wrap: widget.wrapEnabled,
-                    textStyle: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 12.25,
-                      height: 1.3,
-                    ).copyWith(fontSize: editorPrefs.fontSize),
-                    gutterStyle: GutterStyle(
-                      width: widget.compact ? 60 : 68,
-                      margin: widget.compact ? 8 : 10,
-                      background: preset.gutterBackground,
-                      activeLineBackground: preset.activeLineNumberBackground,
-                      textStyle: TextStyle(
-                        color: preset.lineNumberColor,
-                        fontFamily: 'monospace',
-                        fontSize: editorPrefs.fontSize,
-                        height: 1.3,
-                      ),
-                      activeLineTextStyle: TextStyle(
-                        color: preset.activeLineNumberColor,
-                        fontFamily: 'monospace',
-                        fontSize: editorPrefs.fontSize,
-                        height: 1.3,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      showErrors: false,
-                      showFoldingHandles: true,
-                      showLineNumbers: true,
-                    ),
-                    decoration: BoxDecoration(
-                      color: root.backgroundColor ?? colorScheme.surface,
-                    ),
-                    currentLineColor: preset.currentLineColor,
-                    highlightCurrentLine: true,
-                    showIndentGuides: true,
-                    indentGuideColor: preset.indentGuideColor,
-                    activeIndentGuideColor: preset.activeIndentGuideColor,
-                    highlightBracketPairs: true,
-                    bracketPairColor: preset.bracketPairColor,
-                    rulers: editorPrefs.showRulers ? const [80, 120] : const [],
-                    rulerColor: preset.rulerColor,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: widget.compact ? 10 : 12,
-                      vertical: widget.compact ? 9 : 11,
-                    ),
-                    smartDashesType: SmartDashesType.disabled,
-                    smartQuotesType: SmartQuotesType.disabled,
-                    textSelectionTheme: TextSelectionThemeData(
-                      selectionColor: preset.selectionColor,
-                      selectionHandleColor: colorScheme.primary,
-                      cursorColor: colorScheme.primary,
-                    ),
-                  ),
-                )
-              : _MonacoEditorSurface(
-                  controller: widget.controller,
-                  preset: preset,
-                  fontSize: editorPrefs.fontSize,
-                ),
+          child: _MonacoEditorSurface(
+            controller: widget.controller,
+            preset: preset,
+            fontSize: editorPrefs.fontSize,
+          ),
         ),
         ListenableBuilder(
           listenable: widget.controller,
@@ -369,7 +299,6 @@ class _CodeTabEditorState extends State<CodeTabEditor> {
 
     final key = [
       widget.controller.filePath,
-      preferences.engine.name,
       preferences.fontSize.toStringAsFixed(2),
       preferences.showRulers,
       preferences.tabSize,

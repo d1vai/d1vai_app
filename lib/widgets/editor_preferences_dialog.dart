@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_monaco/flutter_monaco.dart' as monaco;
 import 'package:provider/provider.dart';
@@ -93,52 +95,6 @@ class EditorPreferencesDialogBody extends StatelessWidget {
                   presets: darkCodeEditorThemePresets,
                   selectedPresetId: editorPrefs.darkThemePresetId,
                   onPresetSelected: editorPrefs.setDarkThemePreset,
-                ),
-                const SizedBox(height: 18),
-                Text(
-                  loc?.translate('settings_editor_engine') ?? 'Editor Engine',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final engine in EditorEngine.values)
-                      ChoiceChip(
-                        label: Text(switch (engine) {
-                          EditorEngine.flutterCodeEditor =>
-                            loc?.translate(
-                                  'settings_editor_engine_flutter_code_editor',
-                                ) ??
-                                'Flutter Code Editor',
-                          EditorEngine.flutterMonaco =>
-                            loc?.translate(
-                                  'settings_editor_engine_flutter_monaco',
-                                ) ??
-                                'Flutter Monaco',
-                        }),
-                        selected: editorPrefs.engine == engine,
-                        onSelected: (_) => editorPrefs.setEngine(engine),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  editorPrefs.engine == EditorEngine.flutterMonaco
-                      ? loc?.translate(
-                              'settings_editor_engine_flutter_monaco_hint',
-                            ) ??
-                            'Monaco uses a platform WebView/iframe backend for better large-file behavior.'
-                      : loc?.translate(
-                              'settings_editor_engine_flutter_code_editor_hint',
-                            ) ??
-                            'Flutter Code Editor stays fully native in Flutter and keeps the current folding workflow.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
                 ),
                 const SizedBox(height: 18),
                 CustomCard(
@@ -427,9 +383,9 @@ class EditorThemePresetCard extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Container(
-              height: 112,
+              height: 108,
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
               decoration: BoxDecoration(
                 color: bg,
                 borderRadius: BorderRadius.circular(10),
@@ -437,9 +393,9 @@ class EditorThemePresetCard extends StatelessWidget {
               child: DefaultTextStyle(
                 style: TextStyle(
                   fontFamily: 'monospace',
-                  fontSize: 11.5,
+                  fontSize: 10.8,
                   color: fg,
-                  height: 1.35,
+                  height: 1.24,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -502,7 +458,7 @@ class EditorThemePresetCard extends StatelessWidget {
   }
 }
 
-class EditorMonacoThemePreview extends StatefulWidget {
+class EditorMonacoThemePreview extends StatelessWidget {
   final String title;
   final CodeEditorThemePreset preset;
   final double fontSize;
@@ -526,130 +482,36 @@ return editor;
 ''';
 
   @override
-  State<EditorMonacoThemePreview> createState() =>
-      _EditorMonacoThemePreviewState();
-}
-
-class _EditorMonacoThemePreviewState extends State<EditorMonacoThemePreview> {
-  monaco.MonacoController? _controller;
-  monaco.EditorOptions? _options;
-  Object? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _bootstrap();
-  }
-
-  @override
-  void didUpdateWidget(covariant EditorMonacoThemePreview oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.preset.id != widget.preset.id ||
-        oldWidget.fontSize != widget.fontSize ||
-        oldWidget.showRulers != widget.showRulers ||
-        oldWidget.wrapEnabled != widget.wrapEnabled ||
-        oldWidget.tabSize != widget.tabSize) {
-      _bootstrap();
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller?.dispose();
-    super.dispose();
-  }
-
-  Future<void> _bootstrap() async {
-    final old = _controller;
-    final controller = await monaco.MonacoController.create(
-      options: monaco.EditorOptions(
-        language: monaco.MonacoLanguage.dart,
-        theme: widget.preset.isDark
-            ? monaco.MonacoTheme.vsDark
-            : monaco.MonacoTheme.vs,
-        fontSize: widget.fontSize,
-        fontFamily: 'Menlo, Monaco, Consolas, "Courier New", monospace',
-        lineHeight: 1.35,
-        readOnly: true,
-        minimap: false,
-        lineNumbers: true,
-        wordWrap: widget.wrapEnabled,
-        automaticLayout: true,
-        scrollBeyondLastLine: false,
-        quickSuggestions: false,
-        tabSize: widget.tabSize,
-        rulers: widget.showRulers ? const [80, 120] : const [],
-      ),
-    );
-
-    try {
-      await controller.setValue(EditorMonacoThemePreview._sample);
-      final themeId = 'settings-preview-${widget.preset.id}';
-      final didRegisterTheme = await controller.tryDefineTheme(
-        themeId,
-        buildMonacoThemeDataForPreset(
-          widget.preset,
-          baseTheme: widget.preset.isDark ? 'vs-dark' : 'vs',
-        ),
-      );
-      await controller.setThemeById(
-        didRegisterTheme ? themeId : (widget.preset.isDark ? 'vs-dark' : 'vs'),
-      );
-      final options = monaco.EditorOptions(
-        language: monaco.MonacoLanguage.dart,
-        theme: widget.preset.isDark
-            ? monaco.MonacoTheme.vsDark
-            : monaco.MonacoTheme.vs,
-        fontSize: widget.fontSize,
-        fontFamily: 'Menlo, Monaco, Consolas, "Courier New", monospace',
-        lineHeight: 1.35,
-        readOnly: true,
-        minimap: false,
-        lineNumbers: true,
-        wordWrap: widget.wrapEnabled,
-        automaticLayout: true,
-        scrollBeyondLastLine: false,
-        quickSuggestions: false,
-        tabSize: widget.tabSize,
-        rulers: widget.showRulers ? const [80, 120] : const [],
-      );
-      if (!mounted) {
-        controller.dispose();
-        old?.dispose();
-        return;
-      }
-      setState(() {
-        _controller = controller;
-        _options = options;
-        _error = null;
-      });
-      old?.dispose();
-    } catch (e) {
-      controller.dispose();
-      if (!mounted) {
-        old?.dispose();
-        return;
-      }
-      setState(() {
-        _error = e;
-      });
-      old?.dispose();
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final root = widget.preset.highlightTheme['root'] ?? const TextStyle();
+    final root = preset.highlightTheme['root'] ?? const TextStyle();
     final bg = root.backgroundColor ?? theme.colorScheme.surface;
-    final controller = _controller;
-    final options = _options;
+    final baseTheme = preset.isDark
+        ? monaco.MonacoTheme.vsDark
+        : monaco.MonacoTheme.vs;
+    final themeId = 'settings-preview-${preset.id}';
+    final options = monaco.EditorOptions(
+      language: monaco.MonacoLanguage.dart,
+      theme: baseTheme,
+      fontSize: fontSize,
+      fontFamily: 'Menlo, Monaco, Consolas, "Courier New", monospace',
+      lineHeight: 1.35,
+      readOnly: true,
+      minimap: false,
+      lineNumbers: true,
+      wordWrap: wrapEnabled,
+      automaticLayout: true,
+      scrollBeyondLastLine: false,
+      quickSuggestions: false,
+      tabSize: tabSize,
+      rulers: showRulers ? const [80, 120] : const [],
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          widget.title,
+          title,
           style: theme.textTheme.labelLarge?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w700,
@@ -666,26 +528,31 @@ class _EditorMonacoThemePreviewState extends State<EditorMonacoThemePreview> {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: _error != null
-                ? Center(
-                    child: Text(
-                      'Monaco preview unavailable.\n$_error',
-                      textAlign: TextAlign.center,
+            child: monaco.MonacoEditor(
+              key: ValueKey(
+                'settings-preview-${preset.id}-${fontSize.toStringAsFixed(2)}-$tabSize-$showRulers-$wrapEnabled',
+              ),
+              initialValue: _sample,
+              options: options,
+              onReady: (controller) {
+                unawaited(() async {
+                  final didRegisterTheme = await controller.tryDefineTheme(
+                    themeId,
+                    buildMonacoThemeDataForPreset(
+                      preset,
+                      baseTheme: preset.isDark ? 'vs-dark' : 'vs',
                     ),
-                  )
-                : controller == null || options == null
-                ? const Center(child: CircularProgressIndicator())
-                : monaco.MonacoEditor(
-                    key: ValueKey(
-                      'settings-preview-${widget.preset.id}-${widget.fontSize.toStringAsFixed(2)}-${widget.tabSize}',
-                    ),
-                    controller: controller,
-                    options: options,
-                    backgroundColor: bg,
-                    showStatusBar: false,
-                    loadingBuilder: (_) =>
-                        const Center(child: CircularProgressIndicator()),
-                  ),
+                  );
+                  await controller.setThemeById(
+                    didRegisterTheme ? themeId : baseTheme.id,
+                  );
+                }());
+              },
+              backgroundColor: bg,
+              showStatusBar: false,
+              loadingBuilder: (_) =>
+                  const Center(child: CircularProgressIndicator()),
+            ),
           ),
         ),
       ],

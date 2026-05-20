@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../../../providers/editor_preferences_provider.dart';
 import '../../../../services/d1vai_service.dart';
 import 'app_code_editor_controller.dart';
 import 'code_tab_models.dart';
@@ -159,7 +158,6 @@ class CodeWorkbenchController extends ChangeNotifier {
     bool preview = true,
     bool wrapEnabled = false,
     int tabSize = 2,
-    required EditorEngine engine,
   }) async {
     selectTreePath(path);
 
@@ -186,7 +184,6 @@ class CodeWorkbenchController extends ChangeNotifier {
 
     late final CodeWorkbenchEditorState editor;
     final controller = await AppCodeEditorController.create(
-      engine: engine,
       filePath: path,
       tabSize: tabSize,
       wrapEnabled: wrapEnabled,
@@ -265,16 +262,7 @@ class CodeWorkbenchController extends ChangeNotifier {
   Future<void> applyEditorPreferences({
     required bool defaultWrap,
     required int tabSize,
-    required EditorEngine engine,
   }) async {
-    final shouldRebuildControllers = _editorsByPath.values.any(
-      (editor) => editor.controller.engine != engine,
-    );
-
-    if (shouldRebuildControllers) {
-      await _rebuildControllersForEngine(engine, tabSize: tabSize);
-    }
-
     for (final editor in _editorsByPath.values) {
       editor.wrapEnabled = defaultWrap;
       await editor.controller.setTabSpaces(tabSize);
@@ -458,82 +446,5 @@ class CodeWorkbenchController extends ChangeNotifier {
     _editorsByPath.clear();
     _openPaths.clear();
     super.dispose();
-  }
-
-  Future<void> _rebuildControllersForEngine(
-    EditorEngine engine, {
-    required int tabSize,
-  }) async {
-    final snapshots =
-        <
-          ({
-            String path,
-            String text,
-            String originalContent,
-            CodeTabFileContent? content,
-            String? error,
-            bool loading,
-            bool saving,
-            bool isEditing,
-            bool isPreview,
-            bool wrapEnabled,
-            bool lastKnownDirty,
-          })
-        >[];
-
-    for (final path in _openPaths) {
-      final editor = _editorsByPath[path];
-      if (editor == null) continue;
-      snapshots.add((
-        path: path,
-        text: await editor.controller.readText(refresh: true),
-        originalContent: editor.originalContent,
-        content: editor.content,
-        error: editor.error,
-        loading: editor.loading,
-        saving: editor.saving,
-        isEditing: editor.isEditing,
-        isPreview: editor.isPreview,
-        wrapEnabled: editor.wrapEnabled,
-        lastKnownDirty: editor.lastKnownDirty,
-      ));
-    }
-
-    for (final editor in _editorsByPath.values) {
-      editor.controller.removeListener(editor.controllerListener);
-      editor.controller.dispose();
-    }
-    _editorsByPath.clear();
-
-    for (final snapshot in snapshots) {
-      late final CodeWorkbenchEditorState editorState;
-      final controller = await AppCodeEditorController.create(
-        engine: engine,
-        filePath: snapshot.path,
-        tabSize: tabSize,
-        wrapEnabled: snapshot.wrapEnabled,
-      );
-      editorState = CodeWorkbenchEditorState(
-        path: snapshot.path,
-        controller: controller,
-        controllerListener: () => _handleControllerChanged(editorState),
-        isPreview: snapshot.isPreview,
-        content: snapshot.content,
-        error: snapshot.error,
-        loading: snapshot.loading,
-        saving: snapshot.saving,
-        isEditing: snapshot.isEditing,
-        wrapEnabled: snapshot.wrapEnabled,
-        originalContent: snapshot.originalContent,
-        lastKnownDirty: snapshot.lastKnownDirty,
-      );
-      controller.addListener(editorState.controllerListener);
-      await controller.setLanguageForPath(snapshot.path);
-      await controller.setText(
-        snapshot.text,
-        markSaved: snapshot.text == snapshot.originalContent,
-      );
-      _editorsByPath[snapshot.path] = editorState;
-    }
   }
 }

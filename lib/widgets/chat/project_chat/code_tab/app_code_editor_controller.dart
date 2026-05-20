@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:flutter_monaco/flutter_monaco.dart' as monaco;
 
 import '../../../../providers/editor_preferences_provider.dart';
@@ -34,23 +33,20 @@ class AppCodeEditorStats {
     cursorColumn: 1,
     selectionLength: 0,
     selectedLineCount: 0,
-    canFold: false,
+    canFold: true,
   );
 }
 
 class AppCodeEditorController extends ChangeNotifier {
   AppCodeEditorController._({
-    required this.engine,
     required this.filePath,
     required int tabSize,
     required bool wrapEnabled,
   }) : _tabSize = tabSize,
        _wrapEnabled = wrapEnabled;
 
-  final EditorEngine engine;
   final String filePath;
 
-  CodeController? _flutterController;
   monaco.MonacoController? _monacoController;
   monaco.EditorOptions? _monacoOptions;
 
@@ -59,27 +55,21 @@ class AppCodeEditorController extends ChangeNotifier {
   bool _hasUnsavedChanges = false;
   bool _hasFoldedSections = false;
   bool _ready = false;
-  bool _disposed = false;
-  bool _suppressFlutterListener = false;
-  bool _suppressMonacoDirty = false;
   int _tabSize;
   bool _wrapEnabled;
   AppCodeEditorStats _stats = AppCodeEditorStats.empty;
   String? _lastMonacoPresentationKey;
 
-  VoidCallback? _flutterListener;
   StreamSubscription<bool>? _monacoContentSub;
   StreamSubscription<monaco.Range?>? _monacoSelectionSub;
   VoidCallback? _monacoStatsListener;
 
   static Future<AppCodeEditorController> create({
-    required EditorEngine engine,
     required String filePath,
     required int tabSize,
     required bool wrapEnabled,
   }) async {
     final controller = AppCodeEditorController._(
-      engine: engine,
       filePath: filePath,
       tabSize: tabSize,
       wrapEnabled: wrapEnabled,
@@ -89,39 +79,22 @@ class AppCodeEditorController extends ChangeNotifier {
   }
 
   bool get isReady => _ready;
-  bool get isFlutterCodeEditor => engine == EditorEngine.flutterCodeEditor;
-  bool get isMonaco => engine == EditorEngine.flutterMonaco;
+  bool get isMonaco => true;
   bool get hasUnsavedChanges => _hasUnsavedChanges;
   int get tabSize => _tabSize;
   bool get wrapEnabled => _wrapEnabled;
-  bool get hasFoldedSections => isFlutterCodeEditor
-      ? (_flutterController?.code.foldedBlocks.isNotEmpty ?? false)
-      : _hasFoldedSections;
+  bool get hasFoldedSections => _hasFoldedSections;
   String get cachedText => _text;
   AppCodeEditorStats get stats => _stats;
-  CodeController? get flutterController => _flutterController;
   monaco.MonacoController? get monacoController => _monacoController;
   monaco.EditorOptions? get monacoOptions => _monacoOptions;
 
   bool get supportsSearch => true;
-  bool get supportsFoldAll => isMonaco || _stats.canFold;
-  bool get supportsFoldImports => isFlutterCodeEditor && _stats.canFold;
-  bool get supportsFoldHeader => isFlutterCodeEditor && _stats.canFold;
+  bool get supportsFoldAll => true;
+  bool get supportsFoldImports => false;
+  bool get supportsFoldHeader => false;
 
   Future<void> _initialize() async {
-    if (isFlutterCodeEditor) {
-      final controller = CodeController(
-        language: languageModeForPath(filePath),
-        params: EditorParams(tabSpaces: _tabSize),
-      );
-      _flutterController = controller;
-      _flutterListener = _handleFlutterControllerChanged;
-      controller.addListener(_flutterListener!);
-      _refreshFlutterState();
-      _ready = true;
-      return;
-    }
-
     final language = monacoLanguageForPath(filePath);
     final options = monaco.EditorOptions(
       language: language,
@@ -149,9 +122,7 @@ class AppCodeEditorController extends ChangeNotifier {
     _monacoController = controller;
     _monacoContentSub = controller.onContentChanged.listen((_) {
       _textStale = true;
-      if (!_suppressMonacoDirty) {
-        _hasUnsavedChanges = true;
-      }
+      _hasUnsavedChanges = true;
       notifyListeners();
     });
     _monacoSelectionSub = controller.onSelectionChanged.listen((_) {
@@ -168,11 +139,6 @@ class AppCodeEditorController extends ChangeNotifier {
   }
 
   Future<void> setLanguageForPath(String path) async {
-    if (isFlutterCodeEditor) {
-      _flutterController?.language = languageModeForPath(path);
-      return;
-    }
-
     final monacoController = _monacoController;
     if (monacoController == null) return;
     final nextLanguage = monacoLanguageForPath(path);
@@ -186,49 +152,25 @@ class AppCodeEditorController extends ChangeNotifier {
     _hasUnsavedChanges = !markSaved;
     _hasFoldedSections = false;
 
-    if (isFlutterCodeEditor) {
-      final controller = _flutterController;
-      if (controller == null) return;
-      _suppressFlutterListener = true;
-      controller.fullText = text;
-      _refreshFlutterState();
-      _suppressFlutterListener = false;
-      notifyListeners();
-      return;
-    }
-
     final monacoController = _monacoController;
     if (monacoController == null) return;
-    _suppressMonacoDirty = true;
-    try {
-      await monacoController.setValue(text);
-      if (markSaved) {
-        await monacoController.markSaved();
-        _hasUnsavedChanges = false;
-      }
-      _applyMonacoStats(monacoController.getStatistics());
-    } finally {
-      _suppressMonacoDirty = false;
+    await monacoController.setValue(text);
+    if (markSaved) {
+      await monacoController.markSaved();
+      _hasUnsavedChanges = false;
     }
+    _applyMonacoStats(monacoController.getStatistics());
     notifyListeners();
   }
 
   Future<void> markSaved() async {
     _hasUnsavedChanges = false;
     _textStale = false;
-    if (isMonaco) {
-      await _monacoController?.markSaved();
-    }
+    await _monacoController?.markSaved();
     notifyListeners();
   }
 
   Future<String> readText({bool refresh = false}) async {
-    if (isFlutterCodeEditor) {
-      final text = _flutterController?.fullText ?? _text;
-      _text = text;
-      return text;
-    }
-
     final monacoController = _monacoController;
     if (monacoController == null) {
       return _text;
@@ -245,11 +187,6 @@ class AppCodeEditorController extends ChangeNotifier {
     final normalized = value.clamp(1, 8);
     _tabSize = normalized;
 
-    if (isFlutterCodeEditor) {
-      _flutterController?.setTabSpaces(normalized);
-      return;
-    }
-
     final current = _monacoOptions;
     final monacoController = _monacoController;
     if (current == null || monacoController == null) return;
@@ -259,10 +196,6 @@ class AppCodeEditorController extends ChangeNotifier {
 
   Future<void> setWrapEnabled(bool enabled) async {
     _wrapEnabled = enabled;
-    if (!isMonaco) {
-      notifyListeners();
-      return;
-    }
 
     final current = _monacoOptions;
     final monacoController = _monacoController;
@@ -278,7 +211,6 @@ class AppCodeEditorController extends ChangeNotifier {
     required bool prefersDark,
     required bool readOnly,
   }) async {
-    if (!isMonaco) return;
     final monacoController = _monacoController;
     final current = _monacoOptions;
     if (monacoController == null || current == null) return;
@@ -286,6 +218,7 @@ class AppCodeEditorController extends ChangeNotifier {
     final themeId = 'd1vai-${preset.id}';
     final rulers = preferences.showRulers ? const [80, 120] : const <int>[];
     final nextOptions = current.copyWith(
+      language: monacoLanguageForPath(filePath),
       fontSize: preferences.fontSize,
       fontFamily: 'Menlo, Monaco, Consolas, "Courier New", monospace',
       lineHeight: 1.3,
@@ -293,7 +226,6 @@ class AppCodeEditorController extends ChangeNotifier {
       rulers: rulers,
       tabSize: preferences.tabSize,
       readOnly: readOnly,
-      language: monacoLanguageForPath(filePath),
       theme: prefersDark ? monaco.MonacoTheme.vsDark : monaco.MonacoTheme.vs,
     );
     final presentationKey = [
@@ -327,20 +259,10 @@ class AppCodeEditorController extends ChangeNotifier {
   }
 
   void showSearch() {
-    if (isFlutterCodeEditor) {
-      _flutterController?.showSearch();
-      return;
-    }
     unawaited(_monacoController?.find() ?? Future<void>.value());
   }
 
   void foldAll() {
-    if (isFlutterCodeEditor) {
-      _flutterController?.foldAll();
-      _refreshFlutterState();
-      notifyListeners();
-      return;
-    }
     _hasFoldedSections = true;
     notifyListeners();
     unawaited(
@@ -350,12 +272,6 @@ class AppCodeEditorController extends ChangeNotifier {
   }
 
   void unfoldAll() {
-    if (isFlutterCodeEditor) {
-      _flutterController?.unfoldAll();
-      _refreshFlutterState();
-      notifyListeners();
-      return;
-    }
     _hasFoldedSections = false;
     notifyListeners();
     unawaited(
@@ -364,65 +280,9 @@ class AppCodeEditorController extends ChangeNotifier {
     );
   }
 
-  void foldImports() {
-    _flutterController?.foldImports();
-  }
+  void foldImports() {}
 
-  void foldHeader() {
-    _flutterController?.foldCommentAtLineZero();
-  }
-
-  void _handleFlutterControllerChanged() {
-    if (_disposed) return;
-    _refreshFlutterState();
-    if (_suppressFlutterListener) {
-      return;
-    }
-    _hasUnsavedChanges = true;
-    notifyListeners();
-  }
-
-  void _refreshFlutterState() {
-    final controller = _flutterController;
-    if (controller == null) return;
-
-    final text = controller.fullText;
-    _text = text;
-    final lineCount = '\n'.allMatches(text).length + 1;
-    final charCount = text.characters.length;
-    final selection = controller.selection;
-    final visibleOffset = selection.isValid && selection.extentOffset >= 0
-        ? selection.extentOffset.clamp(0, controller.text.length)
-        : 0;
-    final fullOffset = controller.code.hiddenRanges.recoverPosition(
-      visibleOffset,
-      placeHiddenRanges: TextAffinity.downstream,
-    );
-    final lines = controller.code.lines.lines;
-    final lineIndex = lines.isEmpty
-        ? 0
-        : controller.code.lines.characterIndexToLineIndex(fullOffset);
-    final lineStart = lines.isEmpty ? 0 : lines[lineIndex].textRange.start;
-    final column = (fullOffset - lineStart) + 1;
-    final selectionLength = selection.isValid && !selection.isCollapsed
-        ? (selection.end - selection.start).abs()
-        : 0;
-    final selectedLineRange = selectionLength > 0
-        ? controller.getSelectedLineRange()
-        : null;
-    final selectedLineCount = selectedLineRange == null
-        ? 0
-        : selectedLineRange.end - selectedLineRange.start;
-    _stats = AppCodeEditorStats(
-      lineCount: lineCount,
-      charCount: charCount,
-      cursorLine: lineIndex + 1,
-      cursorColumn: column,
-      selectionLength: selectionLength,
-      selectedLineCount: selectedLineCount,
-      canFold: controller.code.foldableBlocks.isNotEmpty,
-    );
-  }
+  void foldHeader() {}
 
   void _applyMonacoStats(monaco.LiveStats stats) {
     final cursorParts = stats.cursorPosition?.label.split(':');
@@ -445,19 +305,12 @@ class AppCodeEditorController extends ChangeNotifier {
 
   @override
   void dispose() {
-    if (_disposed) return;
-    _disposed = true;
     _monacoContentSub?.cancel();
     _monacoSelectionSub?.cancel();
     final monacoStatsListener = _monacoStatsListener;
     if (monacoStatsListener != null) {
       _monacoController?.liveStats.removeListener(monacoStatsListener);
     }
-    final flutterListener = _flutterListener;
-    if (flutterListener != null) {
-      _flutterController?.removeListener(flutterListener);
-    }
-    _flutterController?.dispose();
     _monacoController?.dispose();
     super.dispose();
   }
@@ -571,32 +424,21 @@ Map<String, dynamic> buildMonacoThemeDataForPreset(
   addRule('function', ['entity.name.function']);
   addRule('params', ['variable.parameter']);
   addRule('meta', ['meta']);
-  addRule('subst', ['variable']);
-  addRule('regexp', ['regexp']);
-  addRule('symbol', ['constant']);
-  addRule('variable', ['variable']);
-  addRule('template-tag', ['metatag']);
-  addRule('template-variable', ['variable']);
   addRule('attr', ['attribute.name']);
   addRule('attribute', ['attribute.name']);
-  addRule('selector-tag', ['tag']);
-  addRule('selector-class', ['tag.class']);
-  addRule('selector-id', ['tag.id']);
-  addRule('tag', ['tag']);
+  addRule('variable', ['variable']);
+  addRule('template-variable', ['variable']);
+  addRule('symbol', ['constant.other.symbol']);
+  addRule('bullet', ['markup.list']);
   addRule('link', ['string.link']);
-  addRule('bullet', ['list']);
-  addRule('code', ['string']);
+  addRule('tag', ['tag']);
+  addRule('name', ['identifier']);
 
   return {'base': baseTheme, 'inherit': true, 'rules': rules, 'colors': colors};
 }
 
 String _hex(Color color, {bool includeHash = true}) {
-  final red = (color.r * 255.0).round().clamp(0, 255);
-  final green = (color.g * 255.0).round().clamp(0, 255);
-  final blue = (color.b * 255.0).round().clamp(0, 255);
-  final rgb =
-      '${red.toRadixString(16).padLeft(2, '0')}'
-      '${green.toRadixString(16).padLeft(2, '0')}'
-      '${blue.toRadixString(16).padLeft(2, '0')}';
-  return includeHash ? '#$rgb' : rgb;
+  final value = color.toARGB32() & 0x00FFFFFF;
+  final hex = value.toRadixString(16).padLeft(6, '0').toUpperCase();
+  return includeHash ? '#$hex' : hex;
 }
