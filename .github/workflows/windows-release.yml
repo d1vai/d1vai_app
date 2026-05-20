@@ -1,0 +1,117 @@
+name: Build Windows Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: windows-release-main
+  cancel-in-progress: true
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    env:
+      AMPLITUDE_API_KEY: ${{ secrets.AMPLITUDE_API_KEY }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Resolve release metadata
+        id: meta
+        shell: bash
+        run: |
+          raw_version="$(awk '/^version:/ { print $2; exit }' pubspec.yaml)"
+          version_name="${raw_version%%+*}"
+          build_number="${GITHUB_RUN_NUMBER}"
+          short_sha="${GITHUB_SHA::7}"
+          artifact_name="d1v-windows-${version_name}+${build_number}-${short_sha}.zip"
+          release_tag="windows-main-v${version_name}-build.${build_number}"
+          release_name="Windows ZIP ${version_name} (build ${build_number})"
+
+          {
+            echo "version_name=${version_name}"
+            echo "build_number=${build_number}"
+            echo "short_sha=${short_sha}"
+            echo "artifact_name=${artifact_name}"
+            echo "release_tag=${release_tag}"
+            echo "release_name=${release_name}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze project
+        shell: bash
+        run: flutter analyze --no-fatal-infos lib test tool
+
+      - name: Build Windows app
+        shell: bash
+        run: >
+          flutter build windows --release
+          --build-name="${{ steps.meta.outputs.version_name }}"
+          --build-number="${{ steps.meta.outputs.build_number }}"
+          --dart-define=AMPLITUDE_API_KEY="${AMPLITUDE_API_KEY}"
+
+      - name: Package Windows ZIP
+        shell: pwsh
+        run: |
+          $source = "build/windows/x64/runner/Release"
+          $target = "build/windows/${{ steps.meta.outputs.artifact_name }}"
+
+          if (-not (Test-Path $source)) {
+            Write-Error "Expected Windows build output not found at $source"
+            exit 1
+          }
+
+          if (Test-Path $target) {
+            Remove-Item $target -Force
+          }
+
+          Compress-Archive -Path "$source/*" -DestinationPath $target -Force
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.artifact_name }}
+          path: build/windows/${{ steps.meta.outputs.artifact_name }}
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.release_tag }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ steps.meta.outputs.release_name }}
+          prerelease: true
+          fail_on_unmatched_files: true
+          body: |
+            Direct Windows desktop release built from `main`.
+
+            ## Release snapshot
+            - Version: `${{ steps.meta.outputs.version_name }}`
+            - Build: `${{ steps.meta.outputs.build_number }}`
+            - Commit: `${{ github.sha }}`
+            - ZIP: `${{ steps.meta.outputs.artifact_name }}`
+
+            ## Install
+            1. Download the ZIP asset from this release.
+            2. Extract the archive.
+            3. Launch `d1v.exe` from the extracted folder.
+          files: build/windows/${{ steps.meta.outputs.artifact_name }}
