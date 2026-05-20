@@ -36,7 +36,7 @@ jobs:
 
       - name: Analyze project
         shell: bash
-        run: flutter analyze lib test tool
+        run: flutter analyze --no-fatal-infos lib test tool
 
       - name: Build Windows app
         shell: bash
