@@ -35,7 +35,8 @@ jobs:
         run: flutter pub get
 
       - name: Analyze project
-        run: flutter analyze
+        shell: bash
+        run: flutter analyze lib test tool
 
       - name: Build Windows app
         shell: bash

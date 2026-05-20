@@ -179,7 +179,19 @@ jobs:
         shell: bash
         run: |
           app_path="build/macos/Build/Products/Release/${{ steps.meta.outputs.app_name }}"
-          xcrun stapler staple "${app_path}"
+          for attempt in 1 2 3 4 5 6; do
+            if xcrun stapler staple "${app_path}"; then
+              exit 0
+            fi
+
+            if [ "${attempt}" -eq 6 ]; then
+              echo "Stapling app bundle failed after ${attempt} attempts." >&2
+              exit 1
+            fi
+
+            echo "Stapling app bundle not ready yet. Retrying in 20 seconds..."
+            sleep 20
+          done
 
       - name: Package DMG
         shell: bash
@@ -218,7 +230,19 @@ jobs:
         shell: bash
         run: |
           dmg_path="build/macos/${{ steps.meta.outputs.dmg_name }}"
-          xcrun stapler staple "${dmg_path}"
+          for attempt in 1 2 3 4 5 6; do
+            if xcrun stapler staple "${dmg_path}"; then
+              exit 0
+            fi
+
+            if [ "${attempt}" -eq 6 ]; then
+              echo "Stapling DMG failed after ${attempt} attempts." >&2
+              exit 1
+            fi
+
+            echo "Stapling DMG not ready yet. Retrying in 20 seconds..."
+            sleep 20
+          done
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
