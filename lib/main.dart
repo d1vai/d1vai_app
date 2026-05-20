@@ -19,6 +19,7 @@ import 'l10n/app_localizations.dart';
 import 'core/theme/app_theme.dart';
 import 'core/auth_expiry_bus.dart';
 import 'services/apple_iap_service.dart';
+import 'services/app_analytics_service.dart';
 import 'services/macos_folder_import_service.dart';
 import 'services/macos_open_service.dart';
 import 'services/stripe_payment_service.dart';
@@ -39,6 +40,8 @@ Future<void> main() async {
     debugPrint('ApiClient initialization failed: $e');
     debugPrintStack(stackTrace: st);
   }
+
+  await AppAnalyticsService.instance.initialize();
 
   runApp(
     MultiProvider(

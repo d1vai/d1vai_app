@@ -79,6 +79,7 @@ rm -rf ios/Pods ios/.symlinks ios/Runner.xcworkspace ios/Podfile.lock
 flutter pub get
 
 append_dart_define "STRIPE_PUBLISHABLE_KEY" "${STRIPE_PUBLISHABLE_KEY:-}"
+append_dart_define "AMPLITUDE_API_KEY" "${AMPLITUDE_API_KEY:-}"
 append_dart_define "STRIPE_MERCHANT_IDENTIFIER" "${STRIPE_MERCHANT_IDENTIFIER:-}"
 append_dart_define "STRIPE_MERCHANT_DISPLAY_NAME" "${STRIPE_MERCHANT_DISPLAY_NAME:-}"
 append_dart_define "STRIPE_MERCHANT_COUNTRY_CODE" "${STRIPE_MERCHANT_COUNTRY_CODE:-}"

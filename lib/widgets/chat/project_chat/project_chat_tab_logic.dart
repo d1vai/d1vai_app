@@ -523,6 +523,10 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     super.initState();
     _previewUrl = widget.previewUrl;
     _currentChatTabIndex = _chatSubTabIndexFromName(widget.initialSubTab);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _trackPreviewOpenedIfNeeded();
+    });
     _loadChatDraft();
     unawaited(_loadDesktopChatPaneWidth());
     unawaited(_bootstrapWorkspace());
@@ -540,6 +544,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _previewUrl = nextUrl.trim();
         _previewKey += 1;
       });
+      _trackPreviewOpenedIfNeeded();
     }
     if (oldWidget.projectId != widget.projectId) {
       _deployAutoClearTimer?.cancel();
@@ -573,6 +578,10 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       unawaited(_loadDesktopChatPaneWidth());
       unawaited(_bootstrapWorkspace());
       unawaited(_initializeChat());
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _trackPreviewOpenedIfNeeded();
+      });
     } else if (oldWidget.initialSubTab != widget.initialSubTab) {
       final nextIndex = _chatSubTabIndexFromName(widget.initialSubTab);
       if (nextIndex != _currentChatTabIndex) {

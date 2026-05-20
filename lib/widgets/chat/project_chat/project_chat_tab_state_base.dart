@@ -119,6 +119,7 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   // Preview runtime
   String? _previewUrl;
   int _previewKey = 0;
+  String? _lastTrackedPreviewKey;
 
   // Deployment runtime (for preview redeploy + WS deployment frames)
   bool _isDeploying = false;
@@ -135,7 +136,22 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   /// 允许其他 Tab 触发首条消息并自动切换到 Preview 子标签
   void sendInitialPrompt(String text) {
     _currentChatTabIndex = 0;
+    _trackPreviewOpenedIfNeeded();
     _sendFirstMessage(text);
+  }
+
+  void _trackPreviewOpenedIfNeeded() {
+    final preview = (_previewUrl ?? '').trim();
+    if (_currentChatTabIndex != 0 || preview.isEmpty) return;
+    final key = '${widget.projectId}:$preview';
+    if (_lastTrackedPreviewKey == key) return;
+    _lastTrackedPreviewKey = key;
+    unawaited(
+      AppAnalyticsService.instance.trackPreviewOpened(
+        projectId: widget.projectId,
+        previewUrl: preview,
+      ),
+    );
   }
 
   String get _desktopChatPaneWidthKey =>

@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+      AMPLITUDE_API_KEY: ${{ secrets.AMPLITUDE_API_KEY }}
 
     steps:
       - name: Checkout repository
@@ -120,6 +121,7 @@ jobs:
           --build-name="${{ steps.meta.outputs.version_name }}"
           --build-number="${{ steps.meta.outputs.build_number }}"
           --dart-define=STRIPE_PUBLISHABLE_KEY="${STRIPE_PUBLISHABLE_KEY}"
+          --dart-define=AMPLITUDE_API_KEY="${AMPLITUDE_API_KEY}"
 
       - name: Rename APK asset
         run: >

@@ -684,6 +684,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
                 setState(() {
                   _currentChatTabIndex = index;
                 });
+                _trackPreviewOpenedIfNeeded();
               },
               onRefreshPreview: _handleRefreshPreview,
               onOpenInNewTab: _handleOpenInNewTab,
@@ -748,6 +749,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
                       setState(() {
                         _currentChatTabIndex = index;
                       });
+                      _trackPreviewOpenedIfNeeded();
                     },
                     onRefreshPreview: _handleRefreshPreview,
                     onOpenInNewTab: _handleOpenInNewTab,
@@ -922,6 +924,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
       _previewKey += 1;
       _currentChatTabIndex = 0;
     });
+    _trackPreviewOpenedIfNeeded();
   }
 
   void _handleOpenInNewTab() {

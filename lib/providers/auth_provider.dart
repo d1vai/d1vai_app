@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
@@ -8,6 +9,7 @@ import '../core/api_client.dart';
 import '../core/avatar_generator.dart';
 import '../models/user.dart';
 import '../models/onboarding.dart';
+import '../services/app_analytics_service.dart';
 import '../services/d1vai_service.dart';
 import '../services/oauth_callback_service.dart';
 import '../services/storage_service.dart';
@@ -61,6 +63,7 @@ class AuthProvider extends ChangeNotifier {
         final fetchedUser = await _d1vaiService.getUserProfile();
         _user = fetchedUser.copyWith(bearerToken: token);
         await _storageService.saveAuthUser(_user!);
+        unawaited(AppAnalyticsService.instance.syncUser(_user));
       } on AuthExpiredException {
         await logout();
         return;
@@ -72,12 +75,14 @@ class AuthProvider extends ChangeNotifier {
         final cachedUser = _storageService.getAuthUser();
         if (cachedUser != null) {
           _user = cachedUser.copyWith(bearerToken: token);
+          unawaited(AppAnalyticsService.instance.syncUser(_user));
         }
         debugPrint('Auth restore fallback after API error: $e');
       } catch (e) {
         final cachedUser = _storageService.getAuthUser();
         if (cachedUser != null) {
           _user = cachedUser.copyWith(bearerToken: token);
+          unawaited(AppAnalyticsService.instance.syncUser(_user));
         }
         debugPrint('Auth restore fallback after transient error: $e');
       }
@@ -103,6 +108,7 @@ class AuthProvider extends ChangeNotifier {
       }
 
       await _completeLogin(token);
+      unawaited(AppAnalyticsService.instance.trackLogin('email'));
 
       // 只需调用一次 notifyListeners
       notifyListeners();
@@ -121,6 +127,7 @@ class AuthProvider extends ChangeNotifier {
       }
 
       await _completeLogin(token);
+      unawaited(AppAnalyticsService.instance.trackLogin('email_code'));
 
       // 只需调用一次 notifyListeners
       notifyListeners();
@@ -147,6 +154,7 @@ class AuthProvider extends ChangeNotifier {
       }
 
       await _completeLogin(token);
+      unawaited(AppAnalyticsService.instance.trackLogin('solana'));
       notifyListeners();
     } catch (e) {
       rethrow;
@@ -171,6 +179,7 @@ class AuthProvider extends ChangeNotifier {
       }
 
       await _completeLogin(token);
+      unawaited(AppAnalyticsService.instance.trackLogin('sui'));
       notifyListeners();
     } catch (e) {
       rethrow;
@@ -205,6 +214,7 @@ class AuthProvider extends ChangeNotifier {
       }
 
       await _completeLogin(token);
+      unawaited(AppAnalyticsService.instance.trackLogin('apple'));
       notifyListeners();
     } catch (e) {
       rethrow;
@@ -265,6 +275,7 @@ class AuthProvider extends ChangeNotifier {
       }
 
       await _completeLogin(token);
+      unawaited(AppAnalyticsService.instance.trackLogin(provider));
       notifyListeners();
     } catch (e) {
       rethrow;
@@ -285,6 +296,7 @@ class AuthProvider extends ChangeNotifier {
 
     _user = await _d1vaiService.getUserProfile();
     _user = _user?.copyWith(bearerToken: token);
+    unawaited(AppAnalyticsService.instance.syncUser(_user));
     await _applyDefaultInvitationIfNeeded(token);
     if (_user != null) {
       await _storageService.saveAuthUser(_user!);
@@ -553,6 +565,7 @@ class AuthProvider extends ChangeNotifier {
   /// 登出
   Future<void> logout() async {
     try {
+      final lastLoginType = _user?.lastLoginType;
       // Make logout effective immediately for routing.
       _user = null;
       _onboardingData = null;
@@ -570,6 +583,10 @@ class AuthProvider extends ChangeNotifier {
 
       // 清除头像生成器缓存
       _avatarGenerator.clearCache();
+      unawaited(
+        AppAnalyticsService.instance.trackLogout(lastLoginType: lastLoginType),
+      );
+      unawaited(AppAnalyticsService.instance.syncUser(null));
 
       // 重置状态
       _user = null;
@@ -585,6 +602,7 @@ class AuthProvider extends ChangeNotifier {
       _onboardingData = null;
       _hasPersistedAuth = false;
       _isLoading = false;
+      unawaited(AppAnalyticsService.instance.syncUser(null));
       notifyListeners();
       rethrow;
     }

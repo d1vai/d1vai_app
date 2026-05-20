@@ -9,8 +9,12 @@ import '../models/project.dart';
 import '../providers/auth_provider.dart';
 import '../providers/macos_menu_controller.dart';
 import '../providers/project_provider.dart';
+import '../providers/theme_provider.dart';
+import '../services/app_analytics_service.dart';
 import '../services/d1vai_service.dart';
 import '../utils/error_utils.dart';
+import '../widgets/adaptive_modal.dart';
+import '../widgets/avatar_image.dart';
 import '../widgets/login_required_dialog.dart';
 import '../widgets/project_analytics/project_analytics_tab.dart';
 import '../widgets/project_api/project_api_tab.dart';
@@ -19,9 +23,12 @@ import '../widgets/project_database/project_database_tab.dart';
 import '../widgets/project_deploy/project_deploy_tab.dart';
 import '../widgets/project_overview/project_overview_tab.dart';
 import '../widgets/project_payment/project_payment_tab.dart';
+import 'settings/profile_tab.dart';
+import '../widgets/editor_preferences_dialog.dart';
 import '../widgets/d1v_tab_bar_view.dart';
 import '../widgets/share_sheet.dart';
 import '../widgets/snackbar_helper.dart';
+import '../core/theme/app_colors.dart';
 import '../theme/d1v_theme_colors.dart';
 import '../core/auth_expiry_bus.dart';
 import '../l10n/app_localizations.dart';
@@ -62,6 +69,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   UserProject? _project;
   bool _isLoading = true;
   String? _error;
+  bool _showProfileSidebar = false;
+  String? _lastTrackedProjectId;
 
   final List<_TabItem> _tabs = const [
     _TabItem('project_detail_tab_chat', 'Chat', Icons.chat),
@@ -191,6 +200,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           _project = project;
           _isLoading = false;
         });
+        _trackProjectOpened(project);
         unawaited(_macosMenuController.registerProjectVisit(project));
       }
 
@@ -205,6 +215,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           _project = fresh;
           _isLoading = false;
         });
+        _trackProjectOpened(fresh);
         unawaited(_macosMenuController.registerProjectVisit(fresh));
       }
     } catch (e) {
@@ -218,6 +229,12 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         _isLoading = false;
       });
     }
+  }
+
+  void _trackProjectOpened(UserProject project) {
+    if (_lastTrackedProjectId == project.id) return;
+    _lastTrackedProjectId = project.id;
+    unawaited(AppAnalyticsService.instance.trackProjectOpened(project));
   }
 
   void _showLoginRequiredDialog() {
@@ -397,10 +414,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
 
     return Scaffold(
       appBar: null,
-      body: Column(
+      body: Stack(
         children: [
-          _buildMacosProjectTitleBar(context, project),
-          Expanded(child: body),
+          Column(
+            children: [
+              _buildMacosProjectTitleBar(context, project),
+              Expanded(child: body),
+            ],
+          ),
+          if (_showProfileSidebar) _buildProfileSidebarOverlay(context),
         ],
       ),
     );
@@ -608,14 +630,19 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                   const SizedBox(width: 8),
                   IconButton(
                     tooltip: _t('project_detail_share_title', 'Share'),
-                    icon: const Icon(Icons.share, size: 18),
+                    icon: const Icon(Icons.share, size: 16),
                     constraints: const BoxConstraints.tightFor(
-                      width: 32,
-                      height: 32,
+                      width: 28,
+                      height: 28,
                     ),
                     padding: EdgeInsets.zero,
-                    splashRadius: 16,
+                    splashRadius: 14,
                     onPressed: project == null ? null : _shareProject,
+                  ),
+                  const SizedBox(width: 6),
+                  _MacosProfileButton(
+                    onPressed: _toggleProfileSidebar,
+                    active: _showProfileSidebar,
                   ),
                   const SizedBox(width: 6),
                   _MacosWindowDragArea(
@@ -637,6 +664,481 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
       await _windowChannel.invokeMethod<void>('beginWindowDrag');
     } catch (_) {}
   }
+
+  void _toggleProfileSidebar() {
+    setState(() {
+      _showProfileSidebar = !_showProfileSidebar;
+    });
+  }
+
+  void _closeProfileSidebar() {
+    if (!_showProfileSidebar) return;
+    setState(() {
+      _showProfileSidebar = false;
+    });
+  }
+
+  Widget _buildProfileSidebarOverlay(BuildContext context) {
+    return Positioned.fill(
+      child: Stack(
+        children: [
+          Positioned.fill(
+            top: _macosTitleBarHeight,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _closeProfileSidebar,
+              child: Container(color: Colors.black.withValues(alpha: 0.16)),
+            ),
+          ),
+          Positioned(
+            top: _macosTitleBarHeight,
+            bottom: 0,
+            left: 0,
+            width: 380,
+            child: Material(
+              elevation: 14,
+              color: Theme.of(context).colorScheme.surface,
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 12, 8),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _t('profile', 'Profile'),
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: _closeProfileSidebar,
+                            icon: const Icon(Icons.close, size: 18),
+                            tooltip: _t('close', 'Close'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Divider(
+                      height: 1,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.outlineVariant.withValues(alpha: 0.5),
+                    ),
+                    Expanded(
+                      child: SettingsProfileTab(
+                        onShowThemeDialog: _showThemeDialog,
+                        onShowEditorPreferencesDialog:
+                            _showEditorPreferencesDialog,
+                        onShowBindEmailDialog: _showBindEmailDialog,
+                        onShowResetPasswordDialog: _showResetPasswordDialog,
+                        onShowAboutDialog: _showAboutDialog,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showThemeDialog() {
+    final loc = AppLocalizations.of(context);
+    showAdaptiveModal(
+      context: context,
+      builder: (context) {
+        return Consumer<ThemeProvider>(
+          builder: (context, themeProvider, child) {
+            return AdaptiveModalContainer(
+              maxWidth: 460,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AdaptiveModalHeader(
+                    title: loc?.translate('choose_theme') ?? 'Choose Theme',
+                    subtitle: 'Match your workspace mood and ambient contrast.',
+                    onClose: () => Navigator.of(context).pop(),
+                  ),
+                  _buildThemeOption(
+                    context,
+                    themeProvider,
+                    AppThemeMode.light,
+                    Icons.light_mode,
+                    loc?.translate('light_mode') ?? 'Light Mode',
+                  ),
+                  _buildThemeOption(
+                    context,
+                    themeProvider,
+                    AppThemeMode.dark,
+                    Icons.dark_mode,
+                    loc?.translate('dark_mode') ?? 'Dark Mode',
+                  ),
+                  _buildThemeOption(
+                    context,
+                    themeProvider,
+                    AppThemeMode.system,
+                    Icons.brightness_auto,
+                    loc?.translate('system_mode') ?? 'System',
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildThemeOption(
+    BuildContext context,
+    ThemeProvider themeProvider,
+    AppThemeMode mode,
+    IconData icon,
+    String title,
+  ) {
+    final isSelected = themeProvider.themeMode == mode;
+
+    return ListTile(
+      leading: Icon(icon, color: isSelected ? AppColors.primaryBrand : null),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          color: isSelected ? AppColors.primaryBrand : null,
+        ),
+      ),
+      trailing: Radio<AppThemeMode>(
+        groupValue: themeProvider.themeMode,
+        onChanged: (AppThemeMode? newMode) {
+          if (newMode != null) {
+            Navigator.pop(context);
+            themeProvider.setThemeMode(newMode);
+            SnackBarHelper.showSuccess(
+              context,
+              title: 'Theme Updated',
+              message: 'Switched to $title',
+            );
+          }
+        },
+        value: mode,
+      ),
+      onTap: () {
+        final loc = AppLocalizations.of(context);
+        Navigator.pop(context);
+        themeProvider.setThemeMode(mode);
+        SnackBarHelper.showSuccess(
+          context,
+          title: loc?.translate('theme_updated') ?? 'Theme Updated',
+          message:
+              '${loc?.translate('theme_switched') ?? 'Switched to'} $title',
+        );
+      },
+    );
+  }
+
+  void _showAboutDialog() {
+    showAboutDialog(
+      context: context,
+      applicationName: 'd1v.ai',
+      applicationVersion: '1.0.0',
+      applicationIcon: const Icon(Icons.apps, size: 48),
+      children: [
+        Text(
+          AppLocalizations.of(context)?.translate('about_description') ??
+              'An AI-powered app development platform.',
+        ),
+      ],
+    );
+  }
+
+  void _showEditorPreferencesDialog() {
+    showAdaptiveModal(
+      context: context,
+      builder: (_) => const EditorPreferencesDialogBody(),
+    );
+  }
+
+  void _showBindEmailDialog() {
+    final emailController = TextEditingController();
+    final codeController = TextEditingController();
+    int step = 1;
+    final d1vaiService = D1vaiService();
+    final loc = AppLocalizations.of(context);
+
+    showAdaptiveModal(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AdaptiveModalContainer(
+          maxWidth: 520,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AdaptiveModalHeader(
+                  title: loc?.translate('bind_email') ?? 'Bind Email',
+                  subtitle: step == 1
+                      ? (loc?.translate('enter_email_for_code') ??
+                            'Enter your email address to receive a verification code')
+                      : (loc?.translate('enter_code_sent') ??
+                            'Enter the 6-digit verification code sent to your email'),
+                  onClose: () => Navigator.pop(context),
+                ),
+                if (step == 1)
+                  TextField(
+                    controller: emailController,
+                    decoration: InputDecoration(
+                      labelText: loc?.translate('email') ?? 'Email',
+                      hintText: 'your@email.com',
+                      border: const OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                  )
+                else
+                  TextField(
+                    controller: codeController,
+                    decoration: InputDecoration(
+                      labelText:
+                          loc?.translate('verify_code') ?? 'Verification Code',
+                      hintText: '123456',
+                      border: const OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
+                    maxLength: 6,
+                  ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(loc?.translate('cancel') ?? 'Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (step == 1) {
+                            final email = emailController.text.trim();
+                            if (email.isEmpty) {
+                              SnackBarHelper.showError(
+                                context,
+                                title: loc?.translate('error') ?? 'Error',
+                                message:
+                                    loc?.translate('email_required') ??
+                                    'Please enter an email address',
+                              );
+                              return;
+                            }
+                            try {
+                              await d1vaiService.postUserBindEmailSend(email);
+                              if (!context.mounted) return;
+                              SnackBarHelper.showSuccess(
+                                context,
+                                title: loc?.translate('success') ?? 'Success',
+                                message:
+                                    loc?.translate('code_sent_success') ??
+                                    'Verification code sent to your email',
+                              );
+                              setDialogState(() {
+                                step = 2;
+                              });
+                            } catch (error) {
+                              if (!context.mounted) return;
+                              SnackBarHelper.showError(
+                                context,
+                                title: loc?.translate('error') ?? 'Error',
+                                message:
+                                    '${loc?.translate('failed_to_send_code') ?? "Failed to send verification code"}: $error',
+                              );
+                            }
+                          } else {
+                            try {
+                              await d1vaiService.postUserBindEmailConfirm(
+                                emailController.text.trim(),
+                                codeController.text.trim(),
+                              );
+                              if (!context.mounted) return;
+                              SnackBarHelper.showSuccess(
+                                context,
+                                title: loc?.translate('success') ?? 'Success',
+                                message:
+                                    loc?.translate('email_bound_success') ??
+                                    'Email bound successfully',
+                              );
+                              Navigator.pop(context);
+                              await Provider.of<AuthProvider>(
+                                context,
+                                listen: false,
+                              ).refreshUser();
+                            } catch (error) {
+                              if (!context.mounted) return;
+                              SnackBarHelper.showError(
+                                context,
+                                title: loc?.translate('error') ?? 'Error',
+                                message:
+                                    '${loc?.translate('failed_to_verify') ?? "Failed to verify code"}: $error',
+                              );
+                            }
+                          }
+                        },
+                        child: Text(
+                          step == 1
+                              ? (loc?.translate('send_code') ?? 'Send Code')
+                              : (loc?.translate('confirm') ?? 'Verify'),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showResetPasswordDialog() {
+    final loc = AppLocalizations.of(context);
+    final emailController = TextEditingController();
+    final codeController = TextEditingController();
+    final passwordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    int step = 1;
+    final d1vaiService = D1vaiService();
+
+    showAdaptiveModal(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AdaptiveModalContainer(
+          maxWidth: 520,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AdaptiveModalHeader(
+                  title: loc?.translate('reset_password') ?? 'Reset Password',
+                  subtitle: step == 1
+                      ? (loc?.translate('enter_email_for_code') ??
+                            'Enter your email address to receive a verification code')
+                      : (loc?.translate('enter_code_and_new_password') ??
+                            'Enter the verification code and your new password'),
+                  onClose: () => Navigator.pop(context),
+                ),
+                if (step == 1) ...[
+                  TextField(
+                    controller: emailController,
+                    decoration: InputDecoration(
+                      labelText: loc?.translate('email') ?? 'Email',
+                      hintText: 'your@email.com',
+                      border: const OutlineInputBorder(),
+                    ),
+                  ),
+                ] else ...[
+                  TextField(
+                    controller: codeController,
+                    decoration: InputDecoration(
+                      labelText:
+                          loc?.translate('verify_code') ?? 'Verification Code',
+                      border: const OutlineInputBorder(),
+                    ),
+                    maxLength: 6,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: passwordController,
+                    decoration: InputDecoration(
+                      labelText:
+                          loc?.translate('new_password') ?? 'New Password',
+                      border: const OutlineInputBorder(),
+                    ),
+                    obscureText: true,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: confirmPasswordController,
+                    decoration: InputDecoration(
+                      labelText:
+                          loc?.translate('confirm_password') ??
+                          'Confirm Password',
+                      border: const OutlineInputBorder(),
+                    ),
+                    obscureText: true,
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(loc?.translate('cancel') ?? 'Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          try {
+                            if (step == 1) {
+                              await d1vaiService.postUserPasswordForgotSend(
+                                emailController.text.trim(),
+                              );
+                              if (!context.mounted) return;
+                              setDialogState(() {
+                                step = 2;
+                              });
+                            } else {
+                              await d1vaiService.postUserPasswordReset(
+                                emailController.text.trim(),
+                                codeController.text.trim(),
+                                passwordController.text,
+                              );
+                              if (!context.mounted) return;
+                              SnackBarHelper.showSuccess(
+                                context,
+                                title: loc?.translate('success') ?? 'Success',
+                                message:
+                                    loc?.translate('password_reset_success') ??
+                                    'Password reset successfully',
+                              );
+                              Navigator.pop(context);
+                            }
+                          } catch (error) {
+                            if (!context.mounted) return;
+                            SnackBarHelper.showError(
+                              context,
+                              title: loc?.translate('error') ?? 'Error',
+                              message: '$error',
+                            );
+                          }
+                        },
+                        child: Text(
+                          step == 1
+                              ? (loc?.translate('send_code') ?? 'Send Code')
+                              : (loc?.translate('reset_password') ??
+                                    'Reset Password'),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 extension on _ProjectDetailScreenState {
@@ -647,6 +1149,61 @@ extension on _ProjectDetailScreenState {
     } else {
       router.go('/projects');
     }
+  }
+}
+
+class _MacosProfileButton extends StatelessWidget {
+  final VoidCallback onPressed;
+  final bool active;
+
+  const _MacosProfileButton({required this.onPressed, required this.active});
+
+  @override
+  Widget build(BuildContext context) {
+    final user = context.watch<AuthProvider>().user;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Tooltip(
+      message: AppLocalizations.of(context)?.translate('profile') ?? 'Profile',
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(999),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          width: 28,
+          height: 28,
+          padding: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            color: active
+                ? colorScheme.primary.withValues(alpha: 0.12)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: active
+                  ? colorScheme.primary.withValues(alpha: 0.24)
+                  : colorScheme.outlineVariant.withValues(alpha: 0.6),
+            ),
+          ),
+          child: user?.picture != null && user!.picture.isNotEmpty
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(999),
+                  child: AvatarImage(
+                    imageUrl: user.picture,
+                    size: 24,
+                    borderRadius: BorderRadius.circular(999),
+                    fit: BoxFit.cover,
+                  ),
+                )
+              : Icon(
+                  Icons.person_outline,
+                  size: 14,
+                  color: active
+                      ? colorScheme.primary
+                      : colorScheme.onSurfaceVariant,
+                ),
+        ),
+      ),
+    );
   }
 }
 

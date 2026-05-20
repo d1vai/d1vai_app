@@ -13,6 +13,8 @@ concurrency:
 jobs:
   build-windows:
     runs-on: windows-latest
+    env:
+      AMPLITUDE_API_KEY: ${{ secrets.AMPLITUDE_API_KEY }}
 
     steps:
       - name: Checkout repository
@@ -36,4 +38,5 @@ jobs:
         run: flutter analyze
 
       - name: Build Windows app
-        run: flutter build windows
+        shell: bash
+        run: flutter build windows --dart-define=AMPLITUDE_API_KEY="${AMPLITUDE_API_KEY}"

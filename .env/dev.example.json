@@ -1,0 +1,8 @@
+{
+  "AMPLITUDE_API_KEY": "741d0898108d36fcf39481cfa2253d33",
+  "STRIPE_PUBLISHABLE_KEY": "pk_live_replace_me",
+  "STRIPE_MERCHANT_IDENTIFIER": "merchant.ai.d1v.d1vaiapp",
+  "STRIPE_MERCHANT_DISPLAY_NAME": "d1v.ai",
+  "STRIPE_MERCHANT_COUNTRY_CODE": "US",
+  "STRIPE_RETURN_URL": "d1vai://stripe-redirect"
+}
