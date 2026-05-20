@@ -154,6 +154,18 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
     );
   }
 
+  void _trackTabSelection() {
+    final hasPreview = (_previewUrl ?? '').trim().isNotEmpty;
+    final tab = _currentChatTabIndex == 0 ? 'preview' : 'code';
+    unawaited(
+      AppAnalyticsService.instance.trackChatTabSwitched(
+        projectId: widget.projectId,
+        tab: tab,
+        hasPreview: hasPreview,
+      ),
+    );
+  }
+
   String get _desktopChatPaneWidthKey =>
       'project_chat_desktop_sidebar_width:${widget.projectId}';
 

@@ -1,6 +1,5 @@
 import 'package:amplitude_flutter/amplitude.dart';
 import 'package:amplitude_flutter/configuration.dart';
-import 'package:amplitude_flutter/default_tracking.dart';
 import 'package:amplitude_flutter/events/base_event.dart';
 import 'package:amplitude_flutter/events/identify.dart';
 import 'package:flutter/foundation.dart';
@@ -11,8 +10,19 @@ import '../models/user.dart';
 class AnalyticsEvents {
   static const String login = 'login';
   static const String logout = 'logout';
+  static const String createProject = 'create-project';
   static const String projectOpened = 'project-opened';
+  static const String chatOpened = 'chat-opened';
   static const String previewOpened = 'preview-opened';
+  static const String chatTabSwitched = 'chat-tab-switched';
+  static const String deployPreview = 'deploy-preview';
+  static const String deployProduction = 'deploy-production';
+  static const String envVarCreated = 'env-var-created';
+  static const String envVarUpdated = 'env-var-updated';
+  static const String envVarDeleted = 'env-var-deleted';
+  static const String envVarImported = 'env-var-imported';
+  static const String envVarExported = 'env-var-exported';
+  static const String envVarSynced = 'env-var-synced';
 }
 
 class AppAnalyticsService {
@@ -52,11 +62,6 @@ class AppAnalyticsService {
     final amplitude = Amplitude(
       Configuration(
         apiKey: _apiKey,
-        defaultTracking: const DefaultTrackingOptions(
-          sessions: true,
-          appLifecycles: true,
-          deepLinks: true,
-        ),
       ),
     );
 
@@ -135,6 +140,35 @@ class AppAnalyticsService {
     );
   }
 
+  Future<void> trackCreateProject(UserProject project) async {
+    await track(
+      AnalyticsEvents.createProject,
+      eventProperties: {
+        'project_id': project.id,
+        'project_name': project.projectName,
+        'has_preview': (project.preferredPreviewUrl ?? '').trim().isNotEmpty,
+        'has_database': project.hasDatabaseEnabled,
+        'has_payment': project.hasPaymentEnabled,
+        'has_analytics': project.hasAnalyticsId,
+      },
+    );
+  }
+
+  Future<void> trackChatOpened({
+    required String projectId,
+    required String defaultTab,
+    required bool hasPreview,
+  }) async {
+    await track(
+      AnalyticsEvents.chatOpened,
+      eventProperties: {
+        'project_id': projectId,
+        'default_tab': defaultTab,
+        'has_preview': hasPreview,
+      },
+    );
+  }
+
   Future<void> trackPreviewOpened({
     required String projectId,
     required String previewUrl,
@@ -147,6 +181,87 @@ class AppAnalyticsService {
         'preview_url': previewUrl,
         'source': source,
       },
+    );
+  }
+
+  Future<void> trackChatTabSwitched({
+    required String projectId,
+    required String tab,
+    required bool hasPreview,
+  }) async {
+    await track(
+      AnalyticsEvents.chatTabSwitched,
+      eventProperties: {
+        'project_id': projectId,
+        'tab': tab,
+        'has_preview': hasPreview,
+      },
+    );
+  }
+
+  Future<void> trackDeployPreview(String projectId) async {
+    await track(
+      AnalyticsEvents.deployPreview,
+      eventProperties: {'project_id': projectId},
+    );
+  }
+
+  Future<void> trackDeployProduction(String projectId) async {
+    await track(
+      AnalyticsEvents.deployProduction,
+      eventProperties: {'project_id': projectId},
+    );
+  }
+
+  Future<void> trackEnvVarCreated(String projectId, String key) async {
+    await track(
+      AnalyticsEvents.envVarCreated,
+      eventProperties: {'project_id': projectId, 'key': key},
+    );
+  }
+
+  Future<void> trackEnvVarUpdated(String projectId, String key) async {
+    await track(
+      AnalyticsEvents.envVarUpdated,
+      eventProperties: {'project_id': projectId, 'key': key},
+    );
+  }
+
+  Future<void> trackEnvVarDeleted(String projectId, String key) async {
+    await track(
+      AnalyticsEvents.envVarDeleted,
+      eventProperties: {'project_id': projectId, 'key': key},
+    );
+  }
+
+  Future<void> trackEnvVarImported(
+    String projectId, {
+    required int created,
+    required int updated,
+    required int skipped,
+  }) async {
+    await track(
+      AnalyticsEvents.envVarImported,
+      eventProperties: {
+        'project_id': projectId,
+        'created': created,
+        'updated': updated,
+        'skipped': skipped,
+      },
+    );
+  }
+
+  Future<void> trackEnvVarExported(String projectId) async {
+    await track(
+      AnalyticsEvents.envVarExported,
+      eventProperties: {'project_id': projectId},
+    );
+  }
+
+  Future<void> trackEnvVarSynced(String projectId) async {
+    await track(
+      AnalyticsEvents.envVarSynced,
+      eventProperties: {'project_id': projectId},
     );
   }
 

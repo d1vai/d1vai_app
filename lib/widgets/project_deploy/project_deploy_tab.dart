@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/deployment.dart';
 import '../../models/project.dart';
+import '../../services/app_analytics_service.dart';
 import '../../services/d1vai_service.dart';
 import '../../core/auth_expiry_bus.dart';
 import '../../utils/error_utils.dart';
@@ -518,6 +519,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
             ? () => _openUrl(url)
             : null,
       );
+      unawaited(AppAnalyticsService.instance.trackDeployPreview(widget.project.id));
       await widget.onRefreshProject?.call();
       await _loadDeployments();
       await _loadReleases();
@@ -606,6 +608,9 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
         onActionPressed: (url != null && url.isNotEmpty)
             ? () => _openUrl(url)
             : null,
+      );
+      unawaited(
+        AppAnalyticsService.instance.trackDeployProduction(widget.project.id),
       );
       await widget.onRefreshProject?.call();
       await _loadDeployments();

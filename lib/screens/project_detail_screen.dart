@@ -201,6 +201,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           _isLoading = false;
         });
         _trackProjectOpened(project);
+        _trackChatOpenedIfNeeded(project);
         unawaited(_macosMenuController.registerProjectVisit(project));
       }
 
@@ -216,6 +217,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           _isLoading = false;
         });
         _trackProjectOpened(fresh);
+        _trackChatOpenedIfNeeded(fresh);
         unawaited(_macosMenuController.registerProjectVisit(fresh));
       }
     } catch (e) {
@@ -235,6 +237,22 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     if (_lastTrackedProjectId == project.id) return;
     _lastTrackedProjectId = project.id;
     unawaited(AppAnalyticsService.instance.trackProjectOpened(project));
+  }
+
+  void _trackChatOpenedIfNeeded(UserProject project) {
+    if (_tabController.index != 0) return;
+    final hasPreview = (project.preferredPreviewUrl ?? '').trim().isNotEmpty;
+    final defaultTab =
+        (widget.initialChatTab ?? '').trim().isNotEmpty
+            ? widget.initialChatTab!.trim()
+            : (hasPreview ? 'preview' : 'code');
+    unawaited(
+      AppAnalyticsService.instance.trackChatOpened(
+        projectId: project.id,
+        defaultTab: defaultTab,
+        hasPreview: hasPreview,
+      ),
+    );
   }
 
   void _showLoginRequiredDialog() {

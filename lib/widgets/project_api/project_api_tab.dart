@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../core/auth_expiry_bus.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/env_var.dart';
+import '../../services/app_analytics_service.dart';
 import '../../services/d1vai_service.dart';
 import '../../utils/error_utils.dart';
 import '../adaptive_modal.dart';
@@ -129,6 +130,12 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
           'Environment variable created',
         ),
       );
+      unawaited(
+        AppAnalyticsService.instance.trackEnvVarCreated(
+          widget.projectId,
+          result.key,
+        ),
+      );
       await _loadEnvVars();
     } catch (e) {
       if (!mounted) return;
@@ -189,6 +196,12 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
           'Environment variable updated',
         ),
       );
+      unawaited(
+        AppAnalyticsService.instance.trackEnvVarUpdated(
+          widget.projectId,
+          envVar.key,
+        ),
+      );
       await _loadEnvVars();
     } catch (e) {
       if (!mounted) return;
@@ -238,6 +251,12 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
         context,
         title: _t('project_api_deleted', 'Deleted'),
         message: envVar.key,
+      );
+      unawaited(
+        AppAnalyticsService.instance.trackEnvVarDeleted(
+          widget.projectId,
+          envVar.key,
+        ),
       );
       await _loadEnvVars();
     } catch (e) {
@@ -306,6 +325,14 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
         message:
             'Created ${data['created'] ?? 0} · Updated ${data['updated'] ?? 0} · Skipped ${data['skipped'] ?? 0}',
       );
+      unawaited(
+        AppAnalyticsService.instance.trackEnvVarImported(
+          widget.projectId,
+          created: (data['created'] as num?)?.toInt() ?? 0,
+          updated: (data['updated'] as num?)?.toInt() ?? 0,
+          skipped: (data['skipped'] as num?)?.toInt() ?? 0,
+        ),
+      );
       await _loadEnvVars();
     } catch (e) {
       if (!mounted) return;
@@ -328,6 +355,7 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
       final content = (data['content'] ?? '').toString();
       final filename = (data['filename'] ?? '${widget.projectId}.env')
           .toString();
+      unawaited(AppAnalyticsService.instance.trackEnvVarExported(widget.projectId));
       await showAdaptiveModal<void>(
         context: context,
         builder: (context) =>
@@ -359,6 +387,7 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
         title: _t('project_api_sync_vercel', 'Sync to Vercel'),
         message: message,
       );
+      unawaited(AppAnalyticsService.instance.trackEnvVarSynced(widget.projectId));
       await _loadEnvVars();
     } catch (e) {
       if (!mounted) return;
