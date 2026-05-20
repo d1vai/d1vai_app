@@ -190,28 +190,32 @@ class AdaptiveModalHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hasSubtitle = subtitle != null && subtitle!.trim().isNotEmpty;
 
     return Padding(
       padding: padding,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
+        alignment: Alignment.topCenter,
         children: [
-          if (leading != null) ...[leading!, const SizedBox(width: 12)],
-          Expanded(
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 48),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
                   title,
+                  textAlign: TextAlign.center,
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.3,
                   ),
                 ),
-                if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
+                if (hasSubtitle) ...[
                   const SizedBox(height: 6),
                   Text(
                     subtitle!,
+                    textAlign: TextAlign.center,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                       height: 1.4,
@@ -221,17 +225,32 @@ class AdaptiveModalHeader extends StatelessWidget {
               ],
             ),
           ),
-          if (trailing != null) ...[
-            const SizedBox(width: 12),
-            trailing!,
-          ] else if (onClose != null) ...[
-            const SizedBox(width: 12),
-            IconButton(
-              onPressed: onClose,
-              icon: const Icon(Icons.close),
-              tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
-            ),
-          ],
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 40,
+                child: leading == null ? null : Center(child: leading!),
+              ),
+              const Spacer(),
+              SizedBox(
+                width: 40,
+                child: trailing != null
+                    ? Center(child: trailing!)
+                    : onClose != null
+                    ? Center(
+                        child: IconButton(
+                          onPressed: onClose,
+                          icon: const Icon(Icons.close),
+                          tooltip: MaterialLocalizations.of(
+                            context,
+                          ).closeButtonTooltip,
+                        ),
+                      )
+                    : null,
+              ),
+            ],
+          ),
         ],
       ),
     );

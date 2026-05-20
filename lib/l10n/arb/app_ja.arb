@@ -1285,7 +1285,6 @@
   "onboarding_avatar_pick_failed": "Failed to pick image: {error}",
   "login_change_email": "Change Email",
   "settings_editor_title": "コードエディター",
-  "settings_editor_subtitle": "テーマと編集動作。",
   "settings_editor_appearance_mode": "表示モード",
   "settings_editor_appearance_follow_app": "アプリに合わせる",
   "settings_editor_appearance_light": "ライト",

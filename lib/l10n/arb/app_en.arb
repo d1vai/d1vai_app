@@ -1285,7 +1285,6 @@
   "onboarding_avatar_pick_failed": "Failed to pick image: {error}",
   "login_change_email": "Change Email",
   "settings_editor_title": "Code Editor",
-  "settings_editor_subtitle": "Theme and editing behavior.",
   "settings_editor_entry_subtitle": "Theme, font, wrap",
   "settings_editor_appearance_mode": "Appearance Mode",
   "settings_editor_appearance_follow_app": "Follow App",

@@ -1285,7 +1285,6 @@
   "onboarding_avatar_pick_failed": "Failed to pick image: {error}",
   "login_change_email": "Change Email",
   "settings_editor_title": "Редактор кода",
-  "settings_editor_subtitle": "Тема и поведение.",
   "settings_editor_appearance_mode": "Режим отображения",
   "settings_editor_appearance_follow_app": "Как в приложении",
   "settings_editor_appearance_light": "Светлый",

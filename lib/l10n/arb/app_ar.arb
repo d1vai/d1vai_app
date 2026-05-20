@@ -1285,7 +1285,6 @@
   "onboarding_avatar_pick_failed": "Failed to pick image: {error}",
   "login_change_email": "Change Email",
   "settings_editor_title": "محرر الشيفرة",
-  "settings_editor_subtitle": "السمة وسلوك التحرير.",
   "settings_editor_appearance_mode": "وضع المظهر",
   "settings_editor_appearance_follow_app": "اتباع التطبيق",
   "settings_editor_appearance_light": "فاتح",

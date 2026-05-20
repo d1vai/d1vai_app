@@ -1285,7 +1285,6 @@
   "onboarding_avatar_pick_failed": "選擇圖片失敗: {error}",
   "login_change_email": "修改郵箱",
   "settings_editor_title": "程式碼編輯器",
-  "settings_editor_subtitle": "主題與編輯行為。",
   "settings_editor_entry_subtitle": "主題、字型、換行",
   "settings_editor_appearance_mode": "外觀模式",
   "settings_editor_appearance_follow_app": "跟隨應用程式",

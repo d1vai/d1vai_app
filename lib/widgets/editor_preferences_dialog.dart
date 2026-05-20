@@ -34,9 +34,6 @@ class EditorPreferencesDialogBody extends StatelessWidget {
                 AdaptiveModalHeader(
                   title:
                       loc?.translate('settings_editor_title') ?? 'Code Editor',
-                  subtitle:
-                      loc?.translate('settings_editor_subtitle') ??
-                      'Tune editor visuals toward a VS Code-style workbench.',
                   onClose: () => Navigator.of(context).pop(),
                 ),
                 Text(
@@ -290,7 +287,7 @@ class _ThemeSection extends StatelessWidget {
             return Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(width: 220, child: selectorPane),
+                SizedBox(width: 204, child: selectorPane),
                 const SizedBox(width: 16),
                 Expanded(child: previewPane),
               ],
@@ -336,7 +333,7 @@ class EditorThemePresetCard extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
           color: background,
           boxShadow: selected
@@ -351,17 +348,6 @@ class EditorThemePresetCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Expanded(
-              child: Text(
-                presetLabel,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: foreground,
-                ),
-              ),
-            ),
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 180),
               switchInCurve: Curves.easeOutBack,
@@ -373,25 +359,29 @@ class EditorThemePresetCard extends StatelessWidget {
                 );
               },
               child: selected
-                  ? Container(
+                  ? Icon(
                       key: const ValueKey('selected'),
-                      margin: const EdgeInsets.only(left: 10),
-                      width: 20,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        color: accent.withValues(alpha: 0.14),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: accent.withValues(alpha: 0.34),
-                        ),
-                      ),
-                      child: Icon(Icons.check_rounded, size: 14, color: accent),
+                      Icons.check_rounded,
+                      size: 16,
+                      color: accent,
                     )
                   : const SizedBox(
                       key: ValueKey('unselected'),
-                      width: 20,
-                      height: 20,
+                      width: 16,
+                      height: 16,
                     ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                presetLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w500,
+                  color: foreground,
+                ),
+              ),
             ),
           ],
         ),
@@ -438,16 +428,6 @@ export class PreviewPanel {
 }
 
 class _EditorMonacoThemePreviewState extends State<EditorMonacoThemePreview> {
-  String? _activeThemeId;
-
-  Future<void> _refreshThemeId(monaco.MonacoController controller) async {
-    final themeId = await controller.getThemeId();
-    if (!mounted) return;
-    setState(() {
-      _activeThemeId = themeId;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -481,7 +461,7 @@ class _EditorMonacoThemePreviewState extends State<EditorMonacoThemePreview> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          height: 140,
+          height: 210,
           width: double.infinity,
           decoration: BoxDecoration(
             color: bg,
@@ -509,7 +489,6 @@ class _EditorMonacoThemePreviewState extends State<EditorMonacoThemePreview> {
                   await controller.setThemeById(
                     didRegisterTheme ? themeId : baseTheme.id,
                   );
-                  await _refreshThemeId(controller);
                 }());
               },
               backgroundColor: bg,
