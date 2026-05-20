@@ -20,7 +20,6 @@ jobs:
       AMPLITUDE_API_KEY: ${{ secrets.AMPLITUDE_API_KEY }}
       APPLE_SIGNING_CERT_BASE64: ${{ secrets.APPLE_SIGNING_CERT_BASE64 }}
       APPLE_SIGNING_CERT_PASSWORD: ${{ secrets.APPLE_SIGNING_CERT_PASSWORD }}
-      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       APPLE_NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
       APPLE_NOTARY_ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
@@ -74,7 +73,6 @@ jobs:
           required_vars=(
             APPLE_SIGNING_CERT_BASE64
             APPLE_SIGNING_CERT_PASSWORD
-            APPLE_SIGNING_IDENTITY
             APPLE_TEAM_ID
             APPLE_NOTARY_KEY_ID
             APPLE_NOTARY_ISSUER_ID
@@ -307,6 +305,7 @@ jobs:
         with:
           name: notarization-diagnostics-${{ steps.meta.outputs.short_sha }}
           path: build/macos/notary
+          if-no-files-found: ignore
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
