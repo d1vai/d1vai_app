@@ -1,9 +1,9 @@
 name: Build macOS DMG Release
 
 on:
-  push:
-    branches:
-      - main
+  release:
+    types:
+      - published
   workflow_dispatch:
 
 permissions:
@@ -235,18 +235,18 @@ jobs:
         shell: bash
         run: |
           dmg_path="build/macos/${{ steps.meta.outputs.dmg_name }}"
-          for attempt in 1 2 3 4 5 6; do
+          for attempt in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
             if xcrun stapler staple "${dmg_path}"; then
               exit 0
             fi
 
-            if [ "${attempt}" -eq 6 ]; then
+            if [ "${attempt}" -eq 15 ]; then
               echo "Stapling DMG failed after ${attempt} attempts." >&2
               exit 1
             fi
 
-            echo "Stapling DMG not ready yet. Retrying in 20 seconds..."
-            sleep 20
+            echo "Stapling DMG not ready yet. Retrying in 30 seconds..."
+            sleep 30
           done
 
       - name: Upload build artifact
