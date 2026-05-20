@@ -154,50 +154,6 @@ jobs:
 
           codesign --verify --deep --strict --verbose=2 "${app_path}"
 
-      - name: Archive app bundle for notarization
-        shell: bash
-        run: |
-          app_path="build/macos/Build/Products/Release/${{ steps.meta.outputs.app_name }}"
-          app_zip_path="build/macos/${{ steps.meta.outputs.app_name }}.zip"
-
-          rm -f "${app_zip_path}"
-          ditto -c -k --keepParent "${app_path}" "${app_zip_path}"
-
-      - name: Notarize app bundle
-        shell: bash
-        run: |
-          app_zip_path="build/macos/${{ steps.meta.outputs.app_name }}.zip"
-
-          xcrun notarytool submit "${app_zip_path}" \
-            --key "${APPLE_NOTARY_API_KEY_PATH}" \
-            --key-id "${APPLE_NOTARY_KEY_ID}" \
-            --issuer "${APPLE_NOTARY_ISSUER_ID}" \
-            --team-id "${APPLE_TEAM_ID}" \
-            --wait
-
-      - name: Staple app bundle (best effort)
-        shell: bash
-        run: |
-          app_path="build/macos/Build/Products/Release/${{ steps.meta.outputs.app_name }}"
-          stapled="false"
-
-          for attempt in 1 2 3 4 5 6; do
-            if xcrun stapler staple "${app_path}"; then
-              stapled="true"
-              break
-            fi
-
-            if [ "${attempt}" -eq 6 ]; then
-              echo "::warning::Stapling app bundle failed after ${attempt} attempts. Continuing because the final notarized DMG is the user-facing distribution artifact."
-              break
-            fi
-
-            echo "Stapling app bundle not ready yet. Retrying in 20 seconds..."
-            sleep 20
-          done
-
-          echo "App staple result: ${stapled}"
-
       - name: Package DMG
         shell: bash
         run: |
@@ -218,6 +174,13 @@ jobs:
             -ov \
             -format UDZO \
             "build/macos/${{ steps.meta.outputs.dmg_name }}"
+
+      - name: Codesign DMG
+        shell: bash
+        run: |
+          dmg_path="build/macos/${{ steps.meta.outputs.dmg_name }}"
+          codesign --force --timestamp --sign "${APPLE_SIGNING_IDENTITY}" "${dmg_path}"
+          codesign --verify --verbose=2 "${dmg_path}"
 
       - name: Notarize DMG
         shell: bash
@@ -279,8 +242,8 @@ jobs:
 
             ## Notes
             - This release is generated automatically by GitHub Actions.
-            - The `.app` bundle is signed and notarized before packaging.
-            - The `.dmg` is notarized and stapled for standard Gatekeeper-friendly distribution.
+            - The `.app` bundle is signed before packaging.
+            - The outer `.dmg` container is signed, notarized, and stapled for standard Gatekeeper-friendly distribution.
           files: build/macos/${{ steps.meta.outputs.dmg_name }}
 
       - name: Cleanup temporary keychain
