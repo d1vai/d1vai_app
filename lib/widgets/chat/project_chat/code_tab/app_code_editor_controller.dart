@@ -215,7 +215,7 @@ class AppCodeEditorController extends ChangeNotifier {
     final current = _monacoOptions;
     if (monacoController == null || current == null) return;
 
-    final themeId = 'd1vai-${preset.id}';
+    final themeId = monacoThemeIdForPreset('d1vai', preset.id);
     final rulers = preferences.showRulers ? const [80, 120] : const <int>[];
     final nextOptions = current.copyWith(
       language: monacoLanguageForPath(filePath),
@@ -411,28 +411,83 @@ Map<String, dynamic> buildMonacoThemeDataForPreset(
     }
   }
 
-  addRule('comment', ['comment']);
-  addRule('quote', ['string']);
-  addRule('string', ['string']);
-  addRule('keyword', ['keyword', 'keyword.control']);
-  addRule('number', ['number']);
-  addRule('literal', ['number', 'constant']);
-  addRule('built_in', ['type.identifier', 'support.type']);
-  addRule('type', ['type', 'type.identifier']);
-  addRule('class', ['type', 'type.identifier']);
-  addRule('title', ['entity.name.function', 'entity.name.type']);
-  addRule('function', ['entity.name.function']);
-  addRule('params', ['variable.parameter']);
-  addRule('meta', ['meta']);
-  addRule('attr', ['attribute.name']);
-  addRule('attribute', ['attribute.name']);
-  addRule('variable', ['variable']);
-  addRule('template-variable', ['variable']);
+  addRule('comment', [
+    'comment',
+    'comment.line',
+    'comment.block',
+    'punctuation.definition.comment',
+  ]);
+  addRule('quote', ['string', 'string.quoted']);
+  addRule('string', [
+    'string',
+    'string.quoted',
+    'string.template',
+    'string.escape',
+  ]);
+  addRule('keyword', [
+    'keyword',
+    'keyword.control',
+    'keyword.operator',
+    'storage',
+    'storage.type',
+    'storage.modifier',
+  ]);
+  addRule('number', ['number', 'constant.numeric']);
+  addRule('literal', ['number', 'constant', 'constant.language']);
+  addRule('built_in', [
+    'type.identifier',
+    'support.type',
+    'support.class',
+    'support.function',
+  ]);
+  addRule('type', [
+    'type',
+    'type.identifier',
+    'entity.name.type',
+    'entity.name.type.class',
+    'entity.name.class',
+  ]);
+  addRule('class', [
+    'type',
+    'entity.name.type',
+    'entity.name.type.class',
+    'entity.name.class',
+  ]);
+  addRule('title', [
+    'entity.name.function',
+    'entity.name.type',
+    'entity.name.method',
+    'entity.name.class',
+  ]);
+  addRule('function', [
+    'entity.name.function',
+    'entity.name.method',
+    'support.function',
+  ]);
+  addRule('params', ['variable.parameter', 'meta.parameter']);
+  addRule('meta', ['meta', 'meta.object-literal.key']);
+  addRule('attr', [
+    'attribute.name',
+    'variable.object.property',
+    'support.type.property-name',
+  ]);
+  addRule('attribute', [
+    'attribute.name',
+    'variable.object.property',
+    'support.type.property-name',
+  ]);
+  addRule('variable', [
+    'variable',
+    'variable.other.readwrite',
+    'variable.other.constant',
+    'identifier',
+  ]);
+  addRule('template-variable', ['variable', 'identifier']);
   addRule('symbol', ['constant.other.symbol']);
   addRule('bullet', ['markup.list']);
   addRule('link', ['string.link']);
-  addRule('tag', ['tag']);
-  addRule('name', ['identifier']);
+  addRule('tag', ['tag', 'entity.name.tag']);
+  addRule('name', ['identifier', 'entity.name']);
 
   return {'base': baseTheme, 'inherit': true, 'rules': rules, 'colors': colors};
 }

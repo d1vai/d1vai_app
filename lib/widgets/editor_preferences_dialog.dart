@@ -77,9 +77,6 @@ class EditorPreferencesDialogBody extends StatelessWidget {
                   title:
                       loc?.translate('settings_editor_light_theme') ??
                       'Light Theme',
-                  titleText:
-                      loc?.translate('settings_editor_light_preview') ??
-                      'Light Preview',
                   presets: lightCodeEditorThemePresets,
                   selectedPresetId: editorPrefs.lightThemePresetId,
                   onPresetSelected: editorPrefs.setLightThemePreset,
@@ -89,9 +86,6 @@ class EditorPreferencesDialogBody extends StatelessWidget {
                   title:
                       loc?.translate('settings_editor_dark_theme') ??
                       'Dark Theme',
-                  titleText:
-                      loc?.translate('settings_editor_dark_preview') ??
-                      'Dark Preview',
                   presets: darkCodeEditorThemePresets,
                   selectedPresetId: editorPrefs.darkThemePresetId,
                   onPresetSelected: editorPrefs.setDarkThemePreset,
@@ -230,56 +224,14 @@ class EditorPreferencesDialogBody extends StatelessWidget {
   }
 }
 
-class _PreviewLine extends StatelessWidget {
-  final String number;
-  final List<InlineSpan> spans;
-  final Color numberColor;
-
-  const _PreviewLine({
-    required this.number,
-    required this.spans,
-    required this.numberColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 2),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 18,
-            child: Text(
-              number,
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 11,
-                color: numberColor,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: RichText(text: TextSpan(children: spans)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _ThemeSection extends StatelessWidget {
   final String title;
-  final String titleText;
   final List<CodeEditorThemePreset> presets;
   final String selectedPresetId;
   final Future<void> Function(String) onPresetSelected;
 
   const _ThemeSection({
     required this.title,
-    required this.titleText,
     required this.presets,
     required this.selectedPresetId,
     required this.onPresetSelected,
@@ -288,39 +240,62 @@ class _ThemeSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final prefs = context.watch<EditorPreferencesProvider>();
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
         ),
         const SizedBox(height: 10),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            for (final preset in presets)
-              EditorThemePresetCard(
-                preset: preset,
-                selected: selectedPresetId == preset.id,
-                onTap: () => onPresetSelected(preset.id),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final useSideBySide = constraints.maxWidth >= 620;
+            final selectorPane = Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final preset in presets)
+                  EditorThemePresetCard(
+                    preset: preset,
+                    selected: selectedPresetId == preset.id,
+                    onTap: () => onPresetSelected(preset.id),
+                  ),
+              ],
+            );
+            final previewPane = EditorMonacoThemePreview(
+              key: ValueKey(
+                'monaco-preview-$selectedPresetId-${prefs.fontSize.toStringAsFixed(2)}-${prefs.tabSize}-${prefs.showRulers}-${prefs.defaultWrap}',
               ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        EditorMonacoThemePreview(
-          key: ValueKey(
-            'monaco-preview-$selectedPresetId-${prefs.fontSize.toStringAsFixed(2)}-${prefs.tabSize}-${prefs.showRulers}-${prefs.defaultWrap}',
-          ),
-          title: titleText,
-          preset: codeEditorThemePresetById(selectedPresetId),
-          fontSize: prefs.fontSize,
-          showRulers: prefs.showRulers,
-          wrapEnabled: prefs.defaultWrap,
-          tabSize: prefs.tabSize,
+              preset: codeEditorThemePresetById(selectedPresetId),
+              fontSize: prefs.fontSize,
+              showRulers: prefs.showRulers,
+              wrapEnabled: prefs.defaultWrap,
+              tabSize: prefs.tabSize,
+            );
+
+            if (!useSideBySide) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  selectorPane,
+                  const SizedBox(height: 12),
+                  previewPane,
+                ],
+              );
+            }
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(width: 220, child: selectorPane),
+                const SizedBox(width: 16),
+                Expanded(child: previewPane),
+              ],
+            );
+          },
         ),
       ],
     );
@@ -345,8 +320,11 @@ class EditorThemePresetCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final root = preset.highlightTheme['root'] ?? const TextStyle();
-    final bg = root.backgroundColor ?? colorScheme.surface;
-    final fg = root.color ?? colorScheme.onSurface;
+    final background = root.backgroundColor ?? colorScheme.surface;
+    final foreground = preset.isDark ? Colors.white : Colors.black;
+    final accent = preset.isDark
+        ? Colors.white.withValues(alpha: 0.92)
+        : Colors.black.withValues(alpha: 0.82);
     final presetLabel = _localizedEditorThemeLabel(
       loc,
       preset.id,
@@ -354,102 +332,66 @@ class EditorThemePresetCard extends StatelessWidget {
     );
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.zero,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
-        width: 200,
-        padding: const EdgeInsets.all(12),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: selected
-                ? colorScheme.primary
-                : colorScheme.outlineVariant.withValues(alpha: 0.7),
-            width: selected ? 1.4 : 1,
-          ),
+          color: background,
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: colorScheme.primary.withValues(alpha: 0.16),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ]
+              : null,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Text(
-              presetLabel,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.labelLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: selected ? colorScheme.primary : colorScheme.onSurface,
+            Expanded(
+              child: Text(
+                presetLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: foreground,
+                ),
               ),
             ),
-            const SizedBox(height: 10),
-            Container(
-              height: 108,
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-              decoration: BoxDecoration(
-                color: bg,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: DefaultTextStyle(
-                style: TextStyle(
-                  fontFamily: 'monospace',
-                  fontSize: 10.8,
-                  color: fg,
-                  height: 1.24,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _PreviewLine(
-                      number: '1',
-                      spans: [
-                        TextSpan(
-                          text: 'const ',
-                          style: preset.highlightTheme['keyword'],
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              switchInCurve: Curves.easeOutBack,
+              switchOutCurve: Curves.easeIn,
+              transitionBuilder: (child, animation) {
+                return ScaleTransition(
+                  scale: Tween<double>(begin: 0.7, end: 1).animate(animation),
+                  child: FadeTransition(opacity: animation, child: child),
+                );
+              },
+              child: selected
+                  ? Container(
+                      key: const ValueKey('selected'),
+                      margin: const EdgeInsets.only(left: 10),
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: accent.withValues(alpha: 0.14),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: accent.withValues(alpha: 0.34),
                         ),
-                        TextSpan(
-                          text: 'theme',
-                          style: preset.highlightTheme['variable'],
-                        ),
-                        const TextSpan(text: ' = '),
-                        TextSpan(
-                          text: '"$presetLabel"',
-                          style: preset.highlightTheme['string'],
-                        ),
-                        const TextSpan(text: ';'),
-                      ],
-                      numberColor: fg.withValues(alpha: 0.45),
+                      ),
+                      child: Icon(Icons.check_rounded, size: 14, color: accent),
+                    )
+                  : const SizedBox(
+                      key: ValueKey('unselected'),
+                      width: 20,
+                      height: 20,
                     ),
-                    _PreviewLine(
-                      number: '2',
-                      spans: [
-                        TextSpan(
-                          text:
-                              '// ${loc?.translate('settings_editor_preview_comment') ?? 'VS Code-style preview'}',
-                          style: preset.highlightTheme['comment'],
-                        ),
-                      ],
-                      numberColor: fg.withValues(alpha: 0.45),
-                    ),
-                    _PreviewLine(
-                      number: '3',
-                      spans: [
-                        TextSpan(
-                          text: 'return ',
-                          style: preset.highlightTheme['keyword'],
-                        ),
-                        TextSpan(
-                          text: 'editor',
-                          style: preset.highlightTheme['title'],
-                        ),
-                        const TextSpan(text: ';'),
-                      ],
-                      numberColor: fg.withValues(alpha: 0.45),
-                    ),
-                  ],
-                ),
-              ),
             ),
           ],
         ),
@@ -458,8 +400,7 @@ class EditorThemePresetCard extends StatelessWidget {
   }
 }
 
-class EditorMonacoThemePreview extends StatelessWidget {
-  final String title;
+class EditorMonacoThemePreview extends StatefulWidget {
   final CodeEditorThemePreset preset;
   final double fontSize;
   final bool showRulers;
@@ -468,7 +409,6 @@ class EditorMonacoThemePreview extends StatelessWidget {
 
   const EditorMonacoThemePreview({
     super.key,
-    required this.title,
     required this.preset,
     required this.fontSize,
     required this.showRulers,
@@ -476,48 +416,70 @@ class EditorMonacoThemePreview extends StatelessWidget {
     required this.tabSize,
   });
 
-  static const _sample = '''const theme = "d1vai";
-// Monaco preview for settings
-return editor;
+  static const _sample = r'''const theme = "d1vai";
+interface ThemeConfig {
+  accent: string;
+  spacing: number;
+}
+
+export class PreviewPanel {
+  constructor(private readonly config: ThemeConfig) {}
+
+  render(count: number = 3): string {
+    const title = `tokens:${count}`;
+    return `${title}:${this.config.accent}`;
+  }
+}
 ''';
+
+  @override
+  State<EditorMonacoThemePreview> createState() =>
+      _EditorMonacoThemePreviewState();
+}
+
+class _EditorMonacoThemePreviewState extends State<EditorMonacoThemePreview> {
+  String? _activeThemeId;
+
+  Future<void> _refreshThemeId(monaco.MonacoController controller) async {
+    final themeId = await controller.getThemeId();
+    if (!mounted) return;
+    setState(() {
+      _activeThemeId = themeId;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final root = preset.highlightTheme['root'] ?? const TextStyle();
+    final root = widget.preset.highlightTheme['root'] ?? const TextStyle();
     final bg = root.backgroundColor ?? theme.colorScheme.surface;
-    final baseTheme = preset.isDark
+    final baseTheme = widget.preset.isDark
         ? monaco.MonacoTheme.vsDark
         : monaco.MonacoTheme.vs;
-    final themeId = 'settings-preview-${preset.id}';
+    final themeId = monacoThemeIdForPreset(
+      'settings-preview',
+      widget.preset.id,
+    );
     final options = monaco.EditorOptions(
-      language: monaco.MonacoLanguage.dart,
+      language: monaco.MonacoLanguage.typescript,
       theme: baseTheme,
-      fontSize: fontSize,
+      fontSize: widget.fontSize,
       fontFamily: 'Menlo, Monaco, Consolas, "Courier New", monospace',
       lineHeight: 1.35,
       readOnly: true,
       minimap: false,
       lineNumbers: true,
-      wordWrap: wrapEnabled,
+      wordWrap: widget.wrapEnabled,
       automaticLayout: true,
       scrollBeyondLastLine: false,
       quickSuggestions: false,
-      tabSize: tabSize,
-      rulers: showRulers ? const [80, 120] : const [],
+      tabSize: widget.tabSize,
+      rulers: widget.showRulers ? const [80, 120] : const [],
     );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: theme.textTheme.labelLarge?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 8),
         Container(
           height: 140,
           width: double.infinity,
@@ -530,22 +492,24 @@ return editor;
             borderRadius: BorderRadius.circular(12),
             child: monaco.MonacoEditor(
               key: ValueKey(
-                'settings-preview-${preset.id}-${fontSize.toStringAsFixed(2)}-$tabSize-$showRulers-$wrapEnabled',
+                'settings-preview-${widget.preset.id}-${widget.fontSize.toStringAsFixed(2)}-${widget.tabSize}-${widget.showRulers}-${widget.wrapEnabled}',
               ),
-              initialValue: _sample,
+              initialValue: EditorMonacoThemePreview._sample,
               options: options,
+              themeId: themeId,
               onReady: (controller) {
                 unawaited(() async {
                   final didRegisterTheme = await controller.tryDefineTheme(
                     themeId,
                     buildMonacoThemeDataForPreset(
-                      preset,
-                      baseTheme: preset.isDark ? 'vs-dark' : 'vs',
+                      widget.preset,
+                      baseTheme: widget.preset.isDark ? 'vs-dark' : 'vs',
                     ),
                   );
                   await controller.setThemeById(
                     didRegisterTheme ? themeId : baseTheme.id,
                   );
+                  await _refreshThemeId(controller);
                 }());
               },
               backgroundColor: bg,

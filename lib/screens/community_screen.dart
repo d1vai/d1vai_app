@@ -989,6 +989,7 @@ class _CommunityComponentCard extends StatelessWidget {
                     padding: const EdgeInsets.all(12),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Row(
                           children: [
@@ -1034,13 +1035,16 @@ class _CommunityComponentCard extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          component.description,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall,
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 36),
+                          child: Text(
+                            component.description,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall,
+                          ),
                         ),
-                        const Spacer(),
+                        const SizedBox(height: 4),
                         Text(
                           component.category,
                           maxLines: 1,

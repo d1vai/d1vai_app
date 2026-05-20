@@ -166,7 +166,7 @@ class _MonacoCodePreviewState extends State<MonacoCodePreview> {
     _lastPresentationKey = key;
     _options = nextOptions;
 
-    final themeId = 'd1vai-preview-${preset.id}';
+    final themeId = monacoThemeIdForPreset('d1vai-preview', preset.id);
     final didRegisterTheme = await controller.tryDefineTheme(
       themeId,
       buildMonacoThemeDataForPreset(
@@ -210,6 +210,7 @@ class _MonacoCodePreviewState extends State<MonacoCodePreview> {
     final preset = codeEditorThemePresetById(
       prefersDark ? prefs.darkThemePresetId : prefs.lightThemePresetId,
     );
+    final themeId = 'd1vai-preview-${preset.id}';
 
     return Container(
       color: preset.gutterBackground,
@@ -217,6 +218,7 @@ class _MonacoCodePreviewState extends State<MonacoCodePreview> {
         key: ValueKey('preview-${widget.path}'),
         controller: controller,
         options: options,
+        themeId: themeId,
         backgroundColor: preset.gutterBackground,
         showStatusBar: false,
         padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),

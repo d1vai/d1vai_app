@@ -343,6 +343,7 @@ class _MonacoEditorSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     final monacoController = controller.monacoController;
     final options = controller.monacoOptions;
+    final themeId = 'd1vai-${preset.id}';
     if (monacoController == null || options == null) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -352,6 +353,7 @@ class _MonacoEditorSurface extends StatelessWidget {
       child: monaco.MonacoEditor(
         controller: monacoController,
         options: options,
+        themeId: themeId,
         onReady: (_) {
           unawaited(
             controller.applyMonacoPresentation(

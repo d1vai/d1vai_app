@@ -158,3 +158,23 @@ List<CodeEditorThemePreset> get darkCodeEditorThemePresets =>
     codeEditorThemePresets
         .where((preset) => preset.isDark)
         .toList(growable: false);
+
+String monacoThemeIdForPreset(String scope, String presetId) {
+  // Monaco custom theme registration is more reliable when the runtime theme
+  // id is restricted to lowercase slug characters. We keep the user-facing
+  // preset id untouched for storage/localization, and only sanitize the id
+  // that is passed into defineTheme/setThemeById.
+  final safePresetId = presetId
+      .trim()
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^a-z0-9-]+'), '-')
+      .replaceAll(RegExp(r'-+'), '-')
+      .replaceAll(RegExp(r'^-|-$'), '');
+  final safeScope = scope
+      .trim()
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^a-z0-9-]+'), '-')
+      .replaceAll(RegExp(r'-+'), '-')
+      .replaceAll(RegExp(r'^-|-$'), '');
+  return '$safeScope-$safePresetId';
+}
