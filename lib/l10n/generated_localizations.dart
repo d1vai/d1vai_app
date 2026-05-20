@@ -14,33 +14,27 @@ const List<String> kSupportedLocaleKeys = <String>[
   "zh_Hant",
 ];
 
-const Map<String, Map<String, String>>
-kLocalizedValues = <String, Map<String, String>>{
+const Map<String, Map<String, String>> kLocalizedValues = <String, Map<String, String>>{
   "ar": <String, String>{
     "about": "حول",
     "about_description": "منصة تطوير تطبيقات تعمل بالذكاء الاصطناعي.",
-    "about_subtitle": "إصدار التطبيق والمعلومات",
+    "about_subtitle": "معلومات التطبيق",
     "about_title": "حول",
     "access": "Access",
     "account_data_contact_support_delete": "التواصل مع الدعم لحذف الحساب",
     "account_data_copy_request_template": "نسخ قالب الطلب",
-    "account_data_delete_confirm_message":
-        "سيتم التواصل مع {support_email} لطلب حذف الحساب. قد تكون عملية الحذف غير قابلة للاسترجاع. هل تريد المتابعة؟",
-    "account_data_delete_description":
-        "يتم حذف الحساب حاليا عبر الدعم. يرجى مراجعة القيود القانونية قبل طلب الحذف.",
-    "account_data_delete_template":
-        "الطلب: حذف الحساب\\nالحساب: {email}\\nيرجى حذف حسابي والبيانات المرتبطة به.\\nأفهم أن هذا الإجراء قد يكون غير قابل للاسترجاع.\\nالتواصل: {support_email}",
+    "account_data_delete_confirm_message": "سيتم التواصل مع {support_email} لطلب حذف الحساب. قد تكون عملية الحذف غير قابلة للاسترجاع. هل تريد المتابعة؟",
+    "account_data_delete_description": "يتم حذف الحساب حاليا عبر الدعم. يرجى مراجعة القيود القانونية قبل طلب الحذف.",
+    "account_data_delete_template": "الطلب: حذف الحساب\\nالحساب: {email}\\nيرجى حذف حسابي والبيانات المرتبطة به.\\nأفهم أن هذا الإجراء قد يكون غير قابل للاسترجاع.\\nالتواصل: {support_email}",
     "account_data_delete_title": "حذف الحساب",
-    "account_data_export_description":
-        "يتم تنفيذ التصدير حاليا عبر الدعم. نوفر قالبا يمكنك نسخه وإرساله.",
-    "account_data_export_template":
-        "الطلب: تصدير البيانات\\nالحساب: {email}\\nيرجى تصدير بيانات حسابي (الملف الشخصي، المشاريع، الفوترة).\\nالتواصل: {support_email}",
+    "account_data_export_description": "يتم تنفيذ التصدير حاليا عبر الدعم. نوفر قالبا يمكنك نسخه وإرساله.",
+    "account_data_export_template": "الطلب: تصدير البيانات\\nالحساب: {email}\\nيرجى تصدير بيانات حسابي (الملف الشخصي، المشاريع، الفوترة).\\nالتواصل: {support_email}",
     "account_data_export_title": "تصدير البيانات",
     "account_data_legal": "قانوني",
+    "account_data_open_projects": "فتح المشاريع",
     "account_data_request_template_copied": "تم نسخ قالب الطلب إلى الحافظة",
-    "account_data_subtitle": "تصدير البيانات وحذف الحساب",
-    "account_data_support_dialog_message":
-        "يرجى التواصل مع {support_email} بخصوص هذا الطلب.",
+    "account_data_subtitle": "تصدير / حذف",
+    "account_data_support_dialog_message": "يرجى التواصل مع {support_email} بخصوص هذا الطلب.",
     "account_data_title": "الحساب والبيانات",
     "activity": "النشاط",
     "agree_terms": "بتسجيل الدخول، فإنك توافق على شروط الخدمة وسياسة الخصوصية",
@@ -56,18 +50,14 @@ kLocalizedValues = <String, Map<String, String>>{
     "api_keys_copy_secret_hint": "انسخ هذا السر الآن، فلن يظهر مرة أخرى.",
     "api_keys_create_button": "إنشاء مفتاح",
     "api_keys_create_failed": "فشل إنشاء مفتاح API",
-    "api_keys_create_success":
-        "تم إنشاء مفتاح API. انسخه الآن لأنه لن يظهر مرة أخرى.",
+    "api_keys_create_success": "تم إنشاء مفتاح API. انسخه الآن لأنه لن يظهر مرة أخرى.",
     "api_keys_created_at": "تاريخ الإنشاء",
     "api_keys_creating": "جارٍ الإنشاء...",
-    "api_keys_description":
-        "استخدم مفاتيح API للنقاط غير الإدارية. ما زالت المسارات الإدارية تتطلب تسجيل الدخول المعتاد.",
+    "api_keys_description": "استخدم مفاتيح API للنقاط غير الإدارية. ما زالت المسارات الإدارية تتطلب تسجيل الدخول المعتاد.",
     "api_keys_description_label": "الوصف",
-    "api_keys_dialog_create_description":
-        "أضف اسمًا ووصفًا اختياريًا حتى يسهل التعرف على هذا المفتاح لاحقًا.",
+    "api_keys_dialog_create_description": "أضف اسمًا ووصفًا اختياريًا حتى يسهل التعرف على هذا المفتاح لاحقًا.",
     "api_keys_dialog_create_title": "إنشاء مفتاح API",
-    "api_keys_dialog_revoke_description":
-        "هل تريد إلغاء \"{name}\"؟ لا يمكن التراجع عن هذا الإجراء.",
+    "api_keys_dialog_revoke_description": "هل تريد إلغاء \"{name}\"؟ لا يمكن التراجع عن هذا الإجراء.",
     "api_keys_dialog_revoke_title": "إلغاء مفتاح API",
     "api_keys_empty": "لا توجد مفاتيح API بعد.",
     "api_keys_existing_title": "المفاتيح الحالية",
@@ -81,28 +71,29 @@ kLocalizedValues = <String, Map<String, String>>{
     "api_keys_revoked": "تم الإلغاء",
     "api_keys_title": "إنشاء مفتاح API",
     "api_keys_unnamed": "مفتاح بلا اسم",
-    "api_settings": "واجهة برمجة التطبيقات (API)",
+    "api_settings": "إعدادات API",
+    "api_settings_copy_diagnostics": "نسخ التشخيص",
+    "api_settings_reset": "إعادة تعيين",
+    "api_settings_save": "حفظ",
+    "api_settings_test_connection": "اختبار الاتصال",
     "appearance": "المظهر",
     "back": "رجوع",
     "basic_information": "المعلومات الأساسية",
     "billing_insufficient_action_later": "Later",
     "billing_insufficient_action_topup": "Top up now",
-    "billing_insufficient_description":
-        "Your balance is insufficient for this action. Please top up first.",
+    "billing_insufficient_description": "Your balance is insufficient for this action. Please top up first.",
     "billing_insufficient_title": "Insufficient Balance",
     "bind_email": "ربط البريد الإلكتروني",
-    "bind_email_subtitle": "ربط البريد الإلكتروني بحسابك",
+    "bind_email_subtitle": "ربط البريد",
     "browse": "استعراض",
     "cancel": "Cancel",
     "chat_banner_next_prompt_queued": "Next prompt is queued.",
     "chat_banner_one_prompt_failed": "One queued prompt failed.",
     "chat_banner_preview_rebuilding": "Preview is rebuilding.",
-    "chat_banner_preview_rebuilding_framework":
-        "{framework} preview is rebuilding.",
+    "chat_banner_preview_rebuilding_framework": "{framework} preview is rebuilding.",
     "chat_banner_queue_resume_model": "Queue resumes when the model is ready.",
     "chat_banner_queue_resume_run": "Queue resumes after the current run.",
-    "chat_banner_queue_resume_workspace":
-        "Queue resumes when the workspace is ready.",
+    "chat_banner_queue_resume_workspace": "Queue resumes when the workspace is ready.",
     "chat_banner_queued_count": "{count} queued",
     "chat_banner_queued_one": "1 queued",
     "chat_banner_restoring_output": "Restoring live output.",
@@ -156,8 +147,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "community_empty_all": "No posts.",
     "community_empty_components": "No components.",
     "community_empty_mine": "No posts created by you yet.",
-    "community_empty_my_posts_sentence":
-        "You have not published any posts yet.",
+    "community_empty_my_posts_sentence": "You have not published any posts yet.",
     "community_failed_to_load_components": "Failed to load components",
     "community_filter_all": "All",
     "community_filter_mine": "My posts",
@@ -197,89 +187,69 @@ kLocalizedValues = <String, Map<String, String>>{
     "create_project": "إنشاء مشروع",
     "create_project_accept_invitation": "قبول الدعوة",
     "create_project_accept_invitation_failed": "فشل قبول الدعوة: {error}",
-    "create_project_accept_invitation_hint":
-        "أضف \"{bot}\" كمتعاون في إعدادات مستودع GitHub، ثم اضغط \"قبول الدعوة\".",
+    "create_project_accept_invitation_hint": "أضف \"{bot}\" كمتعاون في إعدادات مستودع GitHub، ثم اضغط \"قبول الدعوة\".",
     "create_project_access_verified": "تم التحقق من الوصول",
     "create_project_access_verified_for": "تم التحقق من الوصول إلى {repo}",
     "create_project_action": "إنشاء المشروع",
     "create_project_bot_username_copied": "تم نسخ اسم مستخدم البوت إلى الحافظة",
     "create_project_choose_how_start": "اختر كيف تريد البدء",
     "create_project_choose_zip": "اختر أرشيف .zip",
-    "create_project_choose_zip_and_name":
-        "يرجى اختيار أرشيف zip وإدخال اسم المشروع",
-    "create_project_could_not_open_github_settings":
-        "تعذر فتح إعدادات GitHub في المتصفح",
+    "create_project_choose_zip_and_name": "يرجى اختيار أرشيف zip وإدخال اسم المشروع",
+    "create_project_could_not_open_github_settings": "تعذر فتح إعدادات GitHub في المتصفح",
     "create_project_default_repo_name": "الافتراضي: اسم المستودع",
     "create_project_description": "الوصف",
     "create_project_description_required": "يرجى وصف ما تريد بناءه",
-    "create_project_description_too_short":
-        "الوصف قصير جدًا. يرجى إضافة المزيد من التفاصيل (8 أحرف على الأقل)",
+    "create_project_description_too_short": "الوصف قصير جدًا. يرجى إضافة المزيد من التفاصيل (8 أحرف على الأقل)",
     "create_project_dialog_title": "إضافة مشروع",
     "create_project_failed_choose_archive": "فشل اختيار الأرشيف: {error}",
     "create_project_failed_get_project_id": "تعذر الحصول على معرّف المشروع",
     "create_project_failed_import_local": "فشل استيراد ملف Zip المحلي: {error}",
     "create_project_failed_import_project": "فشل استيراد المشروع: {error}",
     "create_project_failed_import_repo": "فشل استيراد المستودع: {error}",
-    "create_project_failed_to_create":
-        "فشل إنشاء المشروع: {error}\n\nقاعدة API: {base}",
+    "create_project_failed_to_create": "فشل إنشاء المشروع: {error}\n\nقاعدة API: {base}",
     "create_project_fill_required": "يرجى تعبئة جميع الحقول المطلوبة",
     "create_project_github_bot_username": "اسم مستخدم بوت GitHub",
-    "create_project_github_collaborator_subtitle":
-        "استيراد موجّه: إضافة البوت → قبول الدعوة → التحقق من الوصول → الاستيراد.",
+    "create_project_github_collaborator_subtitle": "استيراد موجّه: إضافة البوت → قبول الدعوة → التحقق من الوصول → الاستيراد.",
     "create_project_github_collaborator_title": "استيراد من GitHub (متعاون)",
     "create_project_github_guided_title": "استيراد GitHub موجّه (3 خطوات)",
     "create_project_github_import_title": "استيراد GitHub",
     "create_project_import_local_action": "استيراد Zip محلي",
-    "create_project_import_local_info":
-        "ارفع مساحة عمل محلية بصيغة .zip واستوردها مباشرة كمشروع. يجب أن يحتوي الأرشيف على ملفات المشروع في الجذر.",
-    "create_project_import_local_subtitle":
-        "ارفع أرشيف مشروع محلي بصيغة .zip واستورده مباشرة.",
+    "create_project_import_local_info": "ارفع مساحة عمل محلية بصيغة .zip واستوردها مباشرة كمشروع. يجب أن يحتوي الأرشيف على ملفات المشروع في الجذر.",
+    "create_project_import_local_subtitle": "ارفع أرشيف مشروع محلي بصيغة .zip واستورده مباشرة.",
     "create_project_import_local_title": "استيراد ملف Zip محلي",
     "create_project_import_project_action": "استيراد المشروع",
-    "create_project_import_public_subtitle":
-        "اعكس مستودع GitHub عام إلى مساحة عمل المؤسسة.",
+    "create_project_import_public_subtitle": "اعكس مستودع GitHub عام إلى مساحة عمل المؤسسة.",
     "create_project_import_public_title": "استيراد مستودع عام",
     "create_project_import_repo_action": "استيراد المستودع",
     "create_project_imported_from_github": "تم الاستيراد من GitHub: {repo}",
-    "create_project_invalid_repo_url":
-        "رابط المستودع غير صالح. مثال: https://github.com/owner/repo",
+    "create_project_invalid_repo_url": "رابط المستودع غير صالح. مثال: https://github.com/owner/repo",
     "create_project_invalid_repo_url_simple": "رابط المستودع غير صالح",
     "create_project_invitation_accepted": "تم قبول الدعوة",
     "create_project_invitation_accepted_message": "تم قبول الدعوة",
-    "create_project_loading_message":
-        "جارٍ إنشاء مشروعك. قد يستغرق ذلك بضع دقائق...",
+    "create_project_loading_message": "جارٍ إنشاء مشروعك. قد يستغرق ذلك بضع دقائق...",
     "create_project_loading_step_finalize": "جارٍ إنهاء الإعداد...",
     "create_project_loading_step_integrations": "جارٍ إعداد التكاملات...",
     "create_project_loading_step_plan": "جارٍ تخطيط بنية المشروع...",
-    "create_project_login_expired_models":
-        "انتهت صلاحية تسجيل الدخول. يرجى تسجيل الدخول مرة أخرى قبل تحميل النماذج.",
-    "create_project_login_expired_templates":
-        "انتهت صلاحية تسجيل الدخول. يرجى تسجيل الدخول مرة أخرى قبل تحميل القوالب.",
-    "create_project_missing_project_id_after_import":
-        "نجح الاستيراد ولكن معرّف المشروع مفقود",
-    "create_project_model_switch_failed_continue":
-        "تعذر تبديل النموذج، وسيتم المتابعة بالنموذج الافتراضي على الخادم. ({error})",
-    "create_project_new_ai_hint":
-        "مثال: تطبيق لوحة مهام للفريق مع مصادقة وأدوار وقاعدة بيانات.",
+    "create_project_login_expired_models": "انتهت صلاحية تسجيل الدخول. يرجى تسجيل الدخول مرة أخرى قبل تحميل النماذج.",
+    "create_project_login_expired_templates": "انتهت صلاحية تسجيل الدخول. يرجى تسجيل الدخول مرة أخرى قبل تحميل القوالب.",
+    "create_project_missing_project_id_after_import": "نجح الاستيراد ولكن معرّف المشروع مفقود",
+    "create_project_model_switch_failed_continue": "تعذر تبديل النموذج، وسيتم المتابعة بالنموذج الافتراضي على الخادم. ({error})",
+    "create_project_new_ai_hint": "مثال: تطبيق لوحة مهام للفريق مع مصادقة وأدوار وقاعدة بيانات.",
     "create_project_new_ai_subtitle": "صف ما تريد بناءه وسنقوم بإعداد كل شيء.",
-    "create_project_new_ai_summary":
-        "في جملة واحدة، صف الصفحات والمصادقة والبيانات والتدفقات الأساسية (8 أحرف على الأقل)؛ سننشئ المشروع ونتابع في الدردشة.",
+    "create_project_new_ai_summary": "في جملة واحدة، صف الصفحات والمصادقة والبيانات والتدفقات الأساسية (8 أحرف على الأقل)؛ سننشئ المشروع ونتابع في الدردشة.",
     "create_project_new_ai_title": "مشروع جديد (AI)",
     "create_project_new_project_title": "مشروع جديد",
     "create_project_open_github_settings": "فتح إعدادات GitHub",
     "create_project_private_project": "مشروع خاص",
-    "create_project_private_project_subtitle":
-        "إبقاء المشروع المستورد خاصًا بشكل افتراضي",
+    "create_project_private_project_subtitle": "إبقاء المشروع المستورد خاصًا بشكل افتراضي",
     "create_project_project_description": "وصف المشروع",
     "create_project_project_name": "اسم المشروع",
     "create_project_project_name_hint": "مثال: my-project",
     "create_project_public_repo_example": "مثال: https://github.com/owner/repo",
-    "create_project_public_repo_info":
-        "سنقوم بعكس المستودع العام إلى مساحة عمل المؤسسة. قد تستغرق المستودعات الكبيرة وقتًا أطول.",
+    "create_project_public_repo_info": "سنقوم بعكس المستودع العام إلى مساحة عمل المؤسسة. قد تستغرق المستودعات الكبيرة وقتًا أطول.",
     "create_project_public_repo_url": "رابط المستودع العام",
     "create_project_repository_url": "رابط المستودع",
-    "create_project_retry_create_integrations":
-        "فشل الإنشاء مع التكاملات، تتم إعادة المحاولة مرة واحدة…",
+    "create_project_retry_create_integrations": "فشل الإنشاء مع التكاملات، تتم إعادة المحاولة مرة واحدة…",
     "create_project_retry_missing_id": "معرّف المشروع مفقود بعد إعادة المحاولة",
     "create_project_select_model": "اختر نموذجًا",
     "create_project_select_template": "اختر قالبًا",
@@ -287,16 +257,13 @@ kLocalizedValues = <String, Map<String, String>>{
     "create_project_step_of_3": "الخطوة {step} من 3",
     "create_project_supported_zip": "الصيغة المدعومة: .zip",
     "create_project_template": "القالب",
-    "create_project_template_auto_description":
-        "دع D1V يختار أفضل قالب بناءً على طلبك.",
+    "create_project_template_auto_description": "دع D1V يختار أفضل قالب بناءً على طلبك.",
     "create_project_template_auto_name": "تلقائي",
-    "create_project_token_missing":
-        "أنت غير مسجل الدخول أو أن الرمز مفقود. يرجى تسجيل الدخول مرة أخرى.\n\nتلميح: الإعدادات → الملف الشخصي → API → نسخ التشخيص.",
+    "create_project_token_missing": "أنت غير مسجل الدخول أو أن الرمز مفقود. يرجى تسجيل الدخول مرة أخرى.\n\nتلميح: الإعدادات → الملف الشخصي → API → نسخ التشخيص.",
     "create_project_verify_access": "التحقق من الوصول",
     "create_project_verify_access_failed": "فشل التحقق من الوصول: {error}",
     "create_project_waiting_workspace": "بانتظار جاهزية مساحة العمل…",
-    "create_project_workspace_not_ready":
-        "مساحة العمل غير جاهزة: {error}\n\nقاعدة API: {base}",
+    "create_project_workspace_not_ready": "مساحة العمل غير جاهزة: {error}\n\nقاعدة API: {base}",
     "dark_mode": "الوضع الداكن",
     "dashboard": "لوحة التحكم",
     "dashboard_action_chat": "Chat",
@@ -307,8 +274,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "dashboard_no_projects_title": "No projects yet",
     "dashboard_open_project": "Open project",
     "dashboard_projects_load_failed": "Failed to load projects",
-    "dashboard_projects_subtitle":
-        "Continue from the most recently touched projects.",
+    "dashboard_projects_subtitle": "Continue from the most recently touched projects.",
     "dashboard_prompt_activity_day_message": "{count} prompts on {date}",
     "dashboard_prompt_activity_title": "Prompt activity",
     "dashboard_search_results": "Search Results ({count})",
@@ -340,42 +306,32 @@ kLocalizedValues = <String, Map<String, String>>{
     "docs_code_copied_message": "Code block copied. Paste it anywhere.",
     "docs_copy_code": "Copy",
     "docs_copy_code_done": "Copied",
-    "docs_hero_subtitle":
-        "Use the docs like a product index: scan by outcome, reopen what you touched recently, and jump straight into the detail view.",
-    "docs_hero_title":
-        "Operational guidance, product context, and implementation references.",
+    "docs_hero_subtitle": "Use the docs like a product index: scan by outcome, reopen what you touched recently, and jump straight into the detail view.",
+    "docs_hero_title": "Operational guidance, product context, and implementation references.",
     "docs_items_count": "{count} items",
-    "docs_load_failed_message":
-        "The in-app reader could not load this document. Retry here or open it in the browser.",
+    "docs_load_failed_message": "The in-app reader could not load this document. Retry here or open it in the browser.",
     "docs_load_failed_title": "Failed to load doc",
     "docs_no_matching_documents": "No matching documents",
-    "docs_no_matching_documents_hint":
-        "Try broader keywords or search by product area, workflow, or API topic.",
+    "docs_no_matching_documents_hint": "Try broader keywords or search by product area, workflow, or API topic.",
     "docs_open_failed_message": "Cannot open link",
     "docs_open_failed_title": "Open failed",
     "docs_open_in_browser": "Open in browser",
     "docs_opening_in_browser": "Opening documentation in your browser...",
     "docs_page_api_desc": "OpenAPI, auth, errors, pagination, webhooks.",
     "docs_page_api_title": "API",
-    "docs_page_architecture_desc":
-        "Environments, promotion model, and failure modes.",
+    "docs_page_architecture_desc": "Environments, promotion model, and failure modes.",
     "docs_page_architecture_title": "Architecture",
     "docs_page_faq_desc": "Troubleshooting and tips.",
     "docs_page_faq_title": "FAQ",
-    "docs_page_getting_started_desc":
-        "Prompt -> preview -> production, with verification steps.",
+    "docs_page_getting_started_desc": "Prompt -> preview -> production, with verification steps.",
     "docs_page_getting_started_title": "Getting Started",
-    "docs_page_integrations_desc":
-        "GitHub/Auth/Payments/Analytics: setup and verification.",
+    "docs_page_integrations_desc": "GitHub/Auth/Payments/Analytics: setup and verification.",
     "docs_page_integrations_title": "Integrations",
-    "docs_page_legal_restrictions_desc":
-        "Compliance and export restrictions (high-level).",
+    "docs_page_legal_restrictions_desc": "Compliance and export restrictions (high-level).",
     "docs_page_legal_restrictions_title": "Legal and Export Restrictions",
-    "docs_page_overview_desc":
-        "What the platform is and how the workflow fits together.",
+    "docs_page_overview_desc": "What the platform is and how the workflow fits together.",
     "docs_page_overview_title": "Overview",
-    "docs_page_privacy_policy_desc":
-        "What data we collect, how we use it, and how to request export or deletion.",
+    "docs_page_privacy_policy_desc": "What data we collect, how we use it, and how to request export or deletion.",
     "docs_page_privacy_policy_title": "Privacy Policy",
     "docs_page_product_desc": "Outcomes by role (PM / Business / Developers).",
     "docs_page_product_title": "Product",
@@ -383,11 +339,9 @@ kLocalizedValues = <String, Map<String, String>>{
     "docs_page_refund_policy_title": "Refund and Dispute Policy",
     "docs_page_roadmap_desc": "Now / Next priorities (subject to change).",
     "docs_page_roadmap_title": "Roadmap",
-    "docs_page_use_cases_desc":
-        "Playbooks: prompts + acceptance criteria for common products.",
+    "docs_page_use_cases_desc": "Playbooks: prompts + acceptance criteria for common products.",
     "docs_page_use_cases_title": "Use Cases",
-    "docs_page_workspace_desc":
-        "Where to go in the Project workspace (Chat, Deploy, Pay, Analytics).",
+    "docs_page_workspace_desc": "Where to go in the Project workspace (Chat, Deploy, Pay, Analytics).",
     "docs_page_workspace_title": "Workspace Guide",
     "docs_recently_viewed": "Recently viewed",
     "docs_search_hint": "Search docs, workflows, API, setup...",
@@ -425,8 +379,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "friends_referred": "الأصدقاء المدعوون",
     "generating": "Generating...",
     "github": "GitHub",
-    "github_connect_description":
-        "قم بتوصيل حساب GitHub الخاص بك لاستيراد المستودعات",
+    "github_connect_description": "قم بتوصيل حساب GitHub الخاص بك لاستيراد المستودعات",
     "github_import_action_import": "استيراد المشروع",
     "github_import_action_importing": "جارٍ استيراد المشروع…",
     "github_import_action_opening_chat": "جارٍ فتح الدردشة…",
@@ -436,15 +389,12 @@ kLocalizedValues = <String, Map<String, String>>{
     "github_import_failed_message": "فشل استيراد المستودع",
     "github_import_failed_title": "فشل الاستيراد",
     "github_import_in_progress_title": "الاستيراد قيد التنفيذ",
-    "github_import_monorepo_notice":
-        "يبدو أن هذا المستودع monorepo. اختر الدليل الجذر للتطبيق قبل بدء النشر التجريبي.",
-    "github_import_opening_chat":
-        "تم استيراد المشروع. ما زالت المعاينة قيد البدء، وسيتم فتح الدردشة الآن.",
+    "github_import_monorepo_notice": "يبدو أن هذا المستودع monorepo. اختر الدليل الجذر للتطبيق قبل بدء النشر التجريبي.",
+    "github_import_opening_chat": "تم استيراد المشروع. ما زالت المعاينة قيد البدء، وسيتم فتح الدردشة الآن.",
     "github_import_progress_choose_root": "اختر الدليل الجذر للتطبيق",
     "github_import_progress_import": "جارٍ استيراد المستودع",
     "github_import_progress_prepare_preview": "جارٍ تجهيز النشر التجريبي",
-    "github_import_progress_preview_after_root":
-        "سيبدأ النشر التجريبي بعد الإعداد",
+    "github_import_progress_preview_after_root": "سيبدأ النشر التجريبي بعد الإعداد",
     "github_import_progress_repo_imported": "تم استيراد المستودع",
     "github_import_progress_wait_preview": "جارٍ انتظار جاهزية المعاينة",
     "github_import_project_description": "وصف المشروع",
@@ -457,8 +407,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "github_import_root_directory": "الدليل الجذر",
     "github_import_root_failed": "فشل إعداد الدليل الجذر",
     "github_import_root_saved": "تم حفظ الدليل الجذر وبدء النشر التجريبي.",
-    "github_import_sheet_subtitle":
-        "أنشئ مشروعًا جديدًا من مستودع GitHub هذا وواصل تدفق النشر التجريبي.",
+    "github_import_sheet_subtitle": "أنشئ مشروعًا جديدًا من مستودع GitHub هذا وواصل تدفق النشر التجريبي.",
     "github_import_sheet_title": "استيراد المستودع",
     "github_import_success_message": "تم استيراد المستودع بنجاح",
     "github_integration": "تكامل GitHub",
@@ -468,14 +417,13 @@ kLocalizedValues = <String, Map<String, String>>{
     "help_support_cta_title": "Still need help?",
     "help_support_docs_subtitle": "Technical documentation and API reference",
     "help_support_email_open_error": "Failed to open email: {error}",
-    "help_support_email_open_failed":
-        "Could not open email app. Please email us at {email}",
+    "help_support_email_open_failed": "Could not open email app. Please email us at {email}",
     "help_support_hero_subtitle": "Find answers or contact our support team",
     "help_support_hero_title": "How can we help you?",
     "help_support_link_open_error": "Failed to open {name}: {error}",
     "help_support_link_open_failed": "Could not open {name}",
     "help_support_quick_actions": "Quick Actions",
-    "help_support_subtitle": "احصل على المساعدة والدعم",
+    "help_support_subtitle": "مساعدة / دعم",
     "help_support_user_guide_subtitle": "Learn how to use all features",
     "help_support_user_guide_title": "User Guide",
     "import_action": "استيراد",
@@ -503,12 +451,10 @@ kLocalizedValues = <String, Map<String, String>>{
     "invitation": "Invitation",
     "invite_code_copied": "تم نسخ رمز الدعوة إلى الحافظة",
     "invite_code_unavailable": "رمز الدعوة غير متاح",
-    "invite_description":
-        "قم بدعوة الأصدقاء للانضمام إلى d1v.ai واحصل على مكافآت",
+    "invite_description": "قم بدعوة الأصدقاء للانضمام إلى d1v.ai واحصل على مكافآت",
     "invite_friends": "دعوة الأصدقاء",
     "invites": "الدعوات",
-    "invites_empty_message":
-        "You haven't invited any friends yet.\\nShare your invite code to get started!",
+    "invites_empty_message": "You haven't invited any friends yet.\\nShare your invite code to get started!",
     "invites_empty_title": "No Invites Yet",
     "invites_joined_at": "Joined {time}",
     "invites_load_failed_title": "Failed to load invited users",
@@ -530,25 +476,19 @@ kLocalizedValues = <String, Map<String, String>>{
     "login_failed": "فشل في تسجيل الدخول",
     "login_first": "يرجى تسجيل الدخول أولاً",
     "login_required_button": "تسجيل الدخول",
-    "login_required_create_post_message":
-        "تحتاج إلى تسجيل الدخول لإنشاء منشور.",
+    "login_required_create_post_message": "تحتاج إلى تسجيل الدخول لإنشاء منشور.",
     "login_required_dashboard_message": "تحتاج إلى تسجيل الدخول لعرض مشاريعك.",
-    "login_required_github_message":
-        "تحتاج إلى تسجيل الدخول لإدارة تكامل GitHub.",
-    "login_required_invites_message":
-        "تحتاج إلى تسجيل الدخول لعرض الدعوات والمكافآت.",
-    "login_required_orders_message":
-        "تحتاج إلى تسجيل الدخول لعرض الطلبات والفوترة.",
-    "login_required_settings_message":
-        "تحتاج إلى تسجيل الدخول لإدارة إعدادات حسابك.",
+    "login_required_github_message": "تحتاج إلى تسجيل الدخول لإدارة تكامل GitHub.",
+    "login_required_invites_message": "تحتاج إلى تسجيل الدخول لعرض الدعوات والمكافآت.",
+    "login_required_orders_message": "تحتاج إلى تسجيل الدخول لعرض الطلبات والفوترة.",
+    "login_required_settings_message": "تحتاج إلى تسجيل الدخول لإدارة إعدادات حسابك.",
     "login_required_title": "تسجيل الدخول مطلوب",
     "login_success": "تم تسجيل الدخول بنجاح",
     "login_with_code": "تسجيل الدخول بالرمز",
     "login_with_password": "تسجيل الدخول بكلمة المرور",
     "logout": "تسجيل الخروج",
     "main_nav_workspace": "Workspace",
-    "model_load_auth_expired":
-        "Login expired. Please sign in again to load models.",
+    "model_load_auth_expired": "Login expired. Please sign in again to load models.",
     "model_switch_failed": "Failed to switch model: {error}",
     "model_switch_success": "تم التبديل إلى {model}",
     "model_switch_title": "النموذج",
@@ -556,17 +496,15 @@ kLocalizedValues = <String, Map<String, String>>{
     "my_invites_subtitle": "عرض سجل الدعوات الخاص بك",
     "new_password": "كلمة المرور الجديدة",
     "notifications": "الإشعارات",
-    "notifications_subtitle": "إدارة الإشعارات",
+    "notifications_subtitle": "الإشعارات",
     "onboarding_action_back": "Back",
     "onboarding_action_finish": "Finish",
     "onboarding_action_next": "Next",
     "onboarding_ai_avatar_generate_failed": "Failed to generate AI avatars",
-    "onboarding_ai_avatar_hint":
-        "Tap \"AI Random\" to draw your AI avatar cards.",
+    "onboarding_ai_avatar_hint": "Tap \"AI Random\" to draw your AI avatar cards.",
     "onboarding_ai_avatar_title": "AI Avatar Cards",
     "onboarding_ai_random": "AI Random",
-    "onboarding_avatar_hint":
-        "Recommended: square image, PNG/JPG/WEBP, up to 5MB.",
+    "onboarding_avatar_hint": "Recommended: square image, PNG/JPG/WEBP, up to 5MB.",
     "onboarding_avatar_pick_failed": "Failed to pick image: {error}",
     "onboarding_avatar_refresh_failed": "Failed to refresh avatars: {error}",
     "onboarding_avatar_select_failed": "Failed to select avatar: {error}",
@@ -575,18 +513,14 @@ kLocalizedValues = <String, Map<String, String>>{
     "onboarding_complete_failed": "Failed to complete onboarding: {error}",
     "onboarding_complete_subtitle": "مرحبًا بك. أنت جاهز للمتابعة.",
     "onboarding_complete_title": "اكتمل الإعداد",
-    "onboarding_invite_helper":
-        "Optional. Add an invite code if someone referred you.",
+    "onboarding_invite_helper": "Optional. Add an invite code if someone referred you.",
     "onboarding_invite_hint": "Enter invite code",
     "onboarding_invite_label": "Invite code",
-    "onboarding_org_helper":
-        "This helps us tailor templates and recommendations for your team.",
-    "onboarding_subtitle_avatar":
-        "Upload a profile image so collaborators can recognize you at a glance.",
+    "onboarding_org_helper": "This helps us tailor templates and recommendations for your team.",
+    "onboarding_subtitle_avatar": "Upload a profile image so collaborators can recognize you at a glance.",
     "onboarding_subtitle_finish": "You are almost ready to start building.",
     "onboarding_subtitle_invite": "Enter an invite code to join your team.",
-    "onboarding_subtitle_org":
-        "This helps us tailor templates and recommendations for your team.",
+    "onboarding_subtitle_org": "This helps us tailor templates and recommendations for your team.",
     "onboarding_title_avatar": "Add your avatar",
     "onboarding_title_finish": "Finish setup",
     "onboarding_title_org": "Tell us about your organization",
@@ -604,8 +538,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "orders_usage_builder_billing_rule": "Billing rule: {rate}/min",
     "orders_usage_builder_empty": "No deployment records yet.",
     "orders_usage_builder_estimated_cost": "Estimated Cost",
-    "orders_usage_builder_estimated_cost_hint":
-        "Estimated from deployment build durations",
+    "orders_usage_builder_estimated_cost_hint": "Estimated from deployment build durations",
     "orders_usage_builder_load_failed": "Unable to load builder usage data.",
     "orders_usage_builder_overall": "Overall Build Time",
     "orders_usage_builder_projects_title": "Top Projects",
@@ -627,8 +560,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "orders_usage_llm_total_cost_hint": "Estimated cost",
     "orders_usage_na": "N/A",
     "orders_usage_project_breakdown_empty": "No usage data available",
-    "orders_usage_project_breakdown_empty_hint":
-        "Your LLM usage will appear here",
+    "orders_usage_project_breakdown_empty_hint": "Your LLM usage will appear here",
     "orders_usage_project_breakdown_title": "Project Breakdown",
     "orders_usage_project_deleted": "تم الحذف",
     "orders_usage_time_range": "Time Range",
@@ -636,11 +568,9 @@ kLocalizedValues = <String, Map<String, String>>{
     "orders_wallet_usage_bucket_expiring": "Expiring",
     "orders_wallet_usage_bucket_non_expiring": "Non-expiring",
     "orders_wallet_usage_empty": "No usage records yet.",
-    "orders_wallet_usage_empty_hint":
-        "Consumption records from deployments and model usage will appear here.",
+    "orders_wallet_usage_empty_hint": "Consumption records from deployments and model usage will appear here.",
     "orders_wallet_usage_source_admin_broadcast": "admin broadcast",
-    "orders_wallet_usage_source_system_message":
-        "System message: {description}",
+    "orders_wallet_usage_source_system_message": "System message: {description}",
     "other": "أخرى",
     "owner_hint": "اسم المستخدم أو المنظمة",
     "owner_label": "المالك",
@@ -651,6 +581,23 @@ kLocalizedValues = <String, Map<String, String>>{
     "passwords_do_not_match": "كلمات المرور غير متطابقة",
     "pricing": "التسعير",
     "privacy": "الخصوصية",
+    "privacy_allow_analytics": "السماح بالتحليلات",
+    "privacy_allow_analytics_desc": "المساعدة في تحسين التطبيق من خلال مشاركة تحليلات الاستخدام",
+    "privacy_allow_data_sharing": "السماح بمشاركة البيانات",
+    "privacy_allow_data_sharing_desc": "مشاركة البيانات لتحسين خدماتنا",
+    "privacy_allow_third_party_apps": "السماح بتطبيقات الطرف الثالث",
+    "privacy_allow_third_party_apps_desc": "تمكين التكامل مع خدمات الطرف الثالث",
+    "privacy_discoverable_by_email": "قابل للاكتشاف عبر البريد الإلكتروني",
+    "privacy_discoverable_by_email_desc": "السماح للآخرين بالعثور عليك باستخدام بريدك الإلكتروني",
+    "privacy_marketing_emails": "رسائل التسويق",
+    "privacy_marketing_emails_desc": "استلام رسائل حول الميزات والعروض الجديدة",
+    "privacy_public_profile": "الملف الشخصي العام",
+    "privacy_public_profile_desc": "السماح لأي شخص بعرض ملفك الشخصي",
+    "privacy_settings": "إعدادات الخصوصية",
+    "privacy_show_activity_status": "إظهار حالة النشاط",
+    "privacy_show_activity_status_desc": "عرض نشاطك الأخير للآخرين",
+    "privacy_show_online_status": "إظهار الحالة عبر الإنترنت",
+    "privacy_show_online_status_desc": "السماح للآخرين برؤية نشاطك",
     "profile": "الملف الشخصي",
     "profile_ai_random": "AI Random",
     "profile_avatar_generate_failed": "Failed to generate avatars",
@@ -676,18 +623,12 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_actions": "Actions",
     "project_analytics_active_now": "Active Now",
     "project_analytics_active_visitors": "Active Visitors",
-    "project_analytics_ai_prompt_active_now":
-        "Can you help me interpret my real-time active users and recommend actions to improve conversion?",
-    "project_analytics_ai_prompt_custom_events":
-        "Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?",
-    "project_analytics_ai_prompt_dashboard":
-        "Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?",
-    "project_analytics_ai_prompt_pageviews":
-        "Can you analyze my pageviews trend and suggest ways to increase traffic and retention?",
-    "project_analytics_ai_prompt_sessions":
-        "Can you analyze my sessions and suggest how to increase engagement and session duration?",
-    "project_analytics_ai_prompt_visitors":
-        "Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?",
+    "project_analytics_ai_prompt_active_now": "Can you help me interpret my real-time active users and recommend actions to improve conversion?",
+    "project_analytics_ai_prompt_custom_events": "Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?",
+    "project_analytics_ai_prompt_dashboard": "Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?",
+    "project_analytics_ai_prompt_pageviews": "Can you analyze my pageviews trend and suggest ways to increase traffic and retention?",
+    "project_analytics_ai_prompt_sessions": "Can you analyze my sessions and suggest how to increase engagement and session duration?",
+    "project_analytics_ai_prompt_visitors": "Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?",
     "project_analytics_all": "All",
     "project_analytics_bounces": "Bounces",
     "project_analytics_comparison_notes": "Comparison Notes",
@@ -695,8 +636,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_copy_failed": "Copy failed",
     "project_analytics_copy_field": "Copy {title}",
     "project_analytics_copy_summary": "Copy Summary",
-    "project_analytics_copy_summary_hint":
-        "Copy a shareable analytics snapshot",
+    "project_analytics_copy_summary_hint": "Copy a shareable analytics snapshot",
     "project_analytics_copy_tracking_code": "Copy Tracking Code",
     "project_analytics_copy_tracking_code_hint": "Copy Umami script snippet",
     "project_analytics_current_window": "Current window: {range}",
@@ -716,11 +656,9 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_dim_screen": "Screen",
     "project_analytics_dim_tag": "Tag",
     "project_analytics_enable_action": "Enable Analytics",
-    "project_analytics_enable_hint":
-        "Track your website's visitors, page views, and custom events with Umami Analytics",
+    "project_analytics_enable_hint": "Track your website's visitors, page views, and custom events with Umami Analytics",
     "project_analytics_enable_title": "Enable Analytics",
-    "project_analytics_env_filter_note":
-        "Note: environment filter uses hostname exact matching.",
+    "project_analytics_env_filter_note": "Note: environment filter uses hostname exact matching.",
     "project_analytics_environment": "Environment",
     "project_analytics_events": "Events",
     "project_analytics_events_trend": "Events Trend",
@@ -733,20 +671,14 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_filters": "Filters",
     "project_analytics_inactive_tab": "{title} tab",
     "project_analytics_initializing": "Initializing...",
-    "project_analytics_install_done_autojump":
-        "Installation completed. Auto-opening Data in {seconds}s.",
-    "project_analytics_install_done_open":
-        "Installation completed. You can open the analytics tabs now.",
-    "project_analytics_install_incomplete":
-        "Analytics install did not complete successfully.",
-    "project_analytics_install_success":
-        "Analytics successfully installed and activated.",
+    "project_analytics_install_done_autojump": "Installation completed. Auto-opening Data in {seconds}s.",
+    "project_analytics_install_done_open": "Installation completed. You can open the analytics tabs now.",
+    "project_analytics_install_incomplete": "Analytics install did not complete successfully.",
+    "project_analytics_install_success": "Analytics successfully installed and activated.",
     "project_analytics_installer": "Analytics Installer",
-    "project_analytics_installer_hint":
-        "Review the session output or retry the install.",
+    "project_analytics_installer_hint": "Review the session output or retry the install.",
     "project_analytics_installing": "Installing Analytics…",
-    "project_analytics_installing_hint":
-        "We are initializing Umami and inserting the tracking script via a chat session.",
+    "project_analytics_installing_hint": "We are initializing Umami and inserting the tracking script via a chat session.",
     "project_analytics_last_24_hours": "Last 24 Hours",
     "project_analytics_last_30_days": "Last 30 Days",
     "project_analytics_last_6_hours": "Last 6 Hours",
@@ -757,12 +689,10 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_metrics": "Metrics",
     "project_analytics_no_compare_data": "No top-page comparison data",
     "project_analytics_no_data": "No analytics data yet",
-    "project_analytics_no_data_hint":
-        "Analytics data will appear once your project is live and receiving traffic.",
+    "project_analytics_no_data_hint": "Analytics data will appear once your project is live and receiving traffic.",
     "project_analytics_no_data_short": "No data",
     "project_analytics_no_events": "No events in current range",
-    "project_analytics_no_metrics_selected":
-        "No metrics selected. Enable Pageviews/Sessions in Filters.",
+    "project_analytics_no_metrics_selected": "No metrics selected. Enable Pageviews/Sessions in Filters.",
     "project_analytics_no_realtime_urls": "No realtime URL data yet",
     "project_analytics_no_sessions": "No sessions in current range",
     "project_analytics_pageviews": "Pageviews",
@@ -776,13 +706,11 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_ready": "Analytics Ready",
     "project_analytics_recent_events": "Recent Events",
     "project_analytics_reenable": "Re-enable Analytics",
-    "project_analytics_reenable_confirm":
-        "This will re-run analytics setup and re-insert the tracking script via workspace session. Continue?",
+    "project_analytics_reenable_confirm": "This will re-run analytics setup and re-insert the tracking script via workspace session. Continue?",
     "project_analytics_reenable_hint": "Re-run script installation flow",
     "project_analytics_reenable_started": "Re-enable process started.",
     "project_analytics_reports": "Reports",
-    "project_analytics_reports_coming":
-        "Custom reports are coming soon. This keeps parity with the current web placeholder state.",
+    "project_analytics_reports_coming": "Custom reports are coming soon. This keeps parity with the current web placeholder state.",
     "project_analytics_reset": "Reset",
     "project_analytics_restore_defaults": "Restore defaults",
     "project_analytics_retry_install": "Retry Install",
@@ -853,8 +781,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_api_deleted": "Deleted",
     "project_api_description_optional": "Description (optional)",
     "project_api_edit_variable": "Edit variable",
-    "project_api_empty_hint":
-        "Create your first key-value pair to configure\\nruntime behavior for this project.",
+    "project_api_empty_hint": "Create your first key-value pair to configure\\nruntime behavior for this project.",
     "project_api_empty_title": "No environment variables",
     "project_api_environment_variables": "Environment Variables",
     "project_api_key": "Key",
@@ -866,8 +793,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_api_sensitive_masked": "Masked in lists by default",
     "project_api_sensitive_visible": "Visible in lists",
     "project_api_show": "Show",
-    "project_api_show_values_message":
-        "This will reveal sensitive environment values on screen.",
+    "project_api_show_values_message": "This will reveal sensitive environment values on screen.",
     "project_api_show_values_title": "Show values?",
     "project_api_update_failed": "Update failed",
     "project_api_value": "Value",
@@ -883,8 +809,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_chat_engine_fast_hint": "استخدم Claude للحصول على ردود أسرع",
     "project_chat_engine_switch_success": "تم التبديل إلى {mode}",
     "project_chat_engine_think_hard": "تفكير عميق",
-    "project_chat_engine_think_hard_hint":
-        "استخدم Codex للحصول على استدلال أعمق",
+    "project_chat_engine_think_hard_hint": "استخدم Codex للحصول على استدلال أعمق",
     "project_chat_engine_title": "الوضع",
     "project_chat_find_in_file_tooltip": "البحث داخل الملف",
     "project_chat_fold_all": "طي الكل",
@@ -910,35 +835,28 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_chat_tab_preview_short": "معاينة",
     "project_chat_unfold_all": "فتح الكل",
     "project_database_actions": "Actions",
-    "project_database_ai_prompt_graph":
-        "Given the database schema, explain how \"{table}\" relates to other tables (foreign keys) and suggest improvements.",
-    "project_database_ai_prompt_relation":
-        "Explain the relationship from {from} to {to}. Suggest indexes and common queries.",
-    "project_database_ai_prompt_table":
-        "Can you analyze the database table \"{table}\" and explain its purpose, structure, and any suggestions for optimization or best practices?",
+    "project_database_ai_prompt_graph": "Given the database schema, explain how \"{table}\" relates to other tables (foreign keys) and suggest improvements.",
+    "project_database_ai_prompt_relation": "Explain the relationship from {from} to {to}. Suggest indexes and common queries.",
+    "project_database_ai_prompt_table": "Can you analyze the database table \"{table}\" and explain its purpose, structure, and any suggestions for optimization or best practices?",
     "project_database_ask_ai_table": "Ask AI about this table",
     "project_database_branch": "Branch",
     "project_database_branch_hint": "Current Neon branch context",
     "project_database_branch_primary": "{name} (primary)",
     "project_database_column_pk": "{name} (PK)",
     "project_database_columns_schema": "{columns} columns • {schema} schema",
-    "project_database_data_empty_hint":
-        "Create tables first, then browse rows here.",
+    "project_database_data_empty_hint": "Create tables first, then browse rows here.",
     "project_database_delete_row": "Delete row",
-    "project_database_delete_row_confirm":
-        "Delete this row from {table}? This action cannot be undone.",
+    "project_database_delete_row_confirm": "Delete this row from {table}? This action cannot be undone.",
     "project_database_edit_row": "Edit row",
     "project_database_enable_action": "Enable Database",
-    "project_database_enable_hint":
-        "Provision a Neon PostgreSQL database for this project and start exploring your schema and data.",
+    "project_database_enable_hint": "Provision a Neon PostgreSQL database for this project and start exploring your schema and data.",
     "project_database_enable_title": "Enable Database",
     "project_database_enabled_success": "Database enabled successfully!",
     "project_database_enabling": "Enabling...",
     "project_database_feature_branching": "Branching support",
     "project_database_feature_serverless": "Serverless Postgres on Neon",
     "project_database_feature_ssl": "Secure SSL connections",
-    "project_database_graph_hint":
-        "Add more tables to see relationships as a graph.",
+    "project_database_graph_hint": "Add more tables to see relationships as a graph.",
     "project_database_insert": "Insert",
     "project_database_insert_row": "Insert row",
     "project_database_inserting": "Inserting...",
@@ -948,22 +866,17 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_database_migration_plans": "{count} plans",
     "project_database_next": "Next",
     "project_database_no_columns": "No visible columns",
-    "project_database_no_columns_hint":
-        "This table currently has no browsable columns.",
+    "project_database_no_columns_hint": "This table currently has no browsable columns.",
     "project_database_no_editable_columns": "No editable columns",
-    "project_database_no_editable_columns_hint":
-        "This table has no editable non-primary-key columns.",
+    "project_database_no_editable_columns_hint": "This table has no editable non-primary-key columns.",
     "project_database_no_job_details": "No job details available yet.",
     "project_database_no_migration": "No migration history",
-    "project_database_no_migration_hint":
-        "Migration plans and execution records will appear here.",
+    "project_database_no_migration_hint": "Migration plans and execution records will appear here.",
     "project_database_no_relations": "No foreign-key relationships found.",
     "project_database_no_rows": "No rows found",
-    "project_database_no_rows_hint":
-        "Try another table or insert data from your application flow.",
+    "project_database_no_rows_hint": "Try another table or insert data from your application flow.",
     "project_database_no_tables": "No database tables",
-    "project_database_no_tables_hint":
-        "Database tables will appear here once they are created.",
+    "project_database_no_tables_hint": "Database tables will appear here once they are created.",
     "project_database_page": "Page {index}",
     "project_database_page_size": "{size} / page",
     "project_database_previous": "Previous",
@@ -990,40 +903,27 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_actions": "Actions",
     "project_deploy_active_preview": "Preview deployment in progress...",
     "project_deploy_active_prod": "Production release in progress: {phase}",
-    "project_deploy_active_reverting":
-        "Rolling back commit{suffix} and triggering preview deploy...",
-    "project_deploy_ai_prompt_environment":
-        "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_active_reverting": "Rolling back commit{suffix} and triggering preview deploy...",
+    "project_deploy_ai_prompt_environment": "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
     "project_deploy_ai_prompt_prefix": "My deploy failed with this error:",
-    "project_deploy_ai_prompt_preview":
-        "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_prod":
-        "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_suffix":
-        "Give me the most likely root cause and a step-by-step fix.",
-    "project_deploy_ai_prompt_vercel_middle":
-        "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
-    "project_deploy_ai_prompt_vercel_prefix":
-        "My Vercel deployment failed for project",
-    "project_deploy_ai_prompt_vercel_suffix":
-        "Also suggest what logs/env vars to check first.",
+    "project_deploy_ai_prompt_preview": "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_prod": "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_suffix": "Give me the most likely root cause and a step-by-step fix.",
+    "project_deploy_ai_prompt_vercel_middle": "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
+    "project_deploy_ai_prompt_vercel_prefix": "My Vercel deployment failed for project",
+    "project_deploy_ai_prompt_vercel_suffix": "Also suggest what logs/env vars to check first.",
     "project_deploy_ask_ai": "Ask AI",
     "project_deploy_build_log": "Build log",
     "project_deploy_build_logs": "Build logs",
     "project_deploy_close": "Close",
-    "project_deploy_coach_no_preview":
-        "No preview yet. Start with a preview deploy to reduce release risk.",
-    "project_deploy_coach_preview_ready":
-        "Preview is ready. Recommended next step: release to production.",
-    "project_deploy_coach_prod_live":
-        "Production is live. Keep shipping with small preview iterations.",
+    "project_deploy_coach_no_preview": "No preview yet. Start with a preview deploy to reduce release risk.",
+    "project_deploy_coach_preview_ready": "Preview is ready. Recommended next step: release to production.",
+    "project_deploy_coach_prod_live": "Production is live. Keep shipping with small preview iterations.",
     "project_deploy_common_fixes": "Common fixes:",
     "project_deploy_configure_later": "Configure later",
-    "project_deploy_confirm_preview_message":
-        "This will trigger a new preview (dev) deployment on Vercel.",
+    "project_deploy_confirm_preview_message": "This will trigger a new preview (dev) deployment on Vercel.",
     "project_deploy_confirm_preview_title": "Redeploy preview?",
-    "project_deploy_confirm_prod_message":
-        "This will compare dev/main, merge if needed, then trigger a production deployment.",
+    "project_deploy_confirm_prod_message": "This will compare dev/main, merge if needed, then trigger a production deployment.",
     "project_deploy_confirm_prod_title": "Deploy to production?",
     "project_deploy_copy": "Copy",
     "project_deploy_copy_all": "Copy all",
@@ -1031,16 +931,14 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_copy_failed": "Copy failed",
     "project_deploy_current_deployments": "Current Deployments",
     "project_deploy_dev_timeline": "Dev Timeline",
-    "project_deploy_dev_timeline_hint":
-        "Inspect recent commits on the dev branch before you promote them to production.",
+    "project_deploy_dev_timeline_hint": "Inspect recent commits on the dev branch before you promote them to production.",
     "project_deploy_environment_deployment": "{env} deployment",
     "project_deploy_error_snippet_copied": "Error snippet copied",
     "project_deploy_filter_all": "All",
     "project_deploy_filter_preview": "Preview",
     "project_deploy_filter_production": "Production",
     "project_deploy_history": "History",
-    "project_deploy_history_empty":
-        "No deployments yet — deploy your project to see history here.",
+    "project_deploy_history_empty": "No deployments yet — deploy your project to see history here.",
     "project_deploy_history_title": "Deployment History",
     "project_deploy_log_cached": "Cached",
     "project_deploy_log_empty": "No logs available for this deployment.",
@@ -1058,27 +956,22 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_merge_into_main": "Merge into main",
     "project_deploy_more": "More",
     "project_deploy_next_steps": "Next steps",
-    "project_deploy_no_change_commits":
-        "No change commits between adjacent releases.",
+    "project_deploy_no_change_commits": "No change commits between adjacent releases.",
     "project_deploy_no_diff_files": "No file diff",
-    "project_deploy_no_diff_files_hint":
-        "This commit did not return any changed file patches.",
+    "project_deploy_no_diff_files_hint": "This commit did not return any changed file patches.",
     "project_deploy_no_history": "No deployment history yet.",
     "project_deploy_no_logs": "No logs",
-    "project_deploy_no_logs_message":
-        "This deployment has no Vercel deployment id.",
+    "project_deploy_no_logs_message": "This deployment has no Vercel deployment id.",
     "project_deploy_no_message": "(no message)",
     "project_deploy_no_production": "No production deployment",
     "project_deploy_no_releases": "No releases detected on main yet.",
     "project_deploy_no_timeline": "No timeline yet",
-    "project_deploy_no_timeline_hint":
-        "No recent commits found on the development branch.",
+    "project_deploy_no_timeline_hint": "No recent commits found on the development branch.",
     "project_deploy_ok": "OK",
     "project_deploy_open": "Open",
     "project_deploy_open_url_failed": "Cannot open URL",
     "project_deploy_open_url_failed_message": "Could not open {url}",
-    "project_deploy_patch_unavailable":
-        "Patch preview is unavailable for this file.",
+    "project_deploy_patch_unavailable": "Patch preview is unavailable for this file.",
     "project_deploy_phase_checking": "Checking dev/main diff...",
     "project_deploy_phase_deploying": "Triggering production deploy...",
     "project_deploy_phase_merging": "Merging dev into main...",
@@ -1093,15 +986,12 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_releases": "Releases",
     "project_deploy_releases_main": "(main)",
     "project_deploy_retry_last": "Retry last deployment",
-    "project_deploy_retry_preview_message":
-        "This will trigger a new preview (dev) deployment.",
+    "project_deploy_retry_preview_message": "This will trigger a new preview (dev) deployment.",
     "project_deploy_retry_preview_title": "Retry preview deploy?",
-    "project_deploy_retry_prod_message":
-        "This will compare dev/main, merge if needed, then trigger a new production deployment.",
+    "project_deploy_retry_prod_message": "This will compare dev/main, merge if needed, then trigger a new production deployment.",
     "project_deploy_retry_prod_title": "Retry production deploy?",
     "project_deploy_revert_confirm_action": "Confirm revert",
-    "project_deploy_revert_confirm_message":
-        "This will run git revert on commit {sha} and trigger a new preview deployment.",
+    "project_deploy_revert_confirm_message": "This will run git revert on commit {sha} and trigger a new preview deployment.",
     "project_deploy_revert_confirm_title": "Revert this commit?",
     "project_deploy_revert_failed": "Revert failed",
     "project_deploy_revert_no_sha": "No commit SHA found for this deployment.",
@@ -1112,8 +1002,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_revert_unavailable": "Revert unavailable",
     "project_deploy_reverting": "Reverting...",
     "project_deploy_select_commit": "Select a commit",
-    "project_deploy_select_commit_hint":
-        "Choose a commit on the left to inspect changed files and patches.",
+    "project_deploy_select_commit_hint": "Choose a commit on the left to inspect changed files and patches.",
     "project_deploy_share_all": "Share all",
     "project_deploy_share_errors": "Share errors",
     "project_deploy_tab_timeline": "Timeline",
@@ -1121,28 +1010,19 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_time_hours_ago": "{hours}h ago",
     "project_deploy_time_just_now": "just now",
     "project_deploy_time_minutes_ago": "{minutes}m ago",
-    "project_deploy_tip_build_issue":
-        "This looks like a build failure — check compilation errors in logs.",
-    "project_deploy_tip_check_env_vars":
-        "Check environment variables (and sync to Vercel).",
-    "project_deploy_tip_check_github_access":
-        "Check GitHub collaborator/bot access to the repo.",
-    "project_deploy_tip_env_issue":
-        "This looks like an env var issue — verify required secrets are set.",
-    "project_deploy_tip_open_logs":
-        "Open the latest build logs and copy/share the error snippet.",
-    "project_deploy_tip_permission":
-        "This looks like a permission issue — verify GitHub access and tokens.",
-    "project_deploy_tip_retry_preview_first":
-        "Retry preview deploy first (then production).",
-    "project_deploy_tip_short_env":
-        "Env vars configured (and synced to Vercel)",
+    "project_deploy_tip_build_issue": "This looks like a build failure — check compilation errors in logs.",
+    "project_deploy_tip_check_env_vars": "Check environment variables (and sync to Vercel).",
+    "project_deploy_tip_check_github_access": "Check GitHub collaborator/bot access to the repo.",
+    "project_deploy_tip_env_issue": "This looks like an env var issue — verify required secrets are set.",
+    "project_deploy_tip_open_logs": "Open the latest build logs and copy/share the error snippet.",
+    "project_deploy_tip_permission": "This looks like a permission issue — verify GitHub access and tokens.",
+    "project_deploy_tip_retry_preview_first": "Retry preview deploy first (then production).",
+    "project_deploy_tip_short_env": "Env vars configured (and synced to Vercel)",
     "project_deploy_tip_short_github": "GitHub access / repo permissions",
     "project_deploy_tip_short_logs": "Open build logs and share error snippet",
     "project_deploy_tip_short_retry_preview": "Retry preview deploy first",
     "project_deploy_troubleshooting": "Troubleshooting",
-    "project_deploy_troubleshooting_hint":
-        "If deploy fails, try these quick checks:",
+    "project_deploy_troubleshooting_hint": "If deploy fails, try these quick checks:",
     "project_deploy_unknown": "unknown",
     "project_deployment_tab_deployments": "Deployments",
     "project_detail_error_text": "Error: {error}",
@@ -1175,8 +1055,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_github_import": "GitHub Import",
     "project_github_import_as_new": "Import as new project",
     "project_github_import_failed": "Import failed: {error}",
-    "project_github_import_missing_project_id":
-        "Import succeeded but missing project id",
+    "project_github_import_missing_project_id": "Import succeeded but missing project id",
     "project_github_imported": "Imported",
     "project_github_imported_description": "Imported from GitHub: {repo}",
     "project_github_invalid_repo_url": "Invalid repository URL",
@@ -1202,38 +1081,25 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_overview_community_action_unpublish": "Unpublish",
     "project_overview_community_action_update": "Update",
     "project_overview_community_action_view": "View",
-    "project_overview_community_hint":
-        "Publish a community post linked to this project (auto-release to production if needed).",
-    "project_overview_community_progress_deploy":
-        "Triggering production deploy…",
+    "project_overview_community_hint": "Publish a community post linked to this project (auto-release to production if needed).",
+    "project_overview_community_progress_deploy": "Triggering production deploy…",
     "project_overview_community_progress_finalizing": "Finalizing…",
     "project_overview_community_progress_merge": "Merging branches…",
     "project_overview_community_progress_publish": "Publishing to community…",
-    "project_overview_community_publish_dialog_current_domain":
-        "Current domain: {domain}",
-    "project_overview_community_publish_dialog_has_prod":
-        "This project already has a production deployment. Publishing will create or update a community post linked to your project overview.",
-    "project_overview_community_publish_dialog_need_release":
-        "To publish this project to the community, we first need to release it to production. We'll merge your dev branch into main, trigger a production deploy, then publish the post.",
-    "project_overview_community_publish_dialog_step_deploy":
-        "• Trigger production deploy",
-    "project_overview_community_publish_dialog_step_merge":
-        "• Merge dev → main",
-    "project_overview_community_publish_dialog_step_publish":
-        "• Publish to community",
+    "project_overview_community_publish_dialog_current_domain": "Current domain: {domain}",
+    "project_overview_community_publish_dialog_has_prod": "This project already has a production deployment. Publishing will create or update a community post linked to your project overview.",
+    "project_overview_community_publish_dialog_need_release": "To publish this project to the community, we first need to release it to production. We'll merge your dev branch into main, trigger a production deploy, then publish the post.",
+    "project_overview_community_publish_dialog_step_deploy": "• Trigger production deploy",
+    "project_overview_community_publish_dialog_step_merge": "• Merge dev → main",
+    "project_overview_community_publish_dialog_step_publish": "• Publish to community",
     "project_overview_community_publish_dialog_steps": "Steps:",
     "project_overview_community_publish_dialog_title": "Publish to community",
-    "project_overview_community_publish_failed":
-        "Failed to publish to community",
-    "project_overview_community_publish_failed_sentence":
-        "Failed to publish to community.",
+    "project_overview_community_publish_failed": "Failed to publish to community",
+    "project_overview_community_publish_failed_sentence": "Failed to publish to community.",
     "project_overview_community_publish_success": "Published to community",
-    "project_overview_community_release_merge_message":
-        "Merge {head} into {base}",
-    "project_overview_community_release_no_commits":
-        "No commits found on development branch",
-    "project_overview_community_release_publish_failed":
-        "Production deploy succeeded, but failed to publish to community",
+    "project_overview_community_release_merge_message": "Merge {head} into {base}",
+    "project_overview_community_release_no_commits": "No commits found on development branch",
+    "project_overview_community_release_publish_failed": "Production deploy succeeded, but failed to publish to community",
     "project_overview_community_status_draft": "Draft",
     "project_overview_community_status_none": "Not published",
     "project_overview_community_status_published": "Published",
@@ -1242,25 +1108,20 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_overview_community_unpublish_success": "Unpublished",
     "project_overview_community_update_failed": "Failed to update post",
     "project_overview_community_update_success": "Post updated",
-    "project_overview_danger_delete_confirm_label":
-        "Type project name to confirm",
-    "project_overview_danger_delete_desc":
-        "This action cannot be undone. Please type the project name to confirm deletion.",
+    "project_overview_danger_delete_confirm_label": "Type project name to confirm",
+    "project_overview_danger_delete_desc": "This action cannot be undone. Please type the project name to confirm deletion.",
     "project_overview_danger_delete_failed": "Failed to delete project",
     "project_overview_danger_delete_in_progress": "Deleting {name}...",
     "project_overview_danger_delete_name_mismatch": "Name does not match.",
     "project_overview_danger_delete_progress_cleanup": "Final cleanup...",
-    "project_overview_danger_delete_progress_remove":
-        "Removing project resources...",
-    "project_overview_danger_delete_progress_submit":
-        "Submitting delete request...",
+    "project_overview_danger_delete_progress_remove": "Removing project resources...",
+    "project_overview_danger_delete_progress_submit": "Submitting delete request...",
     "project_overview_danger_delete_success": "Deleted {name}",
     "project_overview_danger_delete_title": "Delete project",
     "project_overview_danger_project_name": "Project: {name}",
     "project_overview_danger_title": "Danger zone",
     "project_overview_danger_transfer_action": "Transfer",
-    "project_overview_danger_transfer_desc":
-        "Enter the recipient email to transfer ownership. You will lose access after transfer.",
+    "project_overview_danger_transfer_desc": "Enter the recipient email to transfer ownership. You will lose access after transfer.",
     "project_overview_danger_transfer_failed": "Failed to transfer project",
     "project_overview_danger_transfer_recipient": "Recipient email",
     "project_overview_danger_transfer_success": "Project transferred",
@@ -1282,12 +1143,10 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_overview_health_title": "Health metrics",
     "project_overview_links_github_repo": "GitHub Repository",
     "project_overview_links_not_available": "Not available",
-    "project_overview_links_open_github_failed":
-        "Could not open GitHub repository",
+    "project_overview_links_open_github_failed": "Could not open GitHub repository",
     "project_overview_links_open_preview_failed": "Could not open preview URL",
     "project_overview_links_preview_url": "Preview URL",
-    "project_overview_recent_deployments_empty":
-        "No recent deployments — ship a new build to see activity here.",
+    "project_overview_recent_deployments_empty": "No recent deployments — ship a new build to see activity here.",
     "project_overview_recent_deployments_env": "{env} deployment",
     "project_overview_recent_deployments_feed": "Activity feed",
     "project_overview_recent_deployments_title": "Recent deployments",
@@ -1308,27 +1167,21 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_payment_add_product": "Add Product",
     "project_payment_add_product_failed": "Failed to add product: {error}",
     "project_payment_add_product_title": "Add Payment Product",
-    "project_payment_ai_prompt_product":
-        "Can you analyze the payment product \"{name}\" and provide suggestions on pricing strategy, configuration, or marketing improvements?",
-    "project_payment_ai_prompt_transaction":
-        "Can you analyze this payment transaction ({amount}, {status}) and provide insights about payment patterns or recommendations?",
+    "project_payment_ai_prompt_product": "Can you analyze the payment product \"{name}\" and provide suggestions on pricing strategy, configuration, or marketing improvements?",
+    "project_payment_ai_prompt_transaction": "Can you analyze this payment transaction ({amount}, {status}) and provide insights about payment patterns or recommendations?",
     "project_payment_anonymous": "Anonymous",
-    "project_payment_available_for_purchase":
-        "Product is available for purchase",
+    "project_payment_available_for_purchase": "Product is available for purchase",
     "project_payment_conversion_rate": "Conversion Rate",
     "project_payment_description_hint": "Describe your product",
     "project_payment_description_optional": "Description (Optional)",
     "project_payment_edit": "Edit",
     "project_payment_edit_product_title": "Edit Payment Product",
     "project_payment_enable_button": "تفعيل المدفوعات",
-    "project_payment_enable_description":
-        "لم يتم تفعيل المدفوعات لهذا المشروع بعد. قم أولاً بتهيئة المدفوعات، ثم يمكنك إدارة المنتجات والمعاملات والحسابات البنكية وعمليات السحب وعمليات الـ Webhook.",
+    "project_payment_enable_description": "لم يتم تفعيل المدفوعات لهذا المشروع بعد. قم أولاً بتهيئة المدفوعات، ثم يمكنك إدارة المنتجات والمعاملات والحسابات البنكية وعمليات السحب وعمليات الـ Webhook.",
     "project_payment_enable_failed": "فشل تفعيل المدفوعات",
     "project_payment_enable_feature_checkout": "Stripe Checkout وروابط الدفع",
-    "project_payment_enable_feature_products":
-        "المنتجات والأرصدة وعمليات السحب",
-    "project_payment_enable_feature_webhooks":
-        "دورة حياة الطلبات الجاهزة للـ Webhook",
+    "project_payment_enable_feature_products": "المنتجات والأرصدة وعمليات السحب",
+    "project_payment_enable_feature_webhooks": "دورة حياة الطلبات الجاهزة للـ Webhook",
     "project_payment_enable_loading": "جارٍ التهيئة…",
     "project_payment_enable_success": "تم تفعيل المدفوعات بنجاح",
     "project_payment_enable_title": "تفعيل المدفوعات",
@@ -1353,8 +1206,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_payment_total_revenue": "Total Revenue",
     "project_payment_transactions": "Transactions",
     "project_payment_unknown_product": "Unknown Product",
-    "project_payment_update_product_failed":
-        "Failed to update product: {error}",
+    "project_payment_update_product_failed": "Failed to update product: {error}",
     "projects_action_load_more": "Load More",
     "projects_action_relogin": "Re-login",
     "projects_empty_search_message": "جرّب كلمة مفتاحية أخرى أو امسح البحث.",
@@ -1385,7 +1237,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "resend_after": "إعادة الإرسال بعد",
     "resend_code": "إعادة إرسال الرمز",
     "reset_password": "إعادة تعيين كلمة المرور",
-    "reset_password_subtitle": "إعادة تعيين كلمة مرور تسجيل الدخول",
+    "reset_password_subtitle": "إعادة تعيين كلمة المرور",
     "resetting": "جاري إعادة التعيين...",
     "retry": "Retry",
     "save": "Save",
@@ -1393,8 +1245,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "search": "بحث",
     "send_code": "إرسال الرمز",
     "sending": "جاري الإرسال...",
-    "session_expired_message":
-        "انتهت صلاحية تسجيل الدخول. يرجى تسجيل الدخول مرة أخرى.",
+    "session_expired_message": "انتهت صلاحية تسجيل الدخول. يرجى تسجيل الدخول مرة أخرى.",
     "session_expired_title": "انتهت الجلسة",
     "settings": "الإعدادات",
     "settings_api_key": "مفتاح API",
@@ -1404,28 +1255,16 @@ kLocalizedValues = <String, Map<String, String>>{
     "settings_editor_appearance_mode": "وضع المظهر",
     "settings_editor_dark_theme": "السمة الداكنة",
     "settings_editor_default_wrap": "الالتفاف الافتراضي",
-    "settings_editor_default_wrap_hint":
-        "افتح المحررات مع تفعيل التفاف الكلمات بشكل افتراضي.",
-    "settings_editor_engine": "محرك المحرر",
-    "settings_editor_engine_flutter_code_editor": "Flutter Code Editor",
-    "settings_editor_engine_flutter_code_editor_hint":
-        "يبقى Flutter Code Editor أصليًا بالكامل داخل Flutter ويحافظ على سير العمل الحالي لطيّ الكود.",
-    "settings_editor_engine_flutter_monaco": "Flutter Monaco",
-    "settings_editor_engine_flutter_monaco_hint":
-        "يستخدم Monaco واجهة WebView/iframe على مستوى المنصة للحصول على أداء أفضل مع الملفات الكبيرة.",
-    "settings_editor_entry_subtitle": "السمة، الخط، التفاف الأسطر",
+    "settings_editor_default_wrap_hint": "افتح مع التفاف مفعّل.",
+    "settings_editor_entry_subtitle": "السمة، الخط، الالتفاف",
     "settings_editor_font_size": "حجم الخط",
-    "settings_editor_footer":
-        "اختر سمتين منفصلتين للوضع الفاتح والداكن، ثم قرر ما إذا كان المحرر سيتبع مظهر التطبيق أو سيبقى ثابتًا.",
+    "settings_editor_footer": "اختر السمة والسلوك.",
     "settings_editor_light_theme": "السمة الفاتحة",
     "settings_editor_preview_comment": "معاينة بأسلوب VS Code",
-    "settings_editor_saved_message":
-        "تم حفظ السمة الفاتحة والسمة الداكنة ووضع المظهر وتفضيلات المحرر.",
+    "settings_editor_saved_message": "تم حفظ التفضيلات.",
     "settings_editor_show_rulers": "إظهار المساطر",
-    "settings_editor_show_rulers_hint":
-        "اعرض مساطر عمودية عند العمودين 80 و120.",
-    "settings_editor_subtitle":
-        "اضبط مظهر المحرر ليقترب من تجربة مساحة العمل على نمط VS Code.",
+    "settings_editor_show_rulers_hint": "مساطر عند 80 / 120.",
+    "settings_editor_subtitle": "السمة وسلوك التحرير.",
     "settings_editor_tab_size": "حجم Tab",
     "settings_editor_theme_a11y_light": "A11y Light",
     "settings_editor_theme_dracula": "Dracula",
@@ -1454,7 +1293,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "syncing": "جاري المزامنة",
     "syncing_message": "جاري مزامنة المستودعات...",
     "system_mode": "النظام",
-    "theme_subtitle": "الوضع الفاتح أو الداكن",
+    "theme_subtitle": "فاتح أو داكن",
     "theme_switched": "تم التبديل إلى",
     "theme_title": "المظهر",
     "theme_updated": "تم تحديث المظهر",
@@ -1470,35 +1309,34 @@ kLocalizedValues = <String, Map<String, String>>{
     "topup_method_google_pay": "Google Pay",
     "topup_payment_canceled_message": "The payment was canceled.",
     "topup_payment_canceled_title": "Payment canceled",
-    "topup_payment_submitted_message":
-        "Your top-up payment was submitted successfully.",
+    "topup_payment_submitted_message": "Your top-up payment was submitted successfully.",
     "topup_payment_submitted_title": "Payment submitted",
     "topup_subtitle": "Add funds with {methods} through Stripe.",
     "topup_title": "Top up credits",
-    "topup_unconfigured":
-        "Stripe mobile payment is not configured in this build.",
+    "topup_unconfigured": "Stripe mobile payment is not configured in this build.",
+    "two_factor_cancel": "إلغاء",
+    "two_factor_disable": "تعطيل",
+    "two_factor_disable_confirm": "هل أنت متأكد من أنك تريد تعطيل المصادقة ذات العاملين؟ سيكون حسابك أقل أمانًا.",
+    "two_factor_disable_title": "تعطيل المصادقة ذات العاملين",
+    "two_factor_title": "المصادقة ذات العاملين",
+    "two_factor_verify_enable": "تحقق وتمكين",
     "upgrade_best_fit": "Best fit",
     "upgrade_billing_monthly": "Monthly",
     "upgrade_billing_yearly": "Yearly",
     "upgrade_credits": "credits",
     "upgrade_cycle": "cycle",
-    "upgrade_empty_detail":
-        "Subscription packages will appear here when published.",
+    "upgrade_empty_detail": "Subscription packages will appear here when published.",
     "upgrade_empty_title": "No plans available",
     "upgrade_featured_hint": "Balanced for most active builders",
-    "upgrade_footer_configured":
-        "Payments are processed natively in-app. Balance top-up stays in USD for now.",
-    "upgrade_footer_unconfigured":
-        "This build still needs STRIPE_PUBLISHABLE_KEY before native checkout can open.",
+    "upgrade_footer_configured": "Payments are processed natively in-app. Balance top-up stays in USD for now.",
+    "upgrade_footer_unconfigured": "This build still needs STRIPE_PUBLISHABLE_KEY before native checkout can open.",
     "upgrade_load_failed_title": "Failed to load plans",
     "upgrade_period": "period",
     "upgrade_quota": "Quota",
     "upgrade_standard_hint": "Designed for focused production usage",
     "upgrade_subscription_failed": "Subscription failed: {error}",
-    "upgrade_subscription_submitted":
-        "Subscription payment submitted successfully.",
-    "upgrade_subtitle":
-        "Choose a plan built for sustained usage, faster limits, and cleaner billing.",
+    "upgrade_subscription_submitted": "Subscription payment submitted successfully.",
+    "upgrade_subtitle": "Choose a plan built for sustained usage, faster limits, and cleaner billing.",
     "upgrade_title": "Upgrade",
     "verify_code": "رمز التحقق",
     "verify_code_complete": "يرجى إدخال رمز التحقق كاملاً",
@@ -1510,13 +1348,11 @@ kLocalizedValues = <String, Map<String, String>>{
     "workspace_banner_checking_status": "Checking status.",
     "workspace_banner_issue": "Workspace issue",
     "workspace_banner_ready": "Workspace ready",
-    "workspace_banner_retrying_background":
-        "Start failed. Retrying in the background.",
+    "workspace_banner_retrying_background": "Start failed. Retrying in the background.",
     "workspace_banner_sleeping_needed": "😴 في وضع السكون حتى الحاجة إليها.",
     "workspace_banner_starting": "Starting workspace",
     "workspace_banner_starting_message": "Starting workspace.",
-    "workspace_banner_starting_now":
-        "Starting now. Your message will send next.",
+    "workspace_banner_starting_now": "Starting now. Your message will send next.",
     "workspace_banner_syncing_files": "Syncing files.",
     "workspace_tip_checking_short": "Checking",
     "workspace_tip_checking_status": "Checking workspace status",
@@ -1545,43 +1381,34 @@ kLocalizedValues = <String, Map<String, String>>{
     "workspace_warmup_inline_next": "Starting workspace. Sending next.",
     "workspace_warmup_inline_now": "Ready. Sending now.",
     "workspace_warmup_inline_ready": "Workspace ready. Sending your message...",
-    "workspace_warmup_inline_starting":
-        "Workspace is starting. Your message will send automatically.",
+    "workspace_warmup_inline_starting": "Workspace is starting. Your message will send automatically.",
     "workspace_warmup_notice_next": "Starting. Sending next.",
-    "workspace_warmup_notice_starting":
-        "Workspace is starting. Sending will continue automatically.",
+    "workspace_warmup_notice_starting": "Workspace is starting. Sending will continue automatically.",
     "your_invite_code": "رمز الدعوة الخاص بك",
   },
   "en": <String, String>{
     "about": "About",
     "about_description": "An AI-powered app development platform.",
-    "about_subtitle": "App version and info",
+    "about_subtitle": "App info",
     "about_title": "About",
     "access": "Access",
     "account_data_contact_support_delete": "Contact support to delete account",
     "account_data_copy_request_template": "Copy request template",
-    "account_data_delete_confirm_message":
-        "This will contact {support_email} to request account deletion. Deletion may be irreversible. Continue?",
-    "account_data_delete_description":
-        "Account deletion is currently handled by support. Please review the legal restrictions before requesting deletion.",
-    "account_data_delete_template":
-        "Request: Account Deletion\\nAccount: {email}\\nPlease delete my account and associated data.\\nI understand this action may be irreversible.\\nContact: {support_email}",
+    "account_data_delete_confirm_message": "This will contact {support_email} to request account deletion. Deletion may be irreversible. Continue?",
+    "account_data_delete_description": "Account deletion is currently handled by support. Please review the legal restrictions before requesting deletion.",
+    "account_data_delete_template": "Request: Account Deletion\\nAccount: {email}\\nPlease delete my account and associated data.\\nI understand this action may be irreversible.\\nContact: {support_email}",
     "account_data_delete_title": "Account Deletion",
-    "account_data_export_description":
-        "Export is currently handled by support. We provide a template you can copy and send.",
-    "account_data_export_template":
-        "Request: Data Export\\nAccount: {email}\\nPlease export my account data (profile, projects, billing).\\nContact: {support_email}",
+    "account_data_export_description": "Export is currently handled by support. We provide a template you can copy and send.",
+    "account_data_export_template": "Request: Data Export\\nAccount: {email}\\nPlease export my account data (profile, projects, billing).\\nContact: {support_email}",
     "account_data_export_title": "Data Export",
     "account_data_legal": "Legal",
-    "account_data_request_template_copied":
-        "Request template copied to clipboard",
-    "account_data_subtitle": "Data export and account deletion",
-    "account_data_support_dialog_message":
-        "Please contact {support_email} for this request.",
+    "account_data_open_projects": "Open projects",
+    "account_data_request_template_copied": "Request template copied to clipboard",
+    "account_data_subtitle": "Export / delete",
+    "account_data_support_dialog_message": "Please contact {support_email} for this request.",
     "account_data_title": "Account & Data",
     "activity": "Activity",
-    "agree_terms":
-        "By logging in, you agree to our Terms of Service and Privacy Policy",
+    "agree_terms": "By logging in, you agree to our Terms of Service and Privacy Policy",
     "alert_title_error": "Error",
     "alert_title_warning": "Warning",
     "api_docs_load_failed_title": "Failed to load API docs",
@@ -1591,22 +1418,17 @@ kLocalizedValues = <String, Map<String, String>>{
     "api_keys_confirm_create": "Create key",
     "api_keys_confirm_revoke": "Confirm revoke",
     "api_keys_copied": "API key copied",
-    "api_keys_copy_secret_hint":
-        "Copy this secret now. It will not be shown again.",
+    "api_keys_copy_secret_hint": "Copy this secret now. It will not be shown again.",
     "api_keys_create_button": "Create key",
     "api_keys_create_failed": "Failed to create API key",
-    "api_keys_create_success":
-        "API key created. Copy it now, it will not be shown again.",
+    "api_keys_create_success": "API key created. Copy it now, it will not be shown again.",
     "api_keys_created_at": "Created",
     "api_keys_creating": "Creating...",
-    "api_keys_description":
-        "Use API keys for non-admin endpoints. Admin routes still require normal user auth.",
+    "api_keys_description": "Use API keys for non-admin endpoints. Admin routes still require normal user auth.",
     "api_keys_description_label": "Description",
-    "api_keys_dialog_create_description":
-        "Add a name and an optional description so you can recognize this key later.",
+    "api_keys_dialog_create_description": "Add a name and an optional description so you can recognize this key later.",
     "api_keys_dialog_create_title": "Create API key",
-    "api_keys_dialog_revoke_description":
-        "Revoke \"{name}\"? This action cannot be undone.",
+    "api_keys_dialog_revoke_description": "Revoke \"{name}\"? This action cannot be undone.",
     "api_keys_dialog_revoke_title": "Revoke API key",
     "api_keys_empty": "No API keys yet.",
     "api_keys_existing_title": "Existing keys",
@@ -1620,28 +1442,29 @@ kLocalizedValues = <String, Map<String, String>>{
     "api_keys_revoked": "Revoked",
     "api_keys_title": "Create API key",
     "api_keys_unnamed": "Unnamed key",
-    "api_settings": "API",
+    "api_settings": "API Settings",
+    "api_settings_copy_diagnostics": "Copy diagnostics",
+    "api_settings_reset": "Reset",
+    "api_settings_save": "Save",
+    "api_settings_test_connection": "Test connection",
     "appearance": "Appearance",
     "back": "Back",
     "basic_information": "Basic Information",
     "billing_insufficient_action_later": "Later",
     "billing_insufficient_action_topup": "Top up now",
-    "billing_insufficient_description":
-        "Your balance is insufficient for this action. Please top up first.",
+    "billing_insufficient_description": "Your balance is insufficient for this action. Please top up first.",
     "billing_insufficient_title": "Insufficient Balance",
     "bind_email": "Bind Email",
-    "bind_email_subtitle": "Bind email to your account",
+    "bind_email_subtitle": "Link your email",
     "browse": "Browse",
     "cancel": "Cancel",
     "chat_banner_next_prompt_queued": "Next prompt is queued.",
     "chat_banner_one_prompt_failed": "One queued prompt failed.",
     "chat_banner_preview_rebuilding": "Preview is rebuilding.",
-    "chat_banner_preview_rebuilding_framework":
-        "{framework} preview is rebuilding.",
+    "chat_banner_preview_rebuilding_framework": "{framework} preview is rebuilding.",
     "chat_banner_queue_resume_model": "Queue resumes when the model is ready.",
     "chat_banner_queue_resume_run": "Queue resumes after the current run.",
-    "chat_banner_queue_resume_workspace":
-        "Queue resumes when the workspace is ready.",
+    "chat_banner_queue_resume_workspace": "Queue resumes when the workspace is ready.",
     "chat_banner_queued_count": "{count} queued",
     "chat_banner_queued_one": "1 queued",
     "chat_banner_restoring_output": "Restoring live output.",
@@ -1695,8 +1518,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "community_empty_all": "No posts.",
     "community_empty_components": "No components.",
     "community_empty_mine": "No posts created by you yet.",
-    "community_empty_my_posts_sentence":
-        "You have not published any posts yet.",
+    "community_empty_my_posts_sentence": "You have not published any posts yet.",
     "community_failed_to_load_components": "Failed to load components",
     "community_filter_all": "All",
     "community_filter_mine": "My posts",
@@ -1735,95 +1557,70 @@ kLocalizedValues = <String, Map<String, String>>{
     "create_post_title_required": "Please enter a title",
     "create_project": "Create Project",
     "create_project_accept_invitation": "Accept Invitation",
-    "create_project_accept_invitation_failed":
-        "Accept invitation failed: {error}",
-    "create_project_accept_invitation_hint":
-        "Add \"{bot}\" as a collaborator in GitHub repo settings, then tap \"Accept Invitation\".",
+    "create_project_accept_invitation_failed": "Accept invitation failed: {error}",
+    "create_project_accept_invitation_hint": "Add \"{bot}\" as a collaborator in GitHub repo settings, then tap \"Accept Invitation\".",
     "create_project_access_verified": "Access Verified",
     "create_project_access_verified_for": "Access verified for {repo}",
     "create_project_action": "Create Project",
     "create_project_bot_username_copied": "Bot username copied to clipboard",
     "create_project_choose_how_start": "Choose how you want to start",
     "create_project_choose_zip": "Choose .zip archive",
-    "create_project_choose_zip_and_name":
-        "Please choose a zip archive and fill in the project name",
-    "create_project_could_not_open_github_settings":
-        "Could not open GitHub settings in browser",
+    "create_project_choose_zip_and_name": "Please choose a zip archive and fill in the project name",
+    "create_project_could_not_open_github_settings": "Could not open GitHub settings in browser",
     "create_project_default_repo_name": "Default: repository name",
     "create_project_description": "Description",
-    "create_project_description_required":
-        "Please describe what you want to build",
-    "create_project_description_too_short":
-        "Description is too short. Please provide more details (min 8 chars)",
+    "create_project_description_required": "Please describe what you want to build",
+    "create_project_description_too_short": "Description is too short. Please provide more details (min 8 chars)",
     "create_project_dialog_title": "Add Project",
     "create_project_failed_choose_archive": "Failed to choose archive: {error}",
     "create_project_failed_get_project_id": "Failed to get project ID",
     "create_project_failed_import_local": "Failed to import local zip: {error}",
     "create_project_failed_import_project": "Failed to import project: {error}",
     "create_project_failed_import_repo": "Failed to import repository: {error}",
-    "create_project_failed_to_create":
-        "Failed to create project: {error}\\n\\nAPI Base: {base}",
+    "create_project_failed_to_create": "Failed to create project: {error}\\n\\nAPI Base: {base}",
     "create_project_fill_required": "Please fill in all required fields",
     "create_project_github_bot_username": "GitHub Bot Username",
-    "create_project_github_collaborator_subtitle":
-        "Guided import: add bot → accept invite → verify access → import.",
-    "create_project_github_collaborator_title":
-        "Import from GitHub (collaborator)",
+    "create_project_github_collaborator_subtitle": "Guided import: add bot → accept invite → verify access → import.",
+    "create_project_github_collaborator_title": "Import from GitHub (collaborator)",
     "create_project_github_guided_title": "Guided GitHub import (3 steps)",
     "create_project_github_import_title": "GitHub Import",
     "create_project_import_local_action": "Import Local Zip",
-    "create_project_import_local_info":
-        "Upload a local .zip workspace and import it directly as a project. The archive should contain your project files at the root.",
-    "create_project_import_local_subtitle":
-        "Upload a local .zip project archive and import it directly.",
+    "create_project_import_local_info": "Upload a local .zip workspace and import it directly as a project. The archive should contain your project files at the root.",
+    "create_project_import_local_subtitle": "Upload a local .zip project archive and import it directly.",
     "create_project_import_local_title": "Import Local Zip",
     "create_project_import_project_action": "Import Project",
-    "create_project_import_public_subtitle":
-        "Mirror a public GitHub repo into the org workspace.",
+    "create_project_import_public_subtitle": "Mirror a public GitHub repo into the org workspace.",
     "create_project_import_public_title": "Import Public Repo",
     "create_project_import_repo_action": "Import Repository",
     "create_project_imported_from_github": "Imported from GitHub: {repo}",
-    "create_project_invalid_repo_url":
-        "Invalid repo URL. Example: https://github.com/owner/repo",
+    "create_project_invalid_repo_url": "Invalid repo URL. Example: https://github.com/owner/repo",
     "create_project_invalid_repo_url_simple": "Invalid repo URL",
     "create_project_invitation_accepted": "Invitation Accepted",
     "create_project_invitation_accepted_message": "Invitation accepted",
-    "create_project_loading_message":
-        "Creating your project. This can take up to a couple of minutes...",
+    "create_project_loading_message": "Creating your project. This can take up to a couple of minutes...",
     "create_project_loading_step_finalize": "Finalizing setup...",
     "create_project_loading_step_integrations": "Setting up integrations...",
     "create_project_loading_step_plan": "Planning project structure...",
-    "create_project_login_expired_models":
-        "Login expired. Please sign in again before loading models.",
-    "create_project_login_expired_templates":
-        "Login expired. Please sign in again before loading templates.",
-    "create_project_missing_project_id_after_import":
-        "Import succeeded but missing project id",
-    "create_project_model_switch_failed_continue":
-        "Failed to switch model, continuing with server default. ({error})",
-    "create_project_new_ai_hint":
-        "Example: a team task board app with auth, roles, and database.",
-    "create_project_new_ai_subtitle":
-        "Describe what you want to build and we set up everything.",
-    "create_project_new_ai_summary":
-        "In one sentence, describe pages, auth, data, and key flows (min 8 chars); we will create the project and continue in chat.",
+    "create_project_login_expired_models": "Login expired. Please sign in again before loading models.",
+    "create_project_login_expired_templates": "Login expired. Please sign in again before loading templates.",
+    "create_project_missing_project_id_after_import": "Import succeeded but missing project id",
+    "create_project_model_switch_failed_continue": "Failed to switch model, continuing with server default. ({error})",
+    "create_project_new_ai_hint": "Example: a team task board app with auth, roles, and database.",
+    "create_project_new_ai_subtitle": "Describe what you want to build and we set up everything.",
+    "create_project_new_ai_summary": "In one sentence, describe pages, auth, data, and key flows (min 8 chars); we will create the project and continue in chat.",
     "create_project_new_ai_title": "New project (AI)",
     "create_project_new_project_title": "New Project",
     "create_project_open_github_settings": "Open GitHub Settings",
     "create_project_private_project": "Private project",
-    "create_project_private_project_subtitle":
-        "Keep the imported project private by default",
+    "create_project_private_project_subtitle": "Keep the imported project private by default",
     "create_project_project_description": "Project Description",
     "create_project_project_name": "Project Name",
     "create_project_project_name_hint": "my-project",
-    "create_project_public_repo_example":
-        "Example: https://github.com/owner/repo",
-    "create_project_public_repo_info":
-        "We will mirror the public repo into the organization workspace. Large repos may take longer.",
+    "create_project_public_repo_example": "Example: https://github.com/owner/repo",
+    "create_project_public_repo_info": "We will mirror the public repo into the organization workspace. Large repos may take longer.",
     "create_project_public_repo_url": "Public Repo URL",
     "create_project_repository_url": "Repository URL",
-    "create_project_retry_create_integrations":
-        "Create-with-integrations failed, retrying once…",
+    "create_project_retry_create_integrations": "Create-with-integrations failed, retrying once…",
     "create_project_retry_missing_id": "Retry create project missing id",
     "create_project_select_model": "Select model",
     "create_project_select_template": "Select template",
@@ -1831,16 +1628,13 @@ kLocalizedValues = <String, Map<String, String>>{
     "create_project_step_of_3": "Step {step} of 3",
     "create_project_supported_zip": "Supported format: .zip",
     "create_project_template": "Template",
-    "create_project_template_auto_description":
-        "Let D1V choose the best template based on your prompt.",
+    "create_project_template_auto_description": "Let D1V choose the best template based on your prompt.",
     "create_project_template_auto_name": "Auto",
-    "create_project_token_missing":
-        "Not logged in or token missing. Please login again.\\n\\nTip: Settings → Profile → API → Copy diagnostics.",
+    "create_project_token_missing": "Not logged in or token missing. Please login again.\\n\\nTip: Settings → Profile → API → Copy diagnostics.",
     "create_project_verify_access": "Verify Access",
     "create_project_verify_access_failed": "Verify access failed: {error}",
     "create_project_waiting_workspace": "Waiting workspace ready…",
-    "create_project_workspace_not_ready":
-        "Workspace is not ready: {error}\\n\\nAPI Base: {base}",
+    "create_project_workspace_not_ready": "Workspace is not ready: {error}\\n\\nAPI Base: {base}",
     "dark_mode": "Dark Mode",
     "dashboard": "Dashboard",
     "dashboard_action_chat": "Chat",
@@ -1851,8 +1645,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "dashboard_no_projects_title": "No projects yet",
     "dashboard_open_project": "Open project",
     "dashboard_projects_load_failed": "Failed to load projects",
-    "dashboard_projects_subtitle":
-        "Continue from the most recently touched projects.",
+    "dashboard_projects_subtitle": "Continue from the most recently touched projects.",
     "dashboard_prompt_activity_day_message": "{count} prompts on {date}",
     "dashboard_prompt_activity_title": "Prompt activity",
     "dashboard_search_results": "Search Results ({count})",
@@ -1884,42 +1677,32 @@ kLocalizedValues = <String, Map<String, String>>{
     "docs_code_copied_message": "Code block copied. Paste it anywhere.",
     "docs_copy_code": "Copy",
     "docs_copy_code_done": "Copied",
-    "docs_hero_subtitle":
-        "Use the docs like a product index: scan by outcome, reopen what you touched recently, and jump straight into the detail view.",
-    "docs_hero_title":
-        "Operational guidance, product context, and implementation references.",
+    "docs_hero_subtitle": "Use the docs like a product index: scan by outcome, reopen what you touched recently, and jump straight into the detail view.",
+    "docs_hero_title": "Operational guidance, product context, and implementation references.",
     "docs_items_count": "{count} items",
-    "docs_load_failed_message":
-        "The in-app reader could not load this document. Retry here or open it in the browser.",
+    "docs_load_failed_message": "The in-app reader could not load this document. Retry here or open it in the browser.",
     "docs_load_failed_title": "Failed to load doc",
     "docs_no_matching_documents": "No matching documents",
-    "docs_no_matching_documents_hint":
-        "Try broader keywords or search by product area, workflow, or API topic.",
+    "docs_no_matching_documents_hint": "Try broader keywords or search by product area, workflow, or API topic.",
     "docs_open_failed_message": "Cannot open link",
     "docs_open_failed_title": "Open failed",
     "docs_open_in_browser": "Open in browser",
     "docs_opening_in_browser": "Opening documentation in your browser...",
     "docs_page_api_desc": "OpenAPI, auth, errors, pagination, webhooks.",
     "docs_page_api_title": "API",
-    "docs_page_architecture_desc":
-        "Environments, promotion model, and failure modes.",
+    "docs_page_architecture_desc": "Environments, promotion model, and failure modes.",
     "docs_page_architecture_title": "Architecture",
     "docs_page_faq_desc": "Troubleshooting and tips.",
     "docs_page_faq_title": "FAQ",
-    "docs_page_getting_started_desc":
-        "Prompt -> preview -> production, with verification steps.",
+    "docs_page_getting_started_desc": "Prompt -> preview -> production, with verification steps.",
     "docs_page_getting_started_title": "Getting Started",
-    "docs_page_integrations_desc":
-        "GitHub/Auth/Payments/Analytics: setup and verification.",
+    "docs_page_integrations_desc": "GitHub/Auth/Payments/Analytics: setup and verification.",
     "docs_page_integrations_title": "Integrations",
-    "docs_page_legal_restrictions_desc":
-        "Compliance and export restrictions (high-level).",
+    "docs_page_legal_restrictions_desc": "Compliance and export restrictions (high-level).",
     "docs_page_legal_restrictions_title": "Legal and Export Restrictions",
-    "docs_page_overview_desc":
-        "What the platform is and how the workflow fits together.",
+    "docs_page_overview_desc": "What the platform is and how the workflow fits together.",
     "docs_page_overview_title": "Overview",
-    "docs_page_privacy_policy_desc":
-        "What data we collect, how we use it, and how to request export or deletion.",
+    "docs_page_privacy_policy_desc": "What data we collect, how we use it, and how to request export or deletion.",
     "docs_page_privacy_policy_title": "Privacy Policy",
     "docs_page_product_desc": "Outcomes by role (PM / Business / Developers).",
     "docs_page_product_title": "Product",
@@ -1927,11 +1710,9 @@ kLocalizedValues = <String, Map<String, String>>{
     "docs_page_refund_policy_title": "Refund and Dispute Policy",
     "docs_page_roadmap_desc": "Now / Next priorities (subject to change).",
     "docs_page_roadmap_title": "Roadmap",
-    "docs_page_use_cases_desc":
-        "Playbooks: prompts + acceptance criteria for common products.",
+    "docs_page_use_cases_desc": "Playbooks: prompts + acceptance criteria for common products.",
     "docs_page_use_cases_title": "Use Cases",
-    "docs_page_workspace_desc":
-        "Where to go in the Project workspace (Chat, Deploy, Pay, Analytics).",
+    "docs_page_workspace_desc": "Where to go in the Project workspace (Chat, Deploy, Pay, Analytics).",
     "docs_page_workspace_title": "Workspace Guide",
     "docs_recently_viewed": "Recently viewed",
     "docs_search_hint": "Search docs, workflows, API, setup...",
@@ -1946,18 +1727,15 @@ kLocalizedValues = <String, Map<String, String>>{
     "email_bound_success": "Email bound successfully",
     "email_invalid": "Please enter a valid email address",
     "email_required": "Please enter email address",
-    "enter_code_and_new_password":
-        "Enter the verification code and your new password",
+    "enter_code_and_new_password": "Enter the verification code and your new password",
     "enter_code_sent": "Enter the 6-digit verification code sent to your email",
     "enter_email": "Enter your email",
-    "enter_email_for_code":
-        "Enter your email address to receive a verification code",
+    "enter_email_for_code": "Enter your email address to receive a verification code",
     "enter_new_password": "Enter new password",
     "enter_password": "Enter password",
     "enter_verify_code": "Enter verification code",
     "error": "Error",
-    "error_network":
-        "Network error. Please check your connection and try again.",
+    "error_network": "Network error. Please check your connection and try again.",
     "error_request_failed": "Request failed. Please try again later.",
     "error_timeout": "Request timed out. Please try again.",
     "expandable_show_less": "Show less",
@@ -1972,8 +1750,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "friends_referred": "Friends Referred",
     "generating": "Generating...",
     "github": "GitHub",
-    "github_connect_description":
-        "Connect your GitHub account to import repositories",
+    "github_connect_description": "Connect your GitHub account to import repositories",
     "github_import_action_import": "Import Project",
     "github_import_action_importing": "Importing project…",
     "github_import_action_opening_chat": "Opening chat…",
@@ -1983,18 +1760,14 @@ kLocalizedValues = <String, Map<String, String>>{
     "github_import_failed_message": "Failed to import repository",
     "github_import_failed_title": "Import Failed",
     "github_import_in_progress_title": "Import in progress",
-    "github_import_monorepo_notice":
-        "This repository looks like a monorepo. Choose the app root directory before preview deploy starts.",
-    "github_import_opening_chat":
-        "Project imported. Preview is still starting, opening chat now.",
+    "github_import_monorepo_notice": "This repository looks like a monorepo. Choose the app root directory before preview deploy starts.",
+    "github_import_opening_chat": "Project imported. Preview is still starting, opening chat now.",
     "github_import_progress_choose_root": "Select the app root directory",
     "github_import_progress_import": "Importing repository",
     "github_import_progress_prepare_preview": "Preparing preview deployment",
-    "github_import_progress_preview_after_root":
-        "Preview deploy will start after configuration",
+    "github_import_progress_preview_after_root": "Preview deploy will start after configuration",
     "github_import_progress_repo_imported": "Repository imported",
-    "github_import_progress_wait_preview":
-        "Waiting for preview to become ready",
+    "github_import_progress_wait_preview": "Waiting for preview to become ready",
     "github_import_project_description": "Project Description",
     "github_import_project_name": "Project Name",
     "github_import_project_name_required": "Project name is required",
@@ -2005,8 +1778,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "github_import_root_directory": "Root Directory",
     "github_import_root_failed": "Failed to configure root directory",
     "github_import_root_saved": "Root directory saved. Preview deploy started.",
-    "github_import_sheet_subtitle":
-        "Create a new project from this GitHub repository and keep preview deploy in flow.",
+    "github_import_sheet_subtitle": "Create a new project from this GitHub repository and keep preview deploy in flow.",
     "github_import_sheet_title": "Import Repository",
     "github_import_success_message": "Repository imported successfully",
     "github_integration": "GitHub Integration",
@@ -2016,19 +1788,17 @@ kLocalizedValues = <String, Map<String, String>>{
     "help_support_cta_title": "Still need help?",
     "help_support_docs_subtitle": "Technical documentation and API reference",
     "help_support_email_open_error": "Failed to open email: {error}",
-    "help_support_email_open_failed":
-        "Could not open email app. Please email us at {email}",
+    "help_support_email_open_failed": "Could not open email app. Please email us at {email}",
     "help_support_hero_subtitle": "Find answers or contact our support team",
     "help_support_hero_title": "How can we help you?",
     "help_support_link_open_error": "Failed to open {name}: {error}",
     "help_support_link_open_failed": "Could not open {name}",
     "help_support_quick_actions": "Quick Actions",
-    "help_support_subtitle": "Get help and support",
+    "help_support_subtitle": "Help and support",
     "help_support_user_guide_subtitle": "Learn how to use all features",
     "help_support_user_guide_title": "User Guide",
     "import_action": "Import",
-    "import_dialog_description":
-        "Enter the repository information you want to import",
+    "import_dialog_description": "Enter the repository information you want to import",
     "import_dialog_title": "Import Public Repository",
     "import_failed": "Failed to import repository",
     "import_repository": "Import Repository",
@@ -2055,8 +1825,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "invite_description": "Invite friends to join d1v.ai and get rewards",
     "invite_friends": "Invite Friends",
     "invites": "Invites",
-    "invites_empty_message":
-        "You haven't invited any friends yet.\\nShare your invite code to get started!",
+    "invites_empty_message": "You haven't invited any friends yet.\\nShare your invite code to get started!",
     "invites_empty_title": "No Invites Yet",
     "invites_joined_at": "Joined {time}",
     "invites_load_failed_title": "Failed to load invited users",
@@ -2078,26 +1847,19 @@ kLocalizedValues = <String, Map<String, String>>{
     "login_failed": "Login failed",
     "login_first": "Please login first",
     "login_required_button": "Login",
-    "login_required_create_post_message":
-        "You need to log in to create a post.",
-    "login_required_dashboard_message":
-        "You need to log in to view your projects.",
-    "login_required_github_message":
-        "You need to log in to manage GitHub integration.",
-    "login_required_invites_message":
-        "You need to log in to view invites and rewards.",
-    "login_required_orders_message":
-        "You need to log in to view orders and billing.",
-    "login_required_settings_message":
-        "You need to log in to manage your account settings.",
+    "login_required_create_post_message": "You need to log in to create a post.",
+    "login_required_dashboard_message": "You need to log in to view your projects.",
+    "login_required_github_message": "You need to log in to manage GitHub integration.",
+    "login_required_invites_message": "You need to log in to view invites and rewards.",
+    "login_required_orders_message": "You need to log in to view orders and billing.",
+    "login_required_settings_message": "You need to log in to manage your account settings.",
     "login_required_title": "Login required",
     "login_success": "Login successful",
     "login_with_code": "Login with Code",
     "login_with_password": "Login with Password",
     "logout": "Logout",
     "main_nav_workspace": "Workspace",
-    "model_load_auth_expired":
-        "Login expired. Please sign in again to load models.",
+    "model_load_auth_expired": "Login expired. Please sign in again to load models.",
     "model_switch_failed": "Failed to switch model: {error}",
     "model_switch_success": "Switched to {model}",
     "model_switch_title": "Model",
@@ -2105,38 +1867,31 @@ kLocalizedValues = <String, Map<String, String>>{
     "my_invites_subtitle": "View your invitation history",
     "new_password": "New Password",
     "notifications": "Notifications",
-    "notifications_subtitle": "Manage notifications",
+    "notifications_subtitle": "Alerts",
     "onboarding_action_back": "Back",
     "onboarding_action_finish": "Finish",
     "onboarding_action_next": "Next",
     "onboarding_ai_avatar_generate_failed": "Failed to generate AI avatars",
-    "onboarding_ai_avatar_hint":
-        "Tap \"AI Random\" to draw your AI avatar cards.",
+    "onboarding_ai_avatar_hint": "Tap \"AI Random\" to draw your AI avatar cards.",
     "onboarding_ai_avatar_title": "AI Avatar Cards",
     "onboarding_ai_random": "AI Random",
-    "onboarding_avatar_hint":
-        "Recommended: square image, PNG/JPG/WEBP, up to 5MB.",
+    "onboarding_avatar_hint": "Recommended: square image, PNG/JPG/WEBP, up to 5MB.",
     "onboarding_avatar_pick_failed": "Failed to pick image: {error}",
     "onboarding_avatar_refresh_failed": "Failed to refresh avatars: {error}",
     "onboarding_avatar_select_failed": "Failed to select avatar: {error}",
     "onboarding_avatar_select_success": "Avatar selected successfully",
     "onboarding_avatar_title": "Profile picture",
     "onboarding_complete_failed": "Failed to complete onboarding: {error}",
-    "onboarding_complete_subtitle":
-        "Welcome aboard. You are ready to continue.",
+    "onboarding_complete_subtitle": "Welcome aboard. You are ready to continue.",
     "onboarding_complete_title": "Setup complete",
-    "onboarding_invite_helper":
-        "Optional. Add an invite code if someone referred you.",
+    "onboarding_invite_helper": "Optional. Add an invite code if someone referred you.",
     "onboarding_invite_hint": "Enter invite code",
     "onboarding_invite_label": "Invite code",
-    "onboarding_org_helper":
-        "This helps us tailor templates and recommendations for your team.",
-    "onboarding_subtitle_avatar":
-        "Upload a profile image so collaborators can recognize you at a glance.",
+    "onboarding_org_helper": "This helps us tailor templates and recommendations for your team.",
+    "onboarding_subtitle_avatar": "Upload a profile image so collaborators can recognize you at a glance.",
     "onboarding_subtitle_finish": "You are almost ready to start building.",
     "onboarding_subtitle_invite": "Enter an invite code to join your team.",
-    "onboarding_subtitle_org":
-        "This helps us tailor templates and recommendations for your team.",
+    "onboarding_subtitle_org": "This helps us tailor templates and recommendations for your team.",
     "onboarding_title_avatar": "Add your avatar",
     "onboarding_title_finish": "Finish setup",
     "onboarding_title_org": "Tell us about your organization",
@@ -2154,8 +1909,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "orders_usage_builder_billing_rule": "Billing rule: {rate}/min",
     "orders_usage_builder_empty": "No deployment records yet.",
     "orders_usage_builder_estimated_cost": "Estimated Cost",
-    "orders_usage_builder_estimated_cost_hint":
-        "Estimated from deployment build durations",
+    "orders_usage_builder_estimated_cost_hint": "Estimated from deployment build durations",
     "orders_usage_builder_load_failed": "Unable to load builder usage data.",
     "orders_usage_builder_overall": "Overall Build Time",
     "orders_usage_builder_projects_title": "Top Projects",
@@ -2177,8 +1931,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "orders_usage_llm_total_cost_hint": "Estimated cost",
     "orders_usage_na": "N/A",
     "orders_usage_project_breakdown_empty": "No usage data available",
-    "orders_usage_project_breakdown_empty_hint":
-        "Your LLM usage will appear here",
+    "orders_usage_project_breakdown_empty_hint": "Your LLM usage will appear here",
     "orders_usage_project_breakdown_title": "Project Breakdown",
     "orders_usage_project_deleted": "Deleted",
     "orders_usage_time_range": "Time Range",
@@ -2186,11 +1939,9 @@ kLocalizedValues = <String, Map<String, String>>{
     "orders_wallet_usage_bucket_expiring": "Expiring",
     "orders_wallet_usage_bucket_non_expiring": "Non-expiring",
     "orders_wallet_usage_empty": "No usage records yet.",
-    "orders_wallet_usage_empty_hint":
-        "Consumption records from deployments and model usage will appear here.",
+    "orders_wallet_usage_empty_hint": "Consumption records from deployments and model usage will appear here.",
     "orders_wallet_usage_source_admin_broadcast": "admin broadcast",
-    "orders_wallet_usage_source_system_message":
-        "System message: {description}",
+    "orders_wallet_usage_source_system_message": "System message: {description}",
     "other": "Other",
     "owner_hint": "username or organization",
     "owner_label": "Owner",
@@ -2201,6 +1952,23 @@ kLocalizedValues = <String, Map<String, String>>{
     "passwords_do_not_match": "Passwords do not match",
     "pricing": "Pricing",
     "privacy": "Privacy",
+    "privacy_allow_analytics": "Allow Analytics",
+    "privacy_allow_analytics_desc": "Help improve the app by sharing usage analytics",
+    "privacy_allow_data_sharing": "Allow Data Sharing",
+    "privacy_allow_data_sharing_desc": "Share data to improve our services",
+    "privacy_allow_third_party_apps": "Allow Third-Party Apps",
+    "privacy_allow_third_party_apps_desc": "Enable integrations with third-party services",
+    "privacy_discoverable_by_email": "Discoverable by Email",
+    "privacy_discoverable_by_email_desc": "Allow others to find you using your email",
+    "privacy_marketing_emails": "Marketing Emails",
+    "privacy_marketing_emails_desc": "Receive emails about new features and offers",
+    "privacy_public_profile": "Public Profile",
+    "privacy_public_profile_desc": "Allow anyone to view your profile",
+    "privacy_settings": "Privacy Settings",
+    "privacy_show_activity_status": "Show Activity Status",
+    "privacy_show_activity_status_desc": "Display your recent activity to others",
+    "privacy_show_online_status": "Show Online Status",
+    "privacy_show_online_status_desc": "Let others see when you're active",
     "profile": "Profile",
     "profile_ai_random": "AI Random",
     "profile_avatar_generate_failed": "Failed to generate avatars",
@@ -2226,18 +1994,12 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_actions": "Actions",
     "project_analytics_active_now": "Active Now",
     "project_analytics_active_visitors": "Active Visitors",
-    "project_analytics_ai_prompt_active_now":
-        "Can you help me interpret my real-time active users and recommend actions to improve conversion?",
-    "project_analytics_ai_prompt_custom_events":
-        "Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?",
-    "project_analytics_ai_prompt_dashboard":
-        "Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?",
-    "project_analytics_ai_prompt_pageviews":
-        "Can you analyze my pageviews trend and suggest ways to increase traffic and retention?",
-    "project_analytics_ai_prompt_sessions":
-        "Can you analyze my sessions and suggest how to increase engagement and session duration?",
-    "project_analytics_ai_prompt_visitors":
-        "Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?",
+    "project_analytics_ai_prompt_active_now": "Can you help me interpret my real-time active users and recommend actions to improve conversion?",
+    "project_analytics_ai_prompt_custom_events": "Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?",
+    "project_analytics_ai_prompt_dashboard": "Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?",
+    "project_analytics_ai_prompt_pageviews": "Can you analyze my pageviews trend and suggest ways to increase traffic and retention?",
+    "project_analytics_ai_prompt_sessions": "Can you analyze my sessions and suggest how to increase engagement and session duration?",
+    "project_analytics_ai_prompt_visitors": "Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?",
     "project_analytics_all": "All",
     "project_analytics_bounces": "Bounces",
     "project_analytics_comparison_notes": "Comparison Notes",
@@ -2245,8 +2007,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_copy_failed": "Copy failed",
     "project_analytics_copy_field": "Copy {title}",
     "project_analytics_copy_summary": "Copy Summary",
-    "project_analytics_copy_summary_hint":
-        "Copy a shareable analytics snapshot",
+    "project_analytics_copy_summary_hint": "Copy a shareable analytics snapshot",
     "project_analytics_copy_tracking_code": "Copy Tracking Code",
     "project_analytics_copy_tracking_code_hint": "Copy Umami script snippet",
     "project_analytics_current_window": "Current window: {range}",
@@ -2266,11 +2027,9 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_dim_screen": "Screen",
     "project_analytics_dim_tag": "Tag",
     "project_analytics_enable_action": "Enable Analytics",
-    "project_analytics_enable_hint":
-        "Track your website's visitors, page views, and custom events with Umami Analytics",
+    "project_analytics_enable_hint": "Track your website's visitors, page views, and custom events with Umami Analytics",
     "project_analytics_enable_title": "Enable Analytics",
-    "project_analytics_env_filter_note":
-        "Note: environment filter uses hostname exact matching.",
+    "project_analytics_env_filter_note": "Note: environment filter uses hostname exact matching.",
     "project_analytics_environment": "Environment",
     "project_analytics_events": "Events",
     "project_analytics_events_trend": "Events Trend",
@@ -2283,20 +2042,14 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_filters": "Filters",
     "project_analytics_inactive_tab": "{title} tab",
     "project_analytics_initializing": "Initializing...",
-    "project_analytics_install_done_autojump":
-        "Installation completed. Auto-opening Data in {seconds}s.",
-    "project_analytics_install_done_open":
-        "Installation completed. You can open the analytics tabs now.",
-    "project_analytics_install_incomplete":
-        "Analytics install did not complete successfully.",
-    "project_analytics_install_success":
-        "Analytics successfully installed and activated.",
+    "project_analytics_install_done_autojump": "Installation completed. Auto-opening Data in {seconds}s.",
+    "project_analytics_install_done_open": "Installation completed. You can open the analytics tabs now.",
+    "project_analytics_install_incomplete": "Analytics install did not complete successfully.",
+    "project_analytics_install_success": "Analytics successfully installed and activated.",
     "project_analytics_installer": "Analytics Installer",
-    "project_analytics_installer_hint":
-        "Review the session output or retry the install.",
+    "project_analytics_installer_hint": "Review the session output or retry the install.",
     "project_analytics_installing": "Installing Analytics…",
-    "project_analytics_installing_hint":
-        "We are initializing Umami and inserting the tracking script via a chat session.",
+    "project_analytics_installing_hint": "We are initializing Umami and inserting the tracking script via a chat session.",
     "project_analytics_last_24_hours": "Last 24 Hours",
     "project_analytics_last_30_days": "Last 30 Days",
     "project_analytics_last_6_hours": "Last 6 Hours",
@@ -2307,12 +2060,10 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_metrics": "Metrics",
     "project_analytics_no_compare_data": "No top-page comparison data",
     "project_analytics_no_data": "No analytics data yet",
-    "project_analytics_no_data_hint":
-        "Analytics data will appear once your project is live and receiving traffic.",
+    "project_analytics_no_data_hint": "Analytics data will appear once your project is live and receiving traffic.",
     "project_analytics_no_data_short": "No data",
     "project_analytics_no_events": "No events in current range",
-    "project_analytics_no_metrics_selected":
-        "No metrics selected. Enable Pageviews/Sessions in Filters.",
+    "project_analytics_no_metrics_selected": "No metrics selected. Enable Pageviews/Sessions in Filters.",
     "project_analytics_no_realtime_urls": "No realtime URL data yet",
     "project_analytics_no_sessions": "No sessions in current range",
     "project_analytics_pageviews": "Pageviews",
@@ -2326,13 +2077,11 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_ready": "Analytics Ready",
     "project_analytics_recent_events": "Recent Events",
     "project_analytics_reenable": "Re-enable Analytics",
-    "project_analytics_reenable_confirm":
-        "This will re-run analytics setup and re-insert the tracking script via workspace session. Continue?",
+    "project_analytics_reenable_confirm": "This will re-run analytics setup and re-insert the tracking script via workspace session. Continue?",
     "project_analytics_reenable_hint": "Re-run script installation flow",
     "project_analytics_reenable_started": "Re-enable process started.",
     "project_analytics_reports": "Reports",
-    "project_analytics_reports_coming":
-        "Custom reports are coming soon. This keeps parity with the current web placeholder state.",
+    "project_analytics_reports_coming": "Custom reports are coming soon. This keeps parity with the current web placeholder state.",
     "project_analytics_reset": "Reset",
     "project_analytics_restore_defaults": "Restore defaults",
     "project_analytics_retry_install": "Retry Install",
@@ -2403,8 +2152,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_api_deleted": "Deleted",
     "project_api_description_optional": "Description (optional)",
     "project_api_edit_variable": "Edit variable",
-    "project_api_empty_hint":
-        "Create your first key-value pair to configure\\nruntime behavior for this project.",
+    "project_api_empty_hint": "Create your first key-value pair to configure\\nruntime behavior for this project.",
     "project_api_empty_title": "No environment variables",
     "project_api_environment_variables": "Environment Variables",
     "project_api_key": "Key",
@@ -2416,8 +2164,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_api_sensitive_masked": "Masked in lists by default",
     "project_api_sensitive_visible": "Visible in lists",
     "project_api_show": "Show",
-    "project_api_show_values_message":
-        "This will reveal sensitive environment values on screen.",
+    "project_api_show_values_message": "This will reveal sensitive environment values on screen.",
     "project_api_show_values_title": "Show values?",
     "project_api_update_failed": "Update failed",
     "project_api_value": "Value",
@@ -2459,35 +2206,28 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_chat_tab_preview_short": "Prev",
     "project_chat_unfold_all": "Unfold all",
     "project_database_actions": "Actions",
-    "project_database_ai_prompt_graph":
-        "Given the database schema, explain how \"{table}\" relates to other tables (foreign keys) and suggest improvements.",
-    "project_database_ai_prompt_relation":
-        "Explain the relationship from {from} to {to}. Suggest indexes and common queries.",
-    "project_database_ai_prompt_table":
-        "Can you analyze the database table \"{table}\" and explain its purpose, structure, and any suggestions for optimization or best practices?",
+    "project_database_ai_prompt_graph": "Given the database schema, explain how \"{table}\" relates to other tables (foreign keys) and suggest improvements.",
+    "project_database_ai_prompt_relation": "Explain the relationship from {from} to {to}. Suggest indexes and common queries.",
+    "project_database_ai_prompt_table": "Can you analyze the database table \"{table}\" and explain its purpose, structure, and any suggestions for optimization or best practices?",
     "project_database_ask_ai_table": "Ask AI about this table",
     "project_database_branch": "Branch",
     "project_database_branch_hint": "Current Neon branch context",
     "project_database_branch_primary": "{name} (primary)",
     "project_database_column_pk": "{name} (PK)",
     "project_database_columns_schema": "{columns} columns • {schema} schema",
-    "project_database_data_empty_hint":
-        "Create tables first, then browse rows here.",
+    "project_database_data_empty_hint": "Create tables first, then browse rows here.",
     "project_database_delete_row": "Delete row",
-    "project_database_delete_row_confirm":
-        "Delete this row from {table}? This action cannot be undone.",
+    "project_database_delete_row_confirm": "Delete this row from {table}? This action cannot be undone.",
     "project_database_edit_row": "Edit row",
     "project_database_enable_action": "Enable Database",
-    "project_database_enable_hint":
-        "Provision a Neon PostgreSQL database for this project and start exploring your schema and data.",
+    "project_database_enable_hint": "Provision a Neon PostgreSQL database for this project and start exploring your schema and data.",
     "project_database_enable_title": "Enable Database",
     "project_database_enabled_success": "Database enabled successfully!",
     "project_database_enabling": "Enabling...",
     "project_database_feature_branching": "Branching support",
     "project_database_feature_serverless": "Serverless Postgres on Neon",
     "project_database_feature_ssl": "Secure SSL connections",
-    "project_database_graph_hint":
-        "Add more tables to see relationships as a graph.",
+    "project_database_graph_hint": "Add more tables to see relationships as a graph.",
     "project_database_insert": "Insert",
     "project_database_insert_row": "Insert row",
     "project_database_inserting": "Inserting...",
@@ -2497,22 +2237,17 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_database_migration_plans": "{count} plans",
     "project_database_next": "Next",
     "project_database_no_columns": "No visible columns",
-    "project_database_no_columns_hint":
-        "This table currently has no browsable columns.",
+    "project_database_no_columns_hint": "This table currently has no browsable columns.",
     "project_database_no_editable_columns": "No editable columns",
-    "project_database_no_editable_columns_hint":
-        "This table has no editable non-primary-key columns.",
+    "project_database_no_editable_columns_hint": "This table has no editable non-primary-key columns.",
     "project_database_no_job_details": "No job details available yet.",
     "project_database_no_migration": "No migration history",
-    "project_database_no_migration_hint":
-        "Migration plans and execution records will appear here.",
+    "project_database_no_migration_hint": "Migration plans and execution records will appear here.",
     "project_database_no_relations": "No foreign-key relationships found.",
     "project_database_no_rows": "No rows found",
-    "project_database_no_rows_hint":
-        "Try another table or insert data from your application flow.",
+    "project_database_no_rows_hint": "Try another table or insert data from your application flow.",
     "project_database_no_tables": "No database tables",
-    "project_database_no_tables_hint":
-        "Database tables will appear here once they are created.",
+    "project_database_no_tables_hint": "Database tables will appear here once they are created.",
     "project_database_page": "Page {index}",
     "project_database_page_size": "{size} / page",
     "project_database_previous": "Previous",
@@ -2539,40 +2274,27 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_actions": "Actions",
     "project_deploy_active_preview": "Preview deployment in progress...",
     "project_deploy_active_prod": "Production release in progress: {phase}",
-    "project_deploy_active_reverting":
-        "Rolling back commit{suffix} and triggering preview deploy...",
-    "project_deploy_ai_prompt_environment":
-        "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_active_reverting": "Rolling back commit{suffix} and triggering preview deploy...",
+    "project_deploy_ai_prompt_environment": "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
     "project_deploy_ai_prompt_prefix": "My deploy failed with this error:",
-    "project_deploy_ai_prompt_preview":
-        "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_prod":
-        "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_suffix":
-        "Give me the most likely root cause and a step-by-step fix.",
-    "project_deploy_ai_prompt_vercel_middle":
-        "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
-    "project_deploy_ai_prompt_vercel_prefix":
-        "My Vercel deployment failed for project",
-    "project_deploy_ai_prompt_vercel_suffix":
-        "Also suggest what logs/env vars to check first.",
+    "project_deploy_ai_prompt_preview": "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_prod": "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_suffix": "Give me the most likely root cause and a step-by-step fix.",
+    "project_deploy_ai_prompt_vercel_middle": "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
+    "project_deploy_ai_prompt_vercel_prefix": "My Vercel deployment failed for project",
+    "project_deploy_ai_prompt_vercel_suffix": "Also suggest what logs/env vars to check first.",
     "project_deploy_ask_ai": "Ask AI",
     "project_deploy_build_log": "Build log",
     "project_deploy_build_logs": "Build logs",
     "project_deploy_close": "Close",
-    "project_deploy_coach_no_preview":
-        "No preview yet. Start with a preview deploy to reduce release risk.",
-    "project_deploy_coach_preview_ready":
-        "Preview is ready. Recommended next step: release to production.",
-    "project_deploy_coach_prod_live":
-        "Production is live. Keep shipping with small preview iterations.",
+    "project_deploy_coach_no_preview": "No preview yet. Start with a preview deploy to reduce release risk.",
+    "project_deploy_coach_preview_ready": "Preview is ready. Recommended next step: release to production.",
+    "project_deploy_coach_prod_live": "Production is live. Keep shipping with small preview iterations.",
     "project_deploy_common_fixes": "Common fixes:",
     "project_deploy_configure_later": "Configure later",
-    "project_deploy_confirm_preview_message":
-        "This will trigger a new preview (dev) deployment on Vercel.",
+    "project_deploy_confirm_preview_message": "This will trigger a new preview (dev) deployment on Vercel.",
     "project_deploy_confirm_preview_title": "Redeploy preview?",
-    "project_deploy_confirm_prod_message":
-        "This will compare dev/main, merge if needed, then trigger a production deployment.",
+    "project_deploy_confirm_prod_message": "This will compare dev/main, merge if needed, then trigger a production deployment.",
     "project_deploy_confirm_prod_title": "Deploy to production?",
     "project_deploy_copy": "Copy",
     "project_deploy_copy_all": "Copy all",
@@ -2580,16 +2302,14 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_copy_failed": "Copy failed",
     "project_deploy_current_deployments": "Current Deployments",
     "project_deploy_dev_timeline": "Dev Timeline",
-    "project_deploy_dev_timeline_hint":
-        "Inspect recent commits on the dev branch before you promote them to production.",
+    "project_deploy_dev_timeline_hint": "Inspect recent commits on the dev branch before you promote them to production.",
     "project_deploy_environment_deployment": "{env} deployment",
     "project_deploy_error_snippet_copied": "Error snippet copied",
     "project_deploy_filter_all": "All",
     "project_deploy_filter_preview": "Preview",
     "project_deploy_filter_production": "Production",
     "project_deploy_history": "History",
-    "project_deploy_history_empty":
-        "No deployments yet — deploy your project to see history here.",
+    "project_deploy_history_empty": "No deployments yet — deploy your project to see history here.",
     "project_deploy_history_title": "Deployment History",
     "project_deploy_log_cached": "Cached",
     "project_deploy_log_empty": "No logs available for this deployment.",
@@ -2607,27 +2327,22 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_merge_into_main": "Merge into main",
     "project_deploy_more": "More",
     "project_deploy_next_steps": "Next steps",
-    "project_deploy_no_change_commits":
-        "No change commits between adjacent releases.",
+    "project_deploy_no_change_commits": "No change commits between adjacent releases.",
     "project_deploy_no_diff_files": "No file diff",
-    "project_deploy_no_diff_files_hint":
-        "This commit did not return any changed file patches.",
+    "project_deploy_no_diff_files_hint": "This commit did not return any changed file patches.",
     "project_deploy_no_history": "No deployment history yet.",
     "project_deploy_no_logs": "No logs",
-    "project_deploy_no_logs_message":
-        "This deployment has no Vercel deployment id.",
+    "project_deploy_no_logs_message": "This deployment has no Vercel deployment id.",
     "project_deploy_no_message": "(no message)",
     "project_deploy_no_production": "No production deployment",
     "project_deploy_no_releases": "No releases detected on main yet.",
     "project_deploy_no_timeline": "No timeline yet",
-    "project_deploy_no_timeline_hint":
-        "No recent commits found on the development branch.",
+    "project_deploy_no_timeline_hint": "No recent commits found on the development branch.",
     "project_deploy_ok": "OK",
     "project_deploy_open": "Open",
     "project_deploy_open_url_failed": "Cannot open URL",
     "project_deploy_open_url_failed_message": "Could not open {url}",
-    "project_deploy_patch_unavailable":
-        "Patch preview is unavailable for this file.",
+    "project_deploy_patch_unavailable": "Patch preview is unavailable for this file.",
     "project_deploy_phase_checking": "Checking dev/main diff...",
     "project_deploy_phase_deploying": "Triggering production deploy...",
     "project_deploy_phase_merging": "Merging dev into main...",
@@ -2642,15 +2357,12 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_releases": "Releases",
     "project_deploy_releases_main": "(main)",
     "project_deploy_retry_last": "Retry last deployment",
-    "project_deploy_retry_preview_message":
-        "This will trigger a new preview (dev) deployment.",
+    "project_deploy_retry_preview_message": "This will trigger a new preview (dev) deployment.",
     "project_deploy_retry_preview_title": "Retry preview deploy?",
-    "project_deploy_retry_prod_message":
-        "This will compare dev/main, merge if needed, then trigger a new production deployment.",
+    "project_deploy_retry_prod_message": "This will compare dev/main, merge if needed, then trigger a new production deployment.",
     "project_deploy_retry_prod_title": "Retry production deploy?",
     "project_deploy_revert_confirm_action": "Confirm revert",
-    "project_deploy_revert_confirm_message":
-        "This will run git revert on commit {sha} and trigger a new preview deployment.",
+    "project_deploy_revert_confirm_message": "This will run git revert on commit {sha} and trigger a new preview deployment.",
     "project_deploy_revert_confirm_title": "Revert this commit?",
     "project_deploy_revert_failed": "Revert failed",
     "project_deploy_revert_no_sha": "No commit SHA found for this deployment.",
@@ -2661,8 +2373,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_revert_unavailable": "Revert unavailable",
     "project_deploy_reverting": "Reverting...",
     "project_deploy_select_commit": "Select a commit",
-    "project_deploy_select_commit_hint":
-        "Choose a commit on the left to inspect changed files and patches.",
+    "project_deploy_select_commit_hint": "Choose a commit on the left to inspect changed files and patches.",
     "project_deploy_share_all": "Share all",
     "project_deploy_share_errors": "Share errors",
     "project_deploy_tab_timeline": "Timeline",
@@ -2670,28 +2381,19 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_time_hours_ago": "{hours}h ago",
     "project_deploy_time_just_now": "just now",
     "project_deploy_time_minutes_ago": "{minutes}m ago",
-    "project_deploy_tip_build_issue":
-        "This looks like a build failure — check compilation errors in logs.",
-    "project_deploy_tip_check_env_vars":
-        "Check environment variables (and sync to Vercel).",
-    "project_deploy_tip_check_github_access":
-        "Check GitHub collaborator/bot access to the repo.",
-    "project_deploy_tip_env_issue":
-        "This looks like an env var issue — verify required secrets are set.",
-    "project_deploy_tip_open_logs":
-        "Open the latest build logs and copy/share the error snippet.",
-    "project_deploy_tip_permission":
-        "This looks like a permission issue — verify GitHub access and tokens.",
-    "project_deploy_tip_retry_preview_first":
-        "Retry preview deploy first (then production).",
-    "project_deploy_tip_short_env":
-        "Env vars configured (and synced to Vercel)",
+    "project_deploy_tip_build_issue": "This looks like a build failure — check compilation errors in logs.",
+    "project_deploy_tip_check_env_vars": "Check environment variables (and sync to Vercel).",
+    "project_deploy_tip_check_github_access": "Check GitHub collaborator/bot access to the repo.",
+    "project_deploy_tip_env_issue": "This looks like an env var issue — verify required secrets are set.",
+    "project_deploy_tip_open_logs": "Open the latest build logs and copy/share the error snippet.",
+    "project_deploy_tip_permission": "This looks like a permission issue — verify GitHub access and tokens.",
+    "project_deploy_tip_retry_preview_first": "Retry preview deploy first (then production).",
+    "project_deploy_tip_short_env": "Env vars configured (and synced to Vercel)",
     "project_deploy_tip_short_github": "GitHub access / repo permissions",
     "project_deploy_tip_short_logs": "Open build logs and share error snippet",
     "project_deploy_tip_short_retry_preview": "Retry preview deploy first",
     "project_deploy_troubleshooting": "Troubleshooting",
-    "project_deploy_troubleshooting_hint":
-        "If deploy fails, try these quick checks:",
+    "project_deploy_troubleshooting_hint": "If deploy fails, try these quick checks:",
     "project_deploy_unknown": "unknown",
     "project_deployment_tab_deployments": "Deployments",
     "project_detail_error_text": "Error: {error}",
@@ -2724,8 +2426,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_github_import": "GitHub Import",
     "project_github_import_as_new": "Import as new project",
     "project_github_import_failed": "Import failed: {error}",
-    "project_github_import_missing_project_id":
-        "Import succeeded but missing project id",
+    "project_github_import_missing_project_id": "Import succeeded but missing project id",
     "project_github_imported": "Imported",
     "project_github_imported_description": "Imported from GitHub: {repo}",
     "project_github_invalid_repo_url": "Invalid repository URL",
@@ -2751,38 +2452,25 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_overview_community_action_unpublish": "Unpublish",
     "project_overview_community_action_update": "Update",
     "project_overview_community_action_view": "View",
-    "project_overview_community_hint":
-        "Publish a community post linked to this project (auto-release to production if needed).",
-    "project_overview_community_progress_deploy":
-        "Triggering production deploy…",
+    "project_overview_community_hint": "Publish a community post linked to this project (auto-release to production if needed).",
+    "project_overview_community_progress_deploy": "Triggering production deploy…",
     "project_overview_community_progress_finalizing": "Finalizing…",
     "project_overview_community_progress_merge": "Merging branches…",
     "project_overview_community_progress_publish": "Publishing to community…",
-    "project_overview_community_publish_dialog_current_domain":
-        "Current domain: {domain}",
-    "project_overview_community_publish_dialog_has_prod":
-        "This project already has a production deployment. Publishing will create or update a community post linked to your project overview.",
-    "project_overview_community_publish_dialog_need_release":
-        "To publish this project to the community, we first need to release it to production. We'll merge your dev branch into main, trigger a production deploy, then publish the post.",
-    "project_overview_community_publish_dialog_step_deploy":
-        "• Trigger production deploy",
-    "project_overview_community_publish_dialog_step_merge":
-        "• Merge dev → main",
-    "project_overview_community_publish_dialog_step_publish":
-        "• Publish to community",
+    "project_overview_community_publish_dialog_current_domain": "Current domain: {domain}",
+    "project_overview_community_publish_dialog_has_prod": "This project already has a production deployment. Publishing will create or update a community post linked to your project overview.",
+    "project_overview_community_publish_dialog_need_release": "To publish this project to the community, we first need to release it to production. We'll merge your dev branch into main, trigger a production deploy, then publish the post.",
+    "project_overview_community_publish_dialog_step_deploy": "• Trigger production deploy",
+    "project_overview_community_publish_dialog_step_merge": "• Merge dev → main",
+    "project_overview_community_publish_dialog_step_publish": "• Publish to community",
     "project_overview_community_publish_dialog_steps": "Steps:",
     "project_overview_community_publish_dialog_title": "Publish to community",
-    "project_overview_community_publish_failed":
-        "Failed to publish to community",
-    "project_overview_community_publish_failed_sentence":
-        "Failed to publish to community.",
+    "project_overview_community_publish_failed": "Failed to publish to community",
+    "project_overview_community_publish_failed_sentence": "Failed to publish to community.",
     "project_overview_community_publish_success": "Published to community",
-    "project_overview_community_release_merge_message":
-        "Merge {head} into {base}",
-    "project_overview_community_release_no_commits":
-        "No commits found on development branch",
-    "project_overview_community_release_publish_failed":
-        "Production deploy succeeded, but failed to publish to community",
+    "project_overview_community_release_merge_message": "Merge {head} into {base}",
+    "project_overview_community_release_no_commits": "No commits found on development branch",
+    "project_overview_community_release_publish_failed": "Production deploy succeeded, but failed to publish to community",
     "project_overview_community_status_draft": "Draft",
     "project_overview_community_status_none": "Not published",
     "project_overview_community_status_published": "Published",
@@ -2791,25 +2479,20 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_overview_community_unpublish_success": "Unpublished",
     "project_overview_community_update_failed": "Failed to update post",
     "project_overview_community_update_success": "Post updated",
-    "project_overview_danger_delete_confirm_label":
-        "Type project name to confirm",
-    "project_overview_danger_delete_desc":
-        "This action cannot be undone. Please type the project name to confirm deletion.",
+    "project_overview_danger_delete_confirm_label": "Type project name to confirm",
+    "project_overview_danger_delete_desc": "This action cannot be undone. Please type the project name to confirm deletion.",
     "project_overview_danger_delete_failed": "Failed to delete project",
     "project_overview_danger_delete_in_progress": "Deleting {name}...",
     "project_overview_danger_delete_name_mismatch": "Name does not match.",
     "project_overview_danger_delete_progress_cleanup": "Final cleanup...",
-    "project_overview_danger_delete_progress_remove":
-        "Removing project resources...",
-    "project_overview_danger_delete_progress_submit":
-        "Submitting delete request...",
+    "project_overview_danger_delete_progress_remove": "Removing project resources...",
+    "project_overview_danger_delete_progress_submit": "Submitting delete request...",
     "project_overview_danger_delete_success": "Deleted {name}",
     "project_overview_danger_delete_title": "Delete project",
     "project_overview_danger_project_name": "Project: {name}",
     "project_overview_danger_title": "Danger zone",
     "project_overview_danger_transfer_action": "Transfer",
-    "project_overview_danger_transfer_desc":
-        "Enter the recipient email to transfer ownership. You will lose access after transfer.",
+    "project_overview_danger_transfer_desc": "Enter the recipient email to transfer ownership. You will lose access after transfer.",
     "project_overview_danger_transfer_failed": "Failed to transfer project",
     "project_overview_danger_transfer_recipient": "Recipient email",
     "project_overview_danger_transfer_success": "Project transferred",
@@ -2831,12 +2514,10 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_overview_health_title": "Health metrics",
     "project_overview_links_github_repo": "GitHub Repository",
     "project_overview_links_not_available": "Not available",
-    "project_overview_links_open_github_failed":
-        "Could not open GitHub repository",
+    "project_overview_links_open_github_failed": "Could not open GitHub repository",
     "project_overview_links_open_preview_failed": "Could not open preview URL",
     "project_overview_links_preview_url": "Preview URL",
-    "project_overview_recent_deployments_empty":
-        "No recent deployments — ship a new build to see activity here.",
+    "project_overview_recent_deployments_empty": "No recent deployments — ship a new build to see activity here.",
     "project_overview_recent_deployments_env": "{env} deployment",
     "project_overview_recent_deployments_feed": "Activity feed",
     "project_overview_recent_deployments_title": "Recent deployments",
@@ -2857,26 +2538,20 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_payment_add_product": "Add Product",
     "project_payment_add_product_failed": "Failed to add product: {error}",
     "project_payment_add_product_title": "Add Payment Product",
-    "project_payment_ai_prompt_product":
-        "Can you analyze the payment product \"{name}\" and provide suggestions on pricing strategy, configuration, or marketing improvements?",
-    "project_payment_ai_prompt_transaction":
-        "Can you analyze this payment transaction ({amount}, {status}) and provide insights about payment patterns or recommendations?",
+    "project_payment_ai_prompt_product": "Can you analyze the payment product \"{name}\" and provide suggestions on pricing strategy, configuration, or marketing improvements?",
+    "project_payment_ai_prompt_transaction": "Can you analyze this payment transaction ({amount}, {status}) and provide insights about payment patterns or recommendations?",
     "project_payment_anonymous": "Anonymous",
-    "project_payment_available_for_purchase":
-        "Product is available for purchase",
+    "project_payment_available_for_purchase": "Product is available for purchase",
     "project_payment_conversion_rate": "Conversion Rate",
     "project_payment_description_hint": "Describe your product",
     "project_payment_description_optional": "Description (Optional)",
     "project_payment_edit": "Edit",
     "project_payment_edit_product_title": "Edit Payment Product",
     "project_payment_enable_button": "Enable Payments",
-    "project_payment_enable_description":
-        "Payments are not activated for this project yet. Initialize payments first, then manage products, transactions, bank accounts, withdrawals, and webhooks.",
+    "project_payment_enable_description": "Payments are not activated for this project yet. Initialize payments first, then manage products, transactions, bank accounts, withdrawals, and webhooks.",
     "project_payment_enable_failed": "Failed to activate payments",
-    "project_payment_enable_feature_checkout":
-        "Stripe checkout and payment links",
-    "project_payment_enable_feature_products":
-        "Products, balances, and withdrawals",
+    "project_payment_enable_feature_checkout": "Stripe checkout and payment links",
+    "project_payment_enable_feature_products": "Products, balances, and withdrawals",
     "project_payment_enable_feature_webhooks": "Webhook-ready order lifecycle",
     "project_payment_enable_loading": "Initializing…",
     "project_payment_enable_success": "Payments activated successfully",
@@ -2902,17 +2577,13 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_payment_total_revenue": "Total Revenue",
     "project_payment_transactions": "Transactions",
     "project_payment_unknown_product": "Unknown Product",
-    "project_payment_update_product_failed":
-        "Failed to update product: {error}",
+    "project_payment_update_product_failed": "Failed to update product: {error}",
     "projects_action_load_more": "Load More",
     "projects_action_relogin": "Re-login",
-    "projects_empty_search_message":
-        "Try a different keyword or clear the search.",
+    "projects_empty_search_message": "Try a different keyword or clear the search.",
     "projects_empty_search_title": "No matching projects",
-    "projects_empty_state_message":
-        "Create your first project to start building.",
-    "projects_intro_subtitle":
-        "Search, open, and manage your active workspace.",
+    "projects_empty_state_message": "Create your first project to start building.",
+    "projects_intro_subtitle": "Search, open, and manage your active workspace.",
     "projects_search_hint": "Search projects...",
     "projects_searching_subtitle": "Filtered results for your current query.",
     "projects_sync_failed_title": "Sync failed",
@@ -2937,7 +2608,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "resend_after": "Resend after",
     "resend_code": "Resend Code",
     "reset_password": "Reset Password",
-    "reset_password_subtitle": "Reset your login password",
+    "reset_password_subtitle": "Reset password",
     "resetting": "Resetting...",
     "retry": "Retry",
     "save": "Save",
@@ -2956,11 +2627,6 @@ kLocalizedValues = <String, Map<String, String>>{
     "settings_editor_dark_theme": "Dark Theme",
     "settings_editor_default_wrap": "Default Wrap",
     "settings_editor_default_wrap_hint": "Open files with wrap on.",
-    "settings_editor_engine": "Editor Engine",
-    "settings_editor_engine_flutter_code_editor": "Flutter Code Editor",
-    "settings_editor_engine_flutter_code_editor_hint": "Native Flutter editor.",
-    "settings_editor_engine_flutter_monaco": "Flutter Monaco",
-    "settings_editor_engine_flutter_monaco_hint": "Better for large files.",
     "settings_editor_entry_subtitle": "Theme, font, wrap",
     "settings_editor_font_size": "Font Size",
     "settings_editor_footer": "Choose themes and behavior.",
@@ -2998,7 +2664,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "syncing": "Syncing",
     "syncing_message": "Syncing repositories...",
     "system_mode": "System",
-    "theme_subtitle": "Light or Dark mode",
+    "theme_subtitle": "Light or dark",
     "theme_switched": "Switched to",
     "theme_title": "Theme",
     "theme_updated": "Theme Updated",
@@ -3014,35 +2680,34 @@ kLocalizedValues = <String, Map<String, String>>{
     "topup_method_google_pay": "Google Pay",
     "topup_payment_canceled_message": "The payment was canceled.",
     "topup_payment_canceled_title": "Payment canceled",
-    "topup_payment_submitted_message":
-        "Your top-up payment was submitted successfully.",
+    "topup_payment_submitted_message": "Your top-up payment was submitted successfully.",
     "topup_payment_submitted_title": "Payment submitted",
     "topup_subtitle": "Add funds with {methods} through Stripe.",
     "topup_title": "Top up credits",
-    "topup_unconfigured":
-        "Stripe mobile payment is not configured in this build.",
+    "topup_unconfigured": "Stripe mobile payment is not configured in this build.",
+    "two_factor_cancel": "Cancel",
+    "two_factor_disable": "Disable",
+    "two_factor_disable_confirm": "Are you sure you want to disable 2FA? Your account will be less secure.",
+    "two_factor_disable_title": "Disable Two-Factor Authentication",
+    "two_factor_title": "Two-Factor Authentication",
+    "two_factor_verify_enable": "Verify & Enable",
     "upgrade_best_fit": "Best fit",
     "upgrade_billing_monthly": "Monthly",
     "upgrade_billing_yearly": "Yearly",
     "upgrade_credits": "credits",
     "upgrade_cycle": "cycle",
-    "upgrade_empty_detail":
-        "Subscription packages will appear here when published.",
+    "upgrade_empty_detail": "Subscription packages will appear here when published.",
     "upgrade_empty_title": "No plans available",
     "upgrade_featured_hint": "Balanced for most active builders",
-    "upgrade_footer_configured":
-        "Payments are processed natively in-app. Balance top-up stays in USD for now.",
-    "upgrade_footer_unconfigured":
-        "This build still needs STRIPE_PUBLISHABLE_KEY before native checkout can open.",
+    "upgrade_footer_configured": "Payments are processed natively in-app. Balance top-up stays in USD for now.",
+    "upgrade_footer_unconfigured": "This build still needs STRIPE_PUBLISHABLE_KEY before native checkout can open.",
     "upgrade_load_failed_title": "Failed to load plans",
     "upgrade_period": "period",
     "upgrade_quota": "Quota",
     "upgrade_standard_hint": "Designed for focused production usage",
     "upgrade_subscription_failed": "Subscription failed: {error}",
-    "upgrade_subscription_submitted":
-        "Subscription payment submitted successfully.",
-    "upgrade_subtitle":
-        "Choose a plan built for sustained usage, faster limits, and cleaner billing.",
+    "upgrade_subscription_submitted": "Subscription payment submitted successfully.",
+    "upgrade_subtitle": "Choose a plan built for sustained usage, faster limits, and cleaner billing.",
     "upgrade_title": "Upgrade",
     "verify_code": "Verification Code",
     "verify_code_complete": "Please enter complete verification code",
@@ -3054,13 +2719,11 @@ kLocalizedValues = <String, Map<String, String>>{
     "workspace_banner_checking_status": "Checking status.",
     "workspace_banner_issue": "Workspace issue",
     "workspace_banner_ready": "Workspace ready",
-    "workspace_banner_retrying_background":
-        "Start failed. Retrying in the background.",
+    "workspace_banner_retrying_background": "Start failed. Retrying in the background.",
     "workspace_banner_sleeping_needed": "😴 Sleeping until needed.",
     "workspace_banner_starting": "Starting workspace",
     "workspace_banner_starting_message": "Starting workspace.",
-    "workspace_banner_starting_now":
-        "Starting now. Your message will send next.",
+    "workspace_banner_starting_now": "Starting now. Your message will send next.",
     "workspace_banner_syncing_files": "Syncing files.",
     "workspace_tip_checking_short": "Checking",
     "workspace_tip_checking_status": "Checking workspace status",
@@ -3089,45 +2752,34 @@ kLocalizedValues = <String, Map<String, String>>{
     "workspace_warmup_inline_next": "Starting workspace. Sending next.",
     "workspace_warmup_inline_now": "Ready. Sending now.",
     "workspace_warmup_inline_ready": "Workspace ready. Sending your message...",
-    "workspace_warmup_inline_starting":
-        "Workspace is starting. Your message will send automatically.",
+    "workspace_warmup_inline_starting": "Workspace is starting. Your message will send automatically.",
     "workspace_warmup_notice_next": "Starting. Sending next.",
-    "workspace_warmup_notice_starting":
-        "Workspace is starting. Sending will continue automatically.",
+    "workspace_warmup_notice_starting": "Workspace is starting. Sending will continue automatically.",
     "your_invite_code": "Your Invite Code",
   },
   "es": <String, String>{
     "about": "Acerca de",
-    "about_description":
-        "Una plataforma de desarrollo de aplicaciones impulsada por IA.",
-    "about_subtitle": "Versión e información de la aplicación",
+    "about_description": "Una plataforma de desarrollo de aplicaciones impulsada por IA.",
+    "about_subtitle": "Info app",
     "about_title": "Acerca de",
     "access": "Access",
-    "account_data_contact_support_delete":
-        "Contactar con soporte para eliminar la cuenta",
+    "account_data_contact_support_delete": "Contactar con soporte para eliminar la cuenta",
     "account_data_copy_request_template": "Copiar plantilla de solicitud",
-    "account_data_delete_confirm_message":
-        "Esto contactará con {support_email} para solicitar la eliminación de la cuenta. Esta acción puede ser irreversible. ¿Continuar?",
-    "account_data_delete_description":
-        "Actualmente la eliminación de cuenta la gestiona soporte. Revisa las restricciones legales antes de solicitar la eliminación.",
-    "account_data_delete_template":
-        "Solicitud: Eliminación de cuenta\\nCuenta: {email}\\nPor favor, eliminen mi cuenta y los datos asociados.\\nEntiendo que esta acción puede ser irreversible.\\nContacto: {support_email}",
+    "account_data_delete_confirm_message": "Esto contactará con {support_email} para solicitar la eliminación de la cuenta. Esta acción puede ser irreversible. ¿Continuar?",
+    "account_data_delete_description": "Actualmente la eliminación de cuenta la gestiona soporte. Revisa las restricciones legales antes de solicitar la eliminación.",
+    "account_data_delete_template": "Solicitud: Eliminación de cuenta\\nCuenta: {email}\\nPor favor, eliminen mi cuenta y los datos asociados.\\nEntiendo que esta acción puede ser irreversible.\\nContacto: {support_email}",
     "account_data_delete_title": "Eliminación de cuenta",
-    "account_data_export_description":
-        "Actualmente la exportación la gestiona soporte. Te ofrecemos una plantilla para copiar y enviar.",
-    "account_data_export_template":
-        "Solicitud: Exportación de datos\\nCuenta: {email}\\nPor favor, exporten los datos de mi cuenta (perfil, proyectos, facturación).\\nContacto: {support_email}",
+    "account_data_export_description": "Actualmente la exportación la gestiona soporte. Te ofrecemos una plantilla para copiar y enviar.",
+    "account_data_export_template": "Solicitud: Exportación de datos\\nCuenta: {email}\\nPor favor, exporten los datos de mi cuenta (perfil, proyectos, facturación).\\nContacto: {support_email}",
     "account_data_export_title": "Exportación de datos",
     "account_data_legal": "Legal",
-    "account_data_request_template_copied":
-        "Plantilla de solicitud copiada al portapapeles",
-    "account_data_subtitle": "Exportación de datos y eliminación de cuenta",
-    "account_data_support_dialog_message":
-        "Ponte en contacto con {support_email} para esta solicitud.",
+    "account_data_open_projects": "Abrir proyectos",
+    "account_data_request_template_copied": "Plantilla de solicitud copiada al portapapeles",
+    "account_data_subtitle": "Exportar / eliminar",
+    "account_data_support_dialog_message": "Ponte en contacto con {support_email} para esta solicitud.",
     "account_data_title": "Cuenta y datos",
     "activity": "Actividad",
-    "agree_terms":
-        "Al iniciar sesión, acepta nuestros Términos de Servicio y Política de Privacidad",
+    "agree_terms": "Al iniciar sesión, acepta nuestros Términos de Servicio y Política de Privacidad",
     "alert_title_error": "Error",
     "alert_title_warning": "Warning",
     "api_docs_load_failed_title": "Failed to load API docs",
@@ -3137,22 +2789,17 @@ kLocalizedValues = <String, Map<String, String>>{
     "api_keys_confirm_create": "Crear key",
     "api_keys_confirm_revoke": "Confirmar revocación",
     "api_keys_copied": "API key copiada",
-    "api_keys_copy_secret_hint":
-        "Copia este secreto ahora. No volverá a mostrarse.",
+    "api_keys_copy_secret_hint": "Copia este secreto ahora. No volverá a mostrarse.",
     "api_keys_create_button": "Crear key",
     "api_keys_create_failed": "No se pudo crear la API key",
-    "api_keys_create_success":
-        "API key creada. Cópiala ahora; no volverá a mostrarse.",
+    "api_keys_create_success": "API key creada. Cópiala ahora; no volverá a mostrarse.",
     "api_keys_created_at": "Creada",
     "api_keys_creating": "Creando...",
-    "api_keys_description":
-        "Usa API keys para endpoints no administrativos. Las rutas de administrador siguen requiriendo autenticación normal.",
+    "api_keys_description": "Usa API keys para endpoints no administrativos. Las rutas de administrador siguen requiriendo autenticación normal.",
     "api_keys_description_label": "Descripción",
-    "api_keys_dialog_create_description":
-        "Añade un nombre y una descripción opcional para reconocer esta key más tarde.",
+    "api_keys_dialog_create_description": "Añade un nombre y una descripción opcional para reconocer esta key más tarde.",
     "api_keys_dialog_create_title": "Crear API key",
-    "api_keys_dialog_revoke_description":
-        "¿Revocar \"{name}\"? Esta acción no se puede deshacer.",
+    "api_keys_dialog_revoke_description": "¿Revocar \"{name}\"? Esta acción no se puede deshacer.",
     "api_keys_dialog_revoke_title": "Revocar API key",
     "api_keys_empty": "Todavía no hay API keys.",
     "api_keys_existing_title": "Keys existentes",
@@ -3166,28 +2813,29 @@ kLocalizedValues = <String, Map<String, String>>{
     "api_keys_revoked": "Revocada",
     "api_keys_title": "Crear API key",
     "api_keys_unnamed": "Key sin nombre",
-    "api_settings": "API",
+    "api_settings": "Configuración de API",
+    "api_settings_copy_diagnostics": "Copiar diagnósticos",
+    "api_settings_reset": "Restablecer",
+    "api_settings_save": "Guardar",
+    "api_settings_test_connection": "Probar conexión",
     "appearance": "Apariencia",
     "back": "Volver",
     "basic_information": "Información básica",
     "billing_insufficient_action_later": "Later",
     "billing_insufficient_action_topup": "Top up now",
-    "billing_insufficient_description":
-        "Your balance is insufficient for this action. Please top up first.",
+    "billing_insufficient_description": "Your balance is insufficient for this action. Please top up first.",
     "billing_insufficient_title": "Insufficient Balance",
     "bind_email": "Vincular correo",
-    "bind_email_subtitle": "Vincular correo a su cuenta",
+    "bind_email_subtitle": "Vincular correo",
     "browse": "Examinar",
     "cancel": "Cancel",
     "chat_banner_next_prompt_queued": "Next prompt is queued.",
     "chat_banner_one_prompt_failed": "One queued prompt failed.",
     "chat_banner_preview_rebuilding": "Preview is rebuilding.",
-    "chat_banner_preview_rebuilding_framework":
-        "{framework} preview is rebuilding.",
+    "chat_banner_preview_rebuilding_framework": "{framework} preview is rebuilding.",
     "chat_banner_queue_resume_model": "Queue resumes when the model is ready.",
     "chat_banner_queue_resume_run": "Queue resumes after the current run.",
-    "chat_banner_queue_resume_workspace":
-        "Queue resumes when the workspace is ready.",
+    "chat_banner_queue_resume_workspace": "Queue resumes when the workspace is ready.",
     "chat_banner_queued_count": "{count} queued",
     "chat_banner_queued_one": "1 queued",
     "chat_banner_restoring_output": "Restoring live output.",
@@ -3241,8 +2889,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "community_empty_all": "No posts.",
     "community_empty_components": "No components.",
     "community_empty_mine": "No posts created by you yet.",
-    "community_empty_my_posts_sentence":
-        "You have not published any posts yet.",
+    "community_empty_my_posts_sentence": "You have not published any posts yet.",
     "community_failed_to_load_components": "Failed to load components",
     "community_filter_all": "All",
     "community_filter_mine": "My posts",
@@ -3281,124 +2928,84 @@ kLocalizedValues = <String, Map<String, String>>{
     "create_post_title_required": "Please enter a title",
     "create_project": "Crear proyecto",
     "create_project_accept_invitation": "Aceptar invitación",
-    "create_project_accept_invitation_failed":
-        "No se pudo aceptar la invitación: {error}",
-    "create_project_accept_invitation_hint":
-        "Agrega a \"{bot}\" como colaborador en la configuración del repositorio de GitHub y luego pulsa \"Aceptar invitación\".",
+    "create_project_accept_invitation_failed": "No se pudo aceptar la invitación: {error}",
+    "create_project_accept_invitation_hint": "Agrega a \"{bot}\" como colaborador en la configuración del repositorio de GitHub y luego pulsa \"Aceptar invitación\".",
     "create_project_access_verified": "Acceso verificado",
     "create_project_access_verified_for": "Acceso verificado para {repo}",
     "create_project_action": "Crear proyecto",
-    "create_project_bot_username_copied":
-        "Nombre de usuario del bot copiado al portapapeles",
+    "create_project_bot_username_copied": "Nombre de usuario del bot copiado al portapapeles",
     "create_project_choose_how_start": "Elige cómo quieres empezar",
     "create_project_choose_zip": "Elegir archivo .zip",
-    "create_project_choose_zip_and_name":
-        "Elige un archivo zip y completa el nombre del proyecto",
-    "create_project_could_not_open_github_settings":
-        "No se pudo abrir la configuración de GitHub en el navegador",
-    "create_project_default_repo_name":
-        "Predeterminado: nombre del repositorio",
+    "create_project_choose_zip_and_name": "Elige un archivo zip y completa el nombre del proyecto",
+    "create_project_could_not_open_github_settings": "No se pudo abrir la configuración de GitHub en el navegador",
+    "create_project_default_repo_name": "Predeterminado: nombre del repositorio",
     "create_project_description": "Descripción",
     "create_project_description_required": "Describe lo que quieres crear",
-    "create_project_description_too_short":
-        "La descripción es demasiado corta. Añade más detalles (mín. 8 caracteres)",
+    "create_project_description_too_short": "La descripción es demasiado corta. Añade más detalles (mín. 8 caracteres)",
     "create_project_dialog_title": "Agregar proyecto",
-    "create_project_failed_choose_archive":
-        "No se pudo elegir el archivo: {error}",
-    "create_project_failed_get_project_id":
-        "No se pudo obtener el ID del proyecto",
-    "create_project_failed_import_local":
-        "No se pudo importar el zip local: {error}",
-    "create_project_failed_import_project":
-        "No se pudo importar el proyecto: {error}",
-    "create_project_failed_import_repo":
-        "No se pudo importar el repositorio: {error}",
-    "create_project_failed_to_create":
-        "No se pudo crear el proyecto: {error}\n\nBase API: {base}",
+    "create_project_failed_choose_archive": "No se pudo elegir el archivo: {error}",
+    "create_project_failed_get_project_id": "No se pudo obtener el ID del proyecto",
+    "create_project_failed_import_local": "No se pudo importar el zip local: {error}",
+    "create_project_failed_import_project": "No se pudo importar el proyecto: {error}",
+    "create_project_failed_import_repo": "No se pudo importar el repositorio: {error}",
+    "create_project_failed_to_create": "No se pudo crear el proyecto: {error}\n\nBase API: {base}",
     "create_project_fill_required": "Completa todos los campos obligatorios",
     "create_project_github_bot_username": "Nombre de usuario del bot de GitHub",
-    "create_project_github_collaborator_subtitle":
-        "Importación guiada: agregar bot → aceptar invitación → verificar acceso → importar.",
-    "create_project_github_collaborator_title":
-        "Importar desde GitHub (colaborador)",
-    "create_project_github_guided_title":
-        "Importación guiada de GitHub (3 pasos)",
+    "create_project_github_collaborator_subtitle": "Importación guiada: agregar bot → aceptar invitación → verificar acceso → importar.",
+    "create_project_github_collaborator_title": "Importar desde GitHub (colaborador)",
+    "create_project_github_guided_title": "Importación guiada de GitHub (3 pasos)",
     "create_project_github_import_title": "Importación de GitHub",
     "create_project_import_local_action": "Importar Zip local",
-    "create_project_import_local_info":
-        "Sube un espacio de trabajo local en .zip e impórtalo directamente como proyecto. El archivo debe contener los archivos del proyecto en la raíz.",
-    "create_project_import_local_subtitle":
-        "Sube un archivo .zip local del proyecto e impórtalo directamente.",
+    "create_project_import_local_info": "Sube un espacio de trabajo local en .zip e impórtalo directamente como proyecto. El archivo debe contener los archivos del proyecto en la raíz.",
+    "create_project_import_local_subtitle": "Sube un archivo .zip local del proyecto e impórtalo directamente.",
     "create_project_import_local_title": "Importar Zip local",
     "create_project_import_project_action": "Importar proyecto",
-    "create_project_import_public_subtitle":
-        "Refleja un repositorio público de GitHub en el espacio de trabajo de la organización.",
+    "create_project_import_public_subtitle": "Refleja un repositorio público de GitHub en el espacio de trabajo de la organización.",
     "create_project_import_public_title": "Importar repositorio público",
     "create_project_import_repo_action": "Importar repositorio",
     "create_project_imported_from_github": "Importado desde GitHub: {repo}",
-    "create_project_invalid_repo_url":
-        "URL de repositorio no válida. Ejemplo: https://github.com/owner/repo",
+    "create_project_invalid_repo_url": "URL de repositorio no válida. Ejemplo: https://github.com/owner/repo",
     "create_project_invalid_repo_url_simple": "URL de repositorio no válida",
     "create_project_invitation_accepted": "Invitación aceptada",
     "create_project_invitation_accepted_message": "Invitación aceptada",
-    "create_project_loading_message":
-        "Creando tu proyecto. Esto puede tardar un par de minutos...",
+    "create_project_loading_message": "Creando tu proyecto. Esto puede tardar un par de minutos...",
     "create_project_loading_step_finalize": "Finalizando la configuración...",
     "create_project_loading_step_integrations": "Configurando integraciones...",
-    "create_project_loading_step_plan":
-        "Planificando la estructura del proyecto...",
-    "create_project_login_expired_models":
-        "La sesión ha caducado. Vuelve a iniciar sesión antes de cargar modelos.",
-    "create_project_login_expired_templates":
-        "La sesión ha caducado. Vuelve a iniciar sesión antes de cargar plantillas.",
-    "create_project_missing_project_id_after_import":
-        "La importación se completó pero falta el ID del proyecto",
-    "create_project_model_switch_failed_continue":
-        "No se pudo cambiar el modelo; se continuará con el predeterminado del servidor. ({error})",
-    "create_project_new_ai_hint":
-        "Ejemplo: una app de tablero de tareas de equipo con autenticación, roles y base de datos.",
-    "create_project_new_ai_subtitle":
-        "Describe lo que quieres crear y nosotros configuramos todo.",
-    "create_project_new_ai_summary":
-        "En una frase, describe páginas, autenticación, datos y flujos clave (mín. 8 caracteres); crearemos el proyecto y continuaremos en el chat.",
+    "create_project_loading_step_plan": "Planificando la estructura del proyecto...",
+    "create_project_login_expired_models": "La sesión ha caducado. Vuelve a iniciar sesión antes de cargar modelos.",
+    "create_project_login_expired_templates": "La sesión ha caducado. Vuelve a iniciar sesión antes de cargar plantillas.",
+    "create_project_missing_project_id_after_import": "La importación se completó pero falta el ID del proyecto",
+    "create_project_model_switch_failed_continue": "No se pudo cambiar el modelo; se continuará con el predeterminado del servidor. ({error})",
+    "create_project_new_ai_hint": "Ejemplo: una app de tablero de tareas de equipo con autenticación, roles y base de datos.",
+    "create_project_new_ai_subtitle": "Describe lo que quieres crear y nosotros configuramos todo.",
+    "create_project_new_ai_summary": "En una frase, describe páginas, autenticación, datos y flujos clave (mín. 8 caracteres); crearemos el proyecto y continuaremos en el chat.",
     "create_project_new_ai_title": "Nuevo proyecto (IA)",
     "create_project_new_project_title": "Nuevo proyecto",
     "create_project_open_github_settings": "Abrir configuración de GitHub",
     "create_project_private_project": "Proyecto privado",
-    "create_project_private_project_subtitle":
-        "Mantener el proyecto importado como privado por defecto",
+    "create_project_private_project_subtitle": "Mantener el proyecto importado como privado por defecto",
     "create_project_project_description": "Descripción del proyecto",
     "create_project_project_name": "Nombre del proyecto",
     "create_project_project_name_hint": "Ejemplo: my-project",
-    "create_project_public_repo_example":
-        "Ejemplo: https://github.com/owner/repo",
-    "create_project_public_repo_info":
-        "Reflejaremos el repositorio público en el espacio de trabajo de la organización. Los repositorios grandes pueden tardar más.",
+    "create_project_public_repo_example": "Ejemplo: https://github.com/owner/repo",
+    "create_project_public_repo_info": "Reflejaremos el repositorio público en el espacio de trabajo de la organización. Los repositorios grandes pueden tardar más.",
     "create_project_public_repo_url": "URL del repositorio público",
     "create_project_repository_url": "URL del repositorio",
-    "create_project_retry_create_integrations":
-        "Falló la creación con integraciones; reintentando una vez…",
-    "create_project_retry_missing_id":
-        "Falta el ID del proyecto en el reintento de creación",
+    "create_project_retry_create_integrations": "Falló la creación con integraciones; reintentando una vez…",
+    "create_project_retry_missing_id": "Falta el ID del proyecto en el reintento de creación",
     "create_project_select_model": "Seleccionar modelo",
     "create_project_select_template": "Seleccionar plantilla",
-    "create_project_selected_archive_empty":
-        "El archivo seleccionado está vacío",
+    "create_project_selected_archive_empty": "El archivo seleccionado está vacío",
     "create_project_step_of_3": "Paso {step} de 3",
     "create_project_supported_zip": "Formato compatible: .zip",
     "create_project_template": "Plantilla",
-    "create_project_template_auto_description":
-        "Deja que D1V elija la mejor plantilla según tu solicitud.",
+    "create_project_template_auto_description": "Deja que D1V elija la mejor plantilla según tu solicitud.",
     "create_project_template_auto_name": "Auto",
-    "create_project_token_missing":
-        "No has iniciado sesión o falta el token. Vuelve a iniciar sesión.\n\nConsejo: Ajustes → Perfil → API → Copiar diagnóstico.",
+    "create_project_token_missing": "No has iniciado sesión o falta el token. Vuelve a iniciar sesión.\n\nConsejo: Ajustes → Perfil → API → Copiar diagnóstico.",
     "create_project_verify_access": "Verificar acceso",
-    "create_project_verify_access_failed":
-        "No se pudo verificar el acceso: {error}",
-    "create_project_waiting_workspace":
-        "Esperando a que el espacio de trabajo esté listo…",
-    "create_project_workspace_not_ready":
-        "El espacio de trabajo no está listo: {error}\n\nBase API: {base}",
+    "create_project_verify_access_failed": "No se pudo verificar el acceso: {error}",
+    "create_project_waiting_workspace": "Esperando a que el espacio de trabajo esté listo…",
+    "create_project_workspace_not_ready": "El espacio de trabajo no está listo: {error}\n\nBase API: {base}",
     "dark_mode": "Modo oscuro",
     "dashboard": "Panel",
     "dashboard_action_chat": "Chat",
@@ -3409,8 +3016,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "dashboard_no_projects_title": "No projects yet",
     "dashboard_open_project": "Open project",
     "dashboard_projects_load_failed": "Failed to load projects",
-    "dashboard_projects_subtitle":
-        "Continue from the most recently touched projects.",
+    "dashboard_projects_subtitle": "Continue from the most recently touched projects.",
     "dashboard_prompt_activity_day_message": "{count} prompts on {date}",
     "dashboard_prompt_activity_title": "Prompt activity",
     "dashboard_search_results": "Search Results ({count})",
@@ -3442,42 +3048,32 @@ kLocalizedValues = <String, Map<String, String>>{
     "docs_code_copied_message": "Code block copied. Paste it anywhere.",
     "docs_copy_code": "Copy",
     "docs_copy_code_done": "Copied",
-    "docs_hero_subtitle":
-        "Use the docs like a product index: scan by outcome, reopen what you touched recently, and jump straight into the detail view.",
-    "docs_hero_title":
-        "Operational guidance, product context, and implementation references.",
+    "docs_hero_subtitle": "Use the docs like a product index: scan by outcome, reopen what you touched recently, and jump straight into the detail view.",
+    "docs_hero_title": "Operational guidance, product context, and implementation references.",
     "docs_items_count": "{count} items",
-    "docs_load_failed_message":
-        "The in-app reader could not load this document. Retry here or open it in the browser.",
+    "docs_load_failed_message": "The in-app reader could not load this document. Retry here or open it in the browser.",
     "docs_load_failed_title": "Failed to load doc",
     "docs_no_matching_documents": "No matching documents",
-    "docs_no_matching_documents_hint":
-        "Try broader keywords or search by product area, workflow, or API topic.",
+    "docs_no_matching_documents_hint": "Try broader keywords or search by product area, workflow, or API topic.",
     "docs_open_failed_message": "Cannot open link",
     "docs_open_failed_title": "Open failed",
     "docs_open_in_browser": "Open in browser",
     "docs_opening_in_browser": "Opening documentation in your browser...",
     "docs_page_api_desc": "OpenAPI, auth, errors, pagination, webhooks.",
     "docs_page_api_title": "API",
-    "docs_page_architecture_desc":
-        "Environments, promotion model, and failure modes.",
+    "docs_page_architecture_desc": "Environments, promotion model, and failure modes.",
     "docs_page_architecture_title": "Architecture",
     "docs_page_faq_desc": "Troubleshooting and tips.",
     "docs_page_faq_title": "FAQ",
-    "docs_page_getting_started_desc":
-        "Prompt -> preview -> production, with verification steps.",
+    "docs_page_getting_started_desc": "Prompt -> preview -> production, with verification steps.",
     "docs_page_getting_started_title": "Getting Started",
-    "docs_page_integrations_desc":
-        "GitHub/Auth/Payments/Analytics: setup and verification.",
+    "docs_page_integrations_desc": "GitHub/Auth/Payments/Analytics: setup and verification.",
     "docs_page_integrations_title": "Integrations",
-    "docs_page_legal_restrictions_desc":
-        "Compliance and export restrictions (high-level).",
+    "docs_page_legal_restrictions_desc": "Compliance and export restrictions (high-level).",
     "docs_page_legal_restrictions_title": "Legal and Export Restrictions",
-    "docs_page_overview_desc":
-        "What the platform is and how the workflow fits together.",
+    "docs_page_overview_desc": "What the platform is and how the workflow fits together.",
     "docs_page_overview_title": "Overview",
-    "docs_page_privacy_policy_desc":
-        "What data we collect, how we use it, and how to request export or deletion.",
+    "docs_page_privacy_policy_desc": "What data we collect, how we use it, and how to request export or deletion.",
     "docs_page_privacy_policy_title": "Privacy Policy",
     "docs_page_product_desc": "Outcomes by role (PM / Business / Developers).",
     "docs_page_product_title": "Product",
@@ -3485,11 +3081,9 @@ kLocalizedValues = <String, Map<String, String>>{
     "docs_page_refund_policy_title": "Refund and Dispute Policy",
     "docs_page_roadmap_desc": "Now / Next priorities (subject to change).",
     "docs_page_roadmap_title": "Roadmap",
-    "docs_page_use_cases_desc":
-        "Playbooks: prompts + acceptance criteria for common products.",
+    "docs_page_use_cases_desc": "Playbooks: prompts + acceptance criteria for common products.",
     "docs_page_use_cases_title": "Use Cases",
-    "docs_page_workspace_desc":
-        "Where to go in the Project workspace (Chat, Deploy, Pay, Analytics).",
+    "docs_page_workspace_desc": "Where to go in the Project workspace (Chat, Deploy, Pay, Analytics).",
     "docs_page_workspace_title": "Workspace Guide",
     "docs_recently_viewed": "Recently viewed",
     "docs_search_hint": "Search docs, workflows, API, setup...",
@@ -3507,14 +3101,12 @@ kLocalizedValues = <String, Map<String, String>>{
     "enter_code_and_new_password": "Ingrese el código y la nueva contraseña",
     "enter_code_sent": "Ingrese el código de 6 dígitos enviado a su correo",
     "enter_email": "Ingrese su correo electrónico",
-    "enter_email_for_code":
-        "Ingrese su correo para recibir un código de verificación",
+    "enter_email_for_code": "Ingrese su correo para recibir un código de verificación",
     "enter_new_password": "Ingrese la nueva contraseña",
     "enter_password": "Ingrese la contraseña",
     "enter_verify_code": "Ingrese el código de verificación",
     "error": "Error",
-    "error_network":
-        "Error de red. Comprueba tu conexión e inténtalo de nuevo.",
+    "error_network": "Error de red. Comprueba tu conexión e inténtalo de nuevo.",
     "error_request_failed": "La solicitud falló. Inténtalo más tarde.",
     "error_timeout": "Tiempo de espera agotado. Inténtalo de nuevo.",
     "expandable_show_less": "Show less",
@@ -3529,8 +3121,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "friends_referred": "Amigos referidos",
     "generating": "Generating...",
     "github": "GitHub",
-    "github_connect_description":
-        "Conecte su cuenta de GitHub para importar repositorios",
+    "github_connect_description": "Conecte su cuenta de GitHub para importar repositorios",
     "github_import_action_import": "Importar proyecto",
     "github_import_action_importing": "Importando proyecto…",
     "github_import_action_opening_chat": "Abriendo chat…",
@@ -3540,33 +3131,25 @@ kLocalizedValues = <String, Map<String, String>>{
     "github_import_failed_message": "No se pudo importar el repositorio",
     "github_import_failed_title": "Error de importación",
     "github_import_in_progress_title": "Importación en curso",
-    "github_import_monorepo_notice":
-        "Este repositorio parece un monorepo. Elige el directorio raíz de la app antes de iniciar el despliegue preview.",
-    "github_import_opening_chat":
-        "Proyecto importado. La preview todavía se está iniciando, abriendo el chat ahora.",
-    "github_import_progress_choose_root":
-        "Selecciona el directorio raíz de la app",
+    "github_import_monorepo_notice": "Este repositorio parece un monorepo. Elige el directorio raíz de la app antes de iniciar el despliegue preview.",
+    "github_import_opening_chat": "Proyecto importado. La preview todavía se está iniciando, abriendo el chat ahora.",
+    "github_import_progress_choose_root": "Selecciona el directorio raíz de la app",
     "github_import_progress_import": "Importando repositorio",
     "github_import_progress_prepare_preview": "Preparando despliegue preview",
-    "github_import_progress_preview_after_root":
-        "El despliegue preview comenzará después de la configuración",
+    "github_import_progress_preview_after_root": "El despliegue preview comenzará después de la configuración",
     "github_import_progress_repo_imported": "Repositorio importado",
-    "github_import_progress_wait_preview":
-        "Esperando a que la preview esté lista",
+    "github_import_progress_wait_preview": "Esperando a que la preview esté lista",
     "github_import_project_description": "Descripción del proyecto",
     "github_import_project_name": "Nombre del proyecto",
-    "github_import_project_name_required":
-        "El nombre del proyecto es obligatorio",
+    "github_import_project_name_required": "El nombre del proyecto es obligatorio",
     "github_import_ready_title": "La preview está lista",
     "github_import_repo_branch": "rama {branch}",
     "github_import_repo_private": "privado",
     "github_import_repo_public": "público",
     "github_import_root_directory": "Directorio raíz",
     "github_import_root_failed": "No se pudo configurar el directorio raíz",
-    "github_import_root_saved":
-        "Directorio raíz guardado. El despliegue preview ha comenzado.",
-    "github_import_sheet_subtitle":
-        "Crea un nuevo proyecto desde este repositorio de GitHub y mantén el despliegue preview dentro del flujo.",
+    "github_import_root_saved": "Directorio raíz guardado. El despliegue preview ha comenzado.",
+    "github_import_sheet_subtitle": "Crea un nuevo proyecto desde este repositorio de GitHub y mantén el despliegue preview dentro del flujo.",
     "github_import_sheet_title": "Importar repositorio",
     "github_import_success_message": "Repositorio importado correctamente",
     "github_integration": "Integración con GitHub",
@@ -3576,19 +3159,17 @@ kLocalizedValues = <String, Map<String, String>>{
     "help_support_cta_title": "Still need help?",
     "help_support_docs_subtitle": "Technical documentation and API reference",
     "help_support_email_open_error": "Failed to open email: {error}",
-    "help_support_email_open_failed":
-        "Could not open email app. Please email us at {email}",
+    "help_support_email_open_failed": "Could not open email app. Please email us at {email}",
     "help_support_hero_subtitle": "Find answers or contact our support team",
     "help_support_hero_title": "How can we help you?",
     "help_support_link_open_error": "Failed to open {name}: {error}",
     "help_support_link_open_failed": "Could not open {name}",
     "help_support_quick_actions": "Quick Actions",
-    "help_support_subtitle": "Obtener ayuda y soporte",
+    "help_support_subtitle": "Ayuda / soporte",
     "help_support_user_guide_subtitle": "Learn how to use all features",
     "help_support_user_guide_title": "User Guide",
     "import_action": "Importar",
-    "import_dialog_description":
-        "Ingrese la información del repositorio que desea importar",
+    "import_dialog_description": "Ingrese la información del repositorio que desea importar",
     "import_dialog_title": "Importar Repositorio Público",
     "import_failed": "Error al importar repositorio",
     "import_repository": "Importar repositorio",
@@ -3608,17 +3189,14 @@ kLocalizedValues = <String, Map<String, String>>{
     "industry_retail": "Retail",
     "industry_saas": "SaaS",
     "industry_technology": "Technology",
-    "input_error_owner_repo":
-        "Por favor ingrese el propietario y el nombre del repositorio",
+    "input_error_owner_repo": "Por favor ingrese el propietario y el nombre del repositorio",
     "invitation": "Invitation",
     "invite_code_copied": "Código de invitación copiado al portapapeles",
     "invite_code_unavailable": "Código de invitación no disponible",
-    "invite_description":
-        "Invite a amigos a unirse a d1v.ai y obtenga recompensas",
+    "invite_description": "Invite a amigos a unirse a d1v.ai y obtenga recompensas",
     "invite_friends": "Invitar amigos",
     "invites": "Invitaciones",
-    "invites_empty_message":
-        "You haven't invited any friends yet.\\nShare your invite code to get started!",
+    "invites_empty_message": "You haven't invited any friends yet.\\nShare your invite code to get started!",
     "invites_empty_title": "No Invites Yet",
     "invites_joined_at": "Joined {time}",
     "invites_load_failed_title": "Failed to load invited users",
@@ -3640,26 +3218,19 @@ kLocalizedValues = <String, Map<String, String>>{
     "login_failed": "Error al iniciar sesión",
     "login_first": "Por favor inicie sesión primero",
     "login_required_button": "Iniciar sesión",
-    "login_required_create_post_message":
-        "Necesitas iniciar sesión para crear una publicación.",
-    "login_required_dashboard_message":
-        "Necesitas iniciar sesión para ver tus proyectos.",
-    "login_required_github_message":
-        "Necesitas iniciar sesión para administrar la integración con GitHub.",
-    "login_required_invites_message":
-        "Necesitas iniciar sesión para ver invitaciones y recompensas.",
-    "login_required_orders_message":
-        "Necesitas iniciar sesión para ver pedidos y facturación.",
-    "login_required_settings_message":
-        "Necesitas iniciar sesión para administrar la configuración de tu cuenta.",
+    "login_required_create_post_message": "Necesitas iniciar sesión para crear una publicación.",
+    "login_required_dashboard_message": "Necesitas iniciar sesión para ver tus proyectos.",
+    "login_required_github_message": "Necesitas iniciar sesión para administrar la integración con GitHub.",
+    "login_required_invites_message": "Necesitas iniciar sesión para ver invitaciones y recompensas.",
+    "login_required_orders_message": "Necesitas iniciar sesión para ver pedidos y facturación.",
+    "login_required_settings_message": "Necesitas iniciar sesión para administrar la configuración de tu cuenta.",
     "login_required_title": "Inicio de sesión requerido",
     "login_success": "Inicio de sesión exitoso",
     "login_with_code": "Iniciar sesión con código",
     "login_with_password": "Iniciar sesión con contraseña",
     "logout": "Cerrar sesión",
     "main_nav_workspace": "Workspace",
-    "model_load_auth_expired":
-        "Login expired. Please sign in again to load models.",
+    "model_load_auth_expired": "Login expired. Please sign in again to load models.",
     "model_switch_failed": "Failed to switch model: {error}",
     "model_switch_success": "Cambiado a {model}",
     "model_switch_title": "Modelo",
@@ -3667,17 +3238,15 @@ kLocalizedValues = <String, Map<String, String>>{
     "my_invites_subtitle": "Ver su historial de invitaciones",
     "new_password": "Nueva contraseña",
     "notifications": "Notificaciones",
-    "notifications_subtitle": "Administrar notificaciones",
+    "notifications_subtitle": "Alertas",
     "onboarding_action_back": "Back",
     "onboarding_action_finish": "Finish",
     "onboarding_action_next": "Next",
     "onboarding_ai_avatar_generate_failed": "Failed to generate AI avatars",
-    "onboarding_ai_avatar_hint":
-        "Tap \"AI Random\" to draw your AI avatar cards.",
+    "onboarding_ai_avatar_hint": "Tap \"AI Random\" to draw your AI avatar cards.",
     "onboarding_ai_avatar_title": "AI Avatar Cards",
     "onboarding_ai_random": "AI Random",
-    "onboarding_avatar_hint":
-        "Recommended: square image, PNG/JPG/WEBP, up to 5MB.",
+    "onboarding_avatar_hint": "Recommended: square image, PNG/JPG/WEBP, up to 5MB.",
     "onboarding_avatar_pick_failed": "Failed to pick image: {error}",
     "onboarding_avatar_refresh_failed": "Failed to refresh avatars: {error}",
     "onboarding_avatar_select_failed": "Failed to select avatar: {error}",
@@ -3686,18 +3255,14 @@ kLocalizedValues = <String, Map<String, String>>{
     "onboarding_complete_failed": "Failed to complete onboarding: {error}",
     "onboarding_complete_subtitle": "Bienvenido. Ya puedes continuar.",
     "onboarding_complete_title": "Configuración completa",
-    "onboarding_invite_helper":
-        "Optional. Add an invite code if someone referred you.",
+    "onboarding_invite_helper": "Optional. Add an invite code if someone referred you.",
     "onboarding_invite_hint": "Enter invite code",
     "onboarding_invite_label": "Invite code",
-    "onboarding_org_helper":
-        "This helps us tailor templates and recommendations for your team.",
-    "onboarding_subtitle_avatar":
-        "Upload a profile image so collaborators can recognize you at a glance.",
+    "onboarding_org_helper": "This helps us tailor templates and recommendations for your team.",
+    "onboarding_subtitle_avatar": "Upload a profile image so collaborators can recognize you at a glance.",
     "onboarding_subtitle_finish": "You are almost ready to start building.",
     "onboarding_subtitle_invite": "Enter an invite code to join your team.",
-    "onboarding_subtitle_org":
-        "This helps us tailor templates and recommendations for your team.",
+    "onboarding_subtitle_org": "This helps us tailor templates and recommendations for your team.",
     "onboarding_title_avatar": "Add your avatar",
     "onboarding_title_finish": "Finish setup",
     "onboarding_title_org": "Tell us about your organization",
@@ -3715,8 +3280,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "orders_usage_builder_billing_rule": "Billing rule: {rate}/min",
     "orders_usage_builder_empty": "No deployment records yet.",
     "orders_usage_builder_estimated_cost": "Estimated Cost",
-    "orders_usage_builder_estimated_cost_hint":
-        "Estimated from deployment build durations",
+    "orders_usage_builder_estimated_cost_hint": "Estimated from deployment build durations",
     "orders_usage_builder_load_failed": "Unable to load builder usage data.",
     "orders_usage_builder_overall": "Overall Build Time",
     "orders_usage_builder_projects_title": "Top Projects",
@@ -3738,8 +3302,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "orders_usage_llm_total_cost_hint": "Estimated cost",
     "orders_usage_na": "N/A",
     "orders_usage_project_breakdown_empty": "No usage data available",
-    "orders_usage_project_breakdown_empty_hint":
-        "Your LLM usage will appear here",
+    "orders_usage_project_breakdown_empty_hint": "Your LLM usage will appear here",
     "orders_usage_project_breakdown_title": "Project Breakdown",
     "orders_usage_project_deleted": "Eliminado",
     "orders_usage_time_range": "Time Range",
@@ -3747,11 +3310,9 @@ kLocalizedValues = <String, Map<String, String>>{
     "orders_wallet_usage_bucket_expiring": "Expiring",
     "orders_wallet_usage_bucket_non_expiring": "Non-expiring",
     "orders_wallet_usage_empty": "No usage records yet.",
-    "orders_wallet_usage_empty_hint":
-        "Consumption records from deployments and model usage will appear here.",
+    "orders_wallet_usage_empty_hint": "Consumption records from deployments and model usage will appear here.",
     "orders_wallet_usage_source_admin_broadcast": "admin broadcast",
-    "orders_wallet_usage_source_system_message":
-        "System message: {description}",
+    "orders_wallet_usage_source_system_message": "System message: {description}",
     "other": "Otro",
     "owner_hint": "usuario u organización",
     "owner_label": "Propietario",
@@ -3762,6 +3323,23 @@ kLocalizedValues = <String, Map<String, String>>{
     "passwords_do_not_match": "Las contraseñas no coinciden",
     "pricing": "Precios",
     "privacy": "Privacidad",
+    "privacy_allow_analytics": "Permitir análisis",
+    "privacy_allow_analytics_desc": "Ayudar a mejorar la app compartiendo análisis de uso",
+    "privacy_allow_data_sharing": "Permitir compartición de datos",
+    "privacy_allow_data_sharing_desc": "Compartir datos para mejorar nuestros servicios",
+    "privacy_allow_third_party_apps": "Permitir apps de terceros",
+    "privacy_allow_third_party_apps_desc": "Habilitar integraciones con servicios de terceros",
+    "privacy_discoverable_by_email": "Descubrible por correo",
+    "privacy_discoverable_by_email_desc": "Permitir que otros te encuentren usando tu correo",
+    "privacy_marketing_emails": "Correos de marketing",
+    "privacy_marketing_emails_desc": "Recibir correos sobre nuevas funciones y ofertas",
+    "privacy_public_profile": "Perfil público",
+    "privacy_public_profile_desc": "Permitir que cualquiera vea tu perfil",
+    "privacy_settings": "Configuración de privacidad",
+    "privacy_show_activity_status": "Mostrar estado de actividad",
+    "privacy_show_activity_status_desc": "Mostrar tu actividad reciente a otros",
+    "privacy_show_online_status": "Mostrar estado en línea",
+    "privacy_show_online_status_desc": "Permitir que otros vean cuándo estás activo",
     "profile": "Perfil",
     "profile_ai_random": "AI Random",
     "profile_avatar_generate_failed": "Failed to generate avatars",
@@ -3787,18 +3365,12 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_actions": "Actions",
     "project_analytics_active_now": "Active Now",
     "project_analytics_active_visitors": "Active Visitors",
-    "project_analytics_ai_prompt_active_now":
-        "Can you help me interpret my real-time active users and recommend actions to improve conversion?",
-    "project_analytics_ai_prompt_custom_events":
-        "Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?",
-    "project_analytics_ai_prompt_dashboard":
-        "Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?",
-    "project_analytics_ai_prompt_pageviews":
-        "Can you analyze my pageviews trend and suggest ways to increase traffic and retention?",
-    "project_analytics_ai_prompt_sessions":
-        "Can you analyze my sessions and suggest how to increase engagement and session duration?",
-    "project_analytics_ai_prompt_visitors":
-        "Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?",
+    "project_analytics_ai_prompt_active_now": "Can you help me interpret my real-time active users and recommend actions to improve conversion?",
+    "project_analytics_ai_prompt_custom_events": "Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?",
+    "project_analytics_ai_prompt_dashboard": "Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?",
+    "project_analytics_ai_prompt_pageviews": "Can you analyze my pageviews trend and suggest ways to increase traffic and retention?",
+    "project_analytics_ai_prompt_sessions": "Can you analyze my sessions and suggest how to increase engagement and session duration?",
+    "project_analytics_ai_prompt_visitors": "Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?",
     "project_analytics_all": "All",
     "project_analytics_bounces": "Bounces",
     "project_analytics_comparison_notes": "Comparison Notes",
@@ -3806,8 +3378,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_copy_failed": "Copy failed",
     "project_analytics_copy_field": "Copy {title}",
     "project_analytics_copy_summary": "Copy Summary",
-    "project_analytics_copy_summary_hint":
-        "Copy a shareable analytics snapshot",
+    "project_analytics_copy_summary_hint": "Copy a shareable analytics snapshot",
     "project_analytics_copy_tracking_code": "Copy Tracking Code",
     "project_analytics_copy_tracking_code_hint": "Copy Umami script snippet",
     "project_analytics_current_window": "Current window: {range}",
@@ -3827,11 +3398,9 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_dim_screen": "Screen",
     "project_analytics_dim_tag": "Tag",
     "project_analytics_enable_action": "Enable Analytics",
-    "project_analytics_enable_hint":
-        "Track your website's visitors, page views, and custom events with Umami Analytics",
+    "project_analytics_enable_hint": "Track your website's visitors, page views, and custom events with Umami Analytics",
     "project_analytics_enable_title": "Enable Analytics",
-    "project_analytics_env_filter_note":
-        "Note: environment filter uses hostname exact matching.",
+    "project_analytics_env_filter_note": "Note: environment filter uses hostname exact matching.",
     "project_analytics_environment": "Environment",
     "project_analytics_events": "Events",
     "project_analytics_events_trend": "Events Trend",
@@ -3844,20 +3413,14 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_filters": "Filters",
     "project_analytics_inactive_tab": "{title} tab",
     "project_analytics_initializing": "Initializing...",
-    "project_analytics_install_done_autojump":
-        "Installation completed. Auto-opening Data in {seconds}s.",
-    "project_analytics_install_done_open":
-        "Installation completed. You can open the analytics tabs now.",
-    "project_analytics_install_incomplete":
-        "Analytics install did not complete successfully.",
-    "project_analytics_install_success":
-        "Analytics successfully installed and activated.",
+    "project_analytics_install_done_autojump": "Installation completed. Auto-opening Data in {seconds}s.",
+    "project_analytics_install_done_open": "Installation completed. You can open the analytics tabs now.",
+    "project_analytics_install_incomplete": "Analytics install did not complete successfully.",
+    "project_analytics_install_success": "Analytics successfully installed and activated.",
     "project_analytics_installer": "Analytics Installer",
-    "project_analytics_installer_hint":
-        "Review the session output or retry the install.",
+    "project_analytics_installer_hint": "Review the session output or retry the install.",
     "project_analytics_installing": "Installing Analytics…",
-    "project_analytics_installing_hint":
-        "We are initializing Umami and inserting the tracking script via a chat session.",
+    "project_analytics_installing_hint": "We are initializing Umami and inserting the tracking script via a chat session.",
     "project_analytics_last_24_hours": "Last 24 Hours",
     "project_analytics_last_30_days": "Last 30 Days",
     "project_analytics_last_6_hours": "Last 6 Hours",
@@ -3868,12 +3431,10 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_metrics": "Metrics",
     "project_analytics_no_compare_data": "No top-page comparison data",
     "project_analytics_no_data": "No analytics data yet",
-    "project_analytics_no_data_hint":
-        "Analytics data will appear once your project is live and receiving traffic.",
+    "project_analytics_no_data_hint": "Analytics data will appear once your project is live and receiving traffic.",
     "project_analytics_no_data_short": "No data",
     "project_analytics_no_events": "No events in current range",
-    "project_analytics_no_metrics_selected":
-        "No metrics selected. Enable Pageviews/Sessions in Filters.",
+    "project_analytics_no_metrics_selected": "No metrics selected. Enable Pageviews/Sessions in Filters.",
     "project_analytics_no_realtime_urls": "No realtime URL data yet",
     "project_analytics_no_sessions": "No sessions in current range",
     "project_analytics_pageviews": "Pageviews",
@@ -3887,13 +3448,11 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_ready": "Analytics Ready",
     "project_analytics_recent_events": "Recent Events",
     "project_analytics_reenable": "Re-enable Analytics",
-    "project_analytics_reenable_confirm":
-        "This will re-run analytics setup and re-insert the tracking script via workspace session. Continue?",
+    "project_analytics_reenable_confirm": "This will re-run analytics setup and re-insert the tracking script via workspace session. Continue?",
     "project_analytics_reenable_hint": "Re-run script installation flow",
     "project_analytics_reenable_started": "Re-enable process started.",
     "project_analytics_reports": "Reports",
-    "project_analytics_reports_coming":
-        "Custom reports are coming soon. This keeps parity with the current web placeholder state.",
+    "project_analytics_reports_coming": "Custom reports are coming soon. This keeps parity with the current web placeholder state.",
     "project_analytics_reset": "Reset",
     "project_analytics_restore_defaults": "Restore defaults",
     "project_analytics_retry_install": "Retry Install",
@@ -3964,8 +3523,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_api_deleted": "Deleted",
     "project_api_description_optional": "Description (optional)",
     "project_api_edit_variable": "Edit variable",
-    "project_api_empty_hint":
-        "Create your first key-value pair to configure\\nruntime behavior for this project.",
+    "project_api_empty_hint": "Create your first key-value pair to configure\\nruntime behavior for this project.",
     "project_api_empty_title": "No environment variables",
     "project_api_environment_variables": "Environment Variables",
     "project_api_key": "Key",
@@ -3977,8 +3535,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_api_sensitive_masked": "Masked in lists by default",
     "project_api_sensitive_visible": "Visible in lists",
     "project_api_show": "Show",
-    "project_api_show_values_message":
-        "This will reveal sensitive environment values on screen.",
+    "project_api_show_values_message": "This will reveal sensitive environment values on screen.",
     "project_api_show_values_title": "Show values?",
     "project_api_update_failed": "Update failed",
     "project_api_value": "Value",
@@ -3994,8 +3551,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_chat_engine_fast_hint": "Usar Claude para respuestas más rápidas",
     "project_chat_engine_switch_success": "Cambiado a {mode}",
     "project_chat_engine_think_hard": "Pensar más",
-    "project_chat_engine_think_hard_hint":
-        "Usar Codex para un razonamiento más profundo",
+    "project_chat_engine_think_hard_hint": "Usar Codex para un razonamiento más profundo",
     "project_chat_engine_title": "Modo",
     "project_chat_find_in_file_tooltip": "Buscar en el archivo",
     "project_chat_fold_all": "Plegar todo",
@@ -4021,35 +3577,28 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_chat_tab_preview_short": "Vista",
     "project_chat_unfold_all": "Desplegar todo",
     "project_database_actions": "Actions",
-    "project_database_ai_prompt_graph":
-        "Given the database schema, explain how \"{table}\" relates to other tables (foreign keys) and suggest improvements.",
-    "project_database_ai_prompt_relation":
-        "Explain the relationship from {from} to {to}. Suggest indexes and common queries.",
-    "project_database_ai_prompt_table":
-        "Can you analyze the database table \"{table}\" and explain its purpose, structure, and any suggestions for optimization or best practices?",
+    "project_database_ai_prompt_graph": "Given the database schema, explain how \"{table}\" relates to other tables (foreign keys) and suggest improvements.",
+    "project_database_ai_prompt_relation": "Explain the relationship from {from} to {to}. Suggest indexes and common queries.",
+    "project_database_ai_prompt_table": "Can you analyze the database table \"{table}\" and explain its purpose, structure, and any suggestions for optimization or best practices?",
     "project_database_ask_ai_table": "Ask AI about this table",
     "project_database_branch": "Branch",
     "project_database_branch_hint": "Current Neon branch context",
     "project_database_branch_primary": "{name} (primary)",
     "project_database_column_pk": "{name} (PK)",
     "project_database_columns_schema": "{columns} columns • {schema} schema",
-    "project_database_data_empty_hint":
-        "Create tables first, then browse rows here.",
+    "project_database_data_empty_hint": "Create tables first, then browse rows here.",
     "project_database_delete_row": "Delete row",
-    "project_database_delete_row_confirm":
-        "Delete this row from {table}? This action cannot be undone.",
+    "project_database_delete_row_confirm": "Delete this row from {table}? This action cannot be undone.",
     "project_database_edit_row": "Edit row",
     "project_database_enable_action": "Enable Database",
-    "project_database_enable_hint":
-        "Provision a Neon PostgreSQL database for this project and start exploring your schema and data.",
+    "project_database_enable_hint": "Provision a Neon PostgreSQL database for this project and start exploring your schema and data.",
     "project_database_enable_title": "Enable Database",
     "project_database_enabled_success": "Database enabled successfully!",
     "project_database_enabling": "Enabling...",
     "project_database_feature_branching": "Branching support",
     "project_database_feature_serverless": "Serverless Postgres on Neon",
     "project_database_feature_ssl": "Secure SSL connections",
-    "project_database_graph_hint":
-        "Add more tables to see relationships as a graph.",
+    "project_database_graph_hint": "Add more tables to see relationships as a graph.",
     "project_database_insert": "Insert",
     "project_database_insert_row": "Insert row",
     "project_database_inserting": "Inserting...",
@@ -4059,22 +3608,17 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_database_migration_plans": "{count} plans",
     "project_database_next": "Next",
     "project_database_no_columns": "No visible columns",
-    "project_database_no_columns_hint":
-        "This table currently has no browsable columns.",
+    "project_database_no_columns_hint": "This table currently has no browsable columns.",
     "project_database_no_editable_columns": "No editable columns",
-    "project_database_no_editable_columns_hint":
-        "This table has no editable non-primary-key columns.",
+    "project_database_no_editable_columns_hint": "This table has no editable non-primary-key columns.",
     "project_database_no_job_details": "No job details available yet.",
     "project_database_no_migration": "No migration history",
-    "project_database_no_migration_hint":
-        "Migration plans and execution records will appear here.",
+    "project_database_no_migration_hint": "Migration plans and execution records will appear here.",
     "project_database_no_relations": "No foreign-key relationships found.",
     "project_database_no_rows": "No rows found",
-    "project_database_no_rows_hint":
-        "Try another table or insert data from your application flow.",
+    "project_database_no_rows_hint": "Try another table or insert data from your application flow.",
     "project_database_no_tables": "No database tables",
-    "project_database_no_tables_hint":
-        "Database tables will appear here once they are created.",
+    "project_database_no_tables_hint": "Database tables will appear here once they are created.",
     "project_database_page": "Page {index}",
     "project_database_page_size": "{size} / page",
     "project_database_previous": "Previous",
@@ -4101,40 +3645,27 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_actions": "Actions",
     "project_deploy_active_preview": "Preview deployment in progress...",
     "project_deploy_active_prod": "Production release in progress: {phase}",
-    "project_deploy_active_reverting":
-        "Rolling back commit{suffix} and triggering preview deploy...",
-    "project_deploy_ai_prompt_environment":
-        "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_active_reverting": "Rolling back commit{suffix} and triggering preview deploy...",
+    "project_deploy_ai_prompt_environment": "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
     "project_deploy_ai_prompt_prefix": "My deploy failed with this error:",
-    "project_deploy_ai_prompt_preview":
-        "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_prod":
-        "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_suffix":
-        "Give me the most likely root cause and a step-by-step fix.",
-    "project_deploy_ai_prompt_vercel_middle":
-        "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
-    "project_deploy_ai_prompt_vercel_prefix":
-        "My Vercel deployment failed for project",
-    "project_deploy_ai_prompt_vercel_suffix":
-        "Also suggest what logs/env vars to check first.",
+    "project_deploy_ai_prompt_preview": "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_prod": "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_suffix": "Give me the most likely root cause and a step-by-step fix.",
+    "project_deploy_ai_prompt_vercel_middle": "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
+    "project_deploy_ai_prompt_vercel_prefix": "My Vercel deployment failed for project",
+    "project_deploy_ai_prompt_vercel_suffix": "Also suggest what logs/env vars to check first.",
     "project_deploy_ask_ai": "Ask AI",
     "project_deploy_build_log": "Build log",
     "project_deploy_build_logs": "Build logs",
     "project_deploy_close": "Close",
-    "project_deploy_coach_no_preview":
-        "No preview yet. Start with a preview deploy to reduce release risk.",
-    "project_deploy_coach_preview_ready":
-        "Preview is ready. Recommended next step: release to production.",
-    "project_deploy_coach_prod_live":
-        "Production is live. Keep shipping with small preview iterations.",
+    "project_deploy_coach_no_preview": "No preview yet. Start with a preview deploy to reduce release risk.",
+    "project_deploy_coach_preview_ready": "Preview is ready. Recommended next step: release to production.",
+    "project_deploy_coach_prod_live": "Production is live. Keep shipping with small preview iterations.",
     "project_deploy_common_fixes": "Common fixes:",
     "project_deploy_configure_later": "Configure later",
-    "project_deploy_confirm_preview_message":
-        "This will trigger a new preview (dev) deployment on Vercel.",
+    "project_deploy_confirm_preview_message": "This will trigger a new preview (dev) deployment on Vercel.",
     "project_deploy_confirm_preview_title": "Redeploy preview?",
-    "project_deploy_confirm_prod_message":
-        "This will compare dev/main, merge if needed, then trigger a production deployment.",
+    "project_deploy_confirm_prod_message": "This will compare dev/main, merge if needed, then trigger a production deployment.",
     "project_deploy_confirm_prod_title": "Deploy to production?",
     "project_deploy_copy": "Copy",
     "project_deploy_copy_all": "Copy all",
@@ -4142,16 +3673,14 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_copy_failed": "Copy failed",
     "project_deploy_current_deployments": "Current Deployments",
     "project_deploy_dev_timeline": "Dev Timeline",
-    "project_deploy_dev_timeline_hint":
-        "Inspect recent commits on the dev branch before you promote them to production.",
+    "project_deploy_dev_timeline_hint": "Inspect recent commits on the dev branch before you promote them to production.",
     "project_deploy_environment_deployment": "{env} deployment",
     "project_deploy_error_snippet_copied": "Error snippet copied",
     "project_deploy_filter_all": "All",
     "project_deploy_filter_preview": "Preview",
     "project_deploy_filter_production": "Production",
     "project_deploy_history": "History",
-    "project_deploy_history_empty":
-        "No deployments yet — deploy your project to see history here.",
+    "project_deploy_history_empty": "No deployments yet — deploy your project to see history here.",
     "project_deploy_history_title": "Deployment History",
     "project_deploy_log_cached": "Cached",
     "project_deploy_log_empty": "No logs available for this deployment.",
@@ -4169,27 +3698,22 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_merge_into_main": "Merge into main",
     "project_deploy_more": "More",
     "project_deploy_next_steps": "Next steps",
-    "project_deploy_no_change_commits":
-        "No change commits between adjacent releases.",
+    "project_deploy_no_change_commits": "No change commits between adjacent releases.",
     "project_deploy_no_diff_files": "No file diff",
-    "project_deploy_no_diff_files_hint":
-        "This commit did not return any changed file patches.",
+    "project_deploy_no_diff_files_hint": "This commit did not return any changed file patches.",
     "project_deploy_no_history": "No deployment history yet.",
     "project_deploy_no_logs": "No logs",
-    "project_deploy_no_logs_message":
-        "This deployment has no Vercel deployment id.",
+    "project_deploy_no_logs_message": "This deployment has no Vercel deployment id.",
     "project_deploy_no_message": "(no message)",
     "project_deploy_no_production": "No production deployment",
     "project_deploy_no_releases": "No releases detected on main yet.",
     "project_deploy_no_timeline": "No timeline yet",
-    "project_deploy_no_timeline_hint":
-        "No recent commits found on the development branch.",
+    "project_deploy_no_timeline_hint": "No recent commits found on the development branch.",
     "project_deploy_ok": "OK",
     "project_deploy_open": "Open",
     "project_deploy_open_url_failed": "Cannot open URL",
     "project_deploy_open_url_failed_message": "Could not open {url}",
-    "project_deploy_patch_unavailable":
-        "Patch preview is unavailable for this file.",
+    "project_deploy_patch_unavailable": "Patch preview is unavailable for this file.",
     "project_deploy_phase_checking": "Checking dev/main diff...",
     "project_deploy_phase_deploying": "Triggering production deploy...",
     "project_deploy_phase_merging": "Merging dev into main...",
@@ -4204,15 +3728,12 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_releases": "Releases",
     "project_deploy_releases_main": "(main)",
     "project_deploy_retry_last": "Retry last deployment",
-    "project_deploy_retry_preview_message":
-        "This will trigger a new preview (dev) deployment.",
+    "project_deploy_retry_preview_message": "This will trigger a new preview (dev) deployment.",
     "project_deploy_retry_preview_title": "Retry preview deploy?",
-    "project_deploy_retry_prod_message":
-        "This will compare dev/main, merge if needed, then trigger a new production deployment.",
+    "project_deploy_retry_prod_message": "This will compare dev/main, merge if needed, then trigger a new production deployment.",
     "project_deploy_retry_prod_title": "Retry production deploy?",
     "project_deploy_revert_confirm_action": "Confirm revert",
-    "project_deploy_revert_confirm_message":
-        "This will run git revert on commit {sha} and trigger a new preview deployment.",
+    "project_deploy_revert_confirm_message": "This will run git revert on commit {sha} and trigger a new preview deployment.",
     "project_deploy_revert_confirm_title": "Revert this commit?",
     "project_deploy_revert_failed": "Revert failed",
     "project_deploy_revert_no_sha": "No commit SHA found for this deployment.",
@@ -4223,8 +3744,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_revert_unavailable": "Revert unavailable",
     "project_deploy_reverting": "Reverting...",
     "project_deploy_select_commit": "Select a commit",
-    "project_deploy_select_commit_hint":
-        "Choose a commit on the left to inspect changed files and patches.",
+    "project_deploy_select_commit_hint": "Choose a commit on the left to inspect changed files and patches.",
     "project_deploy_share_all": "Share all",
     "project_deploy_share_errors": "Share errors",
     "project_deploy_tab_timeline": "Timeline",
@@ -4232,28 +3752,19 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_time_hours_ago": "{hours}h ago",
     "project_deploy_time_just_now": "just now",
     "project_deploy_time_minutes_ago": "{minutes}m ago",
-    "project_deploy_tip_build_issue":
-        "This looks like a build failure — check compilation errors in logs.",
-    "project_deploy_tip_check_env_vars":
-        "Check environment variables (and sync to Vercel).",
-    "project_deploy_tip_check_github_access":
-        "Check GitHub collaborator/bot access to the repo.",
-    "project_deploy_tip_env_issue":
-        "This looks like an env var issue — verify required secrets are set.",
-    "project_deploy_tip_open_logs":
-        "Open the latest build logs and copy/share the error snippet.",
-    "project_deploy_tip_permission":
-        "This looks like a permission issue — verify GitHub access and tokens.",
-    "project_deploy_tip_retry_preview_first":
-        "Retry preview deploy first (then production).",
-    "project_deploy_tip_short_env":
-        "Env vars configured (and synced to Vercel)",
+    "project_deploy_tip_build_issue": "This looks like a build failure — check compilation errors in logs.",
+    "project_deploy_tip_check_env_vars": "Check environment variables (and sync to Vercel).",
+    "project_deploy_tip_check_github_access": "Check GitHub collaborator/bot access to the repo.",
+    "project_deploy_tip_env_issue": "This looks like an env var issue — verify required secrets are set.",
+    "project_deploy_tip_open_logs": "Open the latest build logs and copy/share the error snippet.",
+    "project_deploy_tip_permission": "This looks like a permission issue — verify GitHub access and tokens.",
+    "project_deploy_tip_retry_preview_first": "Retry preview deploy first (then production).",
+    "project_deploy_tip_short_env": "Env vars configured (and synced to Vercel)",
     "project_deploy_tip_short_github": "GitHub access / repo permissions",
     "project_deploy_tip_short_logs": "Open build logs and share error snippet",
     "project_deploy_tip_short_retry_preview": "Retry preview deploy first",
     "project_deploy_troubleshooting": "Troubleshooting",
-    "project_deploy_troubleshooting_hint":
-        "If deploy fails, try these quick checks:",
+    "project_deploy_troubleshooting_hint": "If deploy fails, try these quick checks:",
     "project_deploy_unknown": "unknown",
     "project_deployment_tab_deployments": "Deployments",
     "project_detail_error_text": "Error: {error}",
@@ -4286,8 +3797,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_github_import": "GitHub Import",
     "project_github_import_as_new": "Import as new project",
     "project_github_import_failed": "Import failed: {error}",
-    "project_github_import_missing_project_id":
-        "Import succeeded but missing project id",
+    "project_github_import_missing_project_id": "Import succeeded but missing project id",
     "project_github_imported": "Imported",
     "project_github_imported_description": "Imported from GitHub: {repo}",
     "project_github_invalid_repo_url": "Invalid repository URL",
@@ -4313,38 +3823,25 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_overview_community_action_unpublish": "Unpublish",
     "project_overview_community_action_update": "Update",
     "project_overview_community_action_view": "View",
-    "project_overview_community_hint":
-        "Publish a community post linked to this project (auto-release to production if needed).",
-    "project_overview_community_progress_deploy":
-        "Triggering production deploy…",
+    "project_overview_community_hint": "Publish a community post linked to this project (auto-release to production if needed).",
+    "project_overview_community_progress_deploy": "Triggering production deploy…",
     "project_overview_community_progress_finalizing": "Finalizing…",
     "project_overview_community_progress_merge": "Merging branches…",
     "project_overview_community_progress_publish": "Publishing to community…",
-    "project_overview_community_publish_dialog_current_domain":
-        "Current domain: {domain}",
-    "project_overview_community_publish_dialog_has_prod":
-        "This project already has a production deployment. Publishing will create or update a community post linked to your project overview.",
-    "project_overview_community_publish_dialog_need_release":
-        "To publish this project to the community, we first need to release it to production. We'll merge your dev branch into main, trigger a production deploy, then publish the post.",
-    "project_overview_community_publish_dialog_step_deploy":
-        "• Trigger production deploy",
-    "project_overview_community_publish_dialog_step_merge":
-        "• Merge dev → main",
-    "project_overview_community_publish_dialog_step_publish":
-        "• Publish to community",
+    "project_overview_community_publish_dialog_current_domain": "Current domain: {domain}",
+    "project_overview_community_publish_dialog_has_prod": "This project already has a production deployment. Publishing will create or update a community post linked to your project overview.",
+    "project_overview_community_publish_dialog_need_release": "To publish this project to the community, we first need to release it to production. We'll merge your dev branch into main, trigger a production deploy, then publish the post.",
+    "project_overview_community_publish_dialog_step_deploy": "• Trigger production deploy",
+    "project_overview_community_publish_dialog_step_merge": "• Merge dev → main",
+    "project_overview_community_publish_dialog_step_publish": "• Publish to community",
     "project_overview_community_publish_dialog_steps": "Steps:",
     "project_overview_community_publish_dialog_title": "Publish to community",
-    "project_overview_community_publish_failed":
-        "Failed to publish to community",
-    "project_overview_community_publish_failed_sentence":
-        "Failed to publish to community.",
+    "project_overview_community_publish_failed": "Failed to publish to community",
+    "project_overview_community_publish_failed_sentence": "Failed to publish to community.",
     "project_overview_community_publish_success": "Published to community",
-    "project_overview_community_release_merge_message":
-        "Merge {head} into {base}",
-    "project_overview_community_release_no_commits":
-        "No commits found on development branch",
-    "project_overview_community_release_publish_failed":
-        "Production deploy succeeded, but failed to publish to community",
+    "project_overview_community_release_merge_message": "Merge {head} into {base}",
+    "project_overview_community_release_no_commits": "No commits found on development branch",
+    "project_overview_community_release_publish_failed": "Production deploy succeeded, but failed to publish to community",
     "project_overview_community_status_draft": "Draft",
     "project_overview_community_status_none": "Not published",
     "project_overview_community_status_published": "Published",
@@ -4353,25 +3850,20 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_overview_community_unpublish_success": "Unpublished",
     "project_overview_community_update_failed": "Failed to update post",
     "project_overview_community_update_success": "Post updated",
-    "project_overview_danger_delete_confirm_label":
-        "Type project name to confirm",
-    "project_overview_danger_delete_desc":
-        "This action cannot be undone. Please type the project name to confirm deletion.",
+    "project_overview_danger_delete_confirm_label": "Type project name to confirm",
+    "project_overview_danger_delete_desc": "This action cannot be undone. Please type the project name to confirm deletion.",
     "project_overview_danger_delete_failed": "Failed to delete project",
     "project_overview_danger_delete_in_progress": "Deleting {name}...",
     "project_overview_danger_delete_name_mismatch": "Name does not match.",
     "project_overview_danger_delete_progress_cleanup": "Final cleanup...",
-    "project_overview_danger_delete_progress_remove":
-        "Removing project resources...",
-    "project_overview_danger_delete_progress_submit":
-        "Submitting delete request...",
+    "project_overview_danger_delete_progress_remove": "Removing project resources...",
+    "project_overview_danger_delete_progress_submit": "Submitting delete request...",
     "project_overview_danger_delete_success": "Deleted {name}",
     "project_overview_danger_delete_title": "Delete project",
     "project_overview_danger_project_name": "Project: {name}",
     "project_overview_danger_title": "Danger zone",
     "project_overview_danger_transfer_action": "Transfer",
-    "project_overview_danger_transfer_desc":
-        "Enter the recipient email to transfer ownership. You will lose access after transfer.",
+    "project_overview_danger_transfer_desc": "Enter the recipient email to transfer ownership. You will lose access after transfer.",
     "project_overview_danger_transfer_failed": "Failed to transfer project",
     "project_overview_danger_transfer_recipient": "Recipient email",
     "project_overview_danger_transfer_success": "Project transferred",
@@ -4393,12 +3885,10 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_overview_health_title": "Health metrics",
     "project_overview_links_github_repo": "GitHub Repository",
     "project_overview_links_not_available": "Not available",
-    "project_overview_links_open_github_failed":
-        "Could not open GitHub repository",
+    "project_overview_links_open_github_failed": "Could not open GitHub repository",
     "project_overview_links_open_preview_failed": "Could not open preview URL",
     "project_overview_links_preview_url": "Preview URL",
-    "project_overview_recent_deployments_empty":
-        "No recent deployments — ship a new build to see activity here.",
+    "project_overview_recent_deployments_empty": "No recent deployments — ship a new build to see activity here.",
     "project_overview_recent_deployments_env": "{env} deployment",
     "project_overview_recent_deployments_feed": "Activity feed",
     "project_overview_recent_deployments_title": "Recent deployments",
@@ -4419,27 +3909,21 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_payment_add_product": "Add Product",
     "project_payment_add_product_failed": "Failed to add product: {error}",
     "project_payment_add_product_title": "Add Payment Product",
-    "project_payment_ai_prompt_product":
-        "Can you analyze the payment product \"{name}\" and provide suggestions on pricing strategy, configuration, or marketing improvements?",
-    "project_payment_ai_prompt_transaction":
-        "Can you analyze this payment transaction ({amount}, {status}) and provide insights about payment patterns or recommendations?",
+    "project_payment_ai_prompt_product": "Can you analyze the payment product \"{name}\" and provide suggestions on pricing strategy, configuration, or marketing improvements?",
+    "project_payment_ai_prompt_transaction": "Can you analyze this payment transaction ({amount}, {status}) and provide insights about payment patterns or recommendations?",
     "project_payment_anonymous": "Anonymous",
-    "project_payment_available_for_purchase":
-        "Product is available for purchase",
+    "project_payment_available_for_purchase": "Product is available for purchase",
     "project_payment_conversion_rate": "Conversion Rate",
     "project_payment_description_hint": "Describe your product",
     "project_payment_description_optional": "Description (Optional)",
     "project_payment_edit": "Edit",
     "project_payment_edit_product_title": "Edit Payment Product",
     "project_payment_enable_button": "Habilitar pagos",
-    "project_payment_enable_description":
-        "Los pagos aún no están activados para este proyecto. Inicializa primero los pagos y luego podrás gestionar productos, transacciones, cuentas bancarias, retiros y webhooks.",
+    "project_payment_enable_description": "Los pagos aún no están activados para este proyecto. Inicializa primero los pagos y luego podrás gestionar productos, transacciones, cuentas bancarias, retiros y webhooks.",
     "project_payment_enable_failed": "No se pudieron activar los pagos",
-    "project_payment_enable_feature_checkout":
-        "Stripe Checkout y enlaces de pago",
+    "project_payment_enable_feature_checkout": "Stripe Checkout y enlaces de pago",
     "project_payment_enable_feature_products": "Productos, saldos y retiros",
-    "project_payment_enable_feature_webhooks":
-        "Ciclo de pedidos preparado para webhooks",
+    "project_payment_enable_feature_webhooks": "Ciclo de pedidos preparado para webhooks",
     "project_payment_enable_loading": "Inicializando…",
     "project_payment_enable_success": "Los pagos se activaron correctamente",
     "project_payment_enable_title": "Habilitar pagos",
@@ -4464,20 +3948,15 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_payment_total_revenue": "Total Revenue",
     "project_payment_transactions": "Transactions",
     "project_payment_unknown_product": "Unknown Product",
-    "project_payment_update_product_failed":
-        "Failed to update product: {error}",
+    "project_payment_update_product_failed": "Failed to update product: {error}",
     "projects_action_load_more": "Load More",
     "projects_action_relogin": "Re-login",
-    "projects_empty_search_message":
-        "Prueba con otra palabra clave o borra la búsqueda.",
+    "projects_empty_search_message": "Prueba con otra palabra clave o borra la búsqueda.",
     "projects_empty_search_title": "No hay proyectos coincidentes",
-    "projects_empty_state_message":
-        "Crea tu primer proyecto para empezar a construir.",
-    "projects_intro_subtitle":
-        "Busca, abre y gestiona tu espacio de trabajo activo.",
+    "projects_empty_state_message": "Crea tu primer proyecto para empezar a construir.",
+    "projects_intro_subtitle": "Busca, abre y gestiona tu espacio de trabajo activo.",
     "projects_search_hint": "Search projects...",
-    "projects_searching_subtitle":
-        "Resultados filtrados para tu consulta actual.",
+    "projects_searching_subtitle": "Resultados filtrados para tu consulta actual.",
     "projects_sync_failed_title": "Sync failed",
     "projects_time_date": "{day}/{month}/{year}",
     "projects_time_days_ago": "{value}d ago",
@@ -4500,7 +3979,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "resend_after": "Reenviar después de",
     "resend_code": "Reenviar código",
     "reset_password": "Restablecer contraseña",
-    "reset_password_subtitle": "Restablecer su contraseña",
+    "reset_password_subtitle": "Restablecer contraseña",
     "resetting": "Restableciendo...",
     "retry": "Retry",
     "save": "Save",
@@ -4518,28 +3997,16 @@ kLocalizedValues = <String, Map<String, String>>{
     "settings_editor_appearance_mode": "Modo de apariencia",
     "settings_editor_dark_theme": "Tema oscuro",
     "settings_editor_default_wrap": "Ajuste de línea por defecto",
-    "settings_editor_default_wrap_hint":
-        "Abrir los editores con ajuste de línea activado por defecto.",
-    "settings_editor_engine": "Motor del editor",
-    "settings_editor_engine_flutter_code_editor": "Flutter Code Editor",
-    "settings_editor_engine_flutter_code_editor_hint":
-        "Flutter Code Editor se mantiene totalmente nativo en Flutter y conserva el flujo actual de plegado de código.",
-    "settings_editor_engine_flutter_monaco": "Flutter Monaco",
-    "settings_editor_engine_flutter_monaco_hint":
-        "Monaco usa un backend WebView/iframe de la plataforma para comportarse mejor con archivos grandes.",
-    "settings_editor_entry_subtitle": "Tema, fuente, ajuste de línea",
+    "settings_editor_default_wrap_hint": "Abrir con ajuste activo.",
+    "settings_editor_entry_subtitle": "Tema, fuente, ajuste",
     "settings_editor_font_size": "Tamaño de fuente",
-    "settings_editor_footer":
-        "Elige por separado los temas claro y oscuro, y decide si el editor sigue la apariencia de la app o permanece fijo.",
+    "settings_editor_footer": "Elige tema y comportamiento.",
     "settings_editor_light_theme": "Tema claro",
     "settings_editor_preview_comment": "Vista previa estilo VS Code",
-    "settings_editor_saved_message":
-        "Se guardaron el tema claro, el tema oscuro, el modo de apariencia y las preferencias del editor.",
+    "settings_editor_saved_message": "Preferencias guardadas.",
     "settings_editor_show_rulers": "Mostrar reglas",
-    "settings_editor_show_rulers_hint":
-        "Muestra reglas verticales en las columnas 80 y 120.",
-    "settings_editor_subtitle":
-        "Ajusta la apariencia del editor para acercarla a una experiencia tipo VS Code.",
+    "settings_editor_show_rulers_hint": "Reglas en 80 / 120.",
+    "settings_editor_subtitle": "Tema y comportamiento.",
     "settings_editor_tab_size": "Tamaño de tabulación",
     "settings_editor_theme_a11y_light": "A11y Light",
     "settings_editor_theme_dracula": "Dracula",
@@ -4568,7 +4035,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "syncing": "Sincronizando",
     "syncing_message": "Sincronizando repositorios...",
     "system_mode": "Sistema",
-    "theme_subtitle": "Modo claro u oscuro",
+    "theme_subtitle": "Claro u oscuro",
     "theme_switched": "Cambiado a",
     "theme_title": "Tema",
     "theme_updated": "Tema actualizado",
@@ -4584,39 +4051,37 @@ kLocalizedValues = <String, Map<String, String>>{
     "topup_method_google_pay": "Google Pay",
     "topup_payment_canceled_message": "The payment was canceled.",
     "topup_payment_canceled_title": "Payment canceled",
-    "topup_payment_submitted_message":
-        "Your top-up payment was submitted successfully.",
+    "topup_payment_submitted_message": "Your top-up payment was submitted successfully.",
     "topup_payment_submitted_title": "Payment submitted",
     "topup_subtitle": "Add funds with {methods} through Stripe.",
     "topup_title": "Top up credits",
-    "topup_unconfigured":
-        "Stripe mobile payment is not configured in this build.",
+    "topup_unconfigured": "Stripe mobile payment is not configured in this build.",
+    "two_factor_cancel": "Cancelar",
+    "two_factor_disable": "Desactivar",
+    "two_factor_disable_confirm": "¿Está seguro de que desea desactivar la autenticación de dos factores? Su cuenta será menos segura.",
+    "two_factor_disable_title": "Desactivar autenticación de dos factores",
+    "two_factor_title": "Autenticación de dos factores",
+    "two_factor_verify_enable": "Verificar y activar",
     "upgrade_best_fit": "Best fit",
     "upgrade_billing_monthly": "Monthly",
     "upgrade_billing_yearly": "Yearly",
     "upgrade_credits": "credits",
     "upgrade_cycle": "cycle",
-    "upgrade_empty_detail":
-        "Subscription packages will appear here when published.",
+    "upgrade_empty_detail": "Subscription packages will appear here when published.",
     "upgrade_empty_title": "No plans available",
     "upgrade_featured_hint": "Balanced for most active builders",
-    "upgrade_footer_configured":
-        "Payments are processed natively in-app. Balance top-up stays in USD for now.",
-    "upgrade_footer_unconfigured":
-        "This build still needs STRIPE_PUBLISHABLE_KEY before native checkout can open.",
+    "upgrade_footer_configured": "Payments are processed natively in-app. Balance top-up stays in USD for now.",
+    "upgrade_footer_unconfigured": "This build still needs STRIPE_PUBLISHABLE_KEY before native checkout can open.",
     "upgrade_load_failed_title": "Failed to load plans",
     "upgrade_period": "period",
     "upgrade_quota": "Quota",
     "upgrade_standard_hint": "Designed for focused production usage",
     "upgrade_subscription_failed": "Subscription failed: {error}",
-    "upgrade_subscription_submitted":
-        "Subscription payment submitted successfully.",
-    "upgrade_subtitle":
-        "Choose a plan built for sustained usage, faster limits, and cleaner billing.",
+    "upgrade_subscription_submitted": "Subscription payment submitted successfully.",
+    "upgrade_subtitle": "Choose a plan built for sustained usage, faster limits, and cleaner billing.",
     "upgrade_title": "Upgrade",
     "verify_code": "Código de verificación",
-    "verify_code_complete":
-        "Por favor ingrese el código de verificación completo",
+    "verify_code_complete": "Por favor ingrese el código de verificación completo",
     "verify_code_required": "Por favor ingrese el código de verificación",
     "verify_login": "Verificar inicio de sesión",
     "verifying": "Verificando...",
@@ -4625,13 +4090,11 @@ kLocalizedValues = <String, Map<String, String>>{
     "workspace_banner_checking_status": "Checking status.",
     "workspace_banner_issue": "Workspace issue",
     "workspace_banner_ready": "Workspace ready",
-    "workspace_banner_retrying_background":
-        "Start failed. Retrying in the background.",
+    "workspace_banner_retrying_background": "Start failed. Retrying in the background.",
     "workspace_banner_sleeping_needed": "😴 En reposo hasta que se necesite.",
     "workspace_banner_starting": "Starting workspace",
     "workspace_banner_starting_message": "Starting workspace.",
-    "workspace_banner_starting_now":
-        "Starting now. Your message will send next.",
+    "workspace_banner_starting_now": "Starting now. Your message will send next.",
     "workspace_banner_syncing_files": "Syncing files.",
     "workspace_tip_checking_short": "Checking",
     "workspace_tip_checking_status": "Checking workspace status",
@@ -4660,45 +4123,34 @@ kLocalizedValues = <String, Map<String, String>>{
     "workspace_warmup_inline_next": "Starting workspace. Sending next.",
     "workspace_warmup_inline_now": "Ready. Sending now.",
     "workspace_warmup_inline_ready": "Workspace ready. Sending your message...",
-    "workspace_warmup_inline_starting":
-        "Workspace is starting. Your message will send automatically.",
+    "workspace_warmup_inline_starting": "Workspace is starting. Your message will send automatically.",
     "workspace_warmup_notice_next": "Starting. Sending next.",
-    "workspace_warmup_notice_starting":
-        "Workspace is starting. Sending will continue automatically.",
+    "workspace_warmup_notice_starting": "Workspace is starting. Sending will continue automatically.",
     "your_invite_code": "Su código de invitación",
   },
   "fr": <String, String>{
     "about": "À propos",
-    "about_description":
-        "Une plateforme de développement d'applications alimentée par l'IA.",
-    "about_subtitle": "Version de l'application et informations",
+    "about_description": "Une plateforme de développement d'applications alimentée par l'IA.",
+    "about_subtitle": "Infos app",
     "about_title": "À propos",
     "access": "Access",
-    "account_data_contact_support_delete":
-        "Contacter le support pour supprimer le compte",
+    "account_data_contact_support_delete": "Contacter le support pour supprimer le compte",
     "account_data_copy_request_template": "Copier le modèle de demande",
-    "account_data_delete_confirm_message":
-        "Cela contactera {support_email} pour demander la suppression du compte. La suppression peut être irréversible. Continuer ?",
-    "account_data_delete_description":
-        "La suppression du compte est actuellement gérée par le support. Veuillez consulter les restrictions légales avant de demander la suppression.",
-    "account_data_delete_template":
-        "Demande : Suppression du compte\\nCompte : {email}\\nVeuillez supprimer mon compte et les données associées.\\nJe comprends que cette action peut être irréversible.\\nContact : {support_email}",
+    "account_data_delete_confirm_message": "Cela contactera {support_email} pour demander la suppression du compte. La suppression peut être irréversible. Continuer ?",
+    "account_data_delete_description": "La suppression du compte est actuellement gérée par le support. Veuillez consulter les restrictions légales avant de demander la suppression.",
+    "account_data_delete_template": "Demande : Suppression du compte\\nCompte : {email}\\nVeuillez supprimer mon compte et les données associées.\\nJe comprends que cette action peut être irréversible.\\nContact : {support_email}",
     "account_data_delete_title": "Suppression du compte",
-    "account_data_export_description":
-        "L’export est actuellement géré par le support. Nous fournissons un modèle que vous pouvez copier et envoyer.",
-    "account_data_export_template":
-        "Demande : Export des données\\nCompte : {email}\\nVeuillez exporter les données de mon compte (profil, projets, facturation).\\nContact : {support_email}",
+    "account_data_export_description": "L’export est actuellement géré par le support. Nous fournissons un modèle que vous pouvez copier et envoyer.",
+    "account_data_export_template": "Demande : Export des données\\nCompte : {email}\\nVeuillez exporter les données de mon compte (profil, projets, facturation).\\nContact : {support_email}",
     "account_data_export_title": "Export des données",
     "account_data_legal": "Juridique",
-    "account_data_request_template_copied":
-        "Le modèle de demande a été copié dans le presse-papiers",
-    "account_data_subtitle": "Export des données et suppression du compte",
-    "account_data_support_dialog_message":
-        "Veuillez contacter {support_email} pour cette demande.",
+    "account_data_open_projects": "Ouvrir les projets",
+    "account_data_request_template_copied": "Le modèle de demande a été copié dans le presse-papiers",
+    "account_data_subtitle": "Export / suppression",
+    "account_data_support_dialog_message": "Veuillez contacter {support_email} pour cette demande.",
     "account_data_title": "Compte et données",
     "activity": "Activité",
-    "agree_terms":
-        "En vous connectant, vous acceptez nos Conditions de Service et notre Politique de Confidentialité",
+    "agree_terms": "En vous connectant, vous acceptez nos Conditions de Service et notre Politique de Confidentialité",
     "alert_title_error": "Error",
     "alert_title_warning": "Warning",
     "api_docs_load_failed_title": "Failed to load API docs",
@@ -4708,22 +4160,17 @@ kLocalizedValues = <String, Map<String, String>>{
     "api_keys_confirm_create": "Créer la clé",
     "api_keys_confirm_revoke": "Confirmer la révocation",
     "api_keys_copied": "Clé API copiée",
-    "api_keys_copy_secret_hint":
-        "Copiez ce secret maintenant. Il ne sera plus affiché.",
+    "api_keys_copy_secret_hint": "Copiez ce secret maintenant. Il ne sera plus affiché.",
     "api_keys_create_button": "Créer une clé",
     "api_keys_create_failed": "Échec de la création de la clé API",
-    "api_keys_create_success":
-        "Clé API créée. Copiez-la maintenant, elle ne sera plus affichée.",
+    "api_keys_create_success": "Clé API créée. Copiez-la maintenant, elle ne sera plus affichée.",
     "api_keys_created_at": "Créée",
     "api_keys_creating": "Création...",
-    "api_keys_description":
-        "Utilisez des clés API pour les endpoints non administrateur. Les routes admin exigent toujours l’authentification normale.",
+    "api_keys_description": "Utilisez des clés API pour les endpoints non administrateur. Les routes admin exigent toujours l’authentification normale.",
     "api_keys_description_label": "Description",
-    "api_keys_dialog_create_description":
-        "Ajoutez un nom et une description facultative pour retrouver cette clé plus tard.",
+    "api_keys_dialog_create_description": "Ajoutez un nom et une description facultative pour retrouver cette clé plus tard.",
     "api_keys_dialog_create_title": "Créer une clé API",
-    "api_keys_dialog_revoke_description":
-        "Révoquer \"{name}\" ? Cette action est irréversible.",
+    "api_keys_dialog_revoke_description": "Révoquer \"{name}\" ? Cette action est irréversible.",
     "api_keys_dialog_revoke_title": "Révoquer la clé API",
     "api_keys_empty": "Aucune clé API pour le moment.",
     "api_keys_existing_title": "Clés existantes",
@@ -4737,28 +4184,29 @@ kLocalizedValues = <String, Map<String, String>>{
     "api_keys_revoked": "Révoquée",
     "api_keys_title": "Créer une clé API",
     "api_keys_unnamed": "Clé sans nom",
-    "api_settings": "API",
+    "api_settings": "Paramètres API",
+    "api_settings_copy_diagnostics": "Copier les diagnostics",
+    "api_settings_reset": "Réinitialiser",
+    "api_settings_save": "Enregistrer",
+    "api_settings_test_connection": "Tester la connexion",
     "appearance": "Apparence",
     "back": "Retour",
     "basic_information": "Informations de base",
     "billing_insufficient_action_later": "Later",
     "billing_insufficient_action_topup": "Top up now",
-    "billing_insufficient_description":
-        "Your balance is insufficient for this action. Please top up first.",
+    "billing_insufficient_description": "Your balance is insufficient for this action. Please top up first.",
     "billing_insufficient_title": "Insufficient Balance",
     "bind_email": "Lier l'e-mail",
-    "bind_email_subtitle": "Lier l'e-mail à votre compte",
+    "bind_email_subtitle": "Lier votre e-mail",
     "browse": "Parcourir",
     "cancel": "Cancel",
     "chat_banner_next_prompt_queued": "Next prompt is queued.",
     "chat_banner_one_prompt_failed": "One queued prompt failed.",
     "chat_banner_preview_rebuilding": "Preview is rebuilding.",
-    "chat_banner_preview_rebuilding_framework":
-        "{framework} preview is rebuilding.",
+    "chat_banner_preview_rebuilding_framework": "{framework} preview is rebuilding.",
     "chat_banner_queue_resume_model": "Queue resumes when the model is ready.",
     "chat_banner_queue_resume_run": "Queue resumes after the current run.",
-    "chat_banner_queue_resume_workspace":
-        "Queue resumes when the workspace is ready.",
+    "chat_banner_queue_resume_workspace": "Queue resumes when the workspace is ready.",
     "chat_banner_queued_count": "{count} queued",
     "chat_banner_queued_one": "1 queued",
     "chat_banner_restoring_output": "Restoring live output.",
@@ -4812,8 +4260,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "community_empty_all": "No posts.",
     "community_empty_components": "No components.",
     "community_empty_mine": "No posts created by you yet.",
-    "community_empty_my_posts_sentence":
-        "You have not published any posts yet.",
+    "community_empty_my_posts_sentence": "You have not published any posts yet.",
     "community_failed_to_load_components": "Failed to load components",
     "community_filter_all": "All",
     "community_filter_mine": "My posts",
@@ -4852,122 +4299,84 @@ kLocalizedValues = <String, Map<String, String>>{
     "create_post_title_required": "Please enter a title",
     "create_project": "Créer un projet",
     "create_project_accept_invitation": "Accepter l’invitation",
-    "create_project_accept_invitation_failed":
-        "Échec de l’acceptation de l’invitation : {error}",
-    "create_project_accept_invitation_hint":
-        "Ajoutez \"{bot}\" comme collaborateur dans les paramètres du dépôt GitHub, puis appuyez sur « Accepter l’invitation ».",
+    "create_project_accept_invitation_failed": "Échec de l’acceptation de l’invitation : {error}",
+    "create_project_accept_invitation_hint": "Ajoutez \"{bot}\" comme collaborateur dans les paramètres du dépôt GitHub, puis appuyez sur « Accepter l’invitation ».",
     "create_project_access_verified": "Accès vérifié",
     "create_project_access_verified_for": "Accès vérifié pour {repo}",
     "create_project_action": "Créer le projet",
-    "create_project_bot_username_copied":
-        "Nom d’utilisateur du bot copié dans le presse-papiers",
+    "create_project_bot_username_copied": "Nom d’utilisateur du bot copié dans le presse-papiers",
     "create_project_choose_how_start": "Choisissez comment commencer",
     "create_project_choose_zip": "Choisir une archive .zip",
-    "create_project_choose_zip_and_name":
-        "Veuillez choisir une archive zip et renseigner le nom du projet",
-    "create_project_could_not_open_github_settings":
-        "Impossible d’ouvrir les paramètres GitHub dans le navigateur",
+    "create_project_choose_zip_and_name": "Veuillez choisir une archive zip et renseigner le nom du projet",
+    "create_project_could_not_open_github_settings": "Impossible d’ouvrir les paramètres GitHub dans le navigateur",
     "create_project_default_repo_name": "Par défaut : nom du dépôt",
     "create_project_description": "Description",
-    "create_project_description_required":
-        "Veuillez décrire ce que vous voulez créer",
-    "create_project_description_too_short":
-        "La description est trop courte. Ajoutez plus de détails (min. 8 caractères)",
+    "create_project_description_required": "Veuillez décrire ce que vous voulez créer",
+    "create_project_description_too_short": "La description est trop courte. Ajoutez plus de détails (min. 8 caractères)",
     "create_project_dialog_title": "Ajouter un projet",
-    "create_project_failed_choose_archive":
-        "Échec du choix de l’archive : {error}",
-    "create_project_failed_get_project_id":
-        "Impossible d’obtenir l’ID du projet",
-    "create_project_failed_import_local":
-        "Échec de l’import du zip local : {error}",
-    "create_project_failed_import_project":
-        "Échec de l’import du projet : {error}",
+    "create_project_failed_choose_archive": "Échec du choix de l’archive : {error}",
+    "create_project_failed_get_project_id": "Impossible d’obtenir l’ID du projet",
+    "create_project_failed_import_local": "Échec de l’import du zip local : {error}",
+    "create_project_failed_import_project": "Échec de l’import du projet : {error}",
     "create_project_failed_import_repo": "Échec de l’import du dépôt : {error}",
-    "create_project_failed_to_create":
-        "Échec de la création du projet : {error}\n\nBase API : {base}",
+    "create_project_failed_to_create": "Échec de la création du projet : {error}\n\nBase API : {base}",
     "create_project_fill_required": "Veuillez remplir tous les champs requis",
     "create_project_github_bot_username": "Nom d’utilisateur du bot GitHub",
-    "create_project_github_collaborator_subtitle":
-        "Import guidé : ajouter le bot → accepter l’invitation → vérifier l’accès → importer.",
-    "create_project_github_collaborator_title":
-        "Importer depuis GitHub (collaborateur)",
+    "create_project_github_collaborator_subtitle": "Import guidé : ajouter le bot → accepter l’invitation → vérifier l’accès → importer.",
+    "create_project_github_collaborator_title": "Importer depuis GitHub (collaborateur)",
     "create_project_github_guided_title": "Import GitHub guidé (3 étapes)",
     "create_project_github_import_title": "Import GitHub",
     "create_project_import_local_action": "Importer un Zip local",
-    "create_project_import_local_info":
-        "Téléversez un espace de travail local en .zip et importez-le directement comme projet. L’archive doit contenir les fichiers du projet à la racine.",
-    "create_project_import_local_subtitle":
-        "Téléversez une archive .zip locale du projet et importez-la directement.",
+    "create_project_import_local_info": "Téléversez un espace de travail local en .zip et importez-le directement comme projet. L’archive doit contenir les fichiers du projet à la racine.",
+    "create_project_import_local_subtitle": "Téléversez une archive .zip locale du projet et importez-la directement.",
     "create_project_import_local_title": "Importer un Zip local",
     "create_project_import_project_action": "Importer le projet",
-    "create_project_import_public_subtitle":
-        "Dupliquez un dépôt GitHub public dans l’espace de travail de l’organisation.",
+    "create_project_import_public_subtitle": "Dupliquez un dépôt GitHub public dans l’espace de travail de l’organisation.",
     "create_project_import_public_title": "Importer un dépôt public",
     "create_project_import_repo_action": "Importer le dépôt",
     "create_project_imported_from_github": "Importé depuis GitHub : {repo}",
-    "create_project_invalid_repo_url":
-        "URL du dépôt invalide. Exemple : https://github.com/owner/repo",
+    "create_project_invalid_repo_url": "URL du dépôt invalide. Exemple : https://github.com/owner/repo",
     "create_project_invalid_repo_url_simple": "URL du dépôt invalide",
     "create_project_invitation_accepted": "Invitation acceptée",
     "create_project_invitation_accepted_message": "Invitation acceptée",
-    "create_project_loading_message":
-        "Création de votre projet. Cela peut prendre quelques minutes...",
-    "create_project_loading_step_finalize":
-        "Finalisation de la configuration...",
-    "create_project_loading_step_integrations":
-        "Configuration des intégrations...",
-    "create_project_loading_step_plan":
-        "Planification de la structure du projet...",
-    "create_project_login_expired_models":
-        "La session a expiré. Reconnectez-vous avant de charger les modèles.",
-    "create_project_login_expired_templates":
-        "La session a expiré. Reconnectez-vous avant de charger les modèles.",
-    "create_project_missing_project_id_after_import":
-        "Import réussi mais ID du projet manquant",
-    "create_project_model_switch_failed_continue":
-        "Impossible de changer de modèle, poursuite avec le modèle par défaut du serveur. ({error})",
-    "create_project_new_ai_hint":
-        "Exemple : une application de tableau de tâches d’équipe avec authentification, rôles et base de données.",
-    "create_project_new_ai_subtitle":
-        "Décrivez ce que vous voulez créer et nous configurons tout.",
-    "create_project_new_ai_summary":
-        "En une phrase, décrivez les pages, l’authentification, les données et les flux clés (min. 8 caractères) ; nous créerons le projet et continuerons dans le chat.",
+    "create_project_loading_message": "Création de votre projet. Cela peut prendre quelques minutes...",
+    "create_project_loading_step_finalize": "Finalisation de la configuration...",
+    "create_project_loading_step_integrations": "Configuration des intégrations...",
+    "create_project_loading_step_plan": "Planification de la structure du projet...",
+    "create_project_login_expired_models": "La session a expiré. Reconnectez-vous avant de charger les modèles.",
+    "create_project_login_expired_templates": "La session a expiré. Reconnectez-vous avant de charger les modèles.",
+    "create_project_missing_project_id_after_import": "Import réussi mais ID du projet manquant",
+    "create_project_model_switch_failed_continue": "Impossible de changer de modèle, poursuite avec le modèle par défaut du serveur. ({error})",
+    "create_project_new_ai_hint": "Exemple : une application de tableau de tâches d’équipe avec authentification, rôles et base de données.",
+    "create_project_new_ai_subtitle": "Décrivez ce que vous voulez créer et nous configurons tout.",
+    "create_project_new_ai_summary": "En une phrase, décrivez les pages, l’authentification, les données et les flux clés (min. 8 caractères) ; nous créerons le projet et continuerons dans le chat.",
     "create_project_new_ai_title": "Nouveau projet (IA)",
     "create_project_new_project_title": "Nouveau projet",
     "create_project_open_github_settings": "Ouvrir les paramètres GitHub",
     "create_project_private_project": "Projet privé",
-    "create_project_private_project_subtitle":
-        "Garder le projet importé privé par défaut",
+    "create_project_private_project_subtitle": "Garder le projet importé privé par défaut",
     "create_project_project_description": "Description du projet",
     "create_project_project_name": "Nom du projet",
     "create_project_project_name_hint": "Exemple : my-project",
-    "create_project_public_repo_example":
-        "Exemple : https://github.com/owner/repo",
-    "create_project_public_repo_info":
-        "Nous allons dupliquer le dépôt public dans l’espace de travail de l’organisation. Les grands dépôts peuvent prendre plus de temps.",
+    "create_project_public_repo_example": "Exemple : https://github.com/owner/repo",
+    "create_project_public_repo_info": "Nous allons dupliquer le dépôt public dans l’espace de travail de l’organisation. Les grands dépôts peuvent prendre plus de temps.",
     "create_project_public_repo_url": "URL du dépôt public",
     "create_project_repository_url": "URL du dépôt",
-    "create_project_retry_create_integrations":
-        "Échec de la création avec intégrations, nouvelle tentative…",
-    "create_project_retry_missing_id":
-        "L’ID du projet est manquant après la nouvelle tentative",
+    "create_project_retry_create_integrations": "Échec de la création avec intégrations, nouvelle tentative…",
+    "create_project_retry_missing_id": "L’ID du projet est manquant après la nouvelle tentative",
     "create_project_select_model": "Sélectionner un modèle",
     "create_project_select_template": "Sélectionner un modèle",
     "create_project_selected_archive_empty": "L’archive sélectionnée est vide",
     "create_project_step_of_3": "Étape {step} sur 3",
     "create_project_supported_zip": "Format pris en charge : .zip",
     "create_project_template": "Modèle",
-    "create_project_template_auto_description":
-        "Laissez D1V choisir le meilleur modèle selon votre demande.",
+    "create_project_template_auto_description": "Laissez D1V choisir le meilleur modèle selon votre demande.",
     "create_project_template_auto_name": "Auto",
-    "create_project_token_missing":
-        "Vous n’êtes pas connecté ou le jeton est manquant. Reconnectez-vous.\n\nAstuce : Paramètres → Profil → API → Copier le diagnostic.",
+    "create_project_token_missing": "Vous n’êtes pas connecté ou le jeton est manquant. Reconnectez-vous.\n\nAstuce : Paramètres → Profil → API → Copier le diagnostic.",
     "create_project_verify_access": "Vérifier l’accès",
-    "create_project_verify_access_failed":
-        "Échec de la vérification de l’accès : {error}",
+    "create_project_verify_access_failed": "Échec de la vérification de l’accès : {error}",
     "create_project_waiting_workspace": "En attente de l’espace de travail…",
-    "create_project_workspace_not_ready":
-        "L’espace de travail n’est pas prêt : {error}\n\nBase API : {base}",
+    "create_project_workspace_not_ready": "L’espace de travail n’est pas prêt : {error}\n\nBase API : {base}",
     "dark_mode": "Mode sombre",
     "dashboard": "Tableau de bord",
     "dashboard_action_chat": "Chat",
@@ -4978,8 +4387,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "dashboard_no_projects_title": "No projects yet",
     "dashboard_open_project": "Open project",
     "dashboard_projects_load_failed": "Failed to load projects",
-    "dashboard_projects_subtitle":
-        "Continue from the most recently touched projects.",
+    "dashboard_projects_subtitle": "Continue from the most recently touched projects.",
     "dashboard_prompt_activity_day_message": "{count} prompts on {date}",
     "dashboard_prompt_activity_title": "Prompt activity",
     "dashboard_search_results": "Search Results ({count})",
@@ -5011,42 +4419,32 @@ kLocalizedValues = <String, Map<String, String>>{
     "docs_code_copied_message": "Code block copied. Paste it anywhere.",
     "docs_copy_code": "Copy",
     "docs_copy_code_done": "Copied",
-    "docs_hero_subtitle":
-        "Use the docs like a product index: scan by outcome, reopen what you touched recently, and jump straight into the detail view.",
-    "docs_hero_title":
-        "Operational guidance, product context, and implementation references.",
+    "docs_hero_subtitle": "Use the docs like a product index: scan by outcome, reopen what you touched recently, and jump straight into the detail view.",
+    "docs_hero_title": "Operational guidance, product context, and implementation references.",
     "docs_items_count": "{count} items",
-    "docs_load_failed_message":
-        "The in-app reader could not load this document. Retry here or open it in the browser.",
+    "docs_load_failed_message": "The in-app reader could not load this document. Retry here or open it in the browser.",
     "docs_load_failed_title": "Failed to load doc",
     "docs_no_matching_documents": "No matching documents",
-    "docs_no_matching_documents_hint":
-        "Try broader keywords or search by product area, workflow, or API topic.",
+    "docs_no_matching_documents_hint": "Try broader keywords or search by product area, workflow, or API topic.",
     "docs_open_failed_message": "Cannot open link",
     "docs_open_failed_title": "Open failed",
     "docs_open_in_browser": "Open in browser",
     "docs_opening_in_browser": "Opening documentation in your browser...",
     "docs_page_api_desc": "OpenAPI, auth, errors, pagination, webhooks.",
     "docs_page_api_title": "API",
-    "docs_page_architecture_desc":
-        "Environments, promotion model, and failure modes.",
+    "docs_page_architecture_desc": "Environments, promotion model, and failure modes.",
     "docs_page_architecture_title": "Architecture",
     "docs_page_faq_desc": "Troubleshooting and tips.",
     "docs_page_faq_title": "FAQ",
-    "docs_page_getting_started_desc":
-        "Prompt -> preview -> production, with verification steps.",
+    "docs_page_getting_started_desc": "Prompt -> preview -> production, with verification steps.",
     "docs_page_getting_started_title": "Getting Started",
-    "docs_page_integrations_desc":
-        "GitHub/Auth/Payments/Analytics: setup and verification.",
+    "docs_page_integrations_desc": "GitHub/Auth/Payments/Analytics: setup and verification.",
     "docs_page_integrations_title": "Integrations",
-    "docs_page_legal_restrictions_desc":
-        "Compliance and export restrictions (high-level).",
+    "docs_page_legal_restrictions_desc": "Compliance and export restrictions (high-level).",
     "docs_page_legal_restrictions_title": "Legal and Export Restrictions",
-    "docs_page_overview_desc":
-        "What the platform is and how the workflow fits together.",
+    "docs_page_overview_desc": "What the platform is and how the workflow fits together.",
     "docs_page_overview_title": "Overview",
-    "docs_page_privacy_policy_desc":
-        "What data we collect, how we use it, and how to request export or deletion.",
+    "docs_page_privacy_policy_desc": "What data we collect, how we use it, and how to request export or deletion.",
     "docs_page_privacy_policy_title": "Privacy Policy",
     "docs_page_product_desc": "Outcomes by role (PM / Business / Developers).",
     "docs_page_product_title": "Product",
@@ -5054,11 +4452,9 @@ kLocalizedValues = <String, Map<String, String>>{
     "docs_page_refund_policy_title": "Refund and Dispute Policy",
     "docs_page_roadmap_desc": "Now / Next priorities (subject to change).",
     "docs_page_roadmap_title": "Roadmap",
-    "docs_page_use_cases_desc":
-        "Playbooks: prompts + acceptance criteria for common products.",
+    "docs_page_use_cases_desc": "Playbooks: prompts + acceptance criteria for common products.",
     "docs_page_use_cases_title": "Use Cases",
-    "docs_page_workspace_desc":
-        "Where to go in the Project workspace (Chat, Deploy, Pay, Analytics).",
+    "docs_page_workspace_desc": "Where to go in the Project workspace (Chat, Deploy, Pay, Analytics).",
     "docs_page_workspace_title": "Workspace Guide",
     "docs_recently_viewed": "Recently viewed",
     "docs_search_hint": "Search docs, workflows, API, setup...",
@@ -5073,20 +4469,16 @@ kLocalizedValues = <String, Map<String, String>>{
     "email_bound_success": "E-mail lié avec succès",
     "email_invalid": "Veuillez entrer une adresse e-mail valide",
     "email_required": "Veuillez entrer votre adresse e-mail",
-    "enter_code_and_new_password":
-        "Entrez le code de vérification et votre nouveau mot de passe",
-    "enter_code_sent":
-        "Entrez le code de vérification à 6 chiffres envoyé à votre e-mail",
+    "enter_code_and_new_password": "Entrez le code de vérification et votre nouveau mot de passe",
+    "enter_code_sent": "Entrez le code de vérification à 6 chiffres envoyé à votre e-mail",
     "enter_email": "Entrez votre e-mail",
-    "enter_email_for_code":
-        "Entrez votre adresse e-mail pour recevoir un code de vérification",
+    "enter_email_for_code": "Entrez votre adresse e-mail pour recevoir un code de vérification",
     "enter_new_password": "Entrez le nouveau mot de passe",
     "enter_password": "Entrez le mot de passe",
     "enter_verify_code": "Entrez le code de vérification",
     "error": "Error",
     "error_network": "Erreur réseau. Vérifiez votre connexion et réessayez.",
-    "error_request_failed":
-        "La requête a échoué. Veuillez réessayer plus tard.",
+    "error_request_failed": "La requête a échoué. Veuillez réessayer plus tard.",
     "error_timeout": "Délai d’attente dépassé. Veuillez réessayer.",
     "expandable_show_less": "Show less",
     "expandable_show_more": "Show more",
@@ -5100,8 +4492,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "friends_referred": "Amis parrainés",
     "generating": "Generating...",
     "github": "GitHub",
-    "github_connect_description":
-        "Connectez votre compte GitHub pour importer des référentiels",
+    "github_connect_description": "Connectez votre compte GitHub pour importer des référentiels",
     "github_import_action_import": "Importer le projet",
     "github_import_action_importing": "Import du projet…",
     "github_import_action_opening_chat": "Ouverture du chat…",
@@ -5111,17 +4502,12 @@ kLocalizedValues = <String, Map<String, String>>{
     "github_import_failed_message": "Échec de l'import du dépôt",
     "github_import_failed_title": "Échec de l'import",
     "github_import_in_progress_title": "Import en cours",
-    "github_import_monorepo_notice":
-        "Ce dépôt ressemble à un monorepo. Choisissez le répertoire racine de l'application avant de démarrer la preview.",
-    "github_import_opening_chat":
-        "Projet importé. La preview démarre encore, ouverture du chat.",
-    "github_import_progress_choose_root":
-        "Sélectionnez le répertoire racine de l'application",
+    "github_import_monorepo_notice": "Ce dépôt ressemble à un monorepo. Choisissez le répertoire racine de l'application avant de démarrer la preview.",
+    "github_import_opening_chat": "Projet importé. La preview démarre encore, ouverture du chat.",
+    "github_import_progress_choose_root": "Sélectionnez le répertoire racine de l'application",
     "github_import_progress_import": "Import du dépôt",
-    "github_import_progress_prepare_preview":
-        "Préparation du déploiement preview",
-    "github_import_progress_preview_after_root":
-        "Le déploiement preview démarrera après la configuration",
+    "github_import_progress_prepare_preview": "Préparation du déploiement preview",
+    "github_import_progress_preview_after_root": "Le déploiement preview démarrera après la configuration",
     "github_import_progress_repo_imported": "Dépôt importé",
     "github_import_progress_wait_preview": "En attente de la preview",
     "github_import_project_description": "Description du projet",
@@ -5132,12 +4518,9 @@ kLocalizedValues = <String, Map<String, String>>{
     "github_import_repo_private": "privé",
     "github_import_repo_public": "public",
     "github_import_root_directory": "Répertoire racine",
-    "github_import_root_failed":
-        "Échec de la configuration du répertoire racine",
-    "github_import_root_saved":
-        "Répertoire racine enregistré. Déploiement preview démarré.",
-    "github_import_sheet_subtitle":
-        "Créez un nouveau projet à partir de ce dépôt GitHub et gardez le déploiement preview dans le flux.",
+    "github_import_root_failed": "Échec de la configuration du répertoire racine",
+    "github_import_root_saved": "Répertoire racine enregistré. Déploiement preview démarré.",
+    "github_import_sheet_subtitle": "Créez un nouveau projet à partir de ce dépôt GitHub et gardez le déploiement preview dans le flux.",
     "github_import_sheet_title": "Importer le dépôt",
     "github_import_success_message": "Dépôt importé avec succès",
     "github_integration": "Intégration GitHub",
@@ -5147,19 +4530,17 @@ kLocalizedValues = <String, Map<String, String>>{
     "help_support_cta_title": "Still need help?",
     "help_support_docs_subtitle": "Technical documentation and API reference",
     "help_support_email_open_error": "Failed to open email: {error}",
-    "help_support_email_open_failed":
-        "Could not open email app. Please email us at {email}",
+    "help_support_email_open_failed": "Could not open email app. Please email us at {email}",
     "help_support_hero_subtitle": "Find answers or contact our support team",
     "help_support_hero_title": "How can we help you?",
     "help_support_link_open_error": "Failed to open {name}: {error}",
     "help_support_link_open_failed": "Could not open {name}",
     "help_support_quick_actions": "Quick Actions",
-    "help_support_subtitle": "Obtenir de l'aide et du support",
+    "help_support_subtitle": "Aide / support",
     "help_support_user_guide_subtitle": "Learn how to use all features",
     "help_support_user_guide_title": "User Guide",
     "import_action": "Importer",
-    "import_dialog_description":
-        "Entrez les informations du référentiel que vous souhaitez importer",
+    "import_dialog_description": "Entrez les informations du référentiel que vous souhaitez importer",
     "import_dialog_title": "Importer un référentiel public",
     "import_failed": "Échec de l'importation du référentiel",
     "import_repository": "Importer un référentiel",
@@ -5179,17 +4560,14 @@ kLocalizedValues = <String, Map<String, String>>{
     "industry_retail": "Retail",
     "industry_saas": "SaaS",
     "industry_technology": "Technology",
-    "input_error_owner_repo":
-        "Veuillez entrer le propriétaire et le nom du référentiel",
+    "input_error_owner_repo": "Veuillez entrer le propriétaire et le nom du référentiel",
     "invitation": "Invitation",
     "invite_code_copied": "Code d'invitation copié dans le presse-papiers",
     "invite_code_unavailable": "Code d'invitation non disponible",
-    "invite_description":
-        "Invitez des amis à rejoindre d1v.ai et obtenez des récompenses",
+    "invite_description": "Invitez des amis à rejoindre d1v.ai et obtenez des récompenses",
     "invite_friends": "Inviter des amis",
     "invites": "Invitations",
-    "invites_empty_message":
-        "You haven't invited any friends yet.\\nShare your invite code to get started!",
+    "invites_empty_message": "You haven't invited any friends yet.\\nShare your invite code to get started!",
     "invites_empty_title": "No Invites Yet",
     "invites_joined_at": "Joined {time}",
     "invites_load_failed_title": "Failed to load invited users",
@@ -5211,26 +4589,19 @@ kLocalizedValues = <String, Map<String, String>>{
     "login_failed": "Échec de la connexion",
     "login_first": "Veuillez d'abord vous connecter",
     "login_required_button": "Se connecter",
-    "login_required_create_post_message":
-        "Vous devez vous connecter pour créer une publication.",
-    "login_required_dashboard_message":
-        "Vous devez vous connecter pour voir vos projets.",
-    "login_required_github_message":
-        "Vous devez vous connecter pour gérer l’intégration GitHub.",
-    "login_required_invites_message":
-        "Vous devez vous connecter pour voir les invitations et les récompenses.",
-    "login_required_orders_message":
-        "Vous devez vous connecter pour voir les commandes et la facturation.",
-    "login_required_settings_message":
-        "Vous devez vous connecter pour gérer les paramètres de votre compte.",
+    "login_required_create_post_message": "Vous devez vous connecter pour créer une publication.",
+    "login_required_dashboard_message": "Vous devez vous connecter pour voir vos projets.",
+    "login_required_github_message": "Vous devez vous connecter pour gérer l’intégration GitHub.",
+    "login_required_invites_message": "Vous devez vous connecter pour voir les invitations et les récompenses.",
+    "login_required_orders_message": "Vous devez vous connecter pour voir les commandes et la facturation.",
+    "login_required_settings_message": "Vous devez vous connecter pour gérer les paramètres de votre compte.",
     "login_required_title": "Connexion requise",
     "login_success": "Connexion réussie",
     "login_with_code": "Se connecter avec code",
     "login_with_password": "Se connecter avec mot de passe",
     "logout": "Se déconnecter",
     "main_nav_workspace": "Workspace",
-    "model_load_auth_expired":
-        "Login expired. Please sign in again to load models.",
+    "model_load_auth_expired": "Login expired. Please sign in again to load models.",
     "model_switch_failed": "Failed to switch model: {error}",
     "model_switch_success": "Basculé vers {model}",
     "model_switch_title": "Modèle",
@@ -5238,17 +4609,15 @@ kLocalizedValues = <String, Map<String, String>>{
     "my_invites_subtitle": "Voir votre historique d'invitations",
     "new_password": "Nouveau mot de passe",
     "notifications": "Notifications",
-    "notifications_subtitle": "Gérer les notifications",
+    "notifications_subtitle": "Alertes",
     "onboarding_action_back": "Back",
     "onboarding_action_finish": "Finish",
     "onboarding_action_next": "Next",
     "onboarding_ai_avatar_generate_failed": "Failed to generate AI avatars",
-    "onboarding_ai_avatar_hint":
-        "Tap \"AI Random\" to draw your AI avatar cards.",
+    "onboarding_ai_avatar_hint": "Tap \"AI Random\" to draw your AI avatar cards.",
     "onboarding_ai_avatar_title": "AI Avatar Cards",
     "onboarding_ai_random": "AI Random",
-    "onboarding_avatar_hint":
-        "Recommended: square image, PNG/JPG/WEBP, up to 5MB.",
+    "onboarding_avatar_hint": "Recommended: square image, PNG/JPG/WEBP, up to 5MB.",
     "onboarding_avatar_pick_failed": "Failed to pick image: {error}",
     "onboarding_avatar_refresh_failed": "Failed to refresh avatars: {error}",
     "onboarding_avatar_select_failed": "Failed to select avatar: {error}",
@@ -5257,18 +4626,14 @@ kLocalizedValues = <String, Map<String, String>>{
     "onboarding_complete_failed": "Failed to complete onboarding: {error}",
     "onboarding_complete_subtitle": "Bienvenue. Vous êtes prêt à continuer.",
     "onboarding_complete_title": "Configuration terminée",
-    "onboarding_invite_helper":
-        "Optional. Add an invite code if someone referred you.",
+    "onboarding_invite_helper": "Optional. Add an invite code if someone referred you.",
     "onboarding_invite_hint": "Enter invite code",
     "onboarding_invite_label": "Invite code",
-    "onboarding_org_helper":
-        "This helps us tailor templates and recommendations for your team.",
-    "onboarding_subtitle_avatar":
-        "Upload a profile image so collaborators can recognize you at a glance.",
+    "onboarding_org_helper": "This helps us tailor templates and recommendations for your team.",
+    "onboarding_subtitle_avatar": "Upload a profile image so collaborators can recognize you at a glance.",
     "onboarding_subtitle_finish": "You are almost ready to start building.",
     "onboarding_subtitle_invite": "Enter an invite code to join your team.",
-    "onboarding_subtitle_org":
-        "This helps us tailor templates and recommendations for your team.",
+    "onboarding_subtitle_org": "This helps us tailor templates and recommendations for your team.",
     "onboarding_title_avatar": "Add your avatar",
     "onboarding_title_finish": "Finish setup",
     "onboarding_title_org": "Tell us about your organization",
@@ -5286,8 +4651,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "orders_usage_builder_billing_rule": "Billing rule: {rate}/min",
     "orders_usage_builder_empty": "No deployment records yet.",
     "orders_usage_builder_estimated_cost": "Estimated Cost",
-    "orders_usage_builder_estimated_cost_hint":
-        "Estimated from deployment build durations",
+    "orders_usage_builder_estimated_cost_hint": "Estimated from deployment build durations",
     "orders_usage_builder_load_failed": "Unable to load builder usage data.",
     "orders_usage_builder_overall": "Overall Build Time",
     "orders_usage_builder_projects_title": "Top Projects",
@@ -5309,8 +4673,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "orders_usage_llm_total_cost_hint": "Estimated cost",
     "orders_usage_na": "N/A",
     "orders_usage_project_breakdown_empty": "No usage data available",
-    "orders_usage_project_breakdown_empty_hint":
-        "Your LLM usage will appear here",
+    "orders_usage_project_breakdown_empty_hint": "Your LLM usage will appear here",
     "orders_usage_project_breakdown_title": "Project Breakdown",
     "orders_usage_project_deleted": "Supprimé",
     "orders_usage_time_range": "Time Range",
@@ -5318,22 +4681,36 @@ kLocalizedValues = <String, Map<String, String>>{
     "orders_wallet_usage_bucket_expiring": "Expiring",
     "orders_wallet_usage_bucket_non_expiring": "Non-expiring",
     "orders_wallet_usage_empty": "No usage records yet.",
-    "orders_wallet_usage_empty_hint":
-        "Consumption records from deployments and model usage will appear here.",
+    "orders_wallet_usage_empty_hint": "Consumption records from deployments and model usage will appear here.",
     "orders_wallet_usage_source_admin_broadcast": "admin broadcast",
-    "orders_wallet_usage_source_system_message":
-        "System message: {description}",
+    "orders_wallet_usage_source_system_message": "System message: {description}",
     "other": "Autre",
     "owner_hint": "nom d'utilisateur ou organisation",
     "owner_label": "Propriétaire",
     "password": "Mot de passe",
-    "password_length_error":
-        "Le mot de passe doit comporter au moins 6 caractères",
+    "password_length_error": "Le mot de passe doit comporter au moins 6 caractères",
     "password_required": "Veuillez entrer le mot de passe",
     "password_reset_success": "Mot de passe réinitialisé avec succès",
     "passwords_do_not_match": "Les mots de passe ne correspondent pas",
     "pricing": "Tarification",
     "privacy": "Confidentialité",
+    "privacy_allow_analytics": "Autoriser les analyses",
+    "privacy_allow_analytics_desc": "Aider à améliorer l'app en partageant les analyses d'utilisation",
+    "privacy_allow_data_sharing": "Autoriser le partage de données",
+    "privacy_allow_data_sharing_desc": "Partager des données pour améliorer nos services",
+    "privacy_allow_third_party_apps": "Autoriser les apps tierces",
+    "privacy_allow_third_party_apps_desc": "Activer les intégrations avec les services tiers",
+    "privacy_discoverable_by_email": "Découvrable par e-mail",
+    "privacy_discoverable_by_email_desc": "Permettre aux autres de vous trouver par votre e-mail",
+    "privacy_marketing_emails": "E-mails marketing",
+    "privacy_marketing_emails_desc": "Recevoir des e-mails sur les nouvelles fonctionnalités et offres",
+    "privacy_public_profile": "Profil public",
+    "privacy_public_profile_desc": "Permettre à anyone de voir votre profil",
+    "privacy_settings": "Paramètres de confidentialité",
+    "privacy_show_activity_status": "Afficher le statut d'activité",
+    "privacy_show_activity_status_desc": "Afficher votre activité récente aux autres",
+    "privacy_show_online_status": "Afficher le statut en ligne",
+    "privacy_show_online_status_desc": "Permettre aux autres de voir quand vous êtes actif",
     "profile": "Profil",
     "profile_ai_random": "AI Random",
     "profile_avatar_generate_failed": "Failed to generate avatars",
@@ -5359,18 +4736,12 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_actions": "Actions",
     "project_analytics_active_now": "Active Now",
     "project_analytics_active_visitors": "Active Visitors",
-    "project_analytics_ai_prompt_active_now":
-        "Can you help me interpret my real-time active users and recommend actions to improve conversion?",
-    "project_analytics_ai_prompt_custom_events":
-        "Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?",
-    "project_analytics_ai_prompt_dashboard":
-        "Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?",
-    "project_analytics_ai_prompt_pageviews":
-        "Can you analyze my pageviews trend and suggest ways to increase traffic and retention?",
-    "project_analytics_ai_prompt_sessions":
-        "Can you analyze my sessions and suggest how to increase engagement and session duration?",
-    "project_analytics_ai_prompt_visitors":
-        "Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?",
+    "project_analytics_ai_prompt_active_now": "Can you help me interpret my real-time active users and recommend actions to improve conversion?",
+    "project_analytics_ai_prompt_custom_events": "Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?",
+    "project_analytics_ai_prompt_dashboard": "Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?",
+    "project_analytics_ai_prompt_pageviews": "Can you analyze my pageviews trend and suggest ways to increase traffic and retention?",
+    "project_analytics_ai_prompt_sessions": "Can you analyze my sessions and suggest how to increase engagement and session duration?",
+    "project_analytics_ai_prompt_visitors": "Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?",
     "project_analytics_all": "All",
     "project_analytics_bounces": "Bounces",
     "project_analytics_comparison_notes": "Comparison Notes",
@@ -5378,8 +4749,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_copy_failed": "Copy failed",
     "project_analytics_copy_field": "Copy {title}",
     "project_analytics_copy_summary": "Copy Summary",
-    "project_analytics_copy_summary_hint":
-        "Copy a shareable analytics snapshot",
+    "project_analytics_copy_summary_hint": "Copy a shareable analytics snapshot",
     "project_analytics_copy_tracking_code": "Copy Tracking Code",
     "project_analytics_copy_tracking_code_hint": "Copy Umami script snippet",
     "project_analytics_current_window": "Current window: {range}",
@@ -5399,11 +4769,9 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_dim_screen": "Screen",
     "project_analytics_dim_tag": "Tag",
     "project_analytics_enable_action": "Enable Analytics",
-    "project_analytics_enable_hint":
-        "Track your website's visitors, page views, and custom events with Umami Analytics",
+    "project_analytics_enable_hint": "Track your website's visitors, page views, and custom events with Umami Analytics",
     "project_analytics_enable_title": "Enable Analytics",
-    "project_analytics_env_filter_note":
-        "Note: environment filter uses hostname exact matching.",
+    "project_analytics_env_filter_note": "Note: environment filter uses hostname exact matching.",
     "project_analytics_environment": "Environment",
     "project_analytics_events": "Events",
     "project_analytics_events_trend": "Events Trend",
@@ -5416,20 +4784,14 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_filters": "Filters",
     "project_analytics_inactive_tab": "{title} tab",
     "project_analytics_initializing": "Initializing...",
-    "project_analytics_install_done_autojump":
-        "Installation completed. Auto-opening Data in {seconds}s.",
-    "project_analytics_install_done_open":
-        "Installation completed. You can open the analytics tabs now.",
-    "project_analytics_install_incomplete":
-        "Analytics install did not complete successfully.",
-    "project_analytics_install_success":
-        "Analytics successfully installed and activated.",
+    "project_analytics_install_done_autojump": "Installation completed. Auto-opening Data in {seconds}s.",
+    "project_analytics_install_done_open": "Installation completed. You can open the analytics tabs now.",
+    "project_analytics_install_incomplete": "Analytics install did not complete successfully.",
+    "project_analytics_install_success": "Analytics successfully installed and activated.",
     "project_analytics_installer": "Analytics Installer",
-    "project_analytics_installer_hint":
-        "Review the session output or retry the install.",
+    "project_analytics_installer_hint": "Review the session output or retry the install.",
     "project_analytics_installing": "Installing Analytics…",
-    "project_analytics_installing_hint":
-        "We are initializing Umami and inserting the tracking script via a chat session.",
+    "project_analytics_installing_hint": "We are initializing Umami and inserting the tracking script via a chat session.",
     "project_analytics_last_24_hours": "Last 24 Hours",
     "project_analytics_last_30_days": "Last 30 Days",
     "project_analytics_last_6_hours": "Last 6 Hours",
@@ -5440,12 +4802,10 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_metrics": "Metrics",
     "project_analytics_no_compare_data": "No top-page comparison data",
     "project_analytics_no_data": "No analytics data yet",
-    "project_analytics_no_data_hint":
-        "Analytics data will appear once your project is live and receiving traffic.",
+    "project_analytics_no_data_hint": "Analytics data will appear once your project is live and receiving traffic.",
     "project_analytics_no_data_short": "No data",
     "project_analytics_no_events": "No events in current range",
-    "project_analytics_no_metrics_selected":
-        "No metrics selected. Enable Pageviews/Sessions in Filters.",
+    "project_analytics_no_metrics_selected": "No metrics selected. Enable Pageviews/Sessions in Filters.",
     "project_analytics_no_realtime_urls": "No realtime URL data yet",
     "project_analytics_no_sessions": "No sessions in current range",
     "project_analytics_pageviews": "Pageviews",
@@ -5459,13 +4819,11 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_ready": "Analytics Ready",
     "project_analytics_recent_events": "Recent Events",
     "project_analytics_reenable": "Re-enable Analytics",
-    "project_analytics_reenable_confirm":
-        "This will re-run analytics setup and re-insert the tracking script via workspace session. Continue?",
+    "project_analytics_reenable_confirm": "This will re-run analytics setup and re-insert the tracking script via workspace session. Continue?",
     "project_analytics_reenable_hint": "Re-run script installation flow",
     "project_analytics_reenable_started": "Re-enable process started.",
     "project_analytics_reports": "Reports",
-    "project_analytics_reports_coming":
-        "Custom reports are coming soon. This keeps parity with the current web placeholder state.",
+    "project_analytics_reports_coming": "Custom reports are coming soon. This keeps parity with the current web placeholder state.",
     "project_analytics_reset": "Reset",
     "project_analytics_restore_defaults": "Restore defaults",
     "project_analytics_retry_install": "Retry Install",
@@ -5536,8 +4894,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_api_deleted": "Deleted",
     "project_api_description_optional": "Description (optional)",
     "project_api_edit_variable": "Edit variable",
-    "project_api_empty_hint":
-        "Create your first key-value pair to configure\\nruntime behavior for this project.",
+    "project_api_empty_hint": "Create your first key-value pair to configure\\nruntime behavior for this project.",
     "project_api_empty_title": "No environment variables",
     "project_api_environment_variables": "Environment Variables",
     "project_api_key": "Key",
@@ -5549,8 +4906,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_api_sensitive_masked": "Masked in lists by default",
     "project_api_sensitive_visible": "Visible in lists",
     "project_api_show": "Show",
-    "project_api_show_values_message":
-        "This will reveal sensitive environment values on screen.",
+    "project_api_show_values_message": "This will reveal sensitive environment values on screen.",
     "project_api_show_values_title": "Show values?",
     "project_api_update_failed": "Update failed",
     "project_api_value": "Value",
@@ -5563,12 +4919,10 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_chat_disable_wrap_tooltip": "Désactiver le retour à la ligne",
     "project_chat_enable_wrap_tooltip": "Activer le retour à la ligne",
     "project_chat_engine_fast": "Rapide",
-    "project_chat_engine_fast_hint":
-        "Utiliser Claude pour des réponses plus rapides",
+    "project_chat_engine_fast_hint": "Utiliser Claude pour des réponses plus rapides",
     "project_chat_engine_switch_success": "Basculé vers {mode}",
     "project_chat_engine_think_hard": "Réflexion approfondie",
-    "project_chat_engine_think_hard_hint":
-        "Utiliser Codex pour un raisonnement plus poussé",
+    "project_chat_engine_think_hard_hint": "Utiliser Codex pour un raisonnement plus poussé",
     "project_chat_engine_title": "Mode",
     "project_chat_find_in_file_tooltip": "Rechercher dans le fichier",
     "project_chat_fold_all": "Tout replier",
@@ -5594,35 +4948,28 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_chat_tab_preview_short": "Aperçu",
     "project_chat_unfold_all": "Tout déplier",
     "project_database_actions": "Actions",
-    "project_database_ai_prompt_graph":
-        "Given the database schema, explain how \"{table}\" relates to other tables (foreign keys) and suggest improvements.",
-    "project_database_ai_prompt_relation":
-        "Explain the relationship from {from} to {to}. Suggest indexes and common queries.",
-    "project_database_ai_prompt_table":
-        "Can you analyze the database table \"{table}\" and explain its purpose, structure, and any suggestions for optimization or best practices?",
+    "project_database_ai_prompt_graph": "Given the database schema, explain how \"{table}\" relates to other tables (foreign keys) and suggest improvements.",
+    "project_database_ai_prompt_relation": "Explain the relationship from {from} to {to}. Suggest indexes and common queries.",
+    "project_database_ai_prompt_table": "Can you analyze the database table \"{table}\" and explain its purpose, structure, and any suggestions for optimization or best practices?",
     "project_database_ask_ai_table": "Ask AI about this table",
     "project_database_branch": "Branch",
     "project_database_branch_hint": "Current Neon branch context",
     "project_database_branch_primary": "{name} (primary)",
     "project_database_column_pk": "{name} (PK)",
     "project_database_columns_schema": "{columns} columns • {schema} schema",
-    "project_database_data_empty_hint":
-        "Create tables first, then browse rows here.",
+    "project_database_data_empty_hint": "Create tables first, then browse rows here.",
     "project_database_delete_row": "Delete row",
-    "project_database_delete_row_confirm":
-        "Delete this row from {table}? This action cannot be undone.",
+    "project_database_delete_row_confirm": "Delete this row from {table}? This action cannot be undone.",
     "project_database_edit_row": "Edit row",
     "project_database_enable_action": "Enable Database",
-    "project_database_enable_hint":
-        "Provision a Neon PostgreSQL database for this project and start exploring your schema and data.",
+    "project_database_enable_hint": "Provision a Neon PostgreSQL database for this project and start exploring your schema and data.",
     "project_database_enable_title": "Enable Database",
     "project_database_enabled_success": "Database enabled successfully!",
     "project_database_enabling": "Enabling...",
     "project_database_feature_branching": "Branching support",
     "project_database_feature_serverless": "Serverless Postgres on Neon",
     "project_database_feature_ssl": "Secure SSL connections",
-    "project_database_graph_hint":
-        "Add more tables to see relationships as a graph.",
+    "project_database_graph_hint": "Add more tables to see relationships as a graph.",
     "project_database_insert": "Insert",
     "project_database_insert_row": "Insert row",
     "project_database_inserting": "Inserting...",
@@ -5632,22 +4979,17 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_database_migration_plans": "{count} plans",
     "project_database_next": "Next",
     "project_database_no_columns": "No visible columns",
-    "project_database_no_columns_hint":
-        "This table currently has no browsable columns.",
+    "project_database_no_columns_hint": "This table currently has no browsable columns.",
     "project_database_no_editable_columns": "No editable columns",
-    "project_database_no_editable_columns_hint":
-        "This table has no editable non-primary-key columns.",
+    "project_database_no_editable_columns_hint": "This table has no editable non-primary-key columns.",
     "project_database_no_job_details": "No job details available yet.",
     "project_database_no_migration": "No migration history",
-    "project_database_no_migration_hint":
-        "Migration plans and execution records will appear here.",
+    "project_database_no_migration_hint": "Migration plans and execution records will appear here.",
     "project_database_no_relations": "No foreign-key relationships found.",
     "project_database_no_rows": "No rows found",
-    "project_database_no_rows_hint":
-        "Try another table or insert data from your application flow.",
+    "project_database_no_rows_hint": "Try another table or insert data from your application flow.",
     "project_database_no_tables": "No database tables",
-    "project_database_no_tables_hint":
-        "Database tables will appear here once they are created.",
+    "project_database_no_tables_hint": "Database tables will appear here once they are created.",
     "project_database_page": "Page {index}",
     "project_database_page_size": "{size} / page",
     "project_database_previous": "Previous",
@@ -5674,40 +5016,27 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_actions": "Actions",
     "project_deploy_active_preview": "Preview deployment in progress...",
     "project_deploy_active_prod": "Production release in progress: {phase}",
-    "project_deploy_active_reverting":
-        "Rolling back commit{suffix} and triggering preview deploy...",
-    "project_deploy_ai_prompt_environment":
-        "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_active_reverting": "Rolling back commit{suffix} and triggering preview deploy...",
+    "project_deploy_ai_prompt_environment": "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
     "project_deploy_ai_prompt_prefix": "My deploy failed with this error:",
-    "project_deploy_ai_prompt_preview":
-        "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_prod":
-        "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_suffix":
-        "Give me the most likely root cause and a step-by-step fix.",
-    "project_deploy_ai_prompt_vercel_middle":
-        "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
-    "project_deploy_ai_prompt_vercel_prefix":
-        "My Vercel deployment failed for project",
-    "project_deploy_ai_prompt_vercel_suffix":
-        "Also suggest what logs/env vars to check first.",
+    "project_deploy_ai_prompt_preview": "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_prod": "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_suffix": "Give me the most likely root cause and a step-by-step fix.",
+    "project_deploy_ai_prompt_vercel_middle": "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
+    "project_deploy_ai_prompt_vercel_prefix": "My Vercel deployment failed for project",
+    "project_deploy_ai_prompt_vercel_suffix": "Also suggest what logs/env vars to check first.",
     "project_deploy_ask_ai": "Ask AI",
     "project_deploy_build_log": "Build log",
     "project_deploy_build_logs": "Build logs",
     "project_deploy_close": "Close",
-    "project_deploy_coach_no_preview":
-        "No preview yet. Start with a preview deploy to reduce release risk.",
-    "project_deploy_coach_preview_ready":
-        "Preview is ready. Recommended next step: release to production.",
-    "project_deploy_coach_prod_live":
-        "Production is live. Keep shipping with small preview iterations.",
+    "project_deploy_coach_no_preview": "No preview yet. Start with a preview deploy to reduce release risk.",
+    "project_deploy_coach_preview_ready": "Preview is ready. Recommended next step: release to production.",
+    "project_deploy_coach_prod_live": "Production is live. Keep shipping with small preview iterations.",
     "project_deploy_common_fixes": "Common fixes:",
     "project_deploy_configure_later": "Configure later",
-    "project_deploy_confirm_preview_message":
-        "This will trigger a new preview (dev) deployment on Vercel.",
+    "project_deploy_confirm_preview_message": "This will trigger a new preview (dev) deployment on Vercel.",
     "project_deploy_confirm_preview_title": "Redeploy preview?",
-    "project_deploy_confirm_prod_message":
-        "This will compare dev/main, merge if needed, then trigger a production deployment.",
+    "project_deploy_confirm_prod_message": "This will compare dev/main, merge if needed, then trigger a production deployment.",
     "project_deploy_confirm_prod_title": "Deploy to production?",
     "project_deploy_copy": "Copy",
     "project_deploy_copy_all": "Copy all",
@@ -5715,16 +5044,14 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_copy_failed": "Copy failed",
     "project_deploy_current_deployments": "Current Deployments",
     "project_deploy_dev_timeline": "Dev Timeline",
-    "project_deploy_dev_timeline_hint":
-        "Inspect recent commits on the dev branch before you promote them to production.",
+    "project_deploy_dev_timeline_hint": "Inspect recent commits on the dev branch before you promote them to production.",
     "project_deploy_environment_deployment": "{env} deployment",
     "project_deploy_error_snippet_copied": "Error snippet copied",
     "project_deploy_filter_all": "All",
     "project_deploy_filter_preview": "Preview",
     "project_deploy_filter_production": "Production",
     "project_deploy_history": "History",
-    "project_deploy_history_empty":
-        "No deployments yet — deploy your project to see history here.",
+    "project_deploy_history_empty": "No deployments yet — deploy your project to see history here.",
     "project_deploy_history_title": "Deployment History",
     "project_deploy_log_cached": "Cached",
     "project_deploy_log_empty": "No logs available for this deployment.",
@@ -5742,27 +5069,22 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_merge_into_main": "Merge into main",
     "project_deploy_more": "More",
     "project_deploy_next_steps": "Next steps",
-    "project_deploy_no_change_commits":
-        "No change commits between adjacent releases.",
+    "project_deploy_no_change_commits": "No change commits between adjacent releases.",
     "project_deploy_no_diff_files": "No file diff",
-    "project_deploy_no_diff_files_hint":
-        "This commit did not return any changed file patches.",
+    "project_deploy_no_diff_files_hint": "This commit did not return any changed file patches.",
     "project_deploy_no_history": "No deployment history yet.",
     "project_deploy_no_logs": "No logs",
-    "project_deploy_no_logs_message":
-        "This deployment has no Vercel deployment id.",
+    "project_deploy_no_logs_message": "This deployment has no Vercel deployment id.",
     "project_deploy_no_message": "(no message)",
     "project_deploy_no_production": "No production deployment",
     "project_deploy_no_releases": "No releases detected on main yet.",
     "project_deploy_no_timeline": "No timeline yet",
-    "project_deploy_no_timeline_hint":
-        "No recent commits found on the development branch.",
+    "project_deploy_no_timeline_hint": "No recent commits found on the development branch.",
     "project_deploy_ok": "OK",
     "project_deploy_open": "Open",
     "project_deploy_open_url_failed": "Cannot open URL",
     "project_deploy_open_url_failed_message": "Could not open {url}",
-    "project_deploy_patch_unavailable":
-        "Patch preview is unavailable for this file.",
+    "project_deploy_patch_unavailable": "Patch preview is unavailable for this file.",
     "project_deploy_phase_checking": "Checking dev/main diff...",
     "project_deploy_phase_deploying": "Triggering production deploy...",
     "project_deploy_phase_merging": "Merging dev into main...",
@@ -5777,15 +5099,12 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_releases": "Releases",
     "project_deploy_releases_main": "(main)",
     "project_deploy_retry_last": "Retry last deployment",
-    "project_deploy_retry_preview_message":
-        "This will trigger a new preview (dev) deployment.",
+    "project_deploy_retry_preview_message": "This will trigger a new preview (dev) deployment.",
     "project_deploy_retry_preview_title": "Retry preview deploy?",
-    "project_deploy_retry_prod_message":
-        "This will compare dev/main, merge if needed, then trigger a new production deployment.",
+    "project_deploy_retry_prod_message": "This will compare dev/main, merge if needed, then trigger a new production deployment.",
     "project_deploy_retry_prod_title": "Retry production deploy?",
     "project_deploy_revert_confirm_action": "Confirm revert",
-    "project_deploy_revert_confirm_message":
-        "This will run git revert on commit {sha} and trigger a new preview deployment.",
+    "project_deploy_revert_confirm_message": "This will run git revert on commit {sha} and trigger a new preview deployment.",
     "project_deploy_revert_confirm_title": "Revert this commit?",
     "project_deploy_revert_failed": "Revert failed",
     "project_deploy_revert_no_sha": "No commit SHA found for this deployment.",
@@ -5796,8 +5115,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_revert_unavailable": "Revert unavailable",
     "project_deploy_reverting": "Reverting...",
     "project_deploy_select_commit": "Select a commit",
-    "project_deploy_select_commit_hint":
-        "Choose a commit on the left to inspect changed files and patches.",
+    "project_deploy_select_commit_hint": "Choose a commit on the left to inspect changed files and patches.",
     "project_deploy_share_all": "Share all",
     "project_deploy_share_errors": "Share errors",
     "project_deploy_tab_timeline": "Timeline",
@@ -5805,28 +5123,19 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_time_hours_ago": "{hours}h ago",
     "project_deploy_time_just_now": "just now",
     "project_deploy_time_minutes_ago": "{minutes}m ago",
-    "project_deploy_tip_build_issue":
-        "This looks like a build failure — check compilation errors in logs.",
-    "project_deploy_tip_check_env_vars":
-        "Check environment variables (and sync to Vercel).",
-    "project_deploy_tip_check_github_access":
-        "Check GitHub collaborator/bot access to the repo.",
-    "project_deploy_tip_env_issue":
-        "This looks like an env var issue — verify required secrets are set.",
-    "project_deploy_tip_open_logs":
-        "Open the latest build logs and copy/share the error snippet.",
-    "project_deploy_tip_permission":
-        "This looks like a permission issue — verify GitHub access and tokens.",
-    "project_deploy_tip_retry_preview_first":
-        "Retry preview deploy first (then production).",
-    "project_deploy_tip_short_env":
-        "Env vars configured (and synced to Vercel)",
+    "project_deploy_tip_build_issue": "This looks like a build failure — check compilation errors in logs.",
+    "project_deploy_tip_check_env_vars": "Check environment variables (and sync to Vercel).",
+    "project_deploy_tip_check_github_access": "Check GitHub collaborator/bot access to the repo.",
+    "project_deploy_tip_env_issue": "This looks like an env var issue — verify required secrets are set.",
+    "project_deploy_tip_open_logs": "Open the latest build logs and copy/share the error snippet.",
+    "project_deploy_tip_permission": "This looks like a permission issue — verify GitHub access and tokens.",
+    "project_deploy_tip_retry_preview_first": "Retry preview deploy first (then production).",
+    "project_deploy_tip_short_env": "Env vars configured (and synced to Vercel)",
     "project_deploy_tip_short_github": "GitHub access / repo permissions",
     "project_deploy_tip_short_logs": "Open build logs and share error snippet",
     "project_deploy_tip_short_retry_preview": "Retry preview deploy first",
     "project_deploy_troubleshooting": "Troubleshooting",
-    "project_deploy_troubleshooting_hint":
-        "If deploy fails, try these quick checks:",
+    "project_deploy_troubleshooting_hint": "If deploy fails, try these quick checks:",
     "project_deploy_unknown": "unknown",
     "project_deployment_tab_deployments": "Deployments",
     "project_detail_error_text": "Error: {error}",
@@ -5859,8 +5168,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_github_import": "GitHub Import",
     "project_github_import_as_new": "Import as new project",
     "project_github_import_failed": "Import failed: {error}",
-    "project_github_import_missing_project_id":
-        "Import succeeded but missing project id",
+    "project_github_import_missing_project_id": "Import succeeded but missing project id",
     "project_github_imported": "Imported",
     "project_github_imported_description": "Imported from GitHub: {repo}",
     "project_github_invalid_repo_url": "Invalid repository URL",
@@ -5886,38 +5194,25 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_overview_community_action_unpublish": "Unpublish",
     "project_overview_community_action_update": "Update",
     "project_overview_community_action_view": "View",
-    "project_overview_community_hint":
-        "Publish a community post linked to this project (auto-release to production if needed).",
-    "project_overview_community_progress_deploy":
-        "Triggering production deploy…",
+    "project_overview_community_hint": "Publish a community post linked to this project (auto-release to production if needed).",
+    "project_overview_community_progress_deploy": "Triggering production deploy…",
     "project_overview_community_progress_finalizing": "Finalizing…",
     "project_overview_community_progress_merge": "Merging branches…",
     "project_overview_community_progress_publish": "Publishing to community…",
-    "project_overview_community_publish_dialog_current_domain":
-        "Current domain: {domain}",
-    "project_overview_community_publish_dialog_has_prod":
-        "This project already has a production deployment. Publishing will create or update a community post linked to your project overview.",
-    "project_overview_community_publish_dialog_need_release":
-        "To publish this project to the community, we first need to release it to production. We'll merge your dev branch into main, trigger a production deploy, then publish the post.",
-    "project_overview_community_publish_dialog_step_deploy":
-        "• Trigger production deploy",
-    "project_overview_community_publish_dialog_step_merge":
-        "• Merge dev → main",
-    "project_overview_community_publish_dialog_step_publish":
-        "• Publish to community",
+    "project_overview_community_publish_dialog_current_domain": "Current domain: {domain}",
+    "project_overview_community_publish_dialog_has_prod": "This project already has a production deployment. Publishing will create or update a community post linked to your project overview.",
+    "project_overview_community_publish_dialog_need_release": "To publish this project to the community, we first need to release it to production. We'll merge your dev branch into main, trigger a production deploy, then publish the post.",
+    "project_overview_community_publish_dialog_step_deploy": "• Trigger production deploy",
+    "project_overview_community_publish_dialog_step_merge": "• Merge dev → main",
+    "project_overview_community_publish_dialog_step_publish": "• Publish to community",
     "project_overview_community_publish_dialog_steps": "Steps:",
     "project_overview_community_publish_dialog_title": "Publish to community",
-    "project_overview_community_publish_failed":
-        "Failed to publish to community",
-    "project_overview_community_publish_failed_sentence":
-        "Failed to publish to community.",
+    "project_overview_community_publish_failed": "Failed to publish to community",
+    "project_overview_community_publish_failed_sentence": "Failed to publish to community.",
     "project_overview_community_publish_success": "Published to community",
-    "project_overview_community_release_merge_message":
-        "Merge {head} into {base}",
-    "project_overview_community_release_no_commits":
-        "No commits found on development branch",
-    "project_overview_community_release_publish_failed":
-        "Production deploy succeeded, but failed to publish to community",
+    "project_overview_community_release_merge_message": "Merge {head} into {base}",
+    "project_overview_community_release_no_commits": "No commits found on development branch",
+    "project_overview_community_release_publish_failed": "Production deploy succeeded, but failed to publish to community",
     "project_overview_community_status_draft": "Draft",
     "project_overview_community_status_none": "Not published",
     "project_overview_community_status_published": "Published",
@@ -5926,25 +5221,20 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_overview_community_unpublish_success": "Unpublished",
     "project_overview_community_update_failed": "Failed to update post",
     "project_overview_community_update_success": "Post updated",
-    "project_overview_danger_delete_confirm_label":
-        "Type project name to confirm",
-    "project_overview_danger_delete_desc":
-        "This action cannot be undone. Please type the project name to confirm deletion.",
+    "project_overview_danger_delete_confirm_label": "Type project name to confirm",
+    "project_overview_danger_delete_desc": "This action cannot be undone. Please type the project name to confirm deletion.",
     "project_overview_danger_delete_failed": "Failed to delete project",
     "project_overview_danger_delete_in_progress": "Deleting {name}...",
     "project_overview_danger_delete_name_mismatch": "Name does not match.",
     "project_overview_danger_delete_progress_cleanup": "Final cleanup...",
-    "project_overview_danger_delete_progress_remove":
-        "Removing project resources...",
-    "project_overview_danger_delete_progress_submit":
-        "Submitting delete request...",
+    "project_overview_danger_delete_progress_remove": "Removing project resources...",
+    "project_overview_danger_delete_progress_submit": "Submitting delete request...",
     "project_overview_danger_delete_success": "Deleted {name}",
     "project_overview_danger_delete_title": "Delete project",
     "project_overview_danger_project_name": "Project: {name}",
     "project_overview_danger_title": "Danger zone",
     "project_overview_danger_transfer_action": "Transfer",
-    "project_overview_danger_transfer_desc":
-        "Enter the recipient email to transfer ownership. You will lose access after transfer.",
+    "project_overview_danger_transfer_desc": "Enter the recipient email to transfer ownership. You will lose access after transfer.",
     "project_overview_danger_transfer_failed": "Failed to transfer project",
     "project_overview_danger_transfer_recipient": "Recipient email",
     "project_overview_danger_transfer_success": "Project transferred",
@@ -5966,12 +5256,10 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_overview_health_title": "Health metrics",
     "project_overview_links_github_repo": "GitHub Repository",
     "project_overview_links_not_available": "Not available",
-    "project_overview_links_open_github_failed":
-        "Could not open GitHub repository",
+    "project_overview_links_open_github_failed": "Could not open GitHub repository",
     "project_overview_links_open_preview_failed": "Could not open preview URL",
     "project_overview_links_preview_url": "Preview URL",
-    "project_overview_recent_deployments_empty":
-        "No recent deployments — ship a new build to see activity here.",
+    "project_overview_recent_deployments_empty": "No recent deployments — ship a new build to see activity here.",
     "project_overview_recent_deployments_env": "{env} deployment",
     "project_overview_recent_deployments_feed": "Activity feed",
     "project_overview_recent_deployments_title": "Recent deployments",
@@ -5992,30 +5280,23 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_payment_add_product": "Add Product",
     "project_payment_add_product_failed": "Failed to add product: {error}",
     "project_payment_add_product_title": "Add Payment Product",
-    "project_payment_ai_prompt_product":
-        "Can you analyze the payment product \"{name}\" and provide suggestions on pricing strategy, configuration, or marketing improvements?",
-    "project_payment_ai_prompt_transaction":
-        "Can you analyze this payment transaction ({amount}, {status}) and provide insights about payment patterns or recommendations?",
+    "project_payment_ai_prompt_product": "Can you analyze the payment product \"{name}\" and provide suggestions on pricing strategy, configuration, or marketing improvements?",
+    "project_payment_ai_prompt_transaction": "Can you analyze this payment transaction ({amount}, {status}) and provide insights about payment patterns or recommendations?",
     "project_payment_anonymous": "Anonymous",
-    "project_payment_available_for_purchase":
-        "Product is available for purchase",
+    "project_payment_available_for_purchase": "Product is available for purchase",
     "project_payment_conversion_rate": "Conversion Rate",
     "project_payment_description_hint": "Describe your product",
     "project_payment_description_optional": "Description (Optional)",
     "project_payment_edit": "Edit",
     "project_payment_edit_product_title": "Edit Payment Product",
     "project_payment_enable_button": "Activer les paiements",
-    "project_payment_enable_description":
-        "Les paiements ne sont pas encore activés pour ce projet. Initialisez d’abord les paiements, puis gérez les produits, transactions, comptes bancaires, retraits et webhooks.",
+    "project_payment_enable_description": "Les paiements ne sont pas encore activés pour ce projet. Initialisez d’abord les paiements, puis gérez les produits, transactions, comptes bancaires, retraits et webhooks.",
     "project_payment_enable_failed": "Échec de l’activation des paiements",
-    "project_payment_enable_feature_checkout":
-        "Stripe Checkout et liens de paiement",
+    "project_payment_enable_feature_checkout": "Stripe Checkout et liens de paiement",
     "project_payment_enable_feature_products": "Produits, soldes et retraits",
-    "project_payment_enable_feature_webhooks":
-        "Cycle de commande prêt pour les webhooks",
+    "project_payment_enable_feature_webhooks": "Cycle de commande prêt pour les webhooks",
     "project_payment_enable_loading": "Initialisation…",
-    "project_payment_enable_success":
-        "Les paiements ont été activés avec succès",
+    "project_payment_enable_success": "Les paiements ont été activés avec succès",
     "project_payment_enable_title": "Activer les paiements",
     "project_payment_get_link": "Get Link",
     "project_payment_getting_link": "Getting payment link...",
@@ -6038,20 +5319,15 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_payment_total_revenue": "Total Revenue",
     "project_payment_transactions": "Transactions",
     "project_payment_unknown_product": "Unknown Product",
-    "project_payment_update_product_failed":
-        "Failed to update product: {error}",
+    "project_payment_update_product_failed": "Failed to update product: {error}",
     "projects_action_load_more": "Load More",
     "projects_action_relogin": "Re-login",
-    "projects_empty_search_message":
-        "Essayez un autre mot-clé ou effacez la recherche.",
+    "projects_empty_search_message": "Essayez un autre mot-clé ou effacez la recherche.",
     "projects_empty_search_title": "Aucun projet correspondant",
-    "projects_empty_state_message":
-        "Créez votre premier projet pour commencer à construire.",
-    "projects_intro_subtitle":
-        "Recherchez, ouvrez et gérez votre espace de travail actif.",
+    "projects_empty_state_message": "Créez votre premier projet pour commencer à construire.",
+    "projects_intro_subtitle": "Recherchez, ouvrez et gérez votre espace de travail actif.",
     "projects_search_hint": "Search projects...",
-    "projects_searching_subtitle":
-        "Résultats filtrés pour votre requête actuelle.",
+    "projects_searching_subtitle": "Résultats filtrés pour votre requête actuelle.",
     "projects_sync_failed_title": "Sync failed",
     "projects_time_date": "{day}/{month}/{year}",
     "projects_time_days_ago": "{value}d ago",
@@ -6074,7 +5350,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "resend_after": "Renvoyer après",
     "resend_code": "Renvoyer le code",
     "reset_password": "Réinitialiser le mot de passe",
-    "reset_password_subtitle": "Réinitialiser votre mot de passe de connexion",
+    "reset_password_subtitle": "Réinitialiser le mot de passe",
     "resetting": "Réinitialisation...",
     "retry": "Retry",
     "save": "Save",
@@ -6082,8 +5358,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "search": "Rechercher",
     "send_code": "Envoyer le code",
     "sending": "Envoi...",
-    "session_expired_message":
-        "Votre session a expiré. Veuillez vous reconnecter.",
+    "session_expired_message": "Votre session a expiré. Veuillez vous reconnecter.",
     "session_expired_title": "Session expirée",
     "settings": "Paramètres",
     "settings_api_key": "Clé API",
@@ -6093,28 +5368,16 @@ kLocalizedValues = <String, Map<String, String>>{
     "settings_editor_appearance_mode": "Mode d’apparence",
     "settings_editor_dark_theme": "Thème sombre",
     "settings_editor_default_wrap": "Retour à la ligne par défaut",
-    "settings_editor_default_wrap_hint":
-        "Ouvrir les éditeurs avec le retour à la ligne activé par défaut.",
-    "settings_editor_engine": "Moteur de l’éditeur",
-    "settings_editor_engine_flutter_code_editor": "Flutter Code Editor",
-    "settings_editor_engine_flutter_code_editor_hint":
-        "Flutter Code Editor reste entièrement natif dans Flutter et conserve le flux actuel de pliage du code.",
-    "settings_editor_engine_flutter_monaco": "Flutter Monaco",
-    "settings_editor_engine_flutter_monaco_hint":
-        "Monaco utilise un backend WebView/iframe de la plateforme pour mieux gérer les fichiers volumineux.",
-    "settings_editor_entry_subtitle": "Thème, police, retour à la ligne",
+    "settings_editor_default_wrap_hint": "Ouvrir avec retour activé.",
+    "settings_editor_entry_subtitle": "Thème, police, retour",
     "settings_editor_font_size": "Taille de police",
-    "settings_editor_footer":
-        "Choisissez séparément les thèmes clair et sombre, puis décidez si l’éditeur suit l’apparence de l’application ou reste fixe.",
+    "settings_editor_footer": "Choisissez thème et comportement.",
     "settings_editor_light_theme": "Thème clair",
     "settings_editor_preview_comment": "Aperçu style VS Code",
-    "settings_editor_saved_message":
-        "Le thème clair, le thème sombre, le mode d’apparence et les préférences de l’éditeur ont été enregistrés.",
+    "settings_editor_saved_message": "Préférences enregistrées.",
     "settings_editor_show_rulers": "Afficher les règles",
-    "settings_editor_show_rulers_hint":
-        "Affiche des règles verticales aux colonnes 80 et 120.",
-    "settings_editor_subtitle":
-        "Ajustez l’apparence de l’éditeur pour retrouver une expérience proche de l’atelier VS Code.",
+    "settings_editor_show_rulers_hint": "Règles à 80 / 120.",
+    "settings_editor_subtitle": "Thème et comportement.",
     "settings_editor_tab_size": "Taille de tabulation",
     "settings_editor_theme_a11y_light": "A11y Light",
     "settings_editor_theme_dracula": "Dracula",
@@ -6143,7 +5406,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "syncing": "Synchronisation",
     "syncing_message": "Synchronisation des référentiels...",
     "system_mode": "Système",
-    "theme_subtitle": "Mode clair ou sombre",
+    "theme_subtitle": "Clair ou sombre",
     "theme_switched": "Passé à",
     "theme_title": "Thème",
     "theme_updated": "Thème mis à jour",
@@ -6159,35 +5422,34 @@ kLocalizedValues = <String, Map<String, String>>{
     "topup_method_google_pay": "Google Pay",
     "topup_payment_canceled_message": "The payment was canceled.",
     "topup_payment_canceled_title": "Payment canceled",
-    "topup_payment_submitted_message":
-        "Your top-up payment was submitted successfully.",
+    "topup_payment_submitted_message": "Your top-up payment was submitted successfully.",
     "topup_payment_submitted_title": "Payment submitted",
     "topup_subtitle": "Add funds with {methods} through Stripe.",
     "topup_title": "Top up credits",
-    "topup_unconfigured":
-        "Stripe mobile payment is not configured in this build.",
+    "topup_unconfigured": "Stripe mobile payment is not configured in this build.",
+    "two_factor_cancel": "Annuler",
+    "two_factor_disable": "Désactiver",
+    "two_factor_disable_confirm": "Êtes-vous sûr de vouloir désactiver l'authentification à deux facteurs ? Votre compte sera moins sécurisé.",
+    "two_factor_disable_title": "Désactiver l'authentification à deux facteurs",
+    "two_factor_title": "Authentification à deux facteurs",
+    "two_factor_verify_enable": "Vérifier et activer",
     "upgrade_best_fit": "Best fit",
     "upgrade_billing_monthly": "Monthly",
     "upgrade_billing_yearly": "Yearly",
     "upgrade_credits": "credits",
     "upgrade_cycle": "cycle",
-    "upgrade_empty_detail":
-        "Subscription packages will appear here when published.",
+    "upgrade_empty_detail": "Subscription packages will appear here when published.",
     "upgrade_empty_title": "No plans available",
     "upgrade_featured_hint": "Balanced for most active builders",
-    "upgrade_footer_configured":
-        "Payments are processed natively in-app. Balance top-up stays in USD for now.",
-    "upgrade_footer_unconfigured":
-        "This build still needs STRIPE_PUBLISHABLE_KEY before native checkout can open.",
+    "upgrade_footer_configured": "Payments are processed natively in-app. Balance top-up stays in USD for now.",
+    "upgrade_footer_unconfigured": "This build still needs STRIPE_PUBLISHABLE_KEY before native checkout can open.",
     "upgrade_load_failed_title": "Failed to load plans",
     "upgrade_period": "period",
     "upgrade_quota": "Quota",
     "upgrade_standard_hint": "Designed for focused production usage",
     "upgrade_subscription_failed": "Subscription failed: {error}",
-    "upgrade_subscription_submitted":
-        "Subscription payment submitted successfully.",
-    "upgrade_subtitle":
-        "Choose a plan built for sustained usage, faster limits, and cleaner billing.",
+    "upgrade_subscription_submitted": "Subscription payment submitted successfully.",
+    "upgrade_subtitle": "Choose a plan built for sustained usage, faster limits, and cleaner billing.",
     "upgrade_title": "Upgrade",
     "verify_code": "Code de vérification",
     "verify_code_complete": "Veuillez entrer le code de vérification complet",
@@ -6199,14 +5461,11 @@ kLocalizedValues = <String, Map<String, String>>{
     "workspace_banner_checking_status": "Checking status.",
     "workspace_banner_issue": "Workspace issue",
     "workspace_banner_ready": "Workspace ready",
-    "workspace_banner_retrying_background":
-        "Start failed. Retrying in the background.",
-    "workspace_banner_sleeping_needed":
-        "😴 En veille jusqu'à la prochaine utilisation.",
+    "workspace_banner_retrying_background": "Start failed. Retrying in the background.",
+    "workspace_banner_sleeping_needed": "😴 En veille jusqu'à la prochaine utilisation.",
     "workspace_banner_starting": "Starting workspace",
     "workspace_banner_starting_message": "Starting workspace.",
-    "workspace_banner_starting_now":
-        "Starting now. Your message will send next.",
+    "workspace_banner_starting_now": "Starting now. Your message will send next.",
     "workspace_banner_syncing_files": "Syncing files.",
     "workspace_tip_checking_short": "Checking",
     "workspace_tip_checking_status": "Checking workspace status",
@@ -6235,36 +5494,30 @@ kLocalizedValues = <String, Map<String, String>>{
     "workspace_warmup_inline_next": "Starting workspace. Sending next.",
     "workspace_warmup_inline_now": "Ready. Sending now.",
     "workspace_warmup_inline_ready": "Workspace ready. Sending your message...",
-    "workspace_warmup_inline_starting":
-        "Workspace is starting. Your message will send automatically.",
+    "workspace_warmup_inline_starting": "Workspace is starting. Your message will send automatically.",
     "workspace_warmup_notice_next": "Starting. Sending next.",
-    "workspace_warmup_notice_starting":
-        "Workspace is starting. Sending will continue automatically.",
+    "workspace_warmup_notice_starting": "Workspace is starting. Sending will continue automatically.",
     "your_invite_code": "Votre code d'invitation",
   },
   "ja": <String, String>{
     "about": "このアプリについて",
     "about_description": "AIを活用したアプリ開発プラットフォーム。",
-    "about_subtitle": "アプリのバージョンと情報",
+    "about_subtitle": "アプリ情報",
     "about_title": "アプリ情報",
     "access": "Access",
     "account_data_contact_support_delete": "サポートに連絡してアカウントを削除",
     "account_data_copy_request_template": "依頼テンプレートをコピー",
-    "account_data_delete_confirm_message":
-        "{support_email} にアカウント削除を依頼します。削除は元に戻せない場合があります。続行しますか？",
-    "account_data_delete_description":
-        "アカウント削除は現在サポートが対応しています。削除を依頼する前に法的制限をご確認ください。",
-    "account_data_delete_template":
-        "依頼: アカウント削除\\nアカウント: {email}\\nアカウントおよび関連データの削除をお願いします。\\nこの操作は元に戻せない可能性があることを理解しています。\\n連絡先: {support_email}",
+    "account_data_delete_confirm_message": "{support_email} にアカウント削除を依頼します。削除は元に戻せない場合があります。続行しますか？",
+    "account_data_delete_description": "アカウント削除は現在サポートが対応しています。削除を依頼する前に法的制限をご確認ください。",
+    "account_data_delete_template": "依頼: アカウント削除\\nアカウント: {email}\\nアカウントおよび関連データの削除をお願いします。\\nこの操作は元に戻せない可能性があることを理解しています。\\n連絡先: {support_email}",
     "account_data_delete_title": "アカウント削除",
-    "account_data_export_description":
-        "エクスポートは現在サポートが対応しています。コピーして送信できる依頼テンプレートを用意しています。",
-    "account_data_export_template":
-        "依頼: データエクスポート\\nアカウント: {email}\\nアカウントデータ（プロフィール、プロジェクト、請求情報）のエクスポートをお願いします。\\n連絡先: {support_email}",
+    "account_data_export_description": "エクスポートは現在サポートが対応しています。コピーして送信できる依頼テンプレートを用意しています。",
+    "account_data_export_template": "依頼: データエクスポート\\nアカウント: {email}\\nアカウントデータ（プロフィール、プロジェクト、請求情報）のエクスポートをお願いします。\\n連絡先: {support_email}",
     "account_data_export_title": "データエクスポート",
     "account_data_legal": "法務",
+    "account_data_open_projects": "プロジェクトを開く",
     "account_data_request_template_copied": "依頼テンプレートをクリップボードにコピーしました",
-    "account_data_subtitle": "データのエクスポートとアカウント削除",
+    "account_data_subtitle": "書き出し / 削除",
     "account_data_support_dialog_message": "この依頼は {support_email} までご連絡ください。",
     "account_data_title": "アカウントとデータ",
     "activity": "アクティビティ",
@@ -6284,8 +5537,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "api_keys_create_success": "API Key を作成しました。今すぐコピーしてください。後から再表示できません。",
     "api_keys_created_at": "作成日時",
     "api_keys_creating": "作成中...",
-    "api_keys_description":
-        "API Key は管理者以外のエンドポイントで利用できます。管理者向けルートは通常の認証が必要です。",
+    "api_keys_description": "API Key は管理者以外のエンドポイントで利用できます。管理者向けルートは通常の認証が必要です。",
     "api_keys_description_label": "説明",
     "api_keys_dialog_create_description": "名前と任意の説明を入力すると、あとで見分けやすくなります。",
     "api_keys_dialog_create_title": "API Key を作成",
@@ -6303,17 +5555,20 @@ kLocalizedValues = <String, Map<String, String>>{
     "api_keys_revoked": "無効化済み",
     "api_keys_title": "API Key を作成",
     "api_keys_unnamed": "名前未設定の Key",
-    "api_settings": "API",
+    "api_settings": "API設定",
+    "api_settings_copy_diagnostics": "診断をコピー",
+    "api_settings_reset": "リセット",
+    "api_settings_save": "保存",
+    "api_settings_test_connection": "接続テスト",
     "appearance": "外観",
     "back": "戻る",
     "basic_information": "基本情報",
     "billing_insufficient_action_later": "Later",
     "billing_insufficient_action_topup": "Top up now",
-    "billing_insufficient_description":
-        "Your balance is insufficient for this action. Please top up first.",
+    "billing_insufficient_description": "Your balance is insufficient for this action. Please top up first.",
     "billing_insufficient_title": "Insufficient Balance",
     "bind_email": "メールアドレスをバインド",
-    "bind_email_subtitle": "アカウントにメールアドレスをバインド",
+    "bind_email_subtitle": "メールを連携",
     "browse": "参照",
     "cancel": "Cancel",
     "chat_banner_next_prompt_queued": "次のプロンプトはキューに入っています。",
@@ -6376,8 +5631,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "community_empty_all": "No posts.",
     "community_empty_components": "No components.",
     "community_empty_mine": "No posts created by you yet.",
-    "community_empty_my_posts_sentence":
-        "You have not published any posts yet.",
+    "community_empty_my_posts_sentence": "You have not published any posts yet.",
     "community_failed_to_load_components": "Failed to load components",
     "community_filter_all": "All",
     "community_filter_mine": "My posts",
@@ -6417,8 +5671,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "create_project": "プロジェクトを作成",
     "create_project_accept_invitation": "招待を承認",
     "create_project_accept_invitation_failed": "招待の承認に失敗しました: {error}",
-    "create_project_accept_invitation_hint":
-        "GitHub リポジトリ設定で「{bot}」をコラボレーターに追加し、「招待を承認」をタップしてください。",
+    "create_project_accept_invitation_hint": "GitHub リポジトリ設定で「{bot}」をコラボレーターに追加し、「招待を承認」をタップしてください。",
     "create_project_access_verified": "アクセス確認済み",
     "create_project_access_verified_for": "{repo} へのアクセスを確認しました",
     "create_project_action": "プロジェクトを作成",
@@ -6437,29 +5690,23 @@ kLocalizedValues = <String, Map<String, String>>{
     "create_project_failed_import_local": "ローカル Zip のインポートに失敗しました: {error}",
     "create_project_failed_import_project": "プロジェクトのインポートに失敗しました: {error}",
     "create_project_failed_import_repo": "リポジトリのインポートに失敗しました: {error}",
-    "create_project_failed_to_create":
-        "プロジェクトの作成に失敗しました: {error}\n\nAPI ベース: {base}",
+    "create_project_failed_to_create": "プロジェクトの作成に失敗しました: {error}\n\nAPI ベース: {base}",
     "create_project_fill_required": "必須項目をすべて入力してください",
     "create_project_github_bot_username": "GitHub ボットのユーザー名",
-    "create_project_github_collaborator_subtitle":
-        "ガイド付きインポート: ボット追加 → 招待承認 → アクセス確認 → インポート。",
+    "create_project_github_collaborator_subtitle": "ガイド付きインポート: ボット追加 → 招待承認 → アクセス確認 → インポート。",
     "create_project_github_collaborator_title": "GitHub からインポート（コラボレーター）",
     "create_project_github_guided_title": "ガイド付き GitHub インポート（3 ステップ）",
     "create_project_github_import_title": "GitHub インポート",
     "create_project_import_local_action": "ローカル Zip をインポート",
-    "create_project_import_local_info":
-        "ローカルの .zip ワークスペースをアップロードし、プロジェクトとして直接インポートします。アーカイブのルートにプロジェクトファイルが含まれている必要があります。",
-    "create_project_import_local_subtitle":
-        "ローカルの .zip プロジェクトアーカイブをアップロードして直接インポートします。",
+    "create_project_import_local_info": "ローカルの .zip ワークスペースをアップロードし、プロジェクトとして直接インポートします。アーカイブのルートにプロジェクトファイルが含まれている必要があります。",
+    "create_project_import_local_subtitle": "ローカルの .zip プロジェクトアーカイブをアップロードして直接インポートします。",
     "create_project_import_local_title": "ローカル Zip をインポート",
     "create_project_import_project_action": "プロジェクトをインポート",
-    "create_project_import_public_subtitle":
-        "公開 GitHub リポジトリを組織ワークスペースにミラーします。",
+    "create_project_import_public_subtitle": "公開 GitHub リポジトリを組織ワークスペースにミラーします。",
     "create_project_import_public_title": "公開リポジトリをインポート",
     "create_project_import_repo_action": "リポジトリをインポート",
     "create_project_imported_from_github": "GitHub からインポート: {repo}",
-    "create_project_invalid_repo_url":
-        "無効なリポジトリ URL です。例: https://github.com/owner/repo",
+    "create_project_invalid_repo_url": "無効なリポジトリ URL です。例: https://github.com/owner/repo",
     "create_project_invalid_repo_url_simple": "無効なリポジトリ URL",
     "create_project_invitation_accepted": "招待を承認しました",
     "create_project_invitation_accepted_message": "招待を承認しました",
@@ -6467,18 +5714,13 @@ kLocalizedValues = <String, Map<String, String>>{
     "create_project_loading_step_finalize": "最終設定を完了しています...",
     "create_project_loading_step_integrations": "連携を設定しています...",
     "create_project_loading_step_plan": "プロジェクト構成を計画しています...",
-    "create_project_login_expired_models":
-        "ログインの有効期限が切れています。モデルを読み込む前に再ログインしてください。",
-    "create_project_login_expired_templates":
-        "ログインの有効期限が切れています。テンプレートを読み込む前に再ログインしてください。",
-    "create_project_missing_project_id_after_import":
-        "インポートは成功しましたが、プロジェクト ID がありません",
-    "create_project_model_switch_failed_continue":
-        "モデルの切り替えに失敗したため、サーバーのデフォルトモデルで続行します。（{error}）",
+    "create_project_login_expired_models": "ログインの有効期限が切れています。モデルを読み込む前に再ログインしてください。",
+    "create_project_login_expired_templates": "ログインの有効期限が切れています。テンプレートを読み込む前に再ログインしてください。",
+    "create_project_missing_project_id_after_import": "インポートは成功しましたが、プロジェクト ID がありません",
+    "create_project_model_switch_failed_continue": "モデルの切り替えに失敗したため、サーバーのデフォルトモデルで続行します。（{error}）",
     "create_project_new_ai_hint": "例: 認証、権限、データベースを備えたチーム向けタスクボードアプリ。",
     "create_project_new_ai_subtitle": "作りたいものを説明してください。必要な設定をこちらで整えます。",
-    "create_project_new_ai_summary":
-        "ページ、認証、データ、主要フローを 1 文で説明してください（8 文字以上）。プロジェクトを作成し、そのままチャットで続行します。",
+    "create_project_new_ai_summary": "ページ、認証、データ、主要フローを 1 文で説明してください（8 文字以上）。プロジェクトを作成し、そのままチャットで続行します。",
     "create_project_new_ai_title": "新しいプロジェクト（AI）",
     "create_project_new_project_title": "新しいプロジェクト",
     "create_project_open_github_settings": "GitHub 設定を開く",
@@ -6488,8 +5730,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "create_project_project_name": "プロジェクト名",
     "create_project_project_name_hint": "例: my-project",
     "create_project_public_repo_example": "例: https://github.com/owner/repo",
-    "create_project_public_repo_info":
-        "公開リポジトリを組織ワークスペースにミラーします。大きなリポジトリでは時間がかかる場合があります。",
+    "create_project_public_repo_info": "公開リポジトリを組織ワークスペースにミラーします。大きなリポジトリでは時間がかかる場合があります。",
     "create_project_public_repo_url": "公開リポジトリ URL",
     "create_project_repository_url": "リポジトリ URL",
     "create_project_retry_create_integrations": "統合付き作成に失敗しました。1 回再試行します…",
@@ -6502,13 +5743,11 @@ kLocalizedValues = <String, Map<String, String>>{
     "create_project_template": "テンプレート",
     "create_project_template_auto_description": "D1V が入力内容に応じて最適なテンプレートを選択します。",
     "create_project_template_auto_name": "自動",
-    "create_project_token_missing":
-        "ログインしていないか、トークンが見つかりません。再ログインしてください。\n\nヒント: 設定 → プロフィール → API → 診断情報をコピー。",
+    "create_project_token_missing": "ログインしていないか、トークンが見つかりません。再ログインしてください。\n\nヒント: 設定 → プロフィール → API → 診断情報をコピー。",
     "create_project_verify_access": "アクセスを確認",
     "create_project_verify_access_failed": "アクセス確認に失敗しました: {error}",
     "create_project_waiting_workspace": "ワークスペースの準備を待っています…",
-    "create_project_workspace_not_ready":
-        "ワークスペースの準備ができていません: {error}\n\nAPI ベース: {base}",
+    "create_project_workspace_not_ready": "ワークスペースの準備ができていません: {error}\n\nAPI ベース: {base}",
     "dark_mode": "ダークモード",
     "dashboard": "ダッシュボード",
     "dashboard_action_chat": "Chat",
@@ -6519,8 +5758,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "dashboard_no_projects_title": "No projects yet",
     "dashboard_open_project": "Open project",
     "dashboard_projects_load_failed": "Failed to load projects",
-    "dashboard_projects_subtitle":
-        "Continue from the most recently touched projects.",
+    "dashboard_projects_subtitle": "Continue from the most recently touched projects.",
     "dashboard_prompt_activity_day_message": "{count} prompts on {date}",
     "dashboard_prompt_activity_title": "Prompt activity",
     "dashboard_search_results": "Search Results ({count})",
@@ -6552,42 +5790,32 @@ kLocalizedValues = <String, Map<String, String>>{
     "docs_code_copied_message": "コードブロックをコピーしました。どこにでも貼り付けられます。",
     "docs_copy_code": "コピー",
     "docs_copy_code_done": "コピーしました",
-    "docs_hero_subtitle":
-        "Use the docs like a product index: scan by outcome, reopen what you touched recently, and jump straight into the detail view.",
-    "docs_hero_title":
-        "Operational guidance, product context, and implementation references.",
+    "docs_hero_subtitle": "Use the docs like a product index: scan by outcome, reopen what you touched recently, and jump straight into the detail view.",
+    "docs_hero_title": "Operational guidance, product context, and implementation references.",
     "docs_items_count": "{count} items",
-    "docs_load_failed_message":
-        "アプリ内リーダーでこのドキュメントを読み込めませんでした。ここで再試行するか、ブラウザで開いてください。",
+    "docs_load_failed_message": "アプリ内リーダーでこのドキュメントを読み込めませんでした。ここで再試行するか、ブラウザで開いてください。",
     "docs_load_failed_title": "ドキュメントの読み込みに失敗しました",
     "docs_no_matching_documents": "No matching documents",
-    "docs_no_matching_documents_hint":
-        "Try broader keywords or search by product area, workflow, or API topic.",
+    "docs_no_matching_documents_hint": "Try broader keywords or search by product area, workflow, or API topic.",
     "docs_open_failed_message": "リンクを開けません",
     "docs_open_failed_title": "開けませんでした",
     "docs_open_in_browser": "ブラウザで開く",
     "docs_opening_in_browser": "Opening documentation in your browser...",
     "docs_page_api_desc": "OpenAPI, auth, errors, pagination, webhooks.",
     "docs_page_api_title": "API",
-    "docs_page_architecture_desc":
-        "Environments, promotion model, and failure modes.",
+    "docs_page_architecture_desc": "Environments, promotion model, and failure modes.",
     "docs_page_architecture_title": "Architecture",
     "docs_page_faq_desc": "Troubleshooting and tips.",
     "docs_page_faq_title": "FAQ",
-    "docs_page_getting_started_desc":
-        "Prompt -> preview -> production, with verification steps.",
+    "docs_page_getting_started_desc": "Prompt -> preview -> production, with verification steps.",
     "docs_page_getting_started_title": "Getting Started",
-    "docs_page_integrations_desc":
-        "GitHub/Auth/Payments/Analytics: setup and verification.",
+    "docs_page_integrations_desc": "GitHub/Auth/Payments/Analytics: setup and verification.",
     "docs_page_integrations_title": "Integrations",
-    "docs_page_legal_restrictions_desc":
-        "Compliance and export restrictions (high-level).",
+    "docs_page_legal_restrictions_desc": "Compliance and export restrictions (high-level).",
     "docs_page_legal_restrictions_title": "Legal and Export Restrictions",
-    "docs_page_overview_desc":
-        "What the platform is and how the workflow fits together.",
+    "docs_page_overview_desc": "What the platform is and how the workflow fits together.",
     "docs_page_overview_title": "Overview",
-    "docs_page_privacy_policy_desc":
-        "What data we collect, how we use it, and how to request export or deletion.",
+    "docs_page_privacy_policy_desc": "What data we collect, how we use it, and how to request export or deletion.",
     "docs_page_privacy_policy_title": "Privacy Policy",
     "docs_page_product_desc": "Outcomes by role (PM / Business / Developers).",
     "docs_page_product_title": "Product",
@@ -6595,11 +5823,9 @@ kLocalizedValues = <String, Map<String, String>>{
     "docs_page_refund_policy_title": "Refund and Dispute Policy",
     "docs_page_roadmap_desc": "Now / Next priorities (subject to change).",
     "docs_page_roadmap_title": "Roadmap",
-    "docs_page_use_cases_desc":
-        "Playbooks: prompts + acceptance criteria for common products.",
+    "docs_page_use_cases_desc": "Playbooks: prompts + acceptance criteria for common products.",
     "docs_page_use_cases_title": "Use Cases",
-    "docs_page_workspace_desc":
-        "Where to go in the Project workspace (Chat, Deploy, Pay, Analytics).",
+    "docs_page_workspace_desc": "Where to go in the Project workspace (Chat, Deploy, Pay, Analytics).",
     "docs_page_workspace_title": "Workspace Guide",
     "docs_recently_viewed": "Recently viewed",
     "docs_search_hint": "Search docs, workflows, API, setup...",
@@ -6647,10 +5873,8 @@ kLocalizedValues = <String, Map<String, String>>{
     "github_import_failed_message": "リポジトリのインポートに失敗しました",
     "github_import_failed_title": "インポート失敗",
     "github_import_in_progress_title": "インポート中",
-    "github_import_monorepo_notice":
-        "このリポジトリは monorepo の可能性があります。プレビュー配備の前にアプリのルートディレクトリを選択してください。",
-    "github_import_opening_chat":
-        "プロジェクトはインポートされました。プレビューはまだ起動中のため、今チャットを開きます。",
+    "github_import_monorepo_notice": "このリポジトリは monorepo の可能性があります。プレビュー配備の前にアプリのルートディレクトリを選択してください。",
+    "github_import_opening_chat": "プロジェクトはインポートされました。プレビューはまだ起動中のため、今チャットを開きます。",
     "github_import_progress_choose_root": "アプリのルートディレクトリを選択",
     "github_import_progress_import": "リポジトリをインポート中",
     "github_import_progress_prepare_preview": "プレビュー配備を準備中",
@@ -6667,8 +5891,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "github_import_root_directory": "ルートディレクトリ",
     "github_import_root_failed": "ルートディレクトリの設定に失敗しました",
     "github_import_root_saved": "ルートディレクトリを保存し、プレビュー配備を開始しました。",
-    "github_import_sheet_subtitle":
-        "この GitHub リポジトリから新しいプロジェクトを作成し、プレビュー配備までそのまま進めます。",
+    "github_import_sheet_subtitle": "この GitHub リポジトリから新しいプロジェクトを作成し、プレビュー配備までそのまま進めます。",
     "github_import_sheet_title": "リポジトリをインポート",
     "github_import_success_message": "リポジトリのインポートに成功しました",
     "github_integration": "GitHub 連携",
@@ -6678,14 +5901,13 @@ kLocalizedValues = <String, Map<String, String>>{
     "help_support_cta_title": "Still need help?",
     "help_support_docs_subtitle": "Technical documentation and API reference",
     "help_support_email_open_error": "Failed to open email: {error}",
-    "help_support_email_open_failed":
-        "Could not open email app. Please email us at {email}",
+    "help_support_email_open_failed": "Could not open email app. Please email us at {email}",
     "help_support_hero_subtitle": "Find answers or contact our support team",
     "help_support_hero_title": "How can we help you?",
     "help_support_link_open_error": "Failed to open {name}: {error}",
     "help_support_link_open_failed": "Could not open {name}",
     "help_support_quick_actions": "Quick Actions",
-    "help_support_subtitle": "ヘルプとサポートを受ける",
+    "help_support_subtitle": "ヘルプ / サポート",
     "help_support_user_guide_subtitle": "Learn how to use all features",
     "help_support_user_guide_title": "User Guide",
     "import_action": "インポート",
@@ -6716,8 +5938,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "invite_description": "友達を d1v.ai に招待して報酬を獲得",
     "invite_friends": "友達を招待",
     "invites": "招待",
-    "invites_empty_message":
-        "You haven't invited any friends yet.\\nShare your invite code to get started!",
+    "invites_empty_message": "You haven't invited any friends yet.\\nShare your invite code to get started!",
     "invites_empty_title": "No Invites Yet",
     "invites_joined_at": "Joined {time}",
     "invites_load_failed_title": "Failed to load invited users",
@@ -6759,17 +5980,15 @@ kLocalizedValues = <String, Map<String, String>>{
     "my_invites_subtitle": "招待履歴を表示",
     "new_password": "新しいパスワード",
     "notifications": "通知",
-    "notifications_subtitle": "通知を管理",
+    "notifications_subtitle": "通知",
     "onboarding_action_back": "Back",
     "onboarding_action_finish": "Finish",
     "onboarding_action_next": "Next",
     "onboarding_ai_avatar_generate_failed": "Failed to generate AI avatars",
-    "onboarding_ai_avatar_hint":
-        "Tap \"AI Random\" to draw your AI avatar cards.",
+    "onboarding_ai_avatar_hint": "Tap \"AI Random\" to draw your AI avatar cards.",
     "onboarding_ai_avatar_title": "AI Avatar Cards",
     "onboarding_ai_random": "AI Random",
-    "onboarding_avatar_hint":
-        "Recommended: square image, PNG/JPG/WEBP, up to 5MB.",
+    "onboarding_avatar_hint": "Recommended: square image, PNG/JPG/WEBP, up to 5MB.",
     "onboarding_avatar_pick_failed": "Failed to pick image: {error}",
     "onboarding_avatar_refresh_failed": "Failed to refresh avatars: {error}",
     "onboarding_avatar_select_failed": "Failed to select avatar: {error}",
@@ -6778,18 +5997,14 @@ kLocalizedValues = <String, Map<String, String>>{
     "onboarding_complete_failed": "Failed to complete onboarding: {error}",
     "onboarding_complete_subtitle": "ようこそ。続ける準備ができました。",
     "onboarding_complete_title": "セットアップ完了",
-    "onboarding_invite_helper":
-        "Optional. Add an invite code if someone referred you.",
+    "onboarding_invite_helper": "Optional. Add an invite code if someone referred you.",
     "onboarding_invite_hint": "Enter invite code",
     "onboarding_invite_label": "Invite code",
-    "onboarding_org_helper":
-        "This helps us tailor templates and recommendations for your team.",
-    "onboarding_subtitle_avatar":
-        "Upload a profile image so collaborators can recognize you at a glance.",
+    "onboarding_org_helper": "This helps us tailor templates and recommendations for your team.",
+    "onboarding_subtitle_avatar": "Upload a profile image so collaborators can recognize you at a glance.",
     "onboarding_subtitle_finish": "You are almost ready to start building.",
     "onboarding_subtitle_invite": "Enter an invite code to join your team.",
-    "onboarding_subtitle_org":
-        "This helps us tailor templates and recommendations for your team.",
+    "onboarding_subtitle_org": "This helps us tailor templates and recommendations for your team.",
     "onboarding_title_avatar": "Add your avatar",
     "onboarding_title_finish": "Finish setup",
     "onboarding_title_org": "Tell us about your organization",
@@ -6807,8 +6022,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "orders_usage_builder_billing_rule": "Billing rule: {rate}/min",
     "orders_usage_builder_empty": "No deployment records yet.",
     "orders_usage_builder_estimated_cost": "Estimated Cost",
-    "orders_usage_builder_estimated_cost_hint":
-        "Estimated from deployment build durations",
+    "orders_usage_builder_estimated_cost_hint": "Estimated from deployment build durations",
     "orders_usage_builder_load_failed": "Unable to load builder usage data.",
     "orders_usage_builder_overall": "Overall Build Time",
     "orders_usage_builder_projects_title": "Top Projects",
@@ -6830,8 +6044,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "orders_usage_llm_total_cost_hint": "Estimated cost",
     "orders_usage_na": "N/A",
     "orders_usage_project_breakdown_empty": "No usage data available",
-    "orders_usage_project_breakdown_empty_hint":
-        "Your LLM usage will appear here",
+    "orders_usage_project_breakdown_empty_hint": "Your LLM usage will appear here",
     "orders_usage_project_breakdown_title": "Project Breakdown",
     "orders_usage_project_deleted": "削除済み",
     "orders_usage_time_range": "Time Range",
@@ -6839,11 +6052,9 @@ kLocalizedValues = <String, Map<String, String>>{
     "orders_wallet_usage_bucket_expiring": "Expiring",
     "orders_wallet_usage_bucket_non_expiring": "Non-expiring",
     "orders_wallet_usage_empty": "No usage records yet.",
-    "orders_wallet_usage_empty_hint":
-        "Consumption records from deployments and model usage will appear here.",
+    "orders_wallet_usage_empty_hint": "Consumption records from deployments and model usage will appear here.",
     "orders_wallet_usage_source_admin_broadcast": "admin broadcast",
-    "orders_wallet_usage_source_system_message":
-        "System message: {description}",
+    "orders_wallet_usage_source_system_message": "System message: {description}",
     "other": "その他",
     "owner_hint": "ユーザー名または組織名",
     "owner_label": "オーナー",
@@ -6854,6 +6065,23 @@ kLocalizedValues = <String, Map<String, String>>{
     "passwords_do_not_match": "パスワードが一致しません",
     "pricing": "料金",
     "privacy": "プライバシー",
+    "privacy_allow_analytics": "分析を許可",
+    "privacy_allow_analytics_desc": "使用分析を共有してアプリの改善に貢献",
+    "privacy_allow_data_sharing": "データ共有を許可",
+    "privacy_allow_data_sharing_desc": "サービスを改善するためにデータを共有",
+    "privacy_allow_third_party_apps": "サードパーティアプリを許可",
+    "privacy_allow_third_party_apps_desc": "サードパーティサービスとの統合を有効化",
+    "privacy_discoverable_by_email": "メールで検索可能",
+    "privacy_discoverable_by_email_desc": "他のユーザーがメールであなたを見つけられるようにする",
+    "privacy_marketing_emails": "マーケティングメール",
+    "privacy_marketing_emails_desc": "新機能やオファーのメールを受け取る",
+    "privacy_public_profile": "パブリックプロフィール",
+    "privacy_public_profile_desc": "誰でもプロフィールを閲覧できるようにする",
+    "privacy_settings": "プライバシー設定",
+    "privacy_show_activity_status": "アクティビティ状態を表示",
+    "privacy_show_activity_status_desc": "最近のアクティビティを他のユーザーに表示",
+    "privacy_show_online_status": "オンライン状態を表示",
+    "privacy_show_online_status_desc": "他のユーザーにあなたのアクティブ状態を表示",
     "profile": "プロフィール",
     "profile_ai_random": "AI Random",
     "profile_avatar_generate_failed": "Failed to generate avatars",
@@ -6879,18 +6107,12 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_actions": "Actions",
     "project_analytics_active_now": "Active Now",
     "project_analytics_active_visitors": "Active Visitors",
-    "project_analytics_ai_prompt_active_now":
-        "Can you help me interpret my real-time active users and recommend actions to improve conversion?",
-    "project_analytics_ai_prompt_custom_events":
-        "Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?",
-    "project_analytics_ai_prompt_dashboard":
-        "Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?",
-    "project_analytics_ai_prompt_pageviews":
-        "Can you analyze my pageviews trend and suggest ways to increase traffic and retention?",
-    "project_analytics_ai_prompt_sessions":
-        "Can you analyze my sessions and suggest how to increase engagement and session duration?",
-    "project_analytics_ai_prompt_visitors":
-        "Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?",
+    "project_analytics_ai_prompt_active_now": "Can you help me interpret my real-time active users and recommend actions to improve conversion?",
+    "project_analytics_ai_prompt_custom_events": "Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?",
+    "project_analytics_ai_prompt_dashboard": "Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?",
+    "project_analytics_ai_prompt_pageviews": "Can you analyze my pageviews trend and suggest ways to increase traffic and retention?",
+    "project_analytics_ai_prompt_sessions": "Can you analyze my sessions and suggest how to increase engagement and session duration?",
+    "project_analytics_ai_prompt_visitors": "Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?",
     "project_analytics_all": "All",
     "project_analytics_bounces": "Bounces",
     "project_analytics_comparison_notes": "Comparison Notes",
@@ -6898,8 +6120,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_copy_failed": "Copy failed",
     "project_analytics_copy_field": "Copy {title}",
     "project_analytics_copy_summary": "Copy Summary",
-    "project_analytics_copy_summary_hint":
-        "Copy a shareable analytics snapshot",
+    "project_analytics_copy_summary_hint": "Copy a shareable analytics snapshot",
     "project_analytics_copy_tracking_code": "Copy Tracking Code",
     "project_analytics_copy_tracking_code_hint": "Copy Umami script snippet",
     "project_analytics_current_window": "Current window: {range}",
@@ -6919,11 +6140,9 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_dim_screen": "Screen",
     "project_analytics_dim_tag": "Tag",
     "project_analytics_enable_action": "Enable Analytics",
-    "project_analytics_enable_hint":
-        "Track your website's visitors, page views, and custom events with Umami Analytics",
+    "project_analytics_enable_hint": "Track your website's visitors, page views, and custom events with Umami Analytics",
     "project_analytics_enable_title": "Enable Analytics",
-    "project_analytics_env_filter_note":
-        "Note: environment filter uses hostname exact matching.",
+    "project_analytics_env_filter_note": "Note: environment filter uses hostname exact matching.",
     "project_analytics_environment": "Environment",
     "project_analytics_events": "Events",
     "project_analytics_events_trend": "Events Trend",
@@ -6936,20 +6155,14 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_filters": "Filters",
     "project_analytics_inactive_tab": "{title} tab",
     "project_analytics_initializing": "Initializing...",
-    "project_analytics_install_done_autojump":
-        "Installation completed. Auto-opening Data in {seconds}s.",
-    "project_analytics_install_done_open":
-        "Installation completed. You can open the analytics tabs now.",
-    "project_analytics_install_incomplete":
-        "Analytics install did not complete successfully.",
-    "project_analytics_install_success":
-        "Analytics successfully installed and activated.",
+    "project_analytics_install_done_autojump": "Installation completed. Auto-opening Data in {seconds}s.",
+    "project_analytics_install_done_open": "Installation completed. You can open the analytics tabs now.",
+    "project_analytics_install_incomplete": "Analytics install did not complete successfully.",
+    "project_analytics_install_success": "Analytics successfully installed and activated.",
     "project_analytics_installer": "Analytics Installer",
-    "project_analytics_installer_hint":
-        "Review the session output or retry the install.",
+    "project_analytics_installer_hint": "Review the session output or retry the install.",
     "project_analytics_installing": "Installing Analytics…",
-    "project_analytics_installing_hint":
-        "We are initializing Umami and inserting the tracking script via a chat session.",
+    "project_analytics_installing_hint": "We are initializing Umami and inserting the tracking script via a chat session.",
     "project_analytics_last_24_hours": "Last 24 Hours",
     "project_analytics_last_30_days": "Last 30 Days",
     "project_analytics_last_6_hours": "Last 6 Hours",
@@ -6960,12 +6173,10 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_metrics": "Metrics",
     "project_analytics_no_compare_data": "No top-page comparison data",
     "project_analytics_no_data": "No analytics data yet",
-    "project_analytics_no_data_hint":
-        "Analytics data will appear once your project is live and receiving traffic.",
+    "project_analytics_no_data_hint": "Analytics data will appear once your project is live and receiving traffic.",
     "project_analytics_no_data_short": "No data",
     "project_analytics_no_events": "No events in current range",
-    "project_analytics_no_metrics_selected":
-        "No metrics selected. Enable Pageviews/Sessions in Filters.",
+    "project_analytics_no_metrics_selected": "No metrics selected. Enable Pageviews/Sessions in Filters.",
     "project_analytics_no_realtime_urls": "No realtime URL data yet",
     "project_analytics_no_sessions": "No sessions in current range",
     "project_analytics_pageviews": "Pageviews",
@@ -6979,13 +6190,11 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_ready": "Analytics Ready",
     "project_analytics_recent_events": "Recent Events",
     "project_analytics_reenable": "Re-enable Analytics",
-    "project_analytics_reenable_confirm":
-        "This will re-run analytics setup and re-insert the tracking script via workspace session. Continue?",
+    "project_analytics_reenable_confirm": "This will re-run analytics setup and re-insert the tracking script via workspace session. Continue?",
     "project_analytics_reenable_hint": "Re-run script installation flow",
     "project_analytics_reenable_started": "Re-enable process started.",
     "project_analytics_reports": "Reports",
-    "project_analytics_reports_coming":
-        "Custom reports are coming soon. This keeps parity with the current web placeholder state.",
+    "project_analytics_reports_coming": "Custom reports are coming soon. This keeps parity with the current web placeholder state.",
     "project_analytics_reset": "Reset",
     "project_analytics_restore_defaults": "Restore defaults",
     "project_analytics_retry_install": "Retry Install",
@@ -7056,8 +6265,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_api_deleted": "Deleted",
     "project_api_description_optional": "Description (optional)",
     "project_api_edit_variable": "Edit variable",
-    "project_api_empty_hint":
-        "Create your first key-value pair to configure\\nruntime behavior for this project.",
+    "project_api_empty_hint": "Create your first key-value pair to configure\\nruntime behavior for this project.",
     "project_api_empty_title": "No environment variables",
     "project_api_environment_variables": "Environment Variables",
     "project_api_key": "Key",
@@ -7069,8 +6277,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_api_sensitive_masked": "Masked in lists by default",
     "project_api_sensitive_visible": "Visible in lists",
     "project_api_show": "Show",
-    "project_api_show_values_message":
-        "This will reveal sensitive environment values on screen.",
+    "project_api_show_values_message": "This will reveal sensitive environment values on screen.",
     "project_api_show_values_title": "Show values?",
     "project_api_update_failed": "Update failed",
     "project_api_value": "Value",
@@ -7112,35 +6319,28 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_chat_tab_preview_short": "プレビュー",
     "project_chat_unfold_all": "すべて展開",
     "project_database_actions": "Actions",
-    "project_database_ai_prompt_graph":
-        "Given the database schema, explain how \"{table}\" relates to other tables (foreign keys) and suggest improvements.",
-    "project_database_ai_prompt_relation":
-        "Explain the relationship from {from} to {to}. Suggest indexes and common queries.",
-    "project_database_ai_prompt_table":
-        "Can you analyze the database table \"{table}\" and explain its purpose, structure, and any suggestions for optimization or best practices?",
+    "project_database_ai_prompt_graph": "Given the database schema, explain how \"{table}\" relates to other tables (foreign keys) and suggest improvements.",
+    "project_database_ai_prompt_relation": "Explain the relationship from {from} to {to}. Suggest indexes and common queries.",
+    "project_database_ai_prompt_table": "Can you analyze the database table \"{table}\" and explain its purpose, structure, and any suggestions for optimization or best practices?",
     "project_database_ask_ai_table": "Ask AI about this table",
     "project_database_branch": "Branch",
     "project_database_branch_hint": "Current Neon branch context",
     "project_database_branch_primary": "{name} (primary)",
     "project_database_column_pk": "{name} (PK)",
     "project_database_columns_schema": "{columns} columns • {schema} schema",
-    "project_database_data_empty_hint":
-        "Create tables first, then browse rows here.",
+    "project_database_data_empty_hint": "Create tables first, then browse rows here.",
     "project_database_delete_row": "Delete row",
-    "project_database_delete_row_confirm":
-        "Delete this row from {table}? This action cannot be undone.",
+    "project_database_delete_row_confirm": "Delete this row from {table}? This action cannot be undone.",
     "project_database_edit_row": "Edit row",
     "project_database_enable_action": "Enable Database",
-    "project_database_enable_hint":
-        "Provision a Neon PostgreSQL database for this project and start exploring your schema and data.",
+    "project_database_enable_hint": "Provision a Neon PostgreSQL database for this project and start exploring your schema and data.",
     "project_database_enable_title": "Enable Database",
     "project_database_enabled_success": "Database enabled successfully!",
     "project_database_enabling": "Enabling...",
     "project_database_feature_branching": "Branching support",
     "project_database_feature_serverless": "Serverless Postgres on Neon",
     "project_database_feature_ssl": "Secure SSL connections",
-    "project_database_graph_hint":
-        "Add more tables to see relationships as a graph.",
+    "project_database_graph_hint": "Add more tables to see relationships as a graph.",
     "project_database_insert": "Insert",
     "project_database_insert_row": "Insert row",
     "project_database_inserting": "Inserting...",
@@ -7150,22 +6350,17 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_database_migration_plans": "{count} plans",
     "project_database_next": "Next",
     "project_database_no_columns": "No visible columns",
-    "project_database_no_columns_hint":
-        "This table currently has no browsable columns.",
+    "project_database_no_columns_hint": "This table currently has no browsable columns.",
     "project_database_no_editable_columns": "No editable columns",
-    "project_database_no_editable_columns_hint":
-        "This table has no editable non-primary-key columns.",
+    "project_database_no_editable_columns_hint": "This table has no editable non-primary-key columns.",
     "project_database_no_job_details": "No job details available yet.",
     "project_database_no_migration": "No migration history",
-    "project_database_no_migration_hint":
-        "Migration plans and execution records will appear here.",
+    "project_database_no_migration_hint": "Migration plans and execution records will appear here.",
     "project_database_no_relations": "No foreign-key relationships found.",
     "project_database_no_rows": "No rows found",
-    "project_database_no_rows_hint":
-        "Try another table or insert data from your application flow.",
+    "project_database_no_rows_hint": "Try another table or insert data from your application flow.",
     "project_database_no_tables": "No database tables",
-    "project_database_no_tables_hint":
-        "Database tables will appear here once they are created.",
+    "project_database_no_tables_hint": "Database tables will appear here once they are created.",
     "project_database_page": "Page {index}",
     "project_database_page_size": "{size} / page",
     "project_database_previous": "Previous",
@@ -7192,40 +6387,27 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_actions": "Actions",
     "project_deploy_active_preview": "Preview deployment in progress...",
     "project_deploy_active_prod": "Production release in progress: {phase}",
-    "project_deploy_active_reverting":
-        "Rolling back commit{suffix} and triggering preview deploy...",
-    "project_deploy_ai_prompt_environment":
-        "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_active_reverting": "Rolling back commit{suffix} and triggering preview deploy...",
+    "project_deploy_ai_prompt_environment": "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
     "project_deploy_ai_prompt_prefix": "My deploy failed with this error:",
-    "project_deploy_ai_prompt_preview":
-        "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_prod":
-        "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_suffix":
-        "Give me the most likely root cause and a step-by-step fix.",
-    "project_deploy_ai_prompt_vercel_middle":
-        "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
-    "project_deploy_ai_prompt_vercel_prefix":
-        "My Vercel deployment failed for project",
-    "project_deploy_ai_prompt_vercel_suffix":
-        "Also suggest what logs/env vars to check first.",
+    "project_deploy_ai_prompt_preview": "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_prod": "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_suffix": "Give me the most likely root cause and a step-by-step fix.",
+    "project_deploy_ai_prompt_vercel_middle": "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
+    "project_deploy_ai_prompt_vercel_prefix": "My Vercel deployment failed for project",
+    "project_deploy_ai_prompt_vercel_suffix": "Also suggest what logs/env vars to check first.",
     "project_deploy_ask_ai": "Ask AI",
     "project_deploy_build_log": "Build log",
     "project_deploy_build_logs": "Build logs",
     "project_deploy_close": "Close",
-    "project_deploy_coach_no_preview":
-        "No preview yet. Start with a preview deploy to reduce release risk.",
-    "project_deploy_coach_preview_ready":
-        "Preview is ready. Recommended next step: release to production.",
-    "project_deploy_coach_prod_live":
-        "Production is live. Keep shipping with small preview iterations.",
+    "project_deploy_coach_no_preview": "No preview yet. Start with a preview deploy to reduce release risk.",
+    "project_deploy_coach_preview_ready": "Preview is ready. Recommended next step: release to production.",
+    "project_deploy_coach_prod_live": "Production is live. Keep shipping with small preview iterations.",
     "project_deploy_common_fixes": "Common fixes:",
     "project_deploy_configure_later": "Configure later",
-    "project_deploy_confirm_preview_message":
-        "This will trigger a new preview (dev) deployment on Vercel.",
+    "project_deploy_confirm_preview_message": "This will trigger a new preview (dev) deployment on Vercel.",
     "project_deploy_confirm_preview_title": "Redeploy preview?",
-    "project_deploy_confirm_prod_message":
-        "This will compare dev/main, merge if needed, then trigger a production deployment.",
+    "project_deploy_confirm_prod_message": "This will compare dev/main, merge if needed, then trigger a production deployment.",
     "project_deploy_confirm_prod_title": "Deploy to production?",
     "project_deploy_copy": "Copy",
     "project_deploy_copy_all": "Copy all",
@@ -7233,16 +6415,14 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_copy_failed": "Copy failed",
     "project_deploy_current_deployments": "Current Deployments",
     "project_deploy_dev_timeline": "Dev Timeline",
-    "project_deploy_dev_timeline_hint":
-        "Inspect recent commits on the dev branch before you promote them to production.",
+    "project_deploy_dev_timeline_hint": "Inspect recent commits on the dev branch before you promote them to production.",
     "project_deploy_environment_deployment": "{env} deployment",
     "project_deploy_error_snippet_copied": "Error snippet copied",
     "project_deploy_filter_all": "All",
     "project_deploy_filter_preview": "Preview",
     "project_deploy_filter_production": "Production",
     "project_deploy_history": "History",
-    "project_deploy_history_empty":
-        "No deployments yet — deploy your project to see history here.",
+    "project_deploy_history_empty": "No deployments yet — deploy your project to see history here.",
     "project_deploy_history_title": "Deployment History",
     "project_deploy_log_cached": "Cached",
     "project_deploy_log_empty": "No logs available for this deployment.",
@@ -7260,27 +6440,22 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_merge_into_main": "Merge into main",
     "project_deploy_more": "More",
     "project_deploy_next_steps": "Next steps",
-    "project_deploy_no_change_commits":
-        "No change commits between adjacent releases.",
+    "project_deploy_no_change_commits": "No change commits between adjacent releases.",
     "project_deploy_no_diff_files": "No file diff",
-    "project_deploy_no_diff_files_hint":
-        "This commit did not return any changed file patches.",
+    "project_deploy_no_diff_files_hint": "This commit did not return any changed file patches.",
     "project_deploy_no_history": "No deployment history yet.",
     "project_deploy_no_logs": "No logs",
-    "project_deploy_no_logs_message":
-        "This deployment has no Vercel deployment id.",
+    "project_deploy_no_logs_message": "This deployment has no Vercel deployment id.",
     "project_deploy_no_message": "(no message)",
     "project_deploy_no_production": "No production deployment",
     "project_deploy_no_releases": "No releases detected on main yet.",
     "project_deploy_no_timeline": "No timeline yet",
-    "project_deploy_no_timeline_hint":
-        "No recent commits found on the development branch.",
+    "project_deploy_no_timeline_hint": "No recent commits found on the development branch.",
     "project_deploy_ok": "OK",
     "project_deploy_open": "Open",
     "project_deploy_open_url_failed": "Cannot open URL",
     "project_deploy_open_url_failed_message": "Could not open {url}",
-    "project_deploy_patch_unavailable":
-        "Patch preview is unavailable for this file.",
+    "project_deploy_patch_unavailable": "Patch preview is unavailable for this file.",
     "project_deploy_phase_checking": "Checking dev/main diff...",
     "project_deploy_phase_deploying": "Triggering production deploy...",
     "project_deploy_phase_merging": "Merging dev into main...",
@@ -7295,15 +6470,12 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_releases": "Releases",
     "project_deploy_releases_main": "(main)",
     "project_deploy_retry_last": "Retry last deployment",
-    "project_deploy_retry_preview_message":
-        "This will trigger a new preview (dev) deployment.",
+    "project_deploy_retry_preview_message": "This will trigger a new preview (dev) deployment.",
     "project_deploy_retry_preview_title": "Retry preview deploy?",
-    "project_deploy_retry_prod_message":
-        "This will compare dev/main, merge if needed, then trigger a new production deployment.",
+    "project_deploy_retry_prod_message": "This will compare dev/main, merge if needed, then trigger a new production deployment.",
     "project_deploy_retry_prod_title": "Retry production deploy?",
     "project_deploy_revert_confirm_action": "Confirm revert",
-    "project_deploy_revert_confirm_message":
-        "This will run git revert on commit {sha} and trigger a new preview deployment.",
+    "project_deploy_revert_confirm_message": "This will run git revert on commit {sha} and trigger a new preview deployment.",
     "project_deploy_revert_confirm_title": "Revert this commit?",
     "project_deploy_revert_failed": "Revert failed",
     "project_deploy_revert_no_sha": "No commit SHA found for this deployment.",
@@ -7314,8 +6486,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_revert_unavailable": "Revert unavailable",
     "project_deploy_reverting": "Reverting...",
     "project_deploy_select_commit": "Select a commit",
-    "project_deploy_select_commit_hint":
-        "Choose a commit on the left to inspect changed files and patches.",
+    "project_deploy_select_commit_hint": "Choose a commit on the left to inspect changed files and patches.",
     "project_deploy_share_all": "Share all",
     "project_deploy_share_errors": "Share errors",
     "project_deploy_tab_timeline": "Timeline",
@@ -7323,28 +6494,19 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_time_hours_ago": "{hours}h ago",
     "project_deploy_time_just_now": "just now",
     "project_deploy_time_minutes_ago": "{minutes}m ago",
-    "project_deploy_tip_build_issue":
-        "This looks like a build failure — check compilation errors in logs.",
-    "project_deploy_tip_check_env_vars":
-        "Check environment variables (and sync to Vercel).",
-    "project_deploy_tip_check_github_access":
-        "Check GitHub collaborator/bot access to the repo.",
-    "project_deploy_tip_env_issue":
-        "This looks like an env var issue — verify required secrets are set.",
-    "project_deploy_tip_open_logs":
-        "Open the latest build logs and copy/share the error snippet.",
-    "project_deploy_tip_permission":
-        "This looks like a permission issue — verify GitHub access and tokens.",
-    "project_deploy_tip_retry_preview_first":
-        "Retry preview deploy first (then production).",
-    "project_deploy_tip_short_env":
-        "Env vars configured (and synced to Vercel)",
+    "project_deploy_tip_build_issue": "This looks like a build failure — check compilation errors in logs.",
+    "project_deploy_tip_check_env_vars": "Check environment variables (and sync to Vercel).",
+    "project_deploy_tip_check_github_access": "Check GitHub collaborator/bot access to the repo.",
+    "project_deploy_tip_env_issue": "This looks like an env var issue — verify required secrets are set.",
+    "project_deploy_tip_open_logs": "Open the latest build logs and copy/share the error snippet.",
+    "project_deploy_tip_permission": "This looks like a permission issue — verify GitHub access and tokens.",
+    "project_deploy_tip_retry_preview_first": "Retry preview deploy first (then production).",
+    "project_deploy_tip_short_env": "Env vars configured (and synced to Vercel)",
     "project_deploy_tip_short_github": "GitHub access / repo permissions",
     "project_deploy_tip_short_logs": "Open build logs and share error snippet",
     "project_deploy_tip_short_retry_preview": "Retry preview deploy first",
     "project_deploy_troubleshooting": "Troubleshooting",
-    "project_deploy_troubleshooting_hint":
-        "If deploy fails, try these quick checks:",
+    "project_deploy_troubleshooting_hint": "If deploy fails, try these quick checks:",
     "project_deploy_unknown": "unknown",
     "project_deployment_tab_deployments": "Deployments",
     "project_detail_error_text": "Error: {error}",
@@ -7377,8 +6539,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_github_import": "GitHub Import",
     "project_github_import_as_new": "Import as new project",
     "project_github_import_failed": "Import failed: {error}",
-    "project_github_import_missing_project_id":
-        "Import succeeded but missing project id",
+    "project_github_import_missing_project_id": "Import succeeded but missing project id",
     "project_github_imported": "Imported",
     "project_github_imported_description": "Imported from GitHub: {repo}",
     "project_github_invalid_repo_url": "Invalid repository URL",
@@ -7404,38 +6565,25 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_overview_community_action_unpublish": "Unpublish",
     "project_overview_community_action_update": "Update",
     "project_overview_community_action_view": "View",
-    "project_overview_community_hint":
-        "Publish a community post linked to this project (auto-release to production if needed).",
-    "project_overview_community_progress_deploy":
-        "Triggering production deploy…",
+    "project_overview_community_hint": "Publish a community post linked to this project (auto-release to production if needed).",
+    "project_overview_community_progress_deploy": "Triggering production deploy…",
     "project_overview_community_progress_finalizing": "Finalizing…",
     "project_overview_community_progress_merge": "Merging branches…",
     "project_overview_community_progress_publish": "Publishing to community…",
-    "project_overview_community_publish_dialog_current_domain":
-        "Current domain: {domain}",
-    "project_overview_community_publish_dialog_has_prod":
-        "This project already has a production deployment. Publishing will create or update a community post linked to your project overview.",
-    "project_overview_community_publish_dialog_need_release":
-        "To publish this project to the community, we first need to release it to production. We'll merge your dev branch into main, trigger a production deploy, then publish the post.",
-    "project_overview_community_publish_dialog_step_deploy":
-        "• Trigger production deploy",
-    "project_overview_community_publish_dialog_step_merge":
-        "• Merge dev → main",
-    "project_overview_community_publish_dialog_step_publish":
-        "• Publish to community",
+    "project_overview_community_publish_dialog_current_domain": "Current domain: {domain}",
+    "project_overview_community_publish_dialog_has_prod": "This project already has a production deployment. Publishing will create or update a community post linked to your project overview.",
+    "project_overview_community_publish_dialog_need_release": "To publish this project to the community, we first need to release it to production. We'll merge your dev branch into main, trigger a production deploy, then publish the post.",
+    "project_overview_community_publish_dialog_step_deploy": "• Trigger production deploy",
+    "project_overview_community_publish_dialog_step_merge": "• Merge dev → main",
+    "project_overview_community_publish_dialog_step_publish": "• Publish to community",
     "project_overview_community_publish_dialog_steps": "Steps:",
     "project_overview_community_publish_dialog_title": "Publish to community",
-    "project_overview_community_publish_failed":
-        "Failed to publish to community",
-    "project_overview_community_publish_failed_sentence":
-        "Failed to publish to community.",
+    "project_overview_community_publish_failed": "Failed to publish to community",
+    "project_overview_community_publish_failed_sentence": "Failed to publish to community.",
     "project_overview_community_publish_success": "Published to community",
-    "project_overview_community_release_merge_message":
-        "Merge {head} into {base}",
-    "project_overview_community_release_no_commits":
-        "No commits found on development branch",
-    "project_overview_community_release_publish_failed":
-        "Production deploy succeeded, but failed to publish to community",
+    "project_overview_community_release_merge_message": "Merge {head} into {base}",
+    "project_overview_community_release_no_commits": "No commits found on development branch",
+    "project_overview_community_release_publish_failed": "Production deploy succeeded, but failed to publish to community",
     "project_overview_community_status_draft": "Draft",
     "project_overview_community_status_none": "Not published",
     "project_overview_community_status_published": "Published",
@@ -7444,25 +6592,20 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_overview_community_unpublish_success": "Unpublished",
     "project_overview_community_update_failed": "Failed to update post",
     "project_overview_community_update_success": "Post updated",
-    "project_overview_danger_delete_confirm_label":
-        "Type project name to confirm",
-    "project_overview_danger_delete_desc":
-        "This action cannot be undone. Please type the project name to confirm deletion.",
+    "project_overview_danger_delete_confirm_label": "Type project name to confirm",
+    "project_overview_danger_delete_desc": "This action cannot be undone. Please type the project name to confirm deletion.",
     "project_overview_danger_delete_failed": "Failed to delete project",
     "project_overview_danger_delete_in_progress": "Deleting {name}...",
     "project_overview_danger_delete_name_mismatch": "Name does not match.",
     "project_overview_danger_delete_progress_cleanup": "Final cleanup...",
-    "project_overview_danger_delete_progress_remove":
-        "Removing project resources...",
-    "project_overview_danger_delete_progress_submit":
-        "Submitting delete request...",
+    "project_overview_danger_delete_progress_remove": "Removing project resources...",
+    "project_overview_danger_delete_progress_submit": "Submitting delete request...",
     "project_overview_danger_delete_success": "Deleted {name}",
     "project_overview_danger_delete_title": "Delete project",
     "project_overview_danger_project_name": "Project: {name}",
     "project_overview_danger_title": "Danger zone",
     "project_overview_danger_transfer_action": "Transfer",
-    "project_overview_danger_transfer_desc":
-        "Enter the recipient email to transfer ownership. You will lose access after transfer.",
+    "project_overview_danger_transfer_desc": "Enter the recipient email to transfer ownership. You will lose access after transfer.",
     "project_overview_danger_transfer_failed": "Failed to transfer project",
     "project_overview_danger_transfer_recipient": "Recipient email",
     "project_overview_danger_transfer_success": "Project transferred",
@@ -7484,12 +6627,10 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_overview_health_title": "Health metrics",
     "project_overview_links_github_repo": "GitHub Repository",
     "project_overview_links_not_available": "Not available",
-    "project_overview_links_open_github_failed":
-        "Could not open GitHub repository",
+    "project_overview_links_open_github_failed": "Could not open GitHub repository",
     "project_overview_links_open_preview_failed": "Could not open preview URL",
     "project_overview_links_preview_url": "Preview URL",
-    "project_overview_recent_deployments_empty":
-        "No recent deployments — ship a new build to see activity here.",
+    "project_overview_recent_deployments_empty": "No recent deployments — ship a new build to see activity here.",
     "project_overview_recent_deployments_env": "{env} deployment",
     "project_overview_recent_deployments_feed": "Activity feed",
     "project_overview_recent_deployments_title": "Recent deployments",
@@ -7510,21 +6651,17 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_payment_add_product": "Add Product",
     "project_payment_add_product_failed": "Failed to add product: {error}",
     "project_payment_add_product_title": "Add Payment Product",
-    "project_payment_ai_prompt_product":
-        "Can you analyze the payment product \"{name}\" and provide suggestions on pricing strategy, configuration, or marketing improvements?",
-    "project_payment_ai_prompt_transaction":
-        "Can you analyze this payment transaction ({amount}, {status}) and provide insights about payment patterns or recommendations?",
+    "project_payment_ai_prompt_product": "Can you analyze the payment product \"{name}\" and provide suggestions on pricing strategy, configuration, or marketing improvements?",
+    "project_payment_ai_prompt_transaction": "Can you analyze this payment transaction ({amount}, {status}) and provide insights about payment patterns or recommendations?",
     "project_payment_anonymous": "Anonymous",
-    "project_payment_available_for_purchase":
-        "Product is available for purchase",
+    "project_payment_available_for_purchase": "Product is available for purchase",
     "project_payment_conversion_rate": "Conversion Rate",
     "project_payment_description_hint": "Describe your product",
     "project_payment_description_optional": "Description (Optional)",
     "project_payment_edit": "Edit",
     "project_payment_edit_product_title": "Edit Payment Product",
     "project_payment_enable_button": "支払いを有効化",
-    "project_payment_enable_description":
-        "このプロジェクトではまだ支払いが有効化されていません。まず支払い機能を初期化し、その後に商品、取引、銀行口座、出金、Webhook を管理できます。",
+    "project_payment_enable_description": "このプロジェクトではまだ支払いが有効化されていません。まず支払い機能を初期化し、その後に商品、取引、銀行口座、出金、Webhook を管理できます。",
     "project_payment_enable_failed": "支払いの有効化に失敗しました",
     "project_payment_enable_feature_checkout": "Stripe チェックアウトと支払いリンク",
     "project_payment_enable_feature_products": "商品、残高、出金の管理",
@@ -7553,8 +6690,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_payment_total_revenue": "Total Revenue",
     "project_payment_transactions": "Transactions",
     "project_payment_unknown_product": "Unknown Product",
-    "project_payment_update_product_failed":
-        "Failed to update product: {error}",
+    "project_payment_update_product_failed": "Failed to update product: {error}",
     "projects_action_load_more": "Load More",
     "projects_action_relogin": "Re-login",
     "projects_empty_search_message": "別のキーワードを試すか、検索をクリアしてください。",
@@ -7585,7 +6721,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "resend_after": "再送信まで",
     "resend_code": "コードを再送信",
     "reset_password": "パスワードをリセット",
-    "reset_password_subtitle": "ログインパスワードをリセット",
+    "reset_password_subtitle": "パスワードを再設定",
     "resetting": "リセット中...",
     "retry": "Retry",
     "save": "Save",
@@ -7603,23 +6739,16 @@ kLocalizedValues = <String, Map<String, String>>{
     "settings_editor_appearance_mode": "表示モード",
     "settings_editor_dark_theme": "ダークテーマ",
     "settings_editor_default_wrap": "デフォルト折り返し",
-    "settings_editor_default_wrap_hint": "エディターをデフォルトで折り返し有効で開きます。",
-    "settings_editor_engine": "エディターエンジン",
-    "settings_editor_engine_flutter_code_editor": "Flutter Code Editor",
-    "settings_editor_engine_flutter_code_editor_hint":
-        "Flutter Code Editor は Flutter ネイティブのテキスト基盤のまま動作し、現在の折りたたみワークフローを維持します。",
-    "settings_editor_engine_flutter_monaco": "Flutter Monaco",
-    "settings_editor_engine_flutter_monaco_hint":
-        "Monaco はプラットフォームの WebView/iframe バックエンドを使うため、大きなファイルでより良い挙動を期待できます。",
-    "settings_editor_entry_subtitle": "テーマ、フォント、折り返し",
+    "settings_editor_default_wrap_hint": "折り返しを既定で有効化。",
+    "settings_editor_entry_subtitle": "テーマ、文字、折り返し",
     "settings_editor_font_size": "フォントサイズ",
-    "settings_editor_footer": "ライトとダークのテーマを別々に選び、アプリに追従するか固定表示にするかを決められます。",
+    "settings_editor_footer": "テーマと動作を選択。",
     "settings_editor_light_theme": "ライトテーマ",
     "settings_editor_preview_comment": "VS Code スタイルのプレビュー",
-    "settings_editor_saved_message": "ライトテーマ、ダークテーマ、表示モード、エディター設定を保存しました。",
+    "settings_editor_saved_message": "設定を保存しました。",
     "settings_editor_show_rulers": "ルーラーを表示",
-    "settings_editor_show_rulers_hint": "80 列と 120 列に縦ルーラーを表示します。",
-    "settings_editor_subtitle": "エディターの見た目を VS Code に近いワークベンチ風に調整します。",
+    "settings_editor_show_rulers_hint": "80 / 120 列に表示。",
+    "settings_editor_subtitle": "テーマと編集動作。",
     "settings_editor_tab_size": "Tab サイズ",
     "settings_editor_theme_a11y_light": "A11y Light",
     "settings_editor_theme_dracula": "Dracula",
@@ -7648,7 +6777,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "syncing": "同期中",
     "syncing_message": "リポジトリを同期中...",
     "system_mode": "システム",
-    "theme_subtitle": "ライトモードまたはダークモード",
+    "theme_subtitle": "ライト / ダーク",
     "theme_switched": "次へ切り替えました:",
     "theme_title": "テーマ",
     "theme_updated": "テーマが更新されました",
@@ -7664,35 +6793,34 @@ kLocalizedValues = <String, Map<String, String>>{
     "topup_method_google_pay": "Google Pay",
     "topup_payment_canceled_message": "The payment was canceled.",
     "topup_payment_canceled_title": "Payment canceled",
-    "topup_payment_submitted_message":
-        "Your top-up payment was submitted successfully.",
+    "topup_payment_submitted_message": "Your top-up payment was submitted successfully.",
     "topup_payment_submitted_title": "Payment submitted",
     "topup_subtitle": "Add funds with {methods} through Stripe.",
     "topup_title": "Top up credits",
-    "topup_unconfigured":
-        "Stripe mobile payment is not configured in this build.",
+    "topup_unconfigured": "Stripe mobile payment is not configured in this build.",
+    "two_factor_cancel": "キャンセル",
+    "two_factor_disable": "無効化",
+    "two_factor_disable_confirm": "二要素認証を無効化してもよろしいですか？アカウントのセキュリティが低下します。",
+    "two_factor_disable_title": "二要素認証を無効化",
+    "two_factor_title": "二要素認証",
+    "two_factor_verify_enable": "確認して有効化",
     "upgrade_best_fit": "Best fit",
     "upgrade_billing_monthly": "Monthly",
     "upgrade_billing_yearly": "Yearly",
     "upgrade_credits": "credits",
     "upgrade_cycle": "cycle",
-    "upgrade_empty_detail":
-        "Subscription packages will appear here when published.",
+    "upgrade_empty_detail": "Subscription packages will appear here when published.",
     "upgrade_empty_title": "No plans available",
     "upgrade_featured_hint": "Balanced for most active builders",
-    "upgrade_footer_configured":
-        "Payments are processed natively in-app. Balance top-up stays in USD for now.",
-    "upgrade_footer_unconfigured":
-        "This build still needs STRIPE_PUBLISHABLE_KEY before native checkout can open.",
+    "upgrade_footer_configured": "Payments are processed natively in-app. Balance top-up stays in USD for now.",
+    "upgrade_footer_unconfigured": "This build still needs STRIPE_PUBLISHABLE_KEY before native checkout can open.",
     "upgrade_load_failed_title": "Failed to load plans",
     "upgrade_period": "period",
     "upgrade_quota": "Quota",
     "upgrade_standard_hint": "Designed for focused production usage",
     "upgrade_subscription_failed": "Subscription failed: {error}",
-    "upgrade_subscription_submitted":
-        "Subscription payment submitted successfully.",
-    "upgrade_subtitle":
-        "Choose a plan built for sustained usage, faster limits, and cleaner billing.",
+    "upgrade_subscription_submitted": "Subscription payment submitted successfully.",
+    "upgrade_subtitle": "Choose a plan built for sustained usage, faster limits, and cleaner billing.",
     "upgrade_title": "Upgrade",
     "verify_code": "認証コード",
     "verify_code_complete": "完全な認証コードを入力してください",
@@ -7744,36 +6872,27 @@ kLocalizedValues = <String, Map<String, String>>{
   },
   "ru": <String, String>{
     "about": "О программе",
-    "about_description":
-        "Платформа для разработки приложений с использованием ИИ.",
-    "about_subtitle": "Версия приложения и информация",
+    "about_description": "Платформа для разработки приложений с использованием ИИ.",
+    "about_subtitle": "Инфо о приложении",
     "about_title": "О приложении",
     "access": "Access",
-    "account_data_contact_support_delete":
-        "Связаться с поддержкой для удаления аккаунта",
+    "account_data_contact_support_delete": "Связаться с поддержкой для удаления аккаунта",
     "account_data_copy_request_template": "Скопировать шаблон запроса",
-    "account_data_delete_confirm_message":
-        "Это свяжется с {support_email} для запроса удаления аккаунта. Удаление может быть необратимым. Продолжить?",
-    "account_data_delete_description":
-        "Сейчас удаление аккаунта выполняется через поддержку. Перед запросом удаления ознакомьтесь с юридическими ограничениями.",
-    "account_data_delete_template":
-        "Запрос: Удаление аккаунта\\nАккаунт: {email}\\nПожалуйста, удалите мой аккаунт и связанные данные.\\nЯ понимаю, что это действие может быть необратимым.\\nКонтакт: {support_email}",
+    "account_data_delete_confirm_message": "Это свяжется с {support_email} для запроса удаления аккаунта. Удаление может быть необратимым. Продолжить?",
+    "account_data_delete_description": "Сейчас удаление аккаунта выполняется через поддержку. Перед запросом удаления ознакомьтесь с юридическими ограничениями.",
+    "account_data_delete_template": "Запрос: Удаление аккаунта\\nАккаунт: {email}\\nПожалуйста, удалите мой аккаунт и связанные данные.\\nЯ понимаю, что это действие может быть необратимым.\\nКонтакт: {support_email}",
     "account_data_delete_title": "Удаление аккаунта",
-    "account_data_export_description":
-        "Сейчас экспорт выполняется через поддержку. Мы предоставляем шаблон, который можно скопировать и отправить.",
-    "account_data_export_template":
-        "Запрос: Экспорт данных\\nАккаунт: {email}\\nПожалуйста, экспортируйте данные моего аккаунта (профиль, проекты, биллинг).\\nКонтакт: {support_email}",
+    "account_data_export_description": "Сейчас экспорт выполняется через поддержку. Мы предоставляем шаблон, который можно скопировать и отправить.",
+    "account_data_export_template": "Запрос: Экспорт данных\\nАккаунт: {email}\\nПожалуйста, экспортируйте данные моего аккаунта (профиль, проекты, биллинг).\\nКонтакт: {support_email}",
     "account_data_export_title": "Экспорт данных",
     "account_data_legal": "Юридическое",
-    "account_data_request_template_copied":
-        "Шаблон запроса скопирован в буфер обмена",
-    "account_data_subtitle": "Экспорт данных и удаление аккаунта",
-    "account_data_support_dialog_message":
-        "Пожалуйста, свяжитесь с {support_email} по этому запросу.",
+    "account_data_open_projects": "Открыть проекты",
+    "account_data_request_template_copied": "Шаблон запроса скопирован в буфер обмена",
+    "account_data_subtitle": "Экспорт / удаление",
+    "account_data_support_dialog_message": "Пожалуйста, свяжитесь с {support_email} по этому запросу.",
     "account_data_title": "Аккаунт и данные",
     "activity": "Активность",
-    "agree_terms":
-        "Входя в систему, вы соглашаетесь с нашими Условиями обслуживания и Политикой конфиденциальности",
+    "agree_terms": "Входя в систему, вы соглашаетесь с нашими Условиями обслуживания и Политикой конфиденциальности",
     "alert_title_error": "Error",
     "alert_title_warning": "Warning",
     "api_docs_load_failed_title": "Failed to load API docs",
@@ -7783,22 +6902,17 @@ kLocalizedValues = <String, Map<String, String>>{
     "api_keys_confirm_create": "Создать ключ",
     "api_keys_confirm_revoke": "Подтвердить отзыв",
     "api_keys_copied": "API-ключ скопирован",
-    "api_keys_copy_secret_hint":
-        "Скопируйте этот секрет сейчас. Позже он не будет показан.",
+    "api_keys_copy_secret_hint": "Скопируйте этот секрет сейчас. Позже он не будет показан.",
     "api_keys_create_button": "Создать ключ",
     "api_keys_create_failed": "Не удалось создать API-ключ",
-    "api_keys_create_success":
-        "API-ключ создан. Скопируйте его сейчас, позже он не будет показан.",
+    "api_keys_create_success": "API-ключ создан. Скопируйте его сейчас, позже он не будет показан.",
     "api_keys_created_at": "Создан",
     "api_keys_creating": "Создание...",
-    "api_keys_description":
-        "Используйте API-ключи для неадминистративных эндпоинтов. Админ-маршруты по-прежнему требуют обычную авторизацию.",
+    "api_keys_description": "Используйте API-ключи для неадминистративных эндпоинтов. Админ-маршруты по-прежнему требуют обычную авторизацию.",
     "api_keys_description_label": "Описание",
-    "api_keys_dialog_create_description":
-        "Добавьте имя и необязательное описание, чтобы потом было проще узнать этот ключ.",
+    "api_keys_dialog_create_description": "Добавьте имя и необязательное описание, чтобы потом было проще узнать этот ключ.",
     "api_keys_dialog_create_title": "Создать API-ключ",
-    "api_keys_dialog_revoke_description":
-        "Отозвать \"{name}\"? Это действие нельзя отменить.",
+    "api_keys_dialog_revoke_description": "Отозвать \"{name}\"? Это действие нельзя отменить.",
     "api_keys_dialog_revoke_title": "Отозвать API-ключ",
     "api_keys_empty": "API-ключей пока нет.",
     "api_keys_existing_title": "Существующие ключи",
@@ -7812,28 +6926,29 @@ kLocalizedValues = <String, Map<String, String>>{
     "api_keys_revoked": "Отозван",
     "api_keys_title": "Создать API-ключ",
     "api_keys_unnamed": "Ключ без имени",
-    "api_settings": "API",
+    "api_settings": "Настройки API",
+    "api_settings_copy_diagnostics": "Копировать диагностику",
+    "api_settings_reset": "Сбросить",
+    "api_settings_save": "Сохранить",
+    "api_settings_test_connection": "Проверить соединение",
     "appearance": "Внешний вид",
     "back": "Назад",
     "basic_information": "Основная информация",
     "billing_insufficient_action_later": "Later",
     "billing_insufficient_action_topup": "Top up now",
-    "billing_insufficient_description":
-        "Your balance is insufficient for this action. Please top up first.",
+    "billing_insufficient_description": "Your balance is insufficient for this action. Please top up first.",
     "billing_insufficient_title": "Insufficient Balance",
     "bind_email": "Привязать почту",
-    "bind_email_subtitle": "Привязать почту к аккаунту",
+    "bind_email_subtitle": "Привязать почту",
     "browse": "Обзор",
     "cancel": "Cancel",
     "chat_banner_next_prompt_queued": "Next prompt is queued.",
     "chat_banner_one_prompt_failed": "One queued prompt failed.",
     "chat_banner_preview_rebuilding": "Preview is rebuilding.",
-    "chat_banner_preview_rebuilding_framework":
-        "{framework} preview is rebuilding.",
+    "chat_banner_preview_rebuilding_framework": "{framework} preview is rebuilding.",
     "chat_banner_queue_resume_model": "Queue resumes when the model is ready.",
     "chat_banner_queue_resume_run": "Queue resumes after the current run.",
-    "chat_banner_queue_resume_workspace":
-        "Queue resumes when the workspace is ready.",
+    "chat_banner_queue_resume_workspace": "Queue resumes when the workspace is ready.",
     "chat_banner_queued_count": "{count} queued",
     "chat_banner_queued_one": "1 queued",
     "chat_banner_restoring_output": "Restoring live output.",
@@ -7887,8 +7002,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "community_empty_all": "No posts.",
     "community_empty_components": "No components.",
     "community_empty_mine": "No posts created by you yet.",
-    "community_empty_my_posts_sentence":
-        "You have not published any posts yet.",
+    "community_empty_my_posts_sentence": "You have not published any posts yet.",
     "community_failed_to_load_components": "Failed to load components",
     "community_filter_all": "All",
     "community_filter_mine": "My posts",
@@ -7927,118 +7041,84 @@ kLocalizedValues = <String, Map<String, String>>{
     "create_post_title_required": "Please enter a title",
     "create_project": "Создать проект",
     "create_project_accept_invitation": "Принять приглашение",
-    "create_project_accept_invitation_failed":
-        "Не удалось принять приглашение: {error}",
-    "create_project_accept_invitation_hint":
-        "Добавьте \"{bot}\" как коллаборатора в настройках репозитория GitHub, затем нажмите «Принять приглашение».",
+    "create_project_accept_invitation_failed": "Не удалось принять приглашение: {error}",
+    "create_project_accept_invitation_hint": "Добавьте \"{bot}\" как коллаборатора в настройках репозитория GitHub, затем нажмите «Принять приглашение».",
     "create_project_access_verified": "Доступ подтверждён",
     "create_project_access_verified_for": "Доступ подтверждён для {repo}",
     "create_project_action": "Создать проект",
-    "create_project_bot_username_copied":
-        "Имя пользователя бота скопировано в буфер обмена",
+    "create_project_bot_username_copied": "Имя пользователя бота скопировано в буфер обмена",
     "create_project_choose_how_start": "Выберите, как начать",
     "create_project_choose_zip": "Выбрать архив .zip",
-    "create_project_choose_zip_and_name":
-        "Выберите zip-архив и укажите название проекта",
-    "create_project_could_not_open_github_settings":
-        "Не удалось открыть настройки GitHub в браузере",
+    "create_project_choose_zip_and_name": "Выберите zip-архив и укажите название проекта",
+    "create_project_could_not_open_github_settings": "Не удалось открыть настройки GitHub в браузере",
     "create_project_default_repo_name": "По умолчанию: имя репозитория",
     "create_project_description": "Описание",
     "create_project_description_required": "Опишите, что вы хотите создать",
-    "create_project_description_too_short":
-        "Описание слишком короткое. Добавьте больше деталей (минимум 8 символов)",
+    "create_project_description_too_short": "Описание слишком короткое. Добавьте больше деталей (минимум 8 символов)",
     "create_project_dialog_title": "Добавить проект",
     "create_project_failed_choose_archive": "Не удалось выбрать архив: {error}",
     "create_project_failed_get_project_id": "Не удалось получить ID проекта",
-    "create_project_failed_import_local":
-        "Не удалось импортировать локальный Zip: {error}",
-    "create_project_failed_import_project":
-        "Не удалось импортировать проект: {error}",
-    "create_project_failed_import_repo":
-        "Не удалось импортировать репозиторий: {error}",
-    "create_project_failed_to_create":
-        "Не удалось создать проект: {error}\n\nAPI Base: {base}",
+    "create_project_failed_import_local": "Не удалось импортировать локальный Zip: {error}",
+    "create_project_failed_import_project": "Не удалось импортировать проект: {error}",
+    "create_project_failed_import_repo": "Не удалось импортировать репозиторий: {error}",
+    "create_project_failed_to_create": "Не удалось создать проект: {error}\n\nAPI Base: {base}",
     "create_project_fill_required": "Заполните все обязательные поля",
     "create_project_github_bot_username": "Имя пользователя GitHub-бота",
-    "create_project_github_collaborator_subtitle":
-        "Пошаговый импорт: добавить бота → принять приглашение → проверить доступ → импортировать.",
-    "create_project_github_collaborator_title":
-        "Импорт из GitHub (коллаборатор)",
+    "create_project_github_collaborator_subtitle": "Пошаговый импорт: добавить бота → принять приглашение → проверить доступ → импортировать.",
+    "create_project_github_collaborator_title": "Импорт из GitHub (коллаборатор)",
     "create_project_github_guided_title": "Пошаговый импорт GitHub (3 шага)",
     "create_project_github_import_title": "Импорт GitHub",
     "create_project_import_local_action": "Импортировать локальный Zip",
-    "create_project_import_local_info":
-        "Загрузите локальное рабочее пространство в формате .zip и импортируйте его как проект. Архив должен содержать файлы проекта в корне.",
-    "create_project_import_local_subtitle":
-        "Загрузите локальный архив проекта .zip и импортируйте его напрямую.",
+    "create_project_import_local_info": "Загрузите локальное рабочее пространство в формате .zip и импортируйте его как проект. Архив должен содержать файлы проекта в корне.",
+    "create_project_import_local_subtitle": "Загрузите локальный архив проекта .zip и импортируйте его напрямую.",
     "create_project_import_local_title": "Импорт локального Zip",
     "create_project_import_project_action": "Импортировать проект",
-    "create_project_import_public_subtitle":
-        "Отзеркальте публичный репозиторий GitHub в рабочее пространство организации.",
+    "create_project_import_public_subtitle": "Отзеркальте публичный репозиторий GitHub в рабочее пространство организации.",
     "create_project_import_public_title": "Импорт публичного репозитория",
     "create_project_import_repo_action": "Импортировать репозиторий",
     "create_project_imported_from_github": "Импортировано из GitHub: {repo}",
-    "create_project_invalid_repo_url":
-        "Неверный URL репозитория. Пример: https://github.com/owner/repo",
+    "create_project_invalid_repo_url": "Неверный URL репозитория. Пример: https://github.com/owner/repo",
     "create_project_invalid_repo_url_simple": "Неверный URL репозитория",
     "create_project_invitation_accepted": "Приглашение принято",
     "create_project_invitation_accepted_message": "Приглашение принято",
-    "create_project_loading_message":
-        "Создаём ваш проект. Это может занять пару минут...",
+    "create_project_loading_message": "Создаём ваш проект. Это может занять пару минут...",
     "create_project_loading_step_finalize": "Завершаем настройку...",
     "create_project_loading_step_integrations": "Настраиваем интеграции...",
     "create_project_loading_step_plan": "Планируем структуру проекта...",
-    "create_project_login_expired_models":
-        "Сессия истекла. Войдите снова перед загрузкой моделей.",
-    "create_project_login_expired_templates":
-        "Сессия истекла. Войдите снова перед загрузкой шаблонов.",
-    "create_project_missing_project_id_after_import":
-        "Импорт выполнен, но ID проекта отсутствует",
-    "create_project_model_switch_failed_continue":
-        "Не удалось переключить модель, продолжаем с моделью сервера по умолчанию. ({error})",
-    "create_project_new_ai_hint":
-        "Пример: приложение для командной доски задач с авторизацией, ролями и базой данных.",
-    "create_project_new_ai_subtitle":
-        "Опишите, что вы хотите создать, и мы всё настроим.",
-    "create_project_new_ai_summary":
-        "Одним предложением опишите страницы, авторизацию, данные и ключевые сценарии (минимум 8 символов); мы создадим проект и продолжим в чате.",
+    "create_project_login_expired_models": "Сессия истекла. Войдите снова перед загрузкой моделей.",
+    "create_project_login_expired_templates": "Сессия истекла. Войдите снова перед загрузкой шаблонов.",
+    "create_project_missing_project_id_after_import": "Импорт выполнен, но ID проекта отсутствует",
+    "create_project_model_switch_failed_continue": "Не удалось переключить модель, продолжаем с моделью сервера по умолчанию. ({error})",
+    "create_project_new_ai_hint": "Пример: приложение для командной доски задач с авторизацией, ролями и базой данных.",
+    "create_project_new_ai_subtitle": "Опишите, что вы хотите создать, и мы всё настроим.",
+    "create_project_new_ai_summary": "Одним предложением опишите страницы, авторизацию, данные и ключевые сценарии (минимум 8 символов); мы создадим проект и продолжим в чате.",
     "create_project_new_ai_title": "Новый проект (AI)",
     "create_project_new_project_title": "Новый проект",
     "create_project_open_github_settings": "Открыть настройки GitHub",
     "create_project_private_project": "Приватный проект",
-    "create_project_private_project_subtitle":
-        "Сделать импортированный проект приватным по умолчанию",
+    "create_project_private_project_subtitle": "Сделать импортированный проект приватным по умолчанию",
     "create_project_project_description": "Описание проекта",
     "create_project_project_name": "Название проекта",
     "create_project_project_name_hint": "Например: my-project",
-    "create_project_public_repo_example":
-        "Пример: https://github.com/owner/repo",
-    "create_project_public_repo_info":
-        "Мы отзеркалим публичный репозиторий в рабочее пространство организации. Большие репозитории могут занять больше времени.",
+    "create_project_public_repo_example": "Пример: https://github.com/owner/repo",
+    "create_project_public_repo_info": "Мы отзеркалим публичный репозиторий в рабочее пространство организации. Большие репозитории могут занять больше времени.",
     "create_project_public_repo_url": "URL публичного репозитория",
     "create_project_repository_url": "URL репозитория",
-    "create_project_retry_create_integrations":
-        "Создание с интеграциями не удалось, повторяем ещё раз…",
-    "create_project_retry_missing_id":
-        "При повторной попытке создания отсутствует ID проекта",
+    "create_project_retry_create_integrations": "Создание с интеграциями не удалось, повторяем ещё раз…",
+    "create_project_retry_missing_id": "При повторной попытке создания отсутствует ID проекта",
     "create_project_select_model": "Выбрать модель",
     "create_project_select_template": "Выбрать шаблон",
     "create_project_selected_archive_empty": "Выбранный архив пуст",
     "create_project_step_of_3": "Шаг {step} из 3",
     "create_project_supported_zip": "Поддерживаемый формат: .zip",
     "create_project_template": "Шаблон",
-    "create_project_template_auto_description":
-        "Позвольте D1V выбрать лучший шаблон на основе вашего запроса.",
+    "create_project_template_auto_description": "Позвольте D1V выбрать лучший шаблон на основе вашего запроса.",
     "create_project_template_auto_name": "Авто",
-    "create_project_token_missing":
-        "Вы не вошли в систему или отсутствует токен. Войдите снова.\n\nПодсказка: Настройки → Профиль → API → Скопировать диагностику.",
+    "create_project_token_missing": "Вы не вошли в систему или отсутствует токен. Войдите снова.\n\nПодсказка: Настройки → Профиль → API → Скопировать диагностику.",
     "create_project_verify_access": "Проверить доступ",
-    "create_project_verify_access_failed":
-        "Не удалось проверить доступ: {error}",
-    "create_project_waiting_workspace":
-        "Ожидание готовности рабочего пространства…",
-    "create_project_workspace_not_ready":
-        "Рабочее пространство не готово: {error}\n\nAPI Base: {base}",
+    "create_project_verify_access_failed": "Не удалось проверить доступ: {error}",
+    "create_project_waiting_workspace": "Ожидание готовности рабочего пространства…",
+    "create_project_workspace_not_ready": "Рабочее пространство не готово: {error}\n\nAPI Base: {base}",
     "dark_mode": "Темная тема",
     "dashboard": "Панель управления",
     "dashboard_action_chat": "Chat",
@@ -8049,8 +7129,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "dashboard_no_projects_title": "No projects yet",
     "dashboard_open_project": "Open project",
     "dashboard_projects_load_failed": "Failed to load projects",
-    "dashboard_projects_subtitle":
-        "Continue from the most recently touched projects.",
+    "dashboard_projects_subtitle": "Continue from the most recently touched projects.",
     "dashboard_prompt_activity_day_message": "{count} prompts on {date}",
     "dashboard_prompt_activity_title": "Prompt activity",
     "dashboard_search_results": "Search Results ({count})",
@@ -8082,42 +7161,32 @@ kLocalizedValues = <String, Map<String, String>>{
     "docs_code_copied_message": "Code block copied. Paste it anywhere.",
     "docs_copy_code": "Copy",
     "docs_copy_code_done": "Copied",
-    "docs_hero_subtitle":
-        "Use the docs like a product index: scan by outcome, reopen what you touched recently, and jump straight into the detail view.",
-    "docs_hero_title":
-        "Operational guidance, product context, and implementation references.",
+    "docs_hero_subtitle": "Use the docs like a product index: scan by outcome, reopen what you touched recently, and jump straight into the detail view.",
+    "docs_hero_title": "Operational guidance, product context, and implementation references.",
     "docs_items_count": "{count} items",
-    "docs_load_failed_message":
-        "The in-app reader could not load this document. Retry here or open it in the browser.",
+    "docs_load_failed_message": "The in-app reader could not load this document. Retry here or open it in the browser.",
     "docs_load_failed_title": "Failed to load doc",
     "docs_no_matching_documents": "No matching documents",
-    "docs_no_matching_documents_hint":
-        "Try broader keywords or search by product area, workflow, or API topic.",
+    "docs_no_matching_documents_hint": "Try broader keywords or search by product area, workflow, or API topic.",
     "docs_open_failed_message": "Cannot open link",
     "docs_open_failed_title": "Open failed",
     "docs_open_in_browser": "Open in browser",
     "docs_opening_in_browser": "Opening documentation in your browser...",
     "docs_page_api_desc": "OpenAPI, auth, errors, pagination, webhooks.",
     "docs_page_api_title": "API",
-    "docs_page_architecture_desc":
-        "Environments, promotion model, and failure modes.",
+    "docs_page_architecture_desc": "Environments, promotion model, and failure modes.",
     "docs_page_architecture_title": "Architecture",
     "docs_page_faq_desc": "Troubleshooting and tips.",
     "docs_page_faq_title": "FAQ",
-    "docs_page_getting_started_desc":
-        "Prompt -> preview -> production, with verification steps.",
+    "docs_page_getting_started_desc": "Prompt -> preview -> production, with verification steps.",
     "docs_page_getting_started_title": "Getting Started",
-    "docs_page_integrations_desc":
-        "GitHub/Auth/Payments/Analytics: setup and verification.",
+    "docs_page_integrations_desc": "GitHub/Auth/Payments/Analytics: setup and verification.",
     "docs_page_integrations_title": "Integrations",
-    "docs_page_legal_restrictions_desc":
-        "Compliance and export restrictions (high-level).",
+    "docs_page_legal_restrictions_desc": "Compliance and export restrictions (high-level).",
     "docs_page_legal_restrictions_title": "Legal and Export Restrictions",
-    "docs_page_overview_desc":
-        "What the platform is and how the workflow fits together.",
+    "docs_page_overview_desc": "What the platform is and how the workflow fits together.",
     "docs_page_overview_title": "Overview",
-    "docs_page_privacy_policy_desc":
-        "What data we collect, how we use it, and how to request export or deletion.",
+    "docs_page_privacy_policy_desc": "What data we collect, how we use it, and how to request export or deletion.",
     "docs_page_privacy_policy_title": "Privacy Policy",
     "docs_page_product_desc": "Outcomes by role (PM / Business / Developers).",
     "docs_page_product_title": "Product",
@@ -8125,11 +7194,9 @@ kLocalizedValues = <String, Map<String, String>>{
     "docs_page_refund_policy_title": "Refund and Dispute Policy",
     "docs_page_roadmap_desc": "Now / Next priorities (subject to change).",
     "docs_page_roadmap_title": "Roadmap",
-    "docs_page_use_cases_desc":
-        "Playbooks: prompts + acceptance criteria for common products.",
+    "docs_page_use_cases_desc": "Playbooks: prompts + acceptance criteria for common products.",
     "docs_page_use_cases_title": "Use Cases",
-    "docs_page_workspace_desc":
-        "Where to go in the Project workspace (Chat, Deploy, Pay, Analytics).",
+    "docs_page_workspace_desc": "Where to go in the Project workspace (Chat, Deploy, Pay, Analytics).",
     "docs_page_workspace_title": "Workspace Guide",
     "docs_recently_viewed": "Recently viewed",
     "docs_search_hint": "Search docs, workflows, API, setup...",
@@ -8142,15 +7209,12 @@ kLocalizedValues = <String, Map<String, String>>{
     "email": "Электронная почта",
     "email_address": "Адрес электронной почты",
     "email_bound_success": "Электронная почта успешно привязана",
-    "email_invalid":
-        "Пожалуйста, введите действительный адрес электронной почты",
+    "email_invalid": "Пожалуйста, введите действительный адрес электронной почты",
     "email_required": "Пожалуйста, введите адрес электронной почты",
     "enter_code_and_new_password": "Введите код подтверждения и новый пароль",
-    "enter_code_sent":
-        "Введите 6-значный код подтверждения, отправленный на вашу почту",
+    "enter_code_sent": "Введите 6-значный код подтверждения, отправленный на вашу почту",
     "enter_email": "Введите вашу почту",
-    "enter_email_for_code":
-        "Введите адрес электронной почты для получения кода подтверждения",
+    "enter_email_for_code": "Введите адрес электронной почты для получения кода подтверждения",
     "enter_new_password": "Введите новый пароль",
     "enter_password": "Введите пароль",
     "enter_verify_code": "Введите код подтверждения",
@@ -8170,8 +7234,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "friends_referred": "Приглашенные друзья",
     "generating": "Generating...",
     "github": "GitHub",
-    "github_connect_description":
-        "Подключите свой аккаунт GitHub для импорта репозиториев",
+    "github_connect_description": "Подключите свой аккаунт GitHub для импорта репозиториев",
     "github_import_action_import": "Импортировать проект",
     "github_import_action_importing": "Импорт проекта…",
     "github_import_action_opening_chat": "Открываем чат…",
@@ -8181,16 +7244,12 @@ kLocalizedValues = <String, Map<String, String>>{
     "github_import_failed_message": "Не удалось импортировать репозиторий",
     "github_import_failed_title": "Ошибка импорта",
     "github_import_in_progress_title": "Импорт выполняется",
-    "github_import_monorepo_notice":
-        "Этот репозиторий похож на monorepo. Выберите корневую директорию приложения перед запуском preview-деплоя.",
-    "github_import_opening_chat":
-        "Проект импортирован. Preview всё ещё запускается, открываем чат.",
-    "github_import_progress_choose_root":
-        "Выберите корневую директорию приложения",
+    "github_import_monorepo_notice": "Этот репозиторий похож на monorepo. Выберите корневую директорию приложения перед запуском preview-деплоя.",
+    "github_import_opening_chat": "Проект импортирован. Preview всё ещё запускается, открываем чат.",
+    "github_import_progress_choose_root": "Выберите корневую директорию приложения",
     "github_import_progress_import": "Импорт репозитория",
     "github_import_progress_prepare_preview": "Подготовка preview-деплоя",
-    "github_import_progress_preview_after_root":
-        "Preview-деплой начнётся после настройки",
+    "github_import_progress_preview_after_root": "Preview-деплой начнётся после настройки",
     "github_import_progress_repo_imported": "Репозиторий импортирован",
     "github_import_progress_wait_preview": "Ожидание готовности preview",
     "github_import_project_description": "Описание проекта",
@@ -8202,10 +7261,8 @@ kLocalizedValues = <String, Map<String, String>>{
     "github_import_repo_public": "public",
     "github_import_root_directory": "Корневая директория",
     "github_import_root_failed": "Не удалось настроить корневую директорию",
-    "github_import_root_saved":
-        "Корневая директория сохранена. Preview-деплой запущен.",
-    "github_import_sheet_subtitle":
-        "Создайте новый проект из этого GitHub-репозитория и сохраните поток предпросмотра деплоя.",
+    "github_import_root_saved": "Корневая директория сохранена. Preview-деплой запущен.",
+    "github_import_sheet_subtitle": "Создайте новый проект из этого GitHub-репозитория и сохраните поток предпросмотра деплоя.",
     "github_import_sheet_title": "Импорт репозитория",
     "github_import_success_message": "Репозиторий успешно импортирован",
     "github_integration": "Интеграция с GitHub",
@@ -8215,19 +7272,17 @@ kLocalizedValues = <String, Map<String, String>>{
     "help_support_cta_title": "Still need help?",
     "help_support_docs_subtitle": "Technical documentation and API reference",
     "help_support_email_open_error": "Failed to open email: {error}",
-    "help_support_email_open_failed":
-        "Could not open email app. Please email us at {email}",
+    "help_support_email_open_failed": "Could not open email app. Please email us at {email}",
     "help_support_hero_subtitle": "Find answers or contact our support team",
     "help_support_hero_title": "How can we help you?",
     "help_support_link_open_error": "Failed to open {name}: {error}",
     "help_support_link_open_failed": "Could not open {name}",
     "help_support_quick_actions": "Quick Actions",
-    "help_support_subtitle": "Получить помощь и поддержку",
+    "help_support_subtitle": "Помощь / поддержка",
     "help_support_user_guide_subtitle": "Learn how to use all features",
     "help_support_user_guide_title": "User Guide",
     "import_action": "Импортировать",
-    "import_dialog_description":
-        "Введите информацию о репозитории, который хотите импортировать",
+    "import_dialog_description": "Введите информацию о репозитории, который хотите импортировать",
     "import_dialog_title": "Импорт публичного репозитория",
     "import_failed": "Не удалось импортировать репозиторий",
     "import_repository": "Импортировать репозиторий",
@@ -8247,17 +7302,14 @@ kLocalizedValues = <String, Map<String, String>>{
     "industry_retail": "Retail",
     "industry_saas": "SaaS",
     "industry_technology": "Technology",
-    "input_error_owner_repo":
-        "Пожалуйста, введите владельца и название репозитория",
+    "input_error_owner_repo": "Пожалуйста, введите владельца и название репозитория",
     "invitation": "Invitation",
     "invite_code_copied": "Код приглашения скопирован в буфер обмена",
     "invite_code_unavailable": "Код приглашения недоступен",
-    "invite_description":
-        "Приглашайте друзей присоединиться к d1v.ai и получайте награды",
+    "invite_description": "Приглашайте друзей присоединиться к d1v.ai и получайте награды",
     "invite_friends": "Пригласить друзей",
     "invites": "Приглашения",
-    "invites_empty_message":
-        "You haven't invited any friends yet.\\nShare your invite code to get started!",
+    "invites_empty_message": "You haven't invited any friends yet.\\nShare your invite code to get started!",
     "invites_empty_title": "No Invites Yet",
     "invites_joined_at": "Joined {time}",
     "invites_load_failed_title": "Failed to load invited users",
@@ -8279,26 +7331,19 @@ kLocalizedValues = <String, Map<String, String>>{
     "login_failed": "Ошибка входа",
     "login_first": "Пожалуйста, войдите сначала",
     "login_required_button": "Войти",
-    "login_required_create_post_message":
-        "Чтобы создать публикацию, необходимо войти в систему.",
-    "login_required_dashboard_message":
-        "Чтобы просматривать проекты, необходимо войти в систему.",
-    "login_required_github_message":
-        "Чтобы управлять интеграцией GitHub, необходимо войти в систему.",
-    "login_required_invites_message":
-        "Чтобы просматривать приглашения и награды, необходимо войти в систему.",
-    "login_required_orders_message":
-        "Чтобы просматривать заказы и биллинг, необходимо войти в систему.",
-    "login_required_settings_message":
-        "Чтобы управлять настройками аккаунта, необходимо войти в систему.",
+    "login_required_create_post_message": "Чтобы создать публикацию, необходимо войти в систему.",
+    "login_required_dashboard_message": "Чтобы просматривать проекты, необходимо войти в систему.",
+    "login_required_github_message": "Чтобы управлять интеграцией GitHub, необходимо войти в систему.",
+    "login_required_invites_message": "Чтобы просматривать приглашения и награды, необходимо войти в систему.",
+    "login_required_orders_message": "Чтобы просматривать заказы и биллинг, необходимо войти в систему.",
+    "login_required_settings_message": "Чтобы управлять настройками аккаунта, необходимо войти в систему.",
     "login_required_title": "Требуется вход",
     "login_success": "Успешный вход",
     "login_with_code": "Войти с кодом",
     "login_with_password": "Войти с паролем",
     "logout": "Выйти",
     "main_nav_workspace": "Workspace",
-    "model_load_auth_expired":
-        "Login expired. Please sign in again to load models.",
+    "model_load_auth_expired": "Login expired. Please sign in again to load models.",
     "model_switch_failed": "Failed to switch model: {error}",
     "model_switch_success": "Переключено на {model}",
     "model_switch_title": "Модель",
@@ -8306,17 +7351,15 @@ kLocalizedValues = <String, Map<String, String>>{
     "my_invites_subtitle": "Просмотр истории приглашений",
     "new_password": "Новый пароль",
     "notifications": "Уведомления",
-    "notifications_subtitle": "Управление уведомлениями",
+    "notifications_subtitle": "Уведомления",
     "onboarding_action_back": "Back",
     "onboarding_action_finish": "Finish",
     "onboarding_action_next": "Next",
     "onboarding_ai_avatar_generate_failed": "Failed to generate AI avatars",
-    "onboarding_ai_avatar_hint":
-        "Tap \"AI Random\" to draw your AI avatar cards.",
+    "onboarding_ai_avatar_hint": "Tap \"AI Random\" to draw your AI avatar cards.",
     "onboarding_ai_avatar_title": "AI Avatar Cards",
     "onboarding_ai_random": "AI Random",
-    "onboarding_avatar_hint":
-        "Recommended: square image, PNG/JPG/WEBP, up to 5MB.",
+    "onboarding_avatar_hint": "Recommended: square image, PNG/JPG/WEBP, up to 5MB.",
     "onboarding_avatar_pick_failed": "Failed to pick image: {error}",
     "onboarding_avatar_refresh_failed": "Failed to refresh avatars: {error}",
     "onboarding_avatar_select_failed": "Failed to select avatar: {error}",
@@ -8325,18 +7368,14 @@ kLocalizedValues = <String, Map<String, String>>{
     "onboarding_complete_failed": "Failed to complete onboarding: {error}",
     "onboarding_complete_subtitle": "Добро пожаловать. Можно продолжать.",
     "onboarding_complete_title": "Настройка завершена",
-    "onboarding_invite_helper":
-        "Optional. Add an invite code if someone referred you.",
+    "onboarding_invite_helper": "Optional. Add an invite code if someone referred you.",
     "onboarding_invite_hint": "Enter invite code",
     "onboarding_invite_label": "Invite code",
-    "onboarding_org_helper":
-        "This helps us tailor templates and recommendations for your team.",
-    "onboarding_subtitle_avatar":
-        "Upload a profile image so collaborators can recognize you at a glance.",
+    "onboarding_org_helper": "This helps us tailor templates and recommendations for your team.",
+    "onboarding_subtitle_avatar": "Upload a profile image so collaborators can recognize you at a glance.",
     "onboarding_subtitle_finish": "You are almost ready to start building.",
     "onboarding_subtitle_invite": "Enter an invite code to join your team.",
-    "onboarding_subtitle_org":
-        "This helps us tailor templates and recommendations for your team.",
+    "onboarding_subtitle_org": "This helps us tailor templates and recommendations for your team.",
     "onboarding_title_avatar": "Add your avatar",
     "onboarding_title_finish": "Finish setup",
     "onboarding_title_org": "Tell us about your organization",
@@ -8354,8 +7393,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "orders_usage_builder_billing_rule": "Billing rule: {rate}/min",
     "orders_usage_builder_empty": "No deployment records yet.",
     "orders_usage_builder_estimated_cost": "Estimated Cost",
-    "orders_usage_builder_estimated_cost_hint":
-        "Estimated from deployment build durations",
+    "orders_usage_builder_estimated_cost_hint": "Estimated from deployment build durations",
     "orders_usage_builder_load_failed": "Unable to load builder usage data.",
     "orders_usage_builder_overall": "Overall Build Time",
     "orders_usage_builder_projects_title": "Top Projects",
@@ -8377,8 +7415,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "orders_usage_llm_total_cost_hint": "Estimated cost",
     "orders_usage_na": "N/A",
     "orders_usage_project_breakdown_empty": "No usage data available",
-    "orders_usage_project_breakdown_empty_hint":
-        "Your LLM usage will appear here",
+    "orders_usage_project_breakdown_empty_hint": "Your LLM usage will appear here",
     "orders_usage_project_breakdown_title": "Project Breakdown",
     "orders_usage_project_deleted": "Удалено",
     "orders_usage_time_range": "Time Range",
@@ -8386,11 +7423,9 @@ kLocalizedValues = <String, Map<String, String>>{
     "orders_wallet_usage_bucket_expiring": "Expiring",
     "orders_wallet_usage_bucket_non_expiring": "Non-expiring",
     "orders_wallet_usage_empty": "No usage records yet.",
-    "orders_wallet_usage_empty_hint":
-        "Consumption records from deployments and model usage will appear here.",
+    "orders_wallet_usage_empty_hint": "Consumption records from deployments and model usage will appear here.",
     "orders_wallet_usage_source_admin_broadcast": "admin broadcast",
-    "orders_wallet_usage_source_system_message":
-        "System message: {description}",
+    "orders_wallet_usage_source_system_message": "System message: {description}",
     "other": "Другое",
     "owner_hint": "пользователь или организация",
     "owner_label": "Владелец",
@@ -8401,6 +7436,23 @@ kLocalizedValues = <String, Map<String, String>>{
     "passwords_do_not_match": "Пароли не совпадают",
     "pricing": "Цены",
     "privacy": "Конфиденциальность",
+    "privacy_allow_analytics": "Разрешить аналитику",
+    "privacy_allow_analytics_desc": "Помочь улучшить приложение, делясь аналитикой использования",
+    "privacy_allow_data_sharing": "Разрешить передачу данных",
+    "privacy_allow_data_sharing_desc": "Делиться данными для улучшения наших сервисов",
+    "privacy_allow_third_party_apps": "Разрешить сторонние приложения",
+    "privacy_allow_third_party_apps_desc": "Включить интеграции со сторонними сервисами",
+    "privacy_discoverable_by_email": "Обнаруживаем по email",
+    "privacy_discoverable_by_email_desc": "Разрешить другим находить вас по email",
+    "privacy_marketing_emails": "Маркетинговые письма",
+    "privacy_marketing_emails_desc": "Получать письма о новых функциях и предложениях",
+    "privacy_public_profile": "Публичный профиль",
+    "privacy_public_profile_desc": "Разрешить всем просматривать ваш профиль",
+    "privacy_settings": "Настройки приватности",
+    "privacy_show_activity_status": "Показывать статус активности",
+    "privacy_show_activity_status_desc": "Показывать вашу недавнюю активность другим",
+    "privacy_show_online_status": "Показывать статус онлайн",
+    "privacy_show_online_status_desc": "Позволить другим видеть, когда вы активны",
     "profile": "Профиль",
     "profile_ai_random": "AI Random",
     "profile_avatar_generate_failed": "Failed to generate avatars",
@@ -8426,18 +7478,12 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_actions": "Actions",
     "project_analytics_active_now": "Active Now",
     "project_analytics_active_visitors": "Active Visitors",
-    "project_analytics_ai_prompt_active_now":
-        "Can you help me interpret my real-time active users and recommend actions to improve conversion?",
-    "project_analytics_ai_prompt_custom_events":
-        "Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?",
-    "project_analytics_ai_prompt_dashboard":
-        "Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?",
-    "project_analytics_ai_prompt_pageviews":
-        "Can you analyze my pageviews trend and suggest ways to increase traffic and retention?",
-    "project_analytics_ai_prompt_sessions":
-        "Can you analyze my sessions and suggest how to increase engagement and session duration?",
-    "project_analytics_ai_prompt_visitors":
-        "Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?",
+    "project_analytics_ai_prompt_active_now": "Can you help me interpret my real-time active users and recommend actions to improve conversion?",
+    "project_analytics_ai_prompt_custom_events": "Can you guide me on setting up custom event tracking for my project? What are the most important events I should track to improve my product?",
+    "project_analytics_ai_prompt_dashboard": "Can you help me understand my analytics data and suggest ways to improve user engagement, performance, and overall metrics?",
+    "project_analytics_ai_prompt_pageviews": "Can you analyze my pageviews trend and suggest ways to increase traffic and retention?",
+    "project_analytics_ai_prompt_sessions": "Can you analyze my sessions and suggest how to increase engagement and session duration?",
+    "project_analytics_ai_prompt_visitors": "Can you analyze my visitor acquisition and suggest improvements (SEO, referrers, landing pages)?",
     "project_analytics_all": "All",
     "project_analytics_bounces": "Bounces",
     "project_analytics_comparison_notes": "Comparison Notes",
@@ -8445,8 +7491,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_copy_failed": "Copy failed",
     "project_analytics_copy_field": "Copy {title}",
     "project_analytics_copy_summary": "Copy Summary",
-    "project_analytics_copy_summary_hint":
-        "Copy a shareable analytics snapshot",
+    "project_analytics_copy_summary_hint": "Copy a shareable analytics snapshot",
     "project_analytics_copy_tracking_code": "Copy Tracking Code",
     "project_analytics_copy_tracking_code_hint": "Copy Umami script snippet",
     "project_analytics_current_window": "Current window: {range}",
@@ -8466,11 +7511,9 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_dim_screen": "Screen",
     "project_analytics_dim_tag": "Tag",
     "project_analytics_enable_action": "Enable Analytics",
-    "project_analytics_enable_hint":
-        "Track your website's visitors, page views, and custom events with Umami Analytics",
+    "project_analytics_enable_hint": "Track your website's visitors, page views, and custom events with Umami Analytics",
     "project_analytics_enable_title": "Enable Analytics",
-    "project_analytics_env_filter_note":
-        "Note: environment filter uses hostname exact matching.",
+    "project_analytics_env_filter_note": "Note: environment filter uses hostname exact matching.",
     "project_analytics_environment": "Environment",
     "project_analytics_events": "Events",
     "project_analytics_events_trend": "Events Trend",
@@ -8483,20 +7526,14 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_filters": "Filters",
     "project_analytics_inactive_tab": "{title} tab",
     "project_analytics_initializing": "Initializing...",
-    "project_analytics_install_done_autojump":
-        "Installation completed. Auto-opening Data in {seconds}s.",
-    "project_analytics_install_done_open":
-        "Installation completed. You can open the analytics tabs now.",
-    "project_analytics_install_incomplete":
-        "Analytics install did not complete successfully.",
-    "project_analytics_install_success":
-        "Analytics successfully installed and activated.",
+    "project_analytics_install_done_autojump": "Installation completed. Auto-opening Data in {seconds}s.",
+    "project_analytics_install_done_open": "Installation completed. You can open the analytics tabs now.",
+    "project_analytics_install_incomplete": "Analytics install did not complete successfully.",
+    "project_analytics_install_success": "Analytics successfully installed and activated.",
     "project_analytics_installer": "Analytics Installer",
-    "project_analytics_installer_hint":
-        "Review the session output or retry the install.",
+    "project_analytics_installer_hint": "Review the session output or retry the install.",
     "project_analytics_installing": "Installing Analytics…",
-    "project_analytics_installing_hint":
-        "We are initializing Umami and inserting the tracking script via a chat session.",
+    "project_analytics_installing_hint": "We are initializing Umami and inserting the tracking script via a chat session.",
     "project_analytics_last_24_hours": "Last 24 Hours",
     "project_analytics_last_30_days": "Last 30 Days",
     "project_analytics_last_6_hours": "Last 6 Hours",
@@ -8507,12 +7544,10 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_metrics": "Metrics",
     "project_analytics_no_compare_data": "No top-page comparison data",
     "project_analytics_no_data": "No analytics data yet",
-    "project_analytics_no_data_hint":
-        "Analytics data will appear once your project is live and receiving traffic.",
+    "project_analytics_no_data_hint": "Analytics data will appear once your project is live and receiving traffic.",
     "project_analytics_no_data_short": "No data",
     "project_analytics_no_events": "No events in current range",
-    "project_analytics_no_metrics_selected":
-        "No metrics selected. Enable Pageviews/Sessions in Filters.",
+    "project_analytics_no_metrics_selected": "No metrics selected. Enable Pageviews/Sessions in Filters.",
     "project_analytics_no_realtime_urls": "No realtime URL data yet",
     "project_analytics_no_sessions": "No sessions in current range",
     "project_analytics_pageviews": "Pageviews",
@@ -8526,13 +7561,11 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_ready": "Analytics Ready",
     "project_analytics_recent_events": "Recent Events",
     "project_analytics_reenable": "Re-enable Analytics",
-    "project_analytics_reenable_confirm":
-        "This will re-run analytics setup and re-insert the tracking script via workspace session. Continue?",
+    "project_analytics_reenable_confirm": "This will re-run analytics setup and re-insert the tracking script via workspace session. Continue?",
     "project_analytics_reenable_hint": "Re-run script installation flow",
     "project_analytics_reenable_started": "Re-enable process started.",
     "project_analytics_reports": "Reports",
-    "project_analytics_reports_coming":
-        "Custom reports are coming soon. This keeps parity with the current web placeholder state.",
+    "project_analytics_reports_coming": "Custom reports are coming soon. This keeps parity with the current web placeholder state.",
     "project_analytics_reset": "Reset",
     "project_analytics_restore_defaults": "Restore defaults",
     "project_analytics_retry_install": "Retry Install",
@@ -8603,8 +7636,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_api_deleted": "Deleted",
     "project_api_description_optional": "Description (optional)",
     "project_api_edit_variable": "Edit variable",
-    "project_api_empty_hint":
-        "Create your first key-value pair to configure\\nruntime behavior for this project.",
+    "project_api_empty_hint": "Create your first key-value pair to configure\\nruntime behavior for this project.",
     "project_api_empty_title": "No environment variables",
     "project_api_environment_variables": "Environment Variables",
     "project_api_key": "Key",
@@ -8616,8 +7648,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_api_sensitive_masked": "Masked in lists by default",
     "project_api_sensitive_visible": "Visible in lists",
     "project_api_show": "Show",
-    "project_api_show_values_message":
-        "This will reveal sensitive environment values on screen.",
+    "project_api_show_values_message": "This will reveal sensitive environment values on screen.",
     "project_api_show_values_title": "Show values?",
     "project_api_update_failed": "Update failed",
     "project_api_value": "Value",
@@ -8630,12 +7661,10 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_chat_disable_wrap_tooltip": "Отключить перенос строк",
     "project_chat_enable_wrap_tooltip": "Включить перенос строк",
     "project_chat_engine_fast": "Быстро",
-    "project_chat_engine_fast_hint":
-        "Использовать Claude для более быстрых ответов",
+    "project_chat_engine_fast_hint": "Использовать Claude для более быстрых ответов",
     "project_chat_engine_switch_success": "Переключено на {mode}",
     "project_chat_engine_think_hard": "Думать глубже",
-    "project_chat_engine_think_hard_hint":
-        "Использовать Codex для более глубокого рассуждения",
+    "project_chat_engine_think_hard_hint": "Использовать Codex для более глубокого рассуждения",
     "project_chat_engine_title": "Режим",
     "project_chat_find_in_file_tooltip": "Найти в файле",
     "project_chat_fold_all": "Свернуть всё",
@@ -8661,35 +7690,28 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_chat_tab_preview_short": "Превью",
     "project_chat_unfold_all": "Развернуть всё",
     "project_database_actions": "Actions",
-    "project_database_ai_prompt_graph":
-        "Given the database schema, explain how \"{table}\" relates to other tables (foreign keys) and suggest improvements.",
-    "project_database_ai_prompt_relation":
-        "Explain the relationship from {from} to {to}. Suggest indexes and common queries.",
-    "project_database_ai_prompt_table":
-        "Can you analyze the database table \"{table}\" and explain its purpose, structure, and any suggestions for optimization or best practices?",
+    "project_database_ai_prompt_graph": "Given the database schema, explain how \"{table}\" relates to other tables (foreign keys) and suggest improvements.",
+    "project_database_ai_prompt_relation": "Explain the relationship from {from} to {to}. Suggest indexes and common queries.",
+    "project_database_ai_prompt_table": "Can you analyze the database table \"{table}\" and explain its purpose, structure, and any suggestions for optimization or best practices?",
     "project_database_ask_ai_table": "Ask AI about this table",
     "project_database_branch": "Branch",
     "project_database_branch_hint": "Current Neon branch context",
     "project_database_branch_primary": "{name} (primary)",
     "project_database_column_pk": "{name} (PK)",
     "project_database_columns_schema": "{columns} columns • {schema} schema",
-    "project_database_data_empty_hint":
-        "Create tables first, then browse rows here.",
+    "project_database_data_empty_hint": "Create tables first, then browse rows here.",
     "project_database_delete_row": "Delete row",
-    "project_database_delete_row_confirm":
-        "Delete this row from {table}? This action cannot be undone.",
+    "project_database_delete_row_confirm": "Delete this row from {table}? This action cannot be undone.",
     "project_database_edit_row": "Edit row",
     "project_database_enable_action": "Enable Database",
-    "project_database_enable_hint":
-        "Provision a Neon PostgreSQL database for this project and start exploring your schema and data.",
+    "project_database_enable_hint": "Provision a Neon PostgreSQL database for this project and start exploring your schema and data.",
     "project_database_enable_title": "Enable Database",
     "project_database_enabled_success": "Database enabled successfully!",
     "project_database_enabling": "Enabling...",
     "project_database_feature_branching": "Branching support",
     "project_database_feature_serverless": "Serverless Postgres on Neon",
     "project_database_feature_ssl": "Secure SSL connections",
-    "project_database_graph_hint":
-        "Add more tables to see relationships as a graph.",
+    "project_database_graph_hint": "Add more tables to see relationships as a graph.",
     "project_database_insert": "Insert",
     "project_database_insert_row": "Insert row",
     "project_database_inserting": "Inserting...",
@@ -8699,22 +7721,17 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_database_migration_plans": "{count} plans",
     "project_database_next": "Next",
     "project_database_no_columns": "No visible columns",
-    "project_database_no_columns_hint":
-        "This table currently has no browsable columns.",
+    "project_database_no_columns_hint": "This table currently has no browsable columns.",
     "project_database_no_editable_columns": "No editable columns",
-    "project_database_no_editable_columns_hint":
-        "This table has no editable non-primary-key columns.",
+    "project_database_no_editable_columns_hint": "This table has no editable non-primary-key columns.",
     "project_database_no_job_details": "No job details available yet.",
     "project_database_no_migration": "No migration history",
-    "project_database_no_migration_hint":
-        "Migration plans and execution records will appear here.",
+    "project_database_no_migration_hint": "Migration plans and execution records will appear here.",
     "project_database_no_relations": "No foreign-key relationships found.",
     "project_database_no_rows": "No rows found",
-    "project_database_no_rows_hint":
-        "Try another table or insert data from your application flow.",
+    "project_database_no_rows_hint": "Try another table or insert data from your application flow.",
     "project_database_no_tables": "No database tables",
-    "project_database_no_tables_hint":
-        "Database tables will appear here once they are created.",
+    "project_database_no_tables_hint": "Database tables will appear here once they are created.",
     "project_database_page": "Page {index}",
     "project_database_page_size": "{size} / page",
     "project_database_previous": "Previous",
@@ -8741,40 +7758,27 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_actions": "Actions",
     "project_deploy_active_preview": "Preview deployment in progress...",
     "project_deploy_active_prod": "Production release in progress: {phase}",
-    "project_deploy_active_reverting":
-        "Rolling back commit{suffix} and triggering preview deploy...",
-    "project_deploy_ai_prompt_environment":
-        "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_active_reverting": "Rolling back commit{suffix} and triggering preview deploy...",
+    "project_deploy_ai_prompt_environment": "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
     "project_deploy_ai_prompt_prefix": "My deploy failed with this error:",
-    "project_deploy_ai_prompt_preview":
-        "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_prod":
-        "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_suffix":
-        "Give me the most likely root cause and a step-by-step fix.",
-    "project_deploy_ai_prompt_vercel_middle":
-        "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
-    "project_deploy_ai_prompt_vercel_prefix":
-        "My Vercel deployment failed for project",
-    "project_deploy_ai_prompt_vercel_suffix":
-        "Also suggest what logs/env vars to check first.",
+    "project_deploy_ai_prompt_preview": "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_prod": "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_suffix": "Give me the most likely root cause and a step-by-step fix.",
+    "project_deploy_ai_prompt_vercel_middle": "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
+    "project_deploy_ai_prompt_vercel_prefix": "My Vercel deployment failed for project",
+    "project_deploy_ai_prompt_vercel_suffix": "Also suggest what logs/env vars to check first.",
     "project_deploy_ask_ai": "Ask AI",
     "project_deploy_build_log": "Build log",
     "project_deploy_build_logs": "Build logs",
     "project_deploy_close": "Close",
-    "project_deploy_coach_no_preview":
-        "No preview yet. Start with a preview deploy to reduce release risk.",
-    "project_deploy_coach_preview_ready":
-        "Preview is ready. Recommended next step: release to production.",
-    "project_deploy_coach_prod_live":
-        "Production is live. Keep shipping with small preview iterations.",
+    "project_deploy_coach_no_preview": "No preview yet. Start with a preview deploy to reduce release risk.",
+    "project_deploy_coach_preview_ready": "Preview is ready. Recommended next step: release to production.",
+    "project_deploy_coach_prod_live": "Production is live. Keep shipping with small preview iterations.",
     "project_deploy_common_fixes": "Common fixes:",
     "project_deploy_configure_later": "Configure later",
-    "project_deploy_confirm_preview_message":
-        "This will trigger a new preview (dev) deployment on Vercel.",
+    "project_deploy_confirm_preview_message": "This will trigger a new preview (dev) deployment on Vercel.",
     "project_deploy_confirm_preview_title": "Redeploy preview?",
-    "project_deploy_confirm_prod_message":
-        "This will compare dev/main, merge if needed, then trigger a production deployment.",
+    "project_deploy_confirm_prod_message": "This will compare dev/main, merge if needed, then trigger a production deployment.",
     "project_deploy_confirm_prod_title": "Deploy to production?",
     "project_deploy_copy": "Copy",
     "project_deploy_copy_all": "Copy all",
@@ -8782,16 +7786,14 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_copy_failed": "Copy failed",
     "project_deploy_current_deployments": "Current Deployments",
     "project_deploy_dev_timeline": "Dev Timeline",
-    "project_deploy_dev_timeline_hint":
-        "Inspect recent commits on the dev branch before you promote them to production.",
+    "project_deploy_dev_timeline_hint": "Inspect recent commits on the dev branch before you promote them to production.",
     "project_deploy_environment_deployment": "{env} deployment",
     "project_deploy_error_snippet_copied": "Error snippet copied",
     "project_deploy_filter_all": "All",
     "project_deploy_filter_preview": "Preview",
     "project_deploy_filter_production": "Production",
     "project_deploy_history": "History",
-    "project_deploy_history_empty":
-        "No deployments yet — deploy your project to see history here.",
+    "project_deploy_history_empty": "No deployments yet — deploy your project to see history here.",
     "project_deploy_history_title": "Deployment History",
     "project_deploy_log_cached": "Cached",
     "project_deploy_log_empty": "No logs available for this deployment.",
@@ -8809,27 +7811,22 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_merge_into_main": "Merge into main",
     "project_deploy_more": "More",
     "project_deploy_next_steps": "Next steps",
-    "project_deploy_no_change_commits":
-        "No change commits between adjacent releases.",
+    "project_deploy_no_change_commits": "No change commits between adjacent releases.",
     "project_deploy_no_diff_files": "No file diff",
-    "project_deploy_no_diff_files_hint":
-        "This commit did not return any changed file patches.",
+    "project_deploy_no_diff_files_hint": "This commit did not return any changed file patches.",
     "project_deploy_no_history": "No deployment history yet.",
     "project_deploy_no_logs": "No logs",
-    "project_deploy_no_logs_message":
-        "This deployment has no Vercel deployment id.",
+    "project_deploy_no_logs_message": "This deployment has no Vercel deployment id.",
     "project_deploy_no_message": "(no message)",
     "project_deploy_no_production": "No production deployment",
     "project_deploy_no_releases": "No releases detected on main yet.",
     "project_deploy_no_timeline": "No timeline yet",
-    "project_deploy_no_timeline_hint":
-        "No recent commits found on the development branch.",
+    "project_deploy_no_timeline_hint": "No recent commits found on the development branch.",
     "project_deploy_ok": "OK",
     "project_deploy_open": "Open",
     "project_deploy_open_url_failed": "Cannot open URL",
     "project_deploy_open_url_failed_message": "Could not open {url}",
-    "project_deploy_patch_unavailable":
-        "Patch preview is unavailable for this file.",
+    "project_deploy_patch_unavailable": "Patch preview is unavailable for this file.",
     "project_deploy_phase_checking": "Checking dev/main diff...",
     "project_deploy_phase_deploying": "Triggering production deploy...",
     "project_deploy_phase_merging": "Merging dev into main...",
@@ -8844,15 +7841,12 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_releases": "Releases",
     "project_deploy_releases_main": "(main)",
     "project_deploy_retry_last": "Retry last deployment",
-    "project_deploy_retry_preview_message":
-        "This will trigger a new preview (dev) deployment.",
+    "project_deploy_retry_preview_message": "This will trigger a new preview (dev) deployment.",
     "project_deploy_retry_preview_title": "Retry preview deploy?",
-    "project_deploy_retry_prod_message":
-        "This will compare dev/main, merge if needed, then trigger a new production deployment.",
+    "project_deploy_retry_prod_message": "This will compare dev/main, merge if needed, then trigger a new production deployment.",
     "project_deploy_retry_prod_title": "Retry production deploy?",
     "project_deploy_revert_confirm_action": "Confirm revert",
-    "project_deploy_revert_confirm_message":
-        "This will run git revert on commit {sha} and trigger a new preview deployment.",
+    "project_deploy_revert_confirm_message": "This will run git revert on commit {sha} and trigger a new preview deployment.",
     "project_deploy_revert_confirm_title": "Revert this commit?",
     "project_deploy_revert_failed": "Revert failed",
     "project_deploy_revert_no_sha": "No commit SHA found for this deployment.",
@@ -8863,8 +7857,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_revert_unavailable": "Revert unavailable",
     "project_deploy_reverting": "Reverting...",
     "project_deploy_select_commit": "Select a commit",
-    "project_deploy_select_commit_hint":
-        "Choose a commit on the left to inspect changed files and patches.",
+    "project_deploy_select_commit_hint": "Choose a commit on the left to inspect changed files and patches.",
     "project_deploy_share_all": "Share all",
     "project_deploy_share_errors": "Share errors",
     "project_deploy_tab_timeline": "Timeline",
@@ -8872,28 +7865,19 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_time_hours_ago": "{hours}h ago",
     "project_deploy_time_just_now": "just now",
     "project_deploy_time_minutes_ago": "{minutes}m ago",
-    "project_deploy_tip_build_issue":
-        "This looks like a build failure — check compilation errors in logs.",
-    "project_deploy_tip_check_env_vars":
-        "Check environment variables (and sync to Vercel).",
-    "project_deploy_tip_check_github_access":
-        "Check GitHub collaborator/bot access to the repo.",
-    "project_deploy_tip_env_issue":
-        "This looks like an env var issue — verify required secrets are set.",
-    "project_deploy_tip_open_logs":
-        "Open the latest build logs and copy/share the error snippet.",
-    "project_deploy_tip_permission":
-        "This looks like a permission issue — verify GitHub access and tokens.",
-    "project_deploy_tip_retry_preview_first":
-        "Retry preview deploy first (then production).",
-    "project_deploy_tip_short_env":
-        "Env vars configured (and synced to Vercel)",
+    "project_deploy_tip_build_issue": "This looks like a build failure — check compilation errors in logs.",
+    "project_deploy_tip_check_env_vars": "Check environment variables (and sync to Vercel).",
+    "project_deploy_tip_check_github_access": "Check GitHub collaborator/bot access to the repo.",
+    "project_deploy_tip_env_issue": "This looks like an env var issue — verify required secrets are set.",
+    "project_deploy_tip_open_logs": "Open the latest build logs and copy/share the error snippet.",
+    "project_deploy_tip_permission": "This looks like a permission issue — verify GitHub access and tokens.",
+    "project_deploy_tip_retry_preview_first": "Retry preview deploy first (then production).",
+    "project_deploy_tip_short_env": "Env vars configured (and synced to Vercel)",
     "project_deploy_tip_short_github": "GitHub access / repo permissions",
     "project_deploy_tip_short_logs": "Open build logs and share error snippet",
     "project_deploy_tip_short_retry_preview": "Retry preview deploy first",
     "project_deploy_troubleshooting": "Troubleshooting",
-    "project_deploy_troubleshooting_hint":
-        "If deploy fails, try these quick checks:",
+    "project_deploy_troubleshooting_hint": "If deploy fails, try these quick checks:",
     "project_deploy_unknown": "unknown",
     "project_deployment_tab_deployments": "Deployments",
     "project_detail_error_text": "Error: {error}",
@@ -8926,8 +7910,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_github_import": "GitHub Import",
     "project_github_import_as_new": "Import as new project",
     "project_github_import_failed": "Import failed: {error}",
-    "project_github_import_missing_project_id":
-        "Import succeeded but missing project id",
+    "project_github_import_missing_project_id": "Import succeeded but missing project id",
     "project_github_imported": "Imported",
     "project_github_imported_description": "Imported from GitHub: {repo}",
     "project_github_invalid_repo_url": "Invalid repository URL",
@@ -8946,46 +7929,32 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_github_verify_access": "Verify access",
     "project_github_verify_access_failed": "Verify access failed: {error}",
     "project_github_workspace_branch": "workspace: {branch}",
-    "project_name_hint":
-        "Оставьте пустым, чтобы использовать название репозитория",
+    "project_name_hint": "Оставьте пустым, чтобы использовать название репозитория",
     "project_name_optional": "Название проекта (необязательно)",
     "project_overview_community_action_publish": "Publish",
     "project_overview_community_action_release_publish": "Release & Publish",
     "project_overview_community_action_unpublish": "Unpublish",
     "project_overview_community_action_update": "Update",
     "project_overview_community_action_view": "View",
-    "project_overview_community_hint":
-        "Publish a community post linked to this project (auto-release to production if needed).",
-    "project_overview_community_progress_deploy":
-        "Triggering production deploy…",
+    "project_overview_community_hint": "Publish a community post linked to this project (auto-release to production if needed).",
+    "project_overview_community_progress_deploy": "Triggering production deploy…",
     "project_overview_community_progress_finalizing": "Finalizing…",
     "project_overview_community_progress_merge": "Merging branches…",
     "project_overview_community_progress_publish": "Publishing to community…",
-    "project_overview_community_publish_dialog_current_domain":
-        "Current domain: {domain}",
-    "project_overview_community_publish_dialog_has_prod":
-        "This project already has a production deployment. Publishing will create or update a community post linked to your project overview.",
-    "project_overview_community_publish_dialog_need_release":
-        "To publish this project to the community, we first need to release it to production. We'll merge your dev branch into main, trigger a production deploy, then publish the post.",
-    "project_overview_community_publish_dialog_step_deploy":
-        "• Trigger production deploy",
-    "project_overview_community_publish_dialog_step_merge":
-        "• Merge dev → main",
-    "project_overview_community_publish_dialog_step_publish":
-        "• Publish to community",
+    "project_overview_community_publish_dialog_current_domain": "Current domain: {domain}",
+    "project_overview_community_publish_dialog_has_prod": "This project already has a production deployment. Publishing will create or update a community post linked to your project overview.",
+    "project_overview_community_publish_dialog_need_release": "To publish this project to the community, we first need to release it to production. We'll merge your dev branch into main, trigger a production deploy, then publish the post.",
+    "project_overview_community_publish_dialog_step_deploy": "• Trigger production deploy",
+    "project_overview_community_publish_dialog_step_merge": "• Merge dev → main",
+    "project_overview_community_publish_dialog_step_publish": "• Publish to community",
     "project_overview_community_publish_dialog_steps": "Steps:",
     "project_overview_community_publish_dialog_title": "Publish to community",
-    "project_overview_community_publish_failed":
-        "Failed to publish to community",
-    "project_overview_community_publish_failed_sentence":
-        "Failed to publish to community.",
+    "project_overview_community_publish_failed": "Failed to publish to community",
+    "project_overview_community_publish_failed_sentence": "Failed to publish to community.",
     "project_overview_community_publish_success": "Published to community",
-    "project_overview_community_release_merge_message":
-        "Merge {head} into {base}",
-    "project_overview_community_release_no_commits":
-        "No commits found on development branch",
-    "project_overview_community_release_publish_failed":
-        "Production deploy succeeded, but failed to publish to community",
+    "project_overview_community_release_merge_message": "Merge {head} into {base}",
+    "project_overview_community_release_no_commits": "No commits found on development branch",
+    "project_overview_community_release_publish_failed": "Production deploy succeeded, but failed to publish to community",
     "project_overview_community_status_draft": "Draft",
     "project_overview_community_status_none": "Not published",
     "project_overview_community_status_published": "Published",
@@ -8994,25 +7963,20 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_overview_community_unpublish_success": "Unpublished",
     "project_overview_community_update_failed": "Failed to update post",
     "project_overview_community_update_success": "Post updated",
-    "project_overview_danger_delete_confirm_label":
-        "Type project name to confirm",
-    "project_overview_danger_delete_desc":
-        "This action cannot be undone. Please type the project name to confirm deletion.",
+    "project_overview_danger_delete_confirm_label": "Type project name to confirm",
+    "project_overview_danger_delete_desc": "This action cannot be undone. Please type the project name to confirm deletion.",
     "project_overview_danger_delete_failed": "Failed to delete project",
     "project_overview_danger_delete_in_progress": "Deleting {name}...",
     "project_overview_danger_delete_name_mismatch": "Name does not match.",
     "project_overview_danger_delete_progress_cleanup": "Final cleanup...",
-    "project_overview_danger_delete_progress_remove":
-        "Removing project resources...",
-    "project_overview_danger_delete_progress_submit":
-        "Submitting delete request...",
+    "project_overview_danger_delete_progress_remove": "Removing project resources...",
+    "project_overview_danger_delete_progress_submit": "Submitting delete request...",
     "project_overview_danger_delete_success": "Deleted {name}",
     "project_overview_danger_delete_title": "Delete project",
     "project_overview_danger_project_name": "Project: {name}",
     "project_overview_danger_title": "Danger zone",
     "project_overview_danger_transfer_action": "Transfer",
-    "project_overview_danger_transfer_desc":
-        "Enter the recipient email to transfer ownership. You will lose access after transfer.",
+    "project_overview_danger_transfer_desc": "Enter the recipient email to transfer ownership. You will lose access after transfer.",
     "project_overview_danger_transfer_failed": "Failed to transfer project",
     "project_overview_danger_transfer_recipient": "Recipient email",
     "project_overview_danger_transfer_success": "Project transferred",
@@ -9034,12 +7998,10 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_overview_health_title": "Health metrics",
     "project_overview_links_github_repo": "GitHub Repository",
     "project_overview_links_not_available": "Not available",
-    "project_overview_links_open_github_failed":
-        "Could not open GitHub repository",
+    "project_overview_links_open_github_failed": "Could not open GitHub repository",
     "project_overview_links_open_preview_failed": "Could not open preview URL",
     "project_overview_links_preview_url": "Preview URL",
-    "project_overview_recent_deployments_empty":
-        "No recent deployments — ship a new build to see activity here.",
+    "project_overview_recent_deployments_empty": "No recent deployments — ship a new build to see activity here.",
     "project_overview_recent_deployments_env": "{env} deployment",
     "project_overview_recent_deployments_feed": "Activity feed",
     "project_overview_recent_deployments_title": "Recent deployments",
@@ -9060,27 +8022,21 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_payment_add_product": "Add Product",
     "project_payment_add_product_failed": "Failed to add product: {error}",
     "project_payment_add_product_title": "Add Payment Product",
-    "project_payment_ai_prompt_product":
-        "Can you analyze the payment product \"{name}\" and provide suggestions on pricing strategy, configuration, or marketing improvements?",
-    "project_payment_ai_prompt_transaction":
-        "Can you analyze this payment transaction ({amount}, {status}) and provide insights about payment patterns or recommendations?",
+    "project_payment_ai_prompt_product": "Can you analyze the payment product \"{name}\" and provide suggestions on pricing strategy, configuration, or marketing improvements?",
+    "project_payment_ai_prompt_transaction": "Can you analyze this payment transaction ({amount}, {status}) and provide insights about payment patterns or recommendations?",
     "project_payment_anonymous": "Anonymous",
-    "project_payment_available_for_purchase":
-        "Product is available for purchase",
+    "project_payment_available_for_purchase": "Product is available for purchase",
     "project_payment_conversion_rate": "Conversion Rate",
     "project_payment_description_hint": "Describe your product",
     "project_payment_description_optional": "Description (Optional)",
     "project_payment_edit": "Edit",
     "project_payment_edit_product_title": "Edit Payment Product",
     "project_payment_enable_button": "Включить платежи",
-    "project_payment_enable_description":
-        "Платежи для этого проекта ещё не активированы. Сначала инициализируйте платежи, а затем управляйте товарами, транзакциями, банковскими счетами, выводами и webhook.",
+    "project_payment_enable_description": "Платежи для этого проекта ещё не активированы. Сначала инициализируйте платежи, а затем управляйте товарами, транзакциями, банковскими счетами, выводами и webhook.",
     "project_payment_enable_failed": "Не удалось активировать платежи",
-    "project_payment_enable_feature_checkout":
-        "Stripe Checkout и платёжные ссылки",
+    "project_payment_enable_feature_checkout": "Stripe Checkout и платёжные ссылки",
     "project_payment_enable_feature_products": "Товары, балансы и выводы",
-    "project_payment_enable_feature_webhooks":
-        "Жизненный цикл заказов с поддержкой webhook",
+    "project_payment_enable_feature_webhooks": "Жизненный цикл заказов с поддержкой webhook",
     "project_payment_enable_loading": "Инициализация…",
     "project_payment_enable_success": "Платежи успешно активированы",
     "project_payment_enable_title": "Включить платежи",
@@ -9105,20 +8061,15 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_payment_total_revenue": "Total Revenue",
     "project_payment_transactions": "Transactions",
     "project_payment_unknown_product": "Unknown Product",
-    "project_payment_update_product_failed":
-        "Failed to update product: {error}",
+    "project_payment_update_product_failed": "Failed to update product: {error}",
     "projects_action_load_more": "Load More",
     "projects_action_relogin": "Re-login",
-    "projects_empty_search_message":
-        "Попробуйте другое ключевое слово или очистите поиск.",
+    "projects_empty_search_message": "Попробуйте другое ключевое слово или очистите поиск.",
     "projects_empty_search_title": "Подходящих проектов нет",
-    "projects_empty_state_message":
-        "Создайте свой первый проект, чтобы начать работу.",
-    "projects_intro_subtitle":
-        "Ищите, открывайте и управляйте своим активным рабочим пространством.",
+    "projects_empty_state_message": "Создайте свой первый проект, чтобы начать работу.",
+    "projects_intro_subtitle": "Ищите, открывайте и управляйте своим активным рабочим пространством.",
     "projects_search_hint": "Search projects...",
-    "projects_searching_subtitle":
-        "Отфильтрованные результаты по текущему запросу.",
+    "projects_searching_subtitle": "Отфильтрованные результаты по текущему запросу.",
     "projects_sync_failed_title": "Sync failed",
     "projects_time_date": "{day}/{month}/{year}",
     "projects_time_days_ago": "{value}d ago",
@@ -9141,7 +8092,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "resend_after": "Повторить через",
     "resend_code": "Повторить отправку кода",
     "reset_password": "Сбросить пароль",
-    "reset_password_subtitle": "Сбросить пароль для входа",
+    "reset_password_subtitle": "Сбросить пароль",
     "resetting": "Сброс...",
     "retry": "Retry",
     "save": "Save",
@@ -9149,8 +8100,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "search": "Поиск",
     "send_code": "Отправить код",
     "sending": "Отправка...",
-    "session_expired_message":
-        "Срок действия входа истек. Пожалуйста, войдите снова.",
+    "session_expired_message": "Срок действия входа истек. Пожалуйста, войдите снова.",
     "session_expired_title": "Сессия истекла",
     "settings": "Настройки",
     "settings_api_key": "API-ключ",
@@ -9160,28 +8110,16 @@ kLocalizedValues = <String, Map<String, String>>{
     "settings_editor_appearance_mode": "Режим отображения",
     "settings_editor_dark_theme": "Тёмная тема",
     "settings_editor_default_wrap": "Перенос строк по умолчанию",
-    "settings_editor_default_wrap_hint":
-        "Открывать редакторы с включённым переносом строк по умолчанию.",
-    "settings_editor_engine": "Движок редактора",
-    "settings_editor_engine_flutter_code_editor": "Flutter Code Editor",
-    "settings_editor_engine_flutter_code_editor_hint":
-        "Flutter Code Editor остаётся полностью нативным для Flutter и сохраняет текущий сценарий сворачивания кода.",
-    "settings_editor_engine_flutter_monaco": "Flutter Monaco",
-    "settings_editor_engine_flutter_monaco_hint":
-        "Monaco использует платформенный WebView/iframe и обычно лучше ведёт себя на больших файлах.",
-    "settings_editor_entry_subtitle": "Тема, шрифт, перенос строк",
+    "settings_editor_default_wrap_hint": "Открывать с переносом.",
+    "settings_editor_entry_subtitle": "Тема, шрифт, перенос",
     "settings_editor_font_size": "Размер шрифта",
-    "settings_editor_footer":
-        "Выберите отдельно светлую и тёмную темы редактора, а затем решите, следует ли редактору за внешним видом приложения или оставаться фиксированным.",
+    "settings_editor_footer": "Выберите тему и поведение.",
     "settings_editor_light_theme": "Светлая тема",
     "settings_editor_preview_comment": "Предпросмотр в стиле VS Code",
-    "settings_editor_saved_message":
-        "Светлая тема, тёмная тема, режим отображения и настройки редактора сохранены.",
+    "settings_editor_saved_message": "Настройки сохранены.",
     "settings_editor_show_rulers": "Показывать линейки",
-    "settings_editor_show_rulers_hint":
-        "Показывать вертикальные линейки на колонках 80 и 120.",
-    "settings_editor_subtitle":
-        "Настройте внешний вид редактора так, чтобы он был ближе к рабочему пространству VS Code.",
+    "settings_editor_show_rulers_hint": "Линейки на 80 / 120.",
+    "settings_editor_subtitle": "Тема и поведение.",
     "settings_editor_tab_size": "Размер табуляции",
     "settings_editor_theme_a11y_light": "A11y Light",
     "settings_editor_theme_dracula": "Dracula",
@@ -9210,7 +8148,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "syncing": "Синхронизация",
     "syncing_message": "Синхронизация репозиториев...",
     "system_mode": "Системная",
-    "theme_subtitle": "Светлый или темный режим",
+    "theme_subtitle": "Светлый или тёмный",
     "theme_switched": "Переключено на",
     "theme_title": "Тема",
     "theme_updated": "Тема обновлена",
@@ -9226,35 +8164,34 @@ kLocalizedValues = <String, Map<String, String>>{
     "topup_method_google_pay": "Google Pay",
     "topup_payment_canceled_message": "The payment was canceled.",
     "topup_payment_canceled_title": "Payment canceled",
-    "topup_payment_submitted_message":
-        "Your top-up payment was submitted successfully.",
+    "topup_payment_submitted_message": "Your top-up payment was submitted successfully.",
     "topup_payment_submitted_title": "Payment submitted",
     "topup_subtitle": "Add funds with {methods} through Stripe.",
     "topup_title": "Top up credits",
-    "topup_unconfigured":
-        "Stripe mobile payment is not configured in this build.",
+    "topup_unconfigured": "Stripe mobile payment is not configured in this build.",
+    "two_factor_cancel": "Отмена",
+    "two_factor_disable": "Отключить",
+    "two_factor_disable_confirm": "Вы уверены, что хотите отключить двухфакторную аутентификацию? Ваша учетная запись станет менее безопасной.",
+    "two_factor_disable_title": "Отключить двухфакторную аутентификацию",
+    "two_factor_title": "Двухфакторная аутентификация",
+    "two_factor_verify_enable": "Проверить и включить",
     "upgrade_best_fit": "Best fit",
     "upgrade_billing_monthly": "Monthly",
     "upgrade_billing_yearly": "Yearly",
     "upgrade_credits": "credits",
     "upgrade_cycle": "cycle",
-    "upgrade_empty_detail":
-        "Subscription packages will appear here when published.",
+    "upgrade_empty_detail": "Subscription packages will appear here when published.",
     "upgrade_empty_title": "No plans available",
     "upgrade_featured_hint": "Balanced for most active builders",
-    "upgrade_footer_configured":
-        "Payments are processed natively in-app. Balance top-up stays in USD for now.",
-    "upgrade_footer_unconfigured":
-        "This build still needs STRIPE_PUBLISHABLE_KEY before native checkout can open.",
+    "upgrade_footer_configured": "Payments are processed natively in-app. Balance top-up stays in USD for now.",
+    "upgrade_footer_unconfigured": "This build still needs STRIPE_PUBLISHABLE_KEY before native checkout can open.",
     "upgrade_load_failed_title": "Failed to load plans",
     "upgrade_period": "period",
     "upgrade_quota": "Quota",
     "upgrade_standard_hint": "Designed for focused production usage",
     "upgrade_subscription_failed": "Subscription failed: {error}",
-    "upgrade_subscription_submitted":
-        "Subscription payment submitted successfully.",
-    "upgrade_subtitle":
-        "Choose a plan built for sustained usage, faster limits, and cleaner billing.",
+    "upgrade_subscription_submitted": "Subscription payment submitted successfully.",
+    "upgrade_subtitle": "Choose a plan built for sustained usage, faster limits, and cleaner billing.",
     "upgrade_title": "Upgrade",
     "verify_code": "Код подтверждения",
     "verify_code_complete": "Пожалуйста, введите полный код подтверждения",
@@ -9266,13 +8203,11 @@ kLocalizedValues = <String, Map<String, String>>{
     "workspace_banner_checking_status": "Checking status.",
     "workspace_banner_issue": "Workspace issue",
     "workspace_banner_ready": "Workspace ready",
-    "workspace_banner_retrying_background":
-        "Start failed. Retrying in the background.",
+    "workspace_banner_retrying_background": "Start failed. Retrying in the background.",
     "workspace_banner_sleeping_needed": "😴 Спит до следующего запроса.",
     "workspace_banner_starting": "Starting workspace",
     "workspace_banner_starting_message": "Starting workspace.",
-    "workspace_banner_starting_now":
-        "Starting now. Your message will send next.",
+    "workspace_banner_starting_now": "Starting now. Your message will send next.",
     "workspace_banner_syncing_files": "Syncing files.",
     "workspace_tip_checking_short": "Checking",
     "workspace_tip_checking_status": "Checking workspace status",
@@ -9301,34 +8236,30 @@ kLocalizedValues = <String, Map<String, String>>{
     "workspace_warmup_inline_next": "Starting workspace. Sending next.",
     "workspace_warmup_inline_now": "Ready. Sending now.",
     "workspace_warmup_inline_ready": "Workspace ready. Sending your message...",
-    "workspace_warmup_inline_starting":
-        "Workspace is starting. Your message will send automatically.",
+    "workspace_warmup_inline_starting": "Workspace is starting. Your message will send automatically.",
     "workspace_warmup_notice_next": "Starting. Sending next.",
-    "workspace_warmup_notice_starting":
-        "Workspace is starting. Sending will continue automatically.",
+    "workspace_warmup_notice_starting": "Workspace is starting. Sending will continue automatically.",
     "your_invite_code": "Ваш код приглашения",
   },
   "zh": <String, String>{
     "about": "关于",
     "about_description": "一个 AI 驱动的应用开发平台。",
-    "about_subtitle": "应用版本和信息",
+    "about_subtitle": "版本与信息",
     "about_title": "关于",
     "access": "Access",
     "account_data_contact_support_delete": "联系支持删除账户",
     "account_data_copy_request_template": "复制请求文案",
-    "account_data_delete_confirm_message":
-        "这将通过 {support_email} 发起账户删除请求。删除可能不可恢复，是否继续？",
+    "account_data_delete_confirm_message": "这将通过 {support_email} 发起账户删除请求。删除可能不可恢复，是否继续？",
     "account_data_delete_description": "账户删除目前由客服处理。在发起删除前请先阅读法律限制说明。",
-    "account_data_delete_template":
-        "请求：账户删除\\n账户：{email}\\n请删除我的账户及关联数据。\\n我理解该操作可能不可逆。\\n联系方式：{support_email}",
+    "account_data_delete_template": "请求：账户删除\\n账户：{email}\\n请删除我的账户及关联数据。\\n我理解该操作可能不可逆。\\n联系方式：{support_email}",
     "account_data_delete_title": "账户删除",
     "account_data_export_description": "导出目前由客服处理。我们提供可复制并发送的请求模板。",
-    "account_data_export_template":
-        "请求：数据导出\\n账户：{email}\\n请导出我的账户数据（资料、项目、计费）。\\n联系方式：{support_email}",
+    "account_data_export_template": "请求：数据导出\\n账户：{email}\\n请导出我的账户数据（资料、项目、计费）。\\n联系方式：{support_email}",
     "account_data_export_title": "数据导出",
     "account_data_legal": "法律",
+    "account_data_open_projects": "打开项目",
     "account_data_request_template_copied": "请求文案已复制到剪贴板",
-    "account_data_subtitle": "数据导出与账户删除",
+    "account_data_subtitle": "导出 / 删除",
     "account_data_support_dialog_message": "请通过 {support_email} 联系客服处理此请求。",
     "account_data_title": "账户与数据",
     "activity": "动态",
@@ -9366,7 +8297,11 @@ kLocalizedValues = <String, Map<String, String>>{
     "api_keys_revoked": "已撤销",
     "api_keys_title": "创建 API Key",
     "api_keys_unnamed": "未命名 Key",
-    "api_settings": "API",
+    "api_settings": "API 设置",
+    "api_settings_copy_diagnostics": "复制诊断信息",
+    "api_settings_reset": "重置",
+    "api_settings_save": "保存",
+    "api_settings_test_connection": "测试连接",
     "appearance": "外观",
     "back": "返回",
     "basic_information": "基本信息",
@@ -9375,7 +8310,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "billing_insufficient_description": "当前操作余额不足，请先充值后再继续。",
     "billing_insufficient_title": "余额不足",
     "bind_email": "绑定邮箱",
-    "bind_email_subtitle": "绑定邮箱到您的账户",
+    "bind_email_subtitle": "绑定邮箱",
     "browse": "浏览",
     "cancel": "Cancel",
     "chat_banner_next_prompt_queued": "下一条提示已加入队列。",
@@ -9478,8 +8413,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "create_project": "新建项目",
     "create_project_accept_invitation": "接受邀请",
     "create_project_accept_invitation_failed": "接受邀请失败：{error}",
-    "create_project_accept_invitation_hint":
-        "在 GitHub 仓库设置中将“{bot}”添加为协作者，然后点击“接受邀请”。",
+    "create_project_accept_invitation_hint": "在 GitHub 仓库设置中将“{bot}”添加为协作者，然后点击“接受邀请”。",
     "create_project_access_verified": "权限已验证",
     "create_project_access_verified_for": "已验证 {repo} 的访问权限",
     "create_project_action": "创建项目",
@@ -9501,8 +8435,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "create_project_failed_to_create": "创建项目失败：{error}\n\nAPI 地址：{base}",
     "create_project_fill_required": "请填写所有必填项",
     "create_project_github_bot_username": "GitHub 机器人用户名",
-    "create_project_github_collaborator_subtitle":
-        "引导式导入：添加机器人 → 接受邀请 → 验证权限 → 导入。",
+    "create_project_github_collaborator_subtitle": "引导式导入：添加机器人 → 接受邀请 → 验证权限 → 导入。",
     "create_project_github_collaborator_title": "从 GitHub 导入（协作者）",
     "create_project_github_guided_title": "引导式 GitHub 导入（3 步）",
     "create_project_github_import_title": "GitHub 导入",
@@ -9515,8 +8448,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "create_project_import_public_title": "导入公开仓库",
     "create_project_import_repo_action": "导入仓库",
     "create_project_imported_from_github": "由 GitHub 导入：{repo}",
-    "create_project_invalid_repo_url":
-        "仓库 URL 无效。示例：https://github.com/owner/repo",
+    "create_project_invalid_repo_url": "仓库 URL 无效。示例：https://github.com/owner/repo",
     "create_project_invalid_repo_url_simple": "仓库 URL 无效",
     "create_project_invitation_accepted": "已接受邀请",
     "create_project_invitation_accepted_message": "邀请已接受",
@@ -9527,12 +8459,10 @@ kLocalizedValues = <String, Map<String, String>>{
     "create_project_login_expired_models": "登录已过期，请重新登录后再加载模型。",
     "create_project_login_expired_templates": "登录已过期，请重新登录后再加载模板。",
     "create_project_missing_project_id_after_import": "导入成功，但缺少项目 ID",
-    "create_project_model_switch_failed_continue":
-        "切换模型失败，将继续使用服务端默认模型。（{error}）",
+    "create_project_model_switch_failed_continue": "切换模型失败，将继续使用服务端默认模型。（{error}）",
     "create_project_new_ai_hint": "示例：一个带登录、角色权限和数据库的团队任务看板应用。",
     "create_project_new_ai_subtitle": "描述你想构建的内容，我们会帮你完成基础配置。",
-    "create_project_new_ai_summary":
-        "用一句话描述页面、鉴权、数据和关键流程（至少 8 个字符）；我们会创建项目并在聊天中继续。",
+    "create_project_new_ai_summary": "用一句话描述页面、鉴权、数据和关键流程（至少 8 个字符）；我们会创建项目并在聊天中继续。",
     "create_project_new_ai_title": "AI 创建项目",
     "create_project_new_project_title": "新建项目",
     "create_project_open_github_settings": "打开 GitHub 设置",
@@ -9555,8 +8485,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "create_project_template": "模板",
     "create_project_template_auto_description": "让 D1V 根据你的描述自动选择最适合的模板。",
     "create_project_template_auto_name": "自动",
-    "create_project_token_missing":
-        "未登录或缺少令牌，请重新登录。\n\n提示：设置 → 个人资料 → API → 复制诊断信息。",
+    "create_project_token_missing": "未登录或缺少令牌，请重新登录。\n\n提示：设置 → 个人资料 → API → 复制诊断信息。",
     "create_project_verify_access": "验证访问权限",
     "create_project_verify_access_failed": "验证访问权限失败：{error}",
     "create_project_waiting_workspace": "等待工作区就绪…",
@@ -9720,7 +8649,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "help_support_link_open_error": "打开 {name} 失败：{error}",
     "help_support_link_open_failed": "无法打开 {name}",
     "help_support_quick_actions": "快捷操作",
-    "help_support_subtitle": "获取帮助与支持",
+    "help_support_subtitle": "帮助支持",
     "help_support_user_guide_subtitle": "了解全部功能的使用方法",
     "help_support_user_guide_title": "用户指南",
     "import_action": "导入",
@@ -9793,7 +8722,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "my_invites_subtitle": "查看您的邀请历史",
     "new_password": "新密码",
     "notifications": "通知",
-    "notifications_subtitle": "管理通知",
+    "notifications_subtitle": "通知设置",
     "onboarding_action_back": "上一步",
     "onboarding_action_finish": "完成",
     "onboarding_action_next": "下一步",
@@ -9878,6 +8807,23 @@ kLocalizedValues = <String, Map<String, String>>{
     "passwords_do_not_match": "两次输入的密码不一致",
     "pricing": "价格方案",
     "privacy": "隐私",
+    "privacy_allow_analytics": "允许数据分析",
+    "privacy_allow_analytics_desc": "通过共享使用数据帮助改进应用",
+    "privacy_allow_data_sharing": "允许数据共享",
+    "privacy_allow_data_sharing_desc": "共享数据以改进我们的服务",
+    "privacy_allow_third_party_apps": "允许第三方应用",
+    "privacy_allow_third_party_apps_desc": "启用与第三方服务的集成",
+    "privacy_discoverable_by_email": "可通过邮箱发现",
+    "privacy_discoverable_by_email_desc": "允许其他人通过邮箱找到您",
+    "privacy_marketing_emails": "营销邮件",
+    "privacy_marketing_emails_desc": "接收有关新功能和优惠的邮件",
+    "privacy_public_profile": "公开个人资料",
+    "privacy_public_profile_desc": "允许任何人查看您的个人资料",
+    "privacy_settings": "隐私设置",
+    "privacy_show_activity_status": "显示活动状态",
+    "privacy_show_activity_status_desc": "向他人显示您的最近活动",
+    "privacy_show_online_status": "显示在线状态",
+    "privacy_show_online_status_desc": "让其他人看到您的活跃状态",
     "profile": "个人中心",
     "profile_ai_random": "AI 随机生成",
     "profile_avatar_generate_failed": "生成头像失败",
@@ -9904,14 +8850,11 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_active_now": "当前活跃",
     "project_analytics_active_visitors": "活跃访客",
     "project_analytics_ai_prompt_active_now": "你可以帮我解读实时活跃用户，并给出提升转化的建议吗？",
-    "project_analytics_ai_prompt_custom_events":
-        "你可以指导我如何在项目中配置自定义事件追踪吗？为了提升产品，最应该追踪哪些事件？",
-    "project_analytics_ai_prompt_dashboard":
-        "你可以帮我解读这些分析数据，并给出提升用户参与度、性能和整体指标的建议吗？",
+    "project_analytics_ai_prompt_custom_events": "你可以指导我如何在项目中配置自定义事件追踪吗？为了提升产品，最应该追踪哪些事件？",
+    "project_analytics_ai_prompt_dashboard": "你可以帮我解读这些分析数据，并给出提升用户参与度、性能和整体指标的建议吗？",
     "project_analytics_ai_prompt_pageviews": "请分析我的浏览量趋势，并给出提升流量和留存的建议。",
     "project_analytics_ai_prompt_sessions": "请分析我的会话数据，并给出提升参与度和会话时长的建议。",
-    "project_analytics_ai_prompt_visitors":
-        "请分析我的访客获取情况，并给出优化建议（SEO、来源渠道、落地页）。",
+    "project_analytics_ai_prompt_visitors": "请分析我的访客获取情况，并给出优化建议（SEO、来源渠道、落地页）。",
     "project_analytics_all": "全部",
     "project_analytics_bounces": "跳出数",
     "project_analytics_comparison_notes": "对比说明",
@@ -10118,12 +9061,9 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_chat_tab_preview_short": "预览",
     "project_chat_unfold_all": "全部展开",
     "project_database_actions": "操作",
-    "project_database_ai_prompt_graph":
-        "基于当前数据库 schema，请解释“{table}”与其他表（外键）的关系并提出优化建议。",
-    "project_database_ai_prompt_relation":
-        "请解释 {from} 到 {to} 的关系，并建议可用索引与常见查询方式。",
-    "project_database_ai_prompt_table":
-        "请分析数据库表“{table}”，并说明其用途、结构，以及可优化点或最佳实践建议。",
+    "project_database_ai_prompt_graph": "基于当前数据库 schema，请解释“{table}”与其他表（外键）的关系并提出优化建议。",
+    "project_database_ai_prompt_relation": "请解释 {from} 到 {to} 的关系，并建议可用索引与常见查询方式。",
+    "project_database_ai_prompt_table": "请分析数据库表“{table}”，并说明其用途、结构，以及可优化点或最佳实践建议。",
     "project_database_ask_ai_table": "询问 AI 分析此表",
     "project_database_branch": "分支",
     "project_database_branch_hint": "当前 Neon 分支上下文",
@@ -10135,8 +9075,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_database_delete_row_confirm": "要从 {table} 删除这一行吗？此操作不可撤销。",
     "project_database_edit_row": "编辑行",
     "project_database_enable_action": "启用数据库",
-    "project_database_enable_hint":
-        "为该项目开通 Neon PostgreSQL 数据库，并开始探索你的 Schema 与数据。",
+    "project_database_enable_hint": "为该项目开通 Neon PostgreSQL 数据库，并开始探索你的 Schema 与数据。",
     "project_database_enable_title": "启用数据库",
     "project_database_enabled_success": "数据库已成功启用！",
     "project_database_enabling": "启用中...",
@@ -10191,31 +9130,21 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_active_preview": "预览部署进行中...",
     "project_deploy_active_prod": "生产发布进行中：{phase}",
     "project_deploy_active_reverting": "正在回滚提交{suffix}并触发预览部署...",
-    "project_deploy_ai_prompt_environment":
-        "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_environment": "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
     "project_deploy_ai_prompt_prefix": "My deploy failed with this error:",
-    "project_deploy_ai_prompt_preview":
-        "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_prod":
-        "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_suffix":
-        "Give me the most likely root cause and a step-by-step fix.",
-    "project_deploy_ai_prompt_vercel_middle":
-        "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
-    "project_deploy_ai_prompt_vercel_prefix":
-        "My Vercel deployment failed for project",
-    "project_deploy_ai_prompt_vercel_suffix":
-        "Also suggest what logs/env vars to check first.",
+    "project_deploy_ai_prompt_preview": "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_prod": "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_suffix": "Give me the most likely root cause and a step-by-step fix.",
+    "project_deploy_ai_prompt_vercel_middle": "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
+    "project_deploy_ai_prompt_vercel_prefix": "My Vercel deployment failed for project",
+    "project_deploy_ai_prompt_vercel_suffix": "Also suggest what logs/env vars to check first.",
     "project_deploy_ask_ai": "询问 AI",
     "project_deploy_build_log": "构建日志",
     "project_deploy_build_logs": "构建日志",
     "project_deploy_close": "关闭",
-    "project_deploy_coach_no_preview":
-        "No preview yet. Start with a preview deploy to reduce release risk.",
-    "project_deploy_coach_preview_ready":
-        "Preview is ready. Recommended next step: release to production.",
-    "project_deploy_coach_prod_live":
-        "Production is live. Keep shipping with small preview iterations.",
+    "project_deploy_coach_no_preview": "No preview yet. Start with a preview deploy to reduce release risk.",
+    "project_deploy_coach_preview_ready": "Preview is ready. Recommended next step: release to production.",
+    "project_deploy_coach_prod_live": "Production is live. Keep shipping with small preview iterations.",
     "project_deploy_common_fixes": "常见修复：",
     "project_deploy_configure_later": "稍后配置",
     "project_deploy_confirm_preview_message": "这会在 Vercel 上触发一次新的预览（dev）部署。",
@@ -10288,8 +9217,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_retry_prod_message": "这会比较 dev/main，必要时自动合并，然后触发新的生产部署。",
     "project_deploy_retry_prod_title": "重试生产部署？",
     "project_deploy_revert_confirm_action": "确认回滚",
-    "project_deploy_revert_confirm_message":
-        "这会对提交 {sha} 执行 git revert，并触发新的预览部署。",
+    "project_deploy_revert_confirm_message": "这会对提交 {sha} 执行 git revert，并触发新的预览部署。",
     "project_deploy_revert_confirm_title": "回滚这个提交？",
     "project_deploy_revert_failed": "回滚失败",
     "project_deploy_revert_no_sha": "该部署没有可用的 commit SHA。",
@@ -10385,10 +9313,8 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_overview_community_progress_merge": "正在合并分支…",
     "project_overview_community_progress_publish": "正在发布到社区…",
     "project_overview_community_publish_dialog_current_domain": "当前域名：{domain}",
-    "project_overview_community_publish_dialog_has_prod":
-        "该项目已有生产部署。发布后会创建或更新与项目概览关联的社区帖子。",
-    "project_overview_community_publish_dialog_need_release":
-        "要将项目发布到社区，需要先发布到生产环境。我们会先把 dev 分支合并到 main，再触发生产部署，最后发布帖子。",
+    "project_overview_community_publish_dialog_has_prod": "该项目已有生产部署。发布后会创建或更新与项目概览关联的社区帖子。",
+    "project_overview_community_publish_dialog_need_release": "要将项目发布到社区，需要先发布到生产环境。我们会先把 dev 分支合并到 main，再触发生产部署，最后发布帖子。",
     "project_overview_community_publish_dialog_step_deploy": "• 触发生产部署",
     "project_overview_community_publish_dialog_step_merge": "• 合并 dev → main",
     "project_overview_community_publish_dialog_step_publish": "• 发布到社区",
@@ -10468,8 +9394,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_payment_add_product_failed": "新增商品失败：{error}",
     "project_payment_add_product_title": "新增支付商品",
     "project_payment_ai_prompt_product": "你可以分析支付商品“{name}”并给出定价策略、配置或营销优化建议吗？",
-    "project_payment_ai_prompt_transaction":
-        "你可以分析这条支付交易（{amount}，{status}）并给出支付模式洞察或优化建议吗？",
+    "project_payment_ai_prompt_transaction": "你可以分析这条支付交易（{amount}，{status}）并给出支付模式洞察或优化建议吗？",
     "project_payment_anonymous": "匿名",
     "project_payment_available_for_purchase": "该商品可供购买",
     "project_payment_conversion_rate": "转化率",
@@ -10478,8 +9403,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_payment_edit": "编辑",
     "project_payment_edit_product_title": "编辑支付商品",
     "project_payment_enable_button": "启用支付",
-    "project_payment_enable_description":
-        "此项目尚未启用支付。请先初始化支付能力，然后再管理商品、交易、银行账户、提现和 Webhook。",
+    "project_payment_enable_description": "此项目尚未启用支付。请先初始化支付能力，然后再管理商品、交易、银行账户、提现和 Webhook。",
     "project_payment_enable_failed": "启用支付失败",
     "project_payment_enable_feature_checkout": "Stripe 结账与支付链接",
     "project_payment_enable_feature_products": "商品、余额与提现管理",
@@ -10539,7 +9463,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "resend_after": "秒后重发",
     "resend_code": "重新发送验证码",
     "reset_password": "重置密码",
-    "reset_password_subtitle": "重置您的登录密码",
+    "reset_password_subtitle": "重置密码",
     "resetting": "重置中...",
     "retry": "重试",
     "save": "Save",
@@ -10558,11 +9482,6 @@ kLocalizedValues = <String, Map<String, String>>{
     "settings_editor_dark_theme": "深色主题",
     "settings_editor_default_wrap": "默认换行",
     "settings_editor_default_wrap_hint": "默认开启换行。",
-    "settings_editor_engine": "编辑器内核",
-    "settings_editor_engine_flutter_code_editor": "Flutter Code Editor",
-    "settings_editor_engine_flutter_code_editor_hint": "原生 Flutter 编辑器。",
-    "settings_editor_engine_flutter_monaco": "Flutter Monaco",
-    "settings_editor_engine_flutter_monaco_hint": "更适合大文件。",
     "settings_editor_entry_subtitle": "主题、字体、换行",
     "settings_editor_font_size": "字体大小",
     "settings_editor_footer": "分别选择主题与行为。",
@@ -10600,7 +9519,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "syncing": "同步中",
     "syncing_message": "正在同步仓库...",
     "system_mode": "跟随系统",
-    "theme_subtitle": "明亮或深色模式",
+    "theme_subtitle": "浅色或深色",
     "theme_switched": "已切换至",
     "theme_title": "主题",
     "theme_updated": "主题已更新",
@@ -10621,6 +9540,12 @@ kLocalizedValues = <String, Map<String, String>>{
     "topup_subtitle": "通过 Stripe 使用 {methods} 进行充值。",
     "topup_title": "充值积分",
     "topup_unconfigured": "当前构建未配置 Stripe 移动支付。",
+    "two_factor_cancel": "取消",
+    "two_factor_disable": "禁用",
+    "two_factor_disable_confirm": "确定要禁用双因素认证吗？您的账户安全性将会降低。",
+    "two_factor_disable_title": "禁用双因素认证",
+    "two_factor_title": "双因素认证",
+    "two_factor_verify_enable": "验证并启用",
     "upgrade_best_fit": "最佳选择",
     "upgrade_billing_monthly": "月付",
     "upgrade_billing_yearly": "年付",
@@ -10690,24 +9615,22 @@ kLocalizedValues = <String, Map<String, String>>{
   "zh_Hant": <String, String>{
     "about": "關於",
     "about_description": "一個 AI 驅動的應用程式開發平台。",
-    "about_subtitle": "應用版本和資訊",
+    "about_subtitle": "版本與資訊",
     "about_title": "關於",
     "access": "Access",
     "account_data_contact_support_delete": "聯絡客服刪除帳戶",
     "account_data_copy_request_template": "複製請求文案",
-    "account_data_delete_confirm_message":
-        "這將透過 {support_email} 發起帳戶刪除請求。刪除可能無法復原，是否繼續？",
+    "account_data_delete_confirm_message": "這將透過 {support_email} 發起帳戶刪除請求。刪除可能無法復原，是否繼續？",
     "account_data_delete_description": "帳戶刪除目前由客服處理。提出刪除前請先閱讀法律限制說明。",
-    "account_data_delete_template":
-        "請求：帳戶刪除\\n帳戶：{email}\\n請刪除我的帳戶及關聯資料。\\n我了解此操作可能不可逆。\\n聯絡方式：{support_email}",
+    "account_data_delete_template": "請求：帳戶刪除\\n帳戶：{email}\\n請刪除我的帳戶及關聯資料。\\n我了解此操作可能不可逆。\\n聯絡方式：{support_email}",
     "account_data_delete_title": "帳戶刪除",
     "account_data_export_description": "匯出目前由客服處理。我們提供可複製並發送的請求範本。",
-    "account_data_export_template":
-        "請求：資料匯出\\n帳戶：{email}\\n請匯出我的帳戶資料（資料、專案、計費）。\\n聯絡方式：{support_email}",
+    "account_data_export_template": "請求：資料匯出\\n帳戶：{email}\\n請匯出我的帳戶資料（資料、專案、計費）。\\n聯絡方式：{support_email}",
     "account_data_export_title": "資料匯出",
     "account_data_legal": "法律",
+    "account_data_open_projects": "開啟專案",
     "account_data_request_template_copied": "請求文案已複製到剪貼簿",
-    "account_data_subtitle": "資料匯出與帳戶刪除",
+    "account_data_subtitle": "匯出 / 刪除",
     "account_data_support_dialog_message": "請透過 {support_email} 聯絡客服處理此請求。",
     "account_data_title": "帳戶與資料",
     "activity": "動態",
@@ -10745,7 +9668,11 @@ kLocalizedValues = <String, Map<String, String>>{
     "api_keys_revoked": "已撤銷",
     "api_keys_title": "建立 API Key",
     "api_keys_unnamed": "未命名 Key",
-    "api_settings": "API",
+    "api_settings": "API 設定",
+    "api_settings_copy_diagnostics": "複製診斷資訊",
+    "api_settings_reset": "重設",
+    "api_settings_save": "儲存",
+    "api_settings_test_connection": "測試連線",
     "appearance": "外觀",
     "back": "返回",
     "basic_information": "基本資訊",
@@ -10754,7 +9681,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "billing_insufficient_description": "目前操作餘額不足，請先充值後再繼續。",
     "billing_insufficient_title": "餘額不足",
     "bind_email": "綁定電子郵件",
-    "bind_email_subtitle": "綁定電子郵件到您的帳戶",
+    "bind_email_subtitle": "綁定電子郵件",
     "browse": "瀏覽",
     "cancel": "Cancel",
     "chat_banner_next_prompt_queued": "下一則提示已加入佇列。",
@@ -10857,8 +9784,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "create_project": "建立專案",
     "create_project_accept_invitation": "接受邀請",
     "create_project_accept_invitation_failed": "接受邀請失敗：{error}",
-    "create_project_accept_invitation_hint":
-        "在 GitHub 儲存庫設定中將「{bot}」加入為協作者，然後點擊「接受邀請」。",
+    "create_project_accept_invitation_hint": "在 GitHub 儲存庫設定中將「{bot}」加入為協作者，然後點擊「接受邀請」。",
     "create_project_access_verified": "權限已驗證",
     "create_project_access_verified_for": "已驗證 {repo} 的存取權限",
     "create_project_action": "建立專案",
@@ -10880,8 +9806,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "create_project_failed_to_create": "建立專案失敗：{error}\n\nAPI 位址：{base}",
     "create_project_fill_required": "請填寫所有必填欄位",
     "create_project_github_bot_username": "GitHub 機器人使用者名稱",
-    "create_project_github_collaborator_subtitle":
-        "引導式匯入：加入機器人 → 接受邀請 → 驗證權限 → 匯入。",
+    "create_project_github_collaborator_subtitle": "引導式匯入：加入機器人 → 接受邀請 → 驗證權限 → 匯入。",
     "create_project_github_collaborator_title": "從 GitHub 匯入（協作者）",
     "create_project_github_guided_title": "引導式 GitHub 匯入（3 步）",
     "create_project_github_import_title": "GitHub 匯入",
@@ -10894,8 +9819,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "create_project_import_public_title": "匯入公開儲存庫",
     "create_project_import_repo_action": "匯入儲存庫",
     "create_project_imported_from_github": "由 GitHub 匯入：{repo}",
-    "create_project_invalid_repo_url":
-        "儲存庫 URL 無效。範例：https://github.com/owner/repo",
+    "create_project_invalid_repo_url": "儲存庫 URL 無效。範例：https://github.com/owner/repo",
     "create_project_invalid_repo_url_simple": "儲存庫 URL 無效",
     "create_project_invitation_accepted": "已接受邀請",
     "create_project_invitation_accepted_message": "邀請已接受",
@@ -10906,12 +9830,10 @@ kLocalizedValues = <String, Map<String, String>>{
     "create_project_login_expired_models": "登入已過期，請重新登入後再載入模型。",
     "create_project_login_expired_templates": "登入已過期，請重新登入後再載入模板。",
     "create_project_missing_project_id_after_import": "匯入成功，但缺少專案 ID",
-    "create_project_model_switch_failed_continue":
-        "切換模型失敗，將繼續使用伺服器預設模型。（{error}）",
+    "create_project_model_switch_failed_continue": "切換模型失敗，將繼續使用伺服器預設模型。（{error}）",
     "create_project_new_ai_hint": "範例：一個帶登入、角色權限與資料庫的團隊任務看板應用。",
     "create_project_new_ai_subtitle": "描述你想建立的內容，我們會幫你完成基礎設定。",
-    "create_project_new_ai_summary":
-        "用一句話描述頁面、驗證、資料與關鍵流程（至少 8 個字元）；我們會建立專案並在聊天中繼續。",
+    "create_project_new_ai_summary": "用一句話描述頁面、驗證、資料與關鍵流程（至少 8 個字元）；我們會建立專案並在聊天中繼續。",
     "create_project_new_ai_title": "AI 建立專案",
     "create_project_new_project_title": "新建專案",
     "create_project_open_github_settings": "開啟 GitHub 設定",
@@ -10934,8 +9856,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "create_project_template": "模板",
     "create_project_template_auto_description": "讓 D1V 根據你的描述自動選擇最適合的模板。",
     "create_project_template_auto_name": "自動",
-    "create_project_token_missing":
-        "未登入或缺少權杖，請重新登入。\n\n提示：設定 → 個人資料 → API → 複製診斷資訊。",
+    "create_project_token_missing": "未登入或缺少權杖，請重新登入。\n\n提示：設定 → 個人資料 → API → 複製診斷資訊。",
     "create_project_verify_access": "驗證存取權限",
     "create_project_verify_access_failed": "驗證存取權限失敗：{error}",
     "create_project_waiting_workspace": "等待工作區就緒…",
@@ -11099,7 +10020,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "help_support_link_open_error": "開啟 {name} 失敗：{error}",
     "help_support_link_open_failed": "無法開啟 {name}",
     "help_support_quick_actions": "快速操作",
-    "help_support_subtitle": "獲取幫助與支援",
+    "help_support_subtitle": "幫助支援",
     "help_support_user_guide_subtitle": "了解所有功能的使用方式",
     "help_support_user_guide_title": "使用指南",
     "import_action": "匯入",
@@ -11172,7 +10093,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "my_invites_subtitle": "查看您的邀請記錄",
     "new_password": "新密碼",
     "notifications": "通知",
-    "notifications_subtitle": "管理通知",
+    "notifications_subtitle": "通知設定",
     "onboarding_action_back": "上一步",
     "onboarding_action_finish": "完成",
     "onboarding_action_next": "下一步",
@@ -11257,6 +10178,23 @@ kLocalizedValues = <String, Map<String, String>>{
     "passwords_do_not_match": "兩次輸入的密碼不一致",
     "pricing": "方案價格",
     "privacy": "隱私",
+    "privacy_allow_analytics": "允許資料分析",
+    "privacy_allow_analytics_desc": "透過共享使用資料幫助改進應用",
+    "privacy_allow_data_sharing": "允許資料共享",
+    "privacy_allow_data_sharing_desc": "共享資料以改進我們的服務",
+    "privacy_allow_third_party_apps": "允許第三方應用",
+    "privacy_allow_third_party_apps_desc": "啟用與第三方服務的整合",
+    "privacy_discoverable_by_email": "可透過電子郵件發現",
+    "privacy_discoverable_by_email_desc": "允許其他人透過電子郵件找到您",
+    "privacy_marketing_emails": "行銷電子郵件",
+    "privacy_marketing_emails_desc": "接收有關新功能和優惠的電子郵件",
+    "privacy_public_profile": "公開個人資料",
+    "privacy_public_profile_desc": "允許任何人檢視您的個人資料",
+    "privacy_settings": "隱私設定",
+    "privacy_show_activity_status": "顯示活動狀態",
+    "privacy_show_activity_status_desc": "向他人顯示您的最近活動",
+    "privacy_show_online_status": "顯示上線狀態",
+    "privacy_show_online_status_desc": "讓其他人看到您的活躍狀態",
     "profile": "個人中心",
     "profile_ai_random": "AI 隨機生成",
     "profile_avatar_generate_failed": "生成頭像失敗",
@@ -11283,14 +10221,11 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_analytics_active_now": "當前活跃",
     "project_analytics_active_visitors": "活跃訪客",
     "project_analytics_ai_prompt_active_now": "你可以幫我解讀即時活躍使用者，並給出提升轉換的建議嗎？",
-    "project_analytics_ai_prompt_custom_events":
-        "你可以指導我如何在專案中配置自訂事件追蹤嗎？為了提升產品，最應該追蹤哪些事件？",
-    "project_analytics_ai_prompt_dashboard":
-        "你可以幫我解讀這些分析資料，並給出提升使用者參與度、效能和整體指標的建議嗎？",
+    "project_analytics_ai_prompt_custom_events": "你可以指導我如何在專案中配置自訂事件追蹤嗎？為了提升產品，最應該追蹤哪些事件？",
+    "project_analytics_ai_prompt_dashboard": "你可以幫我解讀這些分析資料，並給出提升使用者參與度、效能和整體指標的建議嗎？",
     "project_analytics_ai_prompt_pageviews": "请分析我的瀏覽量趨勢，並给出提升流量和留存的建議。",
     "project_analytics_ai_prompt_sessions": "請分析我的會話資料，並給出提升參與度和會話時長的建議。",
-    "project_analytics_ai_prompt_visitors":
-        "請分析我的訪客獲取情況，並給出最佳化建議（SEO、來源渠道、落地頁）。",
+    "project_analytics_ai_prompt_visitors": "請分析我的訪客獲取情況，並給出最佳化建議（SEO、來源渠道、落地頁）。",
     "project_analytics_all": "全部",
     "project_analytics_bounces": "跳出数",
     "project_analytics_comparison_notes": "對比說明",
@@ -11497,12 +10432,9 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_chat_tab_preview_short": "預覽",
     "project_chat_unfold_all": "全部展開",
     "project_database_actions": "操作",
-    "project_database_ai_prompt_graph":
-        "基於目前資料庫 schema，請說明「{table}」與其他表（外鍵）的關係並提出優化建議。",
-    "project_database_ai_prompt_relation":
-        "請解釋 {from} 到 {to} 的關係，並建議可用索引與常見查詢方式。",
-    "project_database_ai_prompt_table":
-        "請分析資料庫表「{table}」，並說明其用途、結構，以及可優化點或最佳實踐建議。",
+    "project_database_ai_prompt_graph": "基於目前資料庫 schema，請說明「{table}」與其他表（外鍵）的關係並提出優化建議。",
+    "project_database_ai_prompt_relation": "請解釋 {from} 到 {to} 的關係，並建議可用索引與常見查詢方式。",
+    "project_database_ai_prompt_table": "請分析資料庫表「{table}」，並說明其用途、結構，以及可優化點或最佳實踐建議。",
     "project_database_ask_ai_table": "詢問 AI 分析此表",
     "project_database_branch": "分支",
     "project_database_branch_hint": "目前 Neon 分支上下文",
@@ -11514,8 +10446,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_database_delete_row_confirm": "要從 {table} 刪除此列嗎？此操作無法復原。",
     "project_database_edit_row": "編輯資料列",
     "project_database_enable_action": "啟用資料庫",
-    "project_database_enable_hint":
-        "為此專案開通 Neon PostgreSQL 資料庫，並開始探索你的 Schema 與資料。",
+    "project_database_enable_hint": "為此專案開通 Neon PostgreSQL 資料庫，並開始探索你的 Schema 與資料。",
     "project_database_enable_title": "啟用資料庫",
     "project_database_enabled_success": "資料庫已成功啟用！",
     "project_database_enabling": "啟用中...",
@@ -11570,31 +10501,21 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_active_preview": "預覽部署進行中...",
     "project_deploy_active_prod": "生產發佈進行中：{phase}",
     "project_deploy_active_reverting": "正在回滾提交{suffix}並觸發預覽部署...",
-    "project_deploy_ai_prompt_environment":
-        "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_environment": "Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?",
     "project_deploy_ai_prompt_prefix": "My deploy failed with this error:",
-    "project_deploy_ai_prompt_preview":
-        "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_prod":
-        "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
-    "project_deploy_ai_prompt_suffix":
-        "Give me the most likely root cause and a step-by-step fix.",
-    "project_deploy_ai_prompt_vercel_middle":
-        "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
-    "project_deploy_ai_prompt_vercel_prefix":
-        "My Vercel deployment failed for project",
-    "project_deploy_ai_prompt_vercel_suffix":
-        "Also suggest what logs/env vars to check first.",
+    "project_deploy_ai_prompt_preview": "Can you provide insights and recommendations about the Preview deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_prod": "Can you provide insights and recommendations about the Production deployment, including performance optimization, troubleshooting, and best practices?",
+    "project_deploy_ai_prompt_suffix": "Give me the most likely root cause and a step-by-step fix.",
+    "project_deploy_ai_prompt_vercel_middle": "Give a step-by-step debugging checklist based on common Vercel/Remix issues.",
+    "project_deploy_ai_prompt_vercel_prefix": "My Vercel deployment failed for project",
+    "project_deploy_ai_prompt_vercel_suffix": "Also suggest what logs/env vars to check first.",
     "project_deploy_ask_ai": "詢問 AI",
     "project_deploy_build_log": "建置日誌",
     "project_deploy_build_logs": "建置日誌",
     "project_deploy_close": "關閉",
-    "project_deploy_coach_no_preview":
-        "No preview yet. Start with a preview deploy to reduce release risk.",
-    "project_deploy_coach_preview_ready":
-        "Preview is ready. Recommended next step: release to production.",
-    "project_deploy_coach_prod_live":
-        "Production is live. Keep shipping with small preview iterations.",
+    "project_deploy_coach_no_preview": "No preview yet. Start with a preview deploy to reduce release risk.",
+    "project_deploy_coach_preview_ready": "Preview is ready. Recommended next step: release to production.",
+    "project_deploy_coach_prod_live": "Production is live. Keep shipping with small preview iterations.",
     "project_deploy_common_fixes": "常見修復：",
     "project_deploy_configure_later": "稍後設定",
     "project_deploy_confirm_preview_message": "這會在 Vercel 觸發一次新的預覽（dev）部署。",
@@ -11667,8 +10588,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_deploy_retry_prod_message": "這會比較 dev/main，必要時自動合併，然後觸發新的生產部署。",
     "project_deploy_retry_prod_title": "重試生產部署？",
     "project_deploy_revert_confirm_action": "確認回滾",
-    "project_deploy_revert_confirm_message":
-        "這會對提交 {sha} 執行 git revert，並觸發新的預覽部署。",
+    "project_deploy_revert_confirm_message": "這會對提交 {sha} 執行 git revert，並觸發新的預覽部署。",
     "project_deploy_revert_confirm_title": "回滾這個提交？",
     "project_deploy_revert_failed": "回滾失敗",
     "project_deploy_revert_no_sha": "此部署沒有可用的 commit SHA。",
@@ -11764,10 +10684,8 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_overview_community_progress_merge": "正在合併分支…",
     "project_overview_community_progress_publish": "正在發佈到社群…",
     "project_overview_community_publish_dialog_current_domain": "當前網域：{domain}",
-    "project_overview_community_publish_dialog_has_prod":
-        "此專案已有生產部署。發佈後會建立或更新與專案總覽關聯的社群貼文。",
-    "project_overview_community_publish_dialog_need_release":
-        "要將專案發佈到社群，需要先發佈到生產環境。我們會先把 dev 分支合併到 main，再觸發生產部署，最後發佈貼文。",
+    "project_overview_community_publish_dialog_has_prod": "此專案已有生產部署。發佈後會建立或更新與專案總覽關聯的社群貼文。",
+    "project_overview_community_publish_dialog_need_release": "要將專案發佈到社群，需要先發佈到生產環境。我們會先把 dev 分支合併到 main，再觸發生產部署，最後發佈貼文。",
     "project_overview_community_publish_dialog_step_deploy": "• 觸發生產部署",
     "project_overview_community_publish_dialog_step_merge": "• 合併 dev → main",
     "project_overview_community_publish_dialog_step_publish": "• 發佈到社群",
@@ -11846,10 +10764,8 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_payment_add_product": "新增商品",
     "project_payment_add_product_failed": "新增商品失敗：{error}",
     "project_payment_add_product_title": "新增支付商品",
-    "project_payment_ai_prompt_product":
-        "你可以分析支付商品「{name}」並給出定價策略、配置或行銷最佳化建議嗎？",
-    "project_payment_ai_prompt_transaction":
-        "你可以分析這筆支付交易（{amount}、{status}）並給出支付模式洞察或最佳化建議嗎？",
+    "project_payment_ai_prompt_product": "你可以分析支付商品「{name}」並給出定價策略、配置或行銷最佳化建議嗎？",
+    "project_payment_ai_prompt_transaction": "你可以分析這筆支付交易（{amount}、{status}）並給出支付模式洞察或最佳化建議嗎？",
     "project_payment_anonymous": "匿名",
     "project_payment_available_for_purchase": "該商品可供購買",
     "project_payment_conversion_rate": "轉換率",
@@ -11858,8 +10774,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "project_payment_edit": "編輯",
     "project_payment_edit_product_title": "編輯支付商品",
     "project_payment_enable_button": "啟用支付",
-    "project_payment_enable_description":
-        "此專案尚未啟用支付。請先初始化支付能力，之後即可管理商品、交易、銀行帳戶、提領與 Webhook。",
+    "project_payment_enable_description": "此專案尚未啟用支付。請先初始化支付能力，之後即可管理商品、交易、銀行帳戶、提領與 Webhook。",
     "project_payment_enable_failed": "啟用支付失敗",
     "project_payment_enable_feature_checkout": "Stripe 結帳與支付連結",
     "project_payment_enable_feature_products": "商品、餘額與提領管理",
@@ -11919,7 +10834,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "resend_after": "秒後重發",
     "resend_code": "重新發送驗證碼",
     "reset_password": "重置密碼",
-    "reset_password_subtitle": "重置您的登入密碼",
+    "reset_password_subtitle": "重設密碼",
     "resetting": "重置中...",
     "retry": "重試",
     "save": "Save",
@@ -11938,11 +10853,6 @@ kLocalizedValues = <String, Map<String, String>>{
     "settings_editor_dark_theme": "深色主題",
     "settings_editor_default_wrap": "預設換行",
     "settings_editor_default_wrap_hint": "預設開啟換行。",
-    "settings_editor_engine": "編輯器核心",
-    "settings_editor_engine_flutter_code_editor": "Flutter Code Editor",
-    "settings_editor_engine_flutter_code_editor_hint": "原生 Flutter 編輯器。",
-    "settings_editor_engine_flutter_monaco": "Flutter Monaco",
-    "settings_editor_engine_flutter_monaco_hint": "更適合大型檔案。",
     "settings_editor_entry_subtitle": "主題、字型、換行",
     "settings_editor_font_size": "字型大小",
     "settings_editor_footer": "分別選擇主題與行為。",
@@ -11980,7 +10890,7 @@ kLocalizedValues = <String, Map<String, String>>{
     "syncing": "同步中",
     "syncing_message": "正在同步儲存庫...",
     "system_mode": "跟隨系統",
-    "theme_subtitle": "明亮或深色模式",
+    "theme_subtitle": "淺色或深色",
     "theme_switched": "已切換至",
     "theme_title": "主題",
     "theme_updated": "主題已更新",
@@ -12001,6 +10911,12 @@ kLocalizedValues = <String, Map<String, String>>{
     "topup_subtitle": "透過 Stripe 使用 {methods} 進行儲值。",
     "topup_title": "儲值積分",
     "topup_unconfigured": "此版本尚未配置 Stripe 行動支付。",
+    "two_factor_cancel": "取消",
+    "two_factor_disable": "停用",
+    "two_factor_disable_confirm": "確定要停用雙因素認證嗎？您的帳戶安全性將會降低。",
+    "two_factor_disable_title": "停用雙因素認證",
+    "two_factor_title": "雙因素認證",
+    "two_factor_verify_enable": "驗證並啟用",
     "upgrade_best_fit": "最佳選擇",
     "upgrade_billing_monthly": "月付",
     "upgrade_billing_yearly": "年付",
