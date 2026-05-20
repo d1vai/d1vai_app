@@ -147,7 +147,7 @@ jobs:
 
           xattr -cr "${app_path}"
 
-          codesign --force --deep --options runtime \
+          codesign --force --deep --options runtime --timestamp \
             --entitlements "${entitlements_path}" \
             --sign "${APPLE_SIGNING_IDENTITY}" \
             "${app_path}"
@@ -183,27 +183,94 @@ jobs:
           codesign --verify --verbose=2 "${dmg_path}"
 
       - name: Notarize DMG
+        id: notarize
         shell: bash
         run: |
           dmg_path="build/macos/${{ steps.meta.outputs.dmg_name }}"
+          diagnostics_dir="build/macos/notary"
+          submit_json="${diagnostics_dir}/submit-response.json"
+          log_json="${diagnostics_dir}/notary-log.json"
+
+          mkdir -p "${diagnostics_dir}"
 
           xcrun notarytool submit "${dmg_path}" \
             --key "${APPLE_NOTARY_API_KEY_PATH}" \
             --key-id "${APPLE_NOTARY_KEY_ID}" \
             --issuer "${APPLE_NOTARY_ISSUER_ID}" \
             --team-id "${APPLE_TEAM_ID}" \
-            --wait
+            --wait \
+            --output-format json | tee "${submit_json}"
+
+          submission_id="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1], encoding="utf-8")).get("id", ""))' "${submit_json}")"
+
+          status="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1], encoding="utf-8")).get("status", ""))' "${submit_json}")"
+
+          echo "submission_id=${submission_id}" >> "${GITHUB_OUTPUT}"
+          echo "status=${status}" >> "${GITHUB_OUTPUT}"
+
+          xcrun notarytool log "${submission_id}" \
+            --key "${APPLE_NOTARY_API_KEY_PATH}" \
+            --key-id "${APPLE_NOTARY_KEY_ID}" \
+            --issuer "${APPLE_NOTARY_ISSUER_ID}" \
+            --team-id "${APPLE_TEAM_ID}" \
+            --output-format json > "${log_json}" || true
+
+          echo "Notary submission id: ${submission_id}"
+          echo "Notary status: ${status}"
+          if [ -f "${log_json}" ]; then
+            echo "Notary log:"
+            cat "${log_json}"
+          fi
+
+          if [ "${status}" != "Accepted" ]; then
+            echo "Notarization did not reach Accepted status." >&2
+            exit 1
+          fi
 
       - name: Staple DMG
         shell: bash
         run: |
           dmg_path="build/macos/${{ steps.meta.outputs.dmg_name }}"
-          for attempt in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
-            if xcrun stapler staple "${dmg_path}"; then
+          diagnostics_dir="build/macos/notary"
+          attempts_dir="${diagnostics_dir}/stapler-attempts"
+          history_tsv="${diagnostics_dir}/stapler-history.tsv"
+
+          mkdir -p "${attempts_dir}"
+          printf "attempt\tutc_started_at\texit_code\trecord_not_found\n" > "${history_tsv}"
+
+          for attempt in $(seq 1 40); do
+            started_at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+            attempt_log="${attempts_dir}/attempt-$(printf "%02d" "${attempt}").log"
+
+            set +e
+            xcrun stapler staple "${dmg_path}" > "${attempt_log}" 2>&1
+            exit_code=$?
+            set -e
+
+            if rg -q 'Record not found' "${attempt_log}"; then
+              record_not_found=true
+            else
+              record_not_found=false
+            fi
+
+            printf "%s\t%s\t%s\t%s\n" \
+              "${attempt}" \
+              "${started_at}" \
+              "${exit_code}" \
+              "${record_not_found}" >> "${history_tsv}"
+
+            cat "${attempt_log}"
+
+            if [ "${exit_code}" -eq 0 ]; then
               exit 0
             fi
 
-            if [ "${attempt}" -eq 15 ]; then
+            if [ "${record_not_found}" != "true" ]; then
+              echo "Stapling failed for a reason other than CloudKit propagation." >&2
+              exit "${exit_code}"
+            fi
+
+            if [ "${attempt}" -eq 40 ]; then
               echo "Stapling DMG failed after ${attempt} attempts." >&2
               exit 1
             fi
@@ -217,6 +284,13 @@ jobs:
         with:
           name: ${{ steps.meta.outputs.dmg_name }}
           path: build/macos/${{ steps.meta.outputs.dmg_name }}
+
+      - name: Upload notarization diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: notarization-diagnostics-${{ steps.meta.outputs.short_sha }}
+          path: build/macos/notary
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
