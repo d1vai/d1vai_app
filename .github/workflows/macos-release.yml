@@ -113,10 +113,25 @@ jobs:
           security list-keychains -d user -s "${KEYCHAIN_PATH}" login.keychain-db
           security default-keychain -d user -s "${KEYCHAIN_PATH}"
 
+          resolved_identity="$(
+            security find-identity -v -p codesigning "${KEYCHAIN_PATH}" \
+              | sed -n 's/.*"\(Developer ID Application:.*\)"/\1/p' \
+              | head -n 1
+          )"
+
+          if [ -z "${resolved_identity}" ]; then
+            echo "No Developer ID Application identity was found in the imported certificate." >&2
+            security find-identity -v -p codesigning "${KEYCHAIN_PATH}" >&2 || true
+            exit 1
+          fi
+
           {
             echo "MACOS_KEYCHAIN_PASSWORD=${KEYCHAIN_PASSWORD}"
             echo "MACOS_KEYCHAIN_PATH=${KEYCHAIN_PATH}"
+            echo "MACOS_SIGNING_IDENTITY=${resolved_identity}"
           } >> "${GITHUB_ENV}"
+
+          echo "Resolved Developer ID identity: ${resolved_identity}"
 
       - name: Prepare App Store Connect API key
         shell: bash
@@ -149,10 +164,11 @@ jobs:
 
           codesign --force --deep --options runtime --timestamp \
             --entitlements "${entitlements_path}" \
-            --sign "${APPLE_SIGNING_IDENTITY}" \
+            --sign "${MACOS_SIGNING_IDENTITY}" \
             "${app_path}"
 
           codesign --verify --deep --strict --verbose=2 "${app_path}"
+          codesign --display --verbose=4 "${app_path}" 2>&1 | sed -n '/Authority=/p;/TeamIdentifier=/p;/Timestamp=/p'
 
       - name: Package DMG
         shell: bash
@@ -179,7 +195,7 @@ jobs:
         shell: bash
         run: |
           dmg_path="build/macos/${{ steps.meta.outputs.dmg_name }}"
-          codesign --force --timestamp --sign "${APPLE_SIGNING_IDENTITY}" "${dmg_path}"
+          codesign --force --timestamp --sign "${MACOS_SIGNING_IDENTITY}" "${dmg_path}"
           codesign --verify --verbose=2 "${dmg_path}"
 
       - name: Notarize DMG
