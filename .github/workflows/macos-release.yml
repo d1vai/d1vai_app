@@ -154,12 +154,21 @@ jobs:
 
           codesign --verify --deep --strict --verbose=2 "${app_path}"
 
-      - name: Notarize app bundle
+      - name: Archive app bundle for notarization
         shell: bash
         run: |
           app_path="build/macos/Build/Products/Release/${{ steps.meta.outputs.app_name }}"
+          app_zip_path="build/macos/${{ steps.meta.outputs.app_name }}.zip"
 
-          xcrun notarytool submit "${app_path}" \
+          rm -f "${app_zip_path}"
+          ditto -c -k --keepParent "${app_path}" "${app_zip_path}"
+
+      - name: Notarize app bundle
+        shell: bash
+        run: |
+          app_zip_path="build/macos/${{ steps.meta.outputs.app_name }}.zip"
+
+          xcrun notarytool submit "${app_zip_path}" \
             --key "${APPLE_NOTARY_API_KEY_PATH}" \
             --key-id "${APPLE_NOTARY_KEY_ID}" \
             --issuer "${APPLE_NOTARY_ISSUER_ID}" \
