@@ -18,6 +18,13 @@ jobs:
     runs-on: macos-latest
     env:
       AMPLITUDE_API_KEY: ${{ secrets.AMPLITUDE_API_KEY }}
+      APPLE_SIGNING_CERT_BASE64: ${{ secrets.APPLE_SIGNING_CERT_BASE64 }}
+      APPLE_SIGNING_CERT_PASSWORD: ${{ secrets.APPLE_SIGNING_CERT_PASSWORD }}
+      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
+      APPLE_NOTARY_ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
+      APPLE_NOTARY_API_KEY_BASE64: ${{ secrets.APPLE_NOTARY_API_KEY_BASE64 }}
 
     steps:
       - name: Checkout repository
@@ -43,7 +50,7 @@ jobs:
           build_number="${GITHUB_RUN_NUMBER}"
           short_sha="${GITHUB_SHA::7}"
           app_name="d1v.app"
-          dmg_name="d1vai-app-macos-${version_name}+${build_number}-${short_sha}.dmg"
+          dmg_name="d1v-macos-${version_name}+${build_number}-${short_sha}.dmg"
           release_tag="macos-main-v${version_name}-build.${build_number}"
           release_name="macOS DMG ${version_name} (build ${build_number})"
 
@@ -61,6 +68,64 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Validate signing and notarization secrets
+        shell: bash
+        run: |
+          required_vars=(
+            APPLE_SIGNING_CERT_BASE64
+            APPLE_SIGNING_CERT_PASSWORD
+            APPLE_SIGNING_IDENTITY
+            APPLE_TEAM_ID
+            APPLE_NOTARY_KEY_ID
+            APPLE_NOTARY_ISSUER_ID
+            APPLE_NOTARY_API_KEY_BASE64
+          )
+
+          for var_name in "${required_vars[@]}"; do
+            if [ -z "${!var_name}" ]; then
+              echo "Missing required secret: ${var_name}" >&2
+              exit 1
+            fi
+          done
+
+      - name: Import Developer ID certificate
+        shell: bash
+        run: |
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 16)"
+          CERT_PATH="${RUNNER_TEMP}/developer-id.p12"
+          KEYCHAIN_PATH="${RUNNER_TEMP}/build.keychain-db"
+
+          echo "${APPLE_SIGNING_CERT_BASE64}" | base64 --decode > "${CERT_PATH}"
+
+          security create-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
+          security set-keychain-settings -lut 21600 "${KEYCHAIN_PATH}"
+          security unlock-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
+          security import "${CERT_PATH}" \
+            -k "${KEYCHAIN_PATH}" \
+            -P "${APPLE_SIGNING_CERT_PASSWORD}" \
+            -T /usr/bin/codesign \
+            -T /usr/bin/security
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -s \
+            -k "${KEYCHAIN_PASSWORD}" \
+            "${KEYCHAIN_PATH}"
+          security list-keychains -d user -s "${KEYCHAIN_PATH}" login.keychain-db
+          security default-keychain -d user -s "${KEYCHAIN_PATH}"
+
+          {
+            echo "MACOS_KEYCHAIN_PASSWORD=${KEYCHAIN_PASSWORD}"
+            echo "MACOS_KEYCHAIN_PATH=${KEYCHAIN_PATH}"
+          } >> "${GITHUB_ENV}"
+
+      - name: Prepare App Store Connect API key
+        shell: bash
+        run: |
+          API_KEY_PATH="${RUNNER_TEMP}/AuthKey_${APPLE_NOTARY_KEY_ID}.p8"
+          echo "${APPLE_NOTARY_API_KEY_BASE64}" | base64 --decode > "${API_KEY_PATH}"
+          chmod 600 "${API_KEY_PATH}"
+          echo "APPLE_NOTARY_API_KEY_PATH=${API_KEY_PATH}" >> "${GITHUB_ENV}"
+
       - name: Build macOS app
         shell: bash
         run: >
@@ -68,6 +133,44 @@ jobs:
           --build-name="${{ steps.meta.outputs.version_name }}"
           --build-number="${{ steps.meta.outputs.build_number }}"
           --dart-define=AMPLITUDE_API_KEY="${AMPLITUDE_API_KEY}"
+
+      - name: Codesign app bundle
+        shell: bash
+        run: |
+          app_path="build/macos/Build/Products/Release/${{ steps.meta.outputs.app_name }}"
+          entitlements_path="macos/Runner/Release.entitlements"
+
+          if [ ! -d "${app_path}" ]; then
+            echo "Expected app bundle not found at ${app_path}" >&2
+            exit 1
+          fi
+
+          xattr -cr "${app_path}"
+
+          codesign --force --deep --options runtime \
+            --entitlements "${entitlements_path}" \
+            --sign "${APPLE_SIGNING_IDENTITY}" \
+            "${app_path}"
+
+          codesign --verify --deep --strict --verbose=2 "${app_path}"
+
+      - name: Notarize app bundle
+        shell: bash
+        run: |
+          app_path="build/macos/Build/Products/Release/${{ steps.meta.outputs.app_name }}"
+
+          xcrun notarytool submit "${app_path}" \
+            --key "${APPLE_NOTARY_API_KEY_PATH}" \
+            --key-id "${APPLE_NOTARY_KEY_ID}" \
+            --issuer "${APPLE_NOTARY_ISSUER_ID}" \
+            --team-id "${APPLE_TEAM_ID}" \
+            --wait
+
+      - name: Staple app bundle
+        shell: bash
+        run: |
+          app_path="build/macos/Build/Products/Release/${{ steps.meta.outputs.app_name }}"
+          xcrun stapler staple "${app_path}"
 
       - name: Package DMG
         shell: bash
@@ -89,6 +192,24 @@ jobs:
             -ov \
             -format UDZO \
             "build/macos/${{ steps.meta.outputs.dmg_name }}"
+
+      - name: Notarize DMG
+        shell: bash
+        run: |
+          dmg_path="build/macos/${{ steps.meta.outputs.dmg_name }}"
+
+          xcrun notarytool submit "${dmg_path}" \
+            --key "${APPLE_NOTARY_API_KEY_PATH}" \
+            --key-id "${APPLE_NOTARY_KEY_ID}" \
+            --issuer "${APPLE_NOTARY_ISSUER_ID}" \
+            --team-id "${APPLE_TEAM_ID}" \
+            --wait
+
+      - name: Staple DMG
+        shell: bash
+        run: |
+          dmg_path="build/macos/${{ steps.meta.outputs.dmg_name }}"
+          xcrun stapler staple "${dmg_path}"
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -120,5 +241,14 @@ jobs:
 
             ## Notes
             - This release is generated automatically by GitHub Actions.
-            - The DMG is not notarized in this workflow.
+            - The `.app` bundle is signed and notarized before packaging.
+            - The `.dmg` is notarized and stapled for standard Gatekeeper-friendly distribution.
           files: build/macos/${{ steps.meta.outputs.dmg_name }}
+
+      - name: Cleanup temporary keychain
+        if: always()
+        shell: bash
+        run: |
+          if [ -n "${MACOS_KEYCHAIN_PATH:-}" ]; then
+            security delete-keychain "${MACOS_KEYCHAIN_PATH}" || true
+          fi
