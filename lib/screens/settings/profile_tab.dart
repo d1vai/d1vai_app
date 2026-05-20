@@ -114,9 +114,12 @@ class SettingsProfileTab extends StatelessWidget {
                       Icons.code,
                       color: AppColors.secondaryBrand,
                     ),
-                    title: const Text('Code Editor'),
-                    subtitle: const Text(
-                      'Theme, font size, rulers, and workspace editing feel',
+                    title: Text(
+                      loc?.translate('settings_editor_title') ?? 'Code Editor',
+                    ),
+                    subtitle: Text(
+                      loc?.translate('settings_editor_entry_subtitle') ??
+                          'Theme, font, wrap',
                     ),
                     trailing: const Icon(
                       Icons.arrow_forward_ios,

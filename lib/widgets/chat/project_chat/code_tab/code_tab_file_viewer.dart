@@ -82,25 +82,40 @@ class CodeTabFileViewer extends StatelessWidget {
                   )
                 : content == null || editController == null
                 ? const CodeTabEmptyView(text: 'Pick a file from the tree')
-                : GestureDetector(
-                    onDoubleTap: onEnterEdit,
-                    child: isEditing
-                        ? CodeTabEditingPane(
-                            controller: editController,
-                            originalText: editor?.originalContent ?? '',
-                            languageLabel: languageLabelForPath(p),
-                            wrapEnabled: editor?.wrapEnabled ?? false,
-                            onChanged: onChange,
-                            onCancel: onCancelEdit,
-                            onToggleWrap: onToggleWrap,
-                            compact: compact,
-                          )
-                        : FilePreview(
-                            path: p ?? content.path,
-                            content: content.content,
-                            isBinary: content.isBinary,
-                            sizeBytes: content.size,
+                : isEditing
+                ? CodeTabEditingPane(
+                    controller: editController,
+                    originalText: editor?.originalContent ?? '',
+                    languageLabel: languageLabelForPath(p),
+                    wrapEnabled: editor?.wrapEnabled ?? false,
+                    onChanged: onChange,
+                    onCancel: onCancelEdit,
+                    onToggleWrap: onToggleWrap,
+                    compact: compact,
+                  )
+                : Stack(
+                    children: [
+                      Positioned.fill(
+                        child: FilePreview(
+                          path: p ?? content.path,
+                          content: content.content,
+                          isBinary: content.isBinary,
+                          sizeBytes: content.size,
+                        ),
+                      ),
+                      Positioned.fill(
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: onEnterEdit,
+                            onDoubleTap: onEnterEdit,
+                            splashColor: Colors.transparent,
+                            highlightColor: Colors.transparent,
+                            hoverColor: Colors.transparent,
                           ),
+                        ),
+                      ),
+                    ],
                   ),
           ),
         ],

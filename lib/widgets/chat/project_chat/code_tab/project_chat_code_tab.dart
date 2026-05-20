@@ -136,6 +136,7 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
       activeSaving: activeEditor?.saving == true,
       activeHasUnsavedChanges: activeEditor?.hasUnsavedChanges == true,
       activeWrapEnabled: activeEditor?.wrapEnabled == true,
+      activeFolded: activeEditor?.controller.hasFoldedSections == true,
       supportsFoldAll: activeEditor?.controller.supportsFoldAll == true,
       supportsFoldImports: activeEditor?.controller.supportsFoldImports == true,
       supportsFoldHeader: activeEditor?.controller.supportsFoldHeader == true,
@@ -484,6 +485,13 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
     );
   }
 
+  Future<void> _focusDesktopFile(String path) async {
+    await _openDesktopFile(path, preview: false);
+    final editor = _workbench.editorForPath(path);
+    if (editor == null || editor.loading || editor.content == null) return;
+    _workbench.enterEditMode(path);
+  }
+
   Future<void> _closeEditor(String path) async {
     final ok = await _confirmActionForPath(
       path,
@@ -611,10 +619,10 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
                               onReload: _loadTree,
                               onToggleDir: _toggleDir,
                               onPreviewFile: (p) async {
-                                await _openDesktopFile(p, preview: true);
+                                await _focusDesktopFile(p);
                               },
                               onOpenFile: (p) async {
-                                await _openDesktopFile(p, preview: false);
+                                await _focusDesktopFile(p);
                               },
                             ),
                           ),

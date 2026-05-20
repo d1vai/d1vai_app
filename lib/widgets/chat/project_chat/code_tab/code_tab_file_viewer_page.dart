@@ -440,47 +440,60 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
                   )
                 : content == null
                 ? const CodeTabEmptyView(text: 'No content')
-                : GestureDetector(
-                    onDoubleTap: () => unawaited(_enterEdit()),
-                    child: _isEditing
-                        ? CodeTabEditingPane(
-                            controller: _editController!,
-                            originalText: _editOriginal,
-                            languageLabel: languageLabelForPath(
-                              widget.filePath,
-                            ),
-                            wrapEnabled: _wrapEnabled,
-                            onChanged: null,
-                            onCancel: () async {
-                              final ok = await _confirmLeave();
-                              if (!ok) return;
-                              await _editController?.setText(
-                                _editOriginal,
-                                markSaved: true,
-                              );
-                              if (!mounted) return;
-                              setState(() {
-                                _isEditing = false;
-                                _hasUnsavedChanges = false;
-                              });
-                            },
-                            onToggleWrap: () {
-                              setState(() {
-                                _wrapEnabled = !_wrapEnabled;
-                              });
-                              unawaited(
-                                _editController?.setWrapEnabled(_wrapEnabled) ??
-                                    Future<void>.value(),
-                              );
-                            },
-                            compact: false,
-                          )
-                        : FilePreview(
-                            path: widget.filePath,
-                            content: content.content,
-                            isBinary: content.isBinary,
-                            sizeBytes: content.size,
+                : _isEditing
+                ? CodeTabEditingPane(
+                    controller: _editController!,
+                    originalText: _editOriginal,
+                    languageLabel: languageLabelForPath(widget.filePath),
+                    wrapEnabled: _wrapEnabled,
+                    onChanged: null,
+                    onCancel: () async {
+                      final ok = await _confirmLeave();
+                      if (!ok) return;
+                      await _editController?.setText(
+                        _editOriginal,
+                        markSaved: true,
+                      );
+                      if (!mounted) return;
+                      setState(() {
+                        _isEditing = false;
+                        _hasUnsavedChanges = false;
+                      });
+                    },
+                    onToggleWrap: () {
+                      setState(() {
+                        _wrapEnabled = !_wrapEnabled;
+                      });
+                      unawaited(
+                        _editController?.setWrapEnabled(_wrapEnabled) ??
+                            Future<void>.value(),
+                      );
+                    },
+                    compact: false,
+                  )
+                : Stack(
+                    children: [
+                      Positioned.fill(
+                        child: FilePreview(
+                          path: widget.filePath,
+                          content: content.content,
+                          isBinary: content.isBinary,
+                          sizeBytes: content.size,
+                        ),
+                      ),
+                      Positioned.fill(
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => unawaited(_enterEdit()),
+                            onDoubleTap: () => unawaited(_enterEdit()),
+                            splashColor: Colors.transparent,
+                            highlightColor: Colors.transparent,
+                            hoverColor: Colors.transparent,
                           ),
+                        ),
+                      ),
+                    ],
                   ),
           ),
         ),

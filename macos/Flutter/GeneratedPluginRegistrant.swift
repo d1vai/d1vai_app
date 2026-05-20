@@ -5,6 +5,7 @@
 import FlutterMacOS
 import Foundation
 
+import amplitude_flutter
 import desktop_drop
 import desktop_webview_window
 import file_picker
@@ -22,6 +23,7 @@ import webview_flutter_wkwebview
 import window_to_front
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
+  AmplitudeFlutterPlugin.register(with: registry.registrar(forPlugin: "AmplitudeFlutterPlugin"))
   DesktopDropPlugin.register(with: registry.registrar(forPlugin: "DesktopDropPlugin"))
   DesktopWebviewWindowPlugin.register(with: registry.registrar(forPlugin: "DesktopWebviewWindowPlugin"))
   FilePickerPlugin.register(with: registry.registrar(forPlugin: "FilePickerPlugin"))

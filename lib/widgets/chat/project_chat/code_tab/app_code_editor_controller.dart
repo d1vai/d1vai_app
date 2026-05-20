@@ -57,6 +57,7 @@ class AppCodeEditorController extends ChangeNotifier {
   String _text = '';
   bool _textStale = false;
   bool _hasUnsavedChanges = false;
+  bool _hasFoldedSections = false;
   bool _ready = false;
   bool _disposed = false;
   bool _suppressFlutterListener = false;
@@ -93,6 +94,9 @@ class AppCodeEditorController extends ChangeNotifier {
   bool get hasUnsavedChanges => _hasUnsavedChanges;
   int get tabSize => _tabSize;
   bool get wrapEnabled => _wrapEnabled;
+  bool get hasFoldedSections => isFlutterCodeEditor
+      ? (_flutterController?.code.foldedBlocks.isNotEmpty ?? false)
+      : _hasFoldedSections;
   String get cachedText => _text;
   AppCodeEditorStats get stats => _stats;
   CodeController? get flutterController => _flutterController;
@@ -180,6 +184,7 @@ class AppCodeEditorController extends ChangeNotifier {
     _text = text;
     _textStale = false;
     _hasUnsavedChanges = !markSaved;
+    _hasFoldedSections = false;
 
     if (isFlutterCodeEditor) {
       final controller = _flutterController;
@@ -332,8 +337,12 @@ class AppCodeEditorController extends ChangeNotifier {
   void foldAll() {
     if (isFlutterCodeEditor) {
       _flutterController?.foldAll();
+      _refreshFlutterState();
+      notifyListeners();
       return;
     }
+    _hasFoldedSections = true;
+    notifyListeners();
     unawaited(
       _monacoController?.executeAction(monaco.MonacoAction.foldAll) ??
           Future<void>.value(),
@@ -343,8 +352,12 @@ class AppCodeEditorController extends ChangeNotifier {
   void unfoldAll() {
     if (isFlutterCodeEditor) {
       _flutterController?.unfoldAll();
+      _refreshFlutterState();
+      notifyListeners();
       return;
     }
+    _hasFoldedSections = false;
+    notifyListeners();
     unawaited(
       _monacoController?.executeAction(monaco.MonacoAction.unfoldAll) ??
           Future<void>.value(),

@@ -12,6 +12,7 @@ class CodeTabTopBarController extends ChangeNotifier {
   bool activeSaving = false;
   bool activeHasUnsavedChanges = false;
   bool activeWrapEnabled = false;
+  bool activeFolded = false;
   bool supportsFoldAll = false;
   bool supportsFoldImports = false;
   bool supportsFoldHeader = false;
@@ -35,6 +36,7 @@ class CodeTabTopBarController extends ChangeNotifier {
     required bool activeSaving,
     required bool activeHasUnsavedChanges,
     required bool activeWrapEnabled,
+    required bool activeFolded,
     required bool supportsFoldAll,
     required bool supportsFoldImports,
     required bool supportsFoldHeader,
@@ -57,6 +59,7 @@ class CodeTabTopBarController extends ChangeNotifier {
     this.activeSaving = activeSaving;
     this.activeHasUnsavedChanges = activeHasUnsavedChanges;
     this.activeWrapEnabled = activeWrapEnabled;
+    this.activeFolded = activeFolded;
     this.supportsFoldAll = supportsFoldAll;
     this.supportsFoldImports = supportsFoldImports;
     this.supportsFoldHeader = supportsFoldHeader;
@@ -129,7 +132,10 @@ class ProjectChatTopBar extends StatelessWidget {
               Flexible(
                 child: _TabButton(
                   isSelected: currentIndex == 0,
-                  label: compact ? 'Prev' : null,
+                  label: compact
+                      ? (loc?.translate('project_chat_tab_preview_short') ??
+                            'Prev')
+                      : null,
                   icon: Icons.visibility_outlined,
                   onTap: () => onTabSelected(0),
                 ),
@@ -141,7 +147,8 @@ class ProjectChatTopBar extends StatelessWidget {
                   children: [
                     _TabButton(
                       isSelected: currentIndex == 1,
-                      label: 'Files',
+                      label:
+                          loc?.translate('project_chat_tab_files') ?? 'Files',
                       icon: Icons.folder_open_outlined,
                       onTap: () => onTabSelected(1),
                     ),
@@ -178,18 +185,19 @@ class ProjectChatTopBar extends StatelessWidget {
           );
           final trailingWidget = switch (currentIndex) {
             0 => actionsRow,
-            1 => codeTabController == null
-                ? null
-                : _FilesInlineToolbar(
-                    controller: codeTabController!,
-                    compact: compact,
-                    showSearchField: constraints.maxWidth >= 1120,
-                    searchWidth: constraints.maxWidth >= 1480
-                        ? 220
-                        : constraints.maxWidth >= 1320
-                        ? 180
-                        : 148,
-                  ),
+            1 =>
+              codeTabController == null
+                  ? null
+                  : _FilesInlineToolbar(
+                      controller: codeTabController!,
+                      compact: compact,
+                      showSearchField: constraints.maxWidth >= 1120,
+                      searchWidth: constraints.maxWidth >= 1480
+                          ? 220
+                          : constraints.maxWidth >= 1320
+                          ? 180
+                          : 148,
+                    ),
             _ => null,
           };
 
@@ -215,9 +223,9 @@ class ProjectChatTopBar extends StatelessWidget {
               Expanded(
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                    child: tabRow,
-                  ),
+                  child: tabRow,
                 ),
+              ),
               if (trailingWidget != null) ...[
                 const SizedBox(width: 8),
                 trailingWidget,
@@ -302,197 +310,139 @@ class _FilesInlineToolbar extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-            if (showSearchField) ...[
-              SizedBox(
-                width: searchWidth,
-                child: TextField(
-                  controller: searchController,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.search, size: 18),
-                    hintText:
-                        loc?.translate('project_chat_search_files') ??
-                        'Search files…',
-                    isDense: true,
-                    filled: true,
-                    fillColor: theme.colorScheme.surfaceContainerHighest,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: compact ? 8 : 10,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(
-                        color: theme.colorScheme.outlineVariant,
+              if (showSearchField) ...[
+                SizedBox(
+                  width: searchWidth,
+                  child: TextField(
+                    controller: searchController,
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.search, size: 18),
+                      hintText:
+                          loc?.translate('project_chat_search_files') ??
+                          'Search files…',
+                      isDense: true,
+                      filled: true,
+                      fillColor: theme.colorScheme.surfaceContainerHighest,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: compact ? 8 : 10,
                       ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(
-                        color: theme.colorScheme.outlineVariant,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(
+                          color: theme.colorScheme.outlineVariant,
+                        ),
                       ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(
+                          color: theme.colorScheme.outlineVariant,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      suffixIcon:
+                          searchController == null ||
+                              searchController.text.trim().isEmpty
+                          ? null
+                          : IconButton(
+                              onPressed: searchController.clear,
+                              icon: const Icon(Icons.clear, size: 16),
+                              tooltip: loc?.translate('clear') ?? 'Clear',
+                            ),
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: theme.colorScheme.primary),
-                    ),
-                    suffixIcon:
-                        searchController == null ||
-                            searchController.text.trim().isEmpty
-                        ? null
-                        : IconButton(
-                            onPressed: searchController.clear,
-                            icon: const Icon(Icons.clear, size: 16),
-                            tooltip: loc?.translate('clear') ?? 'Clear',
-                          ),
                   ),
                 ),
+                const SizedBox(width: 8),
+              ],
+              _ActionIconButton(
+                icon: Icons.refresh_outlined,
+                onPressed: controller.loadingTree
+                    ? () {}
+                    : (controller.onReload ?? () {}),
+                tooltip:
+                    loc?.translate('project_chat_refresh_files_tooltip') ??
+                    'Refresh files',
+                enabled: !controller.loadingTree && controller.onReload != null,
+              ),
+              const SizedBox(width: 4),
+              if (controller.activeEditing) ...[
+                _ActionIconButton(
+                  icon: Icons.search_outlined,
+                  onPressed: controller.onFind ?? () {},
+                  tooltip:
+                      loc?.translate('project_chat_find_in_file_tooltip') ??
+                      'Find in file',
+                  enabled: controller.onFind != null,
+                ),
+                const SizedBox(width: 4),
+                _ActionIconButton(
+                  icon: controller.activeWrapEnabled
+                      ? Icons.wrap_text
+                      : Icons.wrap_text_outlined,
+                  onPressed: controller.onToggleWrap ?? () {},
+                  tooltip: controller.activeWrapEnabled
+                      ? (loc?.translate('project_chat_disable_wrap_tooltip') ??
+                            'Disable wrap')
+                      : (loc?.translate('project_chat_enable_wrap_tooltip') ??
+                            'Enable wrap'),
+                  enabled: controller.onToggleWrap != null,
+                ),
+                const SizedBox(width: 4),
+                if (controller.supportsFoldAll)
+                  _ActionIconButton(
+                    icon: controller.activeFolded
+                        ? Icons.unfold_more_outlined
+                        : Icons.unfold_less_outlined,
+                    onPressed: controller.activeFolded
+                        ? (controller.onUnfoldAll ?? () {})
+                        : (controller.onFoldAll ?? () {}),
+                    tooltip: controller.activeFolded
+                        ? (loc?.translate('project_chat_unfold_all') ??
+                              'Unfold all')
+                        : (loc?.translate('project_chat_fold_all') ??
+                              'Fold all'),
+                    enabled: controller.activeFolded
+                        ? controller.onUnfoldAll != null
+                        : controller.onFoldAll != null,
+                    active: controller.activeFolded,
+                  ),
+                if (controller.supportsFoldAll) const SizedBox(width: 4),
+                _ActionIconButton(
+                  icon: Icons.save_as_outlined,
+                  onPressed: controller.activeSaving
+                      ? () {}
+                      : (controller.onSave ?? () {}),
+                  tooltip:
+                      loc?.translate('project_chat_save_file_tooltip') ??
+                      'Save file',
+                  enabled:
+                      !controller.activeSaving &&
+                      controller.activeHasUnsavedChanges &&
+                      controller.onSave != null,
+                ),
+                const SizedBox(width: 4),
+              ],
+              _ActionIconButton(
+                icon: Icons.tips_and_updates_outlined,
+                onPressed: controller.onAsk ?? () {},
+                tooltip:
+                    loc?.translate('project_chat_ask_ai_file_tooltip') ??
+                    'Ask AI about file',
+                enabled: controller.hasSelection && controller.onAsk != null,
               ),
               const SizedBox(width: 8),
-            ],
-            _ActionIconButton(
-              icon: Icons.refresh_outlined,
-              onPressed: controller.loadingTree ? () {} : (controller.onReload ?? () {}),
-              tooltip:
-                  loc?.translate('project_chat_refresh_files_tooltip') ??
-                  'Refresh files',
-              enabled: !controller.loadingTree && controller.onReload != null,
-            ),
-            const SizedBox(width: 4),
-            if (controller.activeEditing) ...[
-              _ActionIconButton(
-                icon: Icons.search_outlined,
-                onPressed: controller.onFind ?? () {},
-                tooltip:
-                    loc?.translate('project_chat_find_in_file_tooltip') ??
-                    'Find in file',
-                enabled: controller.onFind != null,
+              _FilesSyncChip(
+                state: controller.syncState,
+                hasLocalWorkspace: controller.hasLocalWorkspace,
               ),
-              const SizedBox(width: 4),
-              _ActionIconButton(
-                icon: controller.activeWrapEnabled
-                    ? Icons.wrap_text
-                    : Icons.wrap_text_outlined,
-                onPressed: controller.onToggleWrap ?? () {},
-                tooltip: controller.activeWrapEnabled
-                    ? (loc?.translate('project_chat_disable_wrap_tooltip') ??
-                        'Disable wrap')
-                    : (loc?.translate('project_chat_enable_wrap_tooltip') ??
-                        'Enable wrap'),
-                enabled: controller.onToggleWrap != null,
-              ),
-              const SizedBox(width: 4),
-              if (controller.supportsFoldAll)
-                _TopBarFoldActionsMenu(
-                  compact: compact,
-                  onFoldAll: controller.onFoldAll ?? () {},
-                  onUnfoldAll: controller.onUnfoldAll ?? () {},
-                  onFoldImports: controller.supportsFoldImports
-                      ? controller.onFoldImports
-                      : null,
-                  onFoldHeader: controller.supportsFoldHeader
-                      ? controller.onFoldHeader
-                      : null,
-                ),
-              if (controller.supportsFoldAll) const SizedBox(width: 4),
-              _ActionIconButton(
-                icon: Icons.save_as_outlined,
-                onPressed: controller.activeSaving ? () {} : (controller.onSave ?? () {}),
-                tooltip:
-                    loc?.translate('project_chat_save_file_tooltip') ??
-                    'Save file',
-                enabled:
-                    !controller.activeSaving &&
-                    controller.activeHasUnsavedChanges &&
-                    controller.onSave != null,
-              ),
-              const SizedBox(width: 4),
-            ],
-            _ActionIconButton(
-              icon: Icons.tips_and_updates_outlined,
-              onPressed: controller.onAsk ?? () {},
-              tooltip:
-                  loc?.translate('project_chat_ask_ai_file_tooltip') ??
-                  'Ask AI about file',
-              enabled: controller.hasSelection && controller.onAsk != null,
-            ),
-            const SizedBox(width: 8),
-            _FilesSyncChip(
-              state: controller.syncState,
-              hasLocalWorkspace: controller.hasLocalWorkspace,
-            ),
             ],
           ),
         );
-      },
-    );
-  }
-}
-
-class _TopBarFoldActionsMenu extends StatelessWidget {
-  final VoidCallback onFoldAll;
-  final VoidCallback onUnfoldAll;
-  final VoidCallback? onFoldImports;
-  final VoidCallback? onFoldHeader;
-  final bool compact;
-
-  const _TopBarFoldActionsMenu({
-    required this.onFoldAll,
-    required this.onUnfoldAll,
-    required this.onFoldImports,
-    required this.onFoldHeader,
-    this.compact = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    return PopupMenuButton<VoidCallback>(
-      tooltip:
-          loc?.translate('project_chat_fold_options_tooltip') ??
-          'Fold options',
-      padding: EdgeInsets.zero,
-      iconSize: compact ? 15 : 16,
-      splashRadius: compact ? 15 : 16,
-      icon: Icon(
-        Icons.unfold_more_outlined,
-        color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.78),
-      ),
-      onSelected: (action) => action(),
-      itemBuilder: (context) {
-        final items = <PopupMenuEntry<VoidCallback>>[
-          PopupMenuItem(
-            value: onFoldAll,
-            child: Text(loc?.translate('project_chat_fold_all') ?? 'Fold all'),
-          ),
-          PopupMenuItem(
-            value: onUnfoldAll,
-            child: Text(
-              loc?.translate('project_chat_unfold_all') ?? 'Unfold all',
-            ),
-          ),
-        ];
-        if (onFoldImports != null) {
-          items.add(
-            PopupMenuItem(
-              value: onFoldImports!,
-              child: Text(
-                loc?.translate('project_chat_fold_imports') ?? 'Fold imports',
-              ),
-            ),
-          );
-        }
-        if (onFoldHeader != null) {
-          items.add(
-            PopupMenuItem(
-              value: onFoldHeader!,
-              child: Text(
-                loc?.translate('project_chat_fold_header') ?? 'Fold header',
-              ),
-            ),
-          );
-        }
-        return items;
       },
     );
   }
@@ -502,10 +452,7 @@ class _FilesSyncChip extends StatelessWidget {
   final CodeTabTopBarSyncState state;
   final bool hasLocalWorkspace;
 
-  const _FilesSyncChip({
-    required this.state,
-    required this.hasLocalWorkspace,
-  });
+  const _FilesSyncChip({required this.state, required this.hasLocalWorkspace});
 
   @override
   Widget build(BuildContext context) {
@@ -539,9 +486,9 @@ class _FilesSyncChip extends StatelessWidget {
       CodeTabTopBarSyncState.idle => (
         hasLocalWorkspace
             ? (loc?.translate('project_chat_sync_local_workspace') ??
-                'Local workspace')
+                  'Local workspace')
             : (loc?.translate('project_chat_sync_cloud_workspace') ??
-                'Cloud workspace'),
+                  'Cloud workspace'),
         theme.colorScheme.onSurfaceVariant,
       ),
     };
@@ -614,6 +561,7 @@ class ProjectChatModelSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final cs = theme.colorScheme;
@@ -631,8 +579,12 @@ class ProjectChatModelSelector extends StatelessWidget {
             )
             .toList(),
         value: selectedModelId.trim().isEmpty ? null : selectedModelId.trim(),
-        placeholder: placeholder,
-        tooltip: tooltip,
+        placeholder: placeholder == 'Model'
+            ? (loc?.translate('project_chat_model_placeholder') ?? 'Model')
+            : placeholder,
+        tooltip: tooltip == 'Select model'
+            ? (loc?.translate('project_chat_model_tooltip') ?? 'Select model')
+            : tooltip,
         leadingIcon: Icons.auto_awesome_rounded,
         minWidth: minWidth,
         maxWidth: maxWidth,
@@ -858,6 +810,7 @@ class _ActionIconButton extends StatelessWidget {
   final VoidCallback onPressed;
   final String? tooltip;
   final bool enabled;
+  final bool active;
 
   const _ActionIconButton({
     this.icon,
@@ -865,8 +818,8 @@ class _ActionIconButton extends StatelessWidget {
     required this.onPressed,
     this.tooltip,
     this.enabled = true,
-  })
-    : assert(icon != null || iconWidget != null);
+    this.active = false,
+  }) : assert(icon != null || iconWidget != null);
 
   @override
   Widget build(BuildContext context) {
@@ -874,10 +827,14 @@ class _ActionIconButton extends StatelessWidget {
 
     final child = Container(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
+        color: active
+            ? theme.colorScheme.primary.withValues(alpha: 0.1)
+            : theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(7),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+          color: active
+              ? theme.colorScheme.primary.withValues(alpha: 0.28)
+              : theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
           width: 1,
         ),
       ),
@@ -893,9 +850,13 @@ class _ActionIconButton extends StatelessWidget {
                 Icon(
                   icon,
                   size: 15,
-                  color: theme.colorScheme.onSurfaceVariant.withValues(
-                    alpha: enabled ? 1 : 0.38,
-                  ),
+                  color: enabled
+                      ? (active
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.onSurfaceVariant)
+                      : theme.colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.38,
+                        ),
                 ),
           ),
         ),
