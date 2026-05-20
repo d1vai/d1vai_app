@@ -334,9 +334,20 @@ class _SettingsApiKeysTabState extends State<SettingsApiKeysTab> {
                         .toString()
                         .trim()
                         .isNotEmpty;
+                    final name = (item['name'] ??
+                            (loc?.translate('api_keys_unnamed') ?? 'Unnamed key'))
+                        .toString();
+                    final prefix = '${item['key_prefix'] ?? ''}...';
+                    final description = (item['description'] ?? '')
+                        .toString()
+                        .trim();
+                    final createdLabel =
+                        '${loc?.translate('api_keys_created_at') ?? 'Created'} · ${_formatDate(item['created_at'], loc)}';
+                    final lastUsedLabel =
+                        '${loc?.translate('api_keys_last_used') ?? 'Last used'} · ${_formatDate(item['last_used_at'], loc)}';
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(14),
+                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: scheme.outlineVariant),
@@ -345,22 +356,76 @@ class _SettingsApiKeysTabState extends State<SettingsApiKeysTab> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Expanded(
-                                child: Text(
-                                  (item['name'] ??
-                                          (loc?.translate('api_keys_unnamed') ??
-                                              'Unnamed key'))
-                                      .toString(),
-                                  style: theme.textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                                child: Row(
+                                  children: [
+                                    Flexible(
+                                      flex: 3,
+                                      child: Text(
+                                        name,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style:
+                                            theme.textTheme.titleSmall?.copyWith(
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 12.5,
+                                            ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      flex: 4,
+                                      child: SelectableText(
+                                        prefix,
+                                        maxLines: 1,
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              fontFamily: 'monospace',
+                                              fontSize: 12,
+                                              color: scheme.onSurfaceVariant,
+                                            ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              if (revoked)
+                              IconButton(
+                                onPressed: () async {
+                                  await Clipboard.setData(
+                                    ClipboardData(text: prefix),
+                                  );
+                                  if (!context.mounted) return;
+                                  SnackBarHelper.showSuccess(
+                                    context,
+                                    title:
+                                        loc?.translate('settings_api_key') ??
+                                        'API Key',
+                                    message:
+                                        loc?.translate('api_keys_copied') ??
+                                        'API key copied',
+                                  );
+                                },
+                                icon: const Icon(Icons.copy_rounded, size: 15),
+                                visualDensity: VisualDensity.compact,
+                                tooltip: loc?.translate('copy') ?? 'Copy',
+                              ),
+                              if (!revoked)
+                                Button(
+                                  variant: ButtonVariant.outline,
+                                  size: ButtonSize.sm,
+                                  onPressed: _revoking
+                                      ? null
+                                      : () => _confirmRevoke(context, item, loc),
+                                  text:
+                                      loc?.translate('api_keys_revoke_button') ??
+                                      'Revoke',
+                                )
+                              else
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
+                                    horizontal: 7,
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
@@ -370,48 +435,45 @@ class _SettingsApiKeysTabState extends State<SettingsApiKeysTab> {
                                   child: Text(
                                     loc?.translate('api_keys_revoked') ??
                                         'Revoked',
-                                    style: theme.textTheme.labelSmall,
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
                                 ),
                             ],
                           ),
-                          const SizedBox(height: 6),
-                          Text(
-                            '${item['key_prefix'] ?? ''}...',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              fontFamily: 'monospace',
-                              color: scheme.onSurfaceVariant,
+                          if (description.isNotEmpty || true) ...[
+                            const SizedBox(height: 6),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    description,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: scheme.onSurfaceVariant,
+                                      height: 1.25,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Flexible(
+                                  child: Wrap(
+                                    alignment: WrapAlignment.end,
+                                    spacing: 6,
+                                    runSpacing: 6,
+                                    children: [
+                                      _ApiKeyTag(text: createdLabel),
+                                      _ApiKeyTag(text: lastUsedLabel),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                          if (((item['description'] ?? '').toString().trim())
-                              .isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            Text(item['description'].toString()),
                           ],
-                          const SizedBox(height: 8),
-                          Text(
-                            '${loc?.translate('api_keys_created_at') ?? 'Created'}: ${_formatDate(item['created_at'], loc)}',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: scheme.onSurfaceVariant,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${loc?.translate('api_keys_last_used') ?? 'Last used'}: ${_formatDate(item['last_used_at'], loc)}',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: scheme.onSurfaceVariant,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Button(
-                            variant: ButtonVariant.outline,
-                            onPressed: revoked || _revoking
-                                ? null
-                                : () => _confirmRevoke(context, item, loc),
-                            text:
-                                loc?.translate('api_keys_revoke_button') ??
-                                'Revoke',
-                          ),
                         ],
                       ),
                     );
@@ -420,6 +482,33 @@ class _SettingsApiKeysTabState extends State<SettingsApiKeysTab> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ApiKeyTag extends StatelessWidget {
+  final String text;
+
+  const _ApiKeyTag({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.22)),
+      ),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          fontSize: 10,
+          color: scheme.onSurfaceVariant,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

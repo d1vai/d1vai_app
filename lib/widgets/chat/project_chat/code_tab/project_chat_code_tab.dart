@@ -533,7 +533,9 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
     });
 
     return Padding(
-      padding: EdgeInsets.all(compact ? 12 : 16),
+      padding: compact
+          ? const EdgeInsets.fromLTRB(0, 8, 0, 0)
+          : const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

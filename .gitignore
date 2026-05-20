@@ -34,6 +34,7 @@ migrate_working_dir/
 /coverage/
 docs/store-assets-v2/
 docs/readme-assets/iphone-6.5/
+docs/app-store-review/macos/local-assets/
 
 # Symbolication related
 app.*.symbols

@@ -203,7 +203,10 @@ jobs:
           dmg_path="build/macos/${{ steps.meta.outputs.dmg_name }}"
           diagnostics_dir="build/macos/notary"
           submit_json="${diagnostics_dir}/submit-response.json"
+          info_json="${diagnostics_dir}/notary-info.json"
           log_json="${diagnostics_dir}/notary-log.json"
+          timeout_seconds=3600
+          poll_interval_seconds=30
 
           mkdir -p "${diagnostics_dir}"
 
@@ -212,34 +215,64 @@ jobs:
             --key-id "${APPLE_NOTARY_KEY_ID}" \
             --issuer "${APPLE_NOTARY_ISSUER_ID}" \
             --team-id "${APPLE_TEAM_ID}" \
-            --wait \
             --output-format json | tee "${submit_json}"
 
           submission_id="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1], encoding="utf-8")).get("id", ""))' "${submit_json}")"
-
-          status="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1], encoding="utf-8")).get("status", ""))' "${submit_json}")"
+          if [ -z "${submission_id}" ]; then
+            echo "Notary submission id was not returned." >&2
+            exit 1
+          fi
 
           echo "submission_id=${submission_id}" >> "${GITHUB_OUTPUT}"
-          echo "status=${status}" >> "${GITHUB_OUTPUT}"
+          echo "Notary submission id: ${submission_id}"
 
+          deadline=$((SECONDS + timeout_seconds))
+          while [ "${SECONDS}" -lt "${deadline}" ]; do
+            xcrun notarytool info "${submission_id}" \
+              --key "${APPLE_NOTARY_API_KEY_PATH}" \
+              --key-id "${APPLE_NOTARY_KEY_ID}" \
+              --issuer "${APPLE_NOTARY_ISSUER_ID}" \
+              --team-id "${APPLE_TEAM_ID}" \
+              --output-format json | tee "${info_json}"
+
+            status="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1], encoding="utf-8")).get("status", ""))' "${info_json}")"
+            echo "status=${status}" >> "${GITHUB_OUTPUT}"
+            echo "Notary status: ${status}"
+
+            if [ "${status}" = "Accepted" ]; then
+              exit 0
+            fi
+
+            if [ "${status}" = "Invalid" ]; then
+              xcrun notarytool log "${submission_id}" \
+                --key "${APPLE_NOTARY_API_KEY_PATH}" \
+                --key-id "${APPLE_NOTARY_KEY_ID}" \
+                --issuer "${APPLE_NOTARY_ISSUER_ID}" \
+                --team-id "${APPLE_TEAM_ID}" \
+                --output-format json > "${log_json}" || true
+              if [ -f "${log_json}" ]; then
+                cat "${log_json}"
+              fi
+              echo "Notarization did not reach Accepted status." >&2
+              exit 1
+            fi
+
+            echo "Notarization is still pending. Retrying in ${poll_interval_seconds} seconds..."
+            sleep "${poll_interval_seconds}"
+          done
+
+          echo "Timed out after ${timeout_seconds} seconds waiting for notarization." >&2
           xcrun notarytool log "${submission_id}" \
             --key "${APPLE_NOTARY_API_KEY_PATH}" \
             --key-id "${APPLE_NOTARY_KEY_ID}" \
             --issuer "${APPLE_NOTARY_ISSUER_ID}" \
             --team-id "${APPLE_TEAM_ID}" \
             --output-format json > "${log_json}" || true
-
-          echo "Notary submission id: ${submission_id}"
-          echo "Notary status: ${status}"
           if [ -f "${log_json}" ]; then
             echo "Notary log:"
             cat "${log_json}"
           fi
-
-          if [ "${status}" != "Accepted" ]; then
-            echo "Notarization did not reach Accepted status." >&2
-            exit 1
-          fi
+          exit 124
 
       - name: Staple DMG
         shell: bash
