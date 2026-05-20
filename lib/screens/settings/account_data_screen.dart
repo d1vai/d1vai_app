@@ -306,7 +306,7 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
                     child: OutlinedButton.icon(
                       onPressed: () => context.push('/projects'),
                       icon: const Icon(Icons.folder_open),
-                      label: const Text('Open projects'),
+                      label: Text(loc?.translate('account_data_open_projects') ?? 'Open projects'),
                     ),
                   ),
                 ],

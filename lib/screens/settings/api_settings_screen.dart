@@ -12,6 +12,7 @@ import '../../services/workspace_service.dart';
 import '../../utils/navigation_utils.dart';
 import '../../widgets/macos_workspace_inspector_card.dart';
 import '../../widgets/snackbar_helper.dart';
+import '../../l10n/app_localizations.dart';
 
 class ApiSettingsScreen extends StatefulWidget {
   const ApiSettingsScreen({super.key});
@@ -263,7 +264,7 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('API Settings'),
+        title: Text(AppLocalizations.of(context)?.translate('api_settings') ?? 'API Settings'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => NavigationUtils.popOrGo(context, '/settings'),
@@ -342,7 +343,7 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
                       Expanded(
                         child: OutlinedButton(
                           onPressed: _saving ? null : _reset,
-                          child: const Text('Reset'),
+                          child: Text(AppLocalizations.of(context)?.translate('api_settings_reset') ?? 'Reset'),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -357,7 +358,7 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : const Text('Save'),
+                              : Text(AppLocalizations.of(context)?.translate('api_settings_save') ?? 'Save'),
                         ),
                       ),
                     ],
@@ -377,7 +378,7 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
                                   ),
                                 )
                               : const Icon(Icons.wifi_tethering),
-                          label: const Text('Test connection'),
+                          label: Text(AppLocalizations.of(context)?.translate('api_settings_test_connection') ?? 'Test connection'),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -385,7 +386,7 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
                         child: OutlinedButton.icon(
                           onPressed: _copyDiagnostics,
                           icon: const Icon(Icons.copy),
-                          label: const Text('Copy diagnostics'),
+                          label: Text(AppLocalizations.of(context)?.translate('api_settings_copy_diagnostics') ?? 'Copy diagnostics'),
                         ),
                       ),
                     ],

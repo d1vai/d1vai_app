@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/snackbar_helper.dart';
+import '../l10n/app_localizations.dart';
 
 class PrivacySettings {
   bool profileVisibility;
@@ -188,7 +189,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Privacy Settings'),
+        title: Text(AppLocalizations.of(context)?.translate('privacy_settings') ?? 'Privacy Settings'),
         actions: [
           if (_isSaving)
             const Padding(
@@ -280,8 +281,8 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
             Icons.person,
             color: _settings.profileVisibility ? Colors.green : Colors.grey,
           ),
-          title: const Text('Public Profile'),
-          subtitle: const Text('Allow anyone to view your profile'),
+          title: Text(AppLocalizations.of(context)?.translate('privacy_public_profile') ?? 'Public Profile'),
+          subtitle: Text(AppLocalizations.of(context)?.translate('privacy_public_profile_desc') ?? 'Allow anyone to view your profile'),
           value: _settings.profileVisibility,
           onChanged: (value) {
             setState(() {
@@ -295,8 +296,8 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
             Icons.email,
             color: _settings.discoverableByEmail ? Colors.blue : Colors.grey,
           ),
-          title: const Text('Discoverable by Email'),
-          subtitle: const Text('Allow others to find you using your email'),
+          title: Text(AppLocalizations.of(context)?.translate('privacy_discoverable_by_email') ?? 'Discoverable by Email'),
+          subtitle: Text(AppLocalizations.of(context)?.translate('privacy_discoverable_by_email_desc') ?? 'Allow others to find you using your email'),
           value: _settings.discoverableByEmail,
           onChanged: (value) {
             setState(() {
@@ -315,8 +316,8 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
           Icons.analytics,
           color: _settings.allowAnalytics ? Colors.purple : Colors.grey,
         ),
-        title: const Text('Allow Analytics'),
-        subtitle: const Text('Help improve the app by sharing usage analytics'),
+        title: Text(AppLocalizations.of(context)?.translate('privacy_allow_analytics') ?? 'Allow Analytics'),
+        subtitle: Text(AppLocalizations.of(context)?.translate('privacy_allow_analytics_desc') ?? 'Help improve the app by sharing usage analytics'),
         value: _settings.allowAnalytics,
         onChanged: (value) {
           setState(() {
@@ -330,8 +331,8 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
           Icons.share,
           color: _settings.allowDataSharing ? Colors.orange : Colors.grey,
         ),
-        title: const Text('Allow Data Sharing'),
-        subtitle: const Text('Share data to improve our services'),
+        title: Text(AppLocalizations.of(context)?.translate('privacy_allow_data_sharing') ?? 'Allow Data Sharing'),
+        subtitle: Text(AppLocalizations.of(context)?.translate('privacy_allow_data_sharing_desc') ?? 'Share data to improve our services'),
         value: _settings.allowDataSharing,
         onChanged: (value) {
           setState(() {
@@ -345,8 +346,8 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
           Icons.mark_email_unread,
           color: _settings.allowMarketingEmails ? Colors.red : Colors.grey,
         ),
-        title: const Text('Marketing Emails'),
-        subtitle: const Text('Receive emails about new features and offers'),
+        title: Text(AppLocalizations.of(context)?.translate('privacy_marketing_emails') ?? 'Marketing Emails'),
+        subtitle: Text(AppLocalizations.of(context)?.translate('privacy_marketing_emails_desc') ?? 'Receive emails about new features and offers'),
         value: _settings.allowMarketingEmails,
         onChanged: (value) {
           setState(() {
@@ -367,8 +368,8 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
             Icons.circle,
             color: _settings.showOnlineStatus ? Colors.green : Colors.grey,
           ),
-          title: const Text('Show Online Status'),
-          subtitle: const Text('Let others see when you\'re active'),
+          title: Text(AppLocalizations.of(context)?.translate('privacy_show_online_status') ?? 'Show Online Status'),
+          subtitle: Text(AppLocalizations.of(context)?.translate('privacy_show_online_status_desc') ?? 'Let others see when you\'re active'),
           value: _settings.showOnlineStatus,
           onChanged: (value) {
             setState(() {
@@ -382,8 +383,8 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
             Icons.timeline,
             color: _settings.showActivityStatus ? Colors.blue : Colors.grey,
           ),
-          title: const Text('Show Activity Status'),
-          subtitle: const Text('Display your recent activity to others'),
+          title: Text(AppLocalizations.of(context)?.translate('privacy_show_activity_status') ?? 'Show Activity Status'),
+          subtitle: Text(AppLocalizations.of(context)?.translate('privacy_show_activity_status_desc') ?? 'Display your recent activity to others'),
           value: _settings.showActivityStatus,
           onChanged: (value) {
             setState(() {
@@ -407,8 +408,8 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                 ? Colors.indigo
                 : Colors.grey,
           ),
-          title: const Text('Allow Third-Party Apps'),
-          subtitle: const Text('Enable integrations with third-party services'),
+          title: Text(AppLocalizations.of(context)?.translate('privacy_allow_third_party_apps') ?? 'Allow Third-Party Apps'),
+          subtitle: Text(AppLocalizations.of(context)?.translate('privacy_allow_third_party_apps_desc') ?? 'Enable integrations with third-party services'),
           value: _settings.allowThirdPartyIntegrations,
           onChanged: (value) {
             setState(() {

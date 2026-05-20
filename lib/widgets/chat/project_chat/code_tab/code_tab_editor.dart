@@ -122,6 +122,8 @@ class _CodeTabEditorState extends State<CodeTabEditor> {
             controller: widget.controller,
             preset: preset,
             fontSize: editorPrefs.fontSize,
+            preferences: editorPrefs,
+            prefersDark: prefersDark,
           ),
         ),
         ListenableBuilder(
@@ -326,11 +328,15 @@ class _MonacoEditorSurface extends StatelessWidget {
   final AppCodeEditorController controller;
   final CodeEditorThemePreset preset;
   final double fontSize;
+  final EditorPreferencesProvider preferences;
+  final bool prefersDark;
 
   const _MonacoEditorSurface({
     required this.controller,
     required this.preset,
     required this.fontSize,
+    required this.preferences,
+    required this.prefersDark,
   });
 
   @override
@@ -346,6 +352,16 @@ class _MonacoEditorSurface extends StatelessWidget {
       child: monaco.MonacoEditor(
         controller: monacoController,
         options: options,
+        onReady: (_) {
+          unawaited(
+            controller.applyMonacoPresentation(
+              preferences: preferences,
+              preset: preset,
+              prefersDark: prefersDark,
+              readOnly: false,
+            ),
+          );
+        },
         backgroundColor: preset.gutterBackground,
         showStatusBar: false,
         padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),

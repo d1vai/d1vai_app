@@ -821,7 +821,7 @@ class _EnvVarDenseItem extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
         color: cs.surfaceContainerLow.withValues(alpha: 0.88),
         borderRadius: BorderRadius.circular(16),
@@ -834,30 +834,48 @@ class _EnvVarDenseItem extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    SelectableText(
-                      envVar.key,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        fontFamily: 'monospace',
-                      ),
-                    ),
-                    if ((envVar.description ?? '').trim().isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        envVar.description!.trim(),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: cs.onSurfaceVariant,
-                          height: 1.35,
+                    Flexible(
+                      flex: 4,
+                      child: SelectableText(
+                        envVar.key,
+                        maxLines: 1,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          fontFamily: 'monospace',
+                          fontSize: 12.5,
                         ),
                       ),
-                    ],
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      flex: 5,
+                      child: SelectableText(
+                        value.trim().isEmpty ? '***' : value,
+                        maxLines: 1,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontFamily: 'monospace',
+                          fontSize: 12,
+                          height: 1.2,
+                          color: cs.onSurface.withValues(alpha: 0.88),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
+              if (value.trim().isNotEmpty) ...[
+                const SizedBox(width: 4),
+                IconButton(
+                  onPressed: () => onCopy(value, envVar.key),
+                  icon: const Icon(Icons.copy_rounded, size: 15),
+                  visualDensity: VisualDensity.compact,
+                  tooltip: 'Copy',
+                ),
+              ],
+              const SizedBox(width: 2),
               AppMenuButton<String>(
                 tooltip: 'More',
                 useFilledBackground: true,
@@ -884,90 +902,55 @@ class _EnvVarDenseItem extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _BadgePill(
-                icon: envVar.isSensitive
-                    ? Icons.lock_outline
-                    : Icons.key_outlined,
-                text: envVar.isSensitive ? 'Sensitive' : 'Plain',
-                color: envVar.isSensitive ? cs.tertiary : cs.onSurfaceVariant,
-              ),
-              _BadgePill(
-                icon: Icons.layers_outlined,
-                text: envVar.environmentLabel,
-                color: envVar.environmentColor,
-              ),
-              if (timestamp.isNotEmpty)
-                _BadgePill(
-                  icon: Icons.schedule_outlined,
-                  text: timestamp,
-                  color: cs.onSurfaceVariant,
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: cs.surface.withValues(alpha: 0.92),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: cs.outlineVariant.withValues(alpha: 0.22),
-              ),
-            ),
-            child: Column(
+          if ((envVar.description ?? '').trim().isNotEmpty || timestamp.isNotEmpty)
+            const SizedBox(height: 6),
+          if ((envVar.description ?? '').trim().isNotEmpty || timestamp.isNotEmpty)
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.data_object_outlined,
-                      size: 14,
+                Expanded(
+                  child: Text(
+                    (envVar.description ?? '').trim(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
                       color: cs.onSurfaceVariant,
+                      height: 1.25,
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Value',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: cs.onSurfaceVariant,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const Spacer(),
-                    if (value.trim().isNotEmpty)
-                      TextButton.icon(
-                        onPressed: () => onCopy(value, envVar.key),
-                        icon: const Icon(Icons.copy_rounded, size: 15),
-                        label: const Text('Copy'),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                      ),
-                  ],
+                  ),
                 ),
-                const SizedBox(height: 6),
-                SelectableText(
-                  value.trim().isEmpty ? '***' : value,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontFamily: 'monospace',
-                    fontSize: 12,
-                    height: 1.35,
-                    color: cs.onSurface.withValues(alpha: 0.88),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Wrap(
+                    alignment: WrapAlignment.end,
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      _BadgePill(
+                        icon: envVar.isSensitive
+                            ? Icons.lock_outline
+                            : Icons.key_outlined,
+                        text: envVar.isSensitive ? 'Sensitive' : 'Plain',
+                        color: envVar.isSensitive
+                            ? cs.tertiary
+                            : cs.onSurfaceVariant,
+                      ),
+                      _BadgePill(
+                        icon: Icons.layers_outlined,
+                        text: envVar.environmentLabel,
+                        color: envVar.environmentColor,
+                      ),
+                      if (timestamp.isNotEmpty)
+                        _BadgePill(
+                          icon: Icons.schedule_outlined,
+                          text: timestamp,
+                          color: cs.onSurfaceVariant,
+                        ),
+                    ],
                   ),
                 ),
               ],
             ),
-          ),
         ],
       ),
     );
@@ -988,23 +971,23 @@ class _BadgePill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.16)),
+        border: Border.all(color: color.withValues(alpha: 0.12)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 13, color: color),
-          const SizedBox(width: 6),
+          Icon(icon, size: 11.5, color: color),
+          const SizedBox(width: 4),
           Text(
             text,
             style: TextStyle(
               color: color,
-              fontSize: 11.5,
-              fontWeight: FontWeight.w700,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],

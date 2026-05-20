@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:d1vai_app/core/theme/locale_font_helper.dart';
 import 'package:d1vai_app/widgets/adaptive_modal.dart';
 import 'package:d1vai_app/widgets/snackbar_helper.dart';
+import 'package:d1vai_app/l10n/app_localizations.dart';
 
 class TwoFactorAuthSettingsScreen extends StatefulWidget {
   const TwoFactorAuthSettingsScreen({super.key});
@@ -113,19 +114,19 @@ class _TwoFactorAuthSettingsScreenState
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Disable Two-Factor Authentication'),
-        content: const Text(
-          'Are you sure you want to disable 2FA? Your account will be less secure.',
+        title: Text(AppLocalizations.of(context)?.translate('two_factor_disable_title') ?? 'Disable Two-Factor Authentication'),
+        content: Text(
+          AppLocalizations.of(context)?.translate('two_factor_disable_confirm') ?? 'Are you sure you want to disable 2FA? Your account will be less secure.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)?.translate('two_factor_cancel') ?? 'Cancel'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Disable', style: TextStyle(color: Colors.white)),
+            child: Text(AppLocalizations.of(context)?.translate('two_factor_disable') ?? 'Disable', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -363,7 +364,7 @@ class _TwoFactorAuthSettingsScreenState
                         onPressed: () {
                           Navigator.of(context).pop(false);
                         },
-                        child: const Text('Cancel'),
+                        child: Text(AppLocalizations.of(context)?.translate('two_factor_cancel') ?? 'Cancel'),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -385,7 +386,7 @@ class _TwoFactorAuthSettingsScreenState
 
                           Navigator.of(context, rootNavigator: true).pop(true);
                         },
-                        child: const Text('Verify & Enable'),
+                        child: Text(AppLocalizations.of(context)?.translate('two_factor_verify_enable') ?? 'Verify & Enable'),
                       ),
                     ),
                   ],
@@ -433,7 +434,7 @@ class _TwoFactorAuthSettingsScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Two-Factor Authentication')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)?.translate('two_factor_title') ?? 'Two-Factor Authentication')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView(

@@ -44,7 +44,6 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
   bool _wrapEnabled = false;
   String _editOriginal = '';
   AppCodeEditorController? _editController;
-  bool _rebuildingEditor = false;
 
   @override
   void initState() {
@@ -63,7 +62,6 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
 
   Future<void> _initializeEditorAndLoad(EditorPreferencesProvider prefs) async {
     final controller = await AppCodeEditorController.create(
-      engine: prefs.engine,
       filePath: widget.filePath,
       tabSize: prefs.tabSize,
       wrapEnabled: prefs.defaultWrap,
@@ -77,39 +75,6 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
       _editController = controller;
     });
     await _load();
-  }
-
-  Future<void> _rebuildEditor(EditorPreferencesProvider prefs) async {
-    if (_rebuildingEditor) return;
-    final previous = _editController;
-    if (previous == null) return;
-    _rebuildingEditor = true;
-    try {
-      final latestText = await previous.readText(refresh: true);
-      final replacement = await AppCodeEditorController.create(
-        engine: prefs.engine,
-        filePath: widget.filePath,
-        tabSize: prefs.tabSize,
-        wrapEnabled: _wrapEnabled,
-      );
-      await replacement.setText(
-        latestText,
-        markSaved: latestText == _editOriginal,
-      );
-      if (!mounted) {
-        replacement.dispose();
-        return;
-      }
-      previous.removeListener(_handleEditorChanged);
-      previous.dispose();
-      replacement.addListener(_handleEditorChanged);
-      setState(() {
-        _editController = replacement;
-        _hasUnsavedChanges = replacement.hasUnsavedChanges;
-      });
-    } finally {
-      _rebuildingEditor = false;
-    }
   }
 
   void _handleEditorChanged() {
@@ -302,12 +267,6 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
     if (editController != null) {
       if (editController.tabSize != editorPrefs.tabSize) {
         unawaited(editController.setTabSpaces(editorPrefs.tabSize));
-      }
-      if (editController.engine != editorPrefs.engine) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          unawaited(_rebuildEditor(editorPrefs));
-        });
       }
     }
 
