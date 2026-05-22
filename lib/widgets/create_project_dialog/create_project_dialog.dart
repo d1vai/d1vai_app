@@ -17,6 +17,7 @@ import '../../services/d1vai_service.dart';
 import '../../services/model_config_service.dart';
 import '../../services/workspace_service.dart';
 import '../../utils/billing_errors.dart';
+import '../../utils/error_utils.dart';
 import '../snackbar_helper.dart';
 import '../../utils/chat_entry.dart';
 import '../adaptive_modal.dart';
@@ -588,7 +589,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
                             'create_project_model_switch_failed_continue',
                           ) ??
                           'Failed to switch model, continuing with server default. ({error})')
-                      .replaceAll('{error}', '$e'),
+                      .replaceAll('{error}', humanizeError(e)),
               duration: const Duration(seconds: 3),
             );
           }

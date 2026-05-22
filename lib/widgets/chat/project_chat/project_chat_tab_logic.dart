@@ -961,7 +961,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         message:
             (AppLocalizations.of(context)?.translate('model_switch_failed') ??
                     'Failed to switch model: {error}')
-                .replaceAll('{error}', '$e'),
+                .replaceAll('{error}', humanizeError(e)),
       );
     } finally {
       if (mounted) {

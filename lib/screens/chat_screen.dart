@@ -936,7 +936,7 @@ class _ChatScreenState extends State<ChatScreen> {
           content: Text(
             (loc?.translate('model_switch_failed') ??
                     'Failed to switch model: {error}')
-                .replaceAll('{error}', '$e'),
+                .replaceAll('{error}', humanizeError(e)),
           ),
         ),
       );

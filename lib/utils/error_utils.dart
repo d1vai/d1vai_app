@@ -1,8 +1,13 @@
+import '../core/api_client.dart';
 import '../core/locale_bus.dart';
 import '../l10n/app_localizations.dart';
 
 String humanizeError(Object error) {
   var message = error.toString().trim();
+
+  if (error is ApiClientException) {
+    message = error.message.trim();
+  }
 
   // Common Dart exception wrappers.
   if (message.startsWith('Exception: ')) {
@@ -10,6 +15,13 @@ String humanizeError(Object error) {
   }
   if (message.startsWith('HttpException: ')) {
     message = message.substring('HttpException: '.length).trim();
+  }
+  final httpErrorMatch = RegExp(r'^HTTP Error:\s*\d+\s*').firstMatch(message);
+  if (httpErrorMatch != null) {
+    message = message.substring(httpErrorMatch.end).trim();
+  }
+  if (message.startsWith('ApiClientException: ')) {
+    message = message.substring('ApiClientException: '.length).trim();
   }
 
   // Network-ish failures (http package wraps SocketException).
