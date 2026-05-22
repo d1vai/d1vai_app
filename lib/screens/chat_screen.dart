@@ -153,6 +153,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   String? _miniPreviewUrl;
   int _miniPreviewReloadVersion = 0;
+  Timer? _deployStatusPollTimer;
+  int _deployStatusPollRun = 0;
+  DateTime? _lastPreviewDeployCompletedAt;
   late BuildContext _stableUiContext;
 
   @override
@@ -191,6 +194,8 @@ class _ChatScreenState extends State<ChatScreen> {
   void didUpdateWidget(covariant ChatScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.projectId != widget.projectId) {
+      _deployStatusPollTimer?.cancel();
+      _deployStatusPollRun += 1;
       setState(() {
         _miniPreviewUrl = null;
         _miniPreviewReloadVersion = 0;
@@ -209,6 +214,8 @@ class _ChatScreenState extends State<ChatScreen> {
     _reconnectTimer?.cancel();
     _workspacePollTimer?.cancel();
     _modelConfigRetryTimer?.cancel();
+    _deployStatusPollTimer?.cancel();
+    _deployStatusPollRun += 1;
     _webSocketSubscription?.cancel();
     _outboxSignals.close();
     _inputController.dispose();
@@ -991,8 +998,9 @@ class _ChatScreenState extends State<ChatScreen> {
                   'Preview deploy started'),
         position: SnackBarPosition.top,
       );
-      _refreshMiniPreview(fetchLatestUrl: true);
+      _startPreviewStatusPolling(immediate: true);
     } catch (e) {
+      _stopPreviewStatusPolling();
       if (!mounted) return;
       SnackBarHelper.showError(
         _stableUiContext,
@@ -1183,7 +1191,8 @@ class _ChatScreenState extends State<ChatScreen> {
         if (t == null) continue;
         if (t == 'history_complete' ||
             t == 'deployment_start' ||
-            t == 'deployment_complete') {
+            t == 'deployment_complete' ||
+            t == 'deployment_success') {
           continue;
         }
         if (newestNonIgnorable == null ||
@@ -1681,10 +1690,27 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     // Web filters these from history; treat them as non-chat side-effect frames.
-    if (type == 'deployment_start' || type == 'deployment_complete') {
-      if (type == 'deployment_complete') {
-        _refreshMiniPreview(fetchLatestUrl: true);
+    if (type == 'deployment_start') {
+      final doneAt = _lastPreviewDeployCompletedAt;
+      if (doneAt != null && DateTime.now().difference(doneAt).inSeconds < 12) {
+        return;
       }
+      _startPreviewStatusPolling();
+      return;
+    }
+
+    if (type == 'deployment_complete' || type == 'deployment_success') {
+      String? url;
+      try {
+        final msg = payload['message'];
+        if (msg is Map) {
+          url = preferredPreviewUrlFromPayload(
+            msg.map((key, value) => MapEntry(key.toString(), value)),
+          );
+        }
+        url ??= preferredPreviewUrlFromPayload(payload);
+      } catch (_) {}
+      _completePreviewDeployment(url?.trim());
       return;
     }
 
@@ -1925,6 +1951,95 @@ class _ChatScreenState extends State<ChatScreen> {
         },
       ),
       wsKey: wsKey,
+    );
+  }
+
+  void _stopPreviewStatusPolling() {
+    _deployStatusPollRun += 1;
+    _deployStatusPollTimer?.cancel();
+    _deployStatusPollTimer = null;
+  }
+
+  void _completePreviewDeployment(String? nextUrl) {
+    _stopPreviewStatusPolling();
+    _lastPreviewDeployCompletedAt = DateTime.now();
+    final resolvedUrl = (nextUrl ?? '').trim();
+    if (mounted && resolvedUrl.isNotEmpty) {
+      setState(() {
+        _miniPreviewUrl = resolvedUrl;
+        _miniPreviewReloadVersion += 1;
+      });
+    }
+    _refreshMiniPreview(fetchLatestUrl: true);
+  }
+
+  void _startPreviewStatusPolling({bool immediate = false}) {
+    _stopPreviewStatusPolling();
+    final run = _deployStatusPollRun;
+    final deadlineAt = DateTime.now().add(const Duration(minutes: 10));
+
+    Future<void> poll() async {
+      if (!mounted || run != _deployStatusPollRun) return;
+      try {
+        final status = await _d1vaiService.getProjectPreviewStatus(
+          widget.projectId,
+        );
+        if (!mounted || run != _deployStatusPollRun) return;
+
+        final success = status['success'] == true;
+        final message = (status['message'] ?? '').toString().trim();
+        final upperMessage = message.toUpperCase();
+        final nextUrl = (preferredPreviewUrlFromPayload(status) ?? '').trim();
+
+        if (success) {
+          _completePreviewDeployment(nextUrl);
+          return;
+        }
+
+        if (upperMessage.contains('FAILED') ||
+            upperMessage.contains('ERROR') ||
+            upperMessage.contains('CANCELED')) {
+          _stopPreviewStatusPolling();
+          if (!mounted) return;
+          final loc = AppLocalizations.of(_stableUiContext);
+          SnackBarHelper.showError(
+            _stableUiContext,
+            title: loc?.translate('redeploy_failed_title') ?? 'Redeploy failed',
+            message: message.isNotEmpty
+                ? message
+                : 'Preview deployment did not complete successfully',
+            position: SnackBarPosition.top,
+          );
+          return;
+        }
+      } catch (_) {
+        if (!mounted || run != _deployStatusPollRun) return;
+      }
+
+      if (DateTime.now().isAfter(deadlineAt)) {
+        _stopPreviewStatusPolling();
+        if (!mounted) return;
+        final loc = AppLocalizations.of(_stableUiContext);
+        SnackBarHelper.showInfo(
+          _stableUiContext,
+          title: loc?.translate('redeploy_started_title') ?? 'Redeploy started',
+          message: 'Preview deployment is still building. Check back in a moment.',
+          position: SnackBarPosition.top,
+          duration: const Duration(seconds: 3),
+        );
+        return;
+      }
+
+      _deployStatusPollTimer = Timer(const Duration(seconds: 4), () {
+        unawaited(poll());
+      });
+    }
+
+    _deployStatusPollTimer = Timer(
+      immediate ? Duration.zero : const Duration(seconds: 4),
+      () {
+        unawaited(poll());
+      },
     );
   }
 

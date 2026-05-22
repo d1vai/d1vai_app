@@ -125,6 +125,8 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   bool _isDeploying = false;
   String? _deployFramework;
   Timer? _deployAutoClearTimer;
+  Timer? _deployStatusPollTimer;
+  int _deployStatusPollRun = 0;
   DateTime? _lastDeployCompletedAt;
 
   // UI notice cooldowns to avoid snackbar/error storms.

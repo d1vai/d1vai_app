@@ -548,6 +548,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     }
     if (oldWidget.projectId != widget.projectId) {
       _deployAutoClearTimer?.cancel();
+      _deployStatusPollTimer?.cancel();
+      _deployStatusPollRun += 1;
       _modelConfigRetryTimer?.cancel();
       setState(() {
         _previewUrl = widget.previewUrl;
@@ -599,6 +601,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     _workspacePollTimer?.cancel();
     _modelConfigRetryTimer?.cancel();
     _deployAutoClearTimer?.cancel();
+    _deployStatusPollTimer?.cancel();
+    _deployStatusPollRun += 1;
     _thinkingClearTimer?.cancel();
     _chatDraftPersistTimer?.cancel();
     _scrollToBottomTimer?.cancel();
@@ -1960,6 +1964,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _deployFramework = framework?.toString();
       });
       _scheduleDeployAutoClear(const Duration(minutes: 3));
+      _startPreviewStatusPolling();
       _showInfoNotice(
         key: 'deployment_start',
         title:
@@ -1989,24 +1994,112 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         }
         url ??= preferredPreviewUrlFromPayload(payload);
       } catch (_) {}
-
-      final nextUrl = url?.trim() ?? '';
-      setState(() {
-        _isDeploying = false;
-        _deployFramework = null;
-        _lastDeployCompletedAt = DateTime.now();
-        if (nextUrl.isNotEmpty) {
-          _previewUrl = nextUrl;
-        }
-        _previewKey += 1;
-        _currentChatTabIndex = 0;
-      });
-      _deployAutoClearTimer?.cancel();
-
-      // Best-effort refresh project to pick up the bound preview domain.
-      unawaited(_refreshPreviewUrlFromApi());
+      _completePreviewDeployment(url?.trim());
       return;
     }
+  }
+
+  void _stopPreviewStatusPolling() {
+    _deployStatusPollRun += 1;
+    _deployStatusPollTimer?.cancel();
+    _deployStatusPollTimer = null;
+  }
+
+  void _completePreviewDeployment(String? nextUrl) {
+    _stopPreviewStatusPolling();
+    final resolvedUrl = (nextUrl ?? '').trim();
+    setState(() {
+      _isDeploying = false;
+      _deployFramework = null;
+      _lastDeployCompletedAt = DateTime.now();
+      if (resolvedUrl.isNotEmpty) {
+        _previewUrl = resolvedUrl;
+      }
+      _previewKey += 1;
+      _currentChatTabIndex = 0;
+    });
+    _deployAutoClearTimer?.cancel();
+    _trackPreviewOpenedIfNeeded();
+    unawaited(_refreshPreviewUrlFromApi());
+  }
+
+  void _startPreviewStatusPolling({bool immediate = false}) {
+    _stopPreviewStatusPolling();
+    final run = _deployStatusPollRun;
+    final deadlineAt = DateTime.now().add(const Duration(minutes: 10));
+
+    Future<void> poll() async {
+      if (!mounted || run != _deployStatusPollRun) return;
+      try {
+        final status = await _d1vaiService.getProjectPreviewStatus(widget.projectId);
+        if (!mounted || run != _deployStatusPollRun) return;
+
+        final success = status['success'] == true;
+        final message = (status['message'] ?? '').toString().trim();
+        final upperMessage = message.toUpperCase();
+        final nextUrl = (preferredPreviewUrlFromPayload(status) ?? '').trim();
+
+        if (success) {
+          _completePreviewDeployment(nextUrl);
+          return;
+        }
+
+        if (upperMessage.contains('FAILED') ||
+            upperMessage.contains('ERROR') ||
+            upperMessage.contains('CANCELED')) {
+          _stopPreviewStatusPolling();
+          _deployAutoClearTimer?.cancel();
+          if (!mounted) return;
+          setState(() {
+            _isDeploying = false;
+            _deployFramework = null;
+          });
+          _showErrorNotice(
+            key: 'preview_deploy_status_failed',
+            title:
+                AppLocalizations.of(context)?.translate('redeploy_failed_title') ??
+                'Redeploy failed',
+            message: message.isNotEmpty
+                ? message
+                : 'Preview deployment did not complete successfully',
+          );
+          return;
+        }
+      } catch (_) {
+        if (!mounted || run != _deployStatusPollRun) return;
+      }
+
+      if (DateTime.now().isAfter(deadlineAt)) {
+        _stopPreviewStatusPolling();
+        _deployAutoClearTimer?.cancel();
+        if (!mounted) return;
+        setState(() {
+          _isDeploying = false;
+          _deployFramework = null;
+        });
+        _showInfoNotice(
+          key: 'preview_deploy_status_timeout',
+          title:
+              AppLocalizations.of(context)?.translate('redeploy_started_title') ??
+              'Redeploy started',
+          message: 'Preview deployment is still building. Check back in a moment.',
+          cooldown: const Duration(seconds: 30),
+          duration: const Duration(seconds: 3),
+        );
+        return;
+      }
+
+      _deployStatusPollTimer = Timer(const Duration(seconds: 4), () {
+        unawaited(poll());
+      });
+    }
+
+    _deployStatusPollTimer = Timer(
+      immediate ? Duration.zero : const Duration(seconds: 4),
+      () {
+        unawaited(poll());
+      },
+    );
   }
 
   Future<void> _refreshPreviewUrlFromApi() async {
@@ -2123,17 +2216,10 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
             : null,
         duration: const Duration(seconds: 3),
       );
-      unawaited(_refreshPreviewUrlFromApi());
-      // Align with web: treat a successful trigger response as "done" for the UI button.
-      // If WS deployment frames arrive later, they will update `_isDeploying` again.
-      setState(() {
-        _isDeploying = false;
-        _deployFramework = null;
-        _lastDeployCompletedAt = DateTime.now();
-      });
-      _deployAutoClearTimer?.cancel();
+      _startPreviewStatusPolling(immediate: true);
     } catch (e) {
       if (!mounted) return;
+      _stopPreviewStatusPolling();
       _showErrorNotice(
         key: 'preview_redeploy_failed',
         title:

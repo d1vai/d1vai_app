@@ -922,6 +922,18 @@ class MessageParser {
     return text.isEmpty ? null : text;
   }
 
+  static String? _comparableMessageText(ChatMessage message) {
+    final text = _messagePrimaryText(message);
+    if (text == null || text.isEmpty) return null;
+    return text
+        .replaceAll('\r\n', '\n')
+        .split('\n')
+        .map((line) => line.trim())
+        .join('\n')
+        .replaceAll(RegExp(r'\n{3,}'), '\n\n')
+        .trim();
+  }
+
   static String _resultPayloadText(dynamic payload) {
     final normalized = _coerceJsonPayload(payload);
     if (normalized is! Map<String, dynamic>) return '';
@@ -1023,31 +1035,31 @@ class MessageParser {
     List<ChatMessage> historyMessages,
     List<ChatMessage> currentMessages,
   ) {
-    final localOptimisticMessages = currentMessages
+    final localTransientMessages = currentMessages
         .where((message) {
           if (message.role != 'user') return false;
           final status = message.meta?['status'];
-          final isNumericId = RegExp(r'^\d+$').hasMatch(message.id.trim());
-          return status != null || !isNumericId;
+          return status == 'pending' || status == 'failed';
         })
         .toList(growable: false);
 
-    if (localOptimisticMessages.isEmpty) return historyMessages;
+    if (localTransientMessages.isEmpty) return historyMessages;
 
     final merged = historyMessages.toList();
-    for (final localMessage in localOptimisticMessages) {
-      final localText = _messagePrimaryText(localMessage);
+    for (final localMessage in localTransientMessages) {
+      final localText = _comparableMessageText(localMessage);
       final localAt = localMessage.createdAt.millisecondsSinceEpoch;
       final alreadyPresent = merged.any((historyMessage) {
         if (historyMessage.role != localMessage.role) return false;
-        final historyText = _messagePrimaryText(historyMessage);
+        final historyText = _comparableMessageText(historyMessage);
         if (localText == null ||
             historyText == null ||
             historyText != localText) {
           return false;
         }
         final historyAt = historyMessage.createdAt.millisecondsSinceEpoch;
-        return (historyAt - localAt).abs() <= 120000;
+        return historyAt >= localAt - 30000 &&
+            historyAt <= localAt + const Duration(minutes: 10).inMilliseconds;
       });
       if (!alreadyPresent) merged.add(localMessage);
     }
