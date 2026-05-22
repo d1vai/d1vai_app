@@ -676,6 +676,7 @@ class _MarkdownTextState extends State<MarkdownText> {
             style: baseStyle.copyWith(
               color: theme.colorScheme.primary,
               decoration: TextDecoration.underline,
+              decorationColor: theme.colorScheme.primary,
               fontWeight: FontWeight.w600,
             ),
             recognizer: rec,
