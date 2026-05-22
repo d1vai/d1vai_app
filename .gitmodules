@@ -1,3 +1,6 @@
 [submodule "third_party/flutter_monaco"]
 	path = third_party/flutter_monaco
 	url = git@github.com:d1vai/flutter_monaco.git
+[submodule "third_party/nativeapi-flutter"]
+	path = third_party/nativeapi-flutter
+	url = git@github.com:aboutmydreams/nativeapi-flutter.git

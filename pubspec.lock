@@ -97,6 +97,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.2"
+  cnativeapi:
+    dependency: "direct overridden"
+    description:
+      path: "third_party/nativeapi-flutter/packages/cnativeapi"
+      relative: true
+    source: path
+    version: "0.1.1"
   collection:
     dependency: transitive
     description:
@@ -676,6 +683,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.0"
+  nativeapi:
+    dependency: "direct main"
+    description:
+      path: "third_party/nativeapi-flutter/packages/nativeapi"
+      relative: true
+    source: path
+    version: "0.1.1"
   nested:
     dependency: transitive
     description:
