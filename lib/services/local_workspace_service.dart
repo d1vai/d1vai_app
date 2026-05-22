@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -52,7 +51,7 @@ class LocalWorkspaceService {
     int maxDepth = 12,
     int maxEntriesPerDirectory = 300,
   }) async {
-    _ensureMacos();
+    _ensureSupportedDesktop();
     final normalizedRoot = _normalizeRoot(rootPath);
     final rootDir = Directory(normalizedRoot);
     if (!await rootDir.exists()) {
@@ -119,17 +118,18 @@ class LocalWorkspaceService {
     String rootPath,
     String relativePath,
   ) async {
-    _ensureMacos();
+    _ensureSupportedDesktop();
     final file = File(_joinRootAndRelative(rootPath, relativePath));
     if (!await file.exists()) {
       throw Exception('Local file not found.');
     }
-    final bytes = await file.readAsBytes();
-    final binary = _looksBinary(bytes);
+    final size = await file.length();
+    final sample = await _readSampleBytes(file, maxBytes: 8192);
+    final binary = _looksBinary(sample);
     return LocalWorkspaceReadResult(
       path: relativePath,
-      content: binary ? base64Encode(bytes) : utf8.decode(bytes, allowMalformed: true),
-      size: bytes.length,
+      content: binary ? '' : await file.readAsString(),
+      size: size,
       isBinary: binary,
     );
   }
@@ -139,30 +139,33 @@ class LocalWorkspaceService {
     String relativePath,
     String content,
   ) async {
-    _ensureMacos();
+    _ensureSupportedDesktop();
     final file = File(_joinRootAndRelative(rootPath, relativePath));
     await file.parent.create(recursive: true);
     await file.writeAsString(content);
   }
 
-  void _ensureMacos() {
-    if (kIsWeb || !Platform.isMacOS) {
-      throw Exception('Local workspace access is only supported on macOS.');
+  void _ensureSupportedDesktop() {
+    if (kIsWeb || !(Platform.isMacOS || Platform.isWindows)) {
+      throw Exception(
+        'Local workspace access is only supported on macOS and Windows.',
+      );
     }
   }
 
-  String _normalizeRoot(String path) => path.trim().replaceAll(RegExp(r'/+$'), '');
+  String _normalizeRoot(String path) =>
+      path.trim().replaceAll(RegExp(r'[/\\]+$'), '');
 
   String _joinRootAndRelative(String rootPath, String relativePath) {
     final cleanRoot = _normalizeRoot(rootPath);
-    final cleanRelative = relativePath.replaceAll(RegExp(r'^/+'), '');
+    final cleanRelative = relativePath.replaceAll(RegExp(r'^[\/\\]+'), '');
     return '$cleanRoot/$cleanRelative';
   }
 
   String _lastSegment(String path) {
-    final normalized = path.replaceAll(RegExp(r'/+$'), '');
+    final normalized = path.replaceAll(RegExp(r'[/\\]+$'), '');
     if (normalized.isEmpty) return path;
-    final parts = normalized.split('/');
+    final parts = normalized.split(RegExp(r'[/\\]'));
     return parts.isEmpty ? normalized : parts.last;
   }
 
@@ -186,5 +189,14 @@ class LocalWorkspaceService {
       }
     }
     return suspicious / sampleLength > 0.2;
+  }
+
+  Future<List<int>> _readSampleBytes(File file, {required int maxBytes}) async {
+    final raf = await file.open();
+    try {
+      return await raf.read(maxBytes);
+    } finally {
+      await raf.close();
+    }
   }
 }

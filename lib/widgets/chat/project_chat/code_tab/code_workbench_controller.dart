@@ -7,7 +7,7 @@ import 'app_code_editor_controller.dart';
 import 'code_tab_models.dart';
 
 class CodeWorkbenchEditorState {
-  final String path;
+  String path;
   final AppCodeEditorController controller;
   final VoidCallback controllerListener;
   CodeTabFileContent? content;
@@ -111,6 +111,42 @@ class CodeWorkbenchController extends ChangeNotifier {
 
   bool isPreviewOnly(String path) => _previewPath == path;
 
+  Future<CodeWorkbenchEditorState> _createEditor(
+    String path, {
+    required bool preview,
+    required bool wrapEnabled,
+    required int tabSize,
+    required bool loading,
+  }) async {
+    if (preview) {
+      final oldPreviewPath = _previewPath;
+      if (oldPreviewPath != null && oldPreviewPath != path) {
+        _removeEditor(oldPreviewPath);
+      }
+      _previewPath = path;
+    }
+
+    late final CodeWorkbenchEditorState editor;
+    final controller = await AppCodeEditorController.create(
+      filePath: path,
+      tabSize: tabSize,
+      wrapEnabled: wrapEnabled,
+    );
+    editor = CodeWorkbenchEditorState(
+      path: path,
+      controller: controller,
+      controllerListener: () => _handleControllerChanged(editor),
+      isPreview: preview,
+      loading: loading,
+      wrapEnabled: wrapEnabled,
+    );
+    controller.addListener(editor.controllerListener);
+    _editorsByPath[path] = editor;
+    _openPaths.add(path);
+    _activePath = path;
+    return editor;
+  }
+
   void attachLocalWorkspace({
     required String rootPath,
     required String rootName,
@@ -174,32 +210,13 @@ class CodeWorkbenchController extends ChangeNotifier {
       return;
     }
 
-    if (preview) {
-      final oldPreviewPath = _previewPath;
-      if (oldPreviewPath != null && oldPreviewPath != path) {
-        _removeEditor(oldPreviewPath);
-      }
-      _previewPath = path;
-    }
-
-    late final CodeWorkbenchEditorState editor;
-    final controller = await AppCodeEditorController.create(
-      filePath: path,
+    final editor = await _createEditor(
+      path,
+      preview: preview,
+      wrapEnabled: wrapEnabled,
       tabSize: tabSize,
-      wrapEnabled: wrapEnabled,
-    );
-    editor = CodeWorkbenchEditorState(
-      path: path,
-      controller: controller,
-      controllerListener: () => _handleControllerChanged(editor),
-      isPreview: preview,
       loading: true,
-      wrapEnabled: wrapEnabled,
     );
-    controller.addListener(editor.controllerListener);
-    _editorsByPath[path] = editor;
-    _openPaths.add(path);
-    _activePath = path;
     notifyListeners();
 
     try {
@@ -219,6 +236,39 @@ class CodeWorkbenchController extends ChangeNotifier {
     }
 
     notifyListeners();
+  }
+
+  Future<void> openLocalFile(
+    String path, {
+    required CodeTabFileContent content,
+    bool preview = true,
+    bool wrapEnabled = false,
+    int tabSize = 2,
+  }) async {
+    selectTreePath(path);
+
+    final existing = _editorsByPath[path];
+    if (existing != null) {
+      setFileContent(path, content: content, keepEditing: existing.isEditing);
+      if (!preview) {
+        existing.isPreview = false;
+        if (_previewPath == path) {
+          _previewPath = null;
+        }
+      }
+      _activePath = path;
+      notifyListeners();
+      return;
+    }
+
+    await _createEditor(
+      path,
+      preview: preview,
+      wrapEnabled: wrapEnabled,
+      tabSize: tabSize,
+      loading: false,
+    );
+    setFileContent(path, content: content);
   }
 
   void activateEditor(String path) {
@@ -321,11 +371,64 @@ class CodeWorkbenchController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> markLocalFileSaved(String path, {required String text}) async {
+    final editor = _editorsByPath[path];
+    if (editor == null) return;
+    final previous = editor.content;
+    editor.content = CodeTabFileContent(
+      path: previous?.path ?? path,
+      content: text,
+      size: text.length,
+      isBinary: false,
+    );
+    editor.originalContent = text;
+    editor.isEditing = false;
+    await editor.controller.markSaved();
+    editor.lastKnownDirty = editor.hasUnsavedChanges;
+    markPathLocalSaved(path);
+  }
+
   void markPathLocalSaved(String path) {
     _syncedPaths.remove(path);
     _syncStates[path] = CodeWorkbenchSyncState.localSaved;
     _queuedAt[path] = DateTime.now();
     notifyListeners();
+  }
+
+  bool reusePreviewEditor(String nextPath, {required bool wrapEnabled}) {
+    final previewPath = _previewPath;
+    if (previewPath == null || previewPath == nextPath) return false;
+    final editor = _editorsByPath.remove(previewPath);
+    if (editor == null) return false;
+
+    final openIndex = _openPaths.indexOf(previewPath);
+    if (openIndex >= 0) {
+      _openPaths[openIndex] = nextPath;
+    } else {
+      _openPaths.add(nextPath);
+    }
+
+    editor.path = nextPath;
+    editor.content = null;
+    editor.error = null;
+    editor.loading = true;
+    editor.saving = false;
+    editor.isEditing = false;
+    editor.isPreview = true;
+    editor.wrapEnabled = wrapEnabled;
+    editor.originalContent = '';
+    editor.lastKnownDirty = false;
+    _editorsByPath[nextPath] = editor;
+    _activePath = nextPath;
+    _previewPath = nextPath;
+    _syncedPaths.remove(previewPath);
+    _syncStates.remove(previewPath);
+    _queuedAt.remove(previewPath);
+    _syncedPaths.remove(nextPath);
+    _syncStates.remove(nextPath);
+    _queuedAt.remove(nextPath);
+    notifyListeners();
+    return true;
   }
 
   void markPathSyncingGitHub(String path) {

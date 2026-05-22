@@ -36,10 +36,7 @@ class MacosFolderImportService extends ChangeNotifier {
   String? get currentImportPath => _currentImportPath;
   String? get error => _error;
 
-  Future<void> importPath(
-    BuildContext context,
-    String importPath,
-  ) async {
+  Future<void> importPath(BuildContext context, String importPath) async {
     if (kIsWeb || defaultTargetPlatform != TargetPlatform.macOS || _busy) {
       debugPrint(
         '[d1vai-drop] importPath skipped path=$importPath kIsWeb=$kIsWeb platform=$defaultTargetPlatform busy=$_busy',
@@ -50,7 +47,10 @@ class MacosFolderImportService extends ChangeNotifier {
     final trimmedPath = importPath.trim();
     if (trimmedPath.isEmpty) return;
     debugPrint('[d1vai-drop] importPath start path=$trimmedPath');
-    final projectProvider = Provider.of<ProjectProvider>(context, listen: false);
+    final projectProvider = Provider.of<ProjectProvider?>(
+      context,
+      listen: false,
+    );
     final rootNavigator = Navigator.of(context, rootNavigator: true);
     final router = GoRouter.of(context);
 
@@ -76,7 +76,9 @@ class MacosFolderImportService extends ChangeNotifier {
       );
 
       _showProgressDialog(context);
-      debugPrint('[d1vai-drop] importPath progress dialog shown path=$trimmedPath');
+      debugPrint(
+        '[d1vai-drop] importPath progress dialog shown path=$trimmedPath',
+      );
 
       final projectName = _deriveProjectName(trimmedPath);
 
@@ -112,7 +114,9 @@ class MacosFolderImportService extends ChangeNotifier {
       );
 
       final projectId = _extractProjectId(result);
-      debugPrint('[d1vai-drop] importPath upload complete projectId=$projectId');
+      debugPrint(
+        '[d1vai-drop] importPath upload complete projectId=$projectId',
+      );
       if (projectId == null || projectId.isEmpty) {
         throw Exception('Import succeeded but project ID is missing.');
       }
@@ -122,13 +126,15 @@ class MacosFolderImportService extends ChangeNotifier {
         message: 'Opening chat code…',
       );
 
-      await projectProvider.refresh();
+      await projectProvider?.refresh();
 
       if (rootNavigator.canPop()) {
         rootNavigator.pop();
       }
       router.go('/projects/$projectId?tab=chat&chatTab=code');
-      debugPrint('[d1vai-drop] importPath navigation complete projectId=$projectId');
+      debugPrint(
+        '[d1vai-drop] importPath navigation complete projectId=$projectId',
+      );
 
       _setState(
         busy: false,
@@ -157,7 +163,9 @@ class MacosFolderImportService extends ChangeNotifier {
     String importPath, {
     required bool isDirectory,
   }) async {
-    final tempDirectory = await Directory.systemTemp.createTemp('d1vai-import-');
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'd1vai-import-',
+    );
     final archiveBaseName = _deriveProjectName(importPath);
     final archivePath = '${tempDirectory.path}/$archiveBaseName.zip';
 
@@ -301,8 +309,9 @@ class _MacosFolderImportProgressDialog extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.errorContainer
-                          .withValues(alpha: 0.35),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.errorContainer.withValues(alpha: 0.35),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: Theme.of(
@@ -334,16 +343,17 @@ class _MacosFolderImportProgressDialog extends StatelessWidget {
                     ClipboardData(text: service.error!.trim()),
                   );
                   if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Error copied')),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('Error copied')));
                 },
                 icon: const Icon(Icons.copy, size: 16),
                 label: const Text('Copy Error'),
               ),
             if (isFailed)
               TextButton(
-                onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+                onPressed: () =>
+                    Navigator.of(context, rootNavigator: true).pop(),
                 child: const Text('Close'),
               ),
           ],

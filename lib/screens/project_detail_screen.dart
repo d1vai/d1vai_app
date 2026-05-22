@@ -40,12 +40,14 @@ class ProjectDetailScreen extends StatefulWidget {
   final String projectId;
   final String? initialTab;
   final String? initialChatTab;
+  final String? initialLocalEntryPath;
 
   const ProjectDetailScreen({
     super.key,
     required this.projectId,
     this.initialTab,
     this.initialChatTab,
+    this.initialLocalEntryPath,
   });
 
   @override
@@ -242,10 +244,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   void _trackChatOpenedIfNeeded(UserProject project) {
     if (_tabController.index != 0) return;
     final hasPreview = (project.preferredPreviewUrl ?? '').trim().isNotEmpty;
-    final defaultTab =
-        (widget.initialChatTab ?? '').trim().isNotEmpty
-            ? widget.initialChatTab!.trim()
-            : (hasPreview ? 'preview' : 'code');
+    final defaultTab = (widget.initialChatTab ?? '').trim().isNotEmpty
+        ? widget.initialChatTab!.trim()
+        : (hasPreview ? 'preview' : 'code');
     unawaited(
       AppAnalyticsService.instance.trackChatOpened(
         projectId: project.id,
@@ -455,6 +456,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           projectId: project.id,
           previewUrl: project.preferredPreviewUrl,
           initialSubTab: widget.initialChatTab,
+          initialLocalEntryPath: widget.initialLocalEntryPath,
         ),
         ProjectApiTab(projectId: project.id),
         ProjectDatabaseTab(
@@ -831,20 +833,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           color: isSelected ? AppColors.primaryBrand : null,
         ),
       ),
-      trailing: Radio<AppThemeMode>(
-        groupValue: themeProvider.themeMode,
-        onChanged: (AppThemeMode? newMode) {
-          if (newMode != null) {
-            Navigator.pop(context);
-            themeProvider.setThemeMode(newMode);
-            SnackBarHelper.showSuccess(
-              context,
-              title: 'Theme Updated',
-              message: 'Switched to $title',
-            );
-          }
-        },
-        value: mode,
+      trailing: Icon(
+        isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+        color: isSelected ? AppColors.primaryBrand : Colors.grey.shade500,
       ),
       onTap: () {
         final loc = AppLocalizations.of(context);

@@ -1,58 +1,73 @@
 bool isEditableFilePreview(String path, bool isBinary) {
-  if (isBinary) return false;
-  final lower = path.toLowerCase();
-  return !_markdownExtensions.contains(lower.split('.').lastOrNull ?? '') &&
-      !_nonEditableExtensions.any((suffix) => lower.endsWith(suffix));
+  return _editablePreviewExtensions.contains(fileExtensionForPath(path)) &&
+      !isBinary;
 }
 
 bool isCopyableFilePreview(String path, bool isBinary) {
   if (!isBinary) return true;
-  final lower = path.toLowerCase();
-  return lower.endsWith('.svg');
+  return isSvgPreview(path, '');
 }
 
 bool isMarkdownPreview(String path) {
-  final lower = path.toLowerCase();
-  return _markdownExtensions.any((suffix) => lower.endsWith('.$suffix'));
+  return _markdownExtensions.contains(fileExtensionForPath(path));
 }
 
 bool isJsonPreview(String path) {
-  final lower = path.toLowerCase();
-  return lower.endsWith('.json') ||
-      lower.endsWith('.jsonc') ||
-      lower.endsWith('.har');
+  final ext = fileExtensionForPath(path);
+  return ext == 'json' || ext == 'jsonc' || ext == 'har';
 }
 
 bool isSvgPreview(String path, String content) {
-  final lower = path.toLowerCase();
-  if (lower.endsWith('.svg')) return true;
+  if (fileExtensionForPath(path) == 'svg') return true;
   return content.trimLeft().startsWith('<svg');
 }
 
 bool isHtmlPreview(String path) {
-  final lower = path.toLowerCase();
-  return lower.endsWith('.html') || lower.endsWith('.htm');
+  final ext = fileExtensionForPath(path);
+  return ext == 'html' || ext == 'htm';
 }
 
 bool isImagePreview(String path) {
-  final lower = path.toLowerCase();
-  return _imageExtensions.any((suffix) => lower.endsWith('.$suffix'));
+  return _imageExtensions.contains(fileExtensionForPath(path));
 }
 
 bool isVideoPreview(String path) {
-  final lower = path.toLowerCase();
-  return _videoExtensions.any((suffix) => lower.endsWith('.$suffix'));
+  return _videoExtensions.contains(fileExtensionForPath(path));
 }
 
 bool isAudioPreview(String path) {
-  final lower = path.toLowerCase();
-  return _audioExtensions.any((suffix) => lower.endsWith('.$suffix'));
+  return _audioExtensions.contains(fileExtensionForPath(path));
+}
+
+bool isPdfPreview(String path) {
+  return fileExtensionForPath(path) == 'pdf';
+}
+
+bool isDocxPreview(String path) {
+  return fileExtensionForPath(path) == 'docx';
+}
+
+bool isSpreadsheetPreview(String path) {
+  return _spreadsheetExtensions.contains(fileExtensionForPath(path));
+}
+
+bool isPresentationPreview(String path) {
+  return _presentationExtensions.contains(fileExtensionForPath(path));
+}
+
+bool isLegacyOfficePreview(String path) {
+  return _legacyOfficeExtensions.contains(fileExtensionForPath(path));
+}
+
+String fileExtensionForPath(String path) {
+  final lower = path.toLowerCase().trim();
+  final parts = lower.split('.');
+  return parts.lastOrNull ?? '';
 }
 
 String? mimeTypeForPath(String path) {
-  final lower = path.toLowerCase();
   for (final entry in _mimeTypes.entries) {
-    if (lower.endsWith('.${entry.key}')) return entry.value;
+    if (fileExtensionForPath(path) == entry.key) return entry.value;
   }
   return null;
 }
@@ -65,6 +80,46 @@ const Set<String> _markdownExtensions = <String>{
 };
 
 const List<String> _nonEditableExtensions = <String>['.svg', '.html', '.htm'];
+
+const Set<String> _editablePreviewExtensions = <String>{
+  'txt',
+  'md',
+  'markdown',
+  'mdx',
+  'json',
+  'jsonc',
+  'har',
+  'yaml',
+  'yml',
+  'toml',
+  'xml',
+  'csv',
+  'tsv',
+  'js',
+  'jsx',
+  'ts',
+  'tsx',
+  'dart',
+  'py',
+  'go',
+  'rs',
+  'java',
+  'kt',
+  'swift',
+  'c',
+  'cpp',
+  'h',
+  'hpp',
+  'css',
+  'scss',
+  'sass',
+  'less',
+  'sh',
+  'bash',
+  'zsh',
+  'sql',
+  'env',
+};
 
 const Set<String> _imageExtensions = <String>{
   'png',
@@ -104,6 +159,18 @@ const Set<String> _audioExtensions = <String>{
   'weba',
 };
 
+const Set<String> _spreadsheetExtensions = <String>{
+  'csv',
+  'tsv',
+  'xlsx',
+  'xls',
+  'ods',
+};
+
+const Set<String> _presentationExtensions = <String>{'pptx'};
+
+const Set<String> _legacyOfficeExtensions = <String>{'doc', 'xls', 'ppt'};
+
 const Map<String, String> _mimeTypes = <String, String>{
   'png': 'image/png',
   'jpg': 'image/jpeg',
@@ -134,6 +201,15 @@ const Map<String, String> _mimeTypes = <String, String>{
   'ogg': 'audio/ogg',
   'opus': 'audio/opus',
   'weba': 'audio/webm',
+  'pdf': 'application/pdf',
+  'docx':
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'xlsx':
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'pptx':
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'csv': 'text/csv',
+  'tsv': 'text/tab-separated-values',
 };
 
 extension on List<String> {

@@ -34,18 +34,51 @@ class MacosRecentProjectEntry {
   }
 }
 
+class MacosRecentWorkspaceEntry {
+  final String path;
+  final String label;
+  final DateTime seenAt;
+
+  const MacosRecentWorkspaceEntry({
+    required this.path,
+    required this.label,
+    required this.seenAt,
+  });
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+    'path': path,
+    'label': label,
+    'seen_at': seenAt.toIso8601String(),
+  };
+
+  factory MacosRecentWorkspaceEntry.fromJson(Map<String, dynamic> json) {
+    return MacosRecentWorkspaceEntry(
+      path: (json['path'] ?? '').toString(),
+      label: (json['label'] ?? '').toString(),
+      seenAt:
+          DateTime.tryParse((json['seen_at'] ?? '').toString()) ??
+          DateTime.fromMillisecondsSinceEpoch(0),
+    );
+  }
+}
+
 class MacosMenuController extends ChangeNotifier {
   static const String _prefsRecentProjectsKey = 'macos_recent_projects';
+  static const String _prefsRecentWorkspacesKey = 'macos_recent_workspaces';
   static const int _maxRecentProjects = 8;
+  static const int _maxRecentWorkspaces = 8;
 
   List<MacosRecentProjectEntry> _recentProjects =
       const <MacosRecentProjectEntry>[];
+  List<MacosRecentWorkspaceEntry> _recentWorkspaces =
+      const <MacosRecentWorkspaceEntry>[];
   bool _loaded = false;
   String? _currentProjectId;
   String? _currentProjectName;
   bool _notifyScheduled = false;
 
   List<MacosRecentProjectEntry> get recentProjects => _recentProjects;
+  List<MacosRecentWorkspaceEntry> get recentWorkspaces => _recentWorkspaces;
   bool get loaded => _loaded;
   String? get currentProjectId => _currentProjectId;
   String? get currentProjectName => _currentProjectName;
@@ -86,8 +119,24 @@ class MacosMenuController extends ChangeNotifier {
           })
           .whereType<MacosRecentProjectEntry>()
           .toList(growable: false);
+
+      final rawWorkspaces =
+          prefs.getStringList(_prefsRecentWorkspacesKey) ?? const <String>[];
+      _recentWorkspaces = rawWorkspaces
+          .map((item) {
+            try {
+              return MacosRecentWorkspaceEntry.fromJson(
+                jsonDecode(item) as Map<String, dynamic>,
+              );
+            } catch (_) {
+              return null;
+            }
+          })
+          .whereType<MacosRecentWorkspaceEntry>()
+          .toList(growable: false);
     } catch (_) {
       _recentProjects = const <MacosRecentProjectEntry>[];
+      _recentWorkspaces = const <MacosRecentWorkspaceEntry>[];
     } finally {
       _loaded = true;
       _notifyListenersSafely();
@@ -113,6 +162,30 @@ class MacosMenuController extends ChangeNotifier {
     _recentProjects = next;
     _notifyListenersSafely();
     await _persist();
+  }
+
+  Future<void> registerLocalWorkspaceVisit({
+    required String path,
+    String? label,
+  }) async {
+    final normalizedPath = _normalizeWorkspacePath(path);
+    if (normalizedPath.isEmpty) return;
+
+    final displayLabel = (label ?? '').trim().isNotEmpty
+        ? label!.trim()
+        : _fallbackWorkspaceLabel(normalizedPath);
+    final entry = MacosRecentWorkspaceEntry(
+      path: normalizedPath,
+      label: displayLabel,
+      seenAt: DateTime.now(),
+    );
+
+    _recentWorkspaces = <MacosRecentWorkspaceEntry>[
+      entry,
+      ..._recentWorkspaces.where((item) => item.path != normalizedPath),
+    ].take(_maxRecentWorkspaces).toList(growable: false);
+    _notifyListenersSafely();
+    await _persistRecentWorkspaces();
   }
 
   void setCurrentProjectContext({required String id, required String name}) {
@@ -146,6 +219,15 @@ class MacosMenuController extends ChangeNotifier {
     } catch (_) {}
   }
 
+  Future<void> clearRecentWorkspaces() async {
+    _recentWorkspaces = const <MacosRecentWorkspaceEntry>[];
+    _notifyListenersSafely();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_prefsRecentWorkspacesKey);
+    } catch (_) {}
+  }
+
   Future<void> _persist() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -154,5 +236,25 @@ class MacosMenuController extends ChangeNotifier {
         _recentProjects.map((item) => jsonEncode(item.toJson())).toList(),
       );
     } catch (_) {}
+  }
+
+  Future<void> _persistRecentWorkspaces() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(
+        _prefsRecentWorkspacesKey,
+        _recentWorkspaces.map((item) => jsonEncode(item.toJson())).toList(),
+      );
+    } catch (_) {}
+  }
+
+  String _normalizeWorkspacePath(String path) {
+    return path.trim().replaceAll(RegExp(r'[/\\]+$'), '');
+  }
+
+  String _fallbackWorkspaceLabel(String path) {
+    final parts = path.split(RegExp(r'[/\\]'));
+    final last = parts.isEmpty ? path : parts.last.trim();
+    return last.isEmpty ? path : last;
   }
 }

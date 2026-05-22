@@ -28,6 +28,57 @@ class CodeTabTopBarController extends ChangeNotifier {
   VoidCallback? onFoldImports;
   VoidCallback? onFoldHeader;
 
+  void reset() {
+    final changed =
+        searchController != null ||
+        loadingTree ||
+        hasSelection ||
+        activeEditing ||
+        activeSaving ||
+        activeHasUnsavedChanges ||
+        activeWrapEnabled ||
+        activeFolded ||
+        supportsFoldAll ||
+        supportsFoldImports ||
+        supportsFoldHeader ||
+        hasLocalWorkspace ||
+        syncState != CodeTabTopBarSyncState.idle ||
+        onReload != null ||
+        onAsk != null ||
+        onFind != null ||
+        onToggleWrap != null ||
+        onSave != null ||
+        onFoldAll != null ||
+        onUnfoldAll != null ||
+        onFoldImports != null ||
+        onFoldHeader != null;
+    searchController = null;
+    loadingTree = false;
+    hasSelection = false;
+    activeEditing = false;
+    activeSaving = false;
+    activeHasUnsavedChanges = false;
+    activeWrapEnabled = false;
+    activeFolded = false;
+    supportsFoldAll = false;
+    supportsFoldImports = false;
+    supportsFoldHeader = false;
+    hasLocalWorkspace = false;
+    syncState = CodeTabTopBarSyncState.idle;
+    onReload = null;
+    onAsk = null;
+    onFind = null;
+    onToggleWrap = null;
+    onSave = null;
+    onFoldAll = null;
+    onUnfoldAll = null;
+    onFoldImports = null;
+    onFoldHeader = null;
+    if (changed) {
+      notifyListeners();
+    }
+  }
+
   void update({
     required TextEditingController? searchController,
     required bool loadingTree,
@@ -52,6 +103,20 @@ class CodeTabTopBarController extends ChangeNotifier {
     required VoidCallback? onFoldImports,
     required VoidCallback? onFoldHeader,
   }) {
+    final changed =
+        !identical(this.searchController, searchController) ||
+        this.loadingTree != loadingTree ||
+        this.hasSelection != hasSelection ||
+        this.activeEditing != activeEditing ||
+        this.activeSaving != activeSaving ||
+        this.activeHasUnsavedChanges != activeHasUnsavedChanges ||
+        this.activeWrapEnabled != activeWrapEnabled ||
+        this.activeFolded != activeFolded ||
+        this.supportsFoldAll != supportsFoldAll ||
+        this.supportsFoldImports != supportsFoldImports ||
+        this.supportsFoldHeader != supportsFoldHeader ||
+        this.hasLocalWorkspace != hasLocalWorkspace ||
+        this.syncState != syncState;
     this.searchController = searchController;
     this.loadingTree = loadingTree;
     this.hasSelection = hasSelection;
@@ -74,7 +139,9 @@ class CodeTabTopBarController extends ChangeNotifier {
     this.onUnfoldAll = onUnfoldAll;
     this.onFoldImports = onFoldImports;
     this.onFoldHeader = onFoldHeader;
-    notifyListeners();
+    if (changed) {
+      notifyListeners();
+    }
   }
 }
 

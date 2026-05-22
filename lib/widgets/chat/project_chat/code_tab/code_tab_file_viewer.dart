@@ -48,12 +48,11 @@ class CodeTabFileViewer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final editor = activeEditor;
-    final p = editor?.path;
-    final content = editor?.content;
-    final loading = editor?.loading == true;
-    final error = editor?.error;
-    final isEditing = editor?.isEditing == true;
-    final editController = editor?.controller;
+    final activePath = editor?.path;
+    final activeIndex = activePath == null
+        ? -1
+        : editors.indexWhere((item) => item.path == activePath);
+
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLowest,
@@ -62,7 +61,7 @@ class CodeTabFileViewer extends StatelessWidget {
         children: [
           CodeTabEditorTabs(
             editors: editors,
-            activePath: editor?.path,
+            activePath: activePath,
             compact: compact,
             isSynced: isSynced ?? (_) => false,
             syncStateFor: syncStateFor ?? (_) => CodeWorkbenchSyncState.idle,
@@ -72,54 +71,115 @@ class CodeTabFileViewer extends StatelessWidget {
             onClose: onCloseTab ?? (_) {},
           ),
           Expanded(
-            child: loading
-                ? const Center(child: CircularProgressIndicator())
-                : error != null
-                ? CodeTabErrorView(
-                    title: 'Failed to open file',
-                    message: error,
-                    onRetry: null,
-                  )
-                : content == null || editController == null
+            child: activeIndex < 0
                 ? const CodeTabEmptyView(text: 'Pick a file from the tree')
-                : isEditing
-                ? CodeTabEditingPane(
-                    controller: editController,
-                    originalText: editor?.originalContent ?? '',
-                    languageLabel: languageLabelForPath(p),
-                    wrapEnabled: editor?.wrapEnabled ?? false,
-                    onChanged: onChange,
-                    onCancel: onCancelEdit,
-                    onToggleWrap: onToggleWrap,
-                    compact: compact,
-                  )
-                : Stack(
-                    children: [
-                      Positioned.fill(
-                        child: FilePreview(
-                          path: p ?? content.path,
-                          content: content.content,
-                          isBinary: content.isBinary,
-                          sizeBytes: content.size,
-                        ),
-                      ),
-                      Positioned.fill(
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: onEnterEdit,
-                            onDoubleTap: onEnterEdit,
-                            splashColor: Colors.transparent,
-                            highlightColor: Colors.transparent,
-                            hoverColor: Colors.transparent,
+                : IndexedStack(
+                    index: activeIndex,
+                    children: editors
+                        .map(
+                          (item) => KeyedSubtree(
+                            key: ValueKey(item.path),
+                            child: _EditorSurface(
+                              editor: item,
+                              compact: compact,
+                              onEnterEdit: activePath == item.path
+                                  ? onEnterEdit
+                                  : null,
+                              onCancelEdit: activePath == item.path
+                                  ? onCancelEdit
+                                  : null,
+                              onToggleWrap: activePath == item.path
+                                  ? onToggleWrap
+                                  : null,
+                              onChange: activePath == item.path
+                                  ? onChange
+                                  : null,
+                            ),
                           ),
-                        ),
-                      ),
-                    ],
+                        )
+                        .toList(growable: false),
                   ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _EditorSurface extends StatelessWidget {
+  final CodeWorkbenchEditorState editor;
+  final bool compact;
+  final VoidCallback? onEnterEdit;
+  final VoidCallback? onCancelEdit;
+  final VoidCallback? onToggleWrap;
+  final ValueChanged<String>? onChange;
+
+  const _EditorSurface({
+    required this.editor,
+    required this.compact,
+    required this.onEnterEdit,
+    required this.onCancelEdit,
+    required this.onToggleWrap,
+    required this.onChange,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final content = editor.content;
+    final error = editor.error;
+
+    if (editor.loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (error != null) {
+      return CodeTabErrorView(
+        title: 'Failed to open file',
+        message: error,
+        onRetry: null,
+      );
+    }
+
+    if (content == null) {
+      return const CodeTabEmptyView(text: 'Pick a file from the tree');
+    }
+
+    if (editor.isEditing) {
+      return CodeTabEditingPane(
+        controller: editor.controller,
+        originalText: editor.originalContent,
+        languageLabel: languageLabelForPath(editor.path),
+        wrapEnabled: editor.wrapEnabled,
+        onChanged: onChange,
+        onCancel: onCancelEdit,
+        onToggleWrap: onToggleWrap,
+        compact: compact,
+      );
+    }
+
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: FilePreview(
+            path: editor.path,
+            content: content.content,
+            isBinary: content.isBinary,
+            sizeBytes: content.size,
+          ),
+        ),
+        Positioned.fill(
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onEnterEdit,
+              onDoubleTap: onEnterEdit,
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+              hoverColor: Colors.transparent,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

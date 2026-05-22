@@ -23,6 +23,7 @@ import '../screens/settings/account_data_screen.dart';
 import '../screens/doc_detail_screen.dart';
 import '../screens/api_docs_screen.dart';
 import '../screens/community_post_link_screen.dart';
+import '../screens/local_workspace_screen.dart';
 import '../screens/public_user_screen.dart';
 import '../providers/auth_provider.dart';
 
@@ -137,6 +138,7 @@ GoRouter createAppRouter() {
 
       final isPublicStandalone =
           (!isIOS && state.matchedLocation == '/pricing') ||
+          state.matchedLocation == '/local-workspace' ||
           state.matchedLocation == '/api-docs' ||
           state.matchedLocation == '/openapi' ||
           state.matchedLocation.startsWith('/apps/') ||
@@ -347,6 +349,18 @@ GoRouter createAppRouter() {
             projectId: state.pathParameters['id']!,
             initialTab: state.uri.queryParameters['tab'],
             initialChatTab: state.uri.queryParameters['chatTab'],
+            initialLocalEntryPath: state.uri.queryParameters['localPath'],
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/local-workspace',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          LocalWorkspaceScreen(
+            requestedPath: state.uri.queryParameters['path'],
+            source: state.uri.queryParameters['source'],
           ),
         ),
       ),

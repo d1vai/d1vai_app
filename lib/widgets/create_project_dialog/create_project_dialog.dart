@@ -832,7 +832,9 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
 
       final refreshedProject = projectProvider.getProjectById(projectId);
       if (refreshedProject != null) {
-        GoRouter.of(context).push(buildProjectChatDetailRoute(refreshedProject));
+        GoRouter.of(
+          context,
+        ).push(buildProjectChatDetailRoute(refreshedProject));
       } else {
         GoRouter.of(context).push('/projects/$projectId/chat?tab=code');
       }
@@ -967,7 +969,9 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
       if (!mounted) return;
       final refreshedProject = projectProvider.getProjectById(projectId);
       if (refreshedProject != null) {
-        GoRouter.of(context).push(buildProjectChatDetailRoute(refreshedProject));
+        GoRouter.of(
+          context,
+        ).push(buildProjectChatDetailRoute(refreshedProject));
       } else {
         GoRouter.of(context).push('/projects/$projectId/chat?tab=code');
       }
@@ -1250,7 +1254,9 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
       Navigator.pop(context);
       final refreshedProject = projectProvider.getProjectById(projectId);
       if (refreshedProject != null) {
-        GoRouter.of(context).push(buildProjectChatDetailRoute(refreshedProject));
+        GoRouter.of(
+          context,
+        ).push(buildProjectChatDetailRoute(refreshedProject));
       } else {
         GoRouter.of(context).push('/projects/$projectId/chat?tab=code');
       }

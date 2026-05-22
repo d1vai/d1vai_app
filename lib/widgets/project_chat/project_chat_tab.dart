@@ -56,12 +56,14 @@ class ProjectChatTab extends StatefulWidget {
   final String projectId;
   final String? previewUrl;
   final String? initialSubTab;
+  final String? initialLocalEntryPath;
 
   const ProjectChatTab({
     super.key,
     required this.projectId,
     required this.previewUrl,
     this.initialSubTab,
+    this.initialLocalEntryPath,
   });
 
   @override

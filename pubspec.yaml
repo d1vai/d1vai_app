@@ -73,6 +73,8 @@ dependencies:
   amplitude_flutter: ^4.0.0
   nativeapi:
     path: third_party/nativeapi-flutter/packages/nativeapi
+  archive: ^4.0.7
+  xml: ^6.6.1
 
 dev_dependencies:
   flutter_test:

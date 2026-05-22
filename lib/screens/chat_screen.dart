@@ -2023,7 +2023,8 @@ class _ChatScreenState extends State<ChatScreen> {
         SnackBarHelper.showInfo(
           _stableUiContext,
           title: loc?.translate('redeploy_started_title') ?? 'Redeploy started',
-          message: 'Preview deployment is still building. Check back in a moment.',
+          message:
+              'Preview deployment is still building. Check back in a moment.',
           position: SnackBarPosition.top,
           duration: const Duration(seconds: 3),
         );

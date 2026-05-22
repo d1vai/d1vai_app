@@ -172,8 +172,10 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
       'project_chat_desktop_sidebar_width:${widget.projectId}';
 
   double _clampDesktopChatPaneWidth(double width, double totalWidth) {
-    final maxAllowed = (totalWidth - _desktopPrimaryPaneMinWidth)
-        .clamp(_desktopChatPaneMinWidth, _desktopChatPaneMaxWidth);
+    final maxAllowed = (totalWidth - _desktopPrimaryPaneMinWidth).clamp(
+      _desktopChatPaneMinWidth,
+      _desktopChatPaneMaxWidth,
+    );
     return width.clamp(_desktopChatPaneMinWidth, maxAllowed);
   }
 
@@ -222,6 +224,16 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   void _resetDesktopChatPaneWidth(double totalWidth) {
     _setDesktopChatPaneWidthForViewport(
       _desktopChatPaneDefaultWidth,
+      totalWidth,
+    );
+  }
+
+  double _effectiveDesktopChatPaneWidth(
+    double totalWidth, {
+    double? preferredWidth,
+  }) {
+    return _clampDesktopChatPaneWidth(
+      preferredWidth ?? _desktopChatPaneWidth,
       totalWidth,
     );
   }

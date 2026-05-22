@@ -2031,7 +2031,9 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     Future<void> poll() async {
       if (!mounted || run != _deployStatusPollRun) return;
       try {
-        final status = await _d1vaiService.getProjectPreviewStatus(widget.projectId);
+        final status = await _d1vaiService.getProjectPreviewStatus(
+          widget.projectId,
+        );
         if (!mounted || run != _deployStatusPollRun) return;
 
         final success = status['success'] == true;
@@ -2057,7 +2059,9 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
           _showErrorNotice(
             key: 'preview_deploy_status_failed',
             title:
-                AppLocalizations.of(context)?.translate('redeploy_failed_title') ??
+                AppLocalizations.of(
+                  context,
+                )?.translate('redeploy_failed_title') ??
                 'Redeploy failed',
             message: message.isNotEmpty
                 ? message
@@ -2080,9 +2084,12 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _showInfoNotice(
           key: 'preview_deploy_status_timeout',
           title:
-              AppLocalizations.of(context)?.translate('redeploy_started_title') ??
+              AppLocalizations.of(
+                context,
+              )?.translate('redeploy_started_title') ??
               'Redeploy started',
-          message: 'Preview deployment is still building. Check back in a moment.',
+          message:
+              'Preview deployment is still building. Check back in a moment.',
           cooldown: const Duration(seconds: 30),
           duration: const Duration(seconds: 3),
         );

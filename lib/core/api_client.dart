@@ -76,9 +76,17 @@ class ApiClient {
   static const String _prefsLastErrorKey = 'api_last_error';
   static String? _runtimeBaseUrl;
   static bool _configLoaded = false;
+  static String _runtimeLogScope = 'app';
 
   static String get envBaseUrl => _envBaseUrl;
   static String? get runtimeBaseUrl => _runtimeBaseUrl;
+  static String get _debugPrefix =>
+      '[api:${_runtimeLogScope.trim().isEmpty ? 'app' : _runtimeLogScope.trim()}]';
+
+  static void setRuntimeLogScope(String? value) {
+    final normalized = (value ?? '').trim();
+    _runtimeLogScope = normalized.isEmpty ? 'app' : normalized;
+  }
 
   /// Effective API base URL (runtime override > build-time env).
   static String get baseUrl {
@@ -222,12 +230,12 @@ class ApiClient {
     if (kDebugMode) {
       final t = (token ?? '').trim();
       if (t.isEmpty) {
-        debugPrint('🔐 Auth: missing');
+        debugPrint('$_debugPrefix 🔐 Auth: missing');
       } else {
         final suffix = t.length <= 6 ? t : t.substring(t.length - 6);
         final kind = t.startsWith('eyJ') ? 'jwt' : 'opaque';
         debugPrint(
-          '🔐 Auth: present kind=$kind len=${t.length} suffix=$suffix',
+          '$_debugPrefix 🔐 Auth: present kind=$kind len=${t.length} suffix=$suffix',
         );
       }
     }
@@ -263,7 +271,7 @@ class ApiClient {
       baseUrlOverride: baseUrlOverride,
     );
 
-    debugPrint('🌐 API Request: GET $uri');
+    debugPrint('$_debugPrefix 🌐 API Request: GET $uri');
 
     return executeWithRetry<T>(
       () {
@@ -295,7 +303,7 @@ class ApiClient {
       baseUrlOverride: baseUrlOverride,
     );
 
-    debugPrint('🌐 API Request: POST $uri');
+    debugPrint('$_debugPrefix 🌐 API Request: POST $uri');
     debugPrint('📤 Request Body: ${jsonEncode(body)}');
 
     return executeWithRetry<T>(
@@ -323,7 +331,7 @@ class ApiClient {
     final hasAuthToken = headers.containsKey('Authorization');
     final uri = _buildUri(endpoint, baseUrlOverride: baseUrlOverride);
 
-    debugPrint('🌐 API Request: POST $uri');
+    debugPrint('$_debugPrefix 🌐 API Request: POST $uri');
     debugPrint('📤 Request Body: ${jsonEncode(body)}');
 
     return executeWithRetry<T>(
@@ -351,7 +359,7 @@ class ApiClient {
     final hasAuthToken = headers.containsKey('Authorization');
     final uri = _buildUri(endpoint, baseUrlOverride: baseUrlOverride);
 
-    debugPrint('🌐 API Request: PUT $uri');
+    debugPrint('$_debugPrefix 🌐 API Request: PUT $uri');
     debugPrint('📤 Request Body: ${jsonEncode(body)}');
 
     return executeWithRetry<T>(
@@ -380,7 +388,7 @@ class ApiClient {
     final hasAuthToken = headers.containsKey('Authorization');
     final uri = _buildUri(endpoint, baseUrlOverride: baseUrlOverride);
 
-    debugPrint('🌐 API Request: PATCH $uri');
+    debugPrint('$_debugPrefix 🌐 API Request: PATCH $uri');
     debugPrint('📤 Request Body: ${jsonEncode(body)}');
 
     return executeWithRetry<T>(
@@ -407,7 +415,7 @@ class ApiClient {
     final hasAuthToken = headers.containsKey('Authorization');
     final uri = _buildUri(endpoint, baseUrlOverride: baseUrlOverride);
 
-    debugPrint('🌐 API Request: DELETE $uri');
+    debugPrint('$_debugPrefix 🌐 API Request: DELETE $uri');
 
     return executeWithRetry<T>(
       () {
@@ -466,7 +474,7 @@ class ApiClient {
     const endpoint = '/api/upload/pic';
     final uri = _buildUri(endpoint);
 
-    debugPrint('🌐 API Request: POST $uri');
+    debugPrint('$_debugPrefix 🌐 API Request: POST $uri');
     debugPrint('📁 File Name: $fileName');
     debugPrint('📏 File Size: ${finalBytes.length} bytes');
 
@@ -500,7 +508,7 @@ class ApiClient {
       debugPrint('═══════════════════════════════════════');
       debugPrint('API Upload Error Detected');
       debugPrint('═══════════════════════════════════════');
-      debugPrint('📍 API Path: $endpoint');
+      debugPrint('$_debugPrefix 📍 API Path: $endpoint');
       debugPrint('🔢 HTTP Status Code: ${httpResponse.statusCode}');
       debugPrint('📥 Response Body: $responseBody');
       debugPrint('═══════════════════════════════════════');
@@ -542,7 +550,7 @@ class ApiClient {
       ),
     );
 
-    debugPrint('🌐 API Request: POST $uri');
+    debugPrint('$_debugPrefix 🌐 API Request: POST $uri');
     debugPrint('📁 Multipart File: $fileName (${fileBytes.length} bytes)');
 
     final sendFuture = request.send();
@@ -624,7 +632,7 @@ class ApiClient {
     request.headers.addAll(headers);
     request.body = jsonEncode(body);
 
-    debugPrint('🌐 API Request: POST (Stream) $uri');
+    debugPrint('$_debugPrefix 🌐 API Request: POST (Stream) $uri');
     debugPrint('📤 Request Body: ${jsonEncode(body)}');
 
     final streamedResponse = await client.send(request);
@@ -644,7 +652,7 @@ class ApiClient {
       debugPrint('═══════════════════════════════════════');
       debugPrint('API Stream Error Detected');
       debugPrint('═══════════════════════════════════════');
-      debugPrint('📍 API Path: $endpoint');
+      debugPrint('$_debugPrefix 📍 API Path: $endpoint');
       debugPrint('🔢 HTTP Status Code: ${streamedResponse.statusCode}');
       debugPrint('📥 Response Body: $responseBody');
       debugPrint('═══════════════════════════════════════');
@@ -690,7 +698,7 @@ class ApiClient {
           debugPrint('Network Error - Max Retries Exceeded');
           debugPrint('═══════════════════════════════════════');
           if (endpoint != null) {
-            debugPrint('📍 API Path: $endpoint');
+            debugPrint('$_debugPrefix 📍 API Path: $endpoint');
           }
           debugPrint('🔢 Retry Count: $retries');
           debugPrint('💥 Error: $e');
@@ -698,10 +706,10 @@ class ApiClient {
           throw Exception('Network error after $retries retries: $e');
         }
         debugPrint(
-          '🔄 Network error on attempt ${attempt + 1}/$retries, retrying in ${delay.inMilliseconds}ms: $e',
+          '$_debugPrefix 🔄 Network error on attempt ${attempt + 1}/$retries, retrying in ${delay.inMilliseconds}ms: $e',
         );
         if (endpoint != null) {
-          debugPrint('📍 API Path: $endpoint');
+          debugPrint('$_debugPrefix 📍 API Path: $endpoint');
         }
         await Future.delayed(delay);
         delay *= 2; // 指数退避
@@ -712,7 +720,7 @@ class ApiClient {
         debugPrint('HTTP Exception');
         debugPrint('═══════════════════════════════════════');
         if (endpoint != null) {
-          debugPrint('📍 API Path: $endpoint');
+          debugPrint('$_debugPrefix 📍 API Path: $endpoint');
         }
         debugPrint('💥 Error: $e');
         if (requestBody != null) {
@@ -724,10 +732,10 @@ class ApiClient {
         final retryable = _isTransientClientException(e);
         if (retryable && attempt < retries) {
           debugPrint(
-            '🔄 Transient client error on attempt ${attempt + 1}/$retries, retrying in ${delay.inMilliseconds}ms: $e',
+            '$_debugPrefix 🔄 Transient client error on attempt ${attempt + 1}/$retries, retrying in ${delay.inMilliseconds}ms: $e',
           );
           if (endpoint != null) {
-            debugPrint('📍 API Path: $endpoint');
+            debugPrint('$_debugPrefix 📍 API Path: $endpoint');
           }
           await Future.delayed(delay);
           delay *= 2;
@@ -738,7 +746,7 @@ class ApiClient {
         debugPrint('Client Exception');
         debugPrint('═══════════════════════════════════════');
         if (endpoint != null) {
-          debugPrint('📍 API Path: $endpoint');
+          debugPrint('$_debugPrefix 📍 API Path: $endpoint');
         }
         debugPrint('🔢 Retry Count: $attempt/$retries');
         debugPrint('💥 Error: $e');
@@ -756,7 +764,7 @@ class ApiClient {
             debugPrint('Server Error - Max Retries Exceeded');
             debugPrint('═══════════════════════════════════════');
             if (endpoint != null) {
-              debugPrint('📍 API Path: $endpoint');
+              debugPrint('$_debugPrefix 📍 API Path: $endpoint');
             }
             debugPrint('🔢 Retry Count: $retries');
             debugPrint('💥 Error: $e');
@@ -764,10 +772,10 @@ class ApiClient {
             rethrow;
           }
           debugPrint(
-            '🔄 Server error on attempt ${attempt + 1}/$retries, retrying in ${delay.inMilliseconds}ms: $e',
+            '$_debugPrefix 🔄 Server error on attempt ${attempt + 1}/$retries, retrying in ${delay.inMilliseconds}ms: $e',
           );
           if (endpoint != null) {
-            debugPrint('📍 API Path: $endpoint');
+            debugPrint('$_debugPrefix 📍 API Path: $endpoint');
           }
           await Future.delayed(delay);
           delay *= 2;
@@ -778,7 +786,7 @@ class ApiClient {
           debugPrint('Client Error or Other Exception');
           debugPrint('═══════════════════════════════════════');
           if (endpoint != null) {
-            debugPrint('📍 API Path: $endpoint');
+            debugPrint('$_debugPrefix 📍 API Path: $endpoint');
           }
           debugPrint('💥 Error: $e');
           if (requestBody != null) {
@@ -835,7 +843,7 @@ class ApiClient {
         debugPrint('API Business Error Detected');
         debugPrint('═══════════════════════════════════════');
         if (endpoint != null) {
-          debugPrint('📍 API Path: $endpoint');
+          debugPrint('$_debugPrefix 📍 API Path: $endpoint');
         }
         debugPrint('🔢 Status Code: ${response.statusCode}');
         debugPrint('📝 Error Message: ${apiResponse.msg}');
@@ -862,7 +870,7 @@ class ApiClient {
       debugPrint('API HTTP Error Detected');
       debugPrint('═══════════════════════════════════════');
       if (endpoint != null) {
-        debugPrint('📍 API Path: $endpoint');
+        debugPrint('$_debugPrefix 📍 API Path: $endpoint');
       }
       debugPrint('🌍 API Base: $baseUrl');
       debugPrint('🔢 HTTP Status Code: ${response.statusCode}');

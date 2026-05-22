@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../services/d1vai_service.dart';
 import '../../../../services/local_workspace_service.dart';
@@ -18,15 +20,21 @@ import 'code_workbench_controller.dart';
 import '../project_chat_top_bar.dart';
 
 class ProjectChatCodeTab extends StatefulWidget {
-  final String projectId;
+  final String? projectId;
   final ValueChanged<String> onAsk;
   final CodeTabTopBarController? topBarController;
+  final String? initialLocalEntryPath;
+  final bool initialLocalHybridMode;
+  final VoidCallback? onDetachLocalWorkspace;
 
   const ProjectChatCodeTab({
     super.key,
-    required this.projectId,
+    this.projectId,
     required this.onAsk,
     this.topBarController,
+    this.initialLocalEntryPath,
+    this.initialLocalHybridMode = true,
+    this.onDetachLocalWorkspace,
   });
 
   @override
@@ -50,6 +58,10 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
   List<CodeTabFlatNode> _flat = const [];
   double _desktopTreePaneWidth = 320;
   final Map<String, Timer> _syncTimers = <String, Timer>{};
+  final Map<String, CodeTabFileContent> _localFileCache =
+      <String, CodeTabFileContent>{};
+  String? _pendingInitialLocalOpenFilePath;
+  bool _initialLocalFileOpened = false;
 
   @override
   void initState() {
@@ -60,6 +72,19 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
       setState(() {});
     };
     _workbench.addListener(_workbenchListener);
+    final initialLocal = _resolveInitialLocalAttachment(
+      widget.initialLocalEntryPath,
+    );
+    if (initialLocal != null) {
+      _workbench.attachLocalWorkspace(
+        rootPath: initialLocal.rootPath,
+        rootName: initialLocal.rootName,
+        hybrid:
+            widget.initialLocalHybridMode &&
+            ((widget.projectId ?? '').trim().isNotEmpty),
+      );
+      _pendingInitialLocalOpenFilePath = initialLocal.openFilePath;
+    }
     _loadTree();
     _searchListener = () {
       if (!mounted) return;
@@ -74,6 +99,7 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
       timer.cancel();
     }
     _syncTimers.clear();
+    widget.topBarController?.reset();
     _searchController.removeListener(_searchListener);
     _searchController.dispose();
     _editorPreferences?.removeListener(_handleEditorPreferencesChanged);
@@ -143,25 +169,49 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
       onFind: activeEditor?.isEditing == true
           ? activeEditor!.controller.showSearch
           : null,
-      onToggleWrap: activeEditor?.isEditing == true
-          ? () => unawaited(_workbench.toggleWrap(activeEditor!.path))
-          : null,
-      onSave: activeEditor?.isEditing == true
-          ? () => _saveEditor(activeEditor!.path)
-          : null,
+      onToggleWrap: activeEditor?.isEditing == true ? _toggleActiveWrap : null,
+      onSave: activeEditor?.isEditing == true ? _saveActiveEditor : null,
       onFoldAll: activeEditor?.controller.supportsFoldAll == true
-          ? activeEditor!.controller.foldAll
+          ? _foldAllActiveEditor
           : null,
       onUnfoldAll: activeEditor?.controller.supportsFoldAll == true
-          ? activeEditor!.controller.unfoldAll
+          ? _unfoldAllActiveEditor
           : null,
       onFoldImports: activeEditor?.controller.supportsFoldImports == true
-          ? activeEditor!.controller.foldImports
+          ? _foldActiveEditorImports
           : null,
       onFoldHeader: activeEditor?.controller.supportsFoldHeader == true
-          ? activeEditor!.controller.foldHeader
+          ? _foldActiveEditorHeader
           : null,
     );
+  }
+
+  void _toggleActiveWrap() {
+    final path = _workbench.activeEditor?.path;
+    if (path == null || path.isEmpty) return;
+    unawaited(_workbench.toggleWrap(path));
+  }
+
+  void _saveActiveEditor() {
+    final path = _workbench.activeEditor?.path;
+    if (path == null || path.isEmpty) return;
+    _saveEditor(path);
+  }
+
+  void _foldAllActiveEditor() {
+    _workbench.activeEditor?.controller.foldAll();
+  }
+
+  void _unfoldAllActiveEditor() {
+    _workbench.activeEditor?.controller.unfoldAll();
+  }
+
+  void _foldActiveEditorImports() {
+    _workbench.activeEditor?.controller.foldImports();
+  }
+
+  void _foldActiveEditorHeader() {
+    _workbench.activeEditor?.controller.foldHeader();
   }
 
   bool _isMobile(BuildContext context) =>
@@ -174,28 +224,51 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
 
   Future<void> _loadTree() async {
     if (_loadingTree) return;
+    final startedAt = DateTime.now();
     setState(() {
       _loadingTree = true;
       _treeError = null;
       _root = null;
       _flat = const [];
+      _localFileCache.clear();
       _expandedDirs
         ..clear()
         ..add('');
     });
     try {
+      final cloudProjectId = (widget.projectId ?? '').trim();
+      debugPrint(
+        '[d1vai-open] code tree load start local=${_workbench.hasLocalWorkspace} '
+        'root=${_workbench.localRootPath ?? '-'} '
+        'project=${cloudProjectId.isEmpty ? 'none' : cloudProjectId}',
+      );
+      if (!_workbench.hasLocalWorkspace && cloudProjectId.isEmpty) {
+        throw Exception('This workspace is not connected to a cloud project.');
+      }
       final raw = _workbench.hasLocalWorkspace
           ? (await _localWorkspaceService.readTree(
               _workbench.localRootPath!,
             )).root
-          : await _service.getProjectStorageStructure(widget.projectId);
+          : await _service.getProjectStorageStructure(cloudProjectId);
       if (!mounted) return;
       final node = CodeTabFileNode.fromJson(raw);
       setState(() {
         _root = node;
       });
+      debugPrint(
+        '[d1vai-open] code tree load done local=${_workbench.hasLocalWorkspace} '
+        'root=${_workbench.localRootPath ?? '-'} '
+        'elapsed=${DateTime.now().difference(startedAt).inMilliseconds}ms',
+      );
       _rebuildFlatList();
+      await _maybeOpenInitialLocalFile();
     } catch (e) {
+      debugPrint(
+        '[d1vai-open] code tree load failed local=${_workbench.hasLocalWorkspace} '
+        'root=${_workbench.localRootPath ?? '-'} '
+        'elapsed=${DateTime.now().difference(startedAt).inMilliseconds}ms '
+        'error=$e',
+      );
       if (!mounted) return;
       setState(() {
         _treeError = e.toString();
@@ -207,6 +280,20 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
         });
       }
     }
+  }
+
+  Future<void> _maybeOpenInitialLocalFile() async {
+    final pendingPath = _pendingInitialLocalOpenFilePath;
+    if (_initialLocalFileOpened ||
+        pendingPath == null ||
+        pendingPath.trim().isEmpty) {
+      return;
+    }
+    _initialLocalFileOpened = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(_openDesktopFile(pendingPath, preview: false));
+    });
   }
 
   void _rebuildFlatList() {
@@ -335,17 +422,35 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
           path,
           latestText,
         );
-        _scheduleDeferredGitHubSync(path);
-        _workbench.markPathLocalSaved(path);
+        await _workbench.markLocalFileSaved(path, text: latestText);
+        _cacheLocalFileContent(
+          path,
+          CodeTabFileContent(
+            path: path,
+            content: latestText,
+            size: latestText.length,
+            isBinary: false,
+          ),
+        );
+        final cloudProjectId = (widget.projectId ?? '').trim();
+        if (cloudProjectId.isNotEmpty) {
+          _scheduleDeferredGitHubSync(path);
+        }
         if (!mounted) return false;
         SnackBarHelper.showSuccess(
           context,
           title: 'Saved locally',
-          message: 'Local workspace updated. Syncing in the background.',
+          message: cloudProjectId.isEmpty
+              ? 'Local workspace updated.'
+              : 'Local workspace updated. Syncing in the background.',
         );
         return true;
       }
-      commitSha = await _workbench.saveEditor(widget.projectId, path);
+      final cloudProjectId = (widget.projectId ?? '').trim();
+      if (cloudProjectId.isEmpty) {
+        throw Exception('This workspace is not connected to a cloud project.');
+      }
+      commitSha = await _workbench.saveEditor(cloudProjectId, path);
       if (!mounted) return false;
       final shortSha = (commitSha != null && commitSha.length >= 7)
           ? commitSha.substring(0, 7)
@@ -389,13 +494,15 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
   }
 
   Future<void> _syncLocalPathToGitHub(String path) async {
+    final projectId = (widget.projectId ?? '').trim();
+    if (projectId.isEmpty) return;
     final editor = _workbench.editorForPath(path);
     if (editor == null || editor.content == null) return;
     try {
       final fileName = path.split('/').isEmpty ? 'file' : path.split('/').last;
       final latestText = await editor.controller.readText(refresh: true);
       final result = await _service.syncFileToGitHub(
-        widget.projectId,
+        projectId,
         filePath: path,
         content: latestText,
         commitMessage: 'feat: update $fileName',
@@ -442,36 +549,55 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
 
     if (_workbench.hasLocalWorkspace && _workbench.localRootPath != null) {
       final existing = _workbench.editorForPath(path);
-      if (existing == null) {
-        await _workbench.openFile(
-          widget.projectId,
+      if (existing != null) {
+        if (!preview) {
+          _workbench.pinEditor(path);
+        } else {
+          _workbench.activateEditor(path);
+        }
+        return;
+      }
+      final cached = _localFileCache[path];
+      if (cached != null) {
+        await _workbench.openLocalFile(
           path,
+          content: cached,
           preview: preview,
           wrapEnabled: prefs.defaultWrap,
           tabSize: prefs.tabSize,
         );
-        final raw = await _localWorkspaceService.readFile(
-          _workbench.localRootPath!,
-          path,
-        );
-        final editor = _workbench.editorForPath(path);
-        if (editor != null) {
-          _workbench.setFileContent(
-            path,
-            content: CodeTabFileContent(
-              path: raw.path,
-              content: raw.content,
-              size: raw.size,
-              isBinary: raw.isBinary,
-            ),
-          );
-        }
         return;
       }
+      if (preview) {
+        _workbench.reusePreviewEditor(path, wrapEnabled: prefs.defaultWrap);
+      }
+      final raw = await _localWorkspaceService.readFile(
+        _workbench.localRootPath!,
+        path,
+      );
+      final content = CodeTabFileContent(
+        path: raw.path,
+        content: raw.content,
+        size: raw.size,
+        isBinary: raw.isBinary,
+      );
+      _cacheLocalFileContent(path, content);
+      await _workbench.openLocalFile(
+        path,
+        content: content,
+        preview: preview,
+        wrapEnabled: prefs.defaultWrap,
+        tabSize: prefs.tabSize,
+      );
+      return;
     }
 
+    final projectId = (widget.projectId ?? '').trim();
+    if (projectId.isEmpty) {
+      throw Exception('This workspace is not connected to a cloud project.');
+    }
     await _workbench.openFile(
-      widget.projectId,
+      projectId,
       path,
       preview: preview,
       wrapEnabled: prefs.defaultWrap,
@@ -484,6 +610,12 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
     final editor = _workbench.editorForPath(path);
     if (editor == null || editor.loading || editor.content == null) return;
     _workbench.enterEditMode(path);
+  }
+
+  void _cacheLocalFileContent(String path, CodeTabFileContent content) {
+    _localFileCache[path] = content;
+    if (_localFileCache.length <= 48) return;
+    _localFileCache.remove(_localFileCache.keys.first);
   }
 
   Future<void> _closeEditor(String path) async {
@@ -539,6 +671,18 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (_workbench.hasLocalWorkspace) ...[
+            _LocalWorkspaceBanner(
+              rootName: _workbench.localRootName ?? 'Local workspace',
+              rootPath: _workbench.localRootPath ?? '',
+              sourceMode: _workbench.sourceMode,
+              linkedProjectId: (widget.projectId ?? '').trim(),
+              revealLabel: _revealActionLabel(),
+              onRevealInFinder: _revealLocalWorkspaceInFinder,
+              onDetach: widget.onDetachLocalWorkspace,
+            ),
+            const SizedBox(height: 10),
+          ],
           Expanded(
             child: mobile
                 ? CodeTabTreePanel(
@@ -555,7 +699,7 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
                       await Navigator.of(context).push(
                         MaterialPageRoute<void>(
                           builder: (_) => CodeTabFileViewerPage(
-                            projectId: widget.projectId,
+                            projectId: (widget.projectId ?? '').trim(),
                             filePath: p,
                             onAsk: (prompt) {
                               widget.onAsk(prompt);
@@ -568,7 +712,7 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
                       await Navigator.of(context).push(
                         MaterialPageRoute<void>(
                           builder: (_) => CodeTabFileViewerPage(
-                            projectId: widget.projectId,
+                            projectId: (widget.projectId ?? '').trim(),
                             filePath: p,
                             onAsk: (prompt) {
                               widget.onAsk(prompt);
@@ -690,6 +834,231 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
                   ),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _revealLocalWorkspaceInFinder() async {
+    final rootPath = (_workbench.localRootPath ?? '').trim();
+    if (rootPath.isEmpty) return;
+    final uri = Uri.file(rootPath);
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      if (!mounted) return;
+      SnackBarHelper.showError(
+        context,
+        title: _revealFailureTitle(),
+        message: e.toString(),
+      );
+    }
+  }
+
+  String _revealActionLabel() =>
+      Platform.isWindows ? 'Reveal in Explorer' : 'Reveal in Finder';
+
+  String _revealFailureTitle() =>
+      Platform.isWindows ? 'Open in Explorer failed' : 'Open in Finder failed';
+
+  _ResolvedLocalWorkspaceAttachment? _resolveInitialLocalAttachment(
+    String? entryPath,
+  ) {
+    if (kIsWeb || !(Platform.isMacOS || Platform.isWindows)) return null;
+    final trimmed = (entryPath ?? '').trim();
+    if (trimmed.isEmpty) return null;
+
+    final entityType = FileSystemEntity.typeSync(trimmed, followLinks: true);
+    if (entityType == FileSystemEntityType.directory) {
+      return _ResolvedLocalWorkspaceAttachment(
+        rootPath: _normalizePath(trimmed),
+        rootName: _lastSegment(trimmed),
+      );
+    }
+    if (entityType == FileSystemEntityType.file) {
+      final normalizedFilePath = _normalizePath(trimmed);
+      final file = File(normalizedFilePath);
+      final rootPath = _normalizePath(file.parent.path);
+      return _ResolvedLocalWorkspaceAttachment(
+        rootPath: rootPath,
+        rootName: _lastSegment(rootPath),
+        openFilePath: _relativePath(rootPath: rootPath, filePath: trimmed),
+      );
+    }
+    return null;
+  }
+
+  String _normalizePath(String path) =>
+      path.trim().replaceAll(RegExp(r'[/\\]+$'), '');
+
+  String _lastSegment(String path) {
+    final normalized = _normalizePath(path);
+    if (normalized.isEmpty) return path;
+    final parts = normalized.split(RegExp(r'[/\\]'));
+    return parts.isEmpty ? normalized : parts.last;
+  }
+
+  String _relativePath({required String rootPath, required String filePath}) {
+    final normalizedRoot = _normalizePath(rootPath).replaceAll('\\', '/');
+    final normalizedFile = _normalizePath(filePath).replaceAll('\\', '/');
+    final prefix = '$normalizedRoot/';
+    if (normalizedFile.startsWith(prefix)) {
+      return normalizedFile.substring(prefix.length);
+    }
+    return _lastSegment(filePath);
+  }
+}
+
+class _ResolvedLocalWorkspaceAttachment {
+  final String rootPath;
+  final String rootName;
+  final String? openFilePath;
+
+  const _ResolvedLocalWorkspaceAttachment({
+    required this.rootPath,
+    required this.rootName,
+    this.openFilePath,
+  });
+}
+
+class _LocalWorkspaceBanner extends StatelessWidget {
+  final String rootName;
+  final String rootPath;
+  final CodeWorkbenchSourceMode sourceMode;
+  final String linkedProjectId;
+  final String revealLabel;
+  final VoidCallback onRevealInFinder;
+  final VoidCallback? onDetach;
+
+  const _LocalWorkspaceBanner({
+    required this.rootName,
+    required this.rootPath,
+    required this.sourceMode,
+    required this.linkedProjectId,
+    required this.revealLabel,
+    required this.onRevealInFinder,
+    required this.onDetach,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isHybrid = sourceMode == CodeWorkbenchSourceMode.hybrid;
+    final badgeLabel = switch (sourceMode) {
+      CodeWorkbenchSourceMode.cloudOnly => 'Cloud workspace',
+      CodeWorkbenchSourceMode.localAttached => 'Local workspace',
+      CodeWorkbenchSourceMode.hybrid => 'Local + Cloud',
+    };
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.8),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.folder_open_outlined,
+              size: 18,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      rootName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    _WorkspaceModeChip(
+                      label: badgeLabel,
+                      color: isHybrid
+                          ? theme.colorScheme.tertiary
+                          : theme.colorScheme.primary,
+                    ),
+                    if (isHybrid && linkedProjectId.isNotEmpty)
+                      _WorkspaceModeChip(
+                        label: linkedProjectId,
+                        color: theme.colorScheme.secondary,
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  rootPath,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          TextButton.icon(
+            onPressed: onRevealInFinder,
+            icon: const Icon(Icons.folder_outlined, size: 16),
+            label: Text(revealLabel),
+          ),
+          if (onDetach != null) ...[
+            const SizedBox(width: 8),
+            OutlinedButton.icon(
+              onPressed: onDetach,
+              icon: const Icon(Icons.link_off_outlined, size: 16),
+              label: const Text('Detach'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _WorkspaceModeChip extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _WorkspaceModeChip({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

@@ -727,15 +727,12 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
   Widget _buildChatTabDesktop(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final sidebarWidth = _desktopChatPaneWidth.clamp(
-          _desktopChatPaneMinWidth,
-          _desktopChatPaneMaxWidth,
+        final effectiveSidebarWidth = _effectiveDesktopChatPaneWidth(
+          constraints.maxWidth,
         );
-        final effectiveSidebarWidth =
-            (constraints.maxWidth - _desktopPrimaryPaneMinWidth).clamp(
-              _desktopChatPaneMinWidth,
-              sidebarWidth,
-            );
+        final leftBorderColor = Theme.of(
+          context,
+        ).colorScheme.outlineVariant.withValues(alpha: 0.6);
 
         return Row(
           children: [
@@ -770,8 +767,11 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
                 _setDesktopChatPaneWidthForViewport(
                   effectiveSidebarWidth - delta,
                   constraints.maxWidth,
+                  persist: false,
                 );
               },
+              onDragEnd: () =>
+                  unawaited(_persistDesktopChatPaneWidth(_desktopChatPaneWidth)),
               onDoubleTap: () {
                 _resetDesktopChatPaneWidth(constraints.maxWidth);
               },
@@ -780,13 +780,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
               width: effectiveSidebarWidth,
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,
-                border: Border(
-                  left: BorderSide(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.outlineVariant.withValues(alpha: 0.6),
-                  ),
-                ),
+                border: Border(left: BorderSide(color: leftBorderColor)),
               ),
               child: Column(
                 children: [
@@ -912,6 +906,14 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
     return ProjectChatCodeTab(
       projectId: widget.projectId,
       topBarController: _codeTabTopBarController,
+      initialLocalEntryPath: widget.initialLocalEntryPath,
+      onDetachLocalWorkspace: () {
+        final uri = Uri(
+          path: '/projects/${widget.projectId}',
+          queryParameters: const {'tab': 'chat', 'chatTab': 'code'},
+        );
+        context.go(uri.toString());
+      },
       onAsk: (question) {
         _sendFirstMessage(question);
         setState(() {
@@ -950,10 +952,12 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
 
 class _DesktopChatPaneResizeHandle extends StatefulWidget {
   final ValueChanged<double> onDragDelta;
+  final VoidCallback? onDragEnd;
   final VoidCallback onDoubleTap;
 
   const _DesktopChatPaneResizeHandle({
     required this.onDragDelta,
+    this.onDragEnd,
     required this.onDoubleTap,
   });
 
@@ -997,6 +1001,7 @@ class _DesktopChatPaneResizeHandleState
           setState(() {
             _dragging = false;
           });
+          widget.onDragEnd?.call();
         },
         onHorizontalDragCancel: () {
           setState(() {

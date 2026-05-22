@@ -12,7 +12,7 @@ final class NonDraggableHostingView: NSView {
 }
 
 final class RootContainerViewController: NSViewController {
-  private let flutterViewController: FlutterViewController
+  let flutterViewController: FlutterViewController
 
   init(flutterViewController: FlutterViewController) {
     self.flutterViewController = flutterViewController
@@ -46,65 +46,22 @@ final class RootContainerViewController: NSViewController {
 }
 
 final class DirectoryDropOverlayView: NSView {
-  private let messageField = NSTextField(labelWithString: "Drop folder or file to import")
-  private let detailField = NSTextField(labelWithString: "Imports to cloud, then opens Code chat")
+  private let messageField = NSTextField(labelWithString: "Drop folder or file to open")
+  private let detailField = NSTextField(
+    labelWithString: "Open locally, attach to a project, or import to cloud"
+  )
   private let borderLayer = CAShapeLayer()
   private let panelLayer = CAShapeLayer()
   private var isShowingDropState = false
 
   override init(frame frameRect: NSRect) {
     super.init(frame: frameRect)
-    registerForDraggedTypes([.fileURL])
     setupOverlay()
   }
 
   required init?(coder: NSCoder) {
     super.init(coder: coder)
-    registerForDraggedTypes([.fileURL])
     setupOverlay()
-  }
-
-  override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
-    let hasImportablePaths = !extractPaths(from: sender).isEmpty
-    NSLog("[d1vai-drop] overlay draggingEntered hasPaths=%@", hasImportablePaths ? "true" : "false")
-    updateDropState(visible: hasImportablePaths)
-    return hasImportablePaths ? .copy : []
-  }
-
-  override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
-    let hasImportablePaths = !extractPaths(from: sender).isEmpty
-    NSLog("[d1vai-drop] overlay draggingUpdated hasPaths=%@", hasImportablePaths ? "true" : "false")
-    updateDropState(visible: hasImportablePaths)
-    return hasImportablePaths ? .copy : []
-  }
-
-  override func draggingExited(_ sender: NSDraggingInfo?) {
-    NSLog("[d1vai-drop] overlay draggingExited")
-    updateDropState(visible: false)
-  }
-
-  override func prepareForDragOperation(_ sender: NSDraggingInfo) -> Bool {
-    let ok = !extractPaths(from: sender).isEmpty
-    NSLog("[d1vai-drop] overlay prepareForDragOperation ok=%@", ok ? "true" : "false")
-    return ok
-  }
-
-  override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
-    let paths = extractPaths(from: sender)
-    NSLog("[d1vai-drop] overlay performDragOperation paths=%@", paths.joined(separator: " | "))
-    updateDropState(visible: false)
-
-    guard !paths.isEmpty else {
-      return false
-    }
-
-    (NSApp.delegate as? AppDelegate)?.handleDroppedPaths(paths)
-    return true
-  }
-
-  override func concludeDragOperation(_ sender: NSDraggingInfo?) {
-    NSLog("[d1vai-drop] overlay concludeDragOperation")
-    updateDropState(visible: false)
   }
 
   override func hitTest(_ point: NSPoint) -> NSView? {
@@ -121,7 +78,7 @@ final class DirectoryDropOverlayView: NSView {
       transform: nil
     )
 
-    let panelSize = NSSize(width: min(max(bounds.width - 80, 280), 420), height: 112)
+    let panelSize = NSSize(width: min(max(bounds.width - 80, 320), 460), height: 116)
     let panelOrigin = NSPoint(
       x: (bounds.width - panelSize.width) / 2,
       y: (bounds.height - panelSize.height) / 2
@@ -136,7 +93,7 @@ final class DirectoryDropOverlayView: NSView {
 
     messageField.frame = NSRect(
       x: panelOrigin.x + 24,
-      y: panelOrigin.y + 58,
+      y: panelOrigin.y + 60,
       width: panelSize.width - 48,
       height: 24
     )
@@ -144,8 +101,16 @@ final class DirectoryDropOverlayView: NSView {
       x: panelOrigin.x + 24,
       y: panelOrigin.y + 32,
       width: panelSize.width - 48,
-      height: 18
+      height: 20
     )
+  }
+
+  func updateDropState(visible: Bool) {
+    isShowingDropState = visible
+    borderLayer.isHidden = !visible
+    panelLayer.isHidden = !visible
+    messageField.isHidden = !visible
+    detailField.isHidden = !visible
   }
 
   private func setupOverlay() {
@@ -187,13 +152,61 @@ final class DirectoryDropOverlayView: NSView {
     detailField.isHidden = true
     addSubview(detailField)
   }
+}
 
-  func updateDropState(visible: Bool) {
-    isShowingDropState = visible
-    borderLayer.isHidden = !visible
-    panelLayer.isHidden = !visible
-    messageField.isHidden = !visible
-    detailField.isHidden = !visible
+final class SecondaryFlutterWindow: NSWindow {
+  let hostIdentifier: String
+  weak var dropDelegate: FlutterSecondaryWindowController?
+  private weak var dropOverlay: DirectoryDropOverlayView?
+
+  init(hostIdentifier: String, contentRect: NSRect) {
+    self.hostIdentifier = hostIdentifier
+    super.init(
+      contentRect: contentRect,
+      styleMask: [.titled, .closable, .miniaturizable, .resizable],
+      backing: .buffered,
+      defer: false
+    )
+  }
+
+  func installDropOverlay() {
+    // In-window file drops are handled by the Flutter desktop_drop layer so
+    // users keep the "attach / import / open locally" flow. Native handling is
+    // only used for Dock/open-document events.
+  }
+
+  func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+    let hasImportablePaths = !extractPaths(from: sender).isEmpty
+    dropOverlay?.updateDropState(visible: hasImportablePaths)
+    return hasImportablePaths ? .copy : []
+  }
+
+  func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
+    let hasImportablePaths = !extractPaths(from: sender).isEmpty
+    dropOverlay?.updateDropState(visible: hasImportablePaths)
+    return hasImportablePaths ? .copy : []
+  }
+
+  func draggingExited(_ sender: NSDraggingInfo?) {
+    dropOverlay?.updateDropState(visible: false)
+  }
+
+  func prepareForDragOperation(_ sender: NSDraggingInfo) -> Bool {
+    return !extractPaths(from: sender).isEmpty
+  }
+
+  func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+    let paths = extractPaths(from: sender)
+    dropOverlay?.updateDropState(visible: false)
+    guard !paths.isEmpty else {
+      return false
+    }
+    dropDelegate?.handleDroppedPaths(paths)
+    return true
+  }
+
+  func concludeDragOperation(_ sender: NSDraggingInfo?) {
+    dropOverlay?.updateDropState(visible: false)
   }
 
   private func extractPaths(from sender: NSDraggingInfo) -> [String] {
@@ -202,16 +215,67 @@ final class DirectoryDropOverlayView: NSView {
 }
 
 class MainFlutterWindow: NSWindow {
+  let hostIdentifier = "main"
   private weak var dropOverlay: DirectoryDropOverlayView?
+  private weak var flutterViewController: FlutterViewController?
 
   override func awakeFromNib() {
     let flutterViewController = FlutterViewController()
+    self.flutterViewController = flutterViewController
+    installFlutterContent(flutterViewController)
+    RegisterGeneratedPlugins(registry: flutterViewController)
+    (NSApp.delegate as? AppDelegate)?.registerMainWindow(
+      self,
+      flutterViewController: flutterViewController
+    )
+    super.awakeFromNib()
+  }
+
+  func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+    let hasImportablePaths = !extractPaths(from: sender).isEmpty
+    dropOverlay?.updateDropState(visible: hasImportablePaths)
+    return hasImportablePaths ? .copy : []
+  }
+
+  func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
+    let hasImportablePaths = !extractPaths(from: sender).isEmpty
+    dropOverlay?.updateDropState(visible: hasImportablePaths)
+    return hasImportablePaths ? .copy : []
+  }
+
+  func draggingExited(_ sender: NSDraggingInfo?) {
+    dropOverlay?.updateDropState(visible: false)
+  }
+
+  func prepareForDragOperation(_ sender: NSDraggingInfo) -> Bool {
+    return !extractPaths(from: sender).isEmpty
+  }
+
+  func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+    let paths = extractPaths(from: sender)
+    dropOverlay?.updateDropState(visible: false)
+    guard !paths.isEmpty else {
+      return false
+    }
+    (NSApp.delegate as? AppDelegate)?.handleDroppedPaths(paths, targetHostId: hostIdentifier)
+    return true
+  }
+
+  func concludeDragOperation(_ sender: NSDraggingInfo?) {
+    dropOverlay?.updateDropState(visible: false)
+  }
+
+  private func installFlutterContent(_ flutterViewController: FlutterViewController) {
     let rootViewController = RootContainerViewController(
       flutterViewController: flutterViewController
     )
     let windowFrame = self.frame
     self.contentViewController = rootViewController
     self.setFrame(windowFrame, display: true)
+    configureWindowChrome()
+  }
+
+  private func configureWindowChrome() {
     self.titleVisibility = .hidden
     self.titlebarAppearsTransparent = true
     self.isMovableByWindowBackground = false
@@ -219,70 +283,107 @@ class MainFlutterWindow: NSWindow {
     if #available(macOS 11.0, *) {
       self.toolbarStyle = .unifiedCompact
     }
-
-    RegisterGeneratedPlugins(registry: flutterViewController)
-    registerForDraggedTypes([.fileURL])
-    (NSApp.delegate as? AppDelegate)?.configureOpenChannel(
-      binaryMessenger: flutterViewController.engine.binaryMessenger
-    )
-
-    if let contentView = self.contentView {
-      let overlay = DirectoryDropOverlayView(frame: contentView.bounds)
-      overlay.autoresizingMask = [.width, .height]
-      overlay.wantsLayer = true
-      overlay.layer?.backgroundColor = NSColor.clear.cgColor
-      contentView.addSubview(overlay, positioned: .above, relativeTo: nil)
-      dropOverlay = overlay
-    }
-
-    super.awakeFromNib()
-  }
-
-  func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
-    let hasImportablePaths = !extractPaths(from: sender).isEmpty
-    NSLog("[d1vai-drop] window draggingEntered hasPaths=%@", hasImportablePaths ? "true" : "false")
-    dropOverlay?.updateDropState(visible: hasImportablePaths)
-    return hasImportablePaths ? .copy : []
-  }
-
-  func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
-    let hasImportablePaths = !extractPaths(from: sender).isEmpty
-    NSLog("[d1vai-drop] window draggingUpdated hasPaths=%@", hasImportablePaths ? "true" : "false")
-    dropOverlay?.updateDropState(visible: hasImportablePaths)
-    return hasImportablePaths ? .copy : []
-  }
-
-  func draggingExited(_ sender: NSDraggingInfo?) {
-    NSLog("[d1vai-drop] window draggingExited")
-    dropOverlay?.updateDropState(visible: false)
-  }
-
-  func prepareForDragOperation(_ sender: NSDraggingInfo) -> Bool {
-    let ok = !extractPaths(from: sender).isEmpty
-    NSLog("[d1vai-drop] window prepareForDragOperation ok=%@", ok ? "true" : "false")
-    return ok
-  }
-
-  func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
-    let paths = extractPaths(from: sender)
-    NSLog("[d1vai-drop] window performDragOperation paths=%@", paths.joined(separator: " | "))
-    dropOverlay?.updateDropState(visible: false)
-
-    guard !paths.isEmpty else {
-      return false
-    }
-
-    (NSApp.delegate as? AppDelegate)?.handleDroppedPaths(paths)
-    return true
-  }
-
-  func concludeDragOperation(_ sender: NSDraggingInfo?) {
-    NSLog("[d1vai-drop] window concludeDragOperation")
-    dropOverlay?.updateDropState(visible: false)
   }
 
   private func extractPaths(from sender: NSDraggingInfo) -> [String] {
     return extractFilePaths(from: sender.draggingPasteboard)
+  }
+}
+
+final class FlutterSecondaryWindowController: NSWindowController, NSWindowDelegate {
+  private static let defaultContentSize = NSSize(width: 1400, height: 920)
+  private static let minimumContentSize = NSSize(width: 960, height: 640)
+
+  let hostIdentifier: String
+  let engine: FlutterEngine
+  let flutterViewController: FlutterViewController
+  var onWindowClosed: ((String) -> Void)?
+
+  init(hostIdentifier: String) {
+    self.hostIdentifier = hostIdentifier
+    self.engine = FlutterEngine(
+      name: "workspace-\(hostIdentifier)",
+      project: nil,
+      allowHeadlessExecution: true
+    )
+    _ = engine.run(withEntrypoint: "workspaceMain")
+    self.flutterViewController = FlutterViewController(
+      engine: engine,
+      nibName: nil,
+      bundle: nil
+    )
+
+    let window = SecondaryFlutterWindow(
+      hostIdentifier: hostIdentifier,
+      contentRect: NSRect(origin: .zero, size: Self.defaultContentSize)
+    )
+    window.title = "d1v Local Workspace"
+    super.init(window: window)
+
+    RegisterGeneratedPlugins(registry: engine)
+    configureWindow(window)
+    window.delegate = self
+  }
+
+  @available(*, unavailable)
+  required init?(coder: NSCoder) {
+    fatalError("init(coder:) has not been implemented")
+  }
+
+  func showAndActivate() {
+    guard let window else {
+      return
+    }
+    applyDefaultFrame(to: window)
+    showWindow(nil)
+    window.contentView?.layoutSubtreeIfNeeded()
+    window.makeKeyAndOrderFront(nil)
+    window.orderFrontRegardless()
+    NSApp.activate(ignoringOtherApps: true)
+  }
+
+  func windowWillClose(_ notification: Notification) {
+    engine.shutDownEngine()
+    onWindowClosed?(hostIdentifier)
+  }
+
+  func handleDroppedPaths(_ paths: [String]) {
+    (NSApp.delegate as? AppDelegate)?.handleDroppedPaths(paths, targetHostId: hostIdentifier)
+  }
+
+  private func configureWindow(_ window: NSWindow) {
+    let rootViewController = RootContainerViewController(
+      flutterViewController: flutterViewController
+    )
+    window.contentViewController = rootViewController
+    window.contentMinSize = Self.minimumContentSize
+    window.minSize = NSSize(width: 980, height: 680)
+    applyDefaultFrame(to: window)
+    window.center()
+    window.titleVisibility = .hidden
+    window.titlebarAppearsTransparent = true
+    window.isMovableByWindowBackground = false
+    window.styleMask.insert(.fullSizeContentView)
+    if #available(macOS 11.0, *) {
+      window.toolbarStyle = .unifiedCompact
+    }
+    if let dragAwareWindow = window as? SecondaryFlutterWindow {
+      dragAwareWindow.dropDelegate = self
+      dragAwareWindow.installDropOverlay()
+    }
+  }
+
+  private func applyDefaultFrame(to window: NSWindow) {
+    let visibleFrame = NSScreen.main?.visibleFrame ?? NSRect(x: 80, y: 80, width: 1440, height: 900)
+    let width = min(Self.defaultContentSize.width, max(Self.minimumContentSize.width, visibleFrame.width - 96))
+    let height = min(Self.defaultContentSize.height, max(Self.minimumContentSize.height, visibleFrame.height - 96))
+    let frame = NSRect(
+      x: visibleFrame.midX - width / 2,
+      y: visibleFrame.midY - height / 2,
+      width: width,
+      height: height
+    )
+    window.setFrame(frame, display: true)
   }
 }
 

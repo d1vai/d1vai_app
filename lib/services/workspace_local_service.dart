@@ -12,13 +12,14 @@ class WorkspaceLocalService {
     final d1vDirPath = '$normalizedRoot/.d1v';
     final configPath = '$d1vDirPath/project.toml';
 
-    if (kIsWeb || !Platform.isMacOS) {
+    if (kIsWeb || !(Platform.isMacOS || Platform.isWindows)) {
       return LocalWorkspaceState(
         status: LocalWorkspaceStatus.unsupportedPlatform,
         rootPath: normalizedRoot,
         d1vDirectoryPath: d1vDirPath,
         configPath: configPath,
-        errorMessage: 'Local workspace inspection is only enabled on macOS.',
+        errorMessage:
+            'Local workspace inspection is only enabled on macOS and Windows.',
       );
     }
 
