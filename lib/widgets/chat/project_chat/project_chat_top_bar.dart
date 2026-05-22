@@ -17,8 +17,10 @@ class CodeTabTopBarController extends ChangeNotifier {
   bool supportsFoldImports = false;
   bool supportsFoldHeader = false;
   bool hasLocalWorkspace = false;
+  bool uploadingFiles = false;
   CodeTabTopBarSyncState syncState = CodeTabTopBarSyncState.idle;
   VoidCallback? onReload;
+  VoidCallback? onUpload;
   VoidCallback? onAsk;
   VoidCallback? onFind;
   VoidCallback? onToggleWrap;
@@ -42,8 +44,10 @@ class CodeTabTopBarController extends ChangeNotifier {
         supportsFoldImports ||
         supportsFoldHeader ||
         hasLocalWorkspace ||
+        uploadingFiles ||
         syncState != CodeTabTopBarSyncState.idle ||
         onReload != null ||
+        onUpload != null ||
         onAsk != null ||
         onFind != null ||
         onToggleWrap != null ||
@@ -64,8 +68,10 @@ class CodeTabTopBarController extends ChangeNotifier {
     supportsFoldImports = false;
     supportsFoldHeader = false;
     hasLocalWorkspace = false;
+    uploadingFiles = false;
     syncState = CodeTabTopBarSyncState.idle;
     onReload = null;
+    onUpload = null;
     onAsk = null;
     onFind = null;
     onToggleWrap = null;
@@ -92,8 +98,10 @@ class CodeTabTopBarController extends ChangeNotifier {
     required bool supportsFoldImports,
     required bool supportsFoldHeader,
     required bool hasLocalWorkspace,
+    required bool uploadingFiles,
     required CodeTabTopBarSyncState syncState,
     required VoidCallback? onReload,
+    required VoidCallback? onUpload,
     required VoidCallback? onAsk,
     required VoidCallback? onFind,
     required VoidCallback? onToggleWrap,
@@ -116,6 +124,7 @@ class CodeTabTopBarController extends ChangeNotifier {
         this.supportsFoldImports != supportsFoldImports ||
         this.supportsFoldHeader != supportsFoldHeader ||
         this.hasLocalWorkspace != hasLocalWorkspace ||
+        this.uploadingFiles != uploadingFiles ||
         this.syncState != syncState;
     this.searchController = searchController;
     this.loadingTree = loadingTree;
@@ -129,8 +138,10 @@ class CodeTabTopBarController extends ChangeNotifier {
     this.supportsFoldImports = supportsFoldImports;
     this.supportsFoldHeader = supportsFoldHeader;
     this.hasLocalWorkspace = hasLocalWorkspace;
+    this.uploadingFiles = uploadingFiles;
     this.syncState = syncState;
     this.onReload = onReload;
+    this.onUpload = onUpload;
     this.onAsk = onAsk;
     this.onFind = onFind;
     this.onToggleWrap = onToggleWrap;
@@ -426,6 +437,19 @@ class _FilesInlineToolbar extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
               ],
+              _ActionIconButton(
+                icon: controller.uploadingFiles
+                    ? Icons.hourglass_top_rounded
+                    : Icons.upload_file_outlined,
+                onPressed: controller.uploadingFiles
+                    ? () {}
+                    : (controller.onUpload ?? () {}),
+                tooltip:
+                    loc?.translate('project_chat_upload_files_tooltip') ??
+                    'Upload files',
+                enabled: !controller.uploadingFiles && controller.onUpload != null,
+              ),
+              const SizedBox(width: 4),
               _ActionIconButton(
                 icon: Icons.refresh_outlined,
                 onPressed: controller.loadingTree

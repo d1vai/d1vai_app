@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../services/d1vai_service.dart';
 import '../../../../services/local_workspace_service.dart';
@@ -62,6 +63,8 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
       <String, CodeTabFileContent>{};
   String? _pendingInitialLocalOpenFilePath;
   bool _initialLocalFileOpened = false;
+  bool _uploadingFiles = false;
+  bool _treeDraggingFiles = false;
 
   @override
   void initState() {
@@ -163,8 +166,10 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
       supportsFoldImports: activeEditor?.controller.supportsFoldImports == true,
       supportsFoldHeader: activeEditor?.controller.supportsFoldHeader == true,
       hasLocalWorkspace: _workbench.hasLocalWorkspace,
+      uploadingFiles: _uploadingFiles,
       syncState: syncState,
       onReload: _loadingTree ? null : _loadTree,
+      onUpload: _uploadingFiles ? null : _pickAndUploadFiles,
       onAsk: hasSelection ? _askAboutSelected : null,
       onFind: activeEditor?.isEditing == true
           ? activeEditor!.controller.showSearch
@@ -652,6 +657,93 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
     );
   }
 
+  Future<void> _pickAndUploadFiles() async {
+    if (_uploadingFiles) return;
+    final cloudProjectId = (widget.projectId ?? '').trim();
+    if (_workbench.hasLocalWorkspace || cloudProjectId.isEmpty) {
+      if (!mounted) return;
+      SnackBarHelper.showError(
+        context,
+        title: 'Upload unavailable',
+        message: 'File upload is available only for cloud project files.',
+      );
+      return;
+    }
+    final result = await FilePicker.platform.pickFiles(
+      allowMultiple: true,
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final files = result.files
+        .where((file) => file.bytes != null && (file.name).trim().isNotEmpty)
+        .map(
+          (file) => (
+            name: file.name.trim(),
+            bytes: file.bytes!,
+            mimeType: null,
+          ),
+        )
+        .toList();
+    if (files.isEmpty) return;
+    await _uploadCloudFiles(files, targetDir: '');
+  }
+
+  Future<void> _uploadCloudFiles(
+    List<({String name, Uint8List bytes, String? mimeType})> files, {
+    required String targetDir,
+  }) async {
+    if (_uploadingFiles) return;
+    final cloudProjectId = (widget.projectId ?? '').trim();
+    if (cloudProjectId.isEmpty) return;
+    setState(() {
+      _uploadingFiles = true;
+    });
+    try {
+      String? firstUploadedPath;
+      for (final file in files) {
+        final payload = await _service.uploadProjectStorageFile(
+          cloudProjectId,
+          fileBytes: file.bytes,
+          fileName: file.name,
+          targetDir: targetDir,
+          contentType: file.mimeType,
+        );
+        final uploadedPath = (payload['data']?['path'] ?? payload['path'])
+            ?.toString();
+        if (firstUploadedPath == null &&
+            uploadedPath != null &&
+            uploadedPath.trim().isNotEmpty) {
+          firstUploadedPath = uploadedPath.trim();
+        }
+      }
+      await _loadTree();
+      if (firstUploadedPath != null && mounted) {
+        await _focusDesktopFile(firstUploadedPath);
+      }
+      if (!mounted) return;
+      SnackBarHelper.showSuccess(
+        context,
+        title: files.length == 1 ? 'Uploaded' : 'Uploads complete',
+        message: files.length == 1
+            ? 'File uploaded successfully.'
+            : '${files.length} files uploaded successfully.',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      SnackBarHelper.showError(
+        context,
+        title: 'Upload failed',
+        message: e.toString(),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _uploadingFiles = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -664,25 +756,13 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
       _publishTopBarState();
     });
 
-    return Padding(
+    final content = Padding(
       padding: compact
           ? const EdgeInsets.fromLTRB(0, 8, 0, 0)
           : const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (_workbench.hasLocalWorkspace) ...[
-            _LocalWorkspaceBanner(
-              rootName: _workbench.localRootName ?? 'Local workspace',
-              rootPath: _workbench.localRootPath ?? '',
-              sourceMode: _workbench.sourceMode,
-              linkedProjectId: (widget.projectId ?? '').trim(),
-              revealLabel: _revealActionLabel(),
-              onRevealInFinder: _revealLocalWorkspaceInFinder,
-              onDetach: widget.onDetachLocalWorkspace,
-            ),
-            const SizedBox(height: 10),
-          ],
           Expanded(
             child: mobile
                 ? CodeTabTreePanel(
@@ -836,29 +916,89 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
         ],
       ),
     );
-  }
 
-  Future<void> _revealLocalWorkspaceInFinder() async {
-    final rootPath = (_workbench.localRootPath ?? '').trim();
-    if (rootPath.isEmpty) return;
-    final uri = Uri.file(rootPath);
-    try {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (e) {
-      if (!mounted) return;
-      SnackBarHelper.showError(
-        context,
-        title: _revealFailureTitle(),
-        message: e.toString(),
-      );
+    final canAcceptDrops =
+        !kIsWeb &&
+        !_workbench.hasLocalWorkspace &&
+        (widget.projectId ?? '').trim().isNotEmpty;
+    if (!canAcceptDrops) {
+      return content;
     }
+
+    return DropTarget(
+      onDragEntered: (_) {
+        if (!mounted || _uploadingFiles) return;
+        setState(() {
+          _treeDraggingFiles = true;
+        });
+      },
+      onDragExited: (_) {
+        if (!mounted) return;
+        setState(() {
+          _treeDraggingFiles = false;
+        });
+      },
+      onDragDone: (detail) async {
+        if (!mounted) return;
+        final picked = <({String name, Uint8List bytes, String? mimeType})>[];
+        for (final file in detail.files) {
+          final path = file.path.trim();
+          final name = file.name.trim();
+          if (path.isEmpty || name.isEmpty) continue;
+          final ioFile = File(path);
+          if (!await ioFile.exists()) continue;
+          final bytes = await ioFile.readAsBytes();
+          picked.add((name: name, bytes: bytes, mimeType: null));
+        }
+        if (picked.isEmpty) {
+          setState(() {
+            _treeDraggingFiles = false;
+          });
+          return;
+        }
+        await _uploadCloudFiles(picked, targetDir: '');
+      },
+      child: Stack(
+        children: [
+          content,
+          IgnorePointer(
+            ignoring: !_treeDraggingFiles,
+            child: AnimatedOpacity(
+              opacity: _treeDraggingFiles ? 1 : 0,
+              duration: const Duration(milliseconds: 120),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.35),
+                    width: 1.5,
+                  ),
+                ),
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: const Text('Drop files to upload to project root'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
-
-  String _revealActionLabel() =>
-      Platform.isWindows ? 'Reveal in Explorer' : 'Reveal in Finder';
-
-  String _revealFailureTitle() =>
-      Platform.isWindows ? 'Open in Explorer failed' : 'Open in Finder failed';
 
   _ResolvedLocalWorkspaceAttachment? _resolveInitialLocalAttachment(
     String? entryPath,
@@ -918,150 +1058,6 @@ class _ResolvedLocalWorkspaceAttachment {
     required this.rootName,
     this.openFilePath,
   });
-}
-
-class _LocalWorkspaceBanner extends StatelessWidget {
-  final String rootName;
-  final String rootPath;
-  final CodeWorkbenchSourceMode sourceMode;
-  final String linkedProjectId;
-  final String revealLabel;
-  final VoidCallback onRevealInFinder;
-  final VoidCallback? onDetach;
-
-  const _LocalWorkspaceBanner({
-    required this.rootName,
-    required this.rootPath,
-    required this.sourceMode,
-    required this.linkedProjectId,
-    required this.revealLabel,
-    required this.onRevealInFinder,
-    required this.onDetach,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isHybrid = sourceMode == CodeWorkbenchSourceMode.hybrid;
-    final badgeLabel = switch (sourceMode) {
-      CodeWorkbenchSourceMode.cloudOnly => 'Cloud workspace',
-      CodeWorkbenchSourceMode.localAttached => 'Local workspace',
-      CodeWorkbenchSourceMode.hybrid => 'Local + Cloud',
-    };
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.7),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.8),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              Icons.folder_open_outlined,
-              size: 18,
-              color: theme.colorScheme.primary,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Text(
-                      rootName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    _WorkspaceModeChip(
-                      label: badgeLabel,
-                      color: isHybrid
-                          ? theme.colorScheme.tertiary
-                          : theme.colorScheme.primary,
-                    ),
-                    if (isHybrid && linkedProjectId.isNotEmpty)
-                      _WorkspaceModeChip(
-                        label: linkedProjectId,
-                        color: theme.colorScheme.secondary,
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  rootPath,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          TextButton.icon(
-            onPressed: onRevealInFinder,
-            icon: const Icon(Icons.folder_outlined, size: 16),
-            label: Text(revealLabel),
-          ),
-          if (onDetach != null) ...[
-            const SizedBox(width: 8),
-            OutlinedButton.icon(
-              onPressed: onDetach,
-              icon: const Icon(Icons.link_off_outlined, size: 16),
-              label: const Text('Detach'),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _WorkspaceModeChip extends StatelessWidget {
-  final String label;
-  final Color color;
-
-  const _WorkspaceModeChip({required this.label, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.16)),
-      ),
-      child: Text(
-        label,
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
 }
 
 class _CodePaneResizeHandle extends StatefulWidget {

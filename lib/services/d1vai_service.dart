@@ -684,6 +684,29 @@ class D1vaiService {
     );
   }
 
+  Future<Map<String, dynamic>> uploadProjectStorageFile(
+    String projectId, {
+    required Uint8List fileBytes,
+    required String fileName,
+    String targetDir = '',
+    String? contentType,
+  }) async {
+    return _apiClient.postMultipart<Map<String, dynamic>>(
+      '/api/projects/storage/$projectId/upload',
+      fields: {'target_dir': targetDir.trim()},
+      fileField: 'file',
+      fileBytes: fileBytes,
+      fileName: fileName,
+      contentType: contentType,
+      timeout: const Duration(minutes: 2),
+      fromJsonT: (json) {
+        if (json is Map<String, dynamic>) return json;
+        if (json is Map) return json.cast<String, dynamic>();
+        return <String, dynamic>{};
+      },
+    );
+  }
+
   Future<Map<String, dynamic>> importProjectFromLocal({
     required Uint8List archiveBytes,
     required String archiveFileName,
