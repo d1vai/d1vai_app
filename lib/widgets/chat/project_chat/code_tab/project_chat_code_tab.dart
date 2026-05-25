@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../services/d1vai_service.dart';
 import '../../../../services/local_workspace_service.dart';
+import '../../../../utils/project_file_links.dart';
 import '../../../../providers/editor_preferences_provider.dart';
 import '../../../snackbar_helper.dart';
 import 'code_tab_file_viewer.dart';
@@ -25,6 +26,7 @@ class ProjectChatCodeTab extends StatefulWidget {
   final ValueChanged<String> onAsk;
   final CodeTabTopBarController? topBarController;
   final String? initialLocalEntryPath;
+  final ProjectFileLinkRequest? pendingProjectFileRequest;
   final bool initialLocalHybridMode;
   final VoidCallback? onDetachLocalWorkspace;
 
@@ -34,6 +36,7 @@ class ProjectChatCodeTab extends StatefulWidget {
     required this.onAsk,
     this.topBarController,
     this.initialLocalEntryPath,
+    this.pendingProjectFileRequest,
     this.initialLocalHybridMode = true,
     this.onDetachLocalWorkspace,
   });
@@ -67,6 +70,8 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
   bool _uploadingFiles = false;
   bool _treeDraggingFiles = false;
   int _treeOpenRequestSerial = 0;
+  ProjectFileLinkRequest? _queuedProjectFileRequest;
+  int _lastHandledProjectFileRequestId = 0;
 
   @override
   void initState() {
@@ -90,6 +95,7 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
       );
       _pendingInitialLocalOpenFilePath = initialLocal.openFilePath;
     }
+    _queuedProjectFileRequest = widget.pendingProjectFileRequest;
     _loadTree();
     _searchListener = () {
       if (!mounted) return;
@@ -100,6 +106,19 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
       });
     };
     _searchController.addListener(_searchListener);
+  }
+
+  @override
+  void didUpdateWidget(covariant ProjectChatCodeTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final nextRequest = widget.pendingProjectFileRequest;
+    if (nextRequest != null &&
+        nextRequest.requestId != _lastHandledProjectFileRequestId &&
+        nextRequest.requestId !=
+            oldWidget.pendingProjectFileRequest?.requestId) {
+      _queuedProjectFileRequest = nextRequest;
+      unawaited(_maybeHandleQueuedProjectFileRequest());
+    }
   }
 
   @override
@@ -275,6 +294,7 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
         'elapsed=${DateTime.now().difference(startedAt).inMilliseconds}ms',
       );
       await _maybeOpenInitialLocalFile();
+      await _maybeHandleQueuedProjectFileRequest();
     } catch (e) {
       debugPrint(
         '[d1vai-open] code tree load failed local=${_workbench.hasLocalWorkspace} '
@@ -302,6 +322,62 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
       if (!mounted) return;
       unawaited(_openDesktopFile(pendingPath, preview: false));
     });
+  }
+
+  Future<void> _maybeHandleQueuedProjectFileRequest() async {
+    final request = _queuedProjectFileRequest;
+    if (request == null ||
+        request.requestId == _lastHandledProjectFileRequestId) {
+      return;
+    }
+    _queuedProjectFileRequest = null;
+    _lastHandledProjectFileRequestId = request.requestId;
+    await _openProjectFileLinkTarget(request.target);
+  }
+
+  void _expandPathAncestors(String path) {
+    final segments = path
+        .split('/')
+        .map((segment) => segment.trim())
+        .where((segment) => segment.isNotEmpty)
+        .toList(growable: false);
+    if (segments.length < 2) return;
+
+    var current = '';
+    var changed = false;
+    for (var i = 0; i < segments.length - 1; i += 1) {
+      current = current.isEmpty ? segments[i] : '$current/${segments[i]}';
+      changed = _expandedDirs.add(current) || changed;
+    }
+    if (changed) {
+      _rebuildFlatList();
+    }
+  }
+
+  Future<void> _openProjectFileLinkTarget(ProjectFileLinkTarget target) async {
+    final path = target.path.trim();
+    if (path.isEmpty) return;
+
+    _expandPathAncestors(path);
+    try {
+      await _editDesktopFileAfterFrame(path);
+      if (!mounted) return;
+      final editor = _workbench.editorForPath(path);
+      final controller = editor?.controller;
+      if (controller != null && !editor!.isBinary) {
+        await controller.focusPosition(
+          line: target.line ?? 1,
+          column: target.column ?? 1,
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      SnackBarHelper.showError(
+        context,
+        title: 'Failed to open file',
+        message: e.toString(),
+      );
+    }
   }
 
   void _rebuildFlatList() {

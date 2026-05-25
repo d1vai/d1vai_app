@@ -11,6 +11,7 @@ import 'message_bubble/status_cards.dart';
 import 'message_bubble/thinking_card.dart';
 import 'message_context_menu.dart';
 import 'tools/enhanced_tool_message.dart';
+import '../../utils/project_file_links.dart';
 
 /// Message bubble widget for displaying chat messages
 /// Note: Message actions are available via long press
@@ -23,6 +24,7 @@ class MessageBubble extends StatelessWidget {
   final List<MessageContent>? overrideContents;
   final bool plainLayout;
   final String? projectId;
+  final ValueChanged<ProjectFileLinkTarget>? onProjectFileTap;
 
   const MessageBubble({
     super.key,
@@ -34,6 +36,7 @@ class MessageBubble extends StatelessWidget {
     this.overrideContents,
     this.plainLayout = false,
     this.projectId,
+    this.onProjectFileTap,
   });
 
   @override
@@ -199,7 +202,10 @@ class MessageBubble extends StatelessWidget {
     } else if (content is GitPushMessageContent) {
       return ChatGitPushRow(content: content);
     } else if (content is ResultMessageContent) {
-      return ChatResultCard(payload: content.payload);
+      return ChatResultCard(
+        payload: content.payload,
+        onProjectFileTap: onProjectFileTap,
+      );
     } else if (content is DeploymentMessageContent) {
       return ChatDeploymentCard(content: content);
     } else if (content is ErrorMessageContent) {

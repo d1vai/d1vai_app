@@ -36,7 +36,7 @@ class ProjectOverviewHealthMetricsCard extends StatelessWidget {
     );
 
     return ProjectOverviewCardShell(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -47,7 +47,7 @@ class ProjectOverviewHealthMetricsCard extends StatelessWidget {
               letterSpacing: 0.2,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           _HealthMetricItem(
             title: _t(context, 'project_overview_health_branch', 'Branch'),
             status:
@@ -68,7 +68,7 @@ class ProjectOverviewHealthMetricsCard extends StatelessWidget {
                 true,
             badgeMonospace: true,
           ),
-          const Divider(height: 32),
+          const Divider(height: 28),
           _HealthMetricItem(
             title: _t(
               context,
@@ -88,7 +88,7 @@ class ProjectOverviewHealthMetricsCard extends StatelessWidget {
                 project.latestProdDeploymentUrl!.isNotEmpty,
             statusOnNewLine: true,
           ),
-          const Divider(height: 32),
+          const Divider(height: 28),
           _HealthMetricItem(
             title: _t(
               context,
@@ -107,7 +107,7 @@ class ProjectOverviewHealthMetricsCard extends StatelessWidget {
                 project.preferredPreviewUrl!.trim().isNotEmpty,
             statusOnNewLine: true,
           ),
-          const Divider(height: 32),
+          const Divider(height: 28),
           _HealthMetricItem(
             title: _t(
               context,
@@ -134,7 +134,7 @@ class ProjectOverviewHealthMetricsCard extends StatelessWidget {
                 true,
             statusOnNewLine: true,
           ),
-          const Divider(height: 32),
+          const Divider(height: 28),
           _HealthMetricItem(
             title: _t(
               context,
@@ -154,7 +154,7 @@ class ProjectOverviewHealthMetricsCard extends StatelessWidget {
             icon: Icons.analytics,
             isEnabled: project.hasAnalyticsId,
           ),
-          const Divider(height: 32),
+          const Divider(height: 28),
           _HealthMetricItem(
             title: _t(context, 'project_overview_health_database', 'Database'),
             status: project.hasDatabaseEnabled ? enabledLabel : disabledLabel,
@@ -166,7 +166,7 @@ class ProjectOverviewHealthMetricsCard extends StatelessWidget {
             icon: Icons.storage,
             isEnabled: project.hasDatabaseEnabled,
           ),
-          const Divider(height: 32),
+          const Divider(height: 28),
           _HealthMetricItem(
             title: _t(context, 'project_overview_health_payments', 'Payments'),
             status: project.hasPaymentEnabled ? enabledLabel : disabledLabel,
@@ -240,11 +240,11 @@ class _HealthMetricItem extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(icon, size: 18, color: theme.colorScheme.primary),
-                        const SizedBox(width: 8),
+                        Icon(icon, size: 16, color: theme.colorScheme.primary),
+                        const SizedBox(width: 7),
                         Text(
                           title,
-                          style: theme.textTheme.bodyMedium?.copyWith(
+                          style: theme.textTheme.bodySmall?.copyWith(
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -265,8 +265,8 @@ class _HealthMetricItem extends StatelessWidget {
               ),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
+                  horizontal: 10,
+                  vertical: 5,
                 ),
                 decoration: BoxDecoration(
                   color: badgeBg,
@@ -279,7 +279,7 @@ class _HealthMetricItem extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: badgeFg,
-                    fontSize: 12,
+                    fontSize: 11.5,
                     fontWeight: FontWeight.w700,
                     fontFamily: badgeMonospace ? 'monospace' : null,
                     height: 1.1,
@@ -294,11 +294,11 @@ class _HealthMetricItem extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(icon, size: 18, color: theme.colorScheme.primary),
-                  const SizedBox(width: 8),
+                  Icon(icon, size: 16, color: theme.colorScheme.primary),
+                  const SizedBox(width: 7),
                   Text(
                     title,
-                    style: theme.textTheme.bodyMedium?.copyWith(
+                    style: theme.textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -318,12 +318,12 @@ class _HealthMetricItem extends StatelessWidget {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
+                  horizontal: 10,
+                  vertical: 7,
                 ),
                 decoration: BoxDecoration(
                   color: badgeBg,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(11),
                   border: Border.all(color: badgeBorder),
                 ),
                 child: Text(
@@ -332,7 +332,7 @@ class _HealthMetricItem extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: badgeFg,
-                    fontSize: 12,
+                    fontSize: 11.5,
                     fontWeight: FontWeight.w700,
                     fontFamily: badgeMonospace ? 'monospace' : null,
                     height: 1.2,

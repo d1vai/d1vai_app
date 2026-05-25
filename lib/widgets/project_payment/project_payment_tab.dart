@@ -31,21 +31,705 @@ class ProjectPaymentTab extends StatefulWidget {
   State<ProjectPaymentTab> createState() => _ProjectPaymentTabState();
 }
 
+enum _PaymentWorkspaceTab { overview, products, transactions }
+
 class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
   PayMetrics? _payMetrics;
   final List<PayProduct> _payProducts = [];
   final List<PaymentTransaction> _paymentTransactions = [];
+  final Set<String> _expandedProductIds = <String>{};
+  final Set<String> _expandedTransactionIds = <String>{};
   bool _isLoading = false;
   bool _isInitialized = false;
   bool _isActivating = false;
   bool _paymentActivationRequired = false;
   bool _paymentActivatedOverride = false;
   String? _loadError;
+  _PaymentWorkspaceTab _activeWorkspaceTab = _PaymentWorkspaceTab.overview;
 
   String _t(String key, String fallback) {
     final value = AppLocalizations.of(context)?.translate(key);
     if (value == null || value == key) return fallback;
     return value;
+  }
+
+  ButtonStyle _densePrimaryButtonStyle(BuildContext context) {
+    final theme = Theme.of(context);
+    return ElevatedButton.styleFrom(
+      minimumSize: const Size(0, 34),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
+      textStyle: theme.textTheme.labelLarge?.copyWith(
+        fontWeight: FontWeight.w700,
+      ),
+    );
+  }
+
+  ButtonStyle _denseOutlineButtonStyle(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    return OutlinedButton.styleFrom(
+      minimumSize: const Size(0, 34),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
+      side: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.42)),
+      textStyle: theme.textTheme.labelLarge?.copyWith(
+        fontWeight: FontWeight.w700,
+      ),
+    );
+  }
+
+  Widget _countPill(BuildContext context, String label, {Color? tone}) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final color = tone ?? cs.primary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWorkspaceTabs(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    Widget tab(
+      _PaymentWorkspaceTab value,
+      IconData icon,
+      String label, {
+      String? counter,
+    }) {
+      final active = _activeWorkspaceTab == value;
+      return Expanded(
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: () => setState(() => _activeWorkspaceTab = value),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: active
+                  ? Color.alphaBlend(
+                      cs.primary.withValues(alpha: 0.12),
+                      cs.surface,
+                    )
+                  : cs.surface.withValues(alpha: 0.42),
+              borderRadius: BorderRadius.circular(9),
+              border: Border.all(
+                color: active
+                    ? cs.primary.withValues(alpha: 0.22)
+                    : cs.outlineVariant.withValues(alpha: 0.24),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 14,
+                  color: active ? cs.primary : cs.onSurfaceVariant,
+                ),
+                const SizedBox(width: 7),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: active ? cs.primary : cs.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                if (counter != null && counter.isNotEmpty) ...[
+                  const SizedBox(width: 7),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: active
+                          ? cs.primary.withValues(alpha: 0.12)
+                          : cs.surfaceContainerHighest.withValues(alpha: 0.8),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      counter,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: active ? cs.primary : cs.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: Color.alphaBlend(
+          cs.surfaceContainerLow.withValues(alpha: 0.72),
+          cs.surface,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.28)),
+      ),
+      child: Row(
+        children: [
+          tab(
+            _PaymentWorkspaceTab.overview,
+            Icons.space_dashboard_outlined,
+            _t('project_payment_overview', 'Overview'),
+          ),
+          const SizedBox(width: 8),
+          tab(
+            _PaymentWorkspaceTab.products,
+            Icons.sell_outlined,
+            _t('project_payment_products', 'Payment Products'),
+            counter: '${_payProducts.length}',
+          ),
+          const SizedBox(width: 8),
+          tab(
+            _PaymentWorkspaceTab.transactions,
+            Icons.receipt_long_outlined,
+            _t('project_payment_recent_transactions', 'Recent Transactions'),
+            counter: '${_paymentTransactions.length}',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWorkspaceHeader(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final activated = _isPaymentActivated;
+    final subtitle = activated
+        ? 'Manage checkout surfaces, products, and successful orders.'
+        : 'Initialize payments before configuring products and transactions.';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: Color.alphaBlend(
+          cs.surfaceContainerLow.withValues(alpha: 0.76),
+          cs.surface,
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.28)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Payments',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  subtitle,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: cs.onSurfaceVariant,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.end,
+            children: [
+              _countPill(
+                context,
+                activated ? 'ACTIVE' : 'SETUP',
+                tone: activated ? Colors.green : cs.primary,
+              ),
+              if (_payMetrics != null)
+                _countPill(
+                  context,
+                  _payMetrics!.formattedRevenue,
+                  tone: cs.tertiary,
+                ),
+              if (_activeWorkspaceTab == _PaymentWorkspaceTab.products)
+                ElevatedButton.icon(
+                  onPressed: () => _showAddPayProductDialog(context),
+                  style: _densePrimaryButtonStyle(context),
+                  icon: const Icon(Icons.add, size: 16),
+                  label: Text(_t('project_payment_add', 'Add')),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWorkspaceBody(BuildContext context) {
+    return switch (_activeWorkspaceTab) {
+      _PaymentWorkspaceTab.overview => _buildOverviewCard(),
+      _PaymentWorkspaceTab.products => _buildProductsCard(context),
+      _PaymentWorkspaceTab.transactions => _buildTransactionsCard(),
+    };
+  }
+
+  String _productRowKey(PayProduct product) {
+    final id = product.id.trim();
+    if (id.isNotEmpty) return id;
+    return '${product.name}|${product.price}|${product.createdAt ?? ''}';
+  }
+
+  String _transactionRowKey(PaymentTransaction tx) {
+    final id = tx.id.trim();
+    if (id.isNotEmpty) return id;
+    return '${tx.productName ?? ''}|${tx.amount}|${tx.createdAt ?? ''}';
+  }
+
+  void _toggleExpanded(Set<String> items, String key) {
+    setState(() {
+      if (!items.add(key)) {
+        items.remove(key);
+      }
+    });
+  }
+
+  String _formatTimestamp(String? raw) {
+    final value = (raw ?? '').trim();
+    if (value.isEmpty) return '—';
+    try {
+      final dt = DateTime.parse(value).toLocal();
+      final date = MaterialLocalizations.of(context).formatMediumDate(dt);
+      final time = MaterialLocalizations.of(context).formatTimeOfDay(
+        TimeOfDay.fromDateTime(dt),
+        alwaysUse24HourFormat: true,
+      );
+      return '$date $time';
+    } catch (_) {
+      return value;
+    }
+  }
+
+  void _askAiAboutProduct(PayProduct product) {
+    final question = _t(
+      'project_payment_ai_prompt_product',
+      'Can you analyze the payment product "{name}" and provide suggestions on pricing strategy, configuration, or marketing improvements?',
+    ).replaceAll('{name}', product.name);
+    widget.onAskAi?.call(question);
+  }
+
+  void _askAiAboutTransaction(PaymentTransaction tx) {
+    final question = _t(
+      'project_payment_ai_prompt_transaction',
+      'Can you analyze this payment transaction ({amount}, {status}) and provide insights about payment patterns or recommendations?',
+    ).replaceAll('{amount}', tx.formattedAmount).replaceAll('{status}', tx.statusLabel);
+    widget.onAskAi?.call(question);
+  }
+
+  Widget _buildDetailTile(
+    BuildContext context,
+    String label,
+    String value, {
+    bool monospace = false,
+  }) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    return Container(
+      constraints: const BoxConstraints(minWidth: 118, maxWidth: 220),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 8),
+      decoration: BoxDecoration(
+        color: cs.surface.withValues(alpha: 0.58),
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.36)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: cs.onSurfaceVariant,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+              fontFamily: monospace ? 'monospace' : null,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductRow(BuildContext context, PayProduct product) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final rowKey = _productRowKey(product);
+    final expanded = _expandedProductIds.contains(rowKey);
+    final description = (product.description ?? '').trim();
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.6)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(11),
+          onTap: () => _toggleExpanded(_expandedProductIds, rowKey),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: AnimatedSize(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOutCubic,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: cs.primary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(9),
+                        ),
+                        child: Icon(
+                          Icons.sell_outlined,
+                          size: 17,
+                          color: cs.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              product.name,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            if (description.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                description,
+                                maxLines: expanded ? 4 : 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: cs.onSurfaceVariant,
+                                  height: 1.35,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          _countPill(
+                            context,
+                            product.isActive ? 'ACTIVE' : 'PAUSED',
+                            tone: product.isActive
+                                ? Colors.green
+                                : cs.onSurfaceVariant,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            product.formattedPrice,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: product.price > 0
+                                  ? Colors.green.shade700
+                                  : cs.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 6),
+                      Icon(
+                        expanded
+                            ? Icons.expand_less_rounded
+                            : Icons.expand_more_rounded,
+                        size: 18,
+                        color: cs.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 2),
+                      AppMenuButton<String>(
+                        tooltip: _t('more', 'More'),
+                        actions: [
+                          AppMenuAction(
+                            value: 'edit',
+                            label: _t('project_payment_edit', 'Edit'),
+                            icon: Icons.edit,
+                          ),
+                          AppMenuAction(
+                            value: 'link',
+                            label: _t('project_payment_get_link', 'Get Link'),
+                            icon: Icons.link,
+                          ),
+                        ],
+                        onSelected: (value) {
+                          if (value == 'edit') {
+                            _showEditPayProductDialog(context, product);
+                          } else if (value == 'link') {
+                            SnackBarHelper.showInfo(
+                              context,
+                              title: _t('project_payment_link', 'Payment Link'),
+                              message: _t(
+                                'project_payment_getting_link',
+                                'Getting payment link...',
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                  if (expanded) ...[
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _buildDetailTile(
+                          context,
+                          'Product ID',
+                          product.id.trim().isEmpty ? '—' : product.id.trim(),
+                          monospace: true,
+                        ),
+                        _buildDetailTile(context, 'Currency', product.currency),
+                        _buildDetailTile(
+                          context,
+                          'Created',
+                          _formatTimestamp(product.createdAt),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: () => _askAiAboutProduct(product),
+                          style: _denseOutlineButtonStyle(context),
+                          icon: const Icon(
+                            Icons.auto_awesome_outlined,
+                            size: 16,
+                          ),
+                          label: const Text('Ask AI'),
+                        ),
+                        TextButton.icon(
+                          onPressed: () =>
+                              _showEditPayProductDialog(context, product),
+                          icon: const Icon(Icons.edit_outlined, size: 16),
+                          label: Text(_t('project_payment_edit', 'Edit')),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTransactionRow(BuildContext context, PaymentTransaction tx) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final rowKey = _transactionRowKey(tx);
+    final expanded = _expandedTransactionIds.contains(rowKey);
+    final customer = (tx.customerEmail ?? '').trim();
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.6)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(11),
+          onTap: () => _toggleExpanded(_expandedTransactionIds, rowKey),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: AnimatedSize(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOutCubic,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: tx.statusColor.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(9),
+                        ),
+                        child: Icon(
+                          tx.statusIcon,
+                          size: 17,
+                          color: tx.statusColor,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              tx.productName ??
+                                  _t(
+                                    'project_payment_unknown_product',
+                                    'Unknown Product',
+                                  ),
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              customer.isEmpty
+                                  ? _t('project_payment_anonymous', 'Anonymous')
+                                  : customer,
+                              maxLines: expanded ? 2 : 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: cs.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            tx.formattedAmount,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _countPill(
+                            context,
+                            tx.statusLabel.toUpperCase(),
+                            tone: tx.statusColor,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        expanded
+                            ? Icons.expand_less_rounded
+                            : Icons.expand_more_rounded,
+                        size: 18,
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ],
+                  ),
+                  if (expanded) ...[
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _buildDetailTile(
+                          context,
+                          'Transaction ID',
+                          tx.id.trim().isEmpty ? '—' : tx.id.trim(),
+                          monospace: true,
+                        ),
+                        _buildDetailTile(
+                          context,
+                          'Payment method',
+                          (tx.paymentMethod ?? '').trim().isEmpty
+                              ? '—'
+                              : tx.paymentMethod!.trim(),
+                        ),
+                        _buildDetailTile(
+                          context,
+                          'Created',
+                          _formatTimestamp(tx.createdAt),
+                        ),
+                        _buildDetailTile(
+                          context,
+                          'Completed',
+                          _formatTimestamp(tx.completedAt),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    OutlinedButton.icon(
+                      onPressed: () => _askAiAboutTransaction(tx),
+                      style: _denseOutlineButtonStyle(context),
+                      icon: const Icon(Icons.auto_awesome_outlined, size: 16),
+                      label: const Text('Ask AI'),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -60,6 +744,15 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
   @override
   void didUpdateWidget(covariant ProjectPaymentTab oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.projectId != widget.projectId) {
+      _expandedProductIds.clear();
+      _expandedTransactionIds.clear();
+      _activeWorkspaceTab = _PaymentWorkspaceTab.overview;
+      if (_isInitialized && !_isLoading) {
+        unawaited(_loadPaymentData());
+      }
+      return;
+    }
     if (oldWidget.projectPayId != widget.projectPayId &&
         widget.projectPayId != null) {
       _paymentActivationRequired = false;
@@ -239,6 +932,7 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                 children: [
                   ElevatedButton.icon(
                     onPressed: _loadPaymentData,
+                    style: _densePrimaryButtonStyle(context),
                     icon: const Icon(Icons.refresh),
                     label: Text(_t('retry', 'Retry')),
                   ),
@@ -249,6 +943,7 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                           endpoint: '/api/projects/${widget.projectId}/payment',
                         );
                       },
+                      style: _denseOutlineButtonStyle(context),
                       icon: const Icon(Icons.login),
                       label: Text(_t('project_payment_relogin', 'Re-login')),
                     ),
@@ -264,15 +959,35 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
       onRefresh: _loadPaymentData,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildOverviewCard(),
-            const SizedBox(height: 16),
-            _buildProductsCard(context),
-            const SizedBox(height: 16),
-            _buildTransactionsCard(),
+            _buildWorkspaceHeader(context),
+            const SizedBox(height: 12),
+            _buildWorkspaceTabs(context),
+            const SizedBox(height: 12),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeIn,
+              transitionBuilder: (child, animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0, 0.02),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                );
+              },
+              child: KeyedSubtree(
+                key: ValueKey(_activeWorkspaceTab),
+                child: _buildWorkspaceBody(context),
+              ),
+            ),
           ],
         ),
       ),
@@ -314,82 +1029,107 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
   Widget _buildOverviewCard() {
     final theme = Theme.of(context);
     return Card(
+      margin: EdgeInsets.zero,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.34),
+        ),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _t('project_payment_overview', 'Payment Overview'),
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 16),
-            if (_payMetrics != null) ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: _PayMetricCard(
-                      title: _t(
-                        'project_payment_total_revenue',
-                        'Total Revenue',
+        padding: const EdgeInsets.all(12),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final wide = constraints.maxWidth >= 960;
+            final metricWidth = wide
+                ? (constraints.maxWidth - 30) / 4
+                : (constraints.maxWidth - 10) / 2;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _t('project_payment_overview', 'Payment Overview'),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
-                      value: _payMetrics!.formattedRevenue,
-                      icon: Icons.attach_money,
-                      color: Colors.green,
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _PayMetricCard(
-                      title: _t('project_payment_transactions', 'Transactions'),
-                      value: _payMetrics!.totalTransactions.toString(),
-                      icon: Icons.receipt,
-                      color: Colors.blue,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _PayMetricCard(
-                      title: _t(
-                        'project_payment_conversion_rate',
-                        'Conversion Rate',
-                      ),
-                      value: _payMetrics!.formattedConversionRate,
-                      icon: Icons.trending_up,
-                      color: Colors.purple,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _PayMetricCard(
-                      title: _t(
-                        'project_payment_active_customers',
-                        'Active Customers',
-                      ),
-                      value: _payMetrics!.activeCustomers.toString(),
-                      icon: Icons.people,
-                      color: Colors.orange,
-                    ),
-                  ),
-                ],
-              ),
-            ] else
-              Text(
-                _t(
-                  'project_payment_not_activated',
-                  'Payment not activated yet',
+                    _countPill(context, '30D'),
+                  ],
                 ),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-          ],
+                const SizedBox(height: 10),
+                if (_payMetrics != null)
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      SizedBox(
+                        width: metricWidth,
+                        child: _PayMetricCard(
+                          title: _t(
+                            'project_payment_total_revenue',
+                            'Total Revenue',
+                          ),
+                          value: _payMetrics!.formattedRevenue,
+                          icon: Icons.attach_money,
+                          color: Colors.green,
+                        ),
+                      ),
+                      SizedBox(
+                        width: metricWidth,
+                        child: _PayMetricCard(
+                          title: _t(
+                            'project_payment_transactions',
+                            'Transactions',
+                          ),
+                          value: _payMetrics!.totalTransactions.toString(),
+                          icon: Icons.receipt_long_outlined,
+                          color: Colors.blue,
+                        ),
+                      ),
+                      SizedBox(
+                        width: metricWidth,
+                        child: _PayMetricCard(
+                          title: _t(
+                            'project_payment_conversion_rate',
+                            'Conversion Rate',
+                          ),
+                          value: _payMetrics!.formattedConversionRate,
+                          icon: Icons.trending_up_rounded,
+                          color: Colors.purple,
+                        ),
+                      ),
+                      SizedBox(
+                        width: metricWidth,
+                        child: _PayMetricCard(
+                          title: _t(
+                            'project_payment_active_customers',
+                            'Active Customers',
+                          ),
+                          value: _payMetrics!.activeCustomers.toString(),
+                          icon: Icons.people_outline_rounded,
+                          color: Colors.orange,
+                        ),
+                      ),
+                    ],
+                  )
+                else
+                  Text(
+                    _t(
+                      'project_payment_not_activated',
+                      'Payment not activated yet',
+                    ),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -398,40 +1138,50 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
   Widget _buildProductsCard(BuildContext context) {
     final theme = Theme.of(context);
     return Card(
+      margin: EdgeInsets.zero,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.34),
+        ),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: Text(
-                    _t('project_payment_products', 'Payment Products'),
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _t('project_payment_products', 'Payment Products'),
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${_payProducts.length} configured',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                ElevatedButton.icon(
-                  onPressed: () => _showAddPayProductDialog(context),
-                  icon: const Icon(Icons.add, size: 18),
-                  label: Text(
-                    _t('project_payment_add', 'Add'),
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
+                _countPill(
+                  context,
+                  '${_payProducts.length}',
+                  tone: Colors.blue,
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             if (_payProducts.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -443,97 +1193,9 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                 ),
               )
             else
-              ..._payProducts.map((product) {
-                return InkWell(
-                  onTap: () {
-                    final question = _t(
-                      'project_payment_ai_prompt_product',
-                      'Can you analyze the payment product "{name}" and provide suggestions on pricing strategy, configuration, or marketing improvements?',
-                    ).replaceAll('{name}', product.name);
-                    widget.onAskAi?.call(question);
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerLowest,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: theme.colorScheme.outlineVariant,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                product.name,
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              if (product.description != null) ...[
-                                const SizedBox(height: 4),
-                                Text(
-                                  product.description!,
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                        Text(
-                          product.formattedPrice,
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: product.price > 0
-                                ? Colors.green.shade700
-                                : Colors.grey.shade600,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        AppMenuButton<String>(
-                          tooltip: _t('more', 'More'),
-                          actions: [
-                            AppMenuAction(
-                              value: 'edit',
-                              label: _t('project_payment_edit', 'Edit'),
-                              icon: Icons.edit,
-                            ),
-                            AppMenuAction(
-                              value: 'link',
-                              label: _t('project_payment_get_link', 'Get Link'),
-                              icon: Icons.link,
-                            ),
-                          ],
-                          onSelected: (value) {
-                            if (value == 'edit') {
-                              _showEditPayProductDialog(context, product);
-                            } else if (value == 'link') {
-                              SnackBarHelper.showInfo(
-                                context,
-                                title: _t(
-                                  'project_payment_link',
-                                  'Payment Link',
-                                ),
-                                message: _t(
-                                  'project_payment_getting_link',
-                                  'Getting payment link...',
-                                ),
-                              );
-                            }
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
+              ..._payProducts.map(
+                (product) => _buildProductRow(context, product),
+              ),
           ],
         ),
       ),
@@ -543,44 +1205,53 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
   Widget _buildTransactionsCard() {
     final theme = Theme.of(context);
     return Card(
+      margin: EdgeInsets.zero,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.34),
+        ),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  _t(
-                    'project_payment_recent_transactions',
-                    'Recent Transactions',
-                  ),
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _t(
+                          'project_payment_recent_transactions',
+                          'Recent Transactions',
+                        ),
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Latest successful checkouts',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.deepPurple.shade100,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '${_paymentTransactions.length}',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.deepPurple.shade700,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+                _countPill(
+                  context,
+                  '${_paymentTransactions.length}',
+                  tone: theme.colorScheme.tertiary,
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
             if (_paymentTransactions.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -592,86 +1263,9 @@ class _ProjectPaymentTabState extends State<ProjectPaymentTab> {
                 ),
               )
             else
-              ..._paymentTransactions.take(5).map((tx) {
-                return InkWell(
-                  onTap: () {
-                    final question =
-                        _t(
-                              'project_payment_ai_prompt_transaction',
-                              'Can you analyze this payment transaction ({amount}, {status}) and provide insights about payment patterns or recommendations?',
-                            )
-                            .replaceAll('{amount}', tx.formattedAmount)
-                            .replaceAll('{status}', tx.statusLabel);
-                    widget.onAskAi?.call(question);
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerLowest,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: theme.colorScheme.outlineVariant,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(tx.statusIcon, size: 20, color: tx.statusColor),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                tx.productName ??
-                                    _t(
-                                      'project_payment_unknown_product',
-                                      'Unknown Product',
-                                    ),
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                tx.customerEmail ??
-                                    _t(
-                                      'project_payment_anonymous',
-                                      'Anonymous',
-                                    ),
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              tx.formattedAmount,
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              tx.statusLabel,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: tx.statusColor,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
+              ..._paymentTransactions
+                  .take(5)
+                  .map((tx) => _buildTransactionRow(context, tx)),
           ],
         ),
       ),
@@ -1205,30 +1799,40 @@ class _PayMetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
+        color: cs.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.6)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: 24),
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Icon(icon, color: color, size: 16),
+          ),
           const SizedBox(height: 8),
           Text(
-            value,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: theme.colorScheme.onSurface,
+            title,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: cs.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 5),
           Text(
-            title,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+            value,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: cs.onSurface,
             ),
           ),
         ],

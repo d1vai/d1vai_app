@@ -38,6 +38,7 @@ class CompactSelector extends StatelessWidget {
   final EdgeInsetsGeometry menuPadding;
   final double itemHeight;
   final bool emphasizeSelectedOption;
+  final bool showShadow;
 
   const CompactSelector({
     super.key,
@@ -65,6 +66,7 @@ class CompactSelector extends StatelessWidget {
     this.menuPadding = const EdgeInsets.symmetric(vertical: 8),
     this.itemHeight = 44,
     this.emphasizeSelectedOption = true,
+    this.showShadow = true,
   });
 
   String _selectedLabel() {
@@ -115,16 +117,20 @@ class CompactSelector extends StatelessWidget {
             color: resolvedBackgroundColor,
             borderRadius: BorderRadius.circular(borderRadius),
             border: Border.all(color: resolvedBorderColor),
-            boxShadow: [
-              BoxShadow(
-                color: cs.shadow.withValues(
-                  alpha: theme.brightness == Brightness.dark ? 0.18 : 0.06,
-                ),
-                blurRadius: 16,
-                spreadRadius: 0,
-                offset: const Offset(0, 6),
-              ),
-            ],
+            boxShadow: showShadow
+                ? [
+                    BoxShadow(
+                      color: cs.shadow.withValues(
+                        alpha: theme.brightness == Brightness.dark
+                            ? 0.14
+                            : 0.045,
+                      ),
+                      blurRadius: 12,
+                      spreadRadius: 0,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : const [],
           ),
           child: PopupMenuButton<String>(
             enabled: canOpen,

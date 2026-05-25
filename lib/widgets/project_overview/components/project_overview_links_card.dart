@@ -27,6 +27,10 @@ class ProjectOverviewLinksCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final previewUrl = preferredPreviewUrlFromProject(project);
+    final repoLabel = (project.repositoryFullName ?? '').trim().isNotEmpty
+        ? project.repositoryFullName!.trim()
+        : (project.repositoryName ?? '').trim();
+    final canOpenRepo = repoLabel.contains('/');
     return ProjectOverviewCardShell(
       child: Column(
         children: [
@@ -86,7 +90,13 @@ class ProjectOverviewLinksCard extends StatelessWidget {
               ),
             ),
             subtitle: Text(
-              'proj_${project.projectPort}',
+              repoLabel.isNotEmpty
+                  ? repoLabel
+                  : _t(
+                      context,
+                      'project_overview_links_not_available',
+                      'Not available',
+                    ),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -95,9 +105,7 @@ class ProjectOverviewLinksCard extends StatelessWidget {
               Icons.chevron_right_rounded,
               color: theme.colorScheme.onSurfaceVariant,
             ),
-            onTap: () {
-              onOpenGitHubRepo('proj_${project.projectPort}');
-            },
+            onTap: canOpenRepo ? () => onOpenGitHubRepo(repoLabel) : null,
           ),
         ],
       ),

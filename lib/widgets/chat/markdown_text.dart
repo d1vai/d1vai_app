@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'code_highlight_block.dart';
+import '../../utils/project_file_links.dart';
 
 List<String> _splitTableRow(String row) {
   final normalized = row
@@ -75,6 +76,7 @@ class MarkdownText extends StatefulWidget {
   final TextStyle? style;
   final int? maxLines;
   final bool selectable;
+  final ValueChanged<ProjectFileLinkTarget>? onProjectFileTap;
 
   const MarkdownText({
     super.key,
@@ -82,6 +84,7 @@ class MarkdownText extends StatefulWidget {
     this.style,
     this.maxLines,
     this.selectable = false,
+    this.onProjectFileTap,
   });
 
   @override
@@ -661,8 +664,13 @@ class _MarkdownTextState extends State<MarkdownText> {
       } else if (raw.startsWith('[')) {
         final label = m.group(1) ?? '';
         final url = (m.group(2) ?? '').trim();
+        final fileTarget = parseProjectFileLinkTarget(url);
         final rec = TapGestureRecognizer()
           ..onTap = () async {
+            if (fileTarget != null && widget.onProjectFileTap != null) {
+              widget.onProjectFileTap!(fileTarget);
+              return;
+            }
             final uri = Uri.tryParse(url);
             if (uri == null) return;
             final ok = await canLaunchUrl(uri);

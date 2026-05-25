@@ -91,19 +91,30 @@ private struct PendingRouteRequest {
   let activate: Bool
 }
 
+private enum SecurityScopedRestoreResult {
+  case alreadyActive
+  case restored
+  case unavailable
+}
+
 private struct RecentWorkspaceRecord {
   let entryPath: String
   let workspacePath: String
   let title: String
   let seenAt: TimeInterval
+  let bookmarkData: Data?
 
   var dictionary: [String: Any] {
-    return [
+    var value: [String: Any] = [
       "entryPath": entryPath,
       "workspacePath": workspacePath,
       "title": title,
       "seenAt": seenAt,
     ]
+    if let bookmarkData {
+      value["bookmarkData"] = bookmarkData
+    }
+    return value
   }
 
   var menuTitle: String {
@@ -133,11 +144,13 @@ private struct RecentWorkspaceRecord {
       (dictionary["title"] as? String)?
       .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     let seenAt = dictionary["seenAt"] as? TimeInterval ?? 0
+    let bookmarkData = dictionary["bookmarkData"] as? Data
     return RecentWorkspaceRecord(
       entryPath: entryPath,
       workspacePath: workspacePath,
       title: title,
-      seenAt: seenAt
+      seenAt: seenAt,
+      bookmarkData: bookmarkData
     )
   }
 }
@@ -159,6 +172,7 @@ class AppDelegate: FlutterAppDelegate {
   private var workspaceWindowControllers: [String: FlutterSecondaryWindowController] = [:]
   private var workspaceWindowStates: [String: WorkspaceWindowState] = [:]
   private var hostWindows: [String: WeakWindowReference] = [:]
+  private var hostSecurityScopedURLs: [String: [String: URL]] = [:]
 
   private var oauthCallbackChannel: FlutterEventChannel?
   private var oauthCallbackControlChannel: FlutterMethodChannel?
@@ -188,6 +202,17 @@ class AppDelegate: FlutterAppDelegate {
 
   override func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
     return true
+  }
+
+  override func applicationShouldHandleReopen(
+    _ sender: NSApplication,
+    hasVisibleWindows flag: Bool
+  ) -> Bool {
+    logOpen("application should handle reopen visible=\(flag)")
+    guard !flag else {
+      return false
+    }
+    return reopenMainWindow(defaultRoute: "/dashboard")
   }
 
   override func applicationDockMenu(_ sender: NSApplication) -> NSMenu? {
@@ -303,6 +328,26 @@ class AppDelegate: FlutterAppDelegate {
       entryPath: request.path
     )
 
+    let targetHostIdentifier: String
+    if !forceNewWindow, let existingHostIdentifier = existingWorkspaceHostIdentifier(for: request) {
+      targetHostIdentifier = existingHostIdentifier
+    } else if openChannels[mainHostIdentifier] == nil && workspaceWindowControllers.isEmpty {
+      targetHostIdentifier = mainHostIdentifier
+    } else {
+      targetHostIdentifier = UUID().uuidString
+    }
+
+    guard prepareWorkspaceAccessIfNeeded(
+      for: request,
+      workspacePath: workspacePath,
+      hostIdentifier: targetHostIdentifier
+    ) else {
+      logOpen(
+        "open request denied source=\(source) path=\(request.path) workspace=\(workspacePath)"
+      )
+      return false
+    }
+
     registerRecentWorkspace(
       entryPath: request.path,
       workspacePath: workspacePath,
@@ -335,9 +380,10 @@ class AppDelegate: FlutterAppDelegate {
       return true
     }
 
-    let hostIdentifier = UUID().uuidString
+    let hostIdentifier = targetHostIdentifier
     let controller = FlutterSecondaryWindowController(hostIdentifier: hostIdentifier)
     controller.onWindowClosed = { [weak self] closedHostIdentifier in
+      self?.releaseSecurityScopedAccess(forHost: closedHostIdentifier)
       self?.workspaceWindowControllers.removeValue(forKey: closedHostIdentifier)
       self?.workspaceWindowStates.removeValue(forKey: closedHostIdentifier)
       self?.openChannels.removeValue(forKey: closedHostIdentifier)
@@ -737,6 +783,7 @@ class AppDelegate: FlutterAppDelegate {
 
   private func clearWorkspaceWindowState(hostIdentifier: String) {
     workspaceWindowStates.removeValue(forKey: hostIdentifier)
+    releaseSecurityScopedAccess(forHost: hostIdentifier)
     broadcastWorkspaceWindowsChanged()
   }
 
@@ -879,7 +926,11 @@ class AppDelegate: FlutterAppDelegate {
       entryPath: normalizedEntryPath,
       workspacePath: normalizedWorkspacePath,
       title: title.trimmingCharacters(in: .whitespacesAndNewlines),
-      seenAt: Date().timeIntervalSince1970
+      seenAt: Date().timeIntervalSince1970,
+      bookmarkData: recentWorkspaceBookmarkData(
+        entryPath: normalizedEntryPath,
+        workspacePath: normalizedWorkspacePath
+      )
     )
 
     let next = [record] + loadRecentWorkspaceRecords().filter { existing in
@@ -903,14 +954,14 @@ class AppDelegate: FlutterAppDelegate {
     UserDefaults.standard.removeObject(forKey: recentWorkspaceDefaultsKey)
   }
 
-  private func presentMissingRecentWorkspaceAlert(for path: String) {
+  private func presentUnavailableRecentWorkspaceAlert(for path: String) {
     DispatchQueue.main.async {
       NSApp.activate(ignoringOtherApps: true)
       let alert = NSAlert()
       alert.alertStyle = .warning
-      alert.messageText = "Path no longer exists"
+      alert.messageText = "Path unavailable"
       alert.informativeText =
-        "d1v could not open this recent workspace because the path was removed:\n\n\(path)"
+        "d1v could not open this recent workspace because the path was removed or macOS no longer grants access:\n\n\(path)\n\nOpen the folder again in d1v to refresh access."
       alert.addButton(withTitle: "OK")
       alert.runModal()
     }
@@ -931,7 +982,7 @@ class AppDelegate: FlutterAppDelegate {
     let exists = FileManager.default.fileExists(atPath: normalizedSelectedPath)
     if !exists {
       removeRecentWorkspace(entryPath: normalizedSelectedPath)
-      presentMissingRecentWorkspaceAlert(for: normalizedSelectedPath)
+      presentUnavailableRecentWorkspaceAlert(for: normalizedSelectedPath)
       return
     }
 
@@ -948,7 +999,7 @@ class AppDelegate: FlutterAppDelegate {
         self.logOpen("dock recent opened path=\(normalizedSelectedPath)")
       } else {
         self.logOpen("dock recent open failed path=\(normalizedSelectedPath)")
-        self.presentMissingRecentWorkspaceAlert(for: normalizedSelectedPath)
+        self.presentUnavailableRecentWorkspaceAlert(for: normalizedSelectedPath)
       }
     }
   }
@@ -960,5 +1011,175 @@ class AppDelegate: FlutterAppDelegate {
 
   private func logOpen(_ message: String) {
     NSLog("[d1vai-open] %@", message)
+  }
+
+  @discardableResult
+  private func reopenMainWindow(defaultRoute: String? = nil) -> Bool {
+    let normalizedRoute =
+      defaultRoute?
+      .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+    if !normalizedRoute.isEmpty {
+      return openRouteInMainWindow(normalizedRoute, activate: true)
+    }
+
+    return activateWorkspaceWindow(hostIdentifier: mainHostIdentifier)
+  }
+
+  private func prepareWorkspaceAccessIfNeeded(
+    for request: MacosOpenRequest,
+    workspacePath: String,
+    hostIdentifier: String
+  ) -> Bool {
+    let normalizedWorkspacePath = normalizedPath(workspacePath)
+    guard !normalizedWorkspacePath.isEmpty else {
+      return false
+    }
+
+    if canAccessWorkspace(at: normalizedWorkspacePath) {
+      return true
+    }
+
+    switch restoreSecurityScopedAccess(
+      for: request,
+      workspacePath: normalizedWorkspacePath,
+      hostIdentifier: hostIdentifier
+    ) {
+    case .alreadyActive:
+      return canAccessWorkspace(at: normalizedWorkspacePath)
+    case .restored:
+      let accessible = canAccessWorkspace(at: normalizedWorkspacePath)
+      if !accessible {
+        releaseSecurityScopedAccess(forHost: hostIdentifier)
+      }
+      return accessible
+    case .unavailable:
+      return false
+    }
+  }
+
+  private func restoreSecurityScopedAccess(
+    for request: MacosOpenRequest,
+    workspacePath: String,
+    hostIdentifier: String
+  ) -> SecurityScopedRestoreResult {
+    let normalizedRequestPath = normalizedPath(request.path)
+    guard !normalizedRequestPath.isEmpty else {
+      return .unavailable
+    }
+
+    var hostURLs = hostSecurityScopedURLs[hostIdentifier] ?? [:]
+    if hostURLs[workspacePath] != nil || hostURLs[normalizedRequestPath] != nil {
+      return .alreadyActive
+    }
+
+    guard
+      let record = recentWorkspaceRecord(
+        entryPath: normalizedRequestPath,
+        workspacePath: workspacePath
+      ),
+      let bookmarkData = record.bookmarkData
+    else {
+      logOpen(
+        "no security-scoped bookmark for entry=\(normalizedRequestPath) workspace=\(workspacePath)"
+      )
+      return .unavailable
+    }
+
+    var isStale = false
+    do {
+      let url = try URL(
+        resolvingBookmarkData: bookmarkData,
+        options: [.withSecurityScope, .withoutUI],
+        relativeTo: nil,
+        bookmarkDataIsStale: &isStale
+      )
+      let resolvedPath = normalizedPath(url.path)
+      let started = url.startAccessingSecurityScopedResource()
+      guard started else {
+        logOpen(
+          "failed to start security-scoped access path=\(resolvedPath) host=\(hostIdentifier)"
+        )
+        return .unavailable
+      }
+      hostURLs[resolvedPath] = url
+      hostSecurityScopedURLs[hostIdentifier] = hostURLs
+      logOpen(
+        "restored security-scoped access path=\(resolvedPath) host=\(hostIdentifier) stale=\(isStale)"
+      )
+      return .restored
+    } catch {
+      logOpen(
+        "failed to resolve security-scoped bookmark entry=\(normalizedRequestPath) workspace=\(workspacePath) error=\(error)"
+      )
+      return .unavailable
+    }
+  }
+
+  private func releaseSecurityScopedAccess(forHost hostIdentifier: String) {
+    guard let urls = hostSecurityScopedURLs.removeValue(forKey: hostIdentifier) else {
+      return
+    }
+    for (path, url) in urls {
+      url.stopAccessingSecurityScopedResource()
+      logOpen("released security-scoped access path=\(path) host=\(hostIdentifier)")
+    }
+  }
+
+  private func canAccessWorkspace(at workspacePath: String) -> Bool {
+    do {
+      _ = try FileManager.default.contentsOfDirectory(atPath: workspacePath)
+      return true
+    } catch {
+      logOpen("workspace access check failed path=\(workspacePath) error=\(error)")
+      return false
+    }
+  }
+
+  private func recentWorkspaceRecord(
+    entryPath: String,
+    workspacePath: String
+  ) -> RecentWorkspaceRecord? {
+    return loadRecentWorkspaceRecords().first { record in
+      record.entryPath == entryPath || record.workspacePath == workspacePath
+    }
+  }
+
+  private func recentWorkspaceBookmarkData(
+    entryPath: String,
+    workspacePath: String
+  ) -> Data? {
+    if let bookmark = securityScopedBookmarkData(for: workspacePath) {
+      return bookmark
+    }
+    if let bookmark = securityScopedBookmarkData(for: entryPath) {
+      return bookmark
+    }
+    if let existingRecord = recentWorkspaceRecord(
+      entryPath: entryPath,
+      workspacePath: workspacePath
+    ) {
+      return existingRecord.bookmarkData
+    }
+    return nil
+  }
+
+  private func securityScopedBookmarkData(for path: String) -> Data? {
+    let normalized = normalizedPath(path)
+    guard !normalized.isEmpty else {
+      return nil
+    }
+
+    let url = URL(fileURLWithPath: normalized)
+    do {
+      return try url.bookmarkData(
+        options: .withSecurityScope,
+        includingResourceValuesForKeys: nil,
+        relativeTo: nil
+      )
+    } catch {
+      logOpen("failed to create security-scoped bookmark path=\(normalized) error=\(error)")
+      return nil
+    }
   }
 }

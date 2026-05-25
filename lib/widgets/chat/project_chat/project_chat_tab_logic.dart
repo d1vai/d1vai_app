@@ -149,6 +149,19 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     );
   }
 
+  @override
+  void _handleProjectFileLinkTap(ProjectFileLinkTarget target) {
+    _projectFileRequestRevision += 1;
+    setState(() {
+      _currentChatTabIndex = 1;
+      _pendingProjectFileRequest = ProjectFileLinkRequest(
+        requestId: _projectFileRequestRevision,
+        target: target,
+      );
+    });
+    _trackTabSelection();
+  }
+
   void _showWorkspaceWarmupUi() {
     final loc = AppLocalizations.of(context);
     if (_workspaceWarmupVisible || !mounted) return;
@@ -529,6 +542,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     });
     _loadChatDraft();
     unawaited(_loadDesktopChatPaneWidth());
+    unawaited(_loadDesktopChatPaneCollapsed());
     unawaited(_bootstrapWorkspace());
     unawaited(_initializeChat());
   }
@@ -556,6 +570,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         _previewKey += 1;
         _currentChatTabIndex = _chatSubTabIndexFromName(widget.initialSubTab);
         _desktopChatPaneWidth = _desktopChatPaneDefaultWidth;
+        _desktopChatPaneCollapsed = false;
         _isDeploying = false;
         _deployFramework = null;
         _availableModels = <ModelInfo>[];
@@ -578,6 +593,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       });
       _loadChatDraft();
       unawaited(_loadDesktopChatPaneWidth());
+      unawaited(_loadDesktopChatPaneCollapsed());
       unawaited(_bootstrapWorkspace());
       unawaited(_initializeChat());
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -607,6 +623,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     _chatDraftPersistTimer?.cancel();
     _scrollToBottomTimer?.cancel();
     _pendingAppendTimer?.cancel();
+    _terminalCloseTimer?.cancel();
     _webSocketSubscription?.cancel();
     _outboxSignals.close();
     _manualWsClose = true;
@@ -631,10 +648,13 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
 
   void _markSessionStarted() {
     _thinkingClearTimer?.cancel();
+    _clearTerminalCloseTimer();
     if (!mounted) {
       _sessionDone = false;
       _sessionError = false;
       _sessionThinking = false;
+      _wsSessionTerminated = false;
+      _currentWsTurnId = null;
       return;
     }
     setState(() {
@@ -642,6 +662,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       _sessionError = false;
       _sessionThinking = false;
     });
+    _wsSessionTerminated = false;
+    _currentWsTurnId = null;
   }
 
   void _markSessionDone() {
@@ -1304,6 +1326,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
   }
 
   Future<void> _closeWebSocket({bool manual = true}) async {
+    _clearTerminalCloseTimer();
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
     _reconnectAttempts = 0;
@@ -1327,6 +1350,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     _webSocket = null;
     _activeWsSessionId = null;
     _activeWsUrlOverride = null;
+    _currentWsTurnId = null;
+    _wsSessionTerminated = false;
     _pendingAppendTimer?.cancel();
     _pendingAppendTimer = null;
     _pendingAppendQueue.clear();
@@ -1529,7 +1554,11 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     }
   }
 
-  void _upsertToolMessage(ToolMessageContent tool) {
+  void _upsertToolMessage(
+    ToolMessageContent tool, {
+    String? wsKey,
+    String? turnId,
+  }) {
     final toolId = (tool.id ?? '').trim();
     if (toolId.isNotEmpty) {
       for (var mi = _chatMessages.length - 1; mi >= 0; mi--) {
@@ -1574,6 +1603,11 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
           role: 'assistant',
           createdAt: DateTime.now(),
           contents: [tool],
+          meta: {
+            if (wsKey != null && wsKey.trim().isNotEmpty) 'wsKey': wsKey.trim(),
+            if (turnId != null && turnId.trim().isNotEmpty)
+              'turnId': turnId.trim(),
+          },
         ),
       );
     });
@@ -1636,8 +1670,157 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     );
   }
 
+  String? _normalizedWsType(Map<String, dynamic> payload) {
+    final raw =
+        payload['type'] ??
+        payload['payload']?['type'] ??
+        payload['message']?['type'] ??
+        payload['message_type'];
+    final type = raw?.toString().trim();
+    return (type == null || type.isEmpty) ? null : type;
+  }
+
+  String? _extractWsKey(Map<String, dynamic> payload, String? type) {
+    try {
+      String? wsKey;
+      final uuid = payload['uuid'];
+      if (uuid is String && uuid.trim().isNotEmpty) {
+        wsKey = uuid.trim();
+      }
+      final message = payload['message'];
+      if (wsKey == null && message is Map<String, dynamic>) {
+        final mid = message['id'];
+        if (mid is String && mid.trim().isNotEmpty) {
+          wsKey = mid.trim();
+        }
+      }
+      if (wsKey == null) {
+        final id = payload['id'];
+        if (id is String && id.trim().isNotEmpty) {
+          wsKey = id.trim();
+        }
+      }
+      if (wsKey == null &&
+          type == 'cancelled' &&
+          payload['session_id'] is String &&
+          (payload['session_id'] as String).trim().isNotEmpty) {
+        wsKey = 'cancelled:${(payload['session_id'] as String).trim()}';
+      }
+      return MessageParser.deriveRenderableWsKey(payload, wsKey, type);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  bool _allowAfterTermination(String? type) {
+    switch (type) {
+      case 'history':
+      case 'history_complete':
+      case 'proxy_status':
+      case 'git_commit':
+      case 'git_push':
+      case 'deployment_start':
+      case 'deployment_status':
+      case 'deployment_complete':
+      case 'deployment_success':
+      case 'deployment_checking':
+      case 'deployment_failed':
+      case 'deployment_auto_fixing':
+      case 'deployment_max_retries_reached':
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  bool _skipTurnGate(String? type) {
+    return type == 'history' ||
+        type == 'history_complete' ||
+        type == 'proxy_status';
+  }
+
+  bool _messageHasOnlyTextualAssistantContent(ChatMessage? message) {
+    if (message == null || message.role != 'assistant') return false;
+    if (message.contents.isEmpty) return false;
+    return message.contents.every((content) => content is TextMessageContent);
+  }
+
+  String? _deriveMessageWsKey(
+    List<MessageContent> contents, {
+    String? fallbackKey,
+  }) {
+    final normalizedFallback = fallbackKey?.trim();
+    if (normalizedFallback != null && normalizedFallback.isNotEmpty) {
+      return normalizedFallback;
+    }
+    if (contents.isEmpty) return null;
+    final first = contents.first;
+    if (first is GitCommitMessageContent) {
+      return 'git_commit:${first.projectId ?? ''}:${first.message}:${MessageParser.stableStringify(first.files ?? const <String>[])}';
+    }
+    if (first is GitPushMessageContent) {
+      return 'git_push:${first.projectId ?? ''}:${first.branch}:${first.success}:${first.error ?? ''}';
+    }
+    if (first is ResultMessageContent) {
+      return 'result_content:${MessageParser.stableStringify(first.payload)}';
+    }
+    return null;
+  }
+
+  String? _deriveAssistantAppendWsKey(
+    List<MessageContent> contents, {
+    String? fallbackKey,
+  }) {
+    if (contents.isEmpty) return fallbackKey?.trim();
+    final allThinking = contents.every(
+      (content) => content is ThinkingMessageContent,
+    );
+    if (allThinking) return null;
+    return _deriveMessageWsKey(contents, fallbackKey: fallbackKey);
+  }
+
+  void _clearTerminalCloseTimer() {
+    _terminalCloseTimer?.cancel();
+    _terminalCloseTimer = null;
+  }
+
+  void _scheduleTerminalClose(String sessionId, {int delayMs = 10000}) {
+    _clearTerminalCloseTimer();
+    _terminalCloseTimer = Timer(Duration(milliseconds: delayMs), () async {
+      _terminalCloseTimer = null;
+      if (!mounted) return;
+      if ((_activeWsSessionId ?? '').trim() != sessionId.trim()) return;
+      await _closeWebSocket(manual: true);
+    });
+  }
+
+  void _appendDeploymentStatusMessage(
+    String type,
+    Map<String, dynamic> payload, {
+    String? wsKey,
+    String? turnId,
+  }) {
+    final contents = MessageParser.createMessageContentsFromPayload(payload);
+    if (contents.isEmpty) return;
+    final messageWsKey = _deriveMessageWsKey(contents, fallbackKey: wsKey);
+    _enqueuePendingAppend(
+      ChatMessage(
+        id: 'deploy-${DateTime.now().millisecondsSinceEpoch}',
+        role: 'assistant',
+        createdAt: DateTime.now(),
+        contents: contents,
+        meta: {
+          if (turnId != null) 'turnId': turnId,
+          if (messageWsKey != null) 'wsKey': messageWsKey,
+        },
+      ),
+      wsKey: messageWsKey,
+      delayMs: 0,
+    );
+  }
+
   void _handleWsPayload(Map<String, dynamic> payload) {
-    final type = payload['type']?.toString();
+    final type = _normalizedWsType(payload);
     final fingerprint = MessageParser.eventFingerprint(payload, type);
     if (fingerprint != null) {
       final nowMs = DateTime.now().millisecondsSinceEpoch;
@@ -1652,6 +1835,25 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     }
 
     if (type == 'system' || MessageParser.isSystemPayload(payload)) return;
+
+    final wsKey = _extractWsKey(payload, type);
+    final turnId = MessageParser.payloadTurnId(payload);
+
+    if (_wsSessionTerminated && !_allowAfterTermination(type)) {
+      return;
+    }
+
+    if (type == 'turn_started' && turnId != null) {
+      _currentWsTurnId = turnId;
+      return;
+    }
+
+    if (turnId != null &&
+        _currentWsTurnId != null &&
+        turnId != _currentWsTurnId &&
+        !_skipTurnGate(type)) {
+      return;
+    }
 
     // Web loads history via HTTP; WS history frames are ignored to avoid duplication.
     if (type == 'history' || type == 'history_complete') {
@@ -1678,30 +1880,12 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       return;
     }
 
-    // Web filters these from history; treat them as non-chat side-effect frames.
-    if (type == 'deployment_start' || type == 'deployment_complete') {
-      _handleDeploymentFrame(type!, payload);
-      return;
-    }
-
     // Best-effort de-dup (web uses uuid/message.id/id). Skip for deltas and
     // allow `assistant_message` to update/overwrite streamed content.
     try {
       if (type != 'content_block_delta' &&
           type != 'message_delta' &&
           type != 'assistant_message') {
-        String? wsKey;
-        final uuid = payload['uuid'];
-        if (uuid is String && uuid.isNotEmpty) {
-          wsKey = uuid;
-        } else if (payload['message'] is Map<String, dynamic>) {
-          final mid = (payload['message'] as Map<String, dynamic>)['id'];
-          if (mid is String && mid.isNotEmpty) wsKey = mid;
-        } else {
-          final id = payload['id'];
-          if (id is String && id.isNotEmpty) wsKey = id;
-        }
-        wsKey = MessageParser.deriveRenderableWsKey(payload, wsKey, type);
         if (wsKey != null) {
           if (_seenWsKeys.contains(wsKey)) return;
           _seenWsKeys.add(wsKey);
@@ -1740,19 +1924,28 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       _setSessionThinking(false);
       final contents = MessageParser.createMessageContentsFromPayload(payload);
       if (contents.isEmpty) return;
-      final canReplaceLastAssistant =
-          _chatMessages.isNotEmpty &&
-          _chatMessages.last.role != 'user' &&
-          _chatMessages.last.contents.isNotEmpty &&
-          _chatMessages.last.contents.every(
-            (content) => content is TextMessageContent,
-          );
+      final assistantWsKey = _deriveAssistantAppendWsKey(
+        contents,
+        fallbackKey: wsKey,
+      );
       setState(() {
-        if (canReplaceLastAssistant) {
+        if (assistantWsKey != null &&
+            _chatMessages.any(
+              (message) => message.meta?['wsKey'] == assistantWsKey,
+            )) {
+          return;
+        }
+        final last = _chatMessages.isNotEmpty ? _chatMessages.last : null;
+        if (_messageHasOnlyTextualAssistantContent(last)) {
           final last = _chatMessages.last;
           _chatMessages[_chatMessages.length - 1] = last.copyWith(
             contents: contents,
             createdAt: DateTime.now(),
+            meta: {
+              ...?last.meta,
+              if (assistantWsKey != null) 'wsKey': assistantWsKey,
+              if (turnId != null) 'turnId': turnId,
+            },
           );
         } else {
           _chatMessages.add(
@@ -1762,8 +1955,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
               createdAt: DateTime.now(),
               contents: contents,
               meta: {
-                if (MessageParser.payloadTurnId(payload) != null)
-                  'turnId': MessageParser.payloadTurnId(payload),
+                if (assistantWsKey != null) 'wsKey': assistantWsKey,
+                if (turnId != null) 'turnId': turnId,
               },
             ),
           );
@@ -1782,28 +1975,26 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       _setSessionThinking(false);
       final contents = MessageParser.createMessageContentsFromPayload(payload);
       if (contents.isEmpty) return;
-      final wsKey = MessageParser.deriveRenderableWsKey(payload, null, type);
-      final canReplaceLastAssistant =
-          _chatMessages.isNotEmpty &&
-          _chatMessages.last.role != 'user' &&
-          _chatMessages.last.contents.isNotEmpty &&
-          _chatMessages.last.contents.every(
-            (content) => content is TextMessageContent,
-          );
-      final turnId = MessageParser.payloadTurnId(payload);
+      final assistantWsKey = _deriveAssistantAppendWsKey(
+        contents,
+        fallbackKey: wsKey,
+      );
       setState(() {
-        if (wsKey != null &&
-            _chatMessages.any((message) => message.meta?['wsKey'] == wsKey)) {
+        if (assistantWsKey != null &&
+            _chatMessages.any(
+              (message) => message.meta?['wsKey'] == assistantWsKey,
+            )) {
           return;
         }
-        if (canReplaceLastAssistant) {
+        final last = _chatMessages.isNotEmpty ? _chatMessages.last : null;
+        if (_messageHasOnlyTextualAssistantContent(last)) {
           final last = _chatMessages.last;
           _chatMessages[_chatMessages.length - 1] = last.copyWith(
             contents: contents,
             createdAt: DateTime.now(),
             meta: {
               ...?last.meta,
-              if (wsKey != null) 'wsKey': wsKey,
+              if (assistantWsKey != null) 'wsKey': assistantWsKey,
               if (turnId != null) 'turnId': turnId,
             },
           );
@@ -1815,7 +2006,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
               createdAt: DateTime.now(),
               contents: contents,
               meta: {
-                if (wsKey != null) 'wsKey': wsKey,
+                if (assistantWsKey != null) 'wsKey': assistantWsKey,
                 if (turnId != null) 'turnId': turnId,
               },
             ),
@@ -1830,6 +2021,95 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       return;
     }
 
+    if (type == 'codex_event') {
+      _finalizePrevToolDone();
+      _setSessionThinking(false);
+      final contents = MessageParser.createMessageContentsFromPayload(payload);
+      if (contents.isEmpty) return;
+
+      final assistantContents = contents
+          .where(
+            (content) =>
+                content is ThinkingMessageContent ||
+                content is TextMessageContent ||
+                content is ResultMessageContent ||
+                content is GitCommitMessageContent ||
+                content is GitPushMessageContent,
+          )
+          .toList(growable: false);
+      final toolContents = contents.whereType<ToolMessageContent>().toList(
+        growable: false,
+      );
+      final toolResultContents = contents
+          .whereType<CodeMessageContent>()
+          .toList(growable: false);
+
+      if (assistantContents.isNotEmpty) {
+        final assistantWsKey =
+            assistantContents.every(
+              (content) => content is ThinkingMessageContent,
+            )
+            ? null
+            : _deriveMessageWsKey(assistantContents, fallbackKey: wsKey);
+        _enqueuePendingAppend(
+          ChatMessage(
+            id: 'codex-asst-${DateTime.now().millisecondsSinceEpoch}',
+            role: 'assistant',
+            createdAt: DateTime.now(),
+            contents: assistantContents,
+            meta: {
+              if (assistantWsKey != null) 'wsKey': assistantWsKey,
+              if (turnId != null) 'turnId': turnId,
+            },
+          ),
+          wsKey: assistantWsKey,
+          delayMs: 0,
+        );
+      }
+
+      for (final tool in toolContents) {
+        _upsertToolMessage(
+          tool,
+          wsKey: tool.id != null ? 'tool_use:${tool.id!}' : wsKey,
+          turnId: turnId,
+        );
+      }
+
+      if (toolResultContents.isNotEmpty) {
+        final nextStatus =
+            toolResultContents.any(
+              (content) => (content.subtype ?? '').toLowerCase().startsWith(
+                'tool_result_error',
+              ),
+            )
+            ? 'error'
+            : 'done';
+        final toolMessage = ChatMessage(
+          id: 'codex-tool-${DateTime.now().millisecondsSinceEpoch}',
+          role: 'assistant',
+          createdAt: DateTime.now(),
+          contents: toolResultContents,
+          meta: {
+            if (wsKey != null) 'wsKey': wsKey,
+            if (turnId != null) 'turnId': turnId,
+          },
+        );
+        setState(() {
+          final next = MessageParser.mergeToolResultsIntoPrevToolCalls([
+            ..._chatMessages,
+            toolMessage,
+          ]);
+          _chatMessages
+            ..clear()
+            ..addAll(next);
+        });
+        _markLastToolOutcome(nextStatus);
+      }
+
+      _scrollToBottom(force: false);
+      return;
+    }
+
     if (type == 'tool_start' ||
         type == 'tool_output_delta' ||
         type == 'tool_end') {
@@ -1838,13 +2118,36 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
           ? contents.whereType<ToolMessageContent>().first
           : null;
       if (tool == null) return;
-      _upsertToolMessage(tool);
+      _upsertToolMessage(tool, wsKey: wsKey, turnId: turnId);
       _scrollToBottom();
       return;
     }
 
-    if (type == 'deployment_success') {
+    if (type == 'deployment_start' ||
+        type == 'deployment_complete' ||
+        type == 'deployment_success') {
       _handleDeploymentFrame(type!, payload);
+      return;
+    }
+
+    if (type == 'deployment_status') {
+      return;
+    }
+
+    if (type == 'deployment_checking' ||
+        type == 'deployment_failed' ||
+        type == 'deployment_auto_fixing' ||
+        type == 'deployment_max_retries_reached') {
+      _handleDeploymentFrame(type, payload);
+      _finalizePrevToolDone();
+      _appendDeploymentStatusMessage(
+        type,
+        payload,
+        wsKey: wsKey,
+        turnId: turnId,
+      );
+      _scrollToBottom(force: false);
+      return;
     }
 
     if (type == 'tool_result' || type == 'task_update') {
@@ -1891,8 +2194,9 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
           payload,
         );
         if (contents.isNotEmpty) {
-          final turnId = MessageParser.payloadTurnId(payload);
-          final resultWsKey = turnId != null ? 'result:$turnId' : null;
+          final resultWsKey =
+              _deriveMessageWsKey(contents, fallbackKey: wsKey) ??
+              (turnId != null ? 'result:$turnId' : null);
           setState(() {
             if (resultWsKey != null &&
                 _chatMessages.any(
@@ -1920,22 +2224,48 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
           });
           _scrollToBottom(force: false);
         }
+        _markSessionDone();
+        _wsSessionTerminated = true;
+        _currentWsTurnId = null;
+        _autoConnectDisabled = true;
+        _signalOutbox();
+        unawaited(_drainOutbox());
+        final sid = (_activeWsSessionId ?? _currentSessionId ?? '').trim();
+        if (sid.isNotEmpty) {
+          _scheduleTerminalClose(sid);
+        }
+        return;
       } else if (type == 'complete') {
         _finalizePrevToolDone();
         _markSessionDone();
+        _wsSessionTerminated = true;
+        _currentWsTurnId = null;
+        _autoConnectDisabled = true;
+        _signalOutbox();
+        unawaited(_drainOutbox());
+        final sid = (_activeWsSessionId ?? _currentSessionId ?? '').trim();
+        if (sid.isNotEmpty) {
+          _scheduleTerminalClose(sid);
+        }
+        return;
       } else if (type == 'error' || type == 'session_failure') {
         _markLastToolOutcome('error');
         _markSessionError();
+        _wsSessionTerminated = true;
+        _currentWsTurnId = null;
       } else if (type == 'cancelled') {
         _markLastToolOutcome('warning');
         _markSessionError();
         _appendCancelledNotice();
+        _wsSessionTerminated = true;
+        _currentWsTurnId = null;
       } else {
         _finalizePrevToolDone();
       }
       _autoConnectDisabled = true;
       _signalOutbox();
       unawaited(_drainOutbox());
+      _clearTerminalCloseTimer();
       unawaited(_maybePowerSaveCloseWebSocket());
       return;
     }
@@ -1974,9 +2304,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     // Default: render as a standalone assistant message derived from payload.
     final contents = MessageParser.createMessageContentsFromPayload(payload);
     if (contents.isEmpty) return;
-    final turnId = MessageParser.payloadTurnId(payload);
-    final wsKey =
-        MessageParser.deriveRenderableWsKey(payload, null, type) ??
+    final appendWsKey =
+        _extractWsKey(payload, type) ??
         (turnId != null && type != null ? '$type:$turnId' : null);
     _enqueuePendingAppend(
       ChatMessage(
@@ -1986,10 +2315,10 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
         contents: contents,
         meta: {
           if (turnId != null) 'turnId': turnId,
-          if (wsKey != null) 'wsKey': wsKey,
+          if (appendWsKey != null) 'wsKey': appendWsKey,
         },
       ),
-      wsKey: wsKey,
+      wsKey: appendWsKey,
     );
   }
 
@@ -2044,6 +2373,60 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
       } catch (_) {}
       _completePreviewDeployment(url?.trim());
       return;
+    }
+
+    if (t == 'deployment_checking' ||
+        t == 'deployment_failed' ||
+        t == 'deployment_auto_fixing') {
+      if (!mounted) return;
+      final payloadMap = payload['payload'];
+      final framework = payload['message'] is Map
+          ? (payload['message'] as Map)['framework']
+          : null;
+      setState(() {
+        _isDeploying = true;
+        _deployFramework ??= framework?.toString();
+      });
+      _scheduleDeployAutoClear(const Duration(minutes: 3));
+      if (t == 'deployment_failed' && payloadMap is Map) {
+        final retryCount = payloadMap['retry_count'];
+        final maxRetries = payloadMap['max_retries'];
+        final retryText = retryCount is num
+            ? (maxRetries is num
+                  ? 'Retry $retryCount/$maxRetries'
+                  : 'Retry $retryCount')
+            : 'Retrying deployment';
+        _showErrorNotice(
+          key: 'deployment_failed',
+          title: 'Deployment',
+          message: retryText,
+          cooldown: const Duration(seconds: 6),
+        );
+      }
+      return;
+    }
+
+    if (t == 'deployment_max_retries_reached') {
+      _stopPreviewStatusPolling();
+      _deployAutoClearTimer?.cancel();
+      if (mounted) {
+        setState(() {
+          _isDeploying = false;
+          _deployFramework = null;
+        });
+      } else {
+        _isDeploying = false;
+        _deployFramework = null;
+      }
+      final payloadMap = payload['payload'];
+      final lastError = payloadMap is Map ? payloadMap['last_error'] : null;
+      _showErrorNotice(
+        key: 'deployment_max_retries',
+        title: 'Deployment',
+        message: (lastError ?? 'Deployment did not complete successfully')
+            .toString(),
+        cooldown: const Duration(seconds: 8),
+      );
     }
   }
 
@@ -2319,12 +2702,19 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     }
 
     _reconnectTimer?.cancel();
+    _clearTerminalCloseTimer();
     _manualWsClose = false;
     _activeWsSessionId = sessionId;
     if (trimmedOverride != null && trimmedOverride.isNotEmpty) {
       _activeWsUrlOverride = trimmedOverride;
     } else if (prevSessionId != sessionId) {
       _activeWsUrlOverride = null;
+    }
+    if (prevSessionId != sessionId) {
+      _seenWsKeys.clear();
+      _recentEventFingerprints.clear();
+      _currentWsTurnId = null;
+      _wsSessionTerminated = false;
     }
     setState(() {
       _wsConnState = WsConnectionState.connecting;

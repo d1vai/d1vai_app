@@ -13,6 +13,7 @@ class MessageInput extends StatefulWidget {
   final int queueCount;
   final bool showSendPulse;
   final ValueChanged<String>? onChanged;
+  final bool compact;
 
   const MessageInput({
     super.key,
@@ -24,6 +25,7 @@ class MessageInput extends StatefulWidget {
     this.queueCount = 0,
     this.showSendPulse = false,
     this.onChanged,
+    this.compact = false,
   });
 
   @override
@@ -112,6 +114,7 @@ class _MessageInputState extends State<MessageInput> {
     final enabled = widget.isEnabled;
     final canSend = enabled && _isComposing;
     final queueCount = widget.queueCount;
+    final compact = widget.compact;
     final borderColor = _isFocused
         ? theme.colorScheme.primary.withValues(alpha: 0.70)
         : theme.colorScheme.outlineVariant.withValues(alpha: 0.70);
@@ -120,7 +123,9 @@ class _MessageInputState extends State<MessageInput> {
     );
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+      padding: compact
+          ? const EdgeInsets.fromLTRB(8, 6, 8, 6)
+          : const EdgeInsets.fromLTRB(14, 10, 14, 10),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         border: Border(
@@ -142,12 +147,12 @@ class _MessageInputState extends State<MessageInput> {
                   color: enabled
                       ? fieldBg
                       : theme.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(18.0),
+                  borderRadius: BorderRadius.circular(compact ? 14.0 : 18.0),
                   border: Border.all(color: borderColor),
                 ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
+                padding: EdgeInsets.symmetric(
+                  horizontal: compact ? 9 : 12,
+                  vertical: compact ? 3 : 6,
                 ),
                 child: Shortcuts(
                   shortcuts: const <ShortcutActivator, Intent>{
@@ -187,7 +192,7 @@ class _MessageInputState extends State<MessageInput> {
                             focusNode: _focusNode,
                             enabled: enabled,
                             minLines: 1,
-                            maxLines: 5,
+                            maxLines: compact ? 5 : 5,
                             textCapitalization: TextCapitalization.sentences,
                             style: theme.textTheme.bodyMedium?.copyWith(
                               height: 1.25,
@@ -204,9 +209,9 @@ class _MessageInputState extends State<MessageInput> {
                               ),
                               border: InputBorder.none,
                               isDense: true,
-                              contentPadding: const EdgeInsets.symmetric(
+                              contentPadding: EdgeInsets.symmetric(
                                 horizontal: 2,
-                                vertical: 8,
+                                vertical: compact ? 5 : 8,
                               ),
                             ),
                             onChanged: (text) {
@@ -227,7 +232,7 @@ class _MessageInputState extends State<MessageInput> {
                                   key: const ValueKey('clear_input_button'),
                                   onPressed: _clearInput,
                                   icon: const Icon(Icons.close_rounded),
-                                  iconSize: 18,
+                                  iconSize: compact ? 15 : 18,
                                   tooltip: 'Clear draft',
                                   visualDensity: VisualDensity.compact,
                                 )
@@ -239,7 +244,7 @@ class _MessageInputState extends State<MessageInput> {
                 ),
               ),
             ),
-            const SizedBox(width: 10.0),
+            SizedBox(width: compact ? 8.0 : 10.0),
             AnimatedScale(
               duration: const Duration(milliseconds: 160),
               curve: Curves.easeOut,
@@ -255,8 +260,8 @@ class _MessageInputState extends State<MessageInput> {
                       : null,
                   customBorder: const CircleBorder(),
                   child: SizedBox(
-                    width: 44,
-                    height: 44,
+                    width: compact ? 36 : 44,
+                    height: compact ? 36 : 44,
                     child: Stack(
                       clipBehavior: Clip.none,
                       children: [
@@ -265,13 +270,13 @@ class _MessageInputState extends State<MessageInput> {
                               ? OutboxSendPulse(
                                   child: Icon(
                                     Icons.arrow_upward_rounded,
-                                    size: 20,
+                                    size: compact ? 18 : 20,
                                     color: theme.colorScheme.onPrimary,
                                   ),
                                 )
                               : Icon(
                                   Icons.arrow_upward_rounded,
-                                  size: 20,
+                                  size: compact ? 18 : 20,
                                   color: canSend
                                       ? theme.colorScheme.onPrimary
                                       : theme.colorScheme.onSurfaceVariant

@@ -353,6 +353,103 @@ class MessageParser {
                 : [const TextMessageContent(text: '')];
           }
 
+        case 'codex_event':
+          {
+            final event = rawPayload['event'];
+            if (event is! Map<String, dynamic>) break;
+            final eventType = event['type']?.toString().trim() ?? '';
+            if (eventType.isEmpty) break;
+
+            if (eventType == 'thread.started' ||
+                eventType == 'turn.started' ||
+                eventType == 'turn.completed') {
+              return [];
+            }
+
+            final item = event['item'];
+            final itemMap = item is Map<String, dynamic> ? item : null;
+            final itemType = itemMap?['type']?.toString().trim() ?? '';
+
+            String toText(dynamic value) {
+              if (value == null) return '';
+              if (value is String) return value;
+              try {
+                return jsonEncode(value);
+              } catch (_) {
+                return value.toString();
+              }
+            }
+
+            String extractResultText(dynamic result) {
+              if (result == null) return '';
+              if (result is String) return result;
+              if (result is Map<String, dynamic>) {
+                final content = result['content'];
+                if (content is List) {
+                  final parts = content
+                      .map((part) {
+                        if (part is Map<String, dynamic> &&
+                            part['text'] is String) {
+                          return part['text'] as String;
+                        }
+                        if (part is String) return part;
+                        return toText(part);
+                      })
+                      .where((text) => text.trim().isNotEmpty)
+                      .toList(growable: false);
+                  if (parts.isNotEmpty) return parts.join('\n');
+                }
+                if (result['text'] is String) {
+                  return result['text'] as String;
+                }
+              }
+              return toText(result);
+            }
+
+            if (eventType == 'item.started' && itemType == 'mcp_tool_call') {
+              return [
+                ToolMessageContent(
+                  id: itemMap?['id']?.toString(),
+                  name: itemMap?['tool']?.toString() ?? 'mcp_tool',
+                  input: itemMap?['arguments'] ?? const <String, dynamic>{},
+                  status: 'processing',
+                ),
+              ];
+            }
+
+            if (eventType == 'item.completed') {
+              if (itemType == 'reasoning') {
+                final text = itemMap?['text']?.toString().trim() ?? '';
+                return text.isEmpty ? [] : [ThinkingMessageContent(text: text)];
+              }
+
+              if (itemType == 'mcp_tool_call') {
+                final outputText = extractResultText(itemMap?['result']);
+                final errorText = toText(itemMap?['error']);
+                final merged = outputText.isNotEmpty ? outputText : errorText;
+                return [
+                  ToolMessageContent(
+                    id: itemMap?['id']?.toString(),
+                    name: itemMap?['tool']?.toString() ?? 'mcp_tool',
+                    input: itemMap?['arguments'] ?? const <String, dynamic>{},
+                    status: itemMap?['error'] != null ? 'error' : 'done',
+                    output: merged.isEmpty
+                        ? null
+                        : ToolOutput(
+                            text: merged,
+                            isError: itemMap?['error'] != null,
+                          ),
+                  ),
+                ];
+              }
+
+              final text = itemMap?['text']?.toString().trim() ?? '';
+              return text.isEmpty ? [] : [TextMessageContent(text: text)];
+            }
+
+            break;
+          }
+
         case 'tool_start':
           {
             return [
@@ -723,6 +820,7 @@ class MessageParser {
         'git_commit',
         'git_push',
         'assistant_message',
+        'codex_event',
         'tool_start',
         'tool_end',
         'tool_output_delta',
@@ -1194,6 +1292,8 @@ class MessageParser {
           return 'user:$sessionId:${stableStringify(payload['message']?['content'] ?? payload['message'] ?? '')}';
         case 'result':
           return 'result:$sessionId:${payload['result'] ?? payload['output'] ?? ''}';
+        case 'codex_event':
+          return 'codex_event:$sessionId:${stableStringify(payload['event'] ?? const <String, dynamic>{})}';
         case 'git_commit':
           return 'git_commit:$sessionId:${payload['project_id'] ?? ''}:${payload['message'] ?? ''}:${stableStringify(payload['files'] ?? [])}';
         case 'git_push':

@@ -5,11 +5,17 @@ import '../desktop_selection_shell.dart';
 import '../markdown_text.dart';
 import '../tools/tool_utils.dart';
 import 'message_card_base.dart';
+import '../../../utils/project_file_links.dart';
 
 class ChatResultCard extends StatelessWidget {
   final dynamic payload;
+  final ValueChanged<ProjectFileLinkTarget>? onProjectFileTap;
 
-  const ChatResultCard({super.key, required this.payload});
+  const ChatResultCard({
+    super.key,
+    required this.payload,
+    this.onProjectFileTap,
+  });
 
   Map<String, dynamic>? _map(dynamic v) =>
       v is Map ? v.map((k, val) => MapEntry(k.toString(), val)) : null;
@@ -108,6 +114,7 @@ class ChatResultCard extends StatelessWidget {
                   fontSize: 13,
                   height: 1.34,
                 ),
+                onProjectFileTap: onProjectFileTap,
               ),
             ),
           ),
@@ -149,18 +156,32 @@ class _MetaChip extends StatelessWidget {
 class _PlainSelectableBody extends StatelessWidget {
   final String text;
   final TextStyle? style;
+  final ValueChanged<ProjectFileLinkTarget>? onProjectFileTap;
 
-  const _PlainSelectableBody({required this.text, required this.style});
+  const _PlainSelectableBody({
+    required this.text,
+    required this.style,
+    this.onProjectFileTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final content = MarkdownText(text: text, style: style, selectable: true);
+    final content = MarkdownText(
+      text: text,
+      style: style,
+      selectable: true,
+      onProjectFileTap: onProjectFileTap,
+    );
     if (defaultTargetPlatform == TargetPlatform.macOS ||
         defaultTargetPlatform == TargetPlatform.windows ||
         defaultTargetPlatform == TargetPlatform.linux) {
       return DesktopSelectionShell(child: content);
     }
-    return MarkdownText(text: text, style: style);
+    return MarkdownText(
+      text: text,
+      style: style,
+      onProjectFileTap: onProjectFileTap,
+    );
   }
 }
 

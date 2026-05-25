@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../models/message.dart';
 import '../../models/model_config.dart';
 import '../../models/outbox.dart';
+import '../../utils/project_file_links.dart';
 import 'message_list.dart';
 import 'message_input.dart';
 import 'quick_actions.dart';
@@ -30,10 +31,12 @@ class ChatBottomSheet extends StatefulWidget {
   final Map<String, MessageStatus>? messageStatuses;
   final Function(ChatMessage)? onRetry;
   final VoidCallback? onLoadMore;
+  final VoidCallback? onRefreshHistory;
   final bool hasMoreHistory;
   final bool isLoadingMore;
   final VoidCallback? onClose;
   final VoidCallback? onOpenFullScreen;
+  final List<Widget> headerActions;
   final String? heroTag;
   final String? statusLabel;
   final String? statusToken;
@@ -56,6 +59,8 @@ class ChatBottomSheet extends StatefulWidget {
   final Color? bannerAccent;
   final bool bannerBusy;
   final bool compactChrome;
+  final String? projectId;
+  final ValueChanged<ProjectFileLinkTarget>? onProjectFileTap;
 
   const ChatBottomSheet({
     super.key,
@@ -74,10 +79,12 @@ class ChatBottomSheet extends StatefulWidget {
     this.messageStatuses,
     this.onRetry,
     this.onLoadMore,
+    this.onRefreshHistory,
     this.hasMoreHistory = false,
     this.isLoadingMore = false,
     this.onClose,
     this.onOpenFullScreen,
+    this.headerActions = const <Widget>[],
     this.heroTag,
     this.statusLabel,
     this.statusToken,
@@ -100,6 +107,8 @@ class ChatBottomSheet extends StatefulWidget {
     this.bannerAccent,
     this.bannerBusy = false,
     this.compactChrome = false,
+    this.projectId,
+    this.onProjectFileTap,
   });
 
   @override
@@ -131,8 +140,9 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final compactChrome = widget.compactChrome;
     final headerDividerColor = theme.colorScheme.outline.withValues(
-      alpha: 0.35,
+      alpha: compactChrome ? 0.22 : 0.35,
     );
 
     final statusText = widget.statusLabel?.trim() ?? '';
@@ -142,12 +152,13 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
     final bannerTitle = widget.bannerTitle?.trim() ?? '';
     final bannerMessage = widget.bannerMessage?.trim() ?? '';
     final showBanner = bannerTitle.isNotEmpty || bannerMessage.isNotEmpty;
-    final compactChrome = widget.compactChrome;
 
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: compactChrome
+            ? BorderRadius.zero
+            : const BorderRadius.vertical(top: Radius.circular(16)),
       ),
       child: Column(
         children: [
@@ -170,8 +181,8 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
           // Header
           Container(
             padding: EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: compactChrome ? 8 : 12,
+              horizontal: compactChrome ? 12 : 16,
+              vertical: compactChrome ? 6 : 12,
             ),
             decoration: BoxDecoration(
               color: theme.colorScheme.surface,
@@ -179,15 +190,44 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
             ),
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final compactHeader = constraints.maxWidth < 460;
+                final compactHeader =
+                    compactChrome || constraints.maxWidth < 460;
                 final regularModelWidth = math.min(
                   172.0,
                   constraints.maxWidth * 0.36,
                 );
                 final compactModelWidth = math.min(
-                  112.0,
-                  constraints.maxWidth * 0.32,
+                  compactChrome ? 124.0 : 112.0,
+                  constraints.maxWidth * (compactChrome ? 0.34 : 0.32),
                 );
+                final refreshButton = widget.onRefreshHistory == null
+                    ? null
+                    : IconButton(
+                        icon: widget.isLoadingHistory
+                            ? SizedBox(
+                                width: 15,
+                                height: 15,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 1.8,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    theme.colorScheme.onSurfaceVariant
+                                        .withValues(alpha: 0.74),
+                                  ),
+                                ),
+                              )
+                            : const Icon(Icons.refresh_rounded),
+                        onPressed: widget.isLoadingHistory
+                            ? null
+                            : widget.onRefreshHistory,
+                        iconSize: compactChrome ? 16 : 18,
+                        tooltip: 'Refresh history',
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints.tightFor(
+                          width: 28,
+                          height: 28,
+                        ),
+                      );
                 final titleRow = Row(
                   children: [
                     Text(
@@ -200,7 +240,7 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                                 fontWeight: compactChrome
                                     ? FontWeight.w700
                                     : FontWeight.w600,
-                                fontSize: compactChrome ? 13 : null,
+                                fontSize: compactChrome ? 12.5 : null,
                               ),
                     ),
                     if (widget.onOpenFullScreen != null) ...[
@@ -212,6 +252,10 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                         tooltip: 'Full screen',
                         visualDensity: VisualDensity.compact,
                       ),
+                    ],
+                    if (widget.headerActions.isNotEmpty) ...[
+                      const SizedBox(width: 4),
+                      ...widget.headerActions,
                     ],
                     if (widget.onClose != null) ...[
                       const Spacer(),
@@ -277,7 +321,7 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                               child: SizeTransition(
                                 sizeFactor: anim,
                                 axis: Axis.horizontal,
-                                axisAlignment: -1,
+                                alignment: Alignment.centerLeft,
                                 child: child,
                               ),
                             ),
@@ -293,6 +337,99 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                     ],
                   ],
                 );
+
+                if (compactChrome) {
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                widget.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.labelLarge?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12.5,
+                                  letterSpacing: 0.15,
+                                ),
+                              ),
+                            ),
+                            if (showStatus) ...[
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 160),
+                                  switchInCurve: Curves.easeOut,
+                                  switchOutCurve: Curves.easeIn,
+                                  transitionBuilder: (child, anim) =>
+                                      FadeTransition(
+                                        opacity: anim,
+                                        child: SizeTransition(
+                                          sizeFactor: anim,
+                                          axis: Axis.horizontal,
+                                          alignment: Alignment.centerLeft,
+                                          child: child,
+                                        ),
+                                      ),
+                                  child: ChatStatusPill(
+                                    key: ValueKey(statusText),
+                                    label: statusText,
+                                    statusToken: widget.statusToken,
+                                    isError: widget.statusIsError,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      ProjectChatModelSelector(
+                        models: widget.models,
+                        selectedModelId: widget.selectedModelId,
+                        isLoading: widget.isModelLoading,
+                        onChanged: widget.onModelChanged,
+                        minWidth: 82,
+                        maxWidth: compactModelWidth,
+                        width: compactModelWidth,
+                      ),
+                      const SizedBox(width: 6),
+                      ProjectChatEngineModeSegment(
+                        value: widget.selectedEngineMode,
+                        fastTooltip: fastHint,
+                        thinkHardTooltip: thinkHardHint,
+                        onChanged: widget.isModelLoading
+                            ? null
+                            : widget.onEngineChanged,
+                      ),
+                      if (widget.isModelLoading) ...[
+                        const SizedBox(width: 6),
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1.8,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              theme.colorScheme.onSurfaceVariant.withValues(
+                                alpha: 0.72,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                      if (refreshButton != null) ...[
+                        const SizedBox(width: 4),
+                        refreshButton,
+                      ],
+                      for (final action in widget.headerActions) ...[
+                        const SizedBox(width: 4),
+                        action,
+                      ],
+                    ],
+                  );
+                }
 
                 if (compactHeader) {
                   return Column(
@@ -324,7 +461,7 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                 opacity: animation,
                 child: SizeTransition(
                   sizeFactor: animation,
-                  axisAlignment: -1,
+                  alignment: Alignment.topCenter,
                   child: child,
                 ),
               );
@@ -338,6 +475,7 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                     icon: widget.bannerIcon,
                     accent: widget.bannerAccent ?? theme.colorScheme.primary,
                     busy: widget.bannerBusy,
+                    compact: compactChrome,
                   ),
           ),
 
@@ -358,6 +496,8 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                       onLoadMore: widget.onLoadMore,
                       hasMoreHistory: widget.hasMoreHistory,
                       isLoadingMore: widget.isLoadingMore,
+                      projectId: widget.projectId,
+                      onProjectFileTap: widget.onProjectFileTap,
                     ),
             ),
           ),
@@ -392,6 +532,7 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
             onChanged: widget.onInputChanged,
             queueCount: widget.outboxItems.length,
             showSendPulse: widget.outboxMode == OutboxMode.dispatching,
+            compact: compactChrome,
           ),
         ],
       ),
@@ -417,10 +558,11 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
 
   Widget _buildEmptyState() {
     final theme = Theme.of(context);
+    final compactChrome = widget.compactChrome;
     return LayoutBuilder(
       builder: (context, constraints) {
         final maxH = (constraints.maxHeight * 0.48).clamp(0.0, 420.0);
-        final compact = maxH < 180;
+        final compact = compactChrome || maxH < 180;
         return Center(
           child: ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxH, maxWidth: 520),
@@ -435,19 +577,23 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
                 children: [
                   Icon(
                     Icons.smart_toy,
-                    size: compact ? 36.0 : 44.0,
+                    size: compact ? 30.0 : 44.0,
                     color: theme.colorScheme.primary.withValues(alpha: 0.55),
                   ),
                   SizedBox(height: compact ? 8 : 12),
                   Text(
-                    'Ask',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                    compactChrome ? 'Start a run' : 'Ask',
+                    style:
+                        (compactChrome
+                                ? theme.textTheme.titleMedium
+                                : theme.textTheme.titleLarge)
+                            ?.copyWith(fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Ask about the project or paste code.',
+                    compactChrome
+                        ? 'Ask about the project, inspect files, or run a fix.'
+                        : 'Ask about the project or paste code.',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant.withValues(
@@ -479,11 +625,12 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
   }
 
   Widget _buildLoadingState() {
+    final compactChrome = widget.compactChrome;
     return Column(
       children: [
         // Quick actions
         Padding(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(compactChrome ? 10 : 16),
           child: QuickActions(
             onSelect: _handleSubmitted,
             actions: widget.quickActions.isEmpty ? null : widget.quickActions,
@@ -498,7 +645,9 @@ class _ChatBottomSheetState extends State<ChatBottomSheet> {
         // Loading skeleton
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            padding: EdgeInsets.symmetric(
+              horizontal: compactChrome ? 10.0 : 16.0,
+            ),
             child: SingleChildScrollView(
               child: Column(
                 children: [
@@ -521,6 +670,7 @@ class _ChatStatusBanner extends StatelessWidget {
   final IconData icon;
   final Color accent;
   final bool busy;
+  final bool compact;
 
   const _ChatStatusBanner({
     super.key,
@@ -529,6 +679,7 @@ class _ChatStatusBanner extends StatelessWidget {
     required this.icon,
     required this.accent,
     required this.busy,
+    this.compact = false,
   });
 
   @override
@@ -546,26 +697,30 @@ class _ChatStatusBanner extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.fromLTRB(12, 10, 12, 4),
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      margin: compact
+          ? const EdgeInsets.fromLTRB(8, 8, 8, 2)
+          : const EdgeInsets.fromLTRB(12, 10, 12, 4),
+      padding: compact
+          ? const EdgeInsets.fromLTRB(10, 8, 10, 8)
+          : const EdgeInsets.fromLTRB(12, 10, 12, 10),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(compact ? 12 : 14),
         border: Border.all(color: border),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 30,
-            height: 30,
+            width: compact ? 26 : 30,
+            height: compact ? 26 : 30,
             decoration: BoxDecoration(
               color: accent.withValues(alpha: isDark ? 0.16 : 0.12),
               borderRadius: BorderRadius.circular(999),
             ),
-            child: Icon(icon, size: 16, color: accent),
+            child: Icon(icon, size: compact ? 14 : 16, color: accent),
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: compact ? 8 : 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -577,10 +732,14 @@ class _ChatStatusBanner extends StatelessWidget {
                         title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: theme.colorScheme.onSurface,
-                        ),
+                        style:
+                            (compact
+                                    ? theme.textTheme.labelMedium
+                                    : theme.textTheme.labelLarge)
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: theme.colorScheme.onSurface,
+                                ),
                       ),
                     ),
                     if (busy) ...[
@@ -597,10 +756,10 @@ class _ChatStatusBanner extends StatelessWidget {
                   ],
                 ),
                 if (message.isNotEmpty) ...[
-                  const SizedBox(height: 4),
+                  SizedBox(height: compact ? 3 : 4),
                   Text(
                     message,
-                    maxLines: 2,
+                    maxLines: compact ? 1 : 2,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall?.copyWith(
                       height: 1.3,

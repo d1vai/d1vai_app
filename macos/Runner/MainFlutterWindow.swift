@@ -367,6 +367,12 @@ final class FlutterSecondaryWindowController: NSWindowController, NSWindowDelega
     if #available(macOS 11.0, *) {
       window.toolbarStyle = .unifiedCompact
     }
+    let toolbar = NSToolbar(identifier: NSToolbar.Identifier("workspace-titlebar"))
+    toolbar.showsBaselineSeparator = false
+    toolbar.displayMode = .iconOnly
+    toolbar.allowsUserCustomization = false
+    toolbar.autosavesConfiguration = false
+    window.toolbar = toolbar
     if let dragAwareWindow = window as? SecondaryFlutterWindow {
       dragAwareWindow.dropDelegate = self
       dragAwareWindow.installDropOverlay()

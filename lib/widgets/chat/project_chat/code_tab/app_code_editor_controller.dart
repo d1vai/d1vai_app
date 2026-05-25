@@ -183,6 +183,29 @@ class AppCodeEditorController extends ChangeNotifier {
     return _text;
   }
 
+  Future<void> focusPosition({
+    required int line,
+    int column = 1,
+    bool center = true,
+  }) async {
+    final monacoController = _monacoController;
+    if (monacoController == null) return;
+    final lineCount = _stats.lineCount <= 0 ? 1 : _stats.lineCount;
+    final safeLine = line.clamp(1, lineCount);
+    final safeColumn = column < 1 ? 1 : column;
+    final range = monaco.Range.singleLine(
+      safeLine,
+      startColumn: safeColumn,
+      endColumn: safeColumn,
+    );
+    await monacoController.setSelection(range);
+    await monacoController.revealPosition(
+      monaco.Position(line: safeLine, column: safeColumn),
+      center: center,
+    );
+    notifyListeners();
+  }
+
   Future<void> setTabSpaces(int value) async {
     final normalized = value.clamp(1, 8);
     _tabSize = normalized;

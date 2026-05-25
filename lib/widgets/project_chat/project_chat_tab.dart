@@ -21,6 +21,7 @@ import '../../services/workspace_service.dart';
 import '../../utils/billing_errors.dart';
 import '../../utils/error_utils.dart';
 import '../../utils/message_parser.dart';
+import '../../utils/project_file_links.dart';
 import '../../utils/preview_url.dart';
 import '../chat/chat_bottom_sheet.dart';
 import '../chat/floating_chat_button.dart';

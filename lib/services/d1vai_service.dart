@@ -1871,6 +1871,23 @@ class D1vaiService {
   // GitHub Ops Methods - GitHub 操作（用于发布流程）
   // ============================================
 
+  /// 获取项目可用分支列表（对齐 Web: `GET /api/github-ops/{projectId}/branches`）
+  Future<List<String>> getGitHubBranches(String projectId) async {
+    final branches = await _apiClient.get<List<dynamic>>(
+      '/api/github-ops/$projectId/branches',
+    );
+    return branches
+        .map((item) {
+          if (item is Map) {
+            return (item['name'] ?? '').toString().trim();
+          }
+          return item.toString().trim();
+        })
+        .where((name) => name.isNotEmpty)
+        .toSet()
+        .toList(growable: false);
+  }
+
   /// 获取分支提交列表（对齐 Web: `GET /api/github-ops/{projectId}/commits`）
   Future<List<dynamic>> getGitHubBranchCommits(
     String projectId, {
@@ -1911,6 +1928,18 @@ class D1vaiService {
           'head_branch': headBranch,
           if (commitMessage != null) 'commit_message': commitMessage,
         });
+  }
+
+  /// 检查分支是否可合并（对齐 Web: `POST /api/github-ops/{projectId}/merge-check`）
+  Future<Map<String, dynamic>> checkGitHubMergeable(
+    String projectId, {
+    required String baseBranch,
+    required String headBranch,
+  }) async {
+    return _apiClient.post<Map<String, dynamic>>(
+      '/api/github-ops/$projectId/merge-check',
+      {'base_branch': baseBranch, 'head_branch': headBranch},
+    );
   }
 
   /// 回滚指定提交（对齐 Web: `POST /api/git/{projectId}/revert`）

@@ -187,15 +187,22 @@ class ProjectChatTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     final trimmedPreviewUrl = previewUrl?.trim() ?? '';
     final showPreviewMeta = currentIndex == 0 && trimmedPreviewUrl.isNotEmpty;
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+      padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
       decoration: BoxDecoration(
+        color: Color.alphaBlend(
+          cs.surfaceContainerLowest.withValues(
+            alpha: theme.brightness == Brightness.dark ? 0.38 : 0.72,
+          ),
+          cs.surface,
+        ),
         border: Border(
           bottom: BorderSide(
-            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+            color: cs.outlineVariant.withValues(alpha: 0.42),
             width: 1,
           ),
         ),
@@ -218,7 +225,7 @@ class ProjectChatTopBar extends StatelessWidget {
                   onTap: () => onTabSelected(0),
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
               Flexible(
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -231,7 +238,7 @@ class ProjectChatTopBar extends StatelessWidget {
                       onTap: () => onTabSelected(1),
                     ),
                     if (showPreviewMeta) ...[
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       Flexible(
                         child: _PreviewInlineMeta(url: trimmedPreviewUrl),
                       ),
@@ -251,7 +258,7 @@ class ProjectChatTopBar extends StatelessWidget {
                     loc?.translate('project_chat_preview_refresh_tooltip') ??
                     'Refresh preview',
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
               _ActionIconButton(
                 icon: Icons.open_in_new_outlined,
                 onPressed: onOpenInNewTab,
@@ -329,29 +336,33 @@ class _PreviewInlineMeta extends StatelessWidget {
     return Tooltip(
       message: url,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: cs.primary.withValues(alpha: 0.05),
+          color: Color.alphaBlend(
+            cs.primary.withValues(alpha: 0.08),
+            cs.surface,
+          ),
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: cs.primary.withValues(alpha: 0.12)),
+          border: Border.all(color: cs.primary.withValues(alpha: 0.16)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               Icons.public_outlined,
-              size: 12.5,
+              size: 12,
               color: cs.primary.withValues(alpha: 0.78),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 5),
             Flexible(
               child: Text(
                 _previewHost(url),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.labelSmall?.copyWith(
+                  fontSize: 10.5,
                   color: cs.primary.withValues(alpha: 0.82),
-                  fontWeight: FontWeight.w400,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
@@ -394,33 +405,50 @@ class _FilesInlineToolbar extends StatelessWidget {
                   child: TextField(
                     controller: searchController,
                     decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.search, size: 18),
+                      prefixIcon: const Icon(Icons.search, size: 16),
+                      prefixIconConstraints: const BoxConstraints(
+                        minWidth: 34,
+                        minHeight: 34,
+                      ),
                       hintText:
                           loc?.translate('project_chat_search_files') ??
                           'Search files…',
                       isDense: true,
                       filled: true,
-                      fillColor: theme.colorScheme.surfaceContainerHighest,
+                      fillColor: Color.alphaBlend(
+                        theme.colorScheme.surfaceContainerHighest.withValues(
+                          alpha: 0.58,
+                        ),
+                        theme.colorScheme.surface,
+                      ),
+                      constraints: const BoxConstraints(minHeight: 34),
                       contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: compact ? 8 : 10,
+                        horizontal: 10,
+                        vertical: compact ? 7 : 8,
+                      ),
+                      hintStyle: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(11),
                         borderSide: BorderSide(
                           color: theme.colorScheme.outlineVariant,
                         ),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(11),
                         borderSide: BorderSide(
-                          color: theme.colorScheme.outlineVariant,
+                          color: theme.colorScheme.outlineVariant.withValues(
+                            alpha: 0.7,
+                          ),
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(11),
                         borderSide: BorderSide(
-                          color: theme.colorScheme.primary,
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.72,
+                          ),
                         ),
                       ),
                       suffixIcon:
@@ -429,13 +457,16 @@ class _FilesInlineToolbar extends StatelessWidget {
                           ? null
                           : IconButton(
                               onPressed: searchController.clear,
-                              icon: const Icon(Icons.clear, size: 16),
+                              icon: const Icon(Icons.clear, size: 14),
                               tooltip: loc?.translate('clear') ?? 'Clear',
                             ),
                     ),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
               ],
               _ActionIconButton(
                 icon: controller.uploadingFiles
@@ -447,7 +478,8 @@ class _FilesInlineToolbar extends StatelessWidget {
                 tooltip:
                     loc?.translate('project_chat_upload_files_tooltip') ??
                     'Upload files',
-                enabled: !controller.uploadingFiles && controller.onUpload != null,
+                enabled:
+                    !controller.uploadingFiles && controller.onUpload != null,
               ),
               const SizedBox(width: 4),
               _ActionIconButton(
@@ -526,7 +558,7 @@ class _FilesInlineToolbar extends StatelessWidget {
                     'Ask AI about file',
                 enabled: controller.hasSelection && controller.onAsk != null,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               _FilesSyncChip(
                 state: controller.syncState,
                 hasLocalWorkspace: controller.hasLocalWorkspace,
@@ -585,11 +617,11 @@ class _FilesSyncChip extends StatelessWidget {
     };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.14)),
+        color: color.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -606,8 +638,9 @@ class _FilesSyncChip extends StatelessWidget {
           Text(
             label,
             style: theme.textTheme.labelSmall?.copyWith(
+              fontSize: 10.5,
               color: color,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
               letterSpacing: 0.15,
             ),
           ),
@@ -679,8 +712,8 @@ class ProjectChatModelSelector extends StatelessWidget {
         leadingIcon: Icons.auto_awesome_rounded,
         minWidth: minWidth,
         maxWidth: maxWidth,
-        borderRadius: 13,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        borderRadius: 11,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         backgroundColor: isDark
             ? Color.alphaBlend(
                 cs.primary.withValues(alpha: 0.12),
@@ -707,12 +740,13 @@ class ProjectChatModelSelector extends StatelessWidget {
             : cs.outlineVariant.withValues(alpha: 0.7),
         menuBorderRadius: 18,
         menuPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
-        itemHeight: 30,
+        itemHeight: 32,
         textColor: isDark ? cs.onSurface : cs.onSurface.withValues(alpha: 0.92),
         iconColor: isDark
             ? cs.primary.withValues(alpha: 0.9)
             : cs.onSurfaceVariant,
         trailingIcon: Icons.expand_more_rounded,
+        showShadow: false,
         isLoading: isLoading,
         onChanged: (isLoading || onChanged == null || models.isEmpty)
             ? null
@@ -770,18 +804,11 @@ class ProjectChatEngineModeSegment extends StatelessWidget {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
               curve: Curves.easeOut,
-              padding: const EdgeInsets.fromLTRB(4, 4, 8, 4),
+              padding: const EdgeInsets.fromLTRB(4, 3, 7, 3),
               decoration: BoxDecoration(
                 color: backgroundColor,
                 borderRadius: BorderRadius.circular(999),
                 border: Border.all(color: borderColor, width: 1),
-                boxShadow: [
-                  BoxShadow(
-                    color: badgeColor.withValues(alpha: 0.14),
-                    blurRadius: 10,
-                    spreadRadius: 0,
-                  ),
-                ],
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -789,33 +816,26 @@ class ProjectChatEngineModeSegment extends StatelessWidget {
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
                     curve: Curves.easeOut,
-                    width: 18,
-                    height: 18,
+                    width: 16,
+                    height: 16,
                     decoration: BoxDecoration(
                       color: badgeColor,
                       shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: badgeColor.withValues(alpha: 0.28),
-                          blurRadius: 8,
-                          spreadRadius: 0,
-                        ),
-                      ],
                     ),
                     child: Icon(
                       isFast
                           ? Icons.flash_on_rounded
                           : Icons.psychology_rounded,
-                      size: 11,
+                      size: 10,
                       color: isFast ? Colors.green.shade900 : Colors.white,
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 5),
                   Icon(
                     isFast
                         ? Icons.psychology_alt_rounded
                         : Icons.flash_on_rounded,
-                    size: 14,
+                    size: 13,
                     color: iconColor.withValues(alpha: isFast ? 0.72 : 0.82),
                   ),
                 ],
@@ -848,40 +868,42 @@ class _TabButton extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(7),
+      borderRadius: BorderRadius.circular(9),
       child: Container(
         padding: hasLabel
             ? const EdgeInsets.symmetric(horizontal: 9, vertical: 5)
-            : const EdgeInsets.all(7),
+            : const EdgeInsets.all(5),
         decoration: BoxDecoration(
           color: isSelected
-              ? theme.colorScheme.primary.withValues(alpha: 0.12)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(7),
-          border: isSelected
-              ? Border.all(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                  width: 1,
-                )
-              : null,
+              ? theme.colorScheme.primary.withValues(alpha: 0.10)
+              : theme.colorScheme.surfaceContainerLowest.withValues(
+                  alpha: 0.42,
+                ),
+          borderRadius: BorderRadius.circular(9),
+          border: Border.all(
+            color: isSelected
+                ? theme.colorScheme.primary.withValues(alpha: 0.24)
+                : theme.colorScheme.outlineVariant.withValues(alpha: 0.28),
+            width: 1,
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
-              size: 14.5,
+              size: 14,
               color: isSelected
                   ? theme.colorScheme.primary
                   : theme.colorScheme.onSurfaceVariant,
             ),
             if (hasLabel) ...[
-              const SizedBox(width: 5),
+              const SizedBox(width: 6),
               Text(
                 label!,
                 style: TextStyle(
                   fontSize: 11,
-                  fontWeight: FontWeight.w400,
+                  fontWeight: FontWeight.w600,
                   color: isSelected
                       ? theme.colorScheme.primary
                       : theme.colorScheme.onSurfaceVariant,
@@ -919,13 +941,13 @@ class _ActionIconButton extends StatelessWidget {
     final child = Container(
       decoration: BoxDecoration(
         color: active
-            ? theme.colorScheme.primary.withValues(alpha: 0.1)
-            : theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(7),
+            ? theme.colorScheme.primary.withValues(alpha: 0.10)
+            : theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.78),
+        borderRadius: BorderRadius.circular(9),
         border: Border.all(
           color: active
-              ? theme.colorScheme.primary.withValues(alpha: 0.28)
-              : theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+              ? theme.colorScheme.primary.withValues(alpha: 0.24)
+              : theme.colorScheme.outlineVariant.withValues(alpha: 0.34),
           width: 1,
         ),
       ),
@@ -933,22 +955,25 @@ class _ActionIconButton extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: enabled ? onPressed : null,
-          borderRadius: BorderRadius.circular(7),
-          child: Padding(
-            padding: const EdgeInsets.all(6),
-            child:
-                iconWidget ??
-                Icon(
-                  icon,
-                  size: 15,
-                  color: enabled
-                      ? (active
-                            ? theme.colorScheme.primary
-                            : theme.colorScheme.onSurfaceVariant)
-                      : theme.colorScheme.onSurfaceVariant.withValues(
-                          alpha: 0.38,
-                        ),
-                ),
+          borderRadius: BorderRadius.circular(9),
+          child: SizedBox(
+            width: 28,
+            height: 28,
+            child: Center(
+              child:
+                  iconWidget ??
+                  Icon(
+                    icon,
+                    size: 14,
+                    color: enabled
+                        ? (active
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.onSurfaceVariant)
+                        : theme.colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.38,
+                          ),
+                  ),
+            ),
           ),
         ),
       ),

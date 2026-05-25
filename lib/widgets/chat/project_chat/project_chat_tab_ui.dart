@@ -532,6 +532,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
               ],
             ),
             child: ChatBottomSheet(
+              projectId: widget.projectId,
               messages: _chatMessages,
               isLoading: _isChatLoading,
               isLoadingHistory: _isLoadingHistory,
@@ -553,6 +554,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
               messageStatuses: _messageStatuses,
               onRetry: _retryMessage,
               onLoadMore: _loadMoreHistory,
+              onRefreshHistory: () => unawaited(_loadChatHistory()),
               hasMoreHistory: _hasMoreHistory,
               isLoadingMore: _isLoadingMoreHistory,
               scrollController: _chatScrollController,
@@ -577,6 +579,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
               selectedEngineMode: _selectedEngineMode,
               onModelChanged: (v) => unawaited(_handleModelChanged(v)),
               onEngineChanged: (v) => unawaited(_handleEngineChanged(v)),
+              onProjectFileTap: _handleProjectFileLinkTap,
             ),
           );
         },
@@ -730,115 +733,240 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
         final effectiveSidebarWidth = _effectiveDesktopChatPaneWidth(
           constraints.maxWidth,
         );
-        final leftBorderColor = Theme.of(
-          context,
-        ).colorScheme.outlineVariant.withValues(alpha: 0.6);
+        final sidebarWidth = _desktopChatPaneCollapsed
+            ? _desktopChatPaneCollapsedWidth
+            : effectiveSidebarWidth;
+        final theme = Theme.of(context);
+        final cs = theme.colorScheme;
+        final leftBorderColor = cs.outlineVariant.withValues(alpha: 0.42);
 
-        return Row(
-          children: [
-            Expanded(
-              child: Column(
-                children: [
-                  ProjectChatTopBar(
-                    currentIndex: _currentChatTabIndex,
-                    previewUrl: _previewUrl,
-                    codeTabController: _codeTabTopBarController,
-                    onTabSelected: (index) {
-                      setState(() {
-                        _currentChatTabIndex = index;
-                      });
-                      _trackTabSelection();
-                      _trackPreviewOpenedIfNeeded();
-                    },
-                    onRefreshPreview: _handleRefreshPreview,
-                    onOpenInNewTab: _handleOpenInNewTab,
-                  ),
-                  Expanded(
-                    child: IndexedStack(
-                      index: _currentChatTabIndex,
-                      children: [_buildChatPreviewTab(), _buildChatCodeTab()],
-                    ),
-                  ),
-                ],
+        return Container(
+          decoration: BoxDecoration(
+            color: Color.alphaBlend(
+              cs.surfaceContainerLow.withValues(
+                alpha: theme.brightness == Brightness.dark ? 0.46 : 0.78,
               ),
+              cs.surface,
             ),
-            _DesktopChatPaneResizeHandle(
-              onDragDelta: (delta) {
-                _setDesktopChatPaneWidthForViewport(
-                  effectiveSidebarWidth - delta,
-                  constraints.maxWidth,
-                  persist: false,
-                );
-              },
-              onDragEnd: () =>
-                  unawaited(_persistDesktopChatPaneWidth(_desktopChatPaneWidth)),
-              onDoubleTap: () {
-                _resetDesktopChatPaneWidth(constraints.maxWidth);
-              },
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: cs.outlineVariant.withValues(alpha: 0.22),
             ),
-            Container(
-              width: effectiveSidebarWidth,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                border: Border(left: BorderSide(color: leftBorderColor)),
-              ),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: ChatBottomSheet(
-                      title: 'Messages',
-                      compactChrome: true,
-                      messages: _chatMessages,
-                      isLoading: _isChatLoading,
-                      isLoadingHistory: _isLoadingHistory,
-                      isDeploying: _isDeploying,
-                      outboxItems: _outboxItems,
-                      outboxMode: _outboxMode,
-                      onOutboxClear: _outboxClear,
-                      onOutboxDelete: _outboxDelete,
-                      onOutboxUpdate: _outboxUpdate,
-                      heroTag: 'project-chat-messages-${widget.projectId}',
-                      statusLabel: _statusLabel(),
-                      statusToken: _statusToken(),
-                      statusIsError: _sessionError,
-                      bannerTitle: _statusBannerTitle(),
-                      bannerMessage: _statusBannerMessage(),
-                      bannerIcon: _statusBannerIcon(),
-                      bannerAccent: _statusBannerAccent(context),
-                      bannerBusy: _statusBannerBusy(),
-                      messageStatuses: _messageStatuses,
-                      onRetry: _retryMessage,
-                      onLoadMore: _loadMoreHistory,
-                      hasMoreHistory: _hasMoreHistory,
-                      isLoadingMore: _isLoadingMoreHistory,
-                      scrollController: _chatScrollController,
-                      inputController: _chatInputController,
-                      inputFocusNode: _chatInputFocusNode,
-                      onInputChanged: (text) =>
-                          unawaited(_persistChatDraft(text)),
-                      quickActions: _quickActions(),
-                      quickActionsTitle: _quickActionsTitle(),
-                      onSendMessage: _sendChatMessage,
-                      isModelReady: _selectedModelId.trim().isNotEmpty,
-                      isModelLoading:
-                          _isLoadingModels ||
-                          _isSwitchingModel ||
-                          _workspacePhase != WorkspacePhase.ready ||
-                          !_hasLoadedModelConfig,
-                      models: _availableModels,
-                      selectedModelId: _selectedModelId,
-                      selectedEngineMode: _selectedEngineMode,
-                      onModelChanged: (v) => unawaited(_handleModelChanged(v)),
-                      onEngineChanged: (v) =>
-                          unawaited(_handleEngineChanged(v)),
-                    ),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  color: cs.surface,
+                  child: Column(
+                    children: [
+                      ProjectChatTopBar(
+                        currentIndex: _currentChatTabIndex,
+                        previewUrl: _previewUrl,
+                        codeTabController: _codeTabTopBarController,
+                        onTabSelected: (index) {
+                          setState(() {
+                            _currentChatTabIndex = index;
+                          });
+                          _trackTabSelection();
+                          _trackPreviewOpenedIfNeeded();
+                        },
+                        onRefreshPreview: _handleRefreshPreview,
+                        onOpenInNewTab: _handleOpenInNewTab,
+                      ),
+                      Expanded(
+                        child: IndexedStack(
+                          index: _currentChatTabIndex,
+                          children: [
+                            _buildChatPreviewTab(),
+                            _buildChatCodeTab(),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ],
+              if (!_desktopChatPaneCollapsed)
+                _DesktopChatPaneResizeHandle(
+                  onDragDelta: (delta) {
+                    _setDesktopChatPaneWidthForViewport(
+                      effectiveSidebarWidth - delta,
+                      constraints.maxWidth,
+                      persist: false,
+                    );
+                  },
+                  onDragEnd: () => unawaited(
+                    _persistDesktopChatPaneWidth(_desktopChatPaneWidth),
+                  ),
+                  onDoubleTap: () {
+                    _resetDesktopChatPaneWidth(constraints.maxWidth);
+                  },
+                ),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutCubic,
+                width: sidebarWidth,
+                decoration: BoxDecoration(
+                  color: Color.alphaBlend(
+                    cs.surfaceContainerLowest.withValues(alpha: 0.72),
+                    cs.surface,
+                  ),
+                  border: Border(left: BorderSide(color: leftBorderColor)),
+                ),
+                child: _desktopChatPaneCollapsed
+                    ? _buildCollapsedDesktopChatRail(context)
+                    : Column(
+                        children: [
+                          Expanded(
+                            child: ChatBottomSheet(
+                              title: 'History',
+                              compactChrome: true,
+                              headerActions: [
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.keyboard_double_arrow_right_rounded,
+                                  ),
+                                  onPressed: () =>
+                                      _setDesktopChatPaneCollapsed(true),
+                                  iconSize: 18,
+                                  tooltip: 'Collapse messages',
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                              ],
+                              projectId: widget.projectId,
+                              messages: _chatMessages,
+                              isLoading: _isChatLoading,
+                              isLoadingHistory: _isLoadingHistory,
+                              isDeploying: _isDeploying,
+                              outboxItems: _outboxItems,
+                              outboxMode: _outboxMode,
+                              onOutboxClear: _outboxClear,
+                              onOutboxDelete: _outboxDelete,
+                              onOutboxUpdate: _outboxUpdate,
+                              heroTag:
+                                  'project-chat-messages-${widget.projectId}',
+                              statusLabel: _statusLabel(),
+                              statusToken: _statusToken(),
+                              statusIsError: _sessionError,
+                              bannerTitle: _statusBannerTitle(),
+                              bannerMessage: _statusBannerMessage(),
+                              bannerIcon: _statusBannerIcon(),
+                              bannerAccent: _statusBannerAccent(context),
+                              bannerBusy: _statusBannerBusy(),
+                              messageStatuses: _messageStatuses,
+                              onRetry: _retryMessage,
+                              onLoadMore: _loadMoreHistory,
+                              onRefreshHistory: () =>
+                                  unawaited(_loadChatHistory()),
+                              hasMoreHistory: _hasMoreHistory,
+                              isLoadingMore: _isLoadingMoreHistory,
+                              scrollController: _chatScrollController,
+                              inputController: _chatInputController,
+                              inputFocusNode: _chatInputFocusNode,
+                              onInputChanged: (text) =>
+                                  unawaited(_persistChatDraft(text)),
+                              quickActions: _quickActions(),
+                              quickActionsTitle: _quickActionsTitle(),
+                              onSendMessage: _sendChatMessage,
+                              isModelReady: _selectedModelId.trim().isNotEmpty,
+                              isModelLoading:
+                                  _isLoadingModels ||
+                                  _isSwitchingModel ||
+                                  _workspacePhase != WorkspacePhase.ready ||
+                                  !_hasLoadedModelConfig,
+                              models: _availableModels,
+                              selectedModelId: _selectedModelId,
+                              selectedEngineMode: _selectedEngineMode,
+                              onModelChanged: (v) =>
+                                  unawaited(_handleModelChanged(v)),
+                              onEngineChanged: (v) =>
+                                  unawaited(_handleEngineChanged(v)),
+                              onProjectFileTap: _handleProjectFileLinkTap,
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+            ],
+          ),
         );
       },
+    );
+  }
+
+  Widget _buildCollapsedDesktopChatRail(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final statusColor = _sessionError
+        ? cs.error
+        : _isChatLoading || _sessionThinking || _outboxItems.isNotEmpty
+        ? cs.primary
+        : cs.onSurfaceVariant;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _setDesktopChatPaneCollapsed(false),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+          child: Column(
+            children: [
+              Tooltip(
+                message: 'Show messages',
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.keyboard_double_arrow_left_rounded,
+                    size: 18,
+                  ),
+                  onPressed: () => _setDesktopChatPaneCollapsed(false),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                width: 30,
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: statusColor.withValues(alpha: 0.18),
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    '${_chatMessages.length}',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: statusColor,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Icon(
+                Icons.chat_bubble_outline_rounded,
+                size: 18,
+                color: cs.onSurfaceVariant,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _statusLabel(),
+                maxLines: 2,
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: cs.onSurfaceVariant,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -907,6 +1035,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
       projectId: widget.projectId,
       topBarController: _codeTabTopBarController,
       initialLocalEntryPath: widget.initialLocalEntryPath,
+      pendingProjectFileRequest: _pendingProjectFileRequest,
       onDetachLocalWorkspace: () {
         final uri = Uri(
           path: '/projects/${widget.projectId}',

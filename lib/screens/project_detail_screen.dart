@@ -276,6 +276,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     });
   }
 
+  void _navigateToProjectTab(String tab) {
+    _tabController.animateTo(_tabIndexFromName(tab));
+  }
+
   @override
   void dispose() {
     _macosMenuController.clearCurrentProjectContext(
@@ -480,7 +484,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           onAskAi: _handleAskAi,
           onRefreshProject: _loadProject,
         ),
-        ProjectOverviewTab(project: project, onRefreshProject: _loadProject),
+        ProjectOverviewTab(
+          project: project,
+          onRefreshProject: _loadProject,
+          onNavigateToTab: _navigateToProjectTab,
+        ),
       ],
     );
   }

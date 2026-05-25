@@ -74,7 +74,10 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   final List<_PendingAppendItem> _pendingAppendQueue = <_PendingAppendItem>[];
   final Set<String> _pendingAppendWsKeys = <String>{};
   Timer? _pendingAppendTimer;
+  Timer? _terminalCloseTimer;
   WsConnectionState _wsConnState = WsConnectionState.idle;
+  String? _currentWsTurnId;
+  bool _wsSessionTerminated = false;
 
   // Mobile chat bottom sheet state
   bool _showMobileChat = false;
@@ -93,11 +96,15 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   int _currentChatTabIndex = 0;
 
   // Desktop split-pane state
-  double _desktopChatPaneWidth = 420;
-  final double _desktopChatPaneDefaultWidth = 420;
-  final double _desktopChatPaneMinWidth = 340;
-  final double _desktopChatPaneMaxWidth = 620;
+  double _desktopChatPaneWidth = 392;
+  bool _desktopChatPaneCollapsed = false;
+  final double _desktopChatPaneDefaultWidth = 392;
+  final double _desktopChatPaneMinWidth = 312;
+  final double _desktopChatPaneMaxWidth = 540;
+  final double _desktopChatPaneCollapsedWidth = 54;
   final double _desktopPrimaryPaneMinWidth = 420;
+  ProjectFileLinkRequest? _pendingProjectFileRequest;
+  int _projectFileRequestRevision = 0;
 
   int _chatSubTabIndexFromName(String? raw) {
     final normalized = (raw ?? '').trim().toLowerCase();
@@ -171,6 +178,9 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   String get _desktopChatPaneWidthKey =>
       'project_chat_desktop_sidebar_width:${widget.projectId}';
 
+  String get _desktopChatPaneCollapsedKey =>
+      'project_chat_desktop_sidebar_collapsed:${widget.projectId}';
+
   double _clampDesktopChatPaneWidth(double width, double totalWidth) {
     final maxAllowed = (totalWidth - _desktopPrimaryPaneMinWidth).clamp(
       _desktopChatPaneMinWidth,
@@ -193,12 +203,28 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
     } catch (_) {}
   }
 
+  Future<void> _loadDesktopChatPaneCollapsed() async {
+    try {
+      final value = _storageService.getBool(_desktopChatPaneCollapsedKey);
+      if (value == null || !mounted) return;
+      setState(() {
+        _desktopChatPaneCollapsed = value;
+      });
+    } catch (_) {}
+  }
+
   Future<void> _persistDesktopChatPaneWidth(double value) async {
     try {
       await _storageService.setString(
         _desktopChatPaneWidthKey,
         value.toStringAsFixed(1),
       );
+    } catch (_) {}
+  }
+
+  Future<void> _persistDesktopChatPaneCollapsed(bool value) async {
+    try {
+      await _storageService.setBool(_desktopChatPaneCollapsedKey, value);
     } catch (_) {}
   }
 
@@ -228,6 +254,18 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
     );
   }
 
+  void _setDesktopChatPaneCollapsed(bool next) {
+    if (_desktopChatPaneCollapsed == next) return;
+    if (mounted) {
+      setState(() {
+        _desktopChatPaneCollapsed = next;
+      });
+    } else {
+      _desktopChatPaneCollapsed = next;
+    }
+    unawaited(_persistDesktopChatPaneCollapsed(next));
+  }
+
   double _effectiveDesktopChatPaneWidth(
     double totalWidth, {
     double? preferredWidth,
@@ -246,10 +284,12 @@ abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
   // ignore: unused_element
   Future<void> _refreshWorkspaceStatus({required bool bypassCache});
   Future<void> _loadMoreHistory();
+  Future<void> _loadChatHistory();
   Future<void> _retryMessage(ChatMessage message);
   Future<void> _handleModelChanged(String modelId);
   Future<void> _handleEngineChanged(ChatEngineMode mode);
   Future<void> _persistChatDraft(String value);
+  void _handleProjectFileLinkTap(ProjectFileLinkTarget target);
 
   // Outbox actions (implemented by logic mixin; UI passes these into widgets).
   void _outboxClear();

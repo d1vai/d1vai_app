@@ -17,6 +17,7 @@ import '../services/macos_open_service.dart';
 import '../services/native_window_service.dart';
 import '../services/workspace_local_service.dart';
 import '../screens/settings/profile_tab.dart';
+import '../utils/desktop_layout.dart';
 import '../widgets/avatar_image.dart';
 import '../widgets/chat/project_chat/code_tab/project_chat_code_tab.dart';
 import '../widgets/editor_preferences_dialog.dart';
@@ -551,54 +552,77 @@ class _LocalWorkspaceScreenState extends State<LocalWorkspaceScreen> {
     String linkedProjectId,
     String linkedProjectName,
   ) {
-    return SafeArea(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          if (constraints.maxWidth < 320 || constraints.maxHeight < 220) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.folder_open_outlined,
-                      color: theme.colorScheme.primary,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _lastSegment(rootPath),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
+    final desktop = MediaQuery.of(context).size.width >= 1024;
+    final isMacosDesktop =
+        desktop && !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
 
-          return Column(
-            children: [
-              Expanded(
-                child: ProjectChatCodeTab(
-                  key: ValueKey(
-                    'local-workspace:${_initialEntryPath ?? rootPath}:${linkedProjectId.isEmpty ? 'local' : linkedProjectId}',
+    Widget content = LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 320 || constraints.maxHeight < 220) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.folder_open_outlined,
+                    color: theme.colorScheme.primary,
                   ),
-                  projectId: linkedProjectId.isEmpty ? null : linkedProjectId,
-                  initialLocalEntryPath: _initialEntryPath ?? rootPath,
-                  initialLocalHybridMode: linkedProjectId.isNotEmpty,
-                  onDetachLocalWorkspace: _switchFolder,
-                  onAsk: _askAboutLocalFile,
-                ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _lastSegment(rootPath),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           );
-        },
-      ),
+        }
+
+        final editor = ProjectChatCodeTab(
+          key: ValueKey(
+            'local-workspace:${_initialEntryPath ?? rootPath}:${linkedProjectId.isEmpty ? 'local' : linkedProjectId}',
+          ),
+          projectId: linkedProjectId.isEmpty ? null : linkedProjectId,
+          initialLocalEntryPath: _initialEntryPath ?? rootPath,
+          initialLocalHybridMode: linkedProjectId.isNotEmpty,
+          onDetachLocalWorkspace: _switchFolder,
+          onAsk: _askAboutLocalFile,
+        );
+
+        if (!isMacosDesktop) {
+          return Column(children: [Expanded(child: editor)]);
+        }
+
+        return DesktopContentFrame(
+          maxWidth: 1520,
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+          child: ClipRect(
+            child: Column(
+              children: [
+                Expanded(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(color: theme.colorScheme.surface),
+                    child: editor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
+
+    if (isMacosDesktop) {
+      return content;
+    }
+
+    return SafeArea(child: content);
   }
 
   Widget _buildMacosWorkspaceTitleBar(

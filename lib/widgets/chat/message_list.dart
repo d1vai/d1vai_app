@@ -1,6 +1,7 @@
 // ignore_for_file: unused_field
 import 'package:flutter/material.dart';
 import '../../models/message.dart';
+import '../../utils/project_file_links.dart';
 import 'message_bubble.dart';
 import 'message_metadata.dart';
 import 'tool_call_group.dart';
@@ -20,6 +21,7 @@ class MessageList extends StatefulWidget {
   final bool isLoadingMore;
   final bool showTimestamps;
   final String? projectId;
+  final ValueChanged<ProjectFileLinkTarget>? onProjectFileTap;
 
   const MessageList({
     super.key,
@@ -33,6 +35,7 @@ class MessageList extends StatefulWidget {
     this.isLoadingMore = false,
     this.showTimestamps = false,
     this.projectId,
+    this.onProjectFileTap,
   });
 
   @override
@@ -259,6 +262,7 @@ class _MessageListState extends State<MessageList> {
                         message.id,
                       ),
                       userAccessory: userAccessory,
+                      onProjectFileTap: widget.onProjectFileTap,
                       onTap: widget.onMessageTap != null
                           ? () => widget.onMessageTap!(message)
                           : null,

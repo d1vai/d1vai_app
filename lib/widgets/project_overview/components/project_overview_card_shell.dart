@@ -31,7 +31,7 @@ class ProjectOverviewCardShell extends StatelessWidget {
     final surface =
         backgroundColor ??
         Color.alphaBlend(
-          colorScheme.primary.withValues(alpha: isDark ? 0.055 : 0.022),
+          colorScheme.primary.withValues(alpha: isDark ? 0.045 : 0.016),
           colorScheme.surface,
         );
 
@@ -43,7 +43,7 @@ class ProjectOverviewCardShell extends StatelessWidget {
       margin: margin,
       padding: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
-      borderRadius: 16,
+      borderRadius: 14,
       backgroundColor: surface,
       borderColor: outline,
       child: Stack(
@@ -53,16 +53,16 @@ class ProjectOverviewCardShell extends StatelessWidget {
             left: 0,
             right: 0,
             top: 0,
-            height: 2,
+            height: 1.5,
             child: IgnorePointer(
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
                       Colors.transparent,
-                      accent.withValues(alpha: isDark ? 0.55 : 0.08),
+                      accent.withValues(alpha: isDark ? 0.38 : 0.06),
                       colorScheme.secondary.withValues(
-                        alpha: isDark ? 0.22 : 0.04,
+                        alpha: isDark ? 0.14 : 0.03,
                       ),
                       Colors.transparent,
                     ],

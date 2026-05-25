@@ -50,7 +50,8 @@ class ProjectAnalyticsTab extends StatefulWidget {
   State<ProjectAnalyticsTab> createState() => _ProjectAnalyticsTabState();
 }
 
-class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
+class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab>
+    with SingleTickerProviderStateMixin {
   static const Map<String, String> _compareDimToApiType = {
     'pages': 'path',
     'referrers': 'referrer',
@@ -100,11 +101,154 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
   bool _showInstallerView = false;
   bool _sharingAccess = false;
   int _analyticsTabIndex = 0;
+  late final TabController _analyticsTabController;
   bool _installSucceeded = false;
   int _autoEnterCountdown = 0;
   Timer? _autoEnterTimer;
 
   String _t(String key, String fallback) => _tr(context, key, fallback);
+
+  ButtonStyle _denseTextButtonStyle(BuildContext context) {
+    final theme = Theme.of(context);
+    return TextButton.styleFrom(
+      minimumSize: const Size(0, 30),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+      textStyle: theme.textTheme.labelLarge?.copyWith(
+        fontWeight: FontWeight.w700,
+      ),
+    );
+  }
+
+  ButtonStyle _denseOutlinedButtonStyle(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    return OutlinedButton.styleFrom(
+      minimumSize: const Size(0, 34),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
+      side: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.42)),
+      textStyle: theme.textTheme.labelLarge?.copyWith(
+        fontWeight: FontWeight.w700,
+      ),
+    );
+  }
+
+  ButtonStyle _denseFilledButtonStyle(BuildContext context) {
+    final theme = Theme.of(context);
+    return FilledButton.styleFrom(
+      minimumSize: const Size(0, 34),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
+      textStyle: theme.textTheme.labelLarge?.copyWith(
+        fontWeight: FontWeight.w700,
+      ),
+    );
+  }
+
+  ChoiceChip _compactChoiceChip({
+    required String label,
+    required bool selected,
+    required ValueChanged<bool>? onSelected,
+  }) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: onSelected,
+      showCheckmark: false,
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 0),
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+      backgroundColor: cs.surfaceContainerLow,
+      selectedColor: cs.primary.withValues(alpha: 0.12),
+      side: BorderSide(
+        color: selected
+            ? cs.primary.withValues(alpha: 0.2)
+            : cs.outlineVariant.withValues(alpha: 0.36),
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+      labelStyle: theme.textTheme.labelMedium?.copyWith(
+        fontWeight: FontWeight.w700,
+        color: selected ? cs.primary : cs.onSurfaceVariant,
+      ),
+    );
+  }
+
+  FilterChip _compactFilterChip({
+    required String label,
+    required bool selected,
+    required ValueChanged<bool>? onSelected,
+  }) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    return FilterChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: onSelected,
+      showCheckmark: false,
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 0),
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+      backgroundColor: cs.surfaceContainerLow,
+      selectedColor: cs.primary.withValues(alpha: 0.12),
+      side: BorderSide(
+        color: selected
+            ? cs.primary.withValues(alpha: 0.2)
+            : cs.outlineVariant.withValues(alpha: 0.36),
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+      labelStyle: theme.textTheme.labelMedium?.copyWith(
+        fontWeight: FontWeight.w700,
+        color: selected ? cs.primary : cs.onSurfaceVariant,
+      ),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _analyticsTabController = TabController(length: 7, vsync: this);
+    _analyticsTabController.addListener(_handleAnalyticsTabChanged);
+  }
+
+  void _handleAnalyticsTabChanged() {
+    final index = _analyticsTabController.index;
+    if (_analyticsTabIndex == index) return;
+    if (!mounted) {
+      _analyticsTabIndex = index;
+      return;
+    }
+    setState(() {
+      _analyticsTabIndex = index;
+    });
+  }
+
+  void _openAnalyticsTab(int index, {bool animate = true}) {
+    if (index < 0 || index >= _analyticsTabController.length) return;
+    if (_analyticsTabIndex != index) {
+      if (mounted) {
+        setState(() {
+          _analyticsTabIndex = index;
+        });
+      } else {
+        _analyticsTabIndex = index;
+      }
+    }
+    if (_analyticsTabController.index == index) return;
+    if (animate) {
+      _analyticsTabController.animateTo(index);
+    } else {
+      _analyticsTabController.index = index;
+    }
+  }
 
   @override
   void didChangeDependencies() {
@@ -139,6 +283,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       _installError = null;
       _showInstallerView = false;
       _analyticsTabIndex = 0;
+      _openAnalyticsTab(0, animate: false);
       _eventsTimeRange = TimeRange.last7Days;
       _compareMode = AnalyticsCompareMode.days7;
       _compareDimension = 'pages';
@@ -155,6 +300,8 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
   void dispose() {
     _autoEnterTimer?.cancel();
     _closeInstallerWebSocket();
+    _analyticsTabController.removeListener(_handleAnalyticsTabChanged);
+    _analyticsTabController.dispose();
     super.dispose();
   }
 
@@ -608,8 +755,8 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       _showInstallerView = false;
       _installSucceeded = false;
       _autoEnterCountdown = 0;
-      _analyticsTabIndex = 0;
     });
+    _openAnalyticsTab(0, animate: false);
   }
 
   Future<void> _copyFieldValue(String value, String label) async {
@@ -942,24 +1089,55 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
   }
 
   Widget _buildEnabledTabsView() {
-    return DefaultTabController(
-      length: 7,
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            child: _buildAnalyticsSummaryStrip(),
-          ),
-          Material(
-            color: Theme.of(context).colorScheme.surface,
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+          child: _buildAnalyticsWorkspaceHeader(),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+          child: _buildAnalyticsSummaryStrip(),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              color: Color.alphaBlend(
+                cs.surfaceContainerLow.withValues(alpha: 0.72),
+                cs.surface,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: cs.outlineVariant.withValues(alpha: 0.28),
+              ),
+            ),
             child: TabBar(
+              controller: _analyticsTabController,
               isScrollable: true,
-              onTap: (index) {
-                if (_analyticsTabIndex == index) return;
-                setState(() {
-                  _analyticsTabIndex = index;
-                });
-              },
+              dividerColor: Colors.transparent,
+              indicatorSize: TabBarIndicatorSize.tab,
+              labelPadding: const EdgeInsets.symmetric(horizontal: 10),
+              labelStyle: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+              ),
+              unselectedLabelStyle: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+              labelColor: cs.primary,
+              unselectedLabelColor: cs.onSurfaceVariant,
+              overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+              splashBorderRadius: BorderRadius.circular(12),
+              indicator: BoxDecoration(
+                color: cs.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(9),
+                border: Border.all(color: cs.primary.withValues(alpha: 0.18)),
+              ),
               tabs: [
                 Tab(text: _t('project_analytics_tab_data', 'Data')),
                 Tab(text: _t('project_analytics_tab_events', 'Events')),
@@ -971,47 +1149,182 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
               ],
             ),
           ),
-          Expanded(
-            child: TabBarView(
-              physics: const NeverScrollableScrollPhysics(),
-              children: [
-                _analyticsTabIndex == 0
-                    ? _buildDataTabView()
-                    : _inactiveTabPlaceholder(
-                        _t('project_analytics_tab_data', 'Data'),
-                      ),
-                _analyticsTabIndex == 1
-                    ? _buildEventsTabView()
-                    : _inactiveTabPlaceholder(
-                        _t('project_analytics_tab_events', 'Events'),
-                      ),
-                _analyticsTabIndex == 2
-                    ? _buildSessionsTabView()
-                    : _inactiveTabPlaceholder(
-                        _t('project_analytics_tab_sessions', 'Sessions'),
-                      ),
-                _analyticsTabIndex == 3
-                    ? _buildRealtimeTabView()
-                    : _inactiveTabPlaceholder(
-                        _t('project_analytics_tab_realtime', 'Realtime'),
-                      ),
-                _analyticsTabIndex == 4
-                    ? _buildCompareTabView()
-                    : _inactiveTabPlaceholder(
-                        _t('project_analytics_tab_compare', 'Compare'),
-                      ),
-                _analyticsTabIndex == 5
-                    ? _buildReportsTabView()
-                    : _inactiveTabPlaceholder(
-                        _t('project_analytics_tab_reports', 'Reports'),
-                      ),
-                _analyticsTabIndex == 6
-                    ? _buildSettingsTabView()
-                    : _inactiveTabPlaceholder(
-                        _t('project_analytics_tab_setting', 'Setting'),
-                      ),
-              ],
+        ),
+        Expanded(
+          child: TabBarView(
+            controller: _analyticsTabController,
+            physics: const NeverScrollableScrollPhysics(),
+            children: [
+              _analyticsTabIndex == 0
+                  ? _buildDataTabView()
+                  : _inactiveTabPlaceholder(
+                      _t('project_analytics_tab_data', 'Data'),
+                    ),
+              _analyticsTabIndex == 1
+                  ? _buildEventsTabView()
+                  : _inactiveTabPlaceholder(
+                      _t('project_analytics_tab_events', 'Events'),
+                    ),
+              _analyticsTabIndex == 2
+                  ? _buildSessionsTabView()
+                  : _inactiveTabPlaceholder(
+                      _t('project_analytics_tab_sessions', 'Sessions'),
+                    ),
+              _analyticsTabIndex == 3
+                  ? _buildRealtimeTabView()
+                  : _inactiveTabPlaceholder(
+                      _t('project_analytics_tab_realtime', 'Realtime'),
+                    ),
+              _analyticsTabIndex == 4
+                  ? _buildCompareTabView()
+                  : _inactiveTabPlaceholder(
+                      _t('project_analytics_tab_compare', 'Compare'),
+                    ),
+              _analyticsTabIndex == 5
+                  ? _buildReportsTabView()
+                  : _inactiveTabPlaceholder(
+                      _t('project_analytics_tab_reports', 'Reports'),
+                    ),
+              _analyticsTabIndex == 6
+                  ? _buildSettingsTabView()
+                  : _inactiveTabPlaceholder(
+                      _t('project_analytics_tab_setting', 'Setting'),
+                    ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAnalyticsWorkspaceHeader() {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final websiteId = (widget.project.analyticsId ?? '').trim();
+    final envLabel = switch (_envScope) {
+      AnalyticsEnvScope.all => _t('project_analytics_all', 'All'),
+      AnalyticsEnvScope.preview => _t('project_analytics_preview', 'Preview'),
+      AnalyticsEnvScope.prod => _t('project_analytics_prod', 'Prod'),
+    };
+
+    Widget pill(IconData icon, String text, {Color? tone}) {
+      final color = tone ?? cs.primary;
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: color.withValues(alpha: 0.18)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 6),
+            Text(
+              text,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: color,
+                fontWeight: FontWeight.w700,
+              ),
             ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: Color.alphaBlend(
+          cs.surfaceContainerLow.withValues(alpha: 0.76),
+          cs.surface,
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.28)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Analytics workspace',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Track traffic, compare recent windows, and jump from overview metrics into the exact slice you want to inspect.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.end,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: _sharingAccess ? null : _shareAnalyticsAccess,
+                    style: _denseOutlinedButtonStyle(context),
+                    icon: const Icon(Icons.share_outlined, size: 16),
+                    label: Text(
+                      _t('project_analytics_share_access', 'Share Access'),
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _copyTrackingCode,
+                    style: _denseOutlinedButtonStyle(context),
+                    icon: const Icon(Icons.copy_all_outlined, size: 16),
+                    label: Text(
+                      _t(
+                        'project_analytics_copy_tracking_code',
+                        'Copy Tracking Code',
+                      ),
+                    ),
+                  ),
+                  FilledButton.icon(
+                    onPressed: _isLoading ? null : _loadAnalytics,
+                    style: _denseFilledButtonStyle(context),
+                    icon: const Icon(Icons.refresh_rounded, size: 16),
+                    label: Text(_t('refresh', 'Refresh')),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              pill(
+                Icons.analytics_outlined,
+                websiteId.isEmpty ? '—' : websiteId,
+              ),
+              pill(Icons.filter_alt_outlined, envLabel, tone: cs.tertiary),
+              if (_previewHost != null)
+                pill(
+                  Icons.visibility_outlined,
+                  _previewHost!,
+                  tone: cs.secondary,
+                ),
+              if (_prodHost != null)
+                pill(Icons.public, _prodHost!, tone: cs.primary),
+            ],
           ),
         ],
       ),
@@ -1029,12 +1342,12 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
 
     Widget item(String label, String value) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(11),
           border: Border.all(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.45),
+            color: colorScheme.outlineVariant.withValues(alpha: 0.38),
           ),
         ),
         child: Column(
@@ -1042,12 +1355,13 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
           children: [
             Text(
               label,
-              style: theme.textTheme.labelSmall?.copyWith(
+              style: theme.textTheme.labelMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
-                letterSpacing: 0.2,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.15,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 5),
             Text(
               value,
               style: theme.textTheme.titleSmall?.copyWith(
@@ -1060,14 +1374,26 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
     }
 
     return Wrap(
-      spacing: 10,
-      runSpacing: 10,
+      spacing: 8,
+      runSpacing: 8,
       children: [
-        item(_t('project_analytics_period', 'Period: {range}').replaceAll('{range}', ''), _timeRangeLabel(_timeRange)),
-        item(_t('project_analytics_pageviews', 'Pageviews'), pageviews.toString()),
+        item(
+          _t(
+            'project_analytics_period',
+            'Period: {range}',
+          ).replaceAll('{range}', ''),
+          _timeRangeLabel(_timeRange),
+        ),
+        item(
+          _t('project_analytics_pageviews', 'Pageviews'),
+          pageviews.toString(),
+        ),
         item(_t('project_analytics_visitors', 'Visitors'), visitors.toString()),
         item(_t('project_analytics_sessions', 'Sessions'), sessions.toString()),
-        item(_t('project_analytics_active_now', 'Active Now'), activeNow.toString()),
+        item(
+          _t('project_analytics_active_now', 'Active Now'),
+          activeNow.toString(),
+        ),
       ],
     );
   }
@@ -1130,6 +1456,18 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
               ),
               const SizedBox(height: 16),
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(0, 36),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  visualDensity: const VisualDensity(
+                    horizontal: -2,
+                    vertical: -2,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                ),
                 onPressed: _loadAnalytics,
                 child: Text(_t('retry', 'Retry')),
               ),
@@ -1143,7 +1481,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       onRefresh: _loadAnalytics,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1155,7 +1493,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(flex: 7, child: _buildFiltersCard()),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Expanded(flex: 5, child: _buildPeriodCard()),
                     ],
                   );
@@ -1163,7 +1501,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                 return Column(
                   children: [
                     _buildFiltersCard(),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     _buildPeriodCard(),
                   ],
                 );
@@ -1348,8 +1686,8 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  ChoiceChip(
-                    label: Text(_t('project_analytics_7d', '7D')),
+                  _compactChoiceChip(
+                    label: _t('project_analytics_7d', '7D'),
                     selected: _eventsTimeRange == TimeRange.last7Days,
                     onSelected: (v) {
                       if (!v || _eventsTimeRange == TimeRange.last7Days) {
@@ -1358,8 +1696,8 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                       setState(() => _eventsTimeRange = TimeRange.last7Days);
                     },
                   ),
-                  ChoiceChip(
-                    label: Text(_t('project_analytics_30d', '30D')),
+                  _compactChoiceChip(
+                    label: _t('project_analytics_30d', '30D'),
                     selected: _eventsTimeRange == TimeRange.last30Days,
                     onSelected: (v) {
                       if (!v || _eventsTimeRange == TimeRange.last30Days) {
@@ -1801,10 +2139,8 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  ChoiceChip(
-                    label: Text(
-                      _t('project_analytics_7d_vs_prev', '7D vs Prev 7D'),
-                    ),
+                  _compactChoiceChip(
+                    label: _t('project_analytics_7d_vs_prev', '7D vs Prev 7D'),
                     selected: _compareMode == AnalyticsCompareMode.days7,
                     onSelected: (v) {
                       if (!v || _compareMode == AnalyticsCompareMode.days7) {
@@ -1813,9 +2149,10 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                       setState(() => _compareMode = AnalyticsCompareMode.days7);
                     },
                   ),
-                  ChoiceChip(
-                    label: Text(
-                      _t('project_analytics_30d_vs_prev', '30D vs Prev 30D'),
+                  _compactChoiceChip(
+                    label: _t(
+                      'project_analytics_30d_vs_prev',
+                      '30D vs Prev 30D',
                     ),
                     selected: _compareMode == AnalyticsCompareMode.days30,
                     onSelected: (v) {
@@ -1837,8 +2174,8 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                     final selected = _compareDimension == dim;
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: Text(_compareDimLabel(dim)),
+                      child: _compactChoiceChip(
+                        label: _compareDimLabel(dim),
                         selected: selected,
                         onSelected: (v) {
                           if (!v || selected) return;
@@ -2111,20 +2448,27 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
   }
 
   Widget _simpleMetricCard({required String title, required String value}) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               title,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: cs.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 6),
             Text(
               value,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ],
         ),
@@ -2136,7 +2480,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
     final theme = Theme.of(context);
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -2146,7 +2490,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               _t(
                 'project_analytics_no_metrics_selected',
@@ -2156,7 +2500,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Align(
               alignment: Alignment.centerRight,
               child: OutlinedButton.icon(
@@ -2228,7 +2572,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -2259,6 +2603,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                           });
                           reload();
                         },
+                  style: _denseTextButtonStyle(context),
                   child: Text(_t('project_analytics_reset', 'Reset')),
                 ),
                 if (_isLoading)
@@ -2269,7 +2614,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                   ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Text(
               _t('project_analytics_time_range', 'Time range'),
               style: theme.textTheme.bodySmall?.copyWith(
@@ -2285,8 +2630,8 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                 TimeRange.last30Days,
                 TimeRange.last90Days,
               ])
-                ChoiceChip(
-                  label: Text(_timeRangeLabel(r)),
+                _compactChoiceChip(
+                  label: _timeRangeLabel(r),
                   selected: _timeRange == r,
                   onSelected: (v) {
                     if (!v || _timeRange == r) return;
@@ -2295,7 +2640,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                   },
                 ),
             ]),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Text(
               _t('project_analytics_environment', 'Environment'),
               style: theme.textTheme.bodySmall?.copyWith(
@@ -2305,8 +2650,8 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
             ),
             const SizedBox(height: 8),
             chipRow([
-              ChoiceChip(
-                label: Text(_t('project_analytics_all', 'All')),
+              _compactChoiceChip(
+                label: _t('project_analytics_all', 'All'),
                 selected: _envScope == AnalyticsEnvScope.all,
                 onSelected: (v) {
                   if (!v || _envScope == AnalyticsEnvScope.all) return;
@@ -2314,8 +2659,8 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                   reload();
                 },
               ),
-              ChoiceChip(
-                label: Text(_t('project_analytics_preview', 'Preview')),
+              _compactChoiceChip(
+                label: _t('project_analytics_preview', 'Preview'),
                 selected: _envScope == AnalyticsEnvScope.preview,
                 onSelected: previewHost == null
                     ? null
@@ -2327,8 +2672,8 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                         reload();
                       },
               ),
-              ChoiceChip(
-                label: Text(_t('project_analytics_prod', 'Prod')),
+              _compactChoiceChip(
+                label: _t('project_analytics_prod', 'Prod'),
                 selected: _envScope == AnalyticsEnvScope.prod,
                 onSelected: prodHost == null
                     ? null
@@ -2339,7 +2684,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                       },
               ),
             ]),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Text(
               _t('project_analytics_metrics', 'Metrics'),
               style: theme.textTheme.bodySmall?.copyWith(
@@ -2349,8 +2694,8 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
             ),
             const SizedBox(height: 8),
             chipRow([
-              FilterChip(
-                label: Text(_t('project_analytics_pageviews', 'Pageviews')),
+              _compactFilterChip(
+                label: _t('project_analytics_pageviews', 'Pageviews'),
                 selected: _showPageviewsSeries,
                 onSelected: (v) {
                   setState(() {
@@ -2361,8 +2706,8 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                   });
                 },
               ),
-              FilterChip(
-                label: Text(_t('project_analytics_sessions', 'Sessions')),
+              _compactFilterChip(
+                label: _t('project_analytics_sessions', 'Sessions'),
                 selected: _showSessionsSeries,
                 onSelected: (v) {
                   setState(() {
@@ -2375,7 +2720,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
               ),
             ]),
             if (_envScope != AnalyticsEnvScope.all) ...[
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Text(
                 _t(
                   'project_analytics_env_filter_note',
@@ -2396,15 +2741,15 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
     final theme = Theme.of(context);
     return Card(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Row(
           children: [
             Icon(
               Icons.calendar_today,
               color: theme.colorScheme.primary,
-              size: 20,
+              size: 16,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2415,7 +2760,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
                       'Period: {range}',
                     ).replaceAll('{range}', _timeRangeLabel(_timeRange)),
                     style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -2454,7 +2799,9 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
         value: pageviews.toString(),
         icon: Icons.visibility,
         color: Colors.blue,
-        onTap: () {
+        actionLabel: _t('project_analytics_open_data', 'Open Data'),
+        onTap: () => _openAnalyticsTab(0),
+        onLongPress: () {
           widget.onAskAi?.call(
             _t(
               'project_analytics_ai_prompt_pageviews',
@@ -2468,7 +2815,9 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
         value: visitors.toString(),
         icon: Icons.people,
         color: Colors.purple,
-        onTap: () {
+        actionLabel: _t('project_analytics_open_data', 'Open Data'),
+        onTap: () => _openAnalyticsTab(0),
+        onLongPress: () {
           widget.onAskAi?.call(
             _t(
               'project_analytics_ai_prompt_visitors',
@@ -2482,7 +2831,9 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
         value: sessions.toString(),
         icon: Icons.timeline,
         color: Colors.teal,
-        onTap: () {
+        actionLabel: _t('project_analytics_open_sessions', 'Open Sessions'),
+        onTap: () => _openAnalyticsTab(2),
+        onLongPress: () {
           widget.onAskAi?.call(
             _t(
               'project_analytics_ai_prompt_sessions',
@@ -2496,7 +2847,9 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
         value: activeNow.toString(),
         icon: Icons.bolt,
         color: Colors.indigo,
-        onTap: () {
+        actionLabel: _t('project_analytics_open_realtime', 'Open Realtime'),
+        onTap: () => _openAnalyticsTab(3),
+        onLongPress: () {
           widget.onAskAi?.call(
             _t(
               'project_analytics_ai_prompt_active_now',
@@ -2516,7 +2869,9 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
           children: [
             for (final card in cards)
               SizedBox(
-                width: wide ? (constraints.maxWidth - 36) / 4 : (constraints.maxWidth - 12) / 2,
+                width: wide
+                    ? (constraints.maxWidth - 36) / 4
+                    : (constraints.maxWidth - 12) / 2,
                 child: card,
               ),
           ],
@@ -2625,91 +2980,110 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab> {
       return '';
     }
 
-    Widget buildList(String title, List<dynamic> items) {
+    Widget buildList(
+      String title,
+      List<dynamic> items, {
+      bool expanded = true,
+    }) {
       final theme = Theme.of(context);
-      return Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      final content = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          if (items.isEmpty)
             Text(
-              title,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            if (items.isEmpty)
-              Text(
-                _t('project_analytics_no_data_short', 'No data'),
-                style: TextStyle(
-                  fontSize: 12,
-                  color: theme.colorScheme.onSurfaceVariant,
+              _t('project_analytics_no_data_short', 'No data'),
+              style: TextStyle(
+                fontSize: 12,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            )
+          else
+            ...items.map((it) {
+              final label = itemLabel(it);
+              final val = itemValue(it);
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      val,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
-              )
-            else
-              ...items.map((it) {
-                final label = itemLabel(it);
-                final val = itemValue(it);
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        val,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: theme.colorScheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
-          ],
-        ),
+              );
+            }),
+        ],
       );
+      return expanded ? Expanded(child: content) : content;
     }
 
     final theme = Theme.of(context);
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _t(
-                'project_analytics_top_traffic_sources',
-                'Top Traffic Sources',
+        padding: const EdgeInsets.all(14),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final stacked = constraints.maxWidth < 720;
+            final lists = <Widget>[
+              buildList(
+                _t('project_analytics_top_pages', 'Top pages'),
+                pages,
+                expanded: !stacked,
               ),
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w800,
+              if (stacked)
+                const SizedBox(height: 14)
+              else
+                const SizedBox(width: 16),
+              buildList(
+                _t('project_analytics_top_referrers', 'Top referrers'),
+                refs,
+                expanded: !stacked,
               ),
-            ),
-            const SizedBox(height: 10),
-            Row(
+            ];
+            return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                buildList(
-                  _t('project_analytics_top_pages', 'Top pages'),
-                  pages,
+                Text(
+                  _t(
+                    'project_analytics_top_traffic_sources',
+                    'Top Traffic Sources',
+                  ),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-                const SizedBox(width: 16),
-                buildList(
-                  _t('project_analytics_top_referrers', 'Top referrers'),
-                  refs,
-                ),
+                const SizedBox(height: 10),
+                stacked
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: lists,
+                      )
+                    : Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: lists,
+                      ),
               ],
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
@@ -3022,34 +3396,45 @@ class _AnalyticsMetricCard extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color color;
+  final String? actionLabel;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
   const _AnalyticsMetricCard({
     required this.title,
     required this.value,
     required this.icon,
     required this.color,
+    this.actionLabel,
     this.onTap,
+    this.onLongPress,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     final card = Container(
-      padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
+      padding: const EdgeInsets.fromLTRB(10, 9, 10, 9),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.75),
-        ),
+        color: cs.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.62)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, color: color, size: 18),
+              Container(
+                width: 26,
+                height: 26,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: color, size: 15),
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -3057,7 +3442,7 @@ class _AnalyticsMetricCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.labelMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                    color: cs.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -3067,10 +3452,26 @@ class _AnalyticsMetricCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             value,
-            style: theme.textTheme.titleLarge?.copyWith(
+            style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
             ),
           ),
+          if ((actionLabel ?? '').trim().isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Text(
+                  actionLabel!,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: cs.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(Icons.arrow_outward_rounded, size: 14, color: cs.primary),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -3078,7 +3479,8 @@ class _AnalyticsMetricCard extends StatelessWidget {
     if (onTap != null) {
       return InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        onLongPress: onLongPress,
+        borderRadius: BorderRadius.circular(11),
         child: card,
       );
     }
@@ -3403,4 +3805,3 @@ class _AnalyticsInstallerView extends StatelessWidget {
     );
   }
 }
-

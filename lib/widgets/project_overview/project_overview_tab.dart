@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -11,6 +12,7 @@ import '../snackbar_helper.dart';
 import 'components/project_overview_card_shell.dart';
 import 'components/project_overview_danger_zone_card.dart';
 import 'components/project_overview_health_metrics_card.dart';
+import 'components/project_overview_links_card.dart';
 import 'components/project_overview_recent_deployments_card.dart';
 import 'components/project_overview_utils.dart';
 import '../../providers/project_provider.dart';
@@ -23,11 +25,13 @@ import '../progress_widget.dart';
 class ProjectOverviewTab extends StatefulWidget {
   final UserProject project;
   final Future<void> Function()? onRefreshProject;
+  final void Function(String tab)? onNavigateToTab;
 
   const ProjectOverviewTab({
     super.key,
     required this.project,
     this.onRefreshProject,
+    this.onNavigateToTab,
   });
 
   @override
@@ -97,15 +101,53 @@ class _ProjectOverviewTabState extends State<ProjectOverviewTab> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 920;
-        final content = <Widget>[
-          _OverviewHeroPanel(
-            project: project,
-            ownerEmail: ownerEmail,
-            onOpenPreviewUrl: _openPreviewUrl,
-            isWide: isWide,
-          ),
-          const SizedBox(height: 14),
-        ];
+        final topWorkspace = isWide
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 7,
+                    child: _OverviewHeroPanel(
+                      project: project,
+                      ownerEmail: ownerEmail,
+                      onOpenUrl: _openProjectUrl,
+                      onCopyValue: _copyValue,
+                      isWide: true,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 5,
+                    child: _OverviewQuickActionsCard(
+                      project: project,
+                      onNavigateToTab: widget.onNavigateToTab,
+                      onOpenPreviewUrl: _openPreviewUrl,
+                      onOpenGitHubRepo: _openGitHubRepo,
+                    ),
+                  ),
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _OverviewHeroPanel(
+                    project: project,
+                    ownerEmail: ownerEmail,
+                    onOpenUrl: _openProjectUrl,
+                    onCopyValue: _copyValue,
+                    isWide: false,
+                  ),
+                  const SizedBox(height: 14),
+                  _OverviewQuickActionsCard(
+                    project: project,
+                    onNavigateToTab: widget.onNavigateToTab,
+                    onOpenPreviewUrl: _openPreviewUrl,
+                    onOpenGitHubRepo: _openGitHubRepo,
+                  ),
+                ],
+              );
+
+        final content = <Widget>[topWorkspace, const SizedBox(height: 16)];
 
         if (isWide) {
           content.add(
@@ -136,6 +178,12 @@ class _ProjectOverviewTabState extends State<ProjectOverviewTab> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      ProjectOverviewLinksCard(
+                        project: project,
+                        onOpenPreviewUrl: _openPreviewUrl,
+                        onOpenGitHubRepo: _openGitHubRepo,
+                      ),
+                      const SizedBox(height: 16),
                       ProjectOverviewHealthMetricsCard(project: project),
                       const SizedBox(height: 16),
                       ProjectOverviewDangerZoneCard(project: project),
@@ -158,6 +206,12 @@ class _ProjectOverviewTabState extends State<ProjectOverviewTab> {
               isLoading: _isLoadingDeployments,
             ),
             const SizedBox(height: 16),
+            ProjectOverviewLinksCard(
+              project: project,
+              onOpenPreviewUrl: _openPreviewUrl,
+              onOpenGitHubRepo: _openGitHubRepo,
+            ),
+            const SizedBox(height: 16),
             ProjectOverviewHealthMetricsCard(project: project),
             const SizedBox(height: 16),
             ProjectOverviewDangerZoneCard(project: project),
@@ -165,7 +219,7 @@ class _ProjectOverviewTabState extends State<ProjectOverviewTab> {
         }
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: content,
@@ -203,18 +257,54 @@ class _ProjectOverviewTabState extends State<ProjectOverviewTab> {
       ),
     );
   }
+
+  Future<void> _openProjectUrl(String url) async {
+    await _openUrl(
+      url,
+      _t(
+        'project_overview_links_open_url_failed',
+        'Could not open project URL',
+      ),
+    );
+  }
+
+  Future<void> _openGitHubRepo(String repoFullName) async {
+    final repo = repoFullName.trim();
+    if (repo.isEmpty || !repo.contains('/')) return;
+    await _openUrl(
+      'https://github.com/$repo',
+      _t(
+        'project_overview_links_open_github_failed',
+        'Could not open GitHub repository',
+      ),
+    );
+  }
+
+  Future<void> _copyValue(String value, String label) async {
+    final text = value.trim();
+    if (text.isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) return;
+    SnackBarHelper.showSuccess(
+      context,
+      title: _t('copied', 'Copied'),
+      message: '$label copied',
+    );
+  }
 }
 
 class _OverviewHeroPanel extends StatelessWidget {
   final UserProject project;
   final String? ownerEmail;
-  final Future<void> Function(String url) onOpenPreviewUrl;
+  final Future<void> Function(String url) onOpenUrl;
+  final Future<void> Function(String value, String label) onCopyValue;
   final bool isWide;
 
   const _OverviewHeroPanel({
     required this.project,
     required this.ownerEmail,
-    required this.onOpenPreviewUrl,
+    required this.onOpenUrl,
+    required this.onCopyValue,
     required this.isWide,
   });
 
@@ -242,7 +332,7 @@ class _OverviewHeroPanel extends StatelessWidget {
               : null);
 
     return ProjectOverviewCardShell(
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
       accentColor: cs.primary,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -251,7 +341,18 @@ class _OverviewHeroPanel extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(flex: 8, child: _buildSummaryColumn(context, theme, cs, isDark, branch, prodUrl)),
+                Expanded(
+                  flex: 8,
+                  child: _buildSummaryColumn(
+                    context,
+                    theme,
+                    cs,
+                    isDark,
+                    previewUrl,
+                    branch,
+                    prodUrl,
+                  ),
+                ),
                 const SizedBox(width: 18),
                 SizedBox(
                   width: 328,
@@ -260,7 +361,15 @@ class _OverviewHeroPanel extends StatelessWidget {
               ],
             )
           else ...[
-            _buildSummaryColumn(context, theme, cs, isDark, branch, prodUrl),
+            _buildSummaryColumn(
+              context,
+              theme,
+              cs,
+              isDark,
+              previewUrl,
+              branch,
+              prodUrl,
+            ),
             const SizedBox(height: 14),
             _buildMetaRail(context, previewUrl),
           ],
@@ -274,6 +383,7 @@ class _OverviewHeroPanel extends StatelessWidget {
     ThemeData theme,
     ColorScheme cs,
     bool isDark,
+    String? previewUrl,
     String branch,
     String? prodUrl,
   ) {
@@ -288,11 +398,11 @@ class _OverviewHeroPanel extends StatelessWidget {
               child: Material(
                 color: Colors.transparent,
                 child: Container(
-                  width: 54,
-                  height: 54,
+                  width: 44,
+                  height: 44,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(12),
                     color: Color.alphaBlend(
                       cs.primary.withValues(alpha: isDark ? 0.18 : 0.08),
                       cs.surface,
@@ -303,12 +413,12 @@ class _OverviewHeroPanel extends StatelessWidget {
                   ),
                   child: Text(
                     project.emoji ?? '🚀',
-                    style: const TextStyle(fontSize: 26),
+                    style: const TextStyle(fontSize: 22),
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,7 +462,7 @@ class _OverviewHeroPanel extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 12),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -370,6 +480,8 @@ class _OverviewHeroPanel extends StatelessWidget {
                 icon: Icons.alt_route,
                 text: branch,
                 monospace: true,
+                onTap: () => onCopyValue(branch, 'Branch'),
+                tooltip: 'Copy branch',
               ),
             _OverviewInlineTag(
               icon: Icons.preview_outlined,
@@ -377,11 +489,19 @@ class _OverviewHeroPanel extends StatelessWidget {
                 context,
                 preferredPreviewUrlFromProject(project),
               ),
+              onTap: previewUrl == null || previewUrl.isEmpty
+                  ? null
+                  : () => onOpenUrl(previewUrl),
+              tooltip: previewUrl == null || previewUrl.isEmpty
+                  ? null
+                  : 'Open preview',
             ),
             if (prodUrl != null)
               _OverviewInlineTag(
                 icon: Icons.public,
                 text: getDeploymentLabel(context, prodUrl),
+                onTap: () => onOpenUrl(prodUrl),
+                tooltip: 'Open production',
               ),
           ],
         ),
@@ -394,16 +514,8 @@ class _OverviewHeroPanel extends StatelessWidget {
         ? _t(context, 'project_overview_stats_unknown', 'Unknown')
         : ownerEmail!;
     final analytics = project.hasAnalyticsId
-        ? _t(
-            context,
-            'project_overview_health_status_enabled',
-            'Enabled',
-          )
-        : _t(
-            context,
-            'project_overview_health_status_disabled',
-            'Disabled',
-          );
+        ? _t(context, 'project_overview_health_status_enabled', 'Enabled')
+        : _t(context, 'project_overview_health_status_disabled', 'Disabled');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -421,6 +533,16 @@ class _OverviewHeroPanel extends StatelessWidget {
               label: _t(context, 'project_overview_stats_owner', 'Owner'),
               value: owner,
               compact: true,
+              onTap:
+                  owner ==
+                      _t(context, 'project_overview_stats_unknown', 'Unknown')
+                  ? null
+                  : () => onCopyValue(owner, 'Owner'),
+              tooltip:
+                  owner ==
+                      _t(context, 'project_overview_stats_unknown', 'Unknown')
+                  ? null
+                  : 'Copy owner',
             ),
             _OverviewMetricTile(
               label: _t(
@@ -439,6 +561,12 @@ class _OverviewHeroPanel extends StatelessWidget {
               ),
               value: getDeploymentLabel(context, previewUrl),
               compact: true,
+              onTap: previewUrl == null || previewUrl.isEmpty
+                  ? null
+                  : () => onOpenUrl(previewUrl),
+              tooltip: previewUrl == null || previewUrl.isEmpty
+                  ? null
+                  : 'Open preview',
             ),
           ],
         ),
@@ -447,7 +575,22 @@ class _OverviewHeroPanel extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: FilledButton.tonalIcon(
-              onPressed: () => onOpenPreviewUrl(previewUrl),
+              onPressed: () => onOpenUrl(previewUrl),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(0, 34),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: const VisualDensity(
+                  horizontal: -2,
+                  vertical: -2,
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(11),
+                ),
+              ),
               icon: const Icon(Icons.open_in_new, size: 18),
               label: Text(
                 _t(context, 'project_overview_open_preview', 'Open preview'),
@@ -456,6 +599,182 @@ class _OverviewHeroPanel extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+class _OverviewQuickActionsCard extends StatelessWidget {
+  final UserProject project;
+  final void Function(String tab)? onNavigateToTab;
+  final Future<void> Function(String url) onOpenPreviewUrl;
+  final Future<void> Function(String repoFullName) onOpenGitHubRepo;
+
+  const _OverviewQuickActionsCard({
+    required this.project,
+    required this.onNavigateToTab,
+    required this.onOpenPreviewUrl,
+    required this.onOpenGitHubRepo,
+  });
+
+  String _t(BuildContext context, String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    if (value == null || value == key) return fallback;
+    return value;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final previewUrl = preferredPreviewUrlFromProject(project);
+    final repoFullName = (project.repositoryFullName ?? '').trim();
+
+    return ProjectOverviewCardShell(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          const gap = 8.0;
+          final columns = constraints.maxWidth >= 420 ? 2 : 1;
+          final buttonWidth = columns == 1
+              ? constraints.maxWidth
+              : (constraints.maxWidth - gap) / 2;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Quick actions',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Jump straight into the part of the project you want to operate on.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: gap,
+                runSpacing: gap,
+                children: [
+                  SizedBox(
+                    width: buttonWidth,
+                    child: _OverviewActionButton(
+                      icon: Icons.chat_bubble_outline_rounded,
+                      label: _t(context, 'project_detail_tab_chat', 'Chat'),
+                      onPressed: onNavigateToTab == null
+                          ? null
+                          : () => onNavigateToTab!('chat'),
+                    ),
+                  ),
+                  SizedBox(
+                    width: buttonWidth,
+                    child: _OverviewActionButton(
+                      icon: Icons.cloud_upload_outlined,
+                      label: _t(context, 'project_detail_tab_deploy', 'Deploy'),
+                      onPressed: onNavigateToTab == null
+                          ? null
+                          : () => onNavigateToTab!('deploy'),
+                    ),
+                  ),
+                  SizedBox(
+                    width: buttonWidth,
+                    child: _OverviewActionButton(
+                      icon: Icons.payment_outlined,
+                      label: _t(
+                        context,
+                        'project_detail_tab_payment',
+                        'Payment',
+                      ),
+                      onPressed: onNavigateToTab == null
+                          ? null
+                          : () => onNavigateToTab!('payment'),
+                    ),
+                  ),
+                  SizedBox(
+                    width: buttonWidth,
+                    child: _OverviewActionButton(
+                      icon: Icons.analytics_outlined,
+                      label: _t(
+                        context,
+                        'project_detail_tab_analytics',
+                        'Analytics',
+                      ),
+                      onPressed: onNavigateToTab == null
+                          ? null
+                          : () => onNavigateToTab!('analytics'),
+                    ),
+                  ),
+                  SizedBox(
+                    width: buttonWidth,
+                    child: _OverviewActionButton(
+                      icon: Icons.open_in_new_rounded,
+                      label: _t(
+                        context,
+                        'project_overview_open_preview',
+                        'Open preview',
+                      ),
+                      onPressed: previewUrl == null || previewUrl.isEmpty
+                          ? null
+                          : () => onOpenPreviewUrl(previewUrl),
+                    ),
+                  ),
+                  SizedBox(
+                    width: buttonWidth,
+                    child: _OverviewActionButton(
+                      icon: Icons.code_rounded,
+                      label: _t(
+                        context,
+                        'project_overview_links_github_repo',
+                        'GitHub Repository',
+                      ),
+                      onPressed:
+                          repoFullName.isEmpty || !repoFullName.contains('/')
+                          ? null
+                          : () => onOpenGitHubRepo(repoFullName),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _OverviewActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback? onPressed;
+
+  const _OverviewActionButton({
+    required this.icon,
+    required this.label,
+    this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return FilledButton.tonalIcon(
+      onPressed: onPressed,
+      style: FilledButton.styleFrom(
+        minimumSize: const Size(0, 34),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
+        textStyle: theme.textTheme.labelLarge?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      icon: Icon(icon, size: 15),
+      label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
     );
   }
 }
@@ -479,30 +798,34 @@ class _OverviewMetricTile extends StatelessWidget {
   final String label;
   final String value;
   final bool compact;
+  final VoidCallback? onTap;
+  final String? tooltip;
 
   const _OverviewMetricTile({
     required this.label,
     required this.value,
     this.compact = false,
+    this.onTap,
+    this.tooltip,
   });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final width = (MediaQuery.sizeOf(context).width - 56) / 2;
-    return ConstrainedBox(
+    final child = ConstrainedBox(
       constraints: BoxConstraints(
-        minWidth: compact ? 140 : 150,
-        maxWidth: width.clamp(compact ? 140 : 150, compact ? 196 : 240),
+        minWidth: compact ? 128 : 144,
+        maxWidth: width.clamp(compact ? 128 : 144, compact ? 188 : 220),
       ),
       child: Container(
         padding: EdgeInsets.symmetric(
-          horizontal: compact ? 12 : 14,
-          vertical: compact ? 11 : 14,
+          horizontal: compact ? 10 : 12,
+          vertical: compact ? 9 : 11,
         ),
         decoration: BoxDecoration(
           color: cs.surface.withValues(alpha: 0.55),
-          borderRadius: BorderRadius.circular(compact ? 14 : 16),
+          borderRadius: BorderRadius.circular(compact ? 11 : 12),
           border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.35)),
         ),
         child: Column(
@@ -519,17 +842,29 @@ class _OverviewMetricTile extends StatelessWidget {
               value,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(
-                context,
-              ).textTheme.titleSmall?.copyWith(
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w700,
-                fontSize: compact ? 13 : null,
+                fontSize: compact ? 12 : 13,
               ),
             ),
           ],
         ),
       ),
     );
+
+    if (onTap == null) return child;
+
+    final interactive = Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(compact ? 12 : 14),
+        onTap: onTap,
+        child: child,
+      ),
+    );
+
+    if ((tooltip ?? '').trim().isEmpty) return interactive;
+    return Tooltip(message: tooltip, child: interactive);
   }
 }
 
@@ -537,33 +872,39 @@ class _OverviewInlineTag extends StatelessWidget {
   final IconData icon;
   final String text;
   final bool monospace;
+  final VoidCallback? onTap;
+  final String? tooltip;
 
   const _OverviewInlineTag({
     required this.icon,
     required this.text,
     this.monospace = false,
+    this.onTap,
+    this.tooltip,
   });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    final child = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
       decoration: BoxDecoration(
         color: cs.surface.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.34)),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 15, color: cs.onSurfaceVariant),
-          const SizedBox(width: 8),
+          Icon(icon, size: 14, color: cs.onSurfaceVariant),
+          const SizedBox(width: 7),
           Flexible(
             child: Text(
               text,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                fontSize: 11.5,
                 fontWeight: FontWeight.w600,
                 fontFamily: monospace ? 'monospace' : null,
               ),
@@ -572,6 +913,20 @@ class _OverviewInlineTag extends StatelessWidget {
         ],
       ),
     );
+
+    if (onTap == null) return child;
+
+    final interactive = Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: onTap,
+        child: child,
+      ),
+    );
+
+    if ((tooltip ?? '').trim().isEmpty) return interactive;
+    return Tooltip(message: tooltip, child: interactive);
   }
 }
 
@@ -610,7 +965,7 @@ class _OverviewStatusPill extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(999),
@@ -618,7 +973,11 @@ class _OverviewStatusPill extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(color: color, fontWeight: FontWeight.w700),
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.w700,
+          fontSize: 12,
+        ),
       ),
     );
   }
@@ -1234,10 +1593,12 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
     }) {
       final cs = theme.colorScheme;
       final outlinedStyle = OutlinedButton.styleFrom(
-        minimumSize: const Size(0, 48),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        minimumSize: const Size(0, 42),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         alignment: Alignment.centerLeft,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         side: BorderSide(
           color: primary
               ? cs.primary.withValues(alpha: 0.18)
@@ -1250,6 +1611,9 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
         disabledForegroundColor: cs.onSurfaceVariant.withValues(alpha: 0.6),
         disabledBackgroundColor: cs.surfaceContainerHighest.withValues(
           alpha: 0.4,
+        ),
+        textStyle: theme.textTheme.labelLarge?.copyWith(
+          fontWeight: FontWeight.w700,
         ),
       );
 
@@ -1283,7 +1647,7 @@ class _CommunityActionsCardState extends State<_CommunityActionsCard> {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
