@@ -1821,6 +1821,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
 
   void _handleWsPayload(Map<String, dynamic> payload) {
     final type = _normalizedWsType(payload);
+    if (type == null) return;
     final fingerprint = MessageParser.eventFingerprint(payload, type);
     if (fingerprint != null) {
       final nowMs = DateTime.now().millisecondsSinceEpoch;
@@ -2126,7 +2127,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     if (type == 'deployment_start' ||
         type == 'deployment_complete' ||
         type == 'deployment_success') {
-      _handleDeploymentFrame(type!, payload);
+      _handleDeploymentFrame(type, payload);
       return;
     }
 
@@ -2305,8 +2306,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     final contents = MessageParser.createMessageContentsFromPayload(payload);
     if (contents.isEmpty) return;
     final appendWsKey =
-        _extractWsKey(payload, type) ??
-        (turnId != null && type != null ? '$type:$turnId' : null);
+        _extractWsKey(payload, type) ?? (turnId != null ? '$type:$turnId' : null);
     _enqueuePendingAppend(
       ChatMessage(
         id: 'ws-${DateTime.now().millisecondsSinceEpoch}',
