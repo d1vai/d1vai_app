@@ -89,7 +89,11 @@ class CustomCard extends StatelessWidget {
                 : defaultShadows),
       ),
       child: child != null
-          ? Padding(padding: padding ?? EdgeInsets.zero, child: child)
+          ? Material(
+              type: MaterialType.transparency,
+              borderRadius: BorderRadius.circular(effectiveBorderRadius),
+              child: Padding(padding: padding ?? EdgeInsets.zero, child: child),
+            )
           : null,
     );
 

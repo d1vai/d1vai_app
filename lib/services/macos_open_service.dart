@@ -154,6 +154,7 @@ class MacosOpenService extends ChangeNotifier {
   static const MethodChannel _channel = MethodChannel('ai.d1v.d1vai/open');
 
   final List<MacosOpenRequest> _pendingRequests = <MacosOpenRequest>[];
+  final List<String> _pendingRoutes = <String>[];
   List<MacosWorkspaceWindowInfo> _workspaceWindows =
       const <MacosWorkspaceWindowInfo>[];
   String? _currentHostIdentifier;
@@ -161,6 +162,8 @@ class MacosOpenService extends ChangeNotifier {
 
   MacosOpenRequest? get pendingRequest =>
       _pendingRequests.isEmpty ? null : _pendingRequests.first;
+  String? get pendingRoute =>
+      _pendingRoutes.isEmpty ? null : _pendingRoutes.first;
   List<MacosWorkspaceWindowInfo> get workspaceWindows => _workspaceWindows;
   String? get currentHostIdentifier => _currentHostIdentifier;
 
@@ -183,6 +186,12 @@ class MacosOpenService extends ChangeNotifier {
           final request = MacosOpenRequest.fromChannelArguments(call.arguments);
           debugPrint('[d1vai-open] flutter request raw=${call.arguments}');
           enqueueRequest(request);
+          return;
+        case 'openRoute':
+          final route = _routeFromChannelArguments(call.arguments);
+          if (route.isEmpty) return;
+          debugPrint('[d1vai-open] flutter route raw=${call.arguments}');
+          enqueueRoute(route);
           return;
         case 'workspaceWindowsChanged':
           _updateWorkspaceWindows(call.arguments);
@@ -222,6 +231,14 @@ class MacosOpenService extends ChangeNotifier {
     }
   }
 
+  String _routeFromChannelArguments(dynamic arguments) {
+    if (arguments is Map) {
+      final map = arguments.cast<Object?, Object?>();
+      return (map['route'] ?? '').toString().trim();
+    }
+    return (arguments ?? '').toString().trim();
+  }
+
   Future<bool> openPathInNewWindow(
     String path, {
     MacosOpenRequestSource source = MacosOpenRequestSource.menu,
@@ -250,6 +267,35 @@ class MacosOpenService extends ChangeNotifier {
     } catch (e, st) {
       debugPrint(
         '[d1vai-open] failed to open new window for path=$trimmed error=$e',
+      );
+      debugPrintStack(stackTrace: st);
+      return false;
+    }
+  }
+
+  Future<bool> openRouteInMainWindow(
+    String route, {
+    bool activate = true,
+  }) async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.macOS) return false;
+    final trimmed = route.trim();
+    if (trimmed.isEmpty) return false;
+
+    try {
+      final opened =
+          await _channel.invokeMethod<bool>(
+            'openRouteInMainWindow',
+            <String, Object?>{'route': trimmed, 'activate': activate},
+          ) ??
+          false;
+      debugPrint(
+        '[d1vai-open] flutter openRouteInMainWindow result=$opened '
+        'route=$trimmed activate=$activate',
+      );
+      return opened;
+    } catch (e, st) {
+      debugPrint(
+        '[d1vai-open] failed to open route in main window route=$trimmed error=$e',
       );
       debugPrintStack(stackTrace: st);
       return false;
@@ -346,12 +392,32 @@ class MacosOpenService extends ChangeNotifier {
     );
   }
 
+  void enqueueRoute(String route) {
+    final trimmed = route.trim();
+    if (trimmed.isEmpty) return;
+    _pendingRoutes.add(trimmed);
+    debugPrint(
+      '[d1vai-open] flutter queued route=$trimmed queue=${_pendingRoutes.length}',
+    );
+    notifyListeners();
+  }
+
   MacosOpenRequest? consumePendingRequest() {
     if (_pendingRequests.isEmpty) return null;
     final value = _pendingRequests.first;
     _pendingRequests.removeAt(0);
     debugPrint(
       '[d1vai-open] flutter consumed request=$value remaining=${_pendingRequests.length}',
+    );
+    return value;
+  }
+
+  String? consumePendingRoute() {
+    if (_pendingRoutes.isEmpty) return null;
+    final value = _pendingRoutes.first;
+    _pendingRoutes.removeAt(0);
+    debugPrint(
+      '[d1vai-open] flutter consumed route=$value remaining=${_pendingRoutes.length}',
     );
     return value;
   }

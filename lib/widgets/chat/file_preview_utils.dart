@@ -1,6 +1,7 @@
 bool isEditableFilePreview(String path, bool isBinary) {
-  return _editablePreviewExtensions.contains(fileExtensionForPath(path)) &&
-      !isBinary;
+  if (isBinary) return false;
+  if (isMindJsonPreview(path)) return true;
+  return _editablePreviewExtensions.contains(fileExtensionForPath(path));
 }
 
 bool isCopyableFilePreview(String path, bool isBinary) {
@@ -15,6 +16,15 @@ bool isMarkdownPreview(String path) {
 bool isJsonPreview(String path) {
   final ext = fileExtensionForPath(path);
   return ext == 'json' || ext == 'jsonc' || ext == 'har';
+}
+
+bool isJsonLinesPreview(String path) {
+  final ext = fileExtensionForPath(path);
+  return ext == 'jsonl' || ext == 'ndjson';
+}
+
+bool isMindJsonPreview(String path) {
+  return path.toLowerCase().endsWith('.mind.json');
 }
 
 bool isSvgPreview(String path, String content) {
@@ -43,6 +53,14 @@ bool isPdfPreview(String path) {
   return fileExtensionForPath(path) == 'pdf';
 }
 
+bool isEpubPreview(String path) {
+  return fileExtensionForPath(path) == 'epub';
+}
+
+bool isXmlStructuredPreview(String path) {
+  return fileExtensionForPath(path) == 'xml';
+}
+
 bool isDocxPreview(String path) {
   return fileExtensionForPath(path) == 'docx';
 }
@@ -55,8 +73,20 @@ bool isPresentationPreview(String path) {
   return _presentationExtensions.contains(fileExtensionForPath(path));
 }
 
+bool isArchivePreview(String path) {
+  return _archiveExtensions.contains(fileExtensionForPath(path));
+}
+
+bool isXMindPreview(String path) {
+  return fileExtensionForPath(path) == 'xmind';
+}
+
 bool isLegacyOfficePreview(String path) {
   return _legacyOfficeExtensions.contains(fileExtensionForPath(path));
+}
+
+bool shouldPreferBrowserImagePreview(String path) {
+  return _browserImageExtensions.contains(fileExtensionForPath(path));
 }
 
 String fileExtensionForPath(String path) {
@@ -79,8 +109,6 @@ const Set<String> _markdownExtensions = <String>{
   'txt',
 };
 
-const List<String> _nonEditableExtensions = <String>['.svg', '.html', '.htm'];
-
 const Set<String> _editablePreviewExtensions = <String>{
   'txt',
   'md',
@@ -89,6 +117,8 @@ const Set<String> _editablePreviewExtensions = <String>{
   'json',
   'jsonc',
   'har',
+  'jsonl',
+  'ndjson',
   'yaml',
   'yml',
   'toml',
@@ -119,6 +149,7 @@ const Set<String> _editablePreviewExtensions = <String>{
   'zsh',
   'sql',
   'env',
+  'mind.json',
 };
 
 const Set<String> _imageExtensions = <String>{
@@ -159,6 +190,10 @@ const Set<String> _audioExtensions = <String>{
   'weba',
 };
 
+const Set<String> _archiveExtensions = <String>{
+  'zip',
+};
+
 const Set<String> _spreadsheetExtensions = <String>{
   'csv',
   'tsv',
@@ -170,6 +205,13 @@ const Set<String> _spreadsheetExtensions = <String>{
 const Set<String> _presentationExtensions = <String>{'pptx'};
 
 const Set<String> _legacyOfficeExtensions = <String>{'doc', 'xls', 'ppt'};
+
+const Set<String> _browserImageExtensions = <String>{
+  'ico',
+  'avif',
+  'heic',
+  'heif',
+};
 
 const Map<String, String> _mimeTypes = <String, String>{
   'png': 'image/png',
@@ -210,6 +252,7 @@ const Map<String, String> _mimeTypes = <String, String>{
       'application/vnd.openxmlformats-officedocument.presentationml.presentation',
   'csv': 'text/csv',
   'tsv': 'text/tab-separated-values',
+  'zip': 'application/zip',
 };
 
 extension on List<String> {

@@ -2,19 +2,19 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 bool isDesktopLayout(BuildContext context) {
-  if (kIsWeb) return MediaQuery.sizeOf(context).width >= 1100;
+  if (kIsWeb) return MediaQuery.sizeOf(context).width >= 880;
   return (defaultTargetPlatform == TargetPlatform.macOS ||
           defaultTargetPlatform == TargetPlatform.windows ||
           defaultTargetPlatform == TargetPlatform.linux) &&
-      MediaQuery.sizeOf(context).width >= 1100;
+      MediaQuery.sizeOf(context).width >= 880;
 }
 
 bool isWideDesktopLayout(BuildContext context) {
-  if (kIsWeb) return MediaQuery.sizeOf(context).width >= 1400;
+  if (kIsWeb) return MediaQuery.sizeOf(context).width >= 1280;
   return (defaultTargetPlatform == TargetPlatform.macOS ||
           defaultTargetPlatform == TargetPlatform.windows ||
           defaultTargetPlatform == TargetPlatform.linux) &&
-      MediaQuery.sizeOf(context).width >= 1400;
+      MediaQuery.sizeOf(context).width >= 1280;
 }
 
 class DesktopContentFrame extends StatelessWidget {

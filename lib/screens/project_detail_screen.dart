@@ -536,15 +536,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                 child: D1VTabBar(
                   controller: _tabController,
                   isScrollable: true,
-                  labelPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  labelPadding: const EdgeInsets.symmetric(horizontal: 8),
                   labelColor: activeText,
                   unselectedLabelColor: inactiveText,
                   labelStyle: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
                   unselectedLabelStyle: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.w500,
                   ),
                   tabs: _tabs
@@ -1277,7 +1277,7 @@ class _MacosProjectTabChip extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
             color: selected
@@ -1294,12 +1294,12 @@ class _MacosProjectTabChip extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                size: 13,
+                size: 12,
                 color: selected
                     ? colorScheme.primary
                     : colorScheme.onSurfaceVariant,
               ),
-              const SizedBox(width: 5),
+              const SizedBox(width: 4),
               Text(
                 label,
                 style: theme.textTheme.bodySmall?.copyWith(

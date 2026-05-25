@@ -81,6 +81,7 @@ void main() {
 
     tearDown(() {
       while (service.consumePendingRequest() != null) {}
+      while (service.consumePendingRoute() != null) {}
     });
 
     test('queues and consumes requests in order', () {
@@ -105,6 +106,22 @@ void main() {
       expect(service.consumePendingRequest()?.path, '/tmp/first');
       expect(service.consumePendingRequest()?.path, '/tmp/second.dart');
       expect(service.consumePendingRequest(), isNull);
+    });
+
+    test('queues and consumes routes in order', () {
+      service.enqueueRoute('/projects/project-a?tab=environment');
+      service.enqueueRoute('/projects/project-a/chat?autoprompt=hello');
+
+      expect(service.pendingRoute, '/projects/project-a?tab=environment');
+      expect(
+        service.consumePendingRoute(),
+        '/projects/project-a?tab=environment',
+      );
+      expect(
+        service.consumePendingRoute(),
+        '/projects/project-a/chat?autoprompt=hello',
+      );
+      expect(service.consumePendingRoute(), isNull);
     });
   });
 }

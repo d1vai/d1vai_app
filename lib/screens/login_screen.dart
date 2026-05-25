@@ -13,6 +13,7 @@ import 'package:d1vai_app/widgets/auth/auth_input_fields.dart';
 import 'package:d1vai_app/widgets/auth/auth_display_controls.dart';
 import 'package:d1vai_app/widgets/share_sheet.dart';
 import 'package:d1vai_app/l10n/app_localizations.dart';
+import '../utils/desktop_layout.dart';
 
 /// 登录模式枚举
 enum LoginMode {
@@ -797,135 +798,313 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  Widget _buildInviteBanner(AppLocalizations? loc) {
+    if ((widget.inviteCode ?? '').trim().isEmpty) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        'Invite code ${(widget.inviteCode ?? '').trim()} will be applied after login.',
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onPrimaryContainer,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoginForm(AppLocalizations? loc, {required bool desktop}) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (_showSessionExpiredBanner) ...[
+            SessionExpiredBanner(
+              title:
+                  loc?.translate('session_expired_title') ?? 'Session expired',
+              message:
+                  loc?.translate('session_expired_message') ??
+                  'Your login has expired. Please log in again.',
+              onClose: () {
+                if (!mounted) return;
+                setState(() => _showSessionExpiredBanner = false);
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+          if ((widget.inviteCode ?? '').trim().isNotEmpty) ...[
+            _buildInviteBanner(loc),
+            const SizedBox(height: 16),
+          ],
+          if (desktop)
+            Text(
+              'Welcome back',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            )
+          else
+            const Text(
+              'd1vai',
+              style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+          SizedBox(height: desktop ? 12 : 48),
+          if (desktop)
+            Text(
+              'Sign in to continue managing projects, previews, deployments, and workspace sessions.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.45,
+              ),
+            ),
+          if (desktop) const SizedBox(height: 20),
+          _LoginModeTabBar(
+            selected: _loginMode,
+            onChanged: _onModeChanged,
+          ),
+          const SizedBox(height: 24),
+          AuthTextInput(
+            controller: _emailController,
+            labelText: loc?.translate('email_address') ?? '邮箱地址',
+            hintText: loc?.translate('enter_email') ?? '请输入您的邮箱',
+            icon: Icons.email_outlined,
+            keyboardType: TextInputType.emailAddress,
+            autofillHints: const [
+              AutofillHints.username,
+              AutofillHints.email,
+            ],
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return loc?.translate('email_required') ?? '请输入邮箱地址';
+              }
+              if (!RegExp(
+                r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+              ).hasMatch(value)) {
+                return loc?.translate('email_invalid') ?? '请输入有效的邮箱地址';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 18),
+          IndexedStack(
+            index: _loginMode.index,
+            children: [
+              _buildCodeModeContent(loc),
+              _buildPasswordModeContent(loc),
+            ],
+          ),
+          if (Platform.isIOS || Platform.isMacOS) ...[
+            const SizedBox(height: 16),
+            _buildAppleLoginButton(),
+          ],
+          if (Platform.isIOS ||
+              Platform.isAndroid ||
+              Platform.isMacOS) ...[
+            const SizedBox(height: 16),
+            _buildMobileOAuthSection(),
+          ],
+          SizedBox(height: desktop ? 24 : 40),
+          LoginLegalLinks(
+            agreementText:
+                loc?.translate('agree_terms') ?? '登录即表示您同意我们的服务条款和隐私政策',
+            legalLabel: loc?.translate('account_data_legal') ?? 'Legal',
+            onOpenLegal: () => context.push(
+              ShareLinks.docsBySlug(
+                'privacy-policy',
+                hideHeader: true,
+              ).toString(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopHero(AppLocalizations? loc) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        gradient: LinearGradient(
+          colors: [
+            cs.primary.withValues(alpha: 0.12),
+            cs.tertiary.withValues(alpha: 0.1),
+            cs.surfaceContainerHigh.withValues(alpha: 0.7),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.6)),
+      ),
+      padding: const EdgeInsets.fromLTRB(28, 28, 28, 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const AuthDisplayControls(),
+          const Spacer(),
+          Text(
+            'd1vai',
+            style: theme.textTheme.displaySmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.8,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Desktop workspace for project chat, file preview, deploy inspection, and production follow-through.',
+            style: theme.textTheme.titleMedium?.copyWith(
+              height: 1.45,
+              color: cs.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: const [
+              _LoginInfoChip(
+                icon: Icons.description_outlined,
+                text: 'Code + file preview',
+              ),
+              _LoginInfoChip(
+                icon: Icons.cloud_sync_outlined,
+                text: 'Preview and deploy flow',
+              ),
+              _LoginInfoChip(
+                icon: Icons.analytics_outlined,
+                text: 'Analytics and runtime status',
+              ),
+            ],
+          ),
+          const SizedBox(height: 28),
+          Text(
+            loc?.translate('agree_terms') ?? '登录即表示您同意我们的服务条款和隐私政策',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: cs.onSurfaceVariant,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
+    final desktop = isDesktopLayout(context);
+    final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Align(
-                  alignment: Alignment.centerRight,
-                  child: AuthDisplayControls(),
-                ),
-                const SizedBox(height: 40),
-                if (_showSessionExpiredBanner) ...[
-                  SessionExpiredBanner(
-                    title:
-                        loc?.translate('session_expired_title') ??
-                        'Session expired',
-                    message:
-                        loc?.translate('session_expired_message') ??
-                        'Your login has expired. Please log in again.',
-                    onClose: () {
-                      if (!mounted) return;
-                      setState(() => _showSessionExpiredBanner = false);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                ],
-                if ((widget.inviteCode ?? '').trim().isNotEmpty) ...[
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'Invite code ${(widget.inviteCode ?? '').trim()} will be applied after login.',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-
-                // Logo
-                const Text(
-                  'd1vai',
-                  style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 48),
-
-                // 模式切换标签 —— 独立 Widget，不受父级 setState 影响
-                _LoginModeTabBar(
-                  selected: _loginMode,
-                  onChanged: _onModeChanged,
-                ),
-                const SizedBox(height: 32),
-
-                // 邮箱输入 —— 始终存在，避免切换 tab 时布局跳动
-                AuthTextInput(
-                  controller: _emailController,
-                  labelText: loc?.translate('email_address') ?? '邮箱地址',
-                  hintText: loc?.translate('enter_email') ?? '请输入您的邮箱',
-                  icon: Icons.email_outlined,
-                  keyboardType: TextInputType.emailAddress,
-                  autofillHints: const [
-                    AutofillHints.username,
-                    AutofillHints.email,
-                  ],
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return loc?.translate('email_required') ?? '请输入邮箱地址';
-                    }
-                    if (!RegExp(
-                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                    ).hasMatch(value)) {
-                      return loc?.translate('email_invalid') ?? '请输入有效的邮箱地址';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 24),
-
-                // 用 IndexedStack 保持两个模式的子树，切换时不销毁/重建
-                IndexedStack(
-                  index: _loginMode.index,
-                  children: [
-                    // index 0 → code 模式
-                    _buildCodeModeContent(loc),
-                    // index 1 → password 模式
-                    _buildPasswordModeContent(loc),
-                  ],
-                ),
-
-                if (Platform.isIOS || Platform.isMacOS) ...[
-                  const SizedBox(height: 18),
-                  _buildAppleLoginButton(),
-                ],
-                if (Platform.isIOS ||
-                    Platform.isAndroid ||
-                    Platform.isMacOS) ...[
-                  const SizedBox(height: 18),
-                  _buildMobileOAuthSection(),
-                ],
-                const SizedBox(height: 48),
-
-                LoginLegalLinks(
-                  agreementText:
-                      loc?.translate('agree_terms') ?? '登录即表示您同意我们的服务条款和隐私政策',
-                  legalLabel: loc?.translate('account_data_legal') ?? 'Legal',
-                  onOpenLegal: () => context.push(
-                    ShareLinks.docsBySlug(
-                      'privacy-policy',
-                      hideHeader: true,
-                    ).toString(),
-                  ),
-                ),
-              ],
-            ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              cs.surface,
+              cs.surfaceContainerLowest,
+              cs.surface,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
         ),
+        child: SafeArea(
+          child: desktop
+              ? DesktopContentFrame(
+                  maxWidth: 1220,
+                  padding: const EdgeInsets.fromLTRB(28, 22, 28, 28),
+                  child: SizedBox.expand(
+                    child: Row(
+                      children: [
+                        Expanded(flex: 12, child: _buildDesktopHero(loc)),
+                        const SizedBox(width: 24),
+                        Expanded(
+                          flex: 10,
+                          child: Align(
+                            alignment: Alignment.center,
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 520),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: cs.surface.withValues(alpha: 0.9),
+                                  borderRadius: BorderRadius.circular(28),
+                                  border: Border.all(
+                                    color: cs.outlineVariant.withValues(
+                                      alpha: 0.55,
+                                    ),
+                                  ),
+                                ),
+                                padding: const EdgeInsets.fromLTRB(
+                                  24,
+                                  22,
+                                  24,
+                                  22,
+                                ),
+                                child: SingleChildScrollView(
+                                  child: _buildLoginForm(loc, desktop: true),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Align(
+                        alignment: Alignment.centerRight,
+                        child: AuthDisplayControls(),
+                      ),
+                      const SizedBox(height: 40),
+                      _buildLoginForm(loc, desktop: false),
+                    ],
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LoginInfoChip extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _LoginInfoChip({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: cs.surface.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: cs.primary),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -145,8 +145,12 @@ class _EditorSurface extends StatelessWidget {
     }
 
     if (editor.isEditing) {
+      final controller = editor.controller;
+      if (controller == null) {
+        return const Center(child: CircularProgressIndicator());
+      }
       return CodeTabEditingPane(
-        controller: editor.controller,
+        controller: controller,
         originalText: editor.originalContent,
         languageLabel: languageLabelForPath(editor.path),
         wrapEnabled: editor.wrapEnabled,
@@ -165,6 +169,7 @@ class _EditorSurface extends StatelessWidget {
             content: content.content,
             isBinary: content.isBinary,
             sizeBytes: content.size,
+            preferLightweightTextPreview: true,
           ),
         ),
         Positioned.fill(
@@ -172,7 +177,6 @@ class _EditorSurface extends StatelessWidget {
             color: Colors.transparent,
             child: InkWell(
               onTap: onEnterEdit,
-              onDoubleTap: onEnterEdit,
               splashColor: Colors.transparent,
               highlightColor: Colors.transparent,
               hoverColor: Colors.transparent,

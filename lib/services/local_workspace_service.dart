@@ -88,12 +88,11 @@ class LocalWorkspaceService {
             continue;
           }
 
-          final stat = await entity.stat();
           fileCount += 1;
           children.add(<String, dynamic>{
             'name': _lastSegment(entity.path),
             'is_directory': false,
-            'size': stat.size,
+            'size': null,
             'children': null,
           });
         }
@@ -143,6 +142,50 @@ class LocalWorkspaceService {
     final file = File(_joinRootAndRelative(rootPath, relativePath));
     await file.parent.create(recursive: true);
     await file.writeAsString(content);
+  }
+
+  Future<String> renameEntry(
+    String rootPath,
+    String relativePath, {
+    required String newName,
+    required bool isDirectory,
+  }) async {
+    _ensureSupportedDesktop();
+    final trimmedName = newName.trim();
+    if (trimmedName.isEmpty) {
+      throw Exception('Name cannot be empty.');
+    }
+    if (trimmedName.contains('/') || trimmedName.contains(r'\')) {
+      throw Exception('Name cannot contain path separators.');
+    }
+
+    final normalizedRelative = relativePath.replaceAll(RegExp(r'^[\/\\]+'), '');
+    final segments = normalizedRelative
+        .split(RegExp(r'[/\\]'))
+        .where((part) => part.trim().isNotEmpty)
+        .toList(growable: false);
+    if (segments.isEmpty) {
+      throw Exception('Root folder cannot be renamed here.');
+    }
+
+    final parentSegments = segments.length > 1
+        ? segments.sublist(0, segments.length - 1)
+        : const <String>[];
+    final nextRelative = [
+      ...parentSegments,
+      trimmedName,
+    ].join('/');
+
+    final sourcePath = _joinRootAndRelative(rootPath, normalizedRelative);
+    final targetPath = _joinRootAndRelative(rootPath, nextRelative);
+    final sourceEntity = isDirectory ? Directory(sourcePath) : File(sourcePath);
+    final targetExists = await FileSystemEntity.type(targetPath) !=
+        FileSystemEntityType.notFound;
+    if (targetExists) {
+      throw Exception('An item with this name already exists.');
+    }
+    await sourceEntity.rename(targetPath);
+    return nextRelative;
   }
 
   void _ensureSupportedDesktop() {

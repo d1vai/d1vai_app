@@ -4,19 +4,24 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../models/local_workspace.dart';
+import '../providers/auth_provider.dart';
 import '../providers/macos_menu_controller.dart';
-import '../services/desktop_window_service.dart';
+import '../providers/profile_provider.dart';
 import '../services/macos_folder_import_service.dart';
 import '../services/macos_open_service.dart';
 import '../services/native_window_service.dart';
 import '../services/workspace_local_service.dart';
+import '../screens/settings/profile_tab.dart';
+import '../widgets/avatar_image.dart';
 import '../widgets/chat/project_chat/code_tab/project_chat_code_tab.dart';
-import '../widgets/chat/project_chat/project_chat_top_bar.dart';
+import '../widgets/editor_preferences_dialog.dart';
+import '../widgets/adaptive_modal.dart';
+import '../widgets/login_required_dialog.dart';
 import '../widgets/snackbar_helper.dart';
 
 class LocalWorkspaceScreen extends StatefulWidget {
@@ -34,19 +39,59 @@ class LocalWorkspaceScreen extends StatefulWidget {
 }
 
 class _LocalWorkspaceScreenState extends State<LocalWorkspaceScreen> {
+  static const MethodChannel _windowChannel = MethodChannel(
+    'ai.d1v.d1vai/window',
+  );
+  static const double _macosTitleBarHeight = 34;
+  static const double _macosTrafficLightsInset = 80;
+
   final WorkspaceLocalService _workspaceLocalService =
       const WorkspaceLocalService();
-  final CodeTabTopBarController _codeTabTopBarController =
-      CodeTabTopBarController();
-
   bool _loading = true;
-  bool _importing = false;
-  bool _openingNewWindow = false;
+  bool _showProfileSidebar = false;
   String? _error;
   String? _rootPath;
   String? _initialEntryPath;
-  bool _initialEntryIsFile = false;
   LocalWorkspaceState? _workspaceState;
+  int _selectedTabIndex = 0;
+
+  static const List<_LocalWorkspaceDesktopTab> _desktopTabs = [
+    _LocalWorkspaceDesktopTab(
+      'Chat',
+      Icons.chat_bubble_outline,
+      projectTabName: 'chat',
+    ),
+    _LocalWorkspaceDesktopTab(
+      'Environment',
+      Icons.key_outlined,
+      projectTabName: 'environment',
+    ),
+    _LocalWorkspaceDesktopTab(
+      'Database',
+      Icons.storage_outlined,
+      projectTabName: 'database',
+    ),
+    _LocalWorkspaceDesktopTab(
+      'Payment',
+      Icons.credit_card_outlined,
+      projectTabName: 'payment',
+    ),
+    _LocalWorkspaceDesktopTab(
+      'Deploy',
+      Icons.rocket_launch_outlined,
+      projectTabName: 'deployment',
+    ),
+    _LocalWorkspaceDesktopTab(
+      'Analytics',
+      Icons.analytics_outlined,
+      projectTabName: 'analytics',
+    ),
+    _LocalWorkspaceDesktopTab(
+      'Overview',
+      Icons.dashboard_outlined,
+      projectTabName: 'overview',
+    ),
+  ];
 
   @override
   void initState() {
@@ -56,7 +101,6 @@ class _LocalWorkspaceScreenState extends State<LocalWorkspaceScreen> {
 
   @override
   void dispose() {
-    _codeTabTopBarController.reset();
     unawaited(MacosOpenService.instance.clearWorkspaceWindowState());
     super.dispose();
   }
@@ -78,7 +122,6 @@ class _LocalWorkspaceScreenState extends State<LocalWorkspaceScreen> {
       _workspaceState = null;
       _rootPath = null;
       _initialEntryPath = null;
-      _initialEntryIsFile = false;
     });
 
     if (kIsWeb || !(Platform.isMacOS || Platform.isWindows)) {
@@ -128,7 +171,6 @@ class _LocalWorkspaceScreenState extends State<LocalWorkspaceScreen> {
         _workspaceState = state;
         _rootPath = resolvedRootPath;
         _initialEntryPath = trimmed;
-        _initialEntryIsFile = entityType == FileSystemEntityType.file;
       });
       unawaited(
         MacosOpenService.instance.setWorkspaceWindowState(
@@ -159,21 +201,8 @@ class _LocalWorkspaceScreenState extends State<LocalWorkspaceScreen> {
       setState(() {
         _loading = false;
         _error = e.toString();
-        _initialEntryIsFile = false;
       });
     }
-  }
-
-  Future<void> _activateWorkspaceWindow(String hostIdentifier) async {
-    final activated = await MacosOpenService.instance.activateWorkspaceWindow(
-      hostIdentifier,
-    );
-    if (activated || !mounted) return;
-    SnackBarHelper.showError(
-      context,
-      title: 'Window unavailable',
-      message: 'This workspace window is no longer available.',
-    );
   }
 
   String _normalizePath(String path) =>
@@ -186,65 +215,146 @@ class _LocalWorkspaceScreenState extends State<LocalWorkspaceScreen> {
     return parts.isEmpty ? normalized : parts.last;
   }
 
-  String? _formattedSourceLabel() {
-    final raw = (widget.source ?? '').trim();
-    if (raw.isEmpty) return null;
-    switch (raw.toLowerCase()) {
-      case 'dock':
-        return 'Opened from Dock';
-      case 'opendocument':
-      case 'open_document':
-        return 'Opened by macOS';
-      case 'windowdrop':
-      case 'window_drop':
-      case 'drop':
-        return 'Dropped into window';
-      case 'menu':
-        return 'Opened from File menu';
-      case 'recentworkspace':
-      case 'recent_workspace':
-      case 'recent':
-        return 'Opened from recent workspaces';
-      case 'picker':
-        return 'Chosen in app';
-      case 'commandline':
-      case 'command_line':
-      case 'argv':
-        return 'Opened from desktop launcher';
-      default:
-        return raw;
-    }
+  bool get _isCloudConnected =>
+      ((_workspaceState?.config?.projectId ?? '').trim().isNotEmpty);
+
+  String get _syncToCloudMessage =>
+      'Sync this local workspace to a cloud project first to use this feature.';
+
+  void _showSyncToCloudDialog({String? feature}) {
+    final label = (feature ?? 'This feature').trim();
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Sync to cloud first'),
+        content: Text(
+          '$label requires a synced cloud project.\n\n$_syncToCloudMessage',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              unawaited(_importCurrentFolder());
+            },
+            child: const Text('Sync Now'),
+          ),
+        ],
+      ),
+    );
   }
 
-  Future<void> _openCurrentInNewWindow() async {
-    final path = (_initialEntryPath ?? _rootPath ?? '').trim();
-    if (path.isEmpty || _openingNewWindow) return;
-    debugPrint('[d1vai-open] local workspace new-window requested path=$path');
-    setState(() {
-      _openingNewWindow = true;
-    });
-    try {
-      final opened = await DesktopWindowService.instance.openWorkspaceWindow(
-        path,
-        source: MacosOpenRequestSource.menu,
-      );
-      debugPrint(
-        '[d1vai-open] local workspace new-window result=$opened path=$path',
-      );
-      if (!opened && mounted) {
-        SnackBarHelper.showError(
-          context,
-          title: 'New window failed',
-          message: 'd1v could not open a new local workspace window.',
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _openingNewWindow = false;
-        });
-      }
+  void _handleDesktopTabSelected(int index) {
+    if (index == 0) {
+      setState(() {
+        _selectedTabIndex = 0;
+      });
+      return;
     }
+
+    if (!_isCloudConnected) {
+      _showSyncToCloudDialog(feature: _desktopTabs[index].label);
+      return;
+    }
+
+    unawaited(_openLinkedProjectTab(index));
+  }
+
+  Future<void> _beginMacosWindowDrag() async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.macOS) return;
+    try {
+      await _windowChannel.invokeMethod<void>('beginWindowDrag');
+    } catch (_) {}
+  }
+
+  void _toggleProfileSidebar() {
+    final user = context.read<AuthProvider>().user;
+    if (user == null) {
+      showDialog(
+        context: context,
+        builder: (_) => const LoginRequiredDialog(
+          message: 'Please login first to access your profile and cloud sync.',
+        ),
+      );
+      return;
+    }
+    setState(() {
+      _showProfileSidebar = !_showProfileSidebar;
+    });
+  }
+
+  void _closeProfileSidebar() {
+    if (!_showProfileSidebar) return;
+    setState(() {
+      _showProfileSidebar = false;
+    });
+  }
+
+  void _showThemeDialog() {
+    final theme = Theme.of(context);
+    showAdaptiveModal(
+      context: context,
+      builder: (context) => AdaptiveModalContainer(
+        maxWidth: 420,
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Theme',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Text('Use Settings in the main app to change the theme.'),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showEditorPreferencesDialog() {
+    showAdaptiveModal(
+      context: context,
+      builder: (_) => const EditorPreferencesDialogBody(),
+    );
+  }
+
+  void _showBindEmailDialog() {
+    _showSyncToCloudDialog(feature: 'Account settings');
+  }
+
+  void _showResetPasswordDialog() {
+    _showSyncToCloudDialog(feature: 'Password reset');
+  }
+
+  void _showAboutDialog() {
+    showAboutDialog(
+      context: context,
+      applicationName: 'd1v.ai',
+      applicationVersion: '1.0.0',
+      applicationIcon: const Icon(Icons.apps, size: 48),
+      children: const [
+        Text('Local workspace editing with optional cloud sync.'),
+      ],
+    );
   }
 
   Future<void> _switchFolder() async {
@@ -258,50 +368,61 @@ class _LocalWorkspaceScreenState extends State<LocalWorkspaceScreen> {
     context.go(uri.toString());
   }
 
-  String _revealActionLabel() =>
-      Platform.isWindows ? 'Reveal in Explorer' : 'Reveal in Finder';
-
-  String _revealFailureTitle() =>
-      Platform.isWindows ? 'Open in Explorer failed' : 'Open in Finder failed';
-
-  Future<void> _revealInFileManager() async {
-    final rootPath = (_rootPath ?? '').trim();
-    if (rootPath.isEmpty) return;
-    try {
-      await launchUrl(Uri.file(rootPath), mode: LaunchMode.externalApplication);
-    } catch (e) {
-      if (!mounted) return;
-      SnackBarHelper.showError(
-        context,
-        title: _revealFailureTitle(),
-        message: e.toString(),
-      );
-    }
-  }
-
-  bool get _canImportToCloud => !kIsWeb && Platform.isMacOS;
-
   Future<void> _importCurrentFolder() async {
     final rootPath = (_rootPath ?? '').trim();
-    if (rootPath.isEmpty || _importing) return;
-    setState(() {
-      _importing = true;
-    });
-    try {
-      await MacosFolderImportService.instance.importPath(context, rootPath);
-    } finally {
-      if (mounted) {
-        setState(() {
-          _importing = false;
-        });
-      }
-    }
+    if (rootPath.isEmpty) return;
+    await MacosFolderImportService.instance.importPath(context, rootPath);
   }
 
-  void _openLinkedProject() {
+  bool get _shouldOpenCloudRouteInMainWindow {
+    final hostIdentifier =
+        (context.read<MacosOpenService>().currentHostIdentifier ??
+                MacosOpenService.instance.currentHostIdentifier ??
+                '')
+            .trim();
+    return hostIdentifier.isNotEmpty && hostIdentifier != 'main';
+  }
+
+  String _linkedProjectRoute(String projectId, int index) {
+    final projectTabName = _desktopTabs[index].projectTabName;
+    final queryParameters = <String, String>{'tab': projectTabName};
+    if (projectTabName == 'chat') {
+      queryParameters['chatTab'] = 'code';
+    }
+    return Uri(
+      path: '/projects/$projectId',
+      queryParameters: queryParameters,
+    ).toString();
+  }
+
+  Future<void> _openCloudRoute(String route, {bool push = false}) async {
+    if (_shouldOpenCloudRouteInMainWindow) {
+      final opened = await MacosOpenService.instance.openRouteInMainWindow(
+        route,
+      );
+      if (opened || !mounted) return;
+      SnackBarHelper.showError(
+        context,
+        title: 'Main window unavailable',
+        message: 'd1v could not open this page in the main window.',
+      );
+      return;
+    }
+    if (!mounted) return;
+    if (push) {
+      context.push(route);
+      return;
+    }
+    context.go(route);
+  }
+
+  Future<void> _openLinkedProjectTab(int index) async {
     final projectId = (_workspaceState?.config?.projectId ?? '').trim();
-    if (projectId.isEmpty) return;
-    context.go('/projects/$projectId?tab=chat&chatTab=code');
+    if (projectId.isEmpty) {
+      _showSyncToCloudDialog(feature: 'Cloud project');
+      return;
+    }
+    await _openCloudRoute(_linkedProjectRoute(projectId, index));
   }
 
   void _askAboutLocalFile(String prompt) {
@@ -318,13 +439,15 @@ class _LocalWorkspaceScreenState extends State<LocalWorkspaceScreen> {
       path: '/projects/$projectId/chat',
       queryParameters: {'autoprompt': prompt},
     );
-    context.push(uri.toString());
+    unawaited(_openCloudRoute(uri.toString(), push: true));
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final openService = context.watch<MacosOpenService>();
+    final desktop = MediaQuery.of(context).size.width >= 1024;
+    final isMacosDesktop =
+        desktop && !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
     final workspaceState = _workspaceState;
     final rootPath = _rootPath;
     final linkedProjectId = (workspaceState?.config?.projectId ?? '').trim();
@@ -332,16 +455,6 @@ class _LocalWorkspaceScreenState extends State<LocalWorkspaceScreen> {
         (workspaceState?.config?.projectName ?? '').trim().isNotEmpty
         ? workspaceState!.config!.projectName!.trim()
         : linkedProjectId;
-    final sourceLabel = _formattedSourceLabel();
-    final entryPath = (_initialEntryPath ?? '').trim();
-    final openedFileLabel = _initialEntryIsFile
-        ? _lastSegment(entryPath)
-        : null;
-    final revealActionLabel = _revealActionLabel();
-    final currentHostIdentifier = openService.currentHostIdentifier;
-    final otherWorkspaceWindows = openService.workspaceWindows
-        .where((item) => item.hostIdentifier != currentHostIdentifier)
-        .toList(growable: false);
 
     if (_loading) {
       return Scaffold(
@@ -398,489 +511,452 @@ class _LocalWorkspaceScreenState extends State<LocalWorkspaceScreen> {
       );
     }
 
+    final body = _buildWorkspaceBody(
+      context,
+      theme,
+      workspaceState,
+      rootPath,
+      linkedProjectId,
+      linkedProjectName,
+    );
+
+    if (!isMacosDesktop) {
+      return Scaffold(backgroundColor: theme.colorScheme.surface, body: body);
+    }
+
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            if (constraints.maxWidth < 320 || constraints.maxHeight < 220) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.folder_open_outlined,
-                        color: theme.colorScheme.primary,
+      appBar: null,
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              _buildMacosWorkspaceTitleBar(
+                context,
+                title: _lastSegment(rootPath),
+              ),
+              Expanded(child: body),
+            ],
+          ),
+          if (_showProfileSidebar) _buildProfileSidebarOverlay(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWorkspaceBody(
+    BuildContext context,
+    ThemeData theme,
+    LocalWorkspaceState? workspaceState,
+    String rootPath,
+    String linkedProjectId,
+    String linkedProjectName,
+  ) {
+    return SafeArea(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth < 320 || constraints.maxHeight < 220) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.folder_open_outlined,
+                      color: theme.colorScheme.primary,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _lastSegment(rootPath),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _lastSegment(rootPath),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          return Column(
+            children: [
+              Expanded(
+                child: ProjectChatCodeTab(
+                  key: ValueKey(
+                    'local-workspace:${_initialEntryPath ?? rootPath}:${linkedProjectId.isEmpty ? 'local' : linkedProjectId}',
+                  ),
+                  projectId: linkedProjectId.isEmpty ? null : linkedProjectId,
+                  initialLocalEntryPath: _initialEntryPath ?? rootPath,
+                  initialLocalHybridMode: linkedProjectId.isNotEmpty,
+                  onDetachLocalWorkspace: _switchFolder,
+                  onAsk: _askAboutLocalFile,
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildMacosWorkspaceTitleBar(
+    BuildContext context, {
+    required String title,
+  }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Container(
+      height: _macosTitleBarHeight,
+      decoration: BoxDecoration(
+        color: colorScheme.surface.withValues(alpha: 0.92),
+        border: Border(
+          bottom: BorderSide(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.55),
+          ),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        bottom: false,
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1520),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+              child: Row(
+                children: [
+                  const SizedBox(width: _macosTrafficLightsInset),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w400,
+                              letterSpacing: 0.05,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: _LocalWorkspaceDesktopTabs(
+                              tabs: _desktopTabs,
+                              selectedIndex: _selectedTabIndex,
+                              onSelected: _handleDesktopTabSelected,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _LocalWorkspaceProfileButton(
+                    onPressed: _toggleProfileSidebar,
+                    onLoginPressed: () => context.go('/login'),
+                    active: _showProfileSidebar,
+                  ),
+                  const SizedBox(width: 6),
+                  _MacosWindowDragArea(
+                    onDragStart: _beginMacosWindowDrag,
+                    child: const SizedBox(width: 28, height: double.infinity),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileSidebarOverlay(BuildContext context) {
+    return Positioned.fill(
+      child: Stack(
+        children: [
+          Positioned.fill(
+            top: _macosTitleBarHeight,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _closeProfileSidebar,
+              child: Container(color: Colors.black.withValues(alpha: 0.16)),
+            ),
+          ),
+          Positioned(
+            top: _macosTitleBarHeight,
+            bottom: 0,
+            left: 0,
+            width: 380,
+            child: ChangeNotifierProvider(
+              create: (_) => ProfileProvider(),
+              child: Material(
+                elevation: 14,
+                color: Theme.of(context).colorScheme.surface,
+                child: SafeArea(
+                  top: false,
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 12, 8),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Profile',
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: _closeProfileSidebar,
+                              icon: const Icon(Icons.close, size: 18),
+                              tooltip: 'Close',
+                            ),
+                          ],
+                        ),
+                      ),
+                      Divider(
+                        height: 1,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.outlineVariant.withValues(alpha: 0.5),
+                      ),
+                      Expanded(
+                        child: SettingsProfileTab(
+                          onShowThemeDialog: _showThemeDialog,
+                          onShowEditorPreferencesDialog:
+                              _showEditorPreferencesDialog,
+                          onShowBindEmailDialog: _showBindEmailDialog,
+                          onShowResetPasswordDialog: _showResetPasswordDialog,
+                          onShowAboutDialog: _showAboutDialog,
                         ),
                       ),
                     ],
                   ),
                 ),
-              );
-            }
-
-            return Column(
-              children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface.withValues(alpha: 0.96),
-                    border: Border(
-                      bottom: BorderSide(
-                        color: theme.colorScheme.outlineVariant.withValues(
-                          alpha: 0.72,
-                        ),
-                      ),
-                    ),
-                  ),
-                  child: LayoutBuilder(
-                    builder: (context, headerConstraints) {
-                      final compactHeader = headerConstraints.maxWidth < 980;
-                      final headerIcon = Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: 0.12,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          Icons.folder_open_outlined,
-                          color: theme.colorScheme.primary,
-                        ),
-                      );
-                      final headerMeta = Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            children: [
-                              Text(
-                                _lastSegment(rootPath),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              _HeaderBadge(
-                                label: linkedProjectId.isEmpty
-                                    ? 'Local only'
-                                    : 'Connected to d1v',
-                                color: linkedProjectId.isEmpty
-                                    ? theme.colorScheme.primary
-                                    : theme.colorScheme.tertiary,
-                              ),
-                              if (sourceLabel != null)
-                                _HeaderBadge(
-                                  label: sourceLabel,
-                                  color: theme.colorScheme.secondary,
-                                ),
-                              if (openedFileLabel != null)
-                                _HeaderBadge(
-                                  label: 'File: $openedFileLabel',
-                                  color: theme.colorScheme.primary,
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            rootPath,
-                            maxLines: compactHeader ? 2 : 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                          if (openedFileLabel != null) ...[
-                            const SizedBox(height: 6),
-                            Text(
-                              'Starts with $openedFileLabel in this workspace',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                          if (linkedProjectId.isNotEmpty) ...[
-                            const SizedBox(height: 6),
-                            Text(
-                              linkedProjectName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.tertiary,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ],
-                      );
-                      final actionButtons = Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        alignment: compactHeader
-                            ? WrapAlignment.start
-                            : WrapAlignment.end,
-                        children: [
-                          OutlinedButton.icon(
-                            onPressed: _openingNewWindow
-                                ? null
-                                : _openCurrentInNewWindow,
-                            icon: _openingNewWindow
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Icon(Icons.open_in_new_outlined),
-                            label: const Text('New Window'),
-                          ),
-                          OutlinedButton.icon(
-                            onPressed: _switchFolder,
-                            icon: const Icon(Icons.swap_horiz_outlined),
-                            label: const Text('Switch Folder'),
-                          ),
-                          OutlinedButton.icon(
-                            onPressed: _revealInFileManager,
-                            icon: const Icon(Icons.folder_outlined),
-                            label: Text(revealActionLabel),
-                          ),
-                          if (linkedProjectId.isNotEmpty)
-                            OutlinedButton.icon(
-                              onPressed: _openLinkedProject,
-                              icon: const Icon(Icons.launch_outlined),
-                              label: const Text('Open Cloud Project'),
-                            ),
-                          if (_canImportToCloud)
-                            FilledButton.icon(
-                              onPressed: _importing
-                                  ? null
-                                  : _importCurrentFolder,
-                              icon: _importing
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Icon(Icons.cloud_upload_outlined),
-                              label: Text(
-                                _importing ? 'Importing...' : 'Import to Cloud',
-                              ),
-                            ),
-                        ],
-                      );
-
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (compactHeader) ...[
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                headerIcon,
-                                const SizedBox(width: 12),
-                                Expanded(child: headerMeta),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            actionButtons,
-                          ] else
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                headerIcon,
-                                const SizedBox(width: 12),
-                                Expanded(child: headerMeta),
-                                const SizedBox(width: 12),
-                                Flexible(child: actionButtons),
-                              ],
-                            ),
-                          const SizedBox(height: 14),
-                          _LocalWorkspaceToolbar(
-                            controller: _codeTabTopBarController,
-                          ),
-                          if (otherWorkspaceWindows.isNotEmpty) ...[
-                            const SizedBox(height: 12),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              children: [
-                                Text(
-                                  'Open windows',
-                                  style: theme.textTheme.labelLarge?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                for (final window in otherWorkspaceWindows)
-                                  OutlinedButton.icon(
-                                    onPressed: () => unawaited(
-                                      _activateWorkspaceWindow(
-                                        window.hostIdentifier,
-                                      ),
-                                    ),
-                                    icon: Icon(
-                                      window.focused
-                                          ? Icons.radio_button_checked
-                                          : Icons.open_in_new,
-                                      size: 16,
-                                    ),
-                                    label: Text(window.displayTitle),
-                                  ),
-                              ],
-                            ),
-                          ],
-                        ],
-                      );
-                    },
-                  ),
-                ),
-                Expanded(
-                  child: ProjectChatCodeTab(
-                    key: ValueKey(
-                      'local-workspace:${_initialEntryPath ?? rootPath}:${linkedProjectId.isEmpty ? 'local' : linkedProjectId}',
-                    ),
-                    projectId: linkedProjectId.isEmpty ? null : linkedProjectId,
-                    topBarController: _codeTabTopBarController,
-                    initialLocalEntryPath: _initialEntryPath ?? rootPath,
-                    initialLocalHybridMode: linkedProjectId.isNotEmpty,
-                    onDetachLocalWorkspace: _switchFolder,
-                    onAsk: _askAboutLocalFile,
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _HeaderBadge extends StatelessWidget {
+class _LocalWorkspaceDesktopTab {
   final String label;
-  final Color color;
-
-  const _HeaderBadge({required this.label, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.16)),
-      ),
-      child: Text(
-        label,
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}
-
-class _LocalWorkspaceToolbar extends StatelessWidget {
-  final CodeTabTopBarController controller;
-
-  const _LocalWorkspaceToolbar({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return ListenableBuilder(
-      listenable: controller,
-      builder: (context, _) {
-        final searchController = controller.searchController;
-        final searchText = searchController?.text.trim() ?? '';
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final narrow = constraints.maxWidth < 560;
-            final searchWidth = constraints.maxWidth >= 1120
-                ? 280.0
-                : constraints.maxWidth >= 820
-                ? 220.0
-                : constraints.maxWidth >= 560
-                ? 180.0
-                : constraints.maxWidth;
-            return Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minWidth: narrow ? constraints.maxWidth : 160,
-                    maxWidth: searchWidth,
-                  ),
-                  child: TextField(
-                    controller: searchController,
-                    enabled: searchController != null,
-                    decoration: InputDecoration(
-                      isDense: true,
-                      hintText: searchController == null
-                          ? 'Loading files…'
-                          : 'Search files…',
-                      prefixIcon: const Icon(Icons.search, size: 18),
-                      suffixIcon: searchText.isEmpty
-                          ? null
-                          : IconButton(
-                              onPressed: searchController?.clear,
-                              icon: const Icon(Icons.clear, size: 16),
-                            ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                ),
-                _ToolbarIconButton(
-                  icon: Icons.refresh_outlined,
-                  tooltip: 'Refresh files',
-                  onPressed: controller.loadingTree
-                      ? null
-                      : controller.onReload,
-                ),
-                _ToolbarIconButton(
-                  icon: Icons.search_outlined,
-                  tooltip: 'Find in file',
-                  onPressed: controller.activeEditing
-                      ? controller.onFind
-                      : null,
-                ),
-                _ToolbarIconButton(
-                  icon: controller.activeWrapEnabled
-                      ? Icons.wrap_text
-                      : Icons.wrap_text_outlined,
-                  tooltip: controller.activeWrapEnabled
-                      ? 'Disable wrap'
-                      : 'Enable wrap',
-                  onPressed: controller.activeEditing
-                      ? controller.onToggleWrap
-                      : null,
-                ),
-                _ToolbarIconButton(
-                  icon: Icons.save_as_outlined,
-                  tooltip: 'Save file',
-                  onPressed:
-                      controller.activeSaving ||
-                          !controller.activeHasUnsavedChanges
-                      ? null
-                      : controller.onSave,
-                ),
-                _ToolbarIconButton(
-                  icon: Icons.tips_and_updates_outlined,
-                  tooltip: 'Ask AI about file',
-                  onPressed: controller.hasSelection ? controller.onAsk : null,
-                ),
-                _ToolbarSyncChip(
-                  state: controller.syncState,
-                  hasLocalWorkspace: controller.hasLocalWorkspace,
-                  colorScheme: theme.colorScheme,
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-class _ToolbarIconButton extends StatelessWidget {
   final IconData icon;
-  final String tooltip;
-  final VoidCallback? onPressed;
+  final String projectTabName;
 
-  const _ToolbarIconButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
+  const _LocalWorkspaceDesktopTab(
+    this.label,
+    this.icon, {
+    required this.projectTabName,
+  });
+}
+
+class _LocalWorkspaceDesktopTabs extends StatelessWidget {
+  final List<_LocalWorkspaceDesktopTab> tabs;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+
+  const _LocalWorkspaceDesktopTabs({
+    required this.tabs,
+    required this.selectedIndex,
+    required this.onSelected,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: IconButton(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 18),
-        visualDensity: VisualDensity.compact,
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (var i = 0; i < tabs.length; i++) ...[
+            if (i > 0) const SizedBox(width: 8),
+            _LocalWorkspaceDesktopTabChip(
+              label: tabs[i].label,
+              icon: tabs[i].icon,
+              selected: selectedIndex == i,
+              onTap: () => onSelected(i),
+            ),
+          ],
+        ],
       ),
     );
   }
 }
 
-class _ToolbarSyncChip extends StatelessWidget {
-  final CodeTabTopBarSyncState state;
-  final bool hasLocalWorkspace;
-  final ColorScheme colorScheme;
+class _LocalWorkspaceDesktopTabChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
 
-  const _ToolbarSyncChip({
-    required this.state,
-    required this.hasLocalWorkspace,
-    required this.colorScheme,
+  const _LocalWorkspaceDesktopTabChip({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final (label, color) = switch (state) {
-      CodeTabTopBarSyncState.localSaved => (
-        'Saved locally',
-        colorScheme.primary,
-      ),
-      CodeTabTopBarSyncState.queued => ('Queued', Colors.orange),
-      CodeTabTopBarSyncState.syncingCloud => (
-        'Cloud sync',
-        colorScheme.secondary,
-      ),
-      CodeTabTopBarSyncState.syncingGitHub => ('Syncing', colorScheme.tertiary),
-      CodeTabTopBarSyncState.synced => ('Synced', Colors.green),
-      CodeTabTopBarSyncState.failed => ('Sync failed', Colors.redAccent),
-      CodeTabTopBarSyncState.idle => (
-        hasLocalWorkspace ? 'Local workspace' : 'Cloud workspace',
-        colorScheme.onSurfaceVariant,
-      ),
-    };
-
     final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.14)),
-      ),
-      child: Text(
-        label,
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w700,
+    final colorScheme = theme.colorScheme;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            color: selected
+                ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.92)
+                : Colors.transparent,
+            border: Border.all(
+              color: selected
+                  ? colorScheme.outlineVariant.withValues(alpha: 0.65)
+                  : colorScheme.outlineVariant.withValues(alpha: 0.28),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 12,
+                color: selected
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w400,
+                  color: selected
+                      ? colorScheme.onSurface
+                      : colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+}
+
+class _LocalWorkspaceProfileButton extends StatelessWidget {
+  final VoidCallback onPressed;
+  final VoidCallback onLoginPressed;
+  final bool active;
+
+  const _LocalWorkspaceProfileButton({
+    required this.onPressed,
+    required this.onLoginPressed,
+    required this.active,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final user = context.watch<AuthProvider>().user;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    if (user == null) {
+      return TextButton(
+        onPressed: onLoginPressed,
+        style: TextButton.styleFrom(
+          minimumSize: const Size(0, 28),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+          visualDensity: VisualDensity.compact,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          side: BorderSide(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.7),
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(999),
+          ),
+        ),
+        child: const Text('Login'),
+      );
+    }
+
+    return Tooltip(
+      message: 'Profile',
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(999),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          width: 28,
+          height: 28,
+          padding: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            color: active
+                ? colorScheme.primary.withValues(alpha: 0.12)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: active
+                  ? colorScheme.primary.withValues(alpha: 0.24)
+                  : colorScheme.outlineVariant.withValues(alpha: 0.6),
+            ),
+          ),
+          child: user.picture.isNotEmpty
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(999),
+                  child: AvatarImage(
+                    imageUrl: user.picture,
+                    size: 24,
+                    borderRadius: BorderRadius.circular(999),
+                    fit: BoxFit.cover,
+                  ),
+                )
+              : Icon(
+                  Icons.person_outline,
+                  size: 14,
+                  color: active
+                      ? colorScheme.primary
+                      : colorScheme.onSurfaceVariant,
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MacosWindowDragArea extends StatelessWidget {
+  final Widget child;
+  final VoidCallback onDragStart;
+
+  const _MacosWindowDragArea({required this.child, required this.onDragStart});
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.move,
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onPanStart: (_) => onDragStart(),
+        onDoubleTap: onDragStart,
+        child: child,
       ),
     );
   }

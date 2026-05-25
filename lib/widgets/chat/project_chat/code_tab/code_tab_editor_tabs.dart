@@ -50,111 +50,118 @@ class CodeTabEditorTabs extends StatelessWidget {
           final editor = editors[index];
           final active = editor.path == activePath;
           final name = editor.path.split('/').last;
-          return ListenableBuilder(
-            listenable: editor.controller,
-            builder: (context, _) {
-              return GestureDetector(
-                onDoubleTap: () => onPin(editor.path),
-                child: InkWell(
-                  onTap: () => onSelect(editor.path),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 120),
-                    constraints: BoxConstraints(
-                      minWidth: compact ? 126 : 142,
-                      maxWidth: compact ? 216 : 252,
-                    ),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: compact ? 9 : 11,
-                      vertical: compact ? 4 : 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: active
-                          ? theme.colorScheme.surface
-                          : theme.colorScheme.surfaceContainerLowest,
-                      border: Border(
-                        top: active
-                            ? BorderSide(
-                                color: theme.colorScheme.primary,
-                                width: 2,
-                              )
-                            : BorderSide.none,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        _DirtyDot(
-                          visible: editor.hasUnsavedChanges,
-                          compact: compact,
-                          color: theme.colorScheme.tertiary,
-                        ),
-                        const SizedBox(width: 8),
-                        _SyncDot(
-                          state:
-                              syncStateFor?.call(editor.path) ??
-                              (isSynced?.call(editor.path) == true
-                                  ? CodeWorkbenchSyncState.synced
-                                  : CodeWorkbenchSyncState.idle),
-                          queuedDuration: queuedDurationFor?.call(editor.path),
-                          compact: compact,
-                          color: theme.colorScheme.primary,
-                        ),
-                        const SizedBox(width: 7),
-                        buildFileTypeIcon(
-                          context,
-                          editor.path,
-                          size: compact ? 14 : 15,
-                          fallbackColor: theme.colorScheme.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 7),
-                        Expanded(
-                          child: Text(
-                            name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: compact ? 11.75 : 12.25,
-                              fontWeight: active
-                                  ? FontWeight.w700
-                                  : FontWeight.w500,
-                              fontStyle: editor.isPreview
-                                  ? FontStyle.italic
-                                  : FontStyle.normal,
-                            ),
-                          ),
-                        ),
-                        if (editor.isPreview)
-                          Padding(
-                            padding: const EdgeInsets.only(right: 6),
-                            child: Text(
-                              'Preview',
-                              style: TextStyle(
-                                fontSize: compact ? 9.5 : 10,
-                                color: theme.colorScheme.onSurface.withValues(
-                                  alpha: 0.58,
-                                ),
-                              ),
-                            ),
-                          ),
-                        InkWell(
-                          onHover: (_) {},
-                          onTap: () => onClose(editor.path),
-                          child: Padding(
-                            padding: EdgeInsets.all(compact ? 2 : 3),
-                            child: Icon(
-                              Icons.close,
-                              size: compact ? 13 : 15,
-                              color: theme.colorScheme.onSurface.withValues(
-                                alpha: 0.72,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+          Widget buildTab() {
+            return GestureDetector(
+              onDoubleTap: () => onPin(editor.path),
+              child: InkWell(
+                onTap: () => onSelect(editor.path),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 120),
+                  constraints: BoxConstraints(
+                    minWidth: compact ? 126 : 142,
+                    maxWidth: compact ? 216 : 252,
+                  ),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: compact ? 9 : 11,
+                    vertical: compact ? 4 : 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: active
+                        ? theme.colorScheme.surface
+                        : theme.colorScheme.surfaceContainerLowest,
+                    border: Border(
+                      top: active
+                          ? BorderSide(
+                              color: theme.colorScheme.primary,
+                              width: 2,
+                            )
+                          : BorderSide.none,
                     ),
                   ),
+                  child: Row(
+                    children: [
+                      _DirtyDot(
+                        visible: editor.hasUnsavedChanges,
+                        compact: compact,
+                        color: theme.colorScheme.tertiary,
+                      ),
+                      const SizedBox(width: 8),
+                      _SyncDot(
+                        state:
+                            syncStateFor?.call(editor.path) ??
+                            (isSynced?.call(editor.path) == true
+                                ? CodeWorkbenchSyncState.synced
+                                : CodeWorkbenchSyncState.idle),
+                        queuedDuration: queuedDurationFor?.call(editor.path),
+                        compact: compact,
+                        color: theme.colorScheme.primary,
+                      ),
+                      const SizedBox(width: 7),
+                      buildFileTypeIcon(
+                        context,
+                        editor.path,
+                        size: compact ? 14 : 15,
+                        fallbackColor: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 7),
+                      Expanded(
+                        child: Text(
+                          name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: compact ? 11.75 : 12.25,
+                            fontWeight: active
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            fontStyle: editor.isPreview
+                                ? FontStyle.italic
+                                : FontStyle.normal,
+                          ),
+                        ),
+                      ),
+                      if (editor.isPreview)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: Text(
+                            'Preview',
+                            style: TextStyle(
+                              fontSize: compact ? 9.5 : 10,
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.58,
+                              ),
+                            ),
+                          ),
+                        ),
+                      InkWell(
+                        onHover: (_) {},
+                        onTap: () => onClose(editor.path),
+                        child: Padding(
+                          padding: EdgeInsets.all(compact ? 2 : 3),
+                          child: Icon(
+                            Icons.close,
+                            size: compact ? 13 : 15,
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.72,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              );
-            },
+              ),
+            );
+          }
+
+          final controller = editor.controller;
+          if (controller == null) {
+            return buildTab();
+          }
+
+          return ListenableBuilder(
+            listenable: controller,
+            builder: (context, _) => buildTab(),
           );
         },
       ),

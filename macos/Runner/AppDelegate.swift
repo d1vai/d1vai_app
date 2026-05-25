@@ -86,6 +86,11 @@ private struct WorkspaceWindowState {
   }
 }
 
+private struct PendingRouteRequest {
+  let route: String
+  let activate: Bool
+}
+
 private struct RecentWorkspaceRecord {
   let entryPath: String
   let workspacePath: String
@@ -150,6 +155,7 @@ class AppDelegate: FlutterAppDelegate {
   private var openChannels: [String: FlutterMethodChannel] = [:]
   private var windowChannels: [String: FlutterMethodChannel] = [:]
   private var pendingOpenRequests: [String: [MacosOpenRequest]] = [:]
+  private var pendingRouteRequests: [String: [PendingRouteRequest]] = [:]
   private var workspaceWindowControllers: [String: FlutterSecondaryWindowController] = [:]
   private var workspaceWindowStates: [String: WorkspaceWindowState] = [:]
   private var hostWindows: [String: WeakWindowReference] = [:]
@@ -338,6 +344,7 @@ class AppDelegate: FlutterAppDelegate {
       self?.windowChannels.removeValue(forKey: closedHostIdentifier)
       self?.hostWindows.removeValue(forKey: closedHostIdentifier)
       self?.pendingOpenRequests.removeValue(forKey: closedHostIdentifier)
+      self?.pendingRouteRequests.removeValue(forKey: closedHostIdentifier)
       self?.broadcastWorkspaceWindowsChanged()
     }
 
@@ -455,6 +462,22 @@ class AppDelegate: FlutterAppDelegate {
           forceNewWindow: forceNewWindow
         )
         result(opened)
+      case "openRouteInMainWindow":
+        guard
+          let arguments = call.arguments as? [String: Any],
+          let rawRoute = arguments["route"] as? String
+        else {
+          result(
+            FlutterError(
+              code: "invalid_arguments",
+              message: "Missing route for openRouteInMainWindow",
+              details: call.arguments
+            )
+          )
+          return
+        }
+        let activate = arguments["activate"] as? Bool ?? true
+        result(self.openRouteInMainWindow(rawRoute, activate: activate))
       default:
         result(FlutterMethodNotImplemented)
       }
@@ -483,6 +506,7 @@ class AppDelegate: FlutterAppDelegate {
     if autoFlushPendingOpenRequests {
       flushPendingOpenRequests(for: hostIdentifier)
     }
+    flushPendingRouteRequests(for: hostIdentifier)
   }
 
   private func configureOAuthChannels(binaryMessenger: FlutterBinaryMessenger) {
@@ -632,6 +656,26 @@ class AppDelegate: FlutterAppDelegate {
     }
   }
 
+  private func flushPendingRouteRequests(for hostIdentifier: String) {
+    guard let channel = openChannels[hostIdentifier] else {
+      return
+    }
+    guard let queued = pendingRouteRequests[hostIdentifier], !queued.isEmpty else {
+      return
+    }
+
+    logOpen("flushing \(queued.count) route(s) to host=\(hostIdentifier)")
+    pendingRouteRequests[hostIdentifier] = []
+    var shouldActivate = false
+    for request in queued {
+      channel.invokeMethod("openRoute", arguments: request.route)
+      shouldActivate = shouldActivate || request.activate
+    }
+    if shouldActivate {
+      _ = activateWorkspaceWindow(hostIdentifier: hostIdentifier)
+    }
+  }
+
   private func setWorkspaceWindowState(
     hostIdentifier: String,
     arguments: [String: Any],
@@ -747,6 +791,24 @@ class AppDelegate: FlutterAppDelegate {
       window.makeKeyAndOrderFront(nil)
       window.orderFrontRegardless()
       NSApp.activate(ignoringOtherApps: true)
+    }
+    return true
+  }
+
+  @discardableResult
+  private func openRouteInMainWindow(_ route: String, activate: Bool = true) -> Bool {
+    let normalizedRoute = route.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !normalizedRoute.isEmpty else {
+      return false
+    }
+
+    pendingRouteRequests[mainHostIdentifier, default: []].append(
+      PendingRouteRequest(route: normalizedRoute, activate: activate)
+    )
+    logOpen("queued main route route=\(normalizedRoute) activate=\(activate)")
+    flushPendingRouteRequests(for: mainHostIdentifier)
+    if activate, openChannels[mainHostIdentifier] == nil {
+      _ = activateWorkspaceWindow(hostIdentifier: mainHostIdentifier)
     }
     return true
   }

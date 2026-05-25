@@ -8,8 +8,9 @@ import 'code_tab_models.dart';
 
 class CodeWorkbenchEditorState {
   String path;
-  final AppCodeEditorController controller;
-  final VoidCallback controllerListener;
+  AppCodeEditorController? controller;
+  VoidCallback? controllerListener;
+  Future<AppCodeEditorController>? controllerLoadFuture;
   CodeTabFileContent? content;
   String? error;
   bool loading;
@@ -17,13 +18,12 @@ class CodeWorkbenchEditorState {
   bool isEditing;
   bool isPreview;
   bool wrapEnabled;
+  int tabSize;
   String originalContent;
   bool lastKnownDirty;
 
   CodeWorkbenchEditorState({
     required this.path,
-    required this.controller,
-    required this.controllerListener,
     required this.isPreview,
     this.content,
     this.error,
@@ -31,11 +31,12 @@ class CodeWorkbenchEditorState {
     this.saving = false,
     this.isEditing = false,
     this.wrapEnabled = false,
+    this.tabSize = 2,
     this.originalContent = '',
     this.lastKnownDirty = false,
   });
 
-  bool get hasUnsavedChanges => controller.hasUnsavedChanges;
+  bool get hasUnsavedChanges => controller?.hasUnsavedChanges ?? lastKnownDirty;
   bool get isBinary => content?.isBinary == true;
 }
 
@@ -58,6 +59,8 @@ class CodeWorkbenchController extends ChangeNotifier {
   final Map<String, CodeWorkbenchEditorState> _editorsByPath =
       <String, CodeWorkbenchEditorState>{};
   final List<String> _openPaths = <String>[];
+  final ValueNotifier<String?> _selectedTreePathNotifier =
+      ValueNotifier<String?>(null);
 
   String? _activePath;
   String? _previewPath;
@@ -78,6 +81,8 @@ class CodeWorkbenchController extends ChangeNotifier {
   String? get activePath => _activePath;
   String? get previewPath => _previewPath;
   String? get selectedTreePath => _selectedTreePath;
+  ValueNotifier<String?> get selectedTreePathListenable =>
+      _selectedTreePathNotifier;
   CodeWorkbenchSourceMode get sourceMode => _sourceMode;
   String? get localRootPath => _localRootPath;
   String? get localRootName => _localRootName;
@@ -91,9 +96,14 @@ class CodeWorkbenchController extends ChangeNotifier {
       _syncStates[path] ?? CodeWorkbenchSyncState.idle;
 
   void selectTreePath(String? path) {
-    if (_selectedTreePath == path) return;
+    _setSelectedTreePath(path);
+  }
+
+  bool _setSelectedTreePath(String? path) {
+    if (_selectedTreePath == path) return false;
     _selectedTreePath = path;
-    notifyListeners();
+    _selectedTreePathNotifier.value = path;
+    return true;
   }
 
   CodeWorkbenchEditorState? editorForPath(String path) => _editorsByPath[path];
@@ -111,13 +121,13 @@ class CodeWorkbenchController extends ChangeNotifier {
 
   bool isPreviewOnly(String path) => _previewPath == path;
 
-  Future<CodeWorkbenchEditorState> _createEditor(
+  CodeWorkbenchEditorState _createEditorShell(
     String path, {
     required bool preview,
     required bool wrapEnabled,
     required int tabSize,
     required bool loading,
-  }) async {
+  }) {
     if (preview) {
       final oldPreviewPath = _previewPath;
       if (oldPreviewPath != null && oldPreviewPath != path) {
@@ -126,25 +136,60 @@ class CodeWorkbenchController extends ChangeNotifier {
       _previewPath = path;
     }
 
-    late final CodeWorkbenchEditorState editor;
-    final controller = await AppCodeEditorController.create(
-      filePath: path,
-      tabSize: tabSize,
-      wrapEnabled: wrapEnabled,
-    );
-    editor = CodeWorkbenchEditorState(
+    final editor = CodeWorkbenchEditorState(
       path: path,
-      controller: controller,
-      controllerListener: () => _handleControllerChanged(editor),
       isPreview: preview,
       loading: loading,
       wrapEnabled: wrapEnabled,
+      tabSize: tabSize,
     );
-    controller.addListener(editor.controllerListener);
     _editorsByPath[path] = editor;
     _openPaths.add(path);
     _activePath = path;
     return editor;
+  }
+
+  Future<AppCodeEditorController> _ensureEditorController(
+    CodeWorkbenchEditorState editor,
+  ) {
+    final existing = editor.controller;
+    if (existing != null) {
+      return Future<AppCodeEditorController>.value(existing);
+    }
+
+    final pending = editor.controllerLoadFuture;
+    if (pending != null) {
+      return pending;
+    }
+
+    final future = () async {
+      final controller = await AppCodeEditorController.create(
+        filePath: editor.path,
+        tabSize: editor.tabSize,
+        wrapEnabled: editor.wrapEnabled,
+      );
+      if (!_editorsByPath.containsKey(editor.path)) {
+        controller.dispose();
+        throw StateError('Editor was closed before controller initialization.');
+      }
+      editor.controller = controller;
+      editor.controllerListener = () => _handleControllerChanged(editor);
+      controller.addListener(editor.controllerListener!);
+
+      final content = editor.content;
+      final initialText = content == null || content.isBinary
+          ? ''
+          : content.content;
+      await controller.setLanguageForPath(editor.path);
+      await controller.setText(initialText, markSaved: true);
+      editor.lastKnownDirty = false;
+      return controller;
+    }();
+
+    editor.controllerLoadFuture = future;
+    return future.whenComplete(() {
+      editor.controllerLoadFuture = null;
+    });
   }
 
   void attachLocalWorkspace({
@@ -188,6 +233,71 @@ class CodeWorkbenchController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void renamePathPrefix(String oldPath, String newPath) {
+    final normalizedOld = oldPath.trim();
+    final normalizedNew = newPath.trim();
+    if (normalizedOld.isEmpty ||
+        normalizedNew.isEmpty ||
+        normalizedOld == normalizedNew) {
+      return;
+    }
+
+    bool matches(String candidate) =>
+        candidate == normalizedOld || candidate.startsWith('$normalizedOld/');
+
+    String rewrite(String candidate) {
+      if (candidate == normalizedOld) return normalizedNew;
+      return '$normalizedNew/${candidate.substring(normalizedOld.length + 1)}';
+    }
+
+    final affected = _editorsByPath.keys.where(matches).toList(growable: false);
+    for (final oldKey in affected) {
+      final editor = _editorsByPath.remove(oldKey);
+      if (editor == null) continue;
+      final nextKey = rewrite(oldKey);
+      editor.path = nextKey;
+      _editorsByPath[nextKey] = editor;
+    }
+
+    for (var i = 0; i < _openPaths.length; i += 1) {
+      if (matches(_openPaths[i])) {
+        _openPaths[i] = rewrite(_openPaths[i]);
+      }
+    }
+
+    if (_activePath != null && matches(_activePath!)) {
+      _activePath = rewrite(_activePath!);
+    }
+    if (_previewPath != null && matches(_previewPath!)) {
+      _previewPath = rewrite(_previewPath!);
+    }
+    if (_selectedTreePath != null && matches(_selectedTreePath!)) {
+      _setSelectedTreePath(rewrite(_selectedTreePath!));
+    }
+
+    void rewriteStateMap<T>(Map<String, T> source) {
+      final next = <String, T>{};
+      for (final entry in source.entries) {
+        next[matches(entry.key) ? rewrite(entry.key) : entry.key] = entry.value;
+      }
+      source
+        ..clear()
+        ..addAll(next);
+    }
+
+    rewriteStateMap(_syncStates);
+    rewriteStateMap(_queuedAt);
+
+    final nextSynced = _syncedPaths
+        .map((path) => matches(path) ? rewrite(path) : path)
+        .toSet();
+    _syncedPaths
+      ..clear()
+      ..addAll(nextSynced);
+
+    notifyListeners();
+  }
+
   Future<void> openFile(
     String projectId,
     String path, {
@@ -210,7 +320,7 @@ class CodeWorkbenchController extends ChangeNotifier {
       return;
     }
 
-    final editor = await _createEditor(
+    final editor = _createEditorShell(
       path,
       preview: preview,
       wrapEnabled: wrapEnabled,
@@ -226,9 +336,12 @@ class CodeWorkbenchController extends ChangeNotifier {
       editor.error = null;
       editor.loading = false;
       editor.originalContent = content.content;
-      await editor.controller.setLanguageForPath(path);
-      await editor.controller.setText(content.content, markSaved: true);
-      editor.lastKnownDirty = editor.hasUnsavedChanges;
+      final controller = editor.controller;
+      if (controller != null) {
+        await controller.setLanguageForPath(path);
+        await controller.setText(content.content, markSaved: true);
+      }
+      editor.lastKnownDirty = false;
     } catch (e) {
       editor.error = e.toString();
       editor.loading = false;
@@ -261,7 +374,7 @@ class CodeWorkbenchController extends ChangeNotifier {
       return;
     }
 
-    await _createEditor(
+    _createEditorShell(
       path,
       preview: preview,
       wrapEnabled: wrapEnabled,
@@ -272,15 +385,16 @@ class CodeWorkbenchController extends ChangeNotifier {
   }
 
   void activateEditor(String path) {
+    _setSelectedTreePath(path);
     if (_activePath == path) return;
     _activePath = path;
-    _selectedTreePath = path;
     notifyListeners();
   }
 
   void pinEditor(String path) {
     final editor = _editorsByPath[path];
     if (editor == null) return;
+    _setSelectedTreePath(path);
     editor.isPreview = false;
     if (_previewPath == path) {
       _previewPath = null;
@@ -289,9 +403,10 @@ class CodeWorkbenchController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void enterEditMode(String path) {
+  Future<void> enterEditMode(String path) async {
     final editor = _editorsByPath[path];
     if (editor == null || editor.content == null || editor.isBinary) return;
+    await _ensureEditorController(editor);
     editor.isEditing = true;
     editor.isPreview = false;
     if (_previewPath == path) {
@@ -305,7 +420,10 @@ class CodeWorkbenchController extends ChangeNotifier {
     final editor = _editorsByPath[path];
     if (editor == null) return;
     editor.wrapEnabled = !editor.wrapEnabled;
-    await editor.controller.setWrapEnabled(editor.wrapEnabled);
+    final controller = editor.controller;
+    if (controller != null) {
+      await controller.setWrapEnabled(editor.wrapEnabled);
+    }
     notifyListeners();
   }
 
@@ -315,8 +433,11 @@ class CodeWorkbenchController extends ChangeNotifier {
   }) async {
     for (final editor in _editorsByPath.values) {
       editor.wrapEnabled = defaultWrap;
-      await editor.controller.setTabSpaces(tabSize);
-      await editor.controller.setWrapEnabled(defaultWrap);
+      editor.tabSize = tabSize;
+      final controller = editor.controller;
+      if (controller == null) continue;
+      await controller.setTabSpaces(tabSize);
+      await controller.setWrapEnabled(defaultWrap);
     }
     notifyListeners();
   }
@@ -324,7 +445,8 @@ class CodeWorkbenchController extends ChangeNotifier {
   Future<void> cancelEdit(String path) async {
     final editor = _editorsByPath[path];
     if (editor == null) return;
-    await editor.controller.setText(editor.originalContent, markSaved: true);
+    final controller = await _ensureEditorController(editor);
+    await controller.setText(editor.originalContent, markSaved: true);
     editor.isEditing = false;
     if (_syncedPaths.contains(path)) {
       _syncStates[path] = CodeWorkbenchSyncState.synced;
@@ -338,9 +460,10 @@ class CodeWorkbenchController extends ChangeNotifier {
   Future<void> updateText(String path, String text) async {
     final editor = _editorsByPath[path];
     if (editor == null) return;
-    final current = await editor.controller.readText();
+    final controller = await _ensureEditorController(editor);
+    final current = await controller.readText();
     if (current == text) return;
-    await editor.controller.setText(text);
+    await controller.setText(text);
     _syncedPaths.remove(path);
     _syncStates[path] = CodeWorkbenchSyncState.queued;
   }
@@ -356,18 +479,23 @@ class CodeWorkbenchController extends ChangeNotifier {
     editor.error = null;
     editor.loading = false;
     editor.originalContent = content.isBinary ? '' : content.content;
-    unawaited(editor.controller.setLanguageForPath(path));
-    unawaited(
-      editor.controller.setText(
-        content.isBinary ? '' : content.content,
-        markSaved: true,
-      ),
-    );
+    final controller = editor.controller;
+    if (controller != null) {
+      unawaited(controller.setLanguageForPath(path));
+      unawaited(
+        controller.setText(
+          content.isBinary ? '' : content.content,
+          markSaved: true,
+        ),
+      );
+    }
     editor.isEditing = keepEditing && !content.isBinary;
-    _syncedPaths.add(path);
-    _syncStates[path] = CodeWorkbenchSyncState.synced;
-    _queuedAt.remove(path);
-    editor.lastKnownDirty = editor.hasUnsavedChanges;
+    if (!keepEditing) {
+      _syncedPaths.add(path);
+      _syncStates[path] = CodeWorkbenchSyncState.synced;
+      _queuedAt.remove(path);
+      editor.lastKnownDirty = false;
+    }
     notifyListeners();
   }
 
@@ -383,8 +511,9 @@ class CodeWorkbenchController extends ChangeNotifier {
     );
     editor.originalContent = text;
     editor.isEditing = false;
-    await editor.controller.markSaved();
-    editor.lastKnownDirty = editor.hasUnsavedChanges;
+    final controller = await _ensureEditorController(editor);
+    await controller.markSaved();
+    editor.lastKnownDirty = false;
     markPathLocalSaved(path);
   }
 
@@ -454,7 +583,8 @@ class CodeWorkbenchController extends ChangeNotifier {
       await Future<void>.delayed(const Duration(milliseconds: 180));
       markPathSyncingGitHub(path);
       final fileName = path.split('/').isEmpty ? 'file' : path.split('/').last;
-      final latestText = await editor.controller.readText(refresh: true);
+      final controller = await _ensureEditorController(editor);
+      final latestText = await controller.readText(refresh: true);
       final result = await _service.syncFileToGitHub(
         projectId,
         filePath: path,
@@ -472,12 +602,12 @@ class CodeWorkbenchController extends ChangeNotifier {
         isBinary: false,
       );
       editor.originalContent = latestText;
-      await editor.controller.markSaved();
+      await controller.markSaved();
       editor.isEditing = false;
       _syncedPaths.add(path);
       _syncStates[path] = CodeWorkbenchSyncState.synced;
       _queuedAt.remove(path);
-      editor.lastKnownDirty = editor.hasUnsavedChanges;
+      editor.lastKnownDirty = false;
       return commitSha;
     } catch (_) {
       _syncedPaths.remove(path);
@@ -493,12 +623,13 @@ class CodeWorkbenchController extends ChangeNotifier {
   Future<void> discardChanges(String path) async {
     final editor = _editorsByPath[path];
     if (editor == null) return;
-    await editor.controller.setText(editor.originalContent, markSaved: true);
+    final controller = await _ensureEditorController(editor);
+    await controller.setText(editor.originalContent, markSaved: true);
     editor.isEditing = false;
     _syncedPaths.add(path);
     _syncStates[path] = CodeWorkbenchSyncState.synced;
     _queuedAt.remove(path);
-    editor.lastKnownDirty = editor.hasUnsavedChanges;
+    editor.lastKnownDirty = false;
     notifyListeners();
   }
 
@@ -519,7 +650,7 @@ class CodeWorkbenchController extends ChangeNotifier {
     }
     if (wasActive) {
       _activePath = _openPaths.isEmpty ? null : _openPaths.last;
-      _selectedTreePath = _activePath;
+      _setSelectedTreePath(_activePath);
     }
     notifyListeners();
   }
@@ -527,10 +658,12 @@ class CodeWorkbenchController extends ChangeNotifier {
   void _removeEditor(String path) {
     final editor = _editorsByPath.remove(path);
     _openPaths.remove(path);
-    if (editor != null) {
-      editor.controller.removeListener(editor.controllerListener);
+    final controller = editor?.controller;
+    final listener = editor?.controllerListener;
+    if (controller != null && listener != null) {
+      controller.removeListener(listener);
     }
-    editor?.controller.dispose();
+    controller?.dispose();
   }
 
   void _handleControllerChanged(CodeWorkbenchEditorState editor) {
@@ -544,10 +677,11 @@ class CodeWorkbenchController extends ChangeNotifier {
   @override
   void dispose() {
     for (final editor in _editorsByPath.values) {
-      editor.controller.dispose();
+      editor.controller?.dispose();
     }
     _editorsByPath.clear();
     _openPaths.clear();
+    _selectedTreePathNotifier.dispose();
     super.dispose();
   }
 }

@@ -13,8 +13,8 @@ import 'models/desktop_window_launch_configuration.dart';
 import 'providers/auth_provider.dart';
 import 'providers/editor_preferences_provider.dart';
 import 'providers/locale_provider.dart';
-import 'providers/project_provider.dart';
 import 'providers/profile_provider.dart';
+import 'providers/project_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/macos_menu_controller.dart';
 import 'router/app_router.dart';
@@ -22,6 +22,7 @@ import 'l10n/app_localizations.dart';
 import 'core/theme/app_theme.dart';
 import 'core/auth_expiry_bus.dart';
 import 'screens/desktop_workspace_welcome_screen.dart';
+import 'screens/login_screen.dart';
 import 'screens/local_workspace_screen.dart';
 import 'services/apple_iap_service.dart';
 import 'services/app_analytics_service.dart';
@@ -121,7 +122,9 @@ void _runWorkspaceWindowApp({DesktopWorkspaceLaunchRequest? initialRequest}) {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
+        ChangeNotifierProvider(create: (_) => ProfileProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => EditorPreferencesProvider()),
         ChangeNotifierProvider.value(value: _macosMenuController),
@@ -512,6 +515,13 @@ class _WorkspaceWindowAppState extends State<WorkspaceWindowApp> {
           source: state.uri.queryParameters['source'],
         ),
       ),
+      GoRoute(
+        path: '/login',
+        builder: (context, state) => LoginScreen(
+          sessionExpired: state.uri.queryParameters['expired'] == '1',
+          inviteCode: state.uri.queryParameters['invite'],
+        ),
+      ),
     ],
   );
 
@@ -770,39 +780,52 @@ class _MacosImportListenerState extends State<_MacosImportListener> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final pending = context.watch<MacosOpenService>().pendingRequest;
-    if (pending == null || pending.path.isEmpty || _draining) return;
+    final openService = context.watch<MacosOpenService>();
+    final pendingRequest = openService.pendingRequest;
+    final pendingRoute = openService.pendingRoute;
+    final hasPendingRequest =
+        pendingRequest != null && pendingRequest.path.isNotEmpty;
+    final hasPendingRoute = pendingRoute != null && pendingRoute.isNotEmpty;
+    if ((!hasPendingRequest && !hasPendingRoute) || _draining) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _draining) return;
-      unawaited(_drainPendingRequests());
+      unawaited(_drainPendingEvents());
     });
   }
 
-  Future<void> _drainPendingRequests() async {
+  Future<void> _drainPendingEvents() async {
     _draining = true;
     try {
       while (mounted) {
-        final request = _macosOpenService.consumePendingRequest();
-        if (request == null || request.path.isEmpty) break;
         final navigatorContext =
             _appRouter.routerDelegate.navigatorKey.currentContext;
         if (navigatorContext == null) {
-          debugPrint(
-            '[d1vai-open] missing navigator context for request=$request',
-          );
-          _macosOpenService.enqueueRequest(request);
           break;
         }
+        final pendingRoute = _macosOpenService.pendingRoute;
+        if (pendingRoute != null && pendingRoute.isNotEmpty) {
+          final route = _macosOpenService.consumePendingRoute();
+          if (route != null && route.isNotEmpty) {
+            _appRouter.go(route);
+            continue;
+          }
+        }
+        final request = _macosOpenService.consumePendingRequest();
+        if (request == null || request.path.isEmpty) break;
         await _handleOpenRequest(navigatorContext, request);
       }
     } finally {
       _draining = false;
       if (mounted) {
-        final pending = _macosOpenService.pendingRequest;
-        if (pending != null && pending.path.isNotEmpty) {
+        final pendingRequest = _macosOpenService.pendingRequest;
+        final pendingRoute = _macosOpenService.pendingRoute;
+        final hasPendingRequest =
+            pendingRequest != null && pendingRequest.path.isNotEmpty;
+        final hasPendingRoute = pendingRoute != null && pendingRoute.isNotEmpty;
+        if (hasPendingRequest || hasPendingRoute) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted || _draining) return;
-            unawaited(_drainPendingRequests());
+            unawaited(_drainPendingEvents());
           });
         }
       }

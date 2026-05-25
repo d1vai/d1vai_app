@@ -1780,6 +1780,54 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     if (type == 'assistant') {
       _finalizePrevToolDone();
       _setSessionThinking(false);
+      final contents = MessageParser.createMessageContentsFromPayload(payload);
+      if (contents.isEmpty) return;
+      final wsKey = MessageParser.deriveRenderableWsKey(payload, null, type);
+      final canReplaceLastAssistant =
+          _chatMessages.isNotEmpty &&
+          _chatMessages.last.role != 'user' &&
+          _chatMessages.last.contents.isNotEmpty &&
+          _chatMessages.last.contents.every(
+            (content) => content is TextMessageContent,
+          );
+      final turnId = MessageParser.payloadTurnId(payload);
+      setState(() {
+        if (wsKey != null &&
+            _chatMessages.any((message) => message.meta?['wsKey'] == wsKey)) {
+          return;
+        }
+        if (canReplaceLastAssistant) {
+          final last = _chatMessages.last;
+          _chatMessages[_chatMessages.length - 1] = last.copyWith(
+            contents: contents,
+            createdAt: DateTime.now(),
+            meta: {
+              ...?last.meta,
+              if (wsKey != null) 'wsKey': wsKey,
+              if (turnId != null) 'turnId': turnId,
+            },
+          );
+        } else {
+          _chatMessages.add(
+            ChatMessage(
+              id: 'asst-${DateTime.now().millisecondsSinceEpoch}',
+              role: 'assistant',
+              createdAt: DateTime.now(),
+              contents: contents,
+              meta: {
+                if (wsKey != null) 'wsKey': wsKey,
+                if (turnId != null) 'turnId': turnId,
+              },
+            ),
+          );
+        }
+        final next = MessageParser.dedupeRepeatedResultMessages(_chatMessages);
+        _chatMessages
+          ..clear()
+          ..addAll(next);
+      });
+      _scrollToBottom();
+      return;
     }
 
     if (type == 'tool_start' ||
