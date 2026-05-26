@@ -12,8 +12,12 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: const ColorScheme.light(
-        primary: AppColors
-            .surfaceDark, // Using dark surface as primary for contrast in light mode
+        primary: Color.fromARGB(
+          255,
+          108,
+          151,
+          249,
+        ), // Using dark surface as primary for contrast in light mode
         onPrimary: Colors.white,
         secondary: AppColors.success,
         onSecondary: Colors.white,

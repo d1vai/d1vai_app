@@ -493,6 +493,7 @@ class _D1VBottomNavBar extends StatelessWidget {
     final unselectedIconColor = colorScheme.onSurfaceVariant.withValues(
       alpha: isDark ? 0.78 : 0.70,
     );
+    final indicatorColor = Colors.white.withValues(alpha: isDark ? 0.12 : 0.16);
 
     return GlassBottomBar(
       tabs: items
@@ -516,13 +517,20 @@ class _D1VBottomNavBar extends StatelessWidget {
       labelFontSize: 10,
       selectedIconColor: selectedIconColor,
       unselectedIconColor: unselectedIconColor,
-      indicatorColor: colorScheme.primary.withValues(
-        alpha: isDark ? 0.20 : 0.12,
+      indicatorColor: indicatorColor,
+      indicatorSettings: const LiquidGlassSettings(
+        glassColor: Color(0x1AFFFFFF),
+        saturation: 1.5,
+        refractiveIndex: 1.15,
+        thickness: 20,
+        lightIntensity: 2,
+        chromaticAberration: 0.5,
+        blur: 0,
       ),
       interactionBehavior: GlassInteractionBehavior.full,
-      interactionGlowColor: colorScheme.primary.withValues(
-        alpha: isDark ? 0.34 : 0.20,
-      ),
+      // interactionGlowColor: colorScheme.primary.withValues(
+      //   alpha: isDark ? 0.34 : 0.20,
+      // ),
       pressScale: 1.04,
       indicatorExpansion: 14,
       magnification: 1.08,
