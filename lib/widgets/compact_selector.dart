@@ -107,9 +107,21 @@ class CompactSelector extends StatelessWidget {
         );
     final resolvedMenuBorderColor =
         menuBorderColor ?? cs.outlineVariant.withValues(alpha: 0.7);
+    final safeMinWidth = minWidth.isFinite && minWidth > 0 ? minWidth : 0.0;
+    final safeMaxWidth = maxWidth.isFinite
+        ? (maxWidth < 0 ? 0.0 : maxWidth)
+        : double.infinity;
+    // Some compact layouts can hand us a max width smaller than the preferred
+    // minimum. Clamp the minimum down so the constraints stay valid.
+    final effectiveMinWidth = safeMaxWidth.isFinite
+        ? safeMinWidth.clamp(0.0, safeMaxWidth).toDouble()
+        : safeMinWidth;
 
     return ConstrainedBox(
-      constraints: BoxConstraints(minWidth: minWidth, maxWidth: maxWidth),
+      constraints: BoxConstraints(
+        minWidth: effectiveMinWidth,
+        maxWidth: safeMaxWidth,
+      ),
       child: Tooltip(
         message: tip,
         child: Container(
