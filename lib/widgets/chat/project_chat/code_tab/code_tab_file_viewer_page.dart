@@ -107,11 +107,16 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
       final content = CodeTabFileContent.fromJson(raw);
       await editController.setLanguageForPath(widget.filePath);
       await editController.setText(content.content, markSaved: true);
+      final shouldOpenDirectlyInEditor =
+          !content.isBinary &&
+          supportsMonacoTextPreview() &&
+          shouldOpenPathDirectlyInMonacoEditor(widget.filePath);
       if (!mounted) return;
       setState(() {
         _content = content;
         _editOriginal = content.content;
         _hasUnsavedChanges = false;
+        _isEditing = shouldOpenDirectlyInEditor;
       });
     } catch (e) {
       if (!mounted) return;
@@ -144,6 +149,22 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
       _editOriginal = content.content;
       _hasUnsavedChanges = false;
     });
+  }
+
+  Future<void> _enterEditAtPosition({
+    required int line,
+    required int column,
+  }) async {
+    final content = _content;
+    final editController = _editController;
+    if (content == null ||
+        editController == null ||
+        !isEditableFilePreview(widget.filePath, content.isBinary)) {
+      return;
+    }
+    await _enterEdit();
+    if (!mounted) return;
+    await editController.focusPosition(line: line, column: column);
   }
 
   Future<void> _save() async {
@@ -279,6 +300,10 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
     final canCopyCurrent =
         content != null &&
         isCopyableFilePreview(widget.filePath, content.isBinary);
+    final useMonacoPreview =
+        canEditCurrent &&
+        supportsMonacoTextPreview() &&
+        shouldOpenPathDirectlyInMonacoEditor(widget.filePath);
 
     return Scaffold(
       appBar: AppBar(
@@ -430,29 +455,28 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
                     },
                     compact: false,
                   )
-                : Stack(
-                    children: [
-                      Positioned.fill(
-                        child: FilePreview(
-                          path: widget.filePath,
-                          content: content.content,
-                          isBinary: content.isBinary,
-                          sizeBytes: content.size,
-                        ),
-                      ),
-                      Positioned.fill(
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () => unawaited(_enterEdit()),
-                            onDoubleTap: () => unawaited(_enterEdit()),
-                            splashColor: Colors.transparent,
-                            highlightColor: Colors.transparent,
-                            hoverColor: Colors.transparent,
-                          ),
-                        ),
-                      ),
-                    ],
+                : useMonacoPreview
+                ? FilePreview(
+                    path: widget.filePath,
+                    content: content.content,
+                    isBinary: false,
+                    sizeBytes: content.size,
+                    preferMonacoWhenEditable: true,
+                    onActivateTextPosition: (line, column) {
+                      unawaited(
+                        _enterEditAtPosition(line: line, column: column),
+                      );
+                    },
+                  )
+                : GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onDoubleTap: () => unawaited(_enterEdit()),
+                    child: FilePreview(
+                      path: widget.filePath,
+                      content: content.content,
+                      isBinary: content.isBinary,
+                      sizeBytes: content.size,
+                    ),
                   ),
           ),
         ),

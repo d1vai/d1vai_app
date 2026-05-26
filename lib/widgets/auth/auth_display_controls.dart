@@ -32,6 +32,7 @@ class AuthDisplayControls extends StatelessWidget {
 
     final selected = await showModalBottomSheet<AppThemeMode>(
       context: context,
+      useRootNavigator: true,
       showDragHandle: true,
       builder: (sheetContext) {
         final currentMode = context.watch<ThemeProvider>().themeMode;
@@ -80,6 +81,7 @@ class AuthDisplayControls extends StatelessWidget {
 
     final selected = await showModalBottomSheet<Locale>(
       context: context,
+      useRootNavigator: true,
       showDragHandle: true,
       builder: (sheetContext) {
         final current = context.watch<LocaleProvider>().locale;

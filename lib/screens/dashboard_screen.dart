@@ -511,12 +511,15 @@ class _DashboardScreenState extends State<DashboardScreen>
           : _buildContent(user, context, projectProvider),
       floatingActionButton: user == null
           ? null
-          : FloatingActionButton(
-              tooltip: _t('create_project', 'Create Project'),
-              onPressed: () {
-                CreateProjectDialog.show(context);
-              },
-              child: const Icon(Icons.add),
+          : Padding(
+              padding: const EdgeInsets.only(bottom: 92),
+              child: FloatingActionButton(
+                tooltip: _t('create_project', 'Create Project'),
+                onPressed: () {
+                  CreateProjectDialog.show(context);
+                },
+                child: const Icon(Icons.add),
+              ),
             ),
     );
   }

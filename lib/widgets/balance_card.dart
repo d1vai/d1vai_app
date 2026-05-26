@@ -78,6 +78,7 @@ class _BalanceCardState extends State<BalanceCard>
   void _showBalanceDetails(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(

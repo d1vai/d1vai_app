@@ -17,6 +17,7 @@ class ShareSheet {
     if (!context.mounted) return;
     await showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       showDragHandle: true,
@@ -46,12 +47,14 @@ class ShareLinks {
     scheme: 'https',
     host: 'www.d1v.ai',
     path: '/docs/$slug',
-    queryParameters: {
-      if (hideHeader) 'hideheader': _hideHeaderValue,
-    },
+    queryParameters: {if (hideHeader) 'hideheader': _hideHeaderValue},
   );
 
-  static Uri openApiDocs({String? prompt, String? spec, bool hideHeader = false}) => Uri(
+  static Uri openApiDocs({
+    String? prompt,
+    String? spec,
+    bool hideHeader = false,
+  }) => Uri(
     scheme: 'https',
     host: 'www.d1v.ai',
     path: '/openapi',

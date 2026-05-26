@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'dart:async';
@@ -37,6 +38,18 @@ final _macosOpenService = MacosOpenService.instance;
 final _macosFolderImportService = MacosFolderImportService.instance;
 final _macosMenuController = MacosMenuController();
 
+Widget _wrapWithLiquidGlass(Widget child) {
+  return LiquidGlassWidgets.wrap(
+    adaptiveQuality: true,
+    theme: GlassThemeData.simple(
+      blur: 10,
+      thickness: 24,
+      quality: GlassQuality.standard,
+    ),
+    child: child,
+  );
+}
+
 void _scheduleSplashRemoval({Duration delay = Duration.zero}) {
   void removeSplash() {
     try {
@@ -57,6 +70,7 @@ void _scheduleSplashRemoval({Duration delay = Duration.zero}) {
 Future<void> main([List<String> args = const <String>[]]) async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  await LiquidGlassWidgets.initialize();
   final launchConfiguration = DesktopWindowLaunchConfiguration.fromArgs(args);
 
   if (launchConfiguration.opensWorkspaceWindow) {
@@ -82,19 +96,21 @@ Future<void> main([List<String> args = const <String>[]]) async {
   await AppAnalyticsService.instance.initialize();
 
   runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => LocaleProvider()),
-        ChangeNotifierProvider(create: (_) => ProjectProvider()),
-        ChangeNotifierProvider(create: (_) => ProfileProvider()),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => EditorPreferencesProvider()),
-        ChangeNotifierProvider.value(value: _macosMenuController),
-        ChangeNotifierProvider.value(value: _macosOpenService),
-        ChangeNotifierProvider.value(value: _macosFolderImportService),
-      ],
-      child: const _AuthExpiryGate(child: MyApp()),
+    _wrapWithLiquidGlass(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => AuthProvider()),
+          ChangeNotifierProvider(create: (_) => LocaleProvider()),
+          ChangeNotifierProvider(create: (_) => ProjectProvider()),
+          ChangeNotifierProvider(create: (_) => ProfileProvider()),
+          ChangeNotifierProvider(create: (_) => ThemeProvider()),
+          ChangeNotifierProvider(create: (_) => EditorPreferencesProvider()),
+          ChangeNotifierProvider.value(value: _macosMenuController),
+          ChangeNotifierProvider.value(value: _macosOpenService),
+          ChangeNotifierProvider.value(value: _macosFolderImportService),
+        ],
+        child: const _AuthExpiryGate(child: MyApp()),
+      ),
     ),
   );
 
@@ -111,6 +127,7 @@ Future<void> main([List<String> args = const <String>[]]) async {
 Future<void> workspaceMain() async {
   WidgetsFlutterBinding.ensureInitialized();
   ApiClient.setRuntimeLogScope('workspace/bootstrap');
+  await LiquidGlassWidgets.initialize();
   await _macosOpenService.initialize();
   _runWorkspaceWindowApp();
 
@@ -120,18 +137,20 @@ Future<void> workspaceMain() async {
 
 void _runWorkspaceWindowApp({DesktopWorkspaceLaunchRequest? initialRequest}) {
   runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => LocaleProvider()),
-        ChangeNotifierProvider(create: (_) => ProfileProvider()),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => EditorPreferencesProvider()),
-        ChangeNotifierProvider.value(value: _macosMenuController),
-        ChangeNotifierProvider.value(value: _macosOpenService),
-        ChangeNotifierProvider.value(value: _macosFolderImportService),
-      ],
-      child: WorkspaceWindowApp(initialRequest: initialRequest),
+    _wrapWithLiquidGlass(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => AuthProvider()),
+          ChangeNotifierProvider(create: (_) => LocaleProvider()),
+          ChangeNotifierProvider(create: (_) => ProfileProvider()),
+          ChangeNotifierProvider(create: (_) => ThemeProvider()),
+          ChangeNotifierProvider(create: (_) => EditorPreferencesProvider()),
+          ChangeNotifierProvider.value(value: _macosMenuController),
+          ChangeNotifierProvider.value(value: _macosOpenService),
+          ChangeNotifierProvider.value(value: _macosFolderImportService),
+        ],
+        child: WorkspaceWindowApp(initialRequest: initialRequest),
+      ),
     ),
   );
 }

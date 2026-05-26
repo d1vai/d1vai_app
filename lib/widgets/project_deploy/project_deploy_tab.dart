@@ -113,6 +113,9 @@ class _ReleaseGroup {
 
 class _ProjectDeployTabState extends State<ProjectDeployTab>
     with SingleTickerProviderStateMixin {
+  static const double _wideWorkspaceBreakpoint = 980;
+  static const double _compactWorkspaceBreakpoint = 720;
+
   final List<DeploymentHistory> _deployments = [];
   bool _isLoading = false;
   bool _isInitialized = false;
@@ -141,6 +144,36 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
     final value = AppLocalizations.of(context)?.translate(key);
     if (value == null || value == key) return fallback;
     return value;
+  }
+
+  bool _isCompactWidth(double width) => width < _compactWorkspaceBreakpoint;
+
+  String _sanitizeDisplayText(String input) {
+    if (input.isEmpty) return input;
+    final units = input.codeUnits;
+    final buffer = StringBuffer();
+    for (var i = 0; i < units.length; i++) {
+      final unit = units[i];
+      if (unit >= 0xD800 && unit <= 0xDBFF) {
+        if (i + 1 < units.length) {
+          final next = units[i + 1];
+          if (next >= 0xDC00 && next <= 0xDFFF) {
+            buffer.writeCharCode(unit);
+            buffer.writeCharCode(next);
+            i++;
+            continue;
+          }
+        }
+        buffer.writeCharCode(0xFFFD);
+        continue;
+      }
+      if (unit >= 0xDC00 && unit <= 0xDFFF) {
+        buffer.writeCharCode(0xFFFD);
+        continue;
+      }
+      buffer.writeCharCode(unit);
+    }
+    return buffer.toString();
   }
 
   ButtonStyle _denseOutlinedButtonStyle(BuildContext context) {
@@ -364,10 +397,12 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
     if (raw is! Map) return null;
     final sha = raw['sha']?.toString().trim() ?? '';
     if (sha.isEmpty) return null;
-    final message = (raw['message'] ?? '').toString().trim();
+    final message = _sanitizeDisplayText(
+      (raw['message'] ?? '').toString().trim(),
+    );
     final author = raw['author'];
     final authorName = author is Map
-        ? (author['name'] ?? '').toString().trim()
+        ? _sanitizeDisplayText((author['name'] ?? '').toString().trim())
         : '';
     final authoredAt = author is Map
         ? (author['date'] ?? '').toString().trim()
@@ -386,10 +421,12 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
     if (raw is! Map) return null;
     final sha = (raw['sha'] ?? '').toString().trim();
     if (sha.isEmpty) return null;
-    final message = (raw['message'] ?? '').toString().trim();
+    final message = _sanitizeDisplayText(
+      (raw['message'] ?? '').toString().trim(),
+    );
     final author = raw['author'];
     final authorName = author is Map
-        ? (author['name'] ?? '').toString().trim()
+        ? _sanitizeDisplayText((author['name'] ?? '').toString().trim())
         : '';
     final authoredAt = author is Map
         ? (author['date'] ?? '').toString().trim()
@@ -408,7 +445,9 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
     if (raw is! Map) return null;
     final sha = (raw['sha'] ?? '').toString().trim();
     if (sha.isEmpty) return null;
-    final message = (raw['message'] ?? '').toString().trim();
+    final message = _sanitizeDisplayText(
+      (raw['message'] ?? '').toString().trim(),
+    );
     final stats = raw['stats'];
     final statsMap = stats is Map ? stats : const <String, dynamic>{};
     final filesRaw = raw['files'];
@@ -417,14 +456,20 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
               .whereType<Map>()
               .map(
                 (file) => _CommitDiffFile(
-                  filename: (file['filename'] ?? '').toString(),
-                  status: (file['status'] ?? 'modified').toString(),
+                  filename: _sanitizeDisplayText(
+                    (file['filename'] ?? '').toString(),
+                  ),
+                  status: _sanitizeDisplayText(
+                    (file['status'] ?? 'modified').toString(),
+                  ),
                   additions:
                       int.tryParse((file['additions'] ?? 0).toString()) ?? 0,
                   deletions:
                       int.tryParse((file['deletions'] ?? 0).toString()) ?? 0,
                   changes: int.tryParse((file['changes'] ?? 0).toString()) ?? 0,
-                  patch: file['patch']?.toString(),
+                  patch: file['patch'] == null
+                      ? null
+                      : _sanitizeDisplayText(file['patch'].toString()),
                 ),
               )
               .toList()
@@ -1446,18 +1491,27 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
       },
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final isWide = constraints.maxWidth >= 980;
+          final isWide = constraints.maxWidth >= _wideWorkspaceBreakpoint;
           return SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildWorkspaceHeader(project),
+                _buildWorkspaceHeader(
+                  project,
+                  isCompact: _isCompactWidth(constraints.maxWidth),
+                ),
                 const SizedBox(height: 12),
-                _buildWorkspaceTabs(),
+                _buildWorkspaceTabs(
+                  isCompact: _isCompactWidth(constraints.maxWidth),
+                ),
                 const SizedBox(height: 12),
-                _buildWorkspaceBody(project, isWide: isWide),
+                _buildWorkspaceBody(
+                  project,
+                  isWide: isWide,
+                  isCompact: _isCompactWidth(constraints.maxWidth),
+                ),
               ],
             ),
           );
@@ -1466,75 +1520,79 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
     );
   }
 
-  Widget _buildWorkspaceTabs() {
+  Widget _buildWorkspaceTabs({required bool isCompact}) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
     Widget tab(_DeployWorkspaceTab value, IconData icon, String label) {
       final active = _activeTab == value;
-      return Expanded(
-        child: InkWell(
-          borderRadius: BorderRadius.circular(9),
-          onTap: () async {
-            setState(() => _activeTab = value);
-            if (value == _DeployWorkspaceTab.timeline &&
-                _timelineCommits.isEmpty &&
-                !_isLoadingTimeline) {
-              await _loadTimeline();
-            } else if (value == _DeployWorkspaceTab.deployments &&
-                _deployments.isEmpty &&
-                !_isLoading) {
-              await _loadDeployments();
-            } else if (value == _DeployWorkspaceTab.releases &&
-                _releaseCommits.isEmpty &&
-                !_isLoadingReleases) {
-              await _loadReleases();
-            }
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOutCubic,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: BoxDecoration(
+      final tabChild = InkWell(
+        borderRadius: BorderRadius.circular(9),
+        onTap: () async {
+          setState(() => _activeTab = value);
+          if (value == _DeployWorkspaceTab.timeline &&
+              _timelineCommits.isEmpty &&
+              !_isLoadingTimeline) {
+            await _loadTimeline();
+          } else if (value == _DeployWorkspaceTab.deployments &&
+              _deployments.isEmpty &&
+              !_isLoading) {
+            await _loadDeployments();
+          } else if (value == _DeployWorkspaceTab.releases &&
+              _releaseCommits.isEmpty &&
+              !_isLoadingReleases) {
+            await _loadReleases();
+          }
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: active
+                ? Color.alphaBlend(
+                    cs.primary.withValues(alpha: 0.14),
+                    cs.surface,
+                  )
+                : cs.surface.withValues(alpha: 0.42),
+            borderRadius: BorderRadius.circular(9),
+            border: Border.all(
               color: active
-                  ? Color.alphaBlend(
-                      cs.primary.withValues(alpha: 0.14),
-                      cs.surface,
-                    )
-                  : cs.surface.withValues(alpha: 0.42),
-              borderRadius: BorderRadius.circular(9),
-              border: Border.all(
-                color: active
-                    ? cs.primary.withValues(alpha: 0.24)
-                    : cs.outlineVariant.withValues(alpha: 0.24),
-              ),
+                  ? cs.primary.withValues(alpha: 0.24)
+                  : cs.outlineVariant.withValues(alpha: 0.24),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  size: 15,
-                  color: active ? cs.primary : cs.onSurfaceVariant,
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      fontSize: 11.5,
-                      color: active ? cs.primary : cs.onSurfaceVariant,
-                      fontWeight: FontWeight.w700,
-                    ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 15,
+                color: active ? cs.primary : cs.onSurfaceVariant,
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontSize: 11.5,
+                    color: active ? cs.primary : cs.onSurfaceVariant,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       );
+
+      if (isCompact) {
+        return tabChild;
+      }
+
+      return Expanded(child: tabChild);
     }
 
     return Container(
@@ -1547,31 +1605,53 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.28)),
       ),
-      child: Row(
-        children: [
-          tab(
-            _DeployWorkspaceTab.timeline,
-            Icons.timeline_rounded,
-            _t('project_deploy_tab_timeline', 'Timeline'),
-          ),
-          const SizedBox(width: 8),
-          tab(
-            _DeployWorkspaceTab.deployments,
-            Icons.rocket_launch_outlined,
-            _t('project_deployment_tab_deployments', 'Deployments'),
-          ),
-          const SizedBox(width: 8),
-          tab(
-            _DeployWorkspaceTab.releases,
-            Icons.inventory_2_outlined,
-            _t('project_deploy_releases', 'Releases'),
-          ),
-        ],
-      ),
+      child: isCompact
+          ? Column(
+              children: [
+                tab(
+                  _DeployWorkspaceTab.timeline,
+                  Icons.timeline_rounded,
+                  _t('project_deploy_tab_timeline', 'Timeline'),
+                ),
+                const SizedBox(height: 8),
+                tab(
+                  _DeployWorkspaceTab.deployments,
+                  Icons.rocket_launch_outlined,
+                  _t('project_deployment_tab_deployments', 'Deployments'),
+                ),
+                const SizedBox(height: 8),
+                tab(
+                  _DeployWorkspaceTab.releases,
+                  Icons.inventory_2_outlined,
+                  _t('project_deploy_releases', 'Releases'),
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                tab(
+                  _DeployWorkspaceTab.timeline,
+                  Icons.timeline_rounded,
+                  _t('project_deploy_tab_timeline', 'Timeline'),
+                ),
+                const SizedBox(width: 8),
+                tab(
+                  _DeployWorkspaceTab.deployments,
+                  Icons.rocket_launch_outlined,
+                  _t('project_deployment_tab_deployments', 'Deployments'),
+                ),
+                const SizedBox(width: 8),
+                tab(
+                  _DeployWorkspaceTab.releases,
+                  Icons.inventory_2_outlined,
+                  _t('project_deploy_releases', 'Releases'),
+                ),
+              ],
+            ),
     );
   }
 
-  Widget _buildWorkspaceHeader(UserProject project) {
+  Widget _buildWorkspaceHeader(UserProject project, {required bool isCompact}) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final devBranch = _resolveDevBranch();
@@ -1604,35 +1684,18 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Flex(
+            direction: isCompact ? Axis.vertical : Axis.horizontal,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Release workflow',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Review development commits, check branch promotion, and move safe changes to production.',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: cs.onSurfaceVariant,
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
+              if (!isCompact)
+                Expanded(child: _buildWorkspaceHeaderIntro(theme, cs)),
+              if (isCompact) _buildWorkspaceHeaderIntro(theme, cs),
+              SizedBox(width: isCompact ? 0 : 12, height: isCompact ? 12 : 0),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                alignment: WrapAlignment.end,
+                alignment: isCompact ? WrapAlignment.start : WrapAlignment.end,
                 children: [
                   pill(
                     Icons.fork_right_rounded,
@@ -1734,10 +1797,36 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
     );
   }
 
-  Widget _buildWorkspaceBody(UserProject project, {required bool isWide}) {
+  Widget _buildWorkspaceHeaderIntro(ThemeData theme, ColorScheme cs) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Release workflow',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Review development commits, check branch promotion, and move safe changes to production.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: cs.onSurfaceVariant,
+            height: 1.35,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWorkspaceBody(
+    UserProject project, {
+    required bool isWide,
+    required bool isCompact,
+  }) {
     switch (_activeTab) {
       case _DeployWorkspaceTab.timeline:
-        return _buildTimelineTab(project, isWide: isWide);
+        return _buildTimelineTab(project, isWide: isWide, isCompact: isCompact);
       case _DeployWorkspaceTab.deployments:
         return _buildDeploymentHistoryCard();
       case _DeployWorkspaceTab.releases:
@@ -1745,7 +1834,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
     }
   }
 
-  Widget _buildBranchContextCard() {
+  Widget _buildBranchContextCard({required bool isCompact}) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final devBranch = _resolveDevBranch();
@@ -1818,6 +1907,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
               ),
             );
 
+      if (isCompact) return interactive;
       return Expanded(child: interactive);
     }
 
@@ -1826,11 +1916,34 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Flex(
+            direction: isCompact ? Axis.vertical : Axis.horizontal,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
+              if (!isCompact)
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Branch release controls',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Inspect your working branch, choose any source/target pair, and run a safe merge check before releasing.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: cs.onSurfaceVariant,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if (isCompact)
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
@@ -1849,8 +1962,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 12),
+              SizedBox(width: isCompact ? 0 : 12, height: isCompact ? 12 : 0),
               FilledButton.tonalIcon(
                 onPressed: _openBranchMergeDialog,
                 style: _denseFilledButtonStyle(context),
@@ -1860,27 +1972,50 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
             ],
           ),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              branchTile(
-                icon: Icons.fork_right_rounded,
-                label: 'Workspace branch',
-                value: devBranch,
-                onTap: () =>
-                    unawaited(_copyToClipboard(devBranch, label: 'Branch')),
-                tooltip: 'Copy workspace branch',
-              ),
-              const SizedBox(width: 12),
-              branchTile(
-                icon: Icons.outbox_rounded,
-                label: 'Release branch',
-                value: mainBranch,
-                onTap: () =>
-                    unawaited(_copyToClipboard(mainBranch, label: 'Branch')),
-                tooltip: 'Copy release branch',
-              ),
-            ],
-          ),
+          if (isCompact)
+            Column(
+              children: [
+                branchTile(
+                  icon: Icons.fork_right_rounded,
+                  label: 'Workspace branch',
+                  value: devBranch,
+                  onTap: () =>
+                      unawaited(_copyToClipboard(devBranch, label: 'Branch')),
+                  tooltip: 'Copy workspace branch',
+                ),
+                const SizedBox(height: 12),
+                branchTile(
+                  icon: Icons.outbox_rounded,
+                  label: 'Release branch',
+                  value: mainBranch,
+                  onTap: () =>
+                      unawaited(_copyToClipboard(mainBranch, label: 'Branch')),
+                  tooltip: 'Copy release branch',
+                ),
+              ],
+            )
+          else
+            Row(
+              children: [
+                branchTile(
+                  icon: Icons.fork_right_rounded,
+                  label: 'Workspace branch',
+                  value: devBranch,
+                  onTap: () =>
+                      unawaited(_copyToClipboard(devBranch, label: 'Branch')),
+                  tooltip: 'Copy workspace branch',
+                ),
+                const SizedBox(width: 12),
+                branchTile(
+                  icon: Icons.outbox_rounded,
+                  label: 'Release branch',
+                  value: mainBranch,
+                  onTap: () =>
+                      unawaited(_copyToClipboard(mainBranch, label: 'Branch')),
+                  tooltip: 'Copy release branch',
+                ),
+              ],
+            ),
           if ((_branchLoadError ?? '').trim().isNotEmpty) ...[
             const SizedBox(height: 12),
             Text(
@@ -1896,7 +2031,11 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
     );
   }
 
-  Widget _buildTimelineTab(UserProject project, {required bool isWide}) {
+  Widget _buildTimelineTab(
+    UserProject project, {
+    required bool isWide,
+    required bool isCompact,
+  }) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final selectedCommit = _timelineCommits.cast<_TimelineCommit?>().firstWhere(
@@ -2030,10 +2169,37 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Flex(
+            direction: isCompact ? Axis.vertical : Axis.horizontal,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
+              if (!isCompact)
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _t('project_deploy_dev_timeline', 'Dev Timeline'),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        _t(
+                          'project_deploy_dev_timeline_hint',
+                          'Inspect recent commits on the dev branch before you promote them to production.',
+                        ),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: cs.onSurfaceVariant,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if (isCompact)
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
@@ -2055,87 +2221,16 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                     ),
                   ],
                 ),
-              ),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  OutlinedButton.icon(
-                    onPressed: _isLoadingTimeline ? null : _loadTimeline,
-                    style: _denseOutlinedButtonStyle(context),
-                    icon: _isLoadingTimeline
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.refresh_rounded),
-                    label: Text(_t('refresh', 'Refresh')),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: _deployingPreview ? null : _triggerPreviewDeploy,
-                    style: _denseOutlinedButtonStyle(context),
-                    icon: _deployingPreview
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.rocket_launch_outlined),
-                    label: Text(
-                      _t(
-                        'project_deploy_action_redeploy_preview',
-                        'Redeploy preview',
-                      ),
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: canRevert && !_revertingCommit
-                        ? () => _revertCommitAndPreviewRedeploy(
-                            selectedCommit.sha,
-                          )
-                        : null,
-                    style: _denseOutlinedButtonStyle(context),
-                    icon: const Icon(Icons.rotate_left_rounded),
-                    label: Text(
-                      _t('project_deploy_revert_preview', 'Revert + Preview'),
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: _openBranchMergeDialog,
-                    style: _denseOutlinedButtonStyle(context),
-                    icon: const Icon(Icons.merge_type_rounded),
-                    label: const Text('Merge branches'),
-                  ),
-                  FilledButton.icon(
-                    onPressed: _deployingProduction
-                        ? null
-                        : () => _confirmAndDeploy(
-                            title: _t(
-                              'project_deploy_confirm_prod_title',
-                              'Deploy to production?',
-                            ),
-                            message: _t(
-                              'project_deploy_confirm_prod_message',
-                              'This will compare dev/main, merge if needed, then trigger a production deployment.',
-                            ),
-                            action: _triggerProductionDeploy,
-                          ),
-                    style: _denseFilledButtonStyle(context),
-                    icon: const Icon(Icons.call_merge_rounded),
-                    label: Text(
-                      _t(
-                        'project_deploy_action_deploy_prod',
-                        'Deploy production',
-                      ),
-                    ),
-                  ),
-                ],
+              SizedBox(width: isCompact ? 0 : 12, height: isCompact ? 12 : 0),
+              _buildTimelineActions(
+                isCompact: isCompact,
+                selectedCommit: selectedCommit,
+                canRevert: canRevert,
               ),
             ],
           ),
           const SizedBox(height: 14),
-          _buildBranchContextCard(),
+          _buildBranchContextCard(isCompact: isCompact),
           const SizedBox(height: 14),
           if (isWide)
             Row(
@@ -2162,6 +2257,102 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
           ],
         ],
       ),
+    );
+  }
+
+  Widget _buildTimelineActions({
+    required bool isCompact,
+    required _TimelineCommit? selectedCommit,
+    required bool canRevert,
+  }) {
+    final actions = <Widget>[
+      OutlinedButton.icon(
+        onPressed: _isLoadingTimeline ? null : _loadTimeline,
+        style: _denseOutlinedButtonStyle(context),
+        icon: _isLoadingTimeline
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.refresh_rounded),
+        label: Text(_t('refresh', 'Refresh')),
+      ),
+      OutlinedButton.icon(
+        onPressed: _deployingPreview ? null : _triggerPreviewDeploy,
+        style: _denseOutlinedButtonStyle(context),
+        icon: _deployingPreview
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.rocket_launch_outlined),
+        label: Text(
+          _t('project_deploy_action_redeploy_preview', 'Redeploy preview'),
+        ),
+      ),
+      OutlinedButton.icon(
+        onPressed: canRevert && !_revertingCommit && selectedCommit != null
+            ? () => _revertCommitAndPreviewRedeploy(selectedCommit.sha)
+            : null,
+        style: _denseOutlinedButtonStyle(context),
+        icon: const Icon(Icons.rotate_left_rounded),
+        label: Text(_t('project_deploy_revert_preview', 'Revert + Preview')),
+      ),
+      OutlinedButton.icon(
+        onPressed: _openBranchMergeDialog,
+        style: _denseOutlinedButtonStyle(context),
+        icon: const Icon(Icons.merge_type_rounded),
+        label: const Text('Merge branches'),
+      ),
+      FilledButton.icon(
+        onPressed: _deployingProduction
+            ? null
+            : () => _confirmAndDeploy(
+                title: _t(
+                  'project_deploy_confirm_prod_title',
+                  'Deploy to production?',
+                ),
+                message: _t(
+                  'project_deploy_confirm_prod_message',
+                  'This will compare dev/main, merge if needed, then trigger a production deployment.',
+                ),
+                action: _triggerProductionDeploy,
+              ),
+        style: _denseFilledButtonStyle(context),
+        icon: const Icon(Icons.call_merge_rounded),
+        label: Text(
+          _t('project_deploy_action_deploy_prod', 'Deploy production'),
+        ),
+      ),
+    ];
+
+    if (!isCompact) {
+      return Wrap(
+        spacing: 10,
+        runSpacing: 10,
+        alignment: WrapAlignment.end,
+        children: actions,
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth.isFinite
+            ? (constraints.maxWidth - 8) / 2
+            : 160.0;
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: actions
+              .map(
+                (action) =>
+                    SizedBox(width: width.clamp(120.0, 220.0), child: action),
+              )
+              .toList(),
+        );
+      },
     );
   }
 
@@ -3064,6 +3255,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
 
     await showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       builder: (context) {
         return SafeArea(
           child: Padding(

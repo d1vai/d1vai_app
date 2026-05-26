@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 const double _adaptiveModalMobileBreakpoint = 720;
@@ -16,6 +18,7 @@ Future<T?> showAdaptiveModal<T>({
   if (useMobileModalLayout(context)) {
     return showModalBottomSheet<T>(
       context: context,
+      useRootNavigator: true,
       isDismissible: barrierDismissible,
       enableDrag: barrierDismissible,
       isScrollControlled: isScrollControlled,
@@ -65,6 +68,17 @@ class AdaptiveModalContainer extends StatelessWidget {
           mobile ? 0 : 20,
           mobile ? 0 : 24,
         );
+    final resolvedMarginInsets = resolvedMargin.resolve(
+      Directionality.of(context),
+    );
+    final availableWidth = math.max(
+      0.0,
+      media.size.width - resolvedMarginInsets.horizontal,
+    );
+    final constrainedMaxWidth = mobile
+        ? availableWidth
+        : math.min(maxWidth, availableWidth);
+    final constrainedMinWidth = mobile ? availableWidth : 0.0;
 
     final shape = RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(
@@ -82,11 +96,11 @@ class AdaptiveModalContainer extends StatelessWidget {
         child: Container(
           margin: resolvedMargin,
           constraints: BoxConstraints(
-            maxWidth: maxWidth,
+            maxWidth: constrainedMaxWidth,
             maxHeight:
                 media.size.height *
                 (mobile ? mobileMaxHeightFactor : desktopMaxHeightFactor),
-            minWidth: mobile ? media.size.width : 0,
+            minWidth: constrainedMinWidth,
           ),
           child: Material(
             color: theme.colorScheme.surface,

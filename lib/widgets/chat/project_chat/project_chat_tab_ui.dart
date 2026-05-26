@@ -438,6 +438,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
   }
 
   void _openMobileChat() {
+    if (_showMobileChat) return;
     HapticFeedback.lightImpact();
     setState(() {
       _showMobileChat = true;
@@ -445,13 +446,13 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
       _mobileChatSheetStage = _sheetStageForExtent(_mobileChatSheetExtent);
     });
     _initializeChat();
+    unawaited(_presentMobileChatSheet());
   }
 
   void _closeMobileChat() {
+    if (!_showMobileChat) return;
     HapticFeedback.lightImpact();
-    setState(() {
-      _showMobileChat = false;
-    });
+    unawaited(Navigator.of(context, rootNavigator: true).maybePop());
   }
 
   int _sheetStageForExtent(double extent) {
@@ -487,20 +488,42 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
     return false;
   }
 
-  Widget _buildChatSheetOverlay(BuildContext context, {double? maxWidth}) {
+  Future<void> _presentMobileChatSheet() async {
+    final hostContext = context;
+    final theme = Theme.of(hostContext);
+    await showModalBottomSheet<void>(
+      context: hostContext,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      useSafeArea: false,
+      enableDrag: false,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(
+        alpha: theme.brightness == Brightness.dark ? 0.46 : 0.34,
+      ),
+      builder: (sheetContext) => _buildChatSheetContent(sheetContext),
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _showMobileChat = false;
+    });
+  }
+
+  Widget _buildChatSheetContent(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final expandT = ((_mobileChatSheetExtent - 0.5) / 0.45).clamp(0.0, 1.0);
-    final scrimAlpha = (0.34 + 0.18 * expandT) * (isDark ? 0.88 : 1.0);
     final radius = lerpDouble(26, 16, expandT) ?? 18;
     final borderAlpha = isDark ? 0.76 - 0.16 * expandT : 0.9 - 0.2 * expandT;
     final glowAlpha = isDark ? 0.18 + 0.08 * expandT : 0.08 + 0.06 * expandT;
 
-    final sheet = NotificationListener<DraggableScrollableNotification>(
+    return NotificationListener<DraggableScrollableNotification>(
       onNotification: _handleChatSheetNotification,
       child: DraggableScrollableSheet(
+        expand: false,
         initialChildSize: 0.7,
-        minChildSize: maxWidth == null ? 0.5 : 0.4,
+        minChildSize: 0.5,
         maxChildSize: 0.95,
         builder: (context, scrollController) {
           return AnimatedContainer(
@@ -580,37 +603,6 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
               onModelChanged: (v) => unawaited(_handleModelChanged(v)),
               onEngineChanged: (v) => unawaited(_handleEngineChanged(v)),
               onProjectFileTap: _handleProjectFileLinkTap,
-            ),
-          );
-        },
-      ),
-    );
-
-    return Positioned.fill(
-      child: TweenAnimationBuilder<double>(
-        tween: Tween(begin: 0, end: 1),
-        duration: const Duration(milliseconds: 240),
-        curve: Curves.easeOutCubic,
-        builder: (context, appear, _) {
-          return GestureDetector(
-            onTap: _closeMobileChat,
-            child: Container(
-              color: Colors.black.withValues(alpha: scrimAlpha * appear),
-              child: GestureDetector(
-                onTap: () {},
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Transform.translate(
-                    offset: Offset(0, (1 - appear) * 28),
-                    child: maxWidth == null
-                        ? sheet
-                        : ConstrainedBox(
-                            constraints: BoxConstraints(maxWidth: maxWidth),
-                            child: sheet,
-                          ),
-                  ),
-                ),
-              ),
             ),
           );
         },
@@ -722,7 +714,6 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
             secondaryLabel: _statusBannerTitle(),
           ),
         ),
-        if (_showMobileChat) _buildChatSheetOverlay(context),
       ],
     );
   }

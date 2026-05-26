@@ -633,6 +633,7 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
     HapticFeedback.selectionClick();
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),

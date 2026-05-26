@@ -13,6 +13,7 @@ import '../../../../services/local_workspace_service.dart';
 import '../../../../utils/project_file_links.dart';
 import '../../../../providers/editor_preferences_provider.dart';
 import '../../../snackbar_helper.dart';
+import '../../file_preview_utils.dart';
 import 'code_tab_file_viewer.dart';
 import 'code_tab_file_viewer_page.dart';
 import 'code_tab_models.dart';
@@ -320,7 +321,7 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
     _initialLocalFileOpened = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      unawaited(_openDesktopFile(pendingPath, preview: false));
+      unawaited(_openDesktopFileForBrowse(pendingPath));
     });
   }
 
@@ -671,16 +672,47 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
     final token = _beginTreeOpenRequest();
     await _waitForNextFrame();
     if (!mounted || _isTreeOpenRequestStale(token)) return;
-    await _openDesktopFile(path, preview: false, requestToken: token);
+    await _openDesktopFile(
+      path,
+      preview: false,
+      openInEditMode: true,
+      requestToken: token,
+    );
     if (!mounted || _isTreeOpenRequestStale(token)) return;
     final editor = _workbench.editorForPath(path);
     if (editor == null || editor.loading || editor.content == null) return;
+    if (!editor.isEditing) {
+      await _workbench.enterEditMode(path);
+    }
+  }
+
+  Future<void> _openDesktopFileForBrowse(String path) async {
+    final directMonaco =
+        supportsMonacoTextPreview() &&
+        shouldOpenPathDirectlyInMonacoEditor(path);
+    await _openDesktopFile(
+      path,
+      preview: !directMonaco,
+      openInEditMode: directMonaco,
+    );
+  }
+
+  Future<void> _enterDesktopFileEditAtPosition(
+    String path, {
+    int line = 1,
+    int column = 1,
+  }) async {
     await _workbench.enterEditMode(path);
+    final editor = _workbench.editorForPath(path);
+    final controller = editor?.controller;
+    if (controller == null || editor?.isBinary == true) return;
+    await controller.focusPosition(line: line, column: column);
   }
 
   Future<void> _openDesktopFile(
     String path, {
     required bool preview,
+    bool openInEditMode = false,
     int? requestToken,
   }) async {
     if (_isTreeOpenRequestStale(requestToken)) return;
@@ -713,6 +745,7 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
           path,
           content: cached,
           preview: preview,
+          openInEditMode: openInEditMode,
           wrapEnabled: prefs.defaultWrap,
           tabSize: prefs.tabSize,
         );
@@ -737,6 +770,7 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
         path,
         content: content,
         preview: preview,
+        openInEditMode: openInEditMode,
         wrapEnabled: prefs.defaultWrap,
         tabSize: prefs.tabSize,
       );
@@ -752,6 +786,7 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
       projectId,
       path,
       preview: preview,
+      openInEditMode: openInEditMode,
       wrapEnabled: prefs.defaultWrap,
       tabSize: prefs.tabSize,
     );
@@ -1100,7 +1135,7 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
                                     },
                                     onRenameItem: _renameTreeEntry,
                                     onOpenFile: (p) async {
-                                      await _editDesktopFileAfterFrame(p);
+                                      await _openDesktopFileForBrowse(p);
                                     },
                                   );
                                 },
@@ -1138,8 +1173,19 @@ class _ProjectChatCodeTabState extends State<ProjectChatCodeTab> {
                                     ? null
                                     : () {
                                         unawaited(
-                                          _workbench.enterEditMode(
+                                          _enterDesktopFileEditAtPosition(
                                             activeEditor.path,
+                                          ),
+                                        );
+                                      },
+                                onEnterEditAtPosition: activeEditor == null
+                                    ? null
+                                    : (line, column) {
+                                        unawaited(
+                                          _enterDesktopFileEditAtPosition(
+                                            activeEditor.path,
+                                            line: line,
+                                            column: column,
                                           ),
                                         );
                                       },

@@ -489,6 +489,7 @@ Future<void> showOutboxSheet(
 }) async {
   await showModalBottomSheet<void>(
     context: context,
+    useRootNavigator: true,
     isScrollControlled: true,
     useSafeArea: true,
     backgroundColor: Theme.of(context).colorScheme.surface,
@@ -926,6 +927,7 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                                       : () async {
                                           await showModalBottomSheet<void>(
                                             context: context,
+                                            useRootNavigator: true,
                                             useSafeArea: true,
                                             backgroundColor:
                                                 theme.colorScheme.surface,

@@ -11,11 +11,13 @@ import 'project_chat/code_tab/code_editor_theme_presets.dart';
 class MonacoCodePreview extends StatefulWidget {
   final String path;
   final String content;
+  final void Function(int line, int column)? onActivatePosition;
 
   const MonacoCodePreview({
     super.key,
     required this.path,
     required this.content,
+    this.onActivatePosition,
   });
 
   @override
@@ -27,6 +29,9 @@ class _MonacoCodePreviewState extends State<MonacoCodePreview> {
   monaco.EditorOptions? _options;
   Object? _error;
   String? _lastPresentationKey;
+  monaco.Range? _pendingSelection;
+  bool _activationRequested = false;
+  bool _activationDispatched = false;
 
   @override
   void initState() {
@@ -39,6 +44,12 @@ class _MonacoCodePreviewState extends State<MonacoCodePreview> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.path != widget.path || oldWidget.content != widget.content) {
       _bootstrap();
+      return;
+    }
+    if (oldWidget.onActivatePosition != widget.onActivatePosition) {
+      _pendingSelection = null;
+      _activationRequested = false;
+      _activationDispatched = false;
     }
   }
 
@@ -51,6 +62,9 @@ class _MonacoCodePreviewState extends State<MonacoCodePreview> {
   Future<void> _bootstrap() async {
     final old = _controller;
     final prefs = context.read<EditorPreferencesProvider>();
+    _pendingSelection = null;
+    _activationRequested = false;
+    _activationDispatched = false;
     final controller = await monaco.MonacoController.create(
       options: monaco.EditorOptions(
         language: monacoLanguageForPath(widget.path),
@@ -121,6 +135,43 @@ class _MonacoCodePreviewState extends State<MonacoCodePreview> {
       });
       old?.dispose();
     }
+  }
+
+  void _handlePreviewFocus() {
+    if (widget.onActivatePosition == null ||
+        _activationRequested ||
+        _activationDispatched) {
+      return;
+    }
+    _activationRequested = true;
+    if (_pendingSelection != null) {
+      _dispatchActivation(_pendingSelection);
+      return;
+    }
+    unawaited(_activateFromController());
+  }
+
+  void _handleSelectionChanged(monaco.Range? selection) {
+    _pendingSelection = selection;
+    if (!_activationRequested || _activationDispatched) return;
+    _dispatchActivation(selection);
+  }
+
+  Future<void> _activateFromController() async {
+    final controller = _controller;
+    if (controller == null || _activationDispatched) return;
+    await Future<void>.delayed(Duration.zero);
+    if (!mounted || _activationDispatched) return;
+    final selection = await controller.getSelection();
+    if (!mounted || _activationDispatched) return;
+    _dispatchActivation(selection);
+  }
+
+  void _dispatchActivation(monaco.Range? selection) {
+    final callback = widget.onActivatePosition;
+    if (callback == null || _activationDispatched) return;
+    _activationDispatched = true;
+    callback(selection?.startLine ?? 1, selection?.startColumn ?? 1);
   }
 
   Future<void> _syncPresentation() async {
@@ -221,6 +272,10 @@ class _MonacoCodePreviewState extends State<MonacoCodePreview> {
         themeId: themeId,
         backgroundColor: preset.gutterBackground,
         showStatusBar: false,
+        onSelectionChanged: widget.onActivatePosition == null
+            ? null
+            : _handleSelectionChanged,
+        onFocus: widget.onActivatePosition == null ? null : _handlePreviewFocus,
         padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
         loadingBuilder: (_) => const Center(child: CircularProgressIndicator()),
       ),

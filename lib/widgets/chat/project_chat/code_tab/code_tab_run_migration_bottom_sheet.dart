@@ -25,6 +25,7 @@ Future<void> showRunSqlMigrationBottomSheet(
   final hostContext = context;
   await showModalBottomSheet<void>(
     context: hostContext,
+    useRootNavigator: true,
     isScrollControlled: true,
     useSafeArea: true,
     backgroundColor: Colors.transparent,

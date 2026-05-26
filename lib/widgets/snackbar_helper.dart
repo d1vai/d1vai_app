@@ -7,8 +7,10 @@ import 'package:flutter/services.dart';
 enum SnackBarPosition { bottom, top }
 
 class SnackBarHelper {
-  static OverlayEntry? _topToastEntry;
-  static Timer? _topToastTimer;
+  static const double _mobileBottomGlassClearance = 116;
+
+  static OverlayEntry? _toastEntry;
+  static Timer? _toastTimer;
 
   static void _triggerHaptic(ContentType type) {
     try {
@@ -113,23 +115,24 @@ class SnackBarHelper {
     );
   }
 
-  static void _clearTopToast() {
-    _topToastTimer?.cancel();
-    _topToastTimer = null;
-    _topToastEntry?.remove();
-    _topToastEntry = null;
+  static void _clearToast() {
+    _toastTimer?.cancel();
+    _toastTimer = null;
+    _toastEntry?.remove();
+    _toastEntry = null;
   }
 
-  static void _showTopToast(
+  static void _showOverlayToast(
     BuildContext context, {
     required String title,
     required String message,
     required ContentType contentType,
+    required SnackBarPosition position,
     String? actionLabel,
     VoidCallback? onActionPressed,
     Duration? duration,
   }) {
-    _clearTopToast();
+    _clearToast();
 
     final overlay = Overlay.maybeOf(context, rootOverlay: true);
     if (overlay == null) return;
@@ -139,15 +142,30 @@ class SnackBarHelper {
 
     final entry = OverlayEntry(
       builder: (overlayContext) {
-        final topInset = MediaQuery.of(overlayContext).padding.top;
+        final mediaQuery = MediaQuery.of(overlayContext);
+        final topInset = mediaQuery.padding.top + 12;
+        final screenWidth =
+            mediaQuery.size.width - mediaQuery.padding.horizontal;
+        final isCompact = screenWidth < 980;
+        final keyboardInset = mediaQuery.viewInsets.bottom;
+        final glassInset = mediaQuery.padding.bottom +
+            (isCompact ? _mobileBottomGlassClearance : 12);
+        final bottomInset = (keyboardInset > 0 ? keyboardInset + 12 : glassInset)
+            .clamp(12.0, double.infinity);
+        final slideOffset = position == SnackBarPosition.top
+            ? Offset(0, -12)
+            : Offset(0, 12);
+
         return Positioned(
-          top: topInset + 12,
+          top: position == SnackBarPosition.top ? topInset : null,
+          bottom: position == SnackBarPosition.bottom ? bottomInset : null,
           left: 12,
           right: 12,
           child: Material(
             color: Colors.transparent,
             child: SafeArea(
-              bottom: false,
+              top: position == SnackBarPosition.top,
+              bottom: position == SnackBarPosition.bottom,
               child: TweenAnimationBuilder<double>(
                 key: ValueKey('toast:$stamp'),
                 tween: Tween(begin: 0, end: 1),
@@ -157,7 +175,10 @@ class SnackBarHelper {
                   return Opacity(
                     opacity: t.clamp(0, 1),
                     child: Transform.translate(
-                      offset: Offset(0, (1 - t) * -12),
+                      offset: Offset(
+                        slideOffset.dx * (1 - t),
+                        slideOffset.dy * (1 - t),
+                      ),
                       child: child,
                     ),
                   );
@@ -170,10 +191,10 @@ class SnackBarHelper {
                   onActionPressed: onActionPressed == null
                       ? null
                       : () {
-                          _clearTopToast();
+                          _clearToast();
                           onActionPressed();
                         },
-                  onClose: _clearTopToast,
+                  onClose: _clearToast,
                 ),
               ),
             ),
@@ -182,12 +203,9 @@ class SnackBarHelper {
       },
     );
 
-    _topToastEntry = entry;
+    _toastEntry = entry;
     overlay.insert(entry);
-    _topToastTimer = Timer(
-      duration ?? const Duration(seconds: 3),
-      _clearTopToast,
-    );
+    _toastTimer = Timer(duration ?? const Duration(seconds: 3), _clearToast);
   }
 
   static void _showSnackBar(
@@ -202,44 +220,15 @@ class SnackBarHelper {
   }) {
     _triggerHaptic(contentType);
 
-    if (position == SnackBarPosition.top) {
-      _showTopToast(
-        context,
-        title: title,
-        message: message,
-        contentType: contentType,
-        actionLabel: actionLabel,
-        onActionPressed: onActionPressed,
-        duration: duration,
-      );
-      return;
-    }
-
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.clearSnackBars();
-
-    final visual = _snackVisual(Theme.of(context), contentType);
-    messenger.showSnackBar(
-      SnackBar(
-        elevation: 0,
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.transparent,
-        duration: duration ?? const Duration(seconds: 4),
-        margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-        padding: EdgeInsets.zero,
-        content: _FeedbackCard(
-          title: title,
-          message: message,
-          visual: visual,
-          actionLabel: actionLabel,
-          onActionPressed: actionLabel != null && onActionPressed != null
-              ? () {
-                  messenger.hideCurrentSnackBar();
-                  onActionPressed();
-                }
-              : null,
-        ),
-      ),
+    _showOverlayToast(
+      context,
+      title: title,
+      message: message,
+      contentType: contentType,
+      position: position,
+      actionLabel: actionLabel,
+      onActionPressed: onActionPressed,
+      duration: duration,
     );
   }
 

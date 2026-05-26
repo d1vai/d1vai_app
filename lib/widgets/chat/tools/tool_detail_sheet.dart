@@ -17,6 +17,7 @@ class ToolDetailSheet {
 
     await showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       showDragHandle: true,
@@ -465,7 +466,7 @@ class _Section extends StatelessWidget {
                   ],
                 ),
               ),
-              if (trailing != null) trailing!,
+              trailing ?? const SizedBox.shrink(),
             ],
           ),
           const SizedBox(height: 10),

@@ -3,6 +3,9 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
+
+import '../app_liquid_glass.dart';
 
 class FloatingPreviewDock extends StatefulWidget {
   final String previewUrl;
@@ -141,146 +144,166 @@ class _FloatingPreviewDockState extends State<FloatingPreviewDock> {
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOutCubic,
           scale: _dragging ? 1.02 : 1.0,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOutCubic,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              color: colorScheme.surface,
-              border: Border.all(
-                color: (_dragging || isSnapping)
-                    ? colorScheme.primary.withValues(
-                        alpha: isDark ? 0.58 : 0.28,
-                      )
-                    : colorScheme.outlineVariant.withValues(
-                        alpha: isDark ? 0.82 : 0.92,
-                      ),
+          child: AppLiquidGlass(
+            variant: AppLiquidGlassVariant.floating,
+            borderRadius: 16,
+            glowIntensity: (_dragging || isSnapping)
+                ? (isDark ? 0.5 : 0.18)
+                : 0,
+            settings: LiquidGlassSettings(
+              blur: isDark ? 20 : 12,
+              thickness: isDark ? 34 : 24,
+              glassColor: colorScheme.surface.withValues(
+                alpha: isDark ? 0.16 : 0.12,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(
-                    alpha: _dragging
-                        ? (isDark ? 0.34 : 0.18)
-                        : (isDark ? 0.28 : 0.14),
-                  ),
-                  blurRadius: _dragging ? 28 : 20,
-                  offset: Offset(0, _dragging ? 14 : 10),
-                ),
-                if (_dragging || isSnapping)
-                  BoxShadow(
-                    color: colorScheme.primary.withValues(
-                      alpha: isDark ? 0.2 : 0.1,
-                    ),
-                    blurRadius: isDark ? 22 : 16,
-                    offset: const Offset(0, 6),
-                  ),
-              ],
+              lightIntensity: isDark ? 0.24 : 0.32,
+              saturation: isDark ? 1.18 : 1.08,
+              glowIntensity: isDark ? 0.5 : 0.24,
+              standardOpacityMultiplier: isDark ? 1 : 0.72,
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: _buildScaledMiniPreview(url, dockSize),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOutCubic,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                color: colorScheme.surface.withValues(
+                  alpha: isDark ? 0.26 : 0.46,
+                ),
+                border: Border.all(
+                  color: (_dragging || isSnapping)
+                      ? colorScheme.primary.withValues(
+                          alpha: isDark ? 0.58 : 0.28,
+                        )
+                      : colorScheme.outlineVariant.withValues(
+                          alpha: isDark ? 0.7 : 0.72,
+                        ),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(
+                      alpha: _dragging
+                          ? (isDark ? 0.34 : 0.18)
+                          : (isDark ? 0.28 : 0.14),
+                    ),
+                    blurRadius: _dragging ? 28 : 20,
+                    offset: Offset(0, _dragging ? 14 : 10),
                   ),
-                  Positioned.fill(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.topCenter,
-                          colors: [
-                            colorScheme.surface.withValues(
-                              alpha: isDark ? 0.58 : 0.42,
-                            ),
-                            colorScheme.surface.withValues(alpha: 0.08),
-                          ],
+                  if (_dragging || isSnapping)
+                    BoxShadow(
+                      color: colorScheme.primary.withValues(
+                        alpha: isDark ? 0.2 : 0.1,
+                      ),
+                      blurRadius: isDark ? 22 : 16,
+                      offset: const Offset(0, 6),
+                    ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: _buildScaledMiniPreview(url, dockSize),
+                    ),
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            colors: [
+                              colorScheme.surface.withValues(
+                                alpha: isDark ? 0.58 : 0.42,
+                              ),
+                              colorScheme.surface.withValues(alpha: 0.08),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  if (_dragging)
+                    if (_dragging)
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  colorScheme.primary.withValues(
+                                    alpha: isDark ? 0.16 : 0.08,
+                                  ),
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    Positioned(
+                      left: 10,
+                      right: 10,
+                      top: 8,
+                      child: Row(
+                        children: [
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 160),
+                            width: 7,
+                            height: 7,
+                            decoration: BoxDecoration(
+                              color: _dragging
+                                  ? colorScheme.primary.withValues(alpha: 0.95)
+                                  : colorScheme.primary,
+                              shape: BoxShape.circle,
+                              boxShadow: _dragging
+                                  ? [
+                                      BoxShadow(
+                                        color: colorScheme.primary.withValues(
+                                          alpha: isDark ? 0.4 : 0.2,
+                                        ),
+                                        blurRadius: 10,
+                                        spreadRadius: 1,
+                                      ),
+                                    ]
+                                  : null,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Preview',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          AnimatedRotation(
+                            duration: const Duration(milliseconds: 180),
+                            turns: _dragging ? 0.05 : 0,
+                            child: Icon(
+                              Icons.open_in_full_rounded,
+                              size: 14,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     Positioned.fill(
                       child: IgnorePointer(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                colorScheme.primary.withValues(
-                                  alpha: isDark ? 0.16 : 0.08,
-                                ),
-                                Colors.transparent,
-                              ],
+                        child: CustomPaint(
+                          painter: _CornerAccentPainter(
+                            color: colorScheme.primary.withValues(
+                              alpha: isDark ? 0.82 : 0.9,
                             ),
                           ),
                         ),
                       ),
                     ),
-                  Positioned(
-                    left: 10,
-                    right: 10,
-                    top: 8,
-                    child: Row(
-                      children: [
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 160),
-                          width: 7,
-                          height: 7,
-                          decoration: BoxDecoration(
-                            color: _dragging
-                                ? colorScheme.primary.withValues(alpha: 0.95)
-                                : colorScheme.primary,
-                            shape: BoxShape.circle,
-                            boxShadow: _dragging
-                                ? [
-                                    BoxShadow(
-                                      color: colorScheme.primary.withValues(
-                                        alpha: isDark ? 0.4 : 0.2,
-                                      ),
-                                      blurRadius: 10,
-                                      spreadRadius: 1,
-                                    ),
-                                  ]
-                                : null,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            'Preview',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                        AnimatedRotation(
-                          duration: const Duration(milliseconds: 180),
-                          turns: _dragging ? 0.05 : 0,
-                          child: Icon(
-                            Icons.open_in_full_rounded,
-                            size: 14,
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      child: CustomPaint(
-                        painter: _CornerAccentPainter(
-                          color: colorScheme.primary.withValues(
-                            alpha: isDark ? 0.82 : 0.9,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

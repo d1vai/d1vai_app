@@ -1,7 +1,7 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -23,6 +23,8 @@ class FilePreview extends StatelessWidget {
   final bool isBinary;
   final int sizeBytes;
   final bool preferLightweightTextPreview;
+  final bool preferMonacoWhenEditable;
+  final void Function(int line, int column)? onActivateTextPosition;
 
   const FilePreview({
     super.key,
@@ -31,6 +33,8 @@ class FilePreview extends StatelessWidget {
     required this.isBinary,
     required this.sizeBytes,
     this.preferLightweightTextPreview = false,
+    this.preferMonacoWhenEditable = false,
+    this.onActivateTextPosition,
   });
 
   String _prettyJson(String raw) {
@@ -47,10 +51,33 @@ class FilePreview extends StatelessWidget {
     }
   }
 
+  String _normalizedTextPreview() {
+    if (isJsonPreview(path)) {
+      try {
+        return _prettyJson(content);
+      } catch (_) {
+        return content;
+      }
+    }
+    return content;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final binaryBytes = _decodeBinaryBytes();
+    final normalizedTextPreview = _normalizedTextPreview();
+
+    if (preferMonacoWhenEditable &&
+        !isBinary &&
+        shouldOpenPathDirectlyInMonacoEditor(path) &&
+        supportsMonacoTextPreview()) {
+      return MonacoCodePreview(
+        path: path,
+        content: normalizedTextPreview,
+        onActivatePosition: onActivateTextPosition,
+      );
+    }
 
     if (isMindJsonPreview(path)) {
       return _MindJsonPreview(path: path, content: content);
@@ -275,28 +302,20 @@ class FilePreview extends StatelessWidget {
     }
 
     if (preferLightweightTextPreview) {
-      String previewText = content;
-      if (isJsonPreview(path)) {
-        try {
-          previewText = _prettyJson(content);
-        } catch (_) {}
-      }
       return CodeTabCodeBlock(
         filePath: path,
-        text: previewText,
+        text: normalizedTextPreview,
         isBinary: false,
         sizeBytes: sizeBytes,
       );
     }
 
-    if (_supportsMonacoPreview(context)) {
-      String previewText = content;
-      if (isJsonPreview(path)) {
-        try {
-          previewText = _prettyJson(content);
-        } catch (_) {}
-      }
-      return MonacoCodePreview(path: path, content: previewText);
+    if (supportsMonacoTextPreview()) {
+      return MonacoCodePreview(
+        path: path,
+        content: normalizedTextPreview,
+        onActivatePosition: onActivateTextPosition,
+      );
     }
 
     return CodeTabCodeBlock(
@@ -305,18 +324,6 @@ class FilePreview extends StatelessWidget {
       isBinary: isBinary,
       sizeBytes: sizeBytes,
     );
-  }
-
-  bool _supportsMonacoPreview(BuildContext context) {
-    if (kIsWeb) return true;
-    return switch (defaultTargetPlatform) {
-      TargetPlatform.macOS => true,
-      TargetPlatform.iOS => true,
-      TargetPlatform.android => true,
-      TargetPlatform.windows => true,
-      TargetPlatform.linux => false,
-      _ => false,
-    };
   }
 }
 

@@ -139,7 +139,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 24),
 
         // 基本信息
-        _buildSectionTitle(loc?.translate('basic_information') ?? 'Basic Information'),
+        _buildSectionTitle(
+          loc?.translate('basic_information') ?? 'Basic Information',
+        ),
         const SizedBox(height: 12),
         _buildInfoCard(
           loc?.translate('company_name') ?? 'Company Name',
@@ -263,7 +265,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 16),
 
         // 编辑表单
-        _buildSectionTitle(loc?.translate('basic_information') ?? 'Basic Information'),
+        _buildSectionTitle(
+          loc?.translate('basic_information') ?? 'Basic Information',
+        ),
         const SizedBox(height: 12),
         TextField(
           controller: profileProvider.companyNameController,
@@ -280,8 +284,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         TextField(
           controller: profileProvider.companyWebsiteController,
           decoration: InputDecoration(
-            labelText:
-                loc?.translate('company_website') ?? 'Company Website',
+            labelText: loc?.translate('company_website') ?? 'Company Website',
             hintText: 'https://example.com',
             border: const OutlineInputBorder(),
             prefixIcon: const Icon(Icons.language),
@@ -378,6 +381,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final loc = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),

@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 bool isEditableFilePreview(String path, bool isBinary) {
   if (isBinary) return false;
   if (isMindJsonPreview(path)) return true;
@@ -87,6 +89,30 @@ bool isLegacyOfficePreview(String path) {
 
 bool shouldPreferBrowserImagePreview(String path) {
   return _browserImageExtensions.contains(fileExtensionForPath(path));
+}
+
+bool supportsMonacoTextPreview() {
+  if (kIsWeb) return true;
+  return switch (defaultTargetPlatform) {
+    TargetPlatform.macOS => true,
+    TargetPlatform.iOS => true,
+    TargetPlatform.android => true,
+    TargetPlatform.windows => true,
+    TargetPlatform.linux => false,
+    _ => false,
+  };
+}
+
+bool shouldKeepRichPreviewBeforeMonaco(String path) {
+  final ext = fileExtensionForPath(path);
+  if (ext == 'md' || ext == 'markdown' || ext == 'mdx') return true;
+  if (isMindJsonPreview(path)) return true;
+  return false;
+}
+
+bool shouldOpenPathDirectlyInMonacoEditor(String path) {
+  if (shouldKeepRichPreviewBeforeMonaco(path)) return false;
+  return isEditableFilePreview(path, false);
 }
 
 String fileExtensionForPath(String path) {
@@ -190,9 +216,7 @@ const Set<String> _audioExtensions = <String>{
   'weba',
 };
 
-const Set<String> _archiveExtensions = <String>{
-  'zip',
-};
+const Set<String> _archiveExtensions = <String>{'zip'};
 
 const Set<String> _spreadsheetExtensions = <String>{
   'csv',
@@ -246,8 +270,7 @@ const Map<String, String> _mimeTypes = <String, String>{
   'pdf': 'application/pdf',
   'docx':
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'xlsx':
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'pptx':
       'application/vnd.openxmlformats-officedocument.presentationml.presentation',
   'csv': 'text/csv',

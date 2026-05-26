@@ -1,9 +1,13 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 import '../core/theme/locale_font_helper.dart';
 import '../l10n/app_localizations.dart';
 import '../utils/desktop_layout.dart';
+import '../widgets/app_liquid_glass.dart';
 import 'dashboard_screen.dart';
 import 'community_screen.dart';
 import 'docs_screen.dart';
@@ -19,11 +23,7 @@ class MainScreen extends StatefulWidget {
   final int initialIndex;
   final String? settingsInitialTab;
 
-  const MainScreen({
-    super.key,
-    this.initialIndex = 0,
-    this.settingsInitialTab,
-  });
+  const MainScreen({super.key, this.initialIndex = 0, this.settingsInitialTab});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -59,6 +59,7 @@ class _MainScreenState extends State<MainScreen> {
     return [
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.home_rounded),
+        inactiveIcon: const Icon(Icons.home_outlined),
         title: (loc?.translate('dashboard') ?? 'Dashboard'),
         activeColorPrimary: theme.colorScheme.primary,
         inactiveColorPrimary: theme.colorScheme.onSurface.withValues(
@@ -67,6 +68,7 @@ class _MainScreenState extends State<MainScreen> {
       ),
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.people_alt_rounded),
+        inactiveIcon: const Icon(Icons.people_alt_outlined),
         title: (loc?.translate('community') ?? 'Community'),
         activeColorPrimary: theme.colorScheme.primary,
         inactiveColorPrimary: theme.colorScheme.onSurface.withValues(
@@ -75,6 +77,7 @@ class _MainScreenState extends State<MainScreen> {
       ),
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.menu_book_rounded),
+        inactiveIcon: const Icon(Icons.menu_book_outlined),
         title: (loc?.translate('docs') ?? 'Docs'),
         activeColorPrimary: theme.colorScheme.primary,
         inactiveColorPrimary: theme.colorScheme.onSurface.withValues(
@@ -83,6 +86,7 @@ class _MainScreenState extends State<MainScreen> {
       ),
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.settings_rounded),
+        inactiveIcon: const Icon(Icons.settings_outlined),
         title: (loc?.translate('settings') ?? 'Settings'),
         activeColorPrimary: theme.colorScheme.primary,
         inactiveColorPrimary: theme.colorScheme.onSurface.withValues(
@@ -109,8 +113,9 @@ class _MainScreenState extends State<MainScreen> {
     final desktop = isDesktopLayout(context);
     final theme = Theme.of(context);
     final items = _navBarsItems(context);
+    Widget content;
     if (desktop) {
-      return Shortcuts(
+      content = Shortcuts(
         shortcuts: const <ShortcutActivator, Intent>{
           SingleActivator(LogicalKeyboardKey.digit1, meta: true): _NavIntent(0),
           SingleActivator(LogicalKeyboardKey.digit2, meta: true): _NavIntent(1),
@@ -150,28 +155,31 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ),
       );
+    } else {
+      const navBarHeight = 104.0;
+      content = PersistentTabView.custom(
+        context,
+        controller: _controller,
+        screens: _buildCustomScreens(),
+        itemCount: items.length,
+        bottomScreenMargin: 0,
+        confineToSafeArea: true,
+        backgroundColor: Colors.transparent,
+        handleAndroidBackButtonPress: true,
+        resizeToAvoidBottomInset: true,
+        stateManagement: true,
+        navBarHeight: navBarHeight,
+        customWidget: _D1VBottomNavBar(
+          items: items,
+          selectedIndex: _controller.index,
+          onItemSelected: _handleTabSelected,
+        ),
+      );
     }
 
-    const navContainerHeight = 64.0;
-    const navOuterPadding = EdgeInsets.fromLTRB(12, 6, 12, 6);
-    final navBarHeight =
-        navContainerHeight + navOuterPadding.top + navOuterPadding.bottom;
-    return PersistentTabView.custom(
-      context,
-      controller: _controller,
-      screens: _buildCustomScreens(),
-      itemCount: items.length,
-      confineToSafeArea: true,
-      backgroundColor: theme.colorScheme.surface,
-      handleAndroidBackButtonPress: true,
-      resizeToAvoidBottomInset: true,
-      stateManagement: true,
-      navBarHeight: navBarHeight,
-      customWidget: _D1VBottomNavBar(
-        items: items,
-        selectedIndex: _controller.index,
-        onItemSelected: _handleTabSelected,
-      ),
+    return GlassPage(
+      background: desktop ? const _MainScreenDesktopBackdrop() : null,
+      child: content,
     );
   }
 }
@@ -199,55 +207,183 @@ class _D1VDesktopSideNav extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    return Container(
+    return SizedBox(
       width: 264,
-      padding: const EdgeInsets.fromLTRB(18, 24, 18, 18),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        border: Border(
-          right: BorderSide(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.65),
+      child: AppLiquidGlass(
+        variant: AppLiquidGlassVariant.navigation,
+        borderRadius: 0,
+        quality: GlassQuality.premium,
+        useOwnLayer: true,
+        glowIntensity: isDark ? 0.18 : 0.08,
+        settings: LiquidGlassSettings(
+          blur: isDark ? 18 : 14,
+          thickness: isDark ? 36 : 28,
+          glassColor: Color.lerp(
+            colorScheme.surface.withValues(alpha: isDark ? 0.18 : 0.22),
+            colorScheme.primary.withValues(alpha: isDark ? 0.10 : 0.06),
+            0.3,
+          )!,
+          lightIntensity: isDark ? 0.28 : 0.34,
+          saturation: isDark ? 1.18 : 1.10,
+          glowIntensity: isDark ? 0.5 : 0.22,
+          standardOpacityMultiplier: isDark ? 1.0 : 0.62,
+        ),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                colorScheme.surface.withValues(alpha: isDark ? 0.22 : 0.28),
+                colorScheme.surfaceContainerLow.withValues(
+                  alpha: isDark ? 0.14 : 0.18,
+                ),
+              ],
+            ),
+            border: Border(
+              right: BorderSide(
+                color: colorScheme.outlineVariant.withValues(alpha: 0.58),
+              ),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.shadow.withValues(
+                  alpha: isDark ? 0.12 : 0.06,
+                ),
+                blurRadius: 24,
+                offset: const Offset(8, 0),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 24, 18, 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'd1v',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.8,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  _t(context, 'main_nav_workspace', 'Workspace'),
+                  style: LocaleFontHelper.localizedTitleStyle(
+                    context,
+                    theme.textTheme.bodyMedium,
+                  )?.copyWith(color: colorScheme.onSurfaceVariant),
+                ),
+                const SizedBox(height: 24),
+                for (var i = 0; i < items.length; i++) ...[
+                  _D1VDesktopNavItem(
+                    item: items[i],
+                    selected: i == selectedIndex,
+                    onTap: () => onItemSelected(i),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                const Spacer(),
+              ],
+            ),
           ),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: isDark ? 0.12 : 0.06),
-            blurRadius: 24,
-            offset: const Offset(8, 0),
+      ),
+    );
+  }
+}
+
+class _MainScreenDesktopBackdrop extends StatelessWidget {
+  const _MainScreenDesktopBackdrop();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.alphaBlend(
+              colorScheme.primary.withValues(alpha: isDark ? 0.14 : 0.10),
+              colorScheme.surface,
+            ),
+            colorScheme.surfaceContainerLowest,
+            Color.alphaBlend(
+              colorScheme.tertiary.withValues(alpha: isDark ? 0.10 : 0.06),
+              colorScheme.surface,
+            ),
+          ],
+          stops: const [0, 0.48, 1],
+        ),
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Positioned(
+            left: -140,
+            top: -120,
+            child: _BackdropBlob(
+              size: 420,
+              color: colorScheme.primary.withValues(
+                alpha: isDark ? 0.18 : 0.12,
+              ),
+            ),
+          ),
+          Positioned(
+            left: 80,
+            bottom: -160,
+            child: _BackdropBlob(
+              size: 360,
+              color: colorScheme.tertiary.withValues(
+                alpha: isDark ? 0.16 : 0.10,
+              ),
+            ),
+          ),
+          Positioned(
+            right: -120,
+            top: 80,
+            child: _BackdropBlob(
+              size: 320,
+              color: colorScheme.secondary.withValues(
+                alpha: isDark ? 0.10 : 0.08,
+              ),
+            ),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'd1v',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w900,
-              letterSpacing: -0.8,
-            ),
+    );
+  }
+}
+
+class _BackdropBlob extends StatelessWidget {
+  final double size;
+  final Color color;
+
+  const _BackdropBlob({required this.size, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            colors: [
+              color,
+              color.withValues(alpha: color.a * 0.58),
+              color.withValues(alpha: 0),
+            ],
+            stops: const [0, 0.45, 1],
           ),
-          const SizedBox(height: 6),
-          Text(
-            _t(context, 'main_nav_workspace', 'Workspace'),
-            style: LocaleFontHelper.localizedTitleStyle(
-              context,
-              theme.textTheme.bodyMedium,
-            )?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 24),
-          for (var i = 0; i < items.length; i++) ...[
-            _D1VDesktopNavItem(
-              item: items[i],
-              selected: i == selectedIndex,
-              onTap: () => onItemSelected(i),
-            ),
-            const SizedBox(height: 8),
-          ],
-          const Spacer(),
-        ],
+        ),
       ),
     );
   }
@@ -307,13 +443,16 @@ class _D1VDesktopNavItem extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: LocaleFontHelper.localizedTitleStyle(
-                    context,
-                    theme.textTheme.titleSmall,
-                  )?.copyWith(
-                    color: selected ? activeColor : inactiveColor,
-                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                  ),
+                  style:
+                      LocaleFontHelper.localizedTitleStyle(
+                        context,
+                        theme.textTheme.titleSmall,
+                      )?.copyWith(
+                        color: selected ? activeColor : inactiveColor,
+                        fontWeight: selected
+                            ? FontWeight.w800
+                            : FontWeight.w600,
+                      ),
                 ),
               ),
             ],
@@ -340,207 +479,56 @@ class _D1VBottomNavBar extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final colorScheme = theme.colorScheme;
-    const outerPadding = EdgeInsets.fromLTRB(12, 6, 12, 6);
-    const navContainerHeight = 64.0;
-
-    return Padding(
-      padding: outerPadding,
-      child: Container(
-        height: navContainerHeight,
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: colorScheme.outlineVariant.withValues(
-              alpha: isDark ? 0.72 : 0.9,
-            ),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: colorScheme.shadow.withValues(alpha: isDark ? 0.24 : 0.1),
-              blurRadius: isDark ? 18 : 22,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final width = constraints.maxWidth;
-            final itemWidth = width / items.length;
-            final indicatorWidth = itemWidth - 12;
-
-            return Stack(
-              children: [
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: 260),
-                  curve: Curves.easeOutCubic,
-                  left: selectedIndex * itemWidth + 6,
-                  top: 6,
-                  bottom: 6,
-                  width: indicatorWidth,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      gradient: LinearGradient(
-                        colors: [
-                          colorScheme.primary.withValues(
-                            alpha: isDark ? 0.28 : 0.12,
-                          ),
-                          colorScheme.primary.withValues(
-                            alpha: isDark ? 0.16 : 0.06,
-                          ),
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                      border: Border.all(
-                        color: colorScheme.primary.withValues(
-                          alpha: isDark ? 0.4 : 0.14,
-                        ),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: colorScheme.primary.withValues(
-                            alpha: isDark ? 0.18 : 0.08,
-                          ),
-                          blurRadius: isDark ? 18 : 14,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Row(
-                  children: [
-                    for (var i = 0; i < items.length; i++)
-                      Expanded(
-                        child: _D1VBottomNavItem(
-                          item: items[i],
-                          selected: i == selectedIndex,
-                          onTap: () => onItemSelected(i),
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-            );
-          },
-        ),
-      ),
+    const tabWidth = 88.0;
+    final screenWidth =
+        MediaQuery.sizeOf(context).width -
+        MediaQuery.paddingOf(context).horizontal;
+    final centeredHorizontalPadding = math.max(
+      16.0,
+      (screenWidth - (items.length * tabWidth)) / 2,
     );
-  }
-}
-
-class _D1VBottomNavItem extends StatefulWidget {
-  final PersistentBottomNavBarItem item;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _D1VBottomNavItem({
-    required this.item,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  State<_D1VBottomNavItem> createState() => _D1VBottomNavItemState();
-}
-
-class _D1VBottomNavItemState extends State<_D1VBottomNavItem>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _pressController;
-  late final Animation<double> _pressScale;
-
-  @override
-  void initState() {
-    super.initState();
-    _pressController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 90),
-      reverseDuration: const Duration(milliseconds: 180),
+    final selectedIconColor = isDark
+        ? Colors.white
+        : colorScheme.onSurface.withValues(alpha: 0.96);
+    final unselectedIconColor = colorScheme.onSurfaceVariant.withValues(
+      alpha: isDark ? 0.78 : 0.70,
     );
-    _pressScale = Tween<double>(begin: 1.0, end: 0.92).animate(
-      CurvedAnimation(parent: _pressController, curve: Curves.easeOutCubic),
-    );
-  }
 
-  @override
-  void dispose() {
-    _pressController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final item = widget.item;
-    final selected = widget.selected;
-    final activeColor = item.activeColorPrimary;
-    final inactiveColor =
-        item.inactiveColorPrimary ??
-        theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.72);
-    final title = item.title ?? '';
-    final icon = selected ? item.icon : (item.inactiveIcon ?? item.icon);
-
-    return AnimatedBuilder(
-      animation: _pressScale,
-      builder: (context, child) {
-        return Transform.scale(scale: _pressScale.value, child: child);
-      },
-      child: Semantics(
-        button: true,
-        selected: selected,
-        label: title,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: widget.onTap,
-            onTapDown: (_) => _pressController.forward(),
-            onTapCancel: () => _pressController.reverse(),
-            onTapUp: (_) => _pressController.reverse(),
-            borderRadius: BorderRadius.circular(20),
-            child: SizedBox(
-              height: double.infinity,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AnimatedSlide(
-                    duration: const Duration(milliseconds: 220),
-                    curve: Curves.easeOutCubic,
-                    offset: selected ? const Offset(0, -0.08) : Offset.zero,
-                    child: IconTheme(
-                      data: IconThemeData(
-                        size: 24,
-                        color: selected ? activeColor : inactiveColor,
-                      ),
-                      child: icon,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  AnimatedDefaultTextStyle(
-                    duration: const Duration(milliseconds: 220),
-                    curve: Curves.easeOutCubic,
-                    style: LocaleFontHelper.localizedTitleStyle(
-                      context,
-                      theme.textTheme.labelSmall,
-                    )!.copyWith(
-                      color: selected ? activeColor : inactiveColor,
-                      fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
-                      letterSpacing: 0.15,
-                    ),
-                    child: Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
+    return GlassBottomBar(
+      tabs: items
+          .map(
+            (item) => GlassBottomBarTab(
+              label: (item.title ?? '').trim().isEmpty ? null : item.title,
+              icon: item.inactiveIcon ?? item.icon,
+              activeIcon: item.icon,
+              glowColor: item.activeColorPrimary.withValues(
+                alpha: isDark ? 0.30 : 0.18,
               ),
+              thickness: 0.8,
             ),
-          ),
-        ),
+          )
+          .toList(growable: false),
+      selectedIndex: selectedIndex,
+      onTabSelected: onItemSelected,
+      quality: GlassQuality.premium,
+      horizontalPadding: centeredHorizontalPadding,
+      tabWidth: tabWidth,
+      labelFontSize: 10,
+      selectedIconColor: selectedIconColor,
+      unselectedIconColor: unselectedIconColor,
+      indicatorColor: colorScheme.primary.withValues(
+        alpha: isDark ? 0.20 : 0.12,
       ),
+      interactionBehavior: GlassInteractionBehavior.full,
+      interactionGlowColor: colorScheme.primary.withValues(
+        alpha: isDark ? 0.34 : 0.20,
+      ),
+      pressScale: 1.04,
+      indicatorExpansion: 14,
+      magnification: 1.08,
+      glowBlurRadius: 36,
+      glowSpreadRadius: 10,
+      glowOpacity: isDark ? 0.72 : 0.48,
     );
   }
 }

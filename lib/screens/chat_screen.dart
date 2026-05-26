@@ -6,6 +6,7 @@ import 'package:d1vai_app/models/model_config.dart';
 import 'package:d1vai_app/models/outbox.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'package:d1vai_app/services/chat_service.dart';
@@ -1859,9 +1860,13 @@ class _ChatScreenState extends State<ChatScreen> {
                 role: 'assistant',
                 createdAt: DateTime.now(),
                 contents: contents,
-                meta: {
-                  if (turnId != null) 'turnId': turnId,
-                  if (resultWsKey != null) 'wsKey': resultWsKey,
+                meta: <String, dynamic>{
+                  ...?(turnId == null
+                      ? null
+                      : <String, dynamic>{'turnId': turnId}),
+                  ...?(resultWsKey == null
+                      ? null
+                      : <String, dynamic>{'wsKey': resultWsKey}),
                 },
               ),
             );
@@ -1945,9 +1950,9 @@ class _ChatScreenState extends State<ChatScreen> {
         role: 'assistant',
         createdAt: DateTime.now(),
         contents: contents,
-        meta: {
-          if (turnId != null) 'turnId': turnId,
-          if (wsKey != null) 'wsKey': wsKey,
+        meta: <String, dynamic>{
+          ...?(turnId == null ? null : <String, dynamic>{'turnId': turnId}),
+          ...?(wsKey == null ? null : <String, dynamic>{'wsKey': wsKey}),
         },
       ),
       wsKey: wsKey,
@@ -2428,250 +2433,254 @@ class _ChatScreenState extends State<ChatScreen> {
         ? 156.0
         : 132.0;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              loc?.translate('chat_with_ai_title') ?? 'Chat with AI',
-              style: Theme.of(context).textTheme.titleMedium,
+    return GlassPage(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                loc?.translate('chat_with_ai_title') ?? 'Chat with AI',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 160),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                transitionBuilder: (child, anim) => FadeTransition(
+                  opacity: anim,
+                  child: SizeTransition(
+                    sizeFactor: anim,
+                    axis: Axis.vertical,
+                    alignment: Alignment.topCenter,
+                    child: child,
+                  ),
+                ),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: ChatStatusPill(
+                    key: ValueKey(_taskLabel()),
+                    label: _taskLabel(),
+                    statusToken: _taskStatusToken(),
+                    isError: _sessionError,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: Center(
+                child: ProjectChatModelSelector(
+                  models: _availableModels,
+                  selectedModelId: _selectedModelId,
+                  isLoading: _isLoadingModels || _isSwitchingModel,
+                  minWidth: 104,
+                  maxWidth: desktopModelWidth,
+                  width: desktopModelWidth,
+                  onChanged:
+                      (_isLoadingModels ||
+                          _isSwitchingModel ||
+                          _availableModels.isEmpty)
+                      ? null
+                      : (value) => unawaited(_handleModelChanged(value)),
+                ),
+              ),
             ),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 160),
-              switchInCurve: Curves.easeOut,
-              switchOutCurve: Curves.easeIn,
-              transitionBuilder: (child, anim) => FadeTransition(
-                opacity: anim,
-                child: SizeTransition(
-                  sizeFactor: anim,
-                  axis: Axis.vertical,
-                  axisAlignment: -1,
-                  child: child,
+            Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: Center(
+                child: ProjectChatEngineModeSegment(
+                  value: _selectedEngineMode,
+                  fastTooltip: fastHint,
+                  thinkHardTooltip: thinkHardHint,
+                  onChanged: (_isLoadingModels || _isSwitchingModel)
+                      ? null
+                      : (value) => unawaited(_handleEngineChanged(value)),
                 ),
               ),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: ChatStatusPill(
-                  key: ValueKey(_taskLabel()),
-                  label: _taskLabel(),
-                  statusToken: _taskStatusToken(),
-                  isError: _sessionError,
+            ),
+            AppMenuButton<_ChatAppBarAction>(
+              tooltip: loc?.translate('chat_menu_more') ?? 'More',
+              actions: [
+                AppMenuAction(
+                  value: _ChatAppBarAction.openOverview,
+                  label: loc?.translate('chat_menu_overview') ?? 'Overview',
+                  icon: Icons.dashboard_outlined,
                 ),
-              ),
+                AppMenuAction(
+                  value: _ChatAppBarAction.openFiles,
+                  label: loc?.translate('chat_menu_view_files') ?? 'View Files',
+                  icon: Icons.folder_open_outlined,
+                ),
+                AppMenuAction(
+                  value: _ChatAppBarAction.openEnvironment,
+                  label:
+                      loc?.translate('chat_menu_environment') ?? 'Environment',
+                  icon: Icons.key_outlined,
+                ),
+                AppMenuAction(
+                  value: _ChatAppBarAction.openDatabase,
+                  label: loc?.translate('chat_menu_database') ?? 'Database',
+                  icon: Icons.storage_outlined,
+                ),
+                AppMenuAction(
+                  value: _ChatAppBarAction.openPayment,
+                  label: loc?.translate('chat_menu_payment') ?? 'Payment',
+                  icon: Icons.payment_outlined,
+                ),
+                AppMenuAction(
+                  value: _ChatAppBarAction.openDeployHistory,
+                  label:
+                      loc?.translate('chat_menu_deploy_history') ??
+                      'Deploy History',
+                  icon: Icons.history_outlined,
+                ),
+                AppMenuAction(
+                  value: _ChatAppBarAction.openAnalytics,
+                  label: loc?.translate('chat_menu_analytics') ?? 'Analytics',
+                  icon: Icons.analytics_outlined,
+                ),
+                const AppMenuAction.divider(),
+                AppMenuAction(
+                  value: _ChatAppBarAction.redeployPreview,
+                  label:
+                      loc?.translate('chat_menu_redeploy_preview') ??
+                      'Redeploy Preview',
+                  icon: Icons.rocket_launch_outlined,
+                ),
+                AppMenuAction(
+                  value: _ChatAppBarAction.refresh,
+                  label:
+                      loc?.translate('chat_menu_refresh_history') ??
+                      'Refresh History',
+                  icon: Icons.refresh,
+                ),
+                AppMenuAction(
+                  value: _ChatAppBarAction.clearChat,
+                  label: loc?.translate('chat_clear_title') ?? 'Clear Chat',
+                  icon: Icons.clear_all,
+                ),
+              ],
+              onSelected: _handleAppBarAction,
             ),
           ],
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 4),
-            child: Center(
-              child: ProjectChatModelSelector(
-                models: _availableModels,
-                selectedModelId: _selectedModelId,
-                isLoading: _isLoadingModels || _isSwitchingModel,
-                minWidth: 104,
-                maxWidth: desktopModelWidth,
-                width: desktopModelWidth,
-                onChanged:
-                    (_isLoadingModels ||
-                        _isSwitchingModel ||
-                        _availableModels.isEmpty)
-                    ? null
-                    : (value) => unawaited(_handleModelChanged(value)),
-              ),
+        body: Stack(
+          children: [
+            Column(
+              children: [
+                // Messages list
+                Expanded(
+                  child: Hero(
+                    tag: heroTag,
+                    transitionOnUserGestures: true,
+                    child: Material(
+                      color: theme.colorScheme.surface,
+                      child: _messages.isEmpty
+                          ? _isLoadingHistory
+                                ? const ChatScreenLoadingState()
+                                : ChatScreenEmptyState(
+                                    onQuickAction: _sendMessage,
+                                  )
+                          : MessageList(
+                              messages: _messages,
+                              scrollController: _scrollController,
+                              messageStatuses: _messageStatuses,
+                              onRetry: _retryMessage,
+                              onLoadMore: _loadMoreHistory,
+                              hasMoreHistory: _hasMoreHistory,
+                              isLoadingMore: _isLoadingMoreHistory,
+                              projectId: widget.projectId,
+                            ),
+                    ),
+                  ),
+                ),
+                OutboxBar(
+                  count: _outboxItems.length,
+                  mode: _outboxMode,
+                  collapsed: _outboxCollapsed,
+                  onToggleCollapsed: () {
+                    setState(() {
+                      _outboxCollapsed = !_outboxCollapsed;
+                    });
+                  },
+                  onOpen: () {
+                    if (_outboxItems.isEmpty) return;
+                    showOutboxSheet(
+                      context,
+                      items: _outboxItems,
+                      mode: _outboxMode,
+                      onClear: _outboxClear,
+                      onDelete: _outboxDelete,
+                      onUpdate: _outboxUpdate,
+                    );
+                  },
+                ),
+                // Message input
+                MessageInput(
+                  onSend: _sendMessage,
+                  isEnabled: !_isLoading,
+                  hintText:
+                      loc?.translate('chat_input_hint') ??
+                      'Type your message...',
+                  controller: _inputController,
+                  focusNode: _inputFocusNode,
+                  queueCount: _outboxItems.length,
+                  showSendPulse: _outboxMode == OutboxMode.dispatching,
+                ),
+              ],
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 4),
-            child: Center(
-              child: ProjectChatEngineModeSegment(
-                value: _selectedEngineMode,
-                fastTooltip: fastHint,
-                thinkHardTooltip: thinkHardHint,
-                onChanged: (_isLoadingModels || _isSwitchingModel)
-                    ? null
-                    : (value) => unawaited(_handleEngineChanged(value)),
+            if ((_miniPreviewUrl ?? '').trim().isNotEmpty)
+              Positioned.fill(
+                child: FloatingPreviewDock(
+                  previewUrl: (_miniPreviewUrl ?? '').trim(),
+                  reloadVersion: _miniPreviewReloadVersion,
+                  topDock: 8,
+                ),
               ),
-            ),
-          ),
-          AppMenuButton<_ChatAppBarAction>(
-            tooltip: loc?.translate('chat_menu_more') ?? 'More',
-            actions: [
-              AppMenuAction(
-                value: _ChatAppBarAction.openOverview,
-                label: loc?.translate('chat_menu_overview') ?? 'Overview',
-                icon: Icons.dashboard_outlined,
-              ),
-              AppMenuAction(
-                value: _ChatAppBarAction.openFiles,
-                label: loc?.translate('chat_menu_view_files') ?? 'View Files',
-                icon: Icons.folder_open_outlined,
-              ),
-              AppMenuAction(
-                value: _ChatAppBarAction.openEnvironment,
-                label: loc?.translate('chat_menu_environment') ?? 'Environment',
-                icon: Icons.key_outlined,
-              ),
-              AppMenuAction(
-                value: _ChatAppBarAction.openDatabase,
-                label: loc?.translate('chat_menu_database') ?? 'Database',
-                icon: Icons.storage_outlined,
-              ),
-              AppMenuAction(
-                value: _ChatAppBarAction.openPayment,
-                label: loc?.translate('chat_menu_payment') ?? 'Payment',
-                icon: Icons.payment_outlined,
-              ),
-              AppMenuAction(
-                value: _ChatAppBarAction.openDeployHistory,
-                label:
-                    loc?.translate('chat_menu_deploy_history') ??
-                    'Deploy History',
-                icon: Icons.history_outlined,
-              ),
-              AppMenuAction(
-                value: _ChatAppBarAction.openAnalytics,
-                label: loc?.translate('chat_menu_analytics') ?? 'Analytics',
-                icon: Icons.analytics_outlined,
-              ),
-              const AppMenuAction.divider(),
-              AppMenuAction(
-                value: _ChatAppBarAction.redeployPreview,
-                label:
-                    loc?.translate('chat_menu_redeploy_preview') ??
-                    'Redeploy Preview',
-                icon: Icons.rocket_launch_outlined,
-              ),
-              AppMenuAction(
-                value: _ChatAppBarAction.refresh,
-                label:
-                    loc?.translate('chat_menu_refresh_history') ??
-                    'Refresh History',
-                icon: Icons.refresh,
-              ),
-              AppMenuAction(
-                value: _ChatAppBarAction.clearChat,
-                label: loc?.translate('chat_clear_title') ?? 'Clear Chat',
-                icon: Icons.clear_all,
-              ),
-            ],
-            onSelected: _handleAppBarAction,
-          ),
-        ],
-      ),
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              // Messages list
-              Expanded(
-                child: Hero(
-                  tag: heroTag,
-                  transitionOnUserGestures: true,
+            if (_workspaceWarmupVisible)
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: 18,
+                child: IgnorePointer(
+                  ignoring: true,
                   child: Material(
-                    color: theme.colorScheme.surface,
-                    child: _messages.isEmpty
-                        ? _isLoadingHistory
-                              ? const ChatScreenLoadingState()
-                              : ChatScreenEmptyState(
-                                  onQuickAction: _sendMessage,
-                                )
-                        : MessageList(
-                            messages: _messages,
-                            scrollController: _scrollController,
-                            messageStatuses: _messageStatuses,
-                            onRetry: _retryMessage,
-                            onLoadMore: _loadMoreHistory,
-                            hasMoreHistory: _hasMoreHistory,
-                            isLoadingMore: _isLoadingMoreHistory,
-                            projectId: widget.projectId,
+                    color: Colors.transparent,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if ((_workspaceWarmupMessage ?? '').trim().isNotEmpty)
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surface,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              _workspaceWarmupMessage!,
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.bodySmall,
+                            ),
                           ),
-                  ),
-                ),
-              ),
-              OutboxBar(
-                count: _outboxItems.length,
-                mode: _outboxMode,
-                collapsed: _outboxCollapsed,
-                onToggleCollapsed: () {
-                  setState(() {
-                    _outboxCollapsed = !_outboxCollapsed;
-                  });
-                },
-                onOpen: () {
-                  if (_outboxItems.isEmpty) return;
-                  showOutboxSheet(
-                    context,
-                    items: _outboxItems,
-                    mode: _outboxMode,
-                    onClear: _outboxClear,
-                    onDelete: _outboxDelete,
-                    onUpdate: _outboxUpdate,
-                  );
-                },
-              ),
-              // Message input
-              MessageInput(
-                onSend: _sendMessage,
-                isEnabled: !_isLoading,
-                hintText:
-                    loc?.translate('chat_input_hint') ?? 'Type your message...',
-                controller: _inputController,
-                focusNode: _inputFocusNode,
-                queueCount: _outboxItems.length,
-                showSendPulse: _outboxMode == OutboxMode.dispatching,
-              ),
-            ],
-          ),
-          if ((_miniPreviewUrl ?? '').trim().isNotEmpty)
-            Positioned.fill(
-              child: FloatingPreviewDock(
-                previewUrl: (_miniPreviewUrl ?? '').trim(),
-                reloadVersion: _miniPreviewReloadVersion,
-                topDock: 8,
-              ),
-            ),
-          if (_workspaceWarmupVisible)
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: 18,
-              child: IgnorePointer(
-                ignoring: true,
-                child: Material(
-                  color: Colors.transparent,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if ((_workspaceWarmupMessage ?? '').trim().isNotEmpty)
-                        Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surface,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            _workspaceWarmupMessage!,
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.bodySmall,
-                          ),
+                        ProgressWidget(
+                          tipList: _workspaceWarmupTips(),
+                          completed: _workspaceWarmupCompleted,
+                          preCompleteDuration: const Duration(seconds: 12),
                         ),
-                      ProgressWidget(
-                        tipList: _workspaceWarmupTips(),
-                        completed: _workspaceWarmupCompleted,
-                        preCompleteDuration: const Duration(seconds: 12),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

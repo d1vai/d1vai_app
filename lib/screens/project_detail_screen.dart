@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 
@@ -424,29 +425,33 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     UserProject? project,
   }) {
     if (!isMacosDesktop) {
-      return Scaffold(
-        appBar: isDesktopLayout(context)
-            ? null
-            : PreferredSize(
-                preferredSize: const Size.fromHeight(kToolbarHeight),
-                child: _buildGlassmorphicAppBar(context),
-              ),
-        body: body,
+      return GlassPage(
+        child: Scaffold(
+          appBar: isDesktopLayout(context)
+              ? null
+              : PreferredSize(
+                  preferredSize: const Size.fromHeight(kToolbarHeight),
+                  child: _buildGlassmorphicAppBar(context),
+                ),
+          body: body,
+        ),
       );
     }
 
-    return Scaffold(
-      appBar: null,
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              _buildMacosProjectTitleBar(context, project),
-              Expanded(child: body),
-            ],
-          ),
-          if (_showProfileSidebar) _buildProfileSidebarOverlay(context),
-        ],
+    return GlassPage(
+      child: Scaffold(
+        appBar: null,
+        body: Stack(
+          children: [
+            Column(
+              children: [
+                _buildMacosProjectTitleBar(context, project),
+                Expanded(child: body),
+              ],
+            ),
+            if (_showProfileSidebar) _buildProfileSidebarOverlay(context),
+          ],
+        ),
       ),
     );
   }

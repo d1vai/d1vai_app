@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
+
+import '../app_liquid_glass.dart';
 
 /// Floating chat button for mobile devices
 /// Shows current chat status and opens bottom sheet when tapped
@@ -138,96 +141,114 @@ class _FloatingChatButtonState extends State<FloatingChatButton>
                 onTapCancel: () => _pressController.reverse(),
                 onTapUp: (_) => _pressController.reverse(),
                 borderRadius: BorderRadius.circular(999),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  curve: Curves.easeOutCubic,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
+                child: AppLiquidGlass(
+                  variant: AppLiquidGlassVariant.floating,
+                  borderRadius: 999,
+                  glowIntensity: isActive || _pressController.value > 0.01
+                      ? (isDark ? 0.52 : 0.22)
+                      : 0,
+                  settings: LiquidGlassSettings(
+                    blur: isDark ? 18 : 12,
+                    thickness: isDark ? 30 : 24,
+                    glassColor: bg.withValues(alpha: isDark ? 0.18 : 0.14),
+                    lightIntensity: isDark ? 0.22 : 0.32,
+                    saturation: isDark ? 1.18 : 1.08,
+                    glowIntensity: isDark ? 0.52 : 0.26,
+                    standardOpacityMultiplier: isDark ? 1 : 0.72,
                   ),
-                  decoration: BoxDecoration(
-                    color: bg,
-                    borderRadius: BorderRadius.circular(999),
-                    boxShadow: [...shadow, ...glow],
-                    border: Border.all(
-                      color: theme.colorScheme.outlineVariant.withValues(
-                        alpha: isDark ? 0.72 : 0.65,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeOutCubic,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: bg.withValues(alpha: isDark ? 0.26 : 0.42),
+                      borderRadius: BorderRadius.circular(999),
+                      boxShadow: [...shadow, ...glow],
+                      border: Border.all(
+                        color: theme.colorScheme.outlineVariant.withValues(
+                          alpha: isDark ? 0.64 : 0.56,
+                        ),
                       ),
                     ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 180),
-                        curve: Curves.easeOutCubic,
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: fg.withValues(alpha: isActive ? 0.14 : 0.1),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: AnimatedSlide(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AnimatedContainer(
                           duration: const Duration(milliseconds: 180),
                           curve: Curves.easeOutCubic,
-                          offset: _pressController.value > 0
-                              ? const Offset(0, -0.04)
-                              : Offset.zero,
-                          child: Icon(
-                            Icons.chat_bubble_outline,
-                            size: 18,
-                            color: fg.withValues(alpha: 0.95),
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: fg.withValues(alpha: isActive ? 0.14 : 0.1),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: AnimatedSlide(
+                            duration: const Duration(milliseconds: 180),
+                            curve: Curves.easeOutCubic,
+                            offset: _pressController.value > 0
+                                ? const Offset(0, -0.04)
+                                : Offset.zero,
+                            child: Icon(
+                              Icons.chat_bubble_outline,
+                              size: 18,
+                              color: fg.withValues(alpha: 0.95),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Chat',
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: fg.withValues(alpha: 0.95),
-                              height: 1.0,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            widget.statusLabel,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: fg.withValues(alpha: 0.78),
-                              fontWeight: FontWeight.w700,
-                              height: 1.0,
-                            ),
-                          ),
-                          if (secondary.isNotEmpty) ...[
-                            const SizedBox(height: 3),
-                            ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 128),
-                              child: Text(
-                                secondary,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: fg.withValues(alpha: 0.58),
-                                  fontWeight: FontWeight.w600,
-                                  height: 1.0,
-                                ),
+                        const SizedBox(width: 10),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Chat',
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: fg.withValues(alpha: 0.95),
+                                height: 1.0,
                               ),
                             ),
+                            const SizedBox(height: 2),
+                            Text(
+                              widget.statusLabel,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: fg.withValues(alpha: 0.78),
+                                fontWeight: FontWeight.w700,
+                                height: 1.0,
+                              ),
+                            ),
+                            if (secondary.isNotEmpty) ...[
+                              const SizedBox(height: 3),
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 128,
+                                ),
+                                child: Text(
+                                  secondary,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: fg.withValues(alpha: 0.58),
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.0,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
-                        ],
-                      ),
-                      const SizedBox(width: 10),
-                      _StatusDot(
-                        color: statusColor,
-                        background: fg.withValues(alpha: 0.10),
-                        pulsing: isActive,
-                        emphasized: _pressController.value > 0.01,
-                      ),
-                    ],
+                        ),
+                        const SizedBox(width: 10),
+                        _StatusDot(
+                          color: statusColor,
+                          background: fg.withValues(alpha: 0.10),
+                          pulsing: isActive,
+                          emphasized: _pressController.value > 0.01,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

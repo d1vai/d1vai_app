@@ -302,6 +302,7 @@ class CodeWorkbenchController extends ChangeNotifier {
     String projectId,
     String path, {
     bool preview = true,
+    bool openInEditMode = false,
     bool wrapEnabled = false,
     int tabSize = 2,
   }) async {
@@ -309,11 +310,15 @@ class CodeWorkbenchController extends ChangeNotifier {
 
     final existing = _editorsByPath[path];
     if (existing != null) {
-      if (!preview) {
+      if (!preview || openInEditMode) {
         existing.isPreview = false;
         if (_previewPath == path) {
           _previewPath = null;
         }
+      }
+      if (openInEditMode && !existing.isBinary) {
+        await _ensureEditorController(existing);
+        existing.isEditing = true;
       }
       _activePath = path;
       notifyListeners();
@@ -341,6 +346,14 @@ class CodeWorkbenchController extends ChangeNotifier {
         await controller.setLanguageForPath(path);
         await controller.setText(content.content, markSaved: true);
       }
+      if (openInEditMode && !content.isBinary) {
+        await _ensureEditorController(editor);
+        editor.isEditing = true;
+        editor.isPreview = false;
+        if (_previewPath == path) {
+          _previewPath = null;
+        }
+      }
       editor.lastKnownDirty = false;
     } catch (e) {
       editor.error = e.toString();
@@ -355,6 +368,7 @@ class CodeWorkbenchController extends ChangeNotifier {
     String path, {
     required CodeTabFileContent content,
     bool preview = true,
+    bool openInEditMode = false,
     bool wrapEnabled = false,
     int tabSize = 2,
   }) async {
@@ -363,25 +377,45 @@ class CodeWorkbenchController extends ChangeNotifier {
     final existing = _editorsByPath[path];
     if (existing != null) {
       setFileContent(path, content: content, keepEditing: existing.isEditing);
-      if (!preview) {
+      if (!preview || openInEditMode) {
         existing.isPreview = false;
         if (_previewPath == path) {
           _previewPath = null;
         }
+      }
+      if (openInEditMode && !content.isBinary) {
+        await _ensureEditorController(existing);
+        existing.isEditing = true;
       }
       _activePath = path;
       notifyListeners();
       return;
     }
 
-    _createEditorShell(
+    final editor = _createEditorShell(
       path,
       preview: preview,
       wrapEnabled: wrapEnabled,
       tabSize: tabSize,
       loading: false,
     );
-    setFileContent(path, content: content);
+    editor.content = content;
+    editor.error = null;
+    editor.loading = false;
+    editor.originalContent = content.isBinary ? '' : content.content;
+    _syncedPaths.add(path);
+    _syncStates[path] = CodeWorkbenchSyncState.synced;
+    _queuedAt.remove(path);
+    editor.lastKnownDirty = false;
+    if (openInEditMode && !content.isBinary) {
+      await _ensureEditorController(editor);
+      editor.isEditing = true;
+      editor.isPreview = false;
+      if (_previewPath == path) {
+        _previewPath = null;
+      }
+    }
+    notifyListeners();
   }
 
   void activateEditor(String path) {

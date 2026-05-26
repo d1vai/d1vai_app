@@ -63,6 +63,7 @@ dependencies:
   share_plus: ^10.0.0
   path_provider: ^2.1.5
   crypto: ^3.0.7
+  liquid_glass_widgets: ^0.12.7
   flutter_monaco:
     path: third_party/flutter_monaco
   highlight: ^0.7.0
