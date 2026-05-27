@@ -58,9 +58,9 @@ class WebSubPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                     colorScheme.primary.withValues(alpha: 0.08),
                   ]
                 : [
-                    Colors.white.withValues(alpha: 0.56),
-                    const Color(0xFFF8FAFC).withValues(alpha: 0.70),
-                    const Color(0xFFFDF4FF).withValues(alpha: 0.34),
+                    Colors.white.withValues(alpha: 0.64),
+                    colorScheme.surface.withValues(alpha: 0.56),
+                    colorScheme.surfaceContainerLowest.withValues(alpha: 0.30),
                   ],
           ),
           border: Border(
@@ -182,7 +182,7 @@ class _AppBarGlassIconButton extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             Colors.white.withValues(alpha: isDark ? 0.04 : 0.72),
-            colorScheme.primary.withValues(alpha: isDark ? 0.04 : 0.06),
+            colorScheme.surface.withValues(alpha: isDark ? 0.04 : 0.34),
           ],
         ),
       ),

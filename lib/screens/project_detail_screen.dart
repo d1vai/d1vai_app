@@ -506,9 +506,20 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         defaultTargetPlatform == TargetPlatform.iOS ||
         defaultTargetPlatform == TargetPlatform.android;
     final useSoftLightBackground = isMobilePlatform && !isDark;
-    final gradient = D1VColors.getPrimaryGradient(context);
     final activeText = D1VColors.getActiveText(context);
     final inactiveText = D1VColors.getInactiveText(context);
+    final lightGlassShadow = <BoxShadow>[
+      BoxShadow(
+        color: theme.colorScheme.shadow.withValues(alpha: 0.08),
+        blurRadius: 18,
+        offset: const Offset(0, 8),
+      ),
+      BoxShadow(
+        color: Colors.white.withValues(alpha: 0.18),
+        blurRadius: 10,
+        offset: const Offset(0, 1),
+      ),
+    ];
 
     return AppGlassSurface(
       variant: AppLiquidGlassVariant.navigation,
@@ -516,29 +527,29 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
       glassBorderRadius: 0,
       glowIntensity: isDark ? 0.14 : 0.08,
       useOwnLayer: isDark,
-      boxShadow: isDark ? null : D1VColors.getGlowShadows(context, 1.0),
+      boxShadow: isDark ? null : lightGlassShadow,
       overlayDecoration: BoxDecoration(
-        gradient: useSoftLightBackground
-            ? LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  theme.colorScheme.surface.withValues(alpha: 0.86),
-                  Colors.white.withValues(alpha: 0.56),
-                  theme.colorScheme.primary.withValues(alpha: 0.04),
-                ],
-              )
-            : LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  gradient.colors.first.withValues(alpha: isDark ? 0.18 : 0.30),
-                  gradient.colors.last.withValues(alpha: isDark ? 0.14 : 0.24),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [
+                  D1VColors.deepBlueDark.withValues(alpha: 0.18),
+                  theme.colorScheme.primary.withValues(alpha: 0.08),
+                  theme.colorScheme.surface.withValues(alpha: 0.10),
+                ]
+              : [
+                  Colors.white.withValues(
+                    alpha: useSoftLightBackground ? 0.72 : 0.60,
+                  ),
                   theme.colorScheme.surface.withValues(
-                    alpha: isDark ? 0.08 : 0.18,
+                    alpha: useSoftLightBackground ? 0.60 : 0.48,
+                  ),
+                  theme.colorScheme.surfaceContainerLowest.withValues(
+                    alpha: useSoftLightBackground ? 0.34 : 0.28,
                   ),
                 ],
-              ),
+        ),
         border: Border(
           bottom: BorderSide(
             color: isDark

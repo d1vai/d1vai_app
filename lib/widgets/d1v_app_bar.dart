@@ -209,14 +209,24 @@ class _D1VGlassHeaderShell extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
+    final lightGlassShadow = <BoxShadow>[
+      BoxShadow(
+        color: colorScheme.shadow.withValues(alpha: 0.08),
+        blurRadius: 18,
+        offset: const Offset(0, 8),
+      ),
+      BoxShadow(
+        color: Colors.white.withValues(alpha: 0.22),
+        blurRadius: 10,
+        offset: const Offset(0, 1),
+      ),
+    ];
 
     if (!enableGlassmorphism) {
       return DecoratedBox(
         decoration: BoxDecoration(
           gradient: D1VColors.getPrimaryGradient(context),
-          boxShadow: isDark
-              ? null
-              : D1VColors.getGlowShadows(context, glowIntensity),
+          boxShadow: isDark ? null : lightGlassShadow,
         ),
         child: child,
       );
@@ -251,9 +261,7 @@ class _D1VGlassHeaderShell extends StatelessWidget {
         useOwnLayer: isDark,
         quality: GlassQuality.premium,
         settings: glassSettings,
-        boxShadow: isDark
-            ? null
-            : D1VColors.getGlowShadows(context, glowIntensity),
+        boxShadow: isDark ? null : lightGlassShadow,
         overlayDecoration: BoxDecoration(
           border: Border(bottom: BorderSide(color: borderColor)),
           gradient: LinearGradient(
@@ -266,9 +274,9 @@ class _D1VGlassHeaderShell extends StatelessWidget {
                     colorScheme.surface.withValues(alpha: 0.10),
                   ]
                 : [
-                    Colors.white.withValues(alpha: 0.64),
-                    D1VColors.rosePinkLight.withValues(alpha: 0.18),
-                    colorScheme.surface.withValues(alpha: 0.42),
+                    Colors.white.withValues(alpha: 0.66),
+                    colorScheme.surface.withValues(alpha: 0.54),
+                    colorScheme.surfaceContainerLowest.withValues(alpha: 0.32),
                   ],
           ),
         ),
