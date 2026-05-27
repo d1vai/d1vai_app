@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/locale_font_helper.dart';
 import '../utils/desktop_layout.dart';
+import '../widgets/d1v_app_bar.dart';
 import '../widgets/snackbar_helper.dart';
 import '../widgets/share_sheet.dart';
 import '../l10n/app_localizations.dart';
@@ -197,7 +198,8 @@ class _DocsScreenState extends State<DocsScreen> {
     final desktop = isDesktopLayout(context);
     final hasRecent = _recentSlugs.isNotEmpty;
     return Scaffold(
-      appBar: AppBar(
+      appBar: D1VSimpleAppBar(
+        enableBreathing: false,
         title: Text(
           _t('docs_title', 'Documentation'),
           style: LocaleFontHelper.localizedTitleStyle(
@@ -473,6 +475,14 @@ class _DocsScreenState extends State<DocsScreen> {
   }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final trailingLabel = trailingText == null
+        ? null
+        : Text(
+            trailingText,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          );
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -502,14 +512,8 @@ class _DocsScreenState extends State<DocsScreen> {
             ],
           ),
         ),
-        if (trailingText != null)
-          Text(
-            trailingText,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-        if (action != null) action,
+        ?trailingLabel,
+        ?action,
       ],
     );
   }

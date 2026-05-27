@@ -1,6 +1,9 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
+
 import '../theme/d1v_theme_colors.dart';
+import 'app_glass_surface.dart';
+import 'app_liquid_glass.dart';
 import 'd1v_tab_bar_view.dart';
 
 /// D1V 优雅的 AppBar 组件
@@ -76,62 +79,16 @@ class _D1VAppBarState extends State<D1VAppBar>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return AnimatedBuilder(
       animation: _breathingController,
       builder: (context, child) {
-        return Container(
-          decoration: BoxDecoration(
-            boxShadow: isDark
-                ? null
-                : D1VColors.getGlowShadows(
-                    context,
-                    _glowIntensityAnimation.value,
-                  ),
-          ),
-          child: ClipRRect(
-            child: Stack(
-              children: [
-                // 背景层
-                _buildBackground(context, isDark),
-
-                // 磨砂玻璃层 (Dark Mode)
-                if (isDark && widget.enableGlassmorphism)
-                  _buildGlassmorphicLayer(context, _blurAnimation.value),
-
-                // AppBar 内容
-                _buildAppBarContent(context),
-              ],
-            ),
-          ),
+        return _D1VGlassHeaderShell(
+          enableGlassmorphism: widget.enableGlassmorphism,
+          glowIntensity: _glowIntensityAnimation.value,
+          blurValue: _blurAnimation.value,
+          child: _buildAppBarContent(context),
         );
       },
-    );
-  }
-
-  Widget _buildBackground(BuildContext context, bool isDark) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: D1VColors.getPrimaryGradient(context),
-      ),
-    );
-  }
-
-  Widget _buildGlassmorphicLayer(BuildContext context, double blurValue) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final tint = Color.alphaBlend(
-      colorScheme.primary.withValues(alpha: isDark ? 0.14 : 0.08),
-      colorScheme.surface,
-    );
-    final overlayColor = tint.withValues(alpha: isDark ? 0.72 : 0.88);
-
-    return BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: blurValue, sigmaY: blurValue),
-      child: Container(decoration: BoxDecoration(color: overlayColor)),
     );
   }
 
@@ -213,64 +170,110 @@ class _D1VSimpleAppBarState extends State<D1VSimpleAppBar>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return AnimatedBuilder(
       animation: _breathingController,
       builder: (context, child) {
-        return Container(
-          decoration: BoxDecoration(
-            boxShadow: isDark
-                ? null
-                : D1VColors.getGlowShadows(
-                    context,
-                    _glowIntensityAnimation.value,
-                  ),
-          ),
-          child: ClipRRect(
-            child: Stack(
-              children: [
-                // 背景渐变
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: D1VColors.getPrimaryGradient(context),
-                  ),
-                ),
-
-                // 磨砂玻璃层 (Dark Mode)
-                if (isDark && widget.enableGlassmorphism)
-                  BackdropFilter(
-                    filter: ImageFilter.blur(
-                      sigmaX: _blurAnimation.value,
-                      sigmaY: _blurAnimation.value,
-                    ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Color.alphaBlend(
-                          Theme.of(
-                            context,
-                          ).colorScheme.primary.withValues(alpha: 0.14),
-                          Theme.of(context).colorScheme.surface,
-                        ).withValues(alpha: 0.72),
-                      ),
-                    ),
-                  ),
-
-                // AppBar 内容
-                AppBar(
-                  title: widget.title,
-                  actions: widget.actions,
-                  leading: widget.leading,
-                  elevation: 0,
-                  backgroundColor: Colors.transparent,
-                  foregroundColor: D1VColors.getActiveText(context),
-                ),
-              ],
-            ),
+        return _D1VGlassHeaderShell(
+          enableGlassmorphism: widget.enableGlassmorphism,
+          glowIntensity: _glowIntensityAnimation.value,
+          blurValue: _blurAnimation.value,
+          child: AppBar(
+            title: widget.title,
+            actions: widget.actions,
+            leading: widget.leading,
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            foregroundColor: D1VColors.getActiveText(context),
           ),
         );
       },
+    );
+  }
+}
+
+class _D1VGlassHeaderShell extends StatelessWidget {
+  final Widget child;
+  final bool enableGlassmorphism;
+  final double glowIntensity;
+  final double blurValue;
+
+  const _D1VGlassHeaderShell({
+    required this.child,
+    required this.enableGlassmorphism,
+    required this.glowIntensity,
+    required this.blurValue,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    if (!enableGlassmorphism) {
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: D1VColors.getPrimaryGradient(context),
+          boxShadow: isDark
+              ? null
+              : D1VColors.getGlowShadows(context, glowIntensity),
+        ),
+        child: child,
+      );
+    }
+
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.10)
+        : colorScheme.outlineVariant.withValues(alpha: 0.78);
+    final glassSettings = LiquidGlassSettings(
+      blur: blurValue,
+      thickness: isDark ? 30 : 24,
+      glassColor: Color.lerp(
+        colorScheme.surface.withValues(alpha: isDark ? 0.22 : 0.34),
+        colorScheme.primary.withValues(alpha: isDark ? 0.10 : 0.06),
+        0.24,
+      )!,
+      lightIntensity: isDark ? 0.24 : 0.34,
+      saturation: isDark ? 1.16 : 1.08,
+      glowIntensity: isDark ? 0.22 : 0.12,
+      standardOpacityMultiplier: isDark ? 1.0 : 0.72,
+    );
+
+    return Material(
+      color: Colors.transparent,
+      child: AppGlassSurface(
+        variant: AppLiquidGlassVariant.navigation,
+        borderRadius: BorderRadius.zero,
+        glassBorderRadius: 0,
+        glowIntensity: isDark
+            ? 0.10 + glowIntensity * 0.04
+            : 0.04 + glowIntensity * 0.03,
+        useOwnLayer: isDark,
+        quality: GlassQuality.premium,
+        settings: glassSettings,
+        boxShadow: isDark
+            ? null
+            : D1VColors.getGlowShadows(context, glowIntensity),
+        overlayDecoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: borderColor)),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isDark
+                ? [
+                    D1VColors.deepBlueDark.withValues(alpha: 0.28),
+                    colorScheme.primary.withValues(alpha: 0.08),
+                    colorScheme.surface.withValues(alpha: 0.10),
+                  ]
+                : [
+                    Colors.white.withValues(alpha: 0.64),
+                    D1VColors.rosePinkLight.withValues(alpha: 0.18),
+                    colorScheme.surface.withValues(alpha: 0.42),
+                  ],
+          ),
+        ),
+        child: child,
+      ),
     );
   }
 }

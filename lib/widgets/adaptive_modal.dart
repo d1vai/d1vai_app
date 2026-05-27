@@ -1,6 +1,10 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
+
+import 'app_glass_surface.dart';
+import 'app_liquid_glass.dart';
 
 const double _adaptiveModalMobileBreakpoint = 720;
 
@@ -86,6 +90,37 @@ class AdaptiveModalContainer extends StatelessWidget {
         bottom: Radius.circular(mobile ? 0 : 28),
       ),
     );
+    final surfaceBorderRadius = BorderRadius.vertical(
+      top: const Radius.circular(28),
+      bottom: Radius.circular(mobile ? 0 : 28),
+    );
+    final shadow = <BoxShadow>[
+      BoxShadow(
+        color: theme.colorScheme.shadow.withValues(alpha: isDark ? 0.34 : 0.14),
+        blurRadius: mobile ? 18 : 30,
+        offset: const Offset(0, 14),
+      ),
+      BoxShadow(
+        color: theme.colorScheme.primary.withValues(
+          alpha: isDark ? 0.08 : 0.05,
+        ),
+        blurRadius: mobile ? 20 : 28,
+        offset: const Offset(0, 8),
+      ),
+    ];
+    final glassSettings = LiquidGlassSettings(
+      blur: isDark ? 18 : 12,
+      thickness: isDark ? 30 : 24,
+      glassColor: Color.lerp(
+        theme.colorScheme.surface.withValues(alpha: isDark ? 0.24 : 0.30),
+        theme.colorScheme.primary.withValues(alpha: isDark ? 0.10 : 0.05),
+        0.24,
+      )!,
+      lightIntensity: isDark ? 0.24 : 0.34,
+      saturation: isDark ? 1.18 : 1.08,
+      glowIntensity: isDark ? 0.32 : 0.16,
+      standardOpacityMultiplier: isDark ? 1.0 : 0.72,
+    );
 
     final surface = AnimatedPadding(
       duration: const Duration(milliseconds: 220),
@@ -103,57 +138,63 @@ class AdaptiveModalContainer extends StatelessWidget {
             minWidth: constrainedMinWidth,
           ),
           child: Material(
-            color: theme.colorScheme.surface,
-            elevation: mobile ? 0 : 18,
-            shadowColor: theme.colorScheme.shadow.withValues(
-              alpha: isDark ? 0.42 : 0.18,
-            ),
+            color: Colors.transparent,
             shape: shape,
             clipBehavior: Clip.antiAlias,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
+            child: AppGlassSurface(
+              variant: AppLiquidGlassVariant.floating,
+              borderRadius: surfaceBorderRadius,
+              glassBorderRadius: 28,
+              glowIntensity: isDark ? 0.14 : 0.08,
+              useOwnLayer: !mobile,
+              quality: GlassQuality.premium,
+              settings: glassSettings,
+              boxShadow: shadow,
+              overlayDecoration: BoxDecoration(
                 border: Border.all(
                   color: theme.colorScheme.outlineVariant.withValues(
-                    alpha: isDark ? 0.42 : 0.85,
+                    alpha: isDark ? 0.52 : 0.72,
                   ),
                 ),
-                borderRadius: BorderRadius.vertical(
-                  top: const Radius.circular(28),
-                  bottom: Radius.circular(mobile ? 0 : 28),
-                ),
+                borderRadius: surfaceBorderRadius,
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
+                    Colors.white.withValues(alpha: isDark ? 0.06 : 0.22),
                     Color.alphaBlend(
                       theme.colorScheme.primary.withValues(
                         alpha: isDark ? 0.08 : 0.04,
                       ),
                       theme.colorScheme.surface,
+                    ).withValues(alpha: isDark ? 0.92 : 0.96),
+                    theme.colorScheme.surface.withValues(
+                      alpha: isDark ? 0.92 : 0.98,
                     ),
-                    theme.colorScheme.surface,
                   ],
                 ),
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (mobile && showMobileHandle)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 10, bottom: 6),
-                      child: Container(
-                        width: 42,
-                        height: 5,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.onSurfaceVariant.withValues(
-                            alpha: 0.32,
+              child: Material(
+                type: MaterialType.transparency,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (mobile && showMobileHandle)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10, bottom: 6),
+                        child: Container(
+                          width: 42,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.onSurfaceVariant
+                                .withValues(alpha: 0.32),
+                            borderRadius: BorderRadius.circular(999),
                           ),
-                          borderRadius: BorderRadius.circular(999),
                         ),
                       ),
-                    ),
-                  Flexible(child: child),
-                ],
+                    Flexible(child: child),
+                  ],
+                ),
               ),
             ),
           ),

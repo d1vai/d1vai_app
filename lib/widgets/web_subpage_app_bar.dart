@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../utils/navigation_utils.dart';
+import 'app_glass_surface.dart';
+import 'app_liquid_glass.dart';
 
 class WebSubPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   const WebSubPageAppBar({
@@ -39,21 +41,26 @@ class WebSubPageAppBar extends StatelessWidget implements PreferredSizeWidget {
 
     return Material(
       color: Colors.transparent,
-      child: Container(
-        decoration: BoxDecoration(
+      child: AppGlassSurface(
+        variant: AppLiquidGlassVariant.navigation,
+        borderRadius: BorderRadius.zero,
+        glassBorderRadius: 0,
+        glowIntensity: isDark ? 0.12 : 0.06,
+        useOwnLayer: isDark,
+        overlayDecoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: isDark
                 ? [
-                    const Color(0xFF0F172A),
-                    const Color(0xFF111B31),
+                    const Color(0xFF0F172A).withValues(alpha: 0.20),
+                    const Color(0xFF111B31).withValues(alpha: 0.14),
                     colorScheme.primary.withValues(alpha: 0.08),
                   ]
                 : [
-                    Colors.white,
-                    const Color(0xFFF8FAFC),
-                    const Color(0xFFFDF4FF),
+                    Colors.white.withValues(alpha: 0.56),
+                    const Color(0xFFF8FAFC).withValues(alpha: 0.70),
+                    const Color(0xFFFDF4FF).withValues(alpha: 0.34),
                   ],
           ),
           border: Border(
@@ -119,7 +126,7 @@ class WebSubPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                   ),
                 ),
               ),
-              if (bottom != null) bottom!,
+              ?bottom,
             ],
           ),
         ),
@@ -158,28 +165,39 @@ class _AppBarGlassIconButton extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.05)
-            : Colors.white.withValues(alpha: 0.85),
+    return AppGlassSurface(
+      variant: AppLiquidGlassVariant.floating,
+      borderRadius: BorderRadius.circular(14),
+      glassBorderRadius: 14,
+      glowIntensity: isDark ? 0.10 : 0.04,
+      overlayDecoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.08)
               : colorScheme.outlineVariant.withValues(alpha: 0.7),
         ),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withValues(alpha: isDark ? 0.04 : 0.72),
+            colorScheme.primary.withValues(alpha: isDark ? 0.04 : 0.06),
+          ],
+        ),
       ),
-      child: IconButton(
-        tooltip: tooltip,
-        padding: EdgeInsets.zero,
-        visualDensity: VisualDensity.compact,
-        icon:
-            iconWidget ??
-            Icon(icon, size: 18, color: colorScheme.onSurfaceVariant),
-        onPressed: onPressed,
+      child: SizedBox(
+        width: 40,
+        height: 40,
+        child: IconButton(
+          tooltip: tooltip,
+          padding: EdgeInsets.zero,
+          visualDensity: VisualDensity.compact,
+          icon:
+              iconWidget ??
+              Icon(icon, size: 18, color: colorScheme.onSurfaceVariant),
+          onPressed: onPressed,
+        ),
       ),
     );
   }

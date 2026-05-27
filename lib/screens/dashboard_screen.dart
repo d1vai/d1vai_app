@@ -27,6 +27,7 @@ import 'package:d1vai_app/widgets/skeletons/prompt_activity_skeleton.dart';
 import 'package:d1vai_app/utils/chat_entry.dart';
 import 'package:d1vai_app/utils/desktop_layout.dart';
 import 'package:d1vai_app/core/theme/locale_font_helper.dart';
+import 'package:d1vai_app/widgets/d1v_app_bar.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -462,7 +463,8 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: D1VSimpleAppBar(
+        enableBreathing: false,
         title: _isSearching
             ? TextField(
                 controller: _searchController,
@@ -470,9 +472,15 @@ class _DashboardScreenState extends State<DashboardScreen>
                 decoration: InputDecoration(
                   hintText: _t('projects_search_hint', 'Search projects...'),
                   border: InputBorder.none,
-                  hintStyle: const TextStyle(color: Colors.white70),
+                  hintStyle: TextStyle(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.78),
+                  ),
                 ),
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
                 onChanged: (query) {
                   _performSearch(query);
                 },

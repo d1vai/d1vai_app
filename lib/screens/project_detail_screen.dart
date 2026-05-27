@@ -15,6 +15,8 @@ import '../services/app_analytics_service.dart';
 import '../services/d1vai_service.dart';
 import '../utils/error_utils.dart';
 import '../widgets/adaptive_modal.dart';
+import '../widgets/app_glass_surface.dart';
+import '../widgets/app_liquid_glass.dart';
 import '../widgets/avatar_image.dart';
 import '../widgets/login_required_dialog.dart';
 import '../widgets/project_analytics/project_analytics_tab.dart';
@@ -34,7 +36,6 @@ import '../theme/d1v_theme_colors.dart';
 import '../core/auth_expiry_bus.dart';
 import '../l10n/app_localizations.dart';
 import '../utils/desktop_layout.dart';
-import 'dart:ui';
 import '../widgets/skeletons/project_overview_skeleton.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
@@ -509,69 +510,79 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     final activeText = D1VColors.getActiveText(context);
     final inactiveText = D1VColors.getInactiveText(context);
 
-    return Container(
-      decoration: BoxDecoration(
-        boxShadow: isDark ? null : D1VColors.getGlowShadows(context, 1.0),
-      ),
-      child: ClipRRect(
-        child: Stack(
-          children: [
-            if (useSoftLightBackground)
-              Container(
-                color: theme.colorScheme.surface.withValues(alpha: 0.98),
+    return AppGlassSurface(
+      variant: AppLiquidGlassVariant.navigation,
+      borderRadius: BorderRadius.zero,
+      glassBorderRadius: 0,
+      glowIntensity: isDark ? 0.14 : 0.08,
+      useOwnLayer: isDark,
+      boxShadow: isDark ? null : D1VColors.getGlowShadows(context, 1.0),
+      overlayDecoration: BoxDecoration(
+        gradient: useSoftLightBackground
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  theme.colorScheme.surface.withValues(alpha: 0.86),
+                  Colors.white.withValues(alpha: 0.56),
+                  theme.colorScheme.primary.withValues(alpha: 0.04),
+                ],
               )
-            else
-              Container(decoration: BoxDecoration(gradient: gradient)),
-            // 磨砂玻璃层 (Dark Mode)
-            if (isDark)
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: D1VColors.deepBlueDark.withValues(alpha: 0.6 * 255),
+            : LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  gradient.colors.first.withValues(alpha: isDark ? 0.18 : 0.30),
+                  gradient.colors.last.withValues(alpha: isDark ? 0.14 : 0.24),
+                  theme.colorScheme.surface.withValues(
+                    alpha: isDark ? 0.08 : 0.18,
                   ),
-                ),
+                ],
               ),
-            // AppBar 内容
-            AppBar(
-              titleSpacing: 0,
-              elevation: 0,
-              backgroundColor: Colors.transparent,
-              foregroundColor: activeText,
-              actions: [
-                IconButton(
-                  tooltip: _t('project_detail_share_title', 'Share'),
-                  icon: const Icon(Icons.share),
-                  onPressed: _shareProject,
-                ),
-              ],
-              title: ClipRect(
-                child: D1VTabBar(
-                  controller: _tabController,
-                  isScrollable: true,
-                  labelPadding: const EdgeInsets.symmetric(horizontal: 8),
-                  labelColor: activeText,
-                  unselectedLabelColor: inactiveText,
-                  labelStyle: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  unselectedLabelStyle: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  tabs: _tabs
-                      .map(
-                        (tab) => D1VTab(
-                          icon: tab.icon,
-                          text: _t(tab.labelKey, tab.fallback),
-                        ),
-                      )
-                      .toList(),
-                ),
-              ),
+        border: Border(
+          bottom: BorderSide(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : theme.colorScheme.outlineVariant.withValues(alpha: 0.68),
+          ),
+        ),
+      ),
+      child: AppBar(
+        titleSpacing: 0,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        foregroundColor: activeText,
+        actions: [
+          IconButton(
+            tooltip: _t('project_detail_share_title', 'Share'),
+            icon: const Icon(Icons.share),
+            onPressed: _shareProject,
+          ),
+        ],
+        title: ClipRect(
+          child: D1VTabBar(
+            controller: _tabController,
+            isScrollable: true,
+            labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+            labelColor: activeText,
+            unselectedLabelColor: inactiveText,
+            labelStyle: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
             ),
-          ],
+            unselectedLabelStyle: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+            tabs: _tabs
+                .map(
+                  (tab) => D1VTab(
+                    icon: tab.icon,
+                    text: _t(tab.labelKey, tab.fallback),
+                  ),
+                )
+                .toList(),
+          ),
         ),
       ),
     );

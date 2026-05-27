@@ -14,6 +14,7 @@ import '../providers/auth_provider.dart';
 import '../services/d1vai_service.dart';
 import '../utils/desktop_layout.dart';
 import '../utils/error_utils.dart';
+import '../widgets/d1v_app_bar.dart';
 import '../widgets/login_required_dialog.dart';
 import '../widgets/post_card.dart';
 import '../widgets/search_field.dart';
@@ -285,7 +286,8 @@ class _CommunityScreenState extends State<CommunityScreen>
     final theme = Theme.of(context);
     final isPostsView = _isPostsTab;
     return Scaffold(
-      appBar: AppBar(
+      appBar: D1VSimpleAppBar(
+        enableBreathing: false,
         title: _isSearching
             ? AppBarSearchField(
                 hintText: isPostsView
