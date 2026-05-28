@@ -494,6 +494,25 @@ class _D1VBottomNavBar extends StatelessWidget {
       alpha: isDark ? 0.78 : 0.70,
     );
     final indicatorColor = Colors.white.withValues(alpha: isDark ? 0.12 : 0.16);
+    final labelStyle = theme.textTheme.labelSmall?.copyWith(
+      fontSize: 10,
+      fontWeight: FontWeight.w600,
+      height: 1.0,
+      leadingDistribution: TextLeadingDistribution.even,
+      decoration: TextDecoration.none,
+      color: unselectedIconColor,
+    );
+    final indicatorSettings = LiquidGlassSettings(
+      glassColor: const Color(0x1AFFFFFF),
+      saturation: isDark ? 1.5 : 1.22,
+      refractiveIndex: 1.15,
+      thickness: 20,
+      lightIntensity: isDark ? 2 : 1.7,
+      // Light mode uses dark tab labels; the package default chromatic
+      // aberration creates visible yellow/blue fringe under text baselines.
+      chromaticAberration: isDark ? 0.5 : 0.0,
+      blur: 0,
+    );
 
     return GlassBottomBar(
       tabs: items
@@ -515,25 +534,18 @@ class _D1VBottomNavBar extends StatelessWidget {
       horizontalPadding: centeredHorizontalPadding,
       tabWidth: tabWidth,
       labelFontSize: 10,
+      textStyle: labelStyle,
       selectedIconColor: selectedIconColor,
       unselectedIconColor: unselectedIconColor,
       indicatorColor: indicatorColor,
-      indicatorSettings: const LiquidGlassSettings(
-        glassColor: Color(0x1AFFFFFF),
-        saturation: 1.5,
-        refractiveIndex: 1.15,
-        thickness: 20,
-        lightIntensity: 2,
-        chromaticAberration: 0.5,
-        blur: 0,
-      ),
+      indicatorSettings: indicatorSettings,
       interactionBehavior: GlassInteractionBehavior.full,
       // interactionGlowColor: colorScheme.primary.withValues(
       //   alpha: isDark ? 0.34 : 0.20,
       // ),
       pressScale: 1.04,
       indicatorExpansion: 14,
-      magnification: 1.08,
+      magnification: 1.02,
       glowBlurRadius: 36,
       glowSpreadRadius: 10,
       glowOpacity: isDark ? 0.72 : 0.48,

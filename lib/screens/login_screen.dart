@@ -688,13 +688,39 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  Widget _buildOAuthMarkBadge({
+    required Widget child,
+    Color? backgroundColor,
+    BorderSide? side,
+  }) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color:
+            backgroundColor ??
+            (isDark
+                ? cs.surfaceContainerHighest.withValues(alpha: 0.84)
+                : Colors.white),
+        borderRadius: BorderRadius.circular(7),
+        border: Border.all(
+          color:
+              side?.color ??
+              cs.outlineVariant.withValues(alpha: isDark ? 0.42 : 0.68),
+          width: side?.width ?? 1,
+        ),
+      ),
+      child: SizedBox(width: 22, height: 22, child: Center(child: child)),
+    );
+  }
+
   Widget _buildGoogleMark() {
-    return Text(
-      'G',
-      style: const TextStyle(
-        fontSize: 19,
-        fontWeight: FontWeight.w800,
-        color: Color(0xFF4285F4),
+    return _buildOAuthMarkBadge(
+      child: SvgPicture.asset(
+        'assets/auth/google-mark.svg',
+        width: 16,
+        height: 16,
       ),
     );
   }
@@ -707,40 +733,54 @@ class _LoginScreenState extends State<LoginScreen> {
       return Container(width: tileSize, height: tileSize, color: color);
     }
 
-    return SizedBox(
-      width: tileSize * 2 + gap,
-      height: tileSize * 2 + gap,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              square(const Color(0xFFF25022)),
-              const SizedBox(width: gap),
-              square(const Color(0xFF7FBA00)),
-            ],
-          ),
-          const SizedBox(height: gap),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              square(const Color(0xFF00A4EF)),
-              const SizedBox(width: gap),
-              square(const Color(0xFFFFB900)),
-            ],
-          ),
-        ],
+    return _buildOAuthMarkBadge(
+      child: SizedBox(
+        width: tileSize * 2 + gap,
+        height: tileSize * 2 + gap,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                square(const Color(0xFFF25022)),
+                const SizedBox(width: gap),
+                square(const Color(0xFF7FBA00)),
+              ],
+            ),
+            const SizedBox(height: gap),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                square(const Color(0xFF00A4EF)),
+                const SizedBox(width: gap),
+                square(const Color(0xFFFFB900)),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildGitHubMark() {
-    return SvgPicture.asset(
-      'assets/auth/github-mark.svg',
-      width: 18,
-      height: 18,
-      colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final badgeColor = isDark ? Colors.white : const Color(0xFF111827);
+    final iconColor = isDark ? const Color(0xFF111827) : Colors.white;
+
+    return _buildOAuthMarkBadge(
+      backgroundColor: badgeColor,
+      side: BorderSide(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.26)
+            : const Color(0xFF111827),
+      ),
+      child: SvgPicture.asset(
+        'assets/auth/github-mark.svg',
+        width: 14,
+        height: 14,
+        colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+      ),
     );
   }
 
@@ -778,12 +818,12 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         const SizedBox(height: 12),
         _buildOAuthButton(
-          label: 'Continue with GitHub',
+          label: 'Sign in with GitHub',
           onPressed: () => _loginWithOAuth('github'),
           leading: _buildGitHubMark(),
-          backgroundColor: Colors.black,
-          foregroundColor: Colors.white,
-          side: const BorderSide(color: Colors.black),
+          backgroundColor: cs.surface,
+          foregroundColor: cs.onSurface,
+          side: BorderSide(color: cs.outlineVariant),
         ),
         const SizedBox(height: 12),
         _buildOAuthButton(
@@ -799,7 +839,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildInviteBanner(AppLocalizations? loc) {
-    if ((widget.inviteCode ?? '').trim().isEmpty) return const SizedBox.shrink();
+    if ((widget.inviteCode ?? '').trim().isEmpty)
+      return const SizedBox.shrink();
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -843,9 +884,9 @@ class _LoginScreenState extends State<LoginScreen> {
           if (desktop)
             Text(
               'Welcome back',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
             )
           else
             const Text(
@@ -863,10 +904,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           if (desktop) const SizedBox(height: 20),
-          _LoginModeTabBar(
-            selected: _loginMode,
-            onChanged: _onModeChanged,
-          ),
+          _LoginModeTabBar(selected: _loginMode, onChanged: _onModeChanged),
           const SizedBox(height: 24),
           AuthTextInput(
             controller: _emailController,
@@ -874,10 +912,7 @@ class _LoginScreenState extends State<LoginScreen> {
             hintText: loc?.translate('enter_email') ?? '请输入您的邮箱',
             icon: Icons.email_outlined,
             keyboardType: TextInputType.emailAddress,
-            autofillHints: const [
-              AutofillHints.username,
-              AutofillHints.email,
-            ],
+            autofillHints: const [AutofillHints.username, AutofillHints.email],
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return loc?.translate('email_required') ?? '请输入邮箱地址';
@@ -902,9 +937,7 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 16),
             _buildAppleLoginButton(),
           ],
-          if (Platform.isIOS ||
-              Platform.isAndroid ||
-              Platform.isMacOS) ...[
+          if (Platform.isIOS || Platform.isAndroid || Platform.isMacOS) ...[
             const SizedBox(height: 16),
             _buildMobileOAuthSection(),
           ],
@@ -1005,11 +1038,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              cs.surface,
-              cs.surfaceContainerLowest,
-              cs.surface,
-            ],
+            colors: [cs.surface, cs.surfaceContainerLowest, cs.surface],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -1100,9 +1129,9 @@ class _LoginInfoChip extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             text,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
           ),
         ],
       ),
