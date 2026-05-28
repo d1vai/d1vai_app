@@ -534,18 +534,27 @@ class D1vaiService {
     );
   }
 
-  Future<List<ProjectStyleInfo>> getProjectStyles() async {
+  Future<List<ProjectStyleInfo>> getProjectStyles({String? lang}) async {
     return _apiClient.get<List<ProjectStyleInfo>>(
       '/api/projects/styles',
+      queryParams: lang != null && lang.trim().isNotEmpty
+          ? {'lang': lang.trim()}
+          : null,
       fromJsonT: (json) => (json as List)
           .map((item) => ProjectStyleInfo.fromJson(item))
           .toList(),
     );
   }
 
-  Future<ProjectStyleInfo> getProjectStyleDetail(String styleId) async {
+  Future<ProjectStyleInfo> getProjectStyleDetail(
+    String styleId, {
+    String? lang,
+  }) async {
     return _apiClient.get<ProjectStyleInfo>(
       '/api/projects/styles/${Uri.encodeComponent(styleId)}',
+      queryParams: lang != null && lang.trim().isNotEmpty
+          ? {'lang': lang.trim()}
+          : null,
       fromJsonT: (json) =>
           ProjectStyleInfo.fromJson(Map<String, dynamic>.from(json as Map)),
     );

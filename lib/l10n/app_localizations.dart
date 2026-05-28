@@ -2,6 +2,43 @@ import 'package:flutter/material.dart';
 
 import 'generated_localizations.dart';
 
+const Set<String> _extendedSupportedLocaleKeys = <String>{
+  'ar',
+  'bg',
+  'bn',
+  'cs',
+  'da',
+  'de',
+  'el',
+  'en',
+  'es',
+  'fa',
+  'fi',
+  'fil',
+  'fr',
+  'he',
+  'hi',
+  'hu',
+  'id',
+  'it',
+  'ja',
+  'ko',
+  'ms',
+  'nb',
+  'nl',
+  'pl',
+  'pt',
+  'ro',
+  'ru',
+  'sv',
+  'th',
+  'tr',
+  'uk',
+  'vi',
+  'zh',
+  'zh_Hant',
+};
+
 /// Lightweight runtime localizations.
 ///
 /// Source of truth lives in `lib/l10n/arb/*.arb`.
@@ -48,7 +85,8 @@ class _AppLocalizationsDelegate
   @override
   bool isSupported(Locale locale) {
     final localeKey = AppLocalizations._localeKeyFromLocale(locale);
-    return kSupportedLocaleKeys.contains(localeKey);
+    return _extendedSupportedLocaleKeys.contains(localeKey) ||
+        kSupportedLocaleKeys.contains(localeKey);
   }
 
   @override

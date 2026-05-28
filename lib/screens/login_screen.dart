@@ -604,6 +604,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildAppleLoginButton() {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final loc = AppLocalizations.of(context);
 
     return SizedBox(
       width: double.infinity,
@@ -617,7 +618,8 @@ class _LoginScreenState extends State<LoginScreen> {
               opacity: _isLoading ? 0.72 : 1,
               child: apple_sign_in.SignInWithAppleButton(
                 onPressed: _loginWithApple,
-                text: 'Continue with Apple',
+                text:
+                    loc?.translate('login_with_apple') ?? 'Continue with Apple',
                 height: 44,
                 borderRadius: const BorderRadius.all(Radius.circular(8)),
                 style: isDark
@@ -786,6 +788,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildMobileOAuthSection() {
     final cs = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -796,7 +799,8 @@ class _LoginScreenState extends State<LoginScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Text(
-                'Other sign-in options',
+                loc?.translate('login_other_options') ??
+                    'Other sign-in options',
                 style: TextStyle(
                   color: cs.onSurfaceVariant,
                   fontSize: 13,
@@ -809,7 +813,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         const SizedBox(height: 14),
         _buildOAuthButton(
-          label: 'Sign in with Google',
+          label: loc?.translate('login_with_google') ?? 'Sign in with Google',
           onPressed: () => _loginWithOAuth('google'),
           leading: _buildGoogleMark(),
           backgroundColor: cs.surface,
@@ -818,7 +822,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         const SizedBox(height: 12),
         _buildOAuthButton(
-          label: 'Sign in with GitHub',
+          label: loc?.translate('login_with_github') ?? 'Sign in with GitHub',
           onPressed: () => _loginWithOAuth('github'),
           leading: _buildGitHubMark(),
           backgroundColor: cs.surface,
@@ -827,7 +831,9 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         const SizedBox(height: 12),
         _buildOAuthButton(
-          label: 'Sign in with Microsoft',
+          label:
+              loc?.translate('login_with_microsoft') ??
+              'Sign in with Microsoft',
           onPressed: () => _loginWithOAuth('microsoft'),
           leading: _buildMicrosoftMark(),
           backgroundColor: cs.surface,
@@ -839,8 +845,15 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildInviteBanner(AppLocalizations? loc) {
-    if ((widget.inviteCode ?? '').trim().isEmpty)
+    if ((widget.inviteCode ?? '').trim().isEmpty) {
       return const SizedBox.shrink();
+    }
+
+    final inviteCode = (widget.inviteCode ?? '').trim();
+    final template =
+        loc?.translate('login_invite_banner') ??
+        'Invite code {code} will be applied after login.';
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -848,7 +861,7 @@ class _LoginScreenState extends State<LoginScreen> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        'Invite code ${(widget.inviteCode ?? '').trim()} will be applied after login.',
+        template.replaceAll('{code}', inviteCode),
         style: TextStyle(
           color: Theme.of(context).colorScheme.onPrimaryContainer,
           fontWeight: FontWeight.w600,
@@ -883,7 +896,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ],
           if (desktop)
             Text(
-              'Welcome back',
+              loc?.translate('login_welcome_back') ?? 'Welcome back',
               style: Theme.of(
                 context,
               ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
@@ -897,7 +910,8 @@ class _LoginScreenState extends State<LoginScreen> {
           SizedBox(height: desktop ? 12 : 48),
           if (desktop)
             Text(
-              'Sign in to continue managing projects, previews, deployments, and workspace sessions.',
+              loc?.translate('login_desktop_intro') ??
+                  'Sign in to continue managing projects, previews, deployments, and workspace sessions.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
                 height: 1.45,
@@ -990,7 +1004,8 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           const SizedBox(height: 14),
           Text(
-            'Desktop workspace for project chat, file preview, deploy inspection, and production follow-through.',
+            loc?.translate('login_desktop_hero_subtitle') ??
+                'Desktop workspace for project chat, file preview, deploy inspection, and production follow-through.',
             style: theme.textTheme.titleMedium?.copyWith(
               height: 1.45,
               color: cs.onSurfaceVariant,
@@ -1000,28 +1015,26 @@ class _LoginScreenState extends State<LoginScreen> {
           Wrap(
             spacing: 10,
             runSpacing: 10,
-            children: const [
+            children: [
               _LoginInfoChip(
                 icon: Icons.description_outlined,
-                text: 'Code + file preview',
+                text:
+                    loc?.translate('login_desktop_hero_chip_files') ??
+                    'Code + file preview',
               ),
               _LoginInfoChip(
                 icon: Icons.cloud_sync_outlined,
-                text: 'Preview and deploy flow',
+                text:
+                    loc?.translate('login_desktop_hero_chip_deploy') ??
+                    'Preview and deploy flow',
               ),
               _LoginInfoChip(
                 icon: Icons.analytics_outlined,
-                text: 'Analytics and runtime status',
+                text:
+                    loc?.translate('login_desktop_hero_chip_analytics') ??
+                    'Analytics and runtime status',
               ),
             ],
-          ),
-          const SizedBox(height: 28),
-          Text(
-            loc?.translate('agree_terms') ?? '登录即表示您同意我们的服务条款和隐私政策',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: cs.onSurfaceVariant,
-              height: 1.5,
-            ),
           ),
         ],
       ),

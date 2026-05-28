@@ -77,7 +77,7 @@ class AuthDisplayControls extends StatelessWidget {
   Future<void> _showLanguageSheet(BuildContext context) async {
     final loc = AppLocalizations.of(context);
     final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
-    final locales = LocaleProvider.supportedLocales;
+    final locales = LocaleProvider.settingsSupportedLocales;
 
     final selected = await showModalBottomSheet<Locale>(
       context: context,

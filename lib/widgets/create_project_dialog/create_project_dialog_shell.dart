@@ -35,7 +35,7 @@ class CreateProjectDialogShell extends StatelessWidget {
         children: [
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+            padding: const EdgeInsets.fromLTRB(18, 10, 18, 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,16 +49,17 @@ class CreateProjectDialogShell extends StatelessWidget {
                         tooltip: loc?.translate('back') ?? 'Back',
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(
-                          minWidth: 40,
-                          minHeight: 40,
+                          minWidth: 34,
+                          minHeight: 34,
                         ),
                       )
                     else
                       Icon(
                         Icons.add_circle_outline,
                         color: theme.colorScheme.primary,
+                        size: 18,
                       ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: AnimatedSwitcher(
                         duration: const Duration(milliseconds: 180),
@@ -83,7 +84,7 @@ class CreateProjectDialogShell extends StatelessWidget {
                         child: Text(
                           title,
                           key: ValueKey(title),
-                          style: theme.textTheme.titleLarge?.copyWith(
+                          style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w700,
                             letterSpacing: -0.3,
                           ),
@@ -96,13 +97,13 @@ class CreateProjectDialogShell extends StatelessWidget {
                       iconSize: 20,
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(
-                        minWidth: 32,
-                        minHeight: 32,
+                        minWidth: 28,
+                        minHeight: 28,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
                 Flexible(
                   child: SingleChildScrollView(
                     child: AnimatedSwitcher(

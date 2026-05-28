@@ -11,30 +11,99 @@ class LocaleProvider extends ChangeNotifier {
   // 以 AppLocalizations（ARB）支持的语言为准。
   static const Map<String, Locale> _localeMap = {
     'en': Locale('en'),
-    'zh': Locale('zh'), // 简体中文
+    'zh': Locale('zh'),
     'zh_Hant': Locale.fromSubtags(
       languageCode: 'zh',
       scriptCode: 'Hant',
-    ), // 繁體中文
-    'ja': Locale('ja'),
-    'fr': Locale('fr'),
-    'ru': Locale('ru'),
+    ),
     'es': Locale('es'),
+    'fr': Locale('fr'),
+    'de': Locale('de'),
+    'pt_BR': Locale('pt', 'BR'),
+    'pt_PT': Locale('pt', 'PT'),
+    'ja': Locale('ja'),
+    'ko': Locale('ko'),
+    'ru': Locale('ru'),
     'ar': Locale('ar'),
+    'hi': Locale('hi'),
+    'id': Locale('id'),
+    'th': Locale('th'),
+    'vi': Locale('vi'),
+    'tr': Locale('tr'),
+    'it': Locale('it'),
+    'nl': Locale('nl'),
+    'pl': Locale('pl'),
+    'sv': Locale('sv'),
+    'cs': Locale('cs'),
+    'he': Locale('he'),
+    'uk': Locale('uk'),
+    'da': Locale('da'),
+    'nb': Locale('nb'),
+    'fi': Locale('fi'),
+    'ro': Locale('ro'),
+    'hu': Locale('hu'),
+    'el': Locale('el'),
+    'bg': Locale('bg'),
+    'fa': Locale('fa'),
+    'bn': Locale('bn'),
+    'ms': Locale('ms'),
+    'fil': Locale('fil'),
   };
 
   static List<Locale> get supportedLocales => _localeMap.values.toList();
+
+  static const List<String> _settingsLanguageKeys = <String>[
+    'en',
+    'zh',
+    'zh_Hant',
+    'ja',
+    'fr',
+    'ru',
+    'es',
+    'ar',
+  ];
+
+  static List<Locale> get settingsSupportedLocales => _settingsLanguageKeys
+      .map((key) => _localeMap[key]!)
+      .toList(growable: false);
 
   // 语言名称映射（在语言设置页中展示）
   static const Map<String, String> languageNames = {
     'en': 'English',
     'zh': '简体中文',
     'zh_Hant': '繁體中文',
-    'ja': '日本語',
-    'fr': 'Français',
-    'ru': 'Русский',
     'es': 'Español',
+    'fr': 'Français',
+    'de': 'Deutsch',
+    'pt_BR': 'Português (Brasil)',
+    'pt_PT': 'Português (Portugal)',
+    'ja': '日本語',
+    'ko': '한국어',
+    'ru': 'Русский',
     'ar': 'العربية',
+    'hi': 'हिन्दी',
+    'id': 'Bahasa Indonesia',
+    'th': 'ไทย',
+    'vi': 'Tiếng Việt',
+    'tr': 'Türkçe',
+    'it': 'Italiano',
+    'nl': 'Nederlands',
+    'pl': 'Polski',
+    'sv': 'Svenska',
+    'cs': 'Čeština',
+    'he': 'עברית',
+    'uk': 'Українська',
+    'da': 'Dansk',
+    'nb': 'Norsk (Bokmål)',
+    'fi': 'Suomi',
+    'ro': 'Română',
+    'hu': 'Magyar',
+    'el': 'Ελληνικά',
+    'bg': 'Български',
+    'fa': 'فارسی',
+    'bn': 'বাংলা',
+    'ms': 'Bahasa Melayu',
+    'fil': 'Filipino',
   };
 
   static String languageKeyFromLocale(Locale locale) =>
@@ -116,14 +185,66 @@ class LocaleProvider extends ChangeNotifier {
         return 'zh';
       case 'ja':
         return 'ja';
+      case 'ko':
+        return 'ko';
       case 'fr':
         return 'fr';
+      case 'de':
+        return 'de';
+      case 'pt':
+        return locale.countryCode == 'PT' ? 'pt_PT' : 'pt_BR';
       case 'ru':
         return 'ru';
       case 'es':
         return 'es';
       case 'ar':
         return 'ar';
+      case 'hi':
+        return 'hi';
+      case 'id':
+        return 'id';
+      case 'th':
+        return 'th';
+      case 'vi':
+        return 'vi';
+      case 'tr':
+        return 'tr';
+      case 'it':
+        return 'it';
+      case 'nl':
+        return 'nl';
+      case 'pl':
+        return 'pl';
+      case 'sv':
+        return 'sv';
+      case 'cs':
+        return 'cs';
+      case 'he':
+        return 'he';
+      case 'uk':
+        return 'uk';
+      case 'da':
+        return 'da';
+      case 'nb':
+        return 'nb';
+      case 'fi':
+        return 'fi';
+      case 'ro':
+        return 'ro';
+      case 'hu':
+        return 'hu';
+      case 'el':
+        return 'el';
+      case 'bg':
+        return 'bg';
+      case 'fa':
+        return 'fa';
+      case 'bn':
+        return 'bn';
+      case 'ms':
+        return 'ms';
+      case 'fil':
+        return 'fil';
       case 'en':
       default:
         return 'en';

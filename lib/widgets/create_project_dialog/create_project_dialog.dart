@@ -409,7 +409,9 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     });
 
     try {
-      final styles = await D1vaiService().getProjectStyles();
+      final styles = await D1vaiService().getProjectStyles(
+        lang: Localizations.localeOf(context).toLanguageTag(),
+      );
       if (!mounted || _flow != _CreateProjectFlow.newAi) return;
 
       final available =
@@ -503,7 +505,10 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     });
 
     try {
-      final style = await D1vaiService().getProjectStyleDetail(next);
+      final style = await D1vaiService().getProjectStyleDetail(
+        next,
+        lang: Localizations.localeOf(context).toLanguageTag(),
+      );
       if (!mounted || _flow != _CreateProjectFlow.newAi) return;
       if (_selectedStyleId != next) return;
       setState(() {

@@ -12,7 +12,7 @@ class LanguageSettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     final localeProvider = Provider.of<LocaleProvider>(context);
-    final locales = LocaleProvider.supportedLocales;
+    final locales = LocaleProvider.settingsSupportedLocales;
 
     return Scaffold(
       appBar: AppBar(
