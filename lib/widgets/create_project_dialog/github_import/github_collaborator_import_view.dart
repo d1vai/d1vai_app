@@ -18,9 +18,11 @@ class GithubCollaboratorImportView extends StatelessWidget {
   final ValueChanged<String> onRepoUrlChanged;
   final VoidCallback onCopyBotUsername;
   final VoidCallback onOpenSettings;
+  final VoidCallback onOpenLegacyImport;
   final VoidCallback onAcceptInvitation;
   final VoidCallback onVerifyAccess;
   final VoidCallback onImportProject;
+  final VoidCallback onOpenPublicImport;
 
   const GithubCollaboratorImportView({
     super.key,
@@ -36,9 +38,11 @@ class GithubCollaboratorImportView extends StatelessWidget {
     required this.onRepoUrlChanged,
     required this.onCopyBotUsername,
     required this.onOpenSettings,
+    required this.onOpenLegacyImport,
     required this.onAcceptInvitation,
     required this.onVerifyAccess,
     required this.onImportProject,
+    required this.onOpenPublicImport,
   });
 
   @override
@@ -126,7 +130,142 @@ class GithubCollaboratorImportView extends StatelessWidget {
             onVerifyAccess: onVerifyAccess,
             onImportProject: onImportProject,
           ),
+        const SizedBox(height: 18),
+        _AlternateImportCards(
+          onOpenLegacy: onOpenLegacyImport,
+          onOpenPublicImport: onOpenPublicImport,
+        ),
       ],
+    );
+  }
+}
+
+class _AlternateImportCards extends StatelessWidget {
+  final VoidCallback onOpenLegacy;
+  final VoidCallback onOpenPublicImport;
+
+  const _AlternateImportCards({
+    required this.onOpenLegacy,
+    required this.onOpenPublicImport,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 720;
+        final legacyCard = _ImportShortcutCard(
+          icon: Icons.hub,
+          title:
+              loc?.translate('create_project_github_legacy_title') ??
+              'Legacy collaborator import',
+          description:
+              loc?.translate('create_project_github_legacy_description') ??
+              'If this is a private collaborator repository without GitHub App access yet, continue with the legacy collaborator flow.',
+          buttonText:
+              loc?.translate('create_project_github_legacy_action') ??
+              'Open legacy collaborator import',
+          onTap: onOpenLegacy,
+        );
+        final publicCard = _ImportShortcutCard(
+          icon: Icons.public,
+          title:
+              loc?.translate('create_project_import_public_title') ??
+              'Import public repo',
+          description:
+              loc?.translate('create_project_import_public_subtitle') ??
+              'Mirror a public GitHub repo into the org workspace.',
+          buttonText:
+              loc?.translate('create_project_import_public_action_open') ??
+              'Open public repo import',
+          onTap: onOpenPublicImport,
+        );
+
+        if (wide) {
+          return Row(
+            children: [
+              Expanded(child: legacyCard),
+              const SizedBox(width: 12),
+              Expanded(child: publicCard),
+            ],
+          );
+        }
+
+        return Column(
+          children: [legacyCard, const SizedBox(height: 12), publicCard],
+        );
+      },
+    );
+  }
+}
+
+class _ImportShortcutCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String description;
+  final String buttonText;
+  final VoidCallback onTap;
+
+  const _ImportShortcutCard({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.buttonText,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: scheme.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: scheme.primary),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            description,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: scheme.onSurfaceVariant,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: Button(
+              onPressed: onTap,
+              variant: ButtonVariant.outline,
+              size: ButtonSize.defaultSize,
+              text: buttonText,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

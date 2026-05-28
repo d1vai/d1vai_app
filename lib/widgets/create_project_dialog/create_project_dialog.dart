@@ -562,9 +562,24 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
         },
         onCopyBotUsername: _copyGitHubBotUsername,
         onOpenSettings: _handleGithubOpenSettings,
+        onOpenLegacyImport: () {
+          setState(() {
+            _ghStep = 1;
+            _ghInvitationAccepted = false;
+            _ghAccessVerified = false;
+            _ghRepoInfo = null;
+            _ghError = '';
+          });
+        },
         onAcceptInvitation: _handleGithubAcceptInvitation,
         onVerifyAccess: _handleGithubVerifyAccess,
         onImportProject: _handleGithubImportProject,
+        onOpenPublicImport: () {
+          setState(() {
+            _flow = _CreateProjectFlow.importPublic;
+            _error = '';
+          });
+        },
       ),
     };
   }
