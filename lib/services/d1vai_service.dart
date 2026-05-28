@@ -534,11 +534,29 @@ class D1vaiService {
     );
   }
 
+  Future<List<ProjectStyleInfo>> getProjectStyles() async {
+    return _apiClient.get<List<ProjectStyleInfo>>(
+      '/api/projects/styles',
+      fromJsonT: (json) => (json as List)
+          .map((item) => ProjectStyleInfo.fromJson(item))
+          .toList(),
+    );
+  }
+
+  Future<ProjectStyleInfo> getProjectStyleDetail(String styleId) async {
+    return _apiClient.get<ProjectStyleInfo>(
+      '/api/projects/styles/${Uri.encodeComponent(styleId)}',
+      fromJsonT: (json) =>
+          ProjectStyleInfo.fromJson(Map<String, dynamic>.from(json as Map)),
+    );
+  }
+
   /// 创建带集成的项目
   Future<dynamic> createProjectWithIntegrations({
     required String prompt,
     int? maxDescLen,
     String? templateRepo,
+    String? styleId,
     bool? autoDeployOnExecute,
     bool? enablePay,
     bool? enableDatabase,
@@ -551,6 +569,8 @@ class D1vaiService {
         if (maxDescLen != null) 'max_desc_len': maxDescLen,
         if (templateRepo != null && templateRepo.trim().isNotEmpty)
           'template_repo': templateRepo.trim(),
+        if (styleId != null && styleId.trim().isNotEmpty)
+          'style_id': styleId.trim(),
         if (autoDeployOnExecute != null)
           'auto_deploy_on_execute': autoDeployOnExecute,
         if (enablePay != null) 'enable_pay': enablePay,

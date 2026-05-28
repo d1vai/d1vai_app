@@ -20,6 +20,7 @@ import '../../utils/billing_errors.dart';
 import '../../utils/error_utils.dart';
 import '../snackbar_helper.dart';
 import '../../utils/chat_entry.dart';
+import '../../utils/project_style_prompt.dart';
 import '../adaptive_modal.dart';
 import '../insufficient_balance_dialog.dart';
 import '../../l10n/app_localizations.dart';
@@ -80,6 +81,13 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
   List<ProjectTemplateInfo> _availableTemplates = const <ProjectTemplateInfo>[];
   String _selectedTemplateRepo = _autoTemplateRepo;
   bool _isLoadingTemplates = false;
+  List<ProjectStyleInfo> _availableStyles = const <ProjectStyleInfo>[];
+  String _selectedStyleId = defaultProjectStyleId;
+  bool _isLoadingStyles = false;
+  ProjectStyleInfo? _selectedStylePreview;
+  bool _isLoadingStylePreview = false;
+  bool _autoDeploy = true;
+  String? _stylePreviewError;
   WorkspacePhase _newProjectWorkspacePhase = WorkspacePhase.unknown;
   Timer? _newProjectWorkspacePollTimer;
   Timer? _newProjectModelRetryTimer;
@@ -183,6 +191,55 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
         (template) => template.templateRepo != _autoTemplateRepo,
       ),
     ];
+  }
+
+  String _translateOrFallback(String key, String fallback) {
+    final translated = AppLocalizations.of(context)?.translate(key);
+    if (translated == null || translated.trim().isEmpty || translated == key) {
+      return fallback;
+    }
+    return translated;
+  }
+
+  ProjectStyleInfo _localizedDefaultStyleInfo(BuildContext context) {
+    return ProjectStyleInfo(
+      id: defaultProjectStyleId,
+      name: _translateOrFallback(
+        'create_project_style_foundation_name',
+        'Foundation',
+      ),
+      summary: _translateOrFallback(
+        'create_project_style_foundation_summary',
+        'Stay close to the template baseline. No curated art direction will be injected into generation.',
+      ),
+      category: 'foundation',
+      tags: const <String>['baseline', 'neutral', 'template-first'],
+      fontSignature: _translateOrFallback(
+        'create_project_style_foundation_font',
+        'Template default',
+      ),
+      rank: -1,
+    );
+  }
+
+  List<ProjectStyleInfo> _styleOptions(BuildContext context) {
+    return <ProjectStyleInfo>[
+      _localizedDefaultStyleInfo(context),
+      ..._availableStyles.where((style) => style.id != defaultProjectStyleId),
+    ];
+  }
+
+  ProjectStyleInfo? _selectedStyle(BuildContext context) {
+    if (_selectedStylePreview != null &&
+        _selectedStylePreview!.id == _selectedStyleId) {
+      return _selectedStylePreview;
+    }
+    for (final style in _styleOptions(context)) {
+      if (style.id == _selectedStyleId) {
+        return style;
+      }
+    }
+    return null;
   }
 
   void _startNewProjectModelBootstrap() {
@@ -342,6 +399,64 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     }
   }
 
+  Future<void> _loadProjectStyles() async {
+    if (!mounted || _flow != _CreateProjectFlow.newAi) return;
+    if (_isLoadingStyles) return;
+
+    setState(() {
+      _isLoadingStyles = true;
+    });
+
+    try {
+      final styles = await D1vaiService().getProjectStyles();
+      if (!mounted || _flow != _CreateProjectFlow.newAi) return;
+
+      final available =
+          styles.where((style) => style.id.trim().isNotEmpty).toList()
+            ..sort((a, b) {
+              final rankCompare = a.rank.compareTo(b.rank);
+              if (rankCompare != 0) return rankCompare;
+              return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+            });
+      final hasSelectedStyle =
+          _selectedStyleId == defaultProjectStyleId ||
+          available.any((style) => style.id == _selectedStyleId);
+
+      setState(() {
+        _availableStyles = available;
+        _isLoadingStyles = false;
+        if (!hasSelectedStyle) {
+          _selectedStyleId = defaultProjectStyleId;
+        }
+      });
+      if (_selectedStyleId == defaultProjectStyleId) {
+        setState(() {
+          _selectedStylePreview = _localizedDefaultStyleInfo(context);
+          _isLoadingStylePreview = false;
+          _stylePreviewError = null;
+        });
+      } else {
+        unawaited(_loadProjectStyleDetail(_selectedStyleId));
+      }
+    } catch (e) {
+      if (!mounted || _flow != _CreateProjectFlow.newAi) return;
+      setState(() {
+        _availableStyles = const <ProjectStyleInfo>[];
+        _isLoadingStyles = false;
+        _selectedStyleId = defaultProjectStyleId;
+        _selectedStylePreview = _localizedDefaultStyleInfo(context);
+        _isLoadingStylePreview = false;
+        _stylePreviewError = null;
+        if (_isAuthError(e)) {
+          _error = _translateOrFallback(
+            'create_project_login_expired_styles',
+            'Login expired. Please sign in again before loading styles.',
+          );
+        }
+      });
+    }
+  }
+
   Future<void> _handleModelSelectionChanged(String modelId) async {
     final next = modelId.trim();
     if (next.isEmpty || next == _selectedModelId) return;
@@ -357,6 +472,67 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     setState(() {
       _selectedTemplateRepo = next;
     });
+  }
+
+  void _handleStyleSelectionChanged(String styleId) {
+    final next = styleId.trim();
+    if (next.isEmpty || next == _selectedStyleId) return;
+    setState(() {
+      _selectedStyleId = next;
+      _stylePreviewError = null;
+    });
+    if (next == defaultProjectStyleId) {
+      setState(() {
+        _selectedStylePreview = _localizedDefaultStyleInfo(context);
+        _isLoadingStylePreview = false;
+      });
+      return;
+    }
+    unawaited(_loadProjectStyleDetail(next));
+  }
+
+  Future<void> _loadProjectStyleDetail(String styleId) async {
+    if (!mounted || _flow != _CreateProjectFlow.newAi) return;
+    final next = styleId.trim();
+    if (next.isEmpty || next == defaultProjectStyleId) return;
+
+    setState(() {
+      _isLoadingStylePreview = true;
+      _stylePreviewError = null;
+    });
+
+    try {
+      final style = await D1vaiService().getProjectStyleDetail(next);
+      if (!mounted || _flow != _CreateProjectFlow.newAi) return;
+      if (_selectedStyleId != next) return;
+      setState(() {
+        _selectedStylePreview = style;
+        _isLoadingStylePreview = false;
+      });
+    } catch (_) {
+      if (!mounted || _flow != _CreateProjectFlow.newAi) return;
+      if (_selectedStyleId != next) return;
+      final fallback = _availableStyles.where((style) => style.id == next);
+      setState(() {
+        _selectedStylePreview = fallback.isNotEmpty ? fallback.first : null;
+        _isLoadingStylePreview = false;
+        _stylePreviewError =
+            'Failed to load the full style preview. You can still create the project.';
+      });
+    }
+  }
+
+  String _buildStyledAutoprompt(String description) {
+    final selectedStyle = _selectedStyle(context);
+    final styleForPrompt =
+        selectedStyle != null && selectedStyle.id != defaultProjectStyleId
+        ? selectedStyle
+        : null;
+    return buildStyledAutoprompt(
+      description,
+      Localizations.localeOf(context),
+      styleForPrompt,
+    );
   }
 
   Widget _buildFlowContent() {
@@ -414,8 +590,14 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
           _flow = _CreateProjectFlow.newAi;
           _error = '';
           _selectedTemplateRepo = _autoTemplateRepo;
+          _selectedStyleId = defaultProjectStyleId;
+          _selectedStylePreview = _localizedDefaultStyleInfo(context);
+          _isLoadingStylePreview = false;
+          _stylePreviewError = null;
+          _autoDeploy = true;
         });
         unawaited(_loadProjectTemplates());
+        unawaited(_loadProjectStyles());
         _startNewProjectModelBootstrap();
       },
       onChooseImportLocal: () {
@@ -475,6 +657,19 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
             selectedTemplateRepo: _selectedTemplateRepo,
             onTemplateChanged: _handleTemplateSelectionChanged,
             isTemplateLoading: _isLoadingTemplates,
+            styleOptions: _styleOptions(context),
+            selectedStyleId: _selectedStyleId,
+            selectedStylePreview: _selectedStyle(context),
+            onStyleChanged: _handleStyleSelectionChanged,
+            isStyleLoading: _isLoadingStyles,
+            isStylePreviewLoading: _isLoadingStylePreview,
+            stylePreviewError: _stylePreviewError,
+            autoDeploy: _autoDeploy,
+            onAutoDeployChanged: (value) {
+              setState(() {
+                _autoDeploy = value;
+              });
+            },
           );
   }
 
@@ -569,6 +764,10 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
       _error = '';
     });
 
+    final selectedStyleId = _selectedStyleId == defaultProjectStyleId
+        ? null
+        : _selectedStyleId;
+
     try {
       final selectedModel = _selectedModelId.trim();
       if (selectedModel.isNotEmpty) {
@@ -622,7 +821,8 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
         prompt: description,
         maxDescLen: 120,
         templateRepo: _selectedTemplateRepo,
-        autoDeployOnExecute: true,
+        styleId: selectedStyleId,
+        autoDeployOnExecute: _autoDeploy,
         enablePay: false,
         enableDatabase: true,
       );
@@ -654,10 +854,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
       final router = GoRouter.of(context);
       Navigator.pop(context);
 
-      // Match d1vai frontend autoprompt generation
-      final followup =
-          'Plan mvp version to replace the hello word page functionality and complete it in multiple steps. Finally, you need to check for syntax errors and fix the known issues found.thinkhard';
-      final autoprompt = '$description\n\n$followup';
+      final autoprompt = _buildStyledAutoprompt(description);
 
       // Jump to chat page with autoprompt
       router.push(
@@ -703,7 +900,8 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
             prompt: description,
             maxDescLen: 120,
             templateRepo: _selectedTemplateRepo,
-            autoDeployOnExecute: true,
+            styleId: selectedStyleId,
+            autoDeployOnExecute: _autoDeploy,
             enablePay: false,
             enableDatabase: true,
           );
@@ -732,9 +930,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
           final router = GoRouter.of(context);
           Navigator.pop(context);
 
-          final followup =
-              'Plan mvp version to replace the hello word page functionality and complete it in multiple steps. Finally, you need to check for syntax errors and fix the known issues found.thinkhard';
-          final autoprompt = '$description\n\n$followup';
+          final autoprompt = _buildStyledAutoprompt(description);
 
           router.push(
             '/projects/$projectId/chat?autoprompt=${Uri.encodeQueryComponent(autoprompt)}',

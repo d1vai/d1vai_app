@@ -397,3 +397,66 @@ class ProjectTemplateInfo {
     );
   }
 }
+
+class ProjectStyleInfo {
+  final String id;
+  final String name;
+  final String summary;
+  final String category;
+  final List<String> tags;
+  final bool featured;
+  final int rank;
+  final String brandTitle;
+  final String brandTagline;
+  final String promptSuffix;
+  final String fontSignature;
+  final String fontDisplay;
+  final String fontBody;
+  final String fontUi;
+  final String fontImportUrl;
+  final String? previewHtml;
+
+  const ProjectStyleInfo({
+    required this.id,
+    required this.name,
+    required this.summary,
+    required this.category,
+    this.tags = const <String>[],
+    this.featured = false,
+    this.rank = 9999,
+    this.brandTitle = '',
+    this.brandTagline = '',
+    this.promptSuffix = '',
+    this.fontSignature = '',
+    this.fontDisplay = '',
+    this.fontBody = '',
+    this.fontUi = '',
+    this.fontImportUrl = '',
+    this.previewHtml,
+  });
+
+  factory ProjectStyleInfo.fromJson(Map<String, dynamic> json) {
+    return ProjectStyleInfo(
+      id: (json['id'] ?? '').toString(),
+      name: (json['name'] ?? '').toString(),
+      summary: (json['summary'] ?? '').toString(),
+      category: (json['category'] ?? 'foundation').toString(),
+      tags: (json['tags'] is List)
+          ? (json['tags'] as List).map((item) => item.toString()).toList()
+          : const <String>[],
+      featured: json['featured'] == true,
+      rank: json['rank'] is int
+          ? json['rank'] as int
+          : int.tryParse('${json['rank'] ?? 9999}') ?? 9999,
+      brandTitle: (json['brand_title'] ?? '').toString(),
+      brandTagline: (json['brand_tagline'] ?? '').toString(),
+      promptSuffix: (json['prompt_suffix'] ?? '').toString(),
+      fontSignature: (json['font_signature'] ?? '').toString(),
+      fontDisplay: (json['font_display'] ?? '').toString(),
+      fontBody: (json['font_body'] ?? '').toString(),
+      fontUi: (json['font_ui'] ?? '').toString(),
+      fontImportUrl: (json['font_import_url'] ?? '').toString(),
+      previewHtml: json['preview_html']?.toString(),
+    );
+  }
+}
