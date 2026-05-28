@@ -10,6 +10,11 @@ import '../button.dart';
 import '../input.dart';
 import '../select.dart';
 
+const double _kComposerMinWideLines = 6;
+const double _kComposerMaxWideLines = 8;
+const double _kComposerMinNarrowLines = 4;
+const double _kComposerMaxNarrowLines = 6;
+
 class CreateProjectNewAiView extends StatelessWidget {
   final TextEditingController descriptionController;
   final String? errorText;
@@ -69,35 +74,18 @@ class CreateProjectNewAiView extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final loc = AppLocalizations.of(context);
     final selectedStyle = selectedStylePreview;
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 900;
-        final promptField = Input(
+        final promptField = _PromptComposer(
           controller: descriptionController,
           onChanged: onChanged,
-          labelText:
-              loc?.translate('create_project_project_description') ??
-              'Project Description',
-          hintText:
-              loc?.translate('create_project_new_ai_hint') ??
-              'Example: a mobile booking app with auth, schedule, payments, and admin approvals.',
-          variant: InputVariant.filled,
-          maxLines: wide ? 12 : 6,
-          minLines: wide ? 10 : 5,
-          borderRadius: 16,
-          fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.2),
-          borderColor: scheme.outlineVariant.withValues(alpha: 0.5),
-          focusedBorderColor: scheme.primary,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 16,
-          ),
-          errorText: (errorText != null && errorText!.isNotEmpty)
-              ? errorText
-              : null,
+          errorText: errorText,
+          wide: wide,
         );
 
         final submitButton = ListenableBuilder(
@@ -105,17 +93,34 @@ class CreateProjectNewAiView extends StatelessWidget {
           builder: (context, _) {
             final enabled = _canCreate(descriptionController.text);
             return SizedBox(
-              width: wide ? null : double.infinity,
+              width: wide ? 220 : double.infinity,
               child: Button(
                 onPressed: enabled ? onCreate : null,
                 disabled: !enabled,
                 variant: ButtonVariant.defaultVariant,
-                size: ButtonSize.defaultSize,
+                size: ButtonSize.lg,
                 text:
                     loc?.translate('create_project_action') ?? 'Create Project',
+                height: 52,
+                borderRadius: 18,
+                elevation: enabled ? 1.5 : 0,
+                backgroundColor: scheme.primary,
+                foregroundColor: scheme.onPrimary,
+                textStyle: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  height: 1.1,
+                  color: scheme.onPrimary,
+                ),
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 14,
+                  horizontal: 18,
+                  vertical: 12,
+                ),
+                suffixIcon: Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 18,
+                  color: enabled
+                      ? scheme.onPrimary
+                      : scheme.onSurface.withValues(alpha: 0.38),
                 ),
               ),
             );
@@ -144,10 +149,29 @@ class CreateProjectNewAiView extends StatelessWidget {
               autoDeploy: autoDeploy,
               onAutoDeployChanged: onAutoDeployChanged,
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             promptField,
-            const SizedBox(height: 14),
-            Align(alignment: Alignment.centerRight, child: submitButton),
+            const SizedBox(height: 12),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: scheme.surfaceContainerLowest.withValues(
+                  alpha: isDark ? 0.36 : 0.82,
+                ),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: scheme.outlineVariant.withValues(
+                    alpha: isDark ? 0.34 : 0.52,
+                  ),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                child: Align(
+                  alignment: wide ? Alignment.centerRight : Alignment.center,
+                  child: submitButton,
+                ),
+              ),
+            ),
           ],
         );
 
@@ -231,174 +255,320 @@ class _ControlPanel extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final loc = AppLocalizations.of(context);
     final locale = Localizations.localeOf(context);
+    final horizontalGap = compact ? 8.0 : 10.0;
+    final deployField = _DeployField(
+      compact: compact,
+      autoDeploy: autoDeploy,
+      onAutoDeployChanged: onAutoDeployChanged,
+    );
 
     return Container(
-      padding: EdgeInsets.all(compact ? 12 : 14),
+      padding: EdgeInsets.all(compact ? 10 : 12),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerLowest.withValues(
           alpha: isDark ? 0.4 : 0.85,
         ),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: scheme.outlineVariant.withValues(alpha: isDark ? 0.42 : 0.6),
         ),
       ),
       child: Column(
         children: [
-          Row(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final modelField = _SelectField<String>(
+                compact: compact,
+                label: loc?.translate('model_switch_title') ?? 'Model',
+                value: selectedModelId.trim().isEmpty ? null : selectedModelId,
+                hint: isWorkspaceReady
+                    ? (isModelLoading
+                          ? (loc?.translate('loading') ?? 'Loading...')
+                          : (loc?.translate('create_project_select_model') ??
+                                'Select model'))
+                    : (loc?.translate('create_project_waiting_workspace') ??
+                          'Waiting workspace ready…'),
+                items: models
+                    .map(
+                      (m) => SelectItem<String>(
+                        value: m.id,
+                        child: _ModelDropdownLabel(model: m, compact: true),
+                      ),
+                    )
+                    .toList(),
+                isLoading: isModelLoading,
+                onChanged:
+                    (!isWorkspaceReady ||
+                        isModelLoading ||
+                        onModelChanged == null)
+                    ? null
+                    : (v) {
+                        if (v == null) return;
+                        onModelChanged!(v);
+                      },
+              );
+
+              final templateField = _SelectField<String>(
+                compact: compact,
+                label: loc?.translate('create_project_template') ?? 'Template',
+                value: selectedTemplateRepo,
+                hint: isTemplateLoading
+                    ? (loc?.translate('loading') ?? 'Loading...')
+                    : (loc?.translate('create_project_select_template') ??
+                          'Select template'),
+                items: templateOptions
+                    .map(
+                      (template) => SelectItem<String>(
+                        value: template.templateRepo,
+                        child: Text(
+                          localizeProjectTemplate(template, locale).name,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
+                isLoading: isTemplateLoading,
+                onChanged: (isTemplateLoading || onTemplateChanged == null)
+                    ? null
+                    : (v) {
+                        if (v == null) return;
+                        onTemplateChanged!(v);
+                      },
+              );
+
+              final styleField = _SelectField<String>(
+                compact: compact,
+                label: loc?.translate('create_project_style') ?? 'Style',
+                value: selectedStyleId,
+                hint: isStyleLoading
+                    ? (loc?.translate('loading') ?? 'Loading...')
+                    : (loc?.translate('create_project_select_style') ??
+                          'Select style'),
+                items: styleOptions
+                    .map(
+                      (style) => SelectItem<String>(
+                        value: style.id,
+                        child: Text(
+                          style.name,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
+                isLoading: isStyleLoading || isStylePreviewLoading,
+                onChanged: (isStyleLoading || onStyleChanged == null)
+                    ? null
+                    : (v) {
+                        if (v == null) return;
+                        onStyleChanged!(v);
+                      },
+              );
+              if (constraints.maxWidth >= 760) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: modelField),
+                    SizedBox(width: horizontalGap),
+                    Expanded(child: templateField),
+                    SizedBox(width: horizontalGap),
+                    Expanded(child: styleField),
+                    SizedBox(width: horizontalGap),
+                    SizedBox(width: 172, child: deployField),
+                  ],
+                );
+              }
+
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                clipBehavior: Clip.none,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(width: 176, child: modelField),
+                    SizedBox(width: horizontalGap),
+                    SizedBox(width: 176, child: templateField),
+                    SizedBox(width: horizontalGap),
+                    SizedBox(width: 176, child: styleField),
+                    SizedBox(width: horizontalGap),
+                    SizedBox(width: 156, child: deployField),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PromptComposer extends StatelessWidget {
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final String? errorText;
+  final bool wide;
+
+  const _PromptComposer({
+    required this.controller,
+    required this.onChanged,
+    required this.errorText,
+    required this.wide,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final loc = AppLocalizations.of(context);
+    final effectiveErrorText = (errorText != null && errorText!.isNotEmpty)
+        ? errorText
+        : null;
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        color: scheme.surfaceContainerLowest.withValues(
+          alpha: isDark ? 0.42 : 0.88,
+        ),
+        border: Border.all(
+          color: effectiveErrorText != null
+              ? scheme.error.withValues(alpha: 0.6)
+              : scheme.outlineVariant.withValues(alpha: isDark ? 0.32 : 0.5),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: scheme.shadow.withValues(alpha: isDark ? 0.18 : 0.06),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(14, wide ? 14 : 12, 14, wide ? 14 : 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              loc?.translate('create_project_project_description') ??
+                  'Project Description',
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Input(
+              controller: controller,
+              onChanged: onChanged,
+              hintText:
+                  loc?.translate('create_project_new_ai_hint') ??
+                  'Example: a mobile booking app with auth, schedule, payments, and admin approvals.',
+              variant: InputVariant.filled,
+              maxLines: wide
+                  ? _kComposerMaxWideLines.toInt()
+                  : _kComposerMaxNarrowLines.toInt(),
+              minLines: wide
+                  ? _kComposerMinWideLines.toInt()
+                  : _kComposerMinNarrowLines.toInt(),
+              borderRadius: 16,
+              fillColor: scheme.surface.withValues(alpha: isDark ? 0.26 : 0.74),
+              borderColor: Colors.transparent,
+              focusedBorderColor: scheme.primary.withValues(alpha: 0.84),
+              hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
+                height: 1.4,
+              ),
+              textStyle: theme.textTheme.bodyLarge?.copyWith(
+                height: 1.4,
+                fontWeight: FontWeight.w500,
+              ),
+              contentPadding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+              errorText: effectiveErrorText,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DeployField extends StatelessWidget {
+  final bool compact;
+  final bool autoDeploy;
+  final ValueChanged<bool>? onAutoDeployChanged;
+
+  const _DeployField({
+    required this.compact,
+    required this.autoDeploy,
+    required this.onAutoDeployChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final loc = AppLocalizations.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          loc?.translate('create_project_deploy') ?? 'Deploy',
+          style: theme.textTheme.labelMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.2,
+          ),
+        ),
+        SizedBox(height: compact ? 4 : 6),
+        Container(
+          width: double.infinity,
+          constraints: BoxConstraints(minHeight: compact ? 44 : 48),
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? 10 : 12,
+            vertical: compact ? 6 : 8,
+          ),
+          decoration: BoxDecoration(
+            color: scheme.surface.withValues(alpha: isDark ? 0.22 : 0.74),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: scheme.outlineVariant.withValues(
+                alpha: isDark ? 0.35 : 0.52,
+              ),
+            ),
+          ),
+          child: Row(
             children: [
               Expanded(
-                child: _SelectField<String>(
-                  compact: compact,
-                  label: loc?.translate('model_switch_title') ?? 'Model',
-                  value: selectedModelId.trim().isEmpty
-                      ? null
-                      : selectedModelId,
-                  hint: isWorkspaceReady
-                      ? (isModelLoading
-                            ? (loc?.translate('loading') ?? 'Loading...')
-                            : (loc?.translate('create_project_select_model') ??
-                                  'Select model'))
-                      : (loc?.translate('create_project_waiting_workspace') ??
-                            'Waiting workspace ready…'),
-                  items: models
-                      .map(
-                        (m) => SelectItem<String>(
-                          value: m.id,
-                          child: _ModelDropdownLabel(model: m, compact: true),
-                        ),
-                      )
-                      .toList(),
-                  isLoading: isModelLoading,
-                  onChanged:
-                      (!isWorkspaceReady ||
-                          isModelLoading ||
-                          onModelChanged == null)
-                      ? null
-                      : (v) {
-                          if (v == null) return;
-                          onModelChanged!(v);
-                        },
+                child: Text(
+                  autoDeploy
+                      ? (loc?.translate('create_project_toggle_on') ?? 'On')
+                      : (loc?.translate('create_project_toggle_off') ?? 'Off'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _SelectField<String>(
-                  compact: compact,
-                  label:
-                      loc?.translate('create_project_template') ?? 'Template',
-                  value: selectedTemplateRepo,
-                  hint: isTemplateLoading
-                      ? (loc?.translate('loading') ?? 'Loading...')
-                      : (loc?.translate('create_project_select_template') ??
-                            'Select template'),
-                  items: templateOptions
-                      .map(
-                        (template) => SelectItem<String>(
-                          value: template.templateRepo,
-                          child: Text(
-                            localizeProjectTemplate(template, locale).name,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      )
-                      .toList(),
-                  isLoading: isTemplateLoading,
-                  onChanged: (isTemplateLoading || onTemplateChanged == null)
-                      ? null
-                      : (v) {
-                          if (v == null) return;
-                          onTemplateChanged!(v);
-                        },
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _SelectField<String>(
-                  compact: compact,
-                  label: loc?.translate('create_project_style') ?? 'Style',
-                  value: selectedStyleId,
-                  hint: isStyleLoading
-                      ? (loc?.translate('loading') ?? 'Loading...')
-                      : (loc?.translate('create_project_select_style') ??
-                            'Select style'),
-                  items: styleOptions
-                      .map(
-                        (style) => SelectItem<String>(
-                          value: style.id,
-                          child: Text(
-                            style.name,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      )
-                      .toList(),
-                  isLoading: isStyleLoading || isStylePreviewLoading,
-                  onChanged: (isStyleLoading || onStyleChanged == null)
-                      ? null
-                      : (v) {
-                          if (v == null) return;
-                          onStyleChanged!(v);
-                        },
+              Transform.scale(
+                scale: compact ? 0.88 : 0.94,
+                child: Switch(
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  value: autoDeploy,
+                  onChanged: onAutoDeployChanged,
                 ),
               ),
             ],
           ),
-          SizedBox(height: compact ? 10 : 12),
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(
-              horizontal: compact ? 12 : 14,
-              vertical: compact ? 10 : 12,
-            ),
-            decoration: BoxDecoration(
-              color: scheme.surface.withValues(alpha: isDark ? 0.22 : 0.74),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: scheme.outlineVariant.withValues(
-                  alpha: isDark ? 0.35 : 0.52,
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      Text(
-                        loc?.translate('create_project_deploy') ?? 'Deploy',
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.2,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        autoDeploy
-                            ? (loc?.translate('create_project_toggle_on') ??
-                                  'On')
-                            : (loc?.translate('create_project_toggle_off') ??
-                                  'Off'),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Switch(value: autoDeploy, onChanged: onAutoDeployChanged),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -567,7 +737,7 @@ class _SelectField<T> extends StatelessWidget {
             letterSpacing: 0.2,
           ),
         ),
-        SizedBox(height: compact ? 6 : 8),
+        SizedBox(height: compact ? 4 : 6),
         Stack(
           alignment: Alignment.centerRight,
           children: [
@@ -575,8 +745,8 @@ class _SelectField<T> extends StatelessWidget {
               value: value,
               isExpanded: true,
               padding: EdgeInsets.symmetric(
-                horizontal: compact ? 12 : 14,
-                vertical: compact ? 11 : 13,
+                horizontal: compact ? 11 : 13,
+                vertical: compact ? 9 : 11,
               ),
               backgroundColor: scheme.surface.withValues(
                 alpha: isDark ? 0.22 : 0.74,
@@ -655,7 +825,7 @@ class _PhonePreviewFrameState extends State<_PhonePreviewFrame> {
 
     return Container(
       width: 252,
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.fromLTRB(8, 7, 8, 8),
       decoration: BoxDecoration(
         color: const Color(0xFF0F172A),
         borderRadius: BorderRadius.circular(30),
@@ -670,14 +840,14 @@ class _PhonePreviewFrameState extends State<_PhonePreviewFrame> {
       child: Column(
         children: [
           Container(
-            width: 84,
-            height: 18,
+            width: 74,
+            height: 12,
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.82),
               borderRadius: BorderRadius.circular(999),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           ClipRRect(
             borderRadius: BorderRadius.circular(22),
             child: Container(
