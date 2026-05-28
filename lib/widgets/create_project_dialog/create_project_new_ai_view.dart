@@ -136,6 +136,11 @@ class CreateProjectNewAiView extends StatelessWidget {
               selectedTemplateRepo: selectedTemplateRepo,
               onTemplateChanged: onTemplateChanged,
               isTemplateLoading: isTemplateLoading,
+              styleOptions: styleOptions,
+              selectedStyleId: selectedStyleId,
+              onStyleChanged: onStyleChanged,
+              isStyleLoading: isStyleLoading,
+              isStylePreviewLoading: isStylePreviewLoading,
               autoDeploy: autoDeploy,
               onAutoDeployChanged: onAutoDeployChanged,
             ),
@@ -162,9 +167,9 @@ class CreateProjectNewAiView extends StatelessWidget {
             key: const ValueKey('new_ai_desktop'),
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(flex: 11, child: leftColumn),
-              const SizedBox(width: 20),
-              Expanded(flex: 10, child: rightColumn),
+              Expanded(flex: 2, child: leftColumn),
+              const SizedBox(width: 16),
+              Expanded(flex: 1, child: rightColumn),
             ],
           );
         }
@@ -191,6 +196,11 @@ class _ControlPanel extends StatelessWidget {
   final String selectedTemplateRepo;
   final ValueChanged<String>? onTemplateChanged;
   final bool isTemplateLoading;
+  final List<ProjectStyleInfo> styleOptions;
+  final String selectedStyleId;
+  final ValueChanged<String>? onStyleChanged;
+  final bool isStyleLoading;
+  final bool isStylePreviewLoading;
   final bool autoDeploy;
   final ValueChanged<bool>? onAutoDeployChanged;
 
@@ -205,6 +215,11 @@ class _ControlPanel extends StatelessWidget {
     required this.selectedTemplateRepo,
     required this.onTemplateChanged,
     required this.isTemplateLoading,
+    required this.styleOptions,
+    required this.selectedStyleId,
+    required this.onStyleChanged,
+    required this.isStyleLoading,
+    required this.isStylePreviewLoading,
     required this.autoDeploy,
     required this.onAutoDeployChanged,
   });
@@ -300,6 +315,39 @@ class _ControlPanel extends StatelessWidget {
                         },
                 ),
               ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _SelectField<String>(
+                  compact: compact,
+                  label: loc?.translate('create_project_style') ?? 'Style',
+                  value: selectedStyleId,
+                  hint: isStyleLoading
+                      ? (loc?.translate('loading') ?? 'Loading...')
+                      : (loc?.translate('create_project_select_style') ??
+                            'Select style'),
+                  items: styleOptions
+                      .map(
+                        (style) => SelectItem<String>(
+                          value: style.id,
+                          child: Text(
+                            style.name,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  isLoading: isStyleLoading || isStylePreviewLoading,
+                  onChanged: (isStyleLoading || onStyleChanged == null)
+                      ? null
+                      : (v) {
+                          if (v == null) return;
+                          onStyleChanged!(v);
+                        },
+                ),
+              ),
             ],
           ),
           SizedBox(height: compact ? 10 : 12),
@@ -382,14 +430,15 @@ class _StyleStage extends StatelessWidget {
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final loc = AppLocalizations.of(context);
-    final foundationName =
-        loc?.translate('create_project_style_foundation_name') ?? 'Foundation';
     final previewHtml =
         (selectedStyle?.previewHtml != null &&
             selectedStyle!.previewHtml!.trim().isNotEmpty)
         ? selectedStyle!.previewHtml!
         : buildCreateProjectFoundationPreviewHtml(
-            title: selectedStyle?.name ?? foundationName,
+            title:
+                selectedStyle?.name ??
+                (loc?.translate('create_project_style_foundation_name') ??
+                    'Foundation'),
             summary:
                 selectedStyle?.summary ??
                 loc?.translate('create_project_style_foundation_summary') ??
@@ -442,42 +491,11 @@ class _StyleStage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SelectField<String>(
-          compact: compact,
-          label: loc?.translate('create_project_style') ?? 'Style',
-          value: selectedStyleId,
-          hint: isStyleLoading
-              ? (loc?.translate('loading') ?? 'Loading...')
-              : (loc?.translate('create_project_select_style') ??
-                    'Select style'),
-          items: styleOptions
-              .map(
-                (style) => SelectItem<String>(
-                  value: style.id,
-                  child: Text(
-                    style.name,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              )
-              .toList(),
-          isLoading: isStyleLoading || isStylePreviewLoading,
-          onChanged: (isStyleLoading || onStyleChanged == null)
-              ? null
-              : (v) {
-                  if (v == null) return;
-                  onStyleChanged!(v);
-                },
-        ),
-        SizedBox(height: compact ? 10 : 14),
         Container(
           width: double.infinity,
-          padding: EdgeInsets.all(compact ? 12 : 14),
+          padding: EdgeInsets.all(compact ? 10 : 12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(24),
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
@@ -497,52 +515,9 @@ class _StyleStage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          selectedStyle?.name ?? foundationName,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (selectedStyle != null)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: scheme.primary.withValues(
-                          alpha: isDark ? 0.22 : 0.12,
-                        ),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        selectedStyle!.category,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: scheme.primary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              SizedBox(height: compact ? 10 : 16),
               Center(
                 child: _PhonePreviewFrame(
                   html: previewHtml,
-                  title:
-                      selectedStyle?.name ??
-                      (loc?.translate('create_project_style_preview_title') ??
-                          'Foundation preview'),
                   loading: isStyleLoading || isStylePreviewLoading,
                   loadingLabel:
                       loc?.translate('create_project_style_preview_loading') ??
@@ -636,13 +611,11 @@ class _SelectField<T> extends StatelessWidget {
 
 class _PhonePreviewFrame extends StatefulWidget {
   final String? html;
-  final String title;
   final bool loading;
   final String loadingLabel;
 
   const _PhonePreviewFrame({
     required this.html,
-    required this.title,
     required this.loading,
     required this.loadingLabel,
   });
@@ -681,11 +654,11 @@ class _PhonePreviewFrameState extends State<_PhonePreviewFrame> {
     final scheme = theme.colorScheme;
 
     return Container(
-      width: 286,
-      padding: const EdgeInsets.all(10),
+      width: 252,
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: const Color(0xFF0F172A),
-        borderRadius: BorderRadius.circular(34),
+        borderRadius: BorderRadius.circular(30),
         boxShadow: const [
           BoxShadow(
             color: Color.fromRGBO(15, 23, 42, 0.28),
@@ -697,19 +670,19 @@ class _PhonePreviewFrameState extends State<_PhonePreviewFrame> {
       child: Column(
         children: [
           Container(
-            width: 92,
-            height: 22,
+            width: 84,
+            height: 18,
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.82),
               borderRadius: BorderRadius.circular(999),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           ClipRRect(
-            borderRadius: BorderRadius.circular(26),
+            borderRadius: BorderRadius.circular(22),
             child: Container(
-              width: 266,
-              height: 520,
+              width: 236,
+              height: 500,
               color: scheme.surface,
               child: Stack(
                 children: [
@@ -768,16 +741,6 @@ class _PhonePreviewFrameState extends State<_PhonePreviewFrame> {
                     ),
                 ],
               ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            widget.title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: Colors.white.withValues(alpha: 0.78),
-              fontWeight: FontWeight.w600,
             ),
           ),
         ],
