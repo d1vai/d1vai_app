@@ -517,8 +517,10 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
       setState(() {
         _selectedStylePreview = fallback.isNotEmpty ? fallback.first : null;
         _isLoadingStylePreview = false;
-        _stylePreviewError =
-            'Failed to load the full style preview. You can still create the project.';
+        _stylePreviewError = _translateOrFallback(
+          'create_project_style_preview_error',
+          'Failed to load the full style preview. You can still create the project.',
+        );
       });
     }
   }

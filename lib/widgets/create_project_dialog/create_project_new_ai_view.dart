@@ -324,8 +324,7 @@ class _ControlPanel extends StatelessWidget {
                   child: Row(
                     children: [
                       Text(
-                        loc?.translate('project_section_deploy_label') ??
-                            'Deploy',
+                        loc?.translate('create_project_deploy') ?? 'Deploy',
                         style: theme.textTheme.labelMedium?.copyWith(
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.2,
@@ -333,7 +332,11 @@ class _ControlPanel extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        autoDeploy ? 'On' : 'Off',
+                        autoDeploy
+                            ? (loc?.translate('create_project_toggle_on') ??
+                                  'On')
+                            : (loc?.translate('create_project_toggle_off') ??
+                                  'Off'),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: scheme.onSurfaceVariant,
                         ),
@@ -379,6 +382,62 @@ class _StyleStage extends StatelessWidget {
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final loc = AppLocalizations.of(context);
+    final foundationName =
+        loc?.translate('create_project_style_foundation_name') ?? 'Foundation';
+    final previewHtml =
+        (selectedStyle?.previewHtml != null &&
+            selectedStyle!.previewHtml!.trim().isNotEmpty)
+        ? selectedStyle!.previewHtml!
+        : buildCreateProjectFoundationPreviewHtml(
+            title: selectedStyle?.name ?? foundationName,
+            summary:
+                selectedStyle?.summary ??
+                loc?.translate('create_project_style_foundation_summary') ??
+                'Stay close to the template baseline. No curated art direction will be injected into generation.',
+            previewBaselineLabel:
+                loc?.translate('create_project_preview_baseline_label') ??
+                'Preview baseline',
+            neutralLabel:
+                loc?.translate('create_project_preview_neutral_label') ??
+                'Neutral',
+            foundationModeLabel:
+                loc?.translate('create_project_style_foundation_name') ??
+                'Foundation',
+            headline:
+                loc?.translate('create_project_preview_fallback_headline') ??
+                'Template-first mobile preview.',
+            createAction:
+                loc?.translate('create_project_action') ?? 'Create Project',
+            densityLabel:
+                loc?.translate('create_project_preview_density_label') ??
+                'Density',
+            densityValue:
+                loc?.translate('create_project_preview_density_value') ??
+                'Compact',
+            densityBody:
+                loc?.translate('create_project_preview_density_body') ??
+                'Controls stay dense so the preview keeps most of the attention.',
+            outputLabel:
+                loc?.translate('create_project_preview_output_label') ??
+                'Output',
+            outputValue:
+                loc?.translate('create_project_preview_output_value') ??
+                'Ready',
+            outputBody:
+                loc?.translate('create_project_preview_output_body') ??
+                'Used whenever a specific style preview is not available yet.',
+            structureLabel:
+                loc?.translate('create_project_preview_structure_label') ??
+                'Structure',
+            structureItems: <String>[
+              loc?.translate('create_project_preview_structure_hero') ?? 'Hero',
+              loc?.translate('create_project_preview_structure_metrics') ??
+                  'Metrics',
+              loc?.translate('create_project_preview_structure_features') ??
+                  'Features',
+              loc?.translate('create_project_preview_structure_cta') ?? 'CTA',
+            ],
+          );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -445,7 +504,7 @@ class _StyleStage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          selectedStyle?.name ?? 'Foundation',
+                          selectedStyle?.name ?? foundationName,
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w800,
                             letterSpacing: -0.3,
@@ -476,23 +535,18 @@ class _StyleStage extends StatelessWidget {
                     ),
                 ],
               ),
-              if (stylePreviewError != null &&
-                  stylePreviewError!.trim().isNotEmpty) ...[
-                const SizedBox(height: 10),
-                Text(
-                  stylePreviewError!,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: scheme.error,
-                    height: 1.3,
-                  ),
-                ),
-              ],
               SizedBox(height: compact ? 10 : 16),
               Center(
                 child: _PhonePreviewFrame(
-                  html: selectedStyle?.previewHtml,
-                  title: selectedStyle?.name ?? 'Foundation preview',
+                  html: previewHtml,
+                  title:
+                      selectedStyle?.name ??
+                      (loc?.translate('create_project_style_preview_title') ??
+                          'Foundation preview'),
                   loading: isStyleLoading || isStylePreviewLoading,
+                  loadingLabel:
+                      loc?.translate('create_project_style_preview_loading') ??
+                      'Loading preview...',
                 ),
               ),
             ],
@@ -584,11 +638,13 @@ class _PhonePreviewFrame extends StatefulWidget {
   final String? html;
   final String title;
   final bool loading;
+  final String loadingLabel;
 
   const _PhonePreviewFrame({
     required this.html,
     required this.title,
     required this.loading,
+    required this.loadingLabel,
   });
 
   @override
@@ -679,19 +735,6 @@ class _PhonePreviewFrameState extends State<_PhonePreviewFrame> {
                           _webReady = true;
                         });
                       },
-                    )
-                  else
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 28),
-                        child: Text(
-                          'No style preview available.',
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
                     ),
                   if (_hasHtml && (widget.loading || !_webReady))
                     Positioned.fill(
@@ -713,7 +756,7 @@ class _PhonePreviewFrameState extends State<_PhonePreviewFrame> {
                               ),
                               const SizedBox(height: 12),
                               Text(
-                                'Loading preview...',
+                                widget.loadingLabel,
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -741,6 +784,128 @@ class _PhonePreviewFrameState extends State<_PhonePreviewFrame> {
       ),
     );
   }
+}
+
+String buildCreateProjectFoundationPreviewHtml({
+  required String title,
+  required String summary,
+  required String previewBaselineLabel,
+  required String neutralLabel,
+  required String foundationModeLabel,
+  required String headline,
+  required String createAction,
+  required String densityLabel,
+  required String densityValue,
+  required String densityBody,
+  required String outputLabel,
+  required String outputValue,
+  required String outputBody,
+  required String structureLabel,
+  required List<String> structureItems,
+}) {
+  String escape(String value) {
+    return value
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;');
+  }
+
+  final chips = structureItems
+      .map((item) => '<span class="chip">${escape(item)}</span>')
+      .join();
+
+  return '''
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f3f6fb;
+        --panel: rgba(255,255,255,0.82);
+        --line: rgba(15,23,42,0.08);
+        --text: #0f172a;
+        --muted: #5b6475;
+        --accent: #111827;
+        --accent-soft: rgba(17,24,39,0.08);
+      }
+      :root.dark {
+        color-scheme: dark;
+        --bg: #020617;
+        --panel: rgba(15,23,42,0.88);
+        --line: rgba(148,163,184,0.16);
+        --text: #f8fafc;
+        --muted: #94a3b8;
+        --accent: #e2e8f0;
+        --accent-soft: rgba(226,232,240,0.1);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at top, rgba(59,130,246,0.14), transparent 28%),
+          linear-gradient(180deg, var(--bg), #dbe5f1);
+      }
+      .shell { min-height: 100vh; padding: 20px 16px 24px; display: flex; flex-direction: column; gap: 14px; }
+      .topbar, .hero, .card, .metric {
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        background: var(--panel);
+        backdrop-filter: blur(18px);
+      }
+      .topbar { padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; }
+      .hero, .card, .metric { padding: 14px; }
+      .eyebrow { font-size: 10px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--muted); }
+      h1 { margin: 12px 0 10px; font-size: 30px; line-height: 1.02; letter-spacing: -0.05em; }
+      p { margin: 0; color: var(--muted); line-height: 1.5; font-size: 13px; }
+      strong { display: block; margin-top: 14px; font-size: 20px; letter-spacing: -0.04em; }
+      .cta { display: inline-flex; margin-top: 16px; border-radius: 999px; background: var(--accent); color: var(--bg); padding: 10px 14px; font-size: 12px; font-weight: 700; }
+      .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+      .chip { border-radius: 999px; padding: 7px 10px; background: var(--accent-soft); font-size: 11px; font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="topbar">
+        <div>
+          <div class="eyebrow">${escape(previewBaselineLabel)}</div>
+          <strong style="margin:4px 0 0;font-size:16px">${escape(title)}</strong>
+        </div>
+        <span class="chip">${escape(neutralLabel)}</span>
+      </section>
+      <section class="hero">
+        <div class="eyebrow">${escape(foundationModeLabel)}</div>
+        <h1>${escape(headline)}</h1>
+        <p>${escape(summary)}</p>
+        <div class="cta">${escape(createAction)}</div>
+      </section>
+      <section class="grid">
+        <article class="metric">
+          <div class="eyebrow">${escape(densityLabel)}</div>
+          <strong>${escape(densityValue)}</strong>
+          <p>${escape(densityBody)}</p>
+        </article>
+        <article class="metric">
+          <div class="eyebrow">${escape(outputLabel)}</div>
+          <strong>${escape(outputValue)}</strong>
+          <p>${escape(outputBody)}</p>
+        </article>
+      </section>
+      <section class="card">
+        <div class="eyebrow">${escape(structureLabel)}</div>
+        <div class="chips">$chips</div>
+      </section>
+    </main>
+  </body>
+</html>
+''';
 }
 
 class _ModelDropdownLabel extends StatelessWidget {
