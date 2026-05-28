@@ -7,6 +7,7 @@ class CreateProjectDialogShell extends StatelessWidget {
   final String title;
   final bool showBack;
   final bool isAnyLoading;
+  final double maxWidth;
   final VoidCallback? onBack;
   final VoidCallback onClose;
   final Widget child;
@@ -16,6 +17,7 @@ class CreateProjectDialogShell extends StatelessWidget {
     required this.title,
     required this.showBack,
     required this.isAnyLoading,
+    this.maxWidth = 600,
     required this.onBack,
     required this.onClose,
     required this.child,
@@ -27,7 +29,7 @@ class CreateProjectDialogShell extends StatelessWidget {
     final theme = Theme.of(context);
 
     final dialog = AdaptiveModalContainer(
-      maxWidth: 600,
+      maxWidth: maxWidth,
       mobileMaxHeightFactor: 0.97,
       child: Stack(
         children: [

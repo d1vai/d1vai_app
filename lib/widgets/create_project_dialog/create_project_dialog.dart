@@ -145,6 +145,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
       title: title,
       showBack: showBack,
       isAnyLoading: isAnyLoading,
+      maxWidth: _flow == _CreateProjectFlow.newAi ? 1120 : 600,
       onBack: showBack ? _goBackToChooser : null,
       onClose: () => Navigator.of(context).pop(),
       child: _buildFlowContent(),

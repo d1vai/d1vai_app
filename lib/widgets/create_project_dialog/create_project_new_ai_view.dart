@@ -65,92 +65,17 @@ class CreateProjectNewAiView extends StatelessWidget {
     return t.isNotEmpty && t.length >= 8;
   }
 
-  ProjectTemplateInfo? _selectedTemplate() {
-    for (final template in templateOptions) {
-      if (template.templateRepo == selectedTemplateRepo) {
-        return template;
-      }
-    }
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
     final loc = AppLocalizations.of(context);
-    final locale = Localizations.localeOf(context);
-    final selectedTemplate = _selectedTemplate();
-    final localizedSelectedTemplate = selectedTemplate == null
-        ? null
-        : localizeProjectTemplate(selectedTemplate, locale);
     final selectedStyle = selectedStylePreview;
 
-    return Column(
-      key: const ValueKey('new_ai'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                scheme.primary.withValues(alpha: isDark ? 0.22 : 0.12),
-                scheme.tertiary.withValues(alpha: isDark ? 0.16 : 0.08),
-                scheme.surface,
-              ],
-            ),
-            border: Border.all(
-              color: scheme.outlineVariant.withValues(
-                alpha: isDark ? 0.45 : 0.7,
-              ),
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                loc?.translate('create_project_new_project_title') ??
-                    'New Project',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.6,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                loc?.translate('create_project_new_ai_summary') ??
-                    'Pick the model, template, and deployment mode. Then describe the product once and verify the visual direction on the phone preview.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  height: 1.35,
-                  color: scheme.onSurface.withValues(alpha: 0.76),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 18),
-        _ControlPanel(
-          models: models,
-          selectedModelId: selectedModelId,
-          onModelChanged: onModelChanged,
-          isModelLoading: isModelLoading,
-          isWorkspaceReady: isWorkspaceReady,
-          templateOptions: templateOptions,
-          selectedTemplateRepo: selectedTemplateRepo,
-          onTemplateChanged: onTemplateChanged,
-          isTemplateLoading: isTemplateLoading,
-          autoDeploy: autoDeploy,
-          onAutoDeployChanged: onAutoDeployChanged,
-        ),
-        const SizedBox(height: 18),
-        Input(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 900;
+        final promptField = Input(
           controller: descriptionController,
           onChanged: onChanged,
           labelText:
@@ -160,15 +85,11 @@ class CreateProjectNewAiView extends StatelessWidget {
               loc?.translate('create_project_new_ai_hint') ??
               'Example: a mobile booking app with auth, schedule, payments, and admin approvals.',
           variant: InputVariant.filled,
-          maxLines: 6,
-          minLines: 5,
-          borderRadius: 18,
-          fillColor: scheme.surfaceContainerHighest.withValues(
-            alpha: isDark ? 0.18 : 0.24,
-          ),
-          borderColor: scheme.outlineVariant.withValues(
-            alpha: isDark ? 0.4 : 0.55,
-          ),
+          maxLines: wide ? 12 : 6,
+          minLines: wide ? 10 : 5,
+          borderRadius: 16,
+          fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.2),
+          borderColor: scheme.outlineVariant.withValues(alpha: 0.5),
           focusedBorderColor: scheme.primary,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
@@ -177,34 +98,14 @@ class CreateProjectNewAiView extends StatelessWidget {
           errorText: (errorText != null && errorText!.isNotEmpty)
               ? errorText
               : null,
-        ),
-        const SizedBox(height: 10),
-        Text(
-          localizedSelectedTemplate?.description ??
-              (loc?.translate('create_project_form_desc_tip') ??
-                  'Describe the core screens, data model, and critical flows.'),
-          style: theme.textTheme.bodySmall?.copyWith(
-            height: 1.35,
-            color: scheme.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 20),
-        _StyleStage(
-          styleOptions: styleOptions,
-          selectedStyleId: selectedStyleId,
-          onStyleChanged: onStyleChanged,
-          isStyleLoading: isStyleLoading,
-          isStylePreviewLoading: isStylePreviewLoading,
-          selectedStyle: selectedStyle,
-          stylePreviewError: stylePreviewError,
-        ),
-        const SizedBox(height: 22),
-        ListenableBuilder(
+        );
+
+        final submitButton = ListenableBuilder(
           listenable: descriptionController,
           builder: (context, _) {
             final enabled = _canCreate(descriptionController.text);
             return SizedBox(
-              width: double.infinity,
+              width: wide ? null : double.infinity,
               child: Button(
                 onPressed: enabled ? onCreate : null,
                 disabled: !enabled,
@@ -219,13 +120,68 @@ class CreateProjectNewAiView extends StatelessWidget {
               ),
             );
           },
-        ),
-      ],
+        );
+
+        final leftColumn = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _ControlPanel(
+              compact: true,
+              models: models,
+              selectedModelId: selectedModelId,
+              onModelChanged: onModelChanged,
+              isModelLoading: isModelLoading,
+              isWorkspaceReady: isWorkspaceReady,
+              templateOptions: templateOptions,
+              selectedTemplateRepo: selectedTemplateRepo,
+              onTemplateChanged: onTemplateChanged,
+              isTemplateLoading: isTemplateLoading,
+              autoDeploy: autoDeploy,
+              onAutoDeployChanged: onAutoDeployChanged,
+            ),
+            const SizedBox(height: 14),
+            promptField,
+            const SizedBox(height: 14),
+            Align(alignment: Alignment.centerRight, child: submitButton),
+          ],
+        );
+
+        final rightColumn = _StyleStage(
+          compact: true,
+          styleOptions: styleOptions,
+          selectedStyleId: selectedStyleId,
+          onStyleChanged: onStyleChanged,
+          isStyleLoading: isStyleLoading,
+          isStylePreviewLoading: isStylePreviewLoading,
+          selectedStyle: selectedStyle,
+          stylePreviewError: stylePreviewError,
+        );
+
+        if (wide) {
+          return Row(
+            key: const ValueKey('new_ai_desktop'),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 11, child: leftColumn),
+              const SizedBox(width: 20),
+              Expanded(flex: 10, child: rightColumn),
+            ],
+          );
+        }
+
+        return Column(
+          key: const ValueKey('new_ai_mobile'),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [leftColumn, const SizedBox(height: 18), rightColumn],
+        );
+      },
     );
   }
 }
 
 class _ControlPanel extends StatelessWidget {
+  final bool compact;
   final List<ModelInfo> models;
   final String selectedModelId;
   final ValueChanged<String>? onModelChanged;
@@ -239,6 +195,7 @@ class _ControlPanel extends StatelessWidget {
   final ValueChanged<bool>? onAutoDeployChanged;
 
   const _ControlPanel({
+    this.compact = false,
     required this.models,
     required this.selectedModelId,
     required this.onModelChanged,
@@ -261,7 +218,7 @@ class _ControlPanel extends StatelessWidget {
     final locale = Localizations.localeOf(context);
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(compact ? 12 : 14),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerLowest.withValues(
           alpha: isDark ? 0.4 : 0.85,
@@ -277,6 +234,7 @@ class _ControlPanel extends StatelessWidget {
             children: [
               Expanded(
                 child: _SelectField<String>(
+                  compact: compact,
                   label: loc?.translate('model_switch_title') ?? 'Model',
                   value: selectedModelId.trim().isEmpty
                       ? null
@@ -311,6 +269,7 @@ class _ControlPanel extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _SelectField<String>(
+                  compact: compact,
                   label:
                       loc?.translate('create_project_template') ?? 'Template',
                   value: selectedTemplateRepo,
@@ -343,10 +302,13 @@ class _ControlPanel extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: compact ? 10 : 12),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: EdgeInsets.symmetric(
+              horizontal: compact ? 12 : 14,
+              vertical: compact ? 10 : 12,
+            ),
             decoration: BoxDecoration(
               color: scheme.surface.withValues(alpha: isDark ? 0.22 : 0.74),
               borderRadius: BorderRadius.circular(18),
@@ -359,8 +321,7 @@ class _ControlPanel extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
                       Text(
                         loc?.translate('project_section_deploy_label') ??
@@ -370,14 +331,11 @@ class _ControlPanel extends StatelessWidget {
                           letterSpacing: 0.2,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(width: 8),
                       Text(
-                        autoDeploy
-                            ? 'Preview deploy will start automatically.'
-                            : 'Create project without immediate deployment.',
+                        autoDeploy ? 'On' : 'Off',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: scheme.onSurfaceVariant,
-                          height: 1.3,
                         ),
                       ),
                     ],
@@ -395,6 +353,7 @@ class _ControlPanel extends StatelessWidget {
 }
 
 class _StyleStage extends StatelessWidget {
+  final bool compact;
   final List<ProjectStyleInfo> styleOptions;
   final String selectedStyleId;
   final ProjectStyleInfo? selectedStyle;
@@ -404,6 +363,7 @@ class _StyleStage extends StatelessWidget {
   final String? stylePreviewError;
 
   const _StyleStage({
+    this.compact = false,
     required this.styleOptions,
     required this.selectedStyleId,
     required this.selectedStyle,
@@ -424,6 +384,7 @@ class _StyleStage extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SelectField<String>(
+          compact: compact,
           label: loc?.translate('create_project_style') ?? 'Style',
           value: selectedStyleId,
           hint: isStyleLoading
@@ -452,10 +413,10 @@ class _StyleStage extends StatelessWidget {
                   onStyleChanged!(v);
                 },
         ),
-        const SizedBox(height: 14),
+        SizedBox(height: compact ? 10 : 14),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(14),
+          padding: EdgeInsets.all(compact ? 12 : 14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(28),
             gradient: LinearGradient(
@@ -488,15 +449,6 @@ class _StyleStage extends StatelessWidget {
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w800,
                             letterSpacing: -0.3,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          selectedStyle?.summary ??
-                              'Template-first direction with no extra art direction.',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            height: 1.35,
-                            color: scheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -535,7 +487,7 @@ class _StyleStage extends StatelessWidget {
                   ),
                 ),
               ],
-              const SizedBox(height: 16),
+              SizedBox(height: compact ? 10 : 16),
               Center(
                 child: _PhonePreviewFrame(
                   html: selectedStyle?.previewHtml,
@@ -552,6 +504,7 @@ class _StyleStage extends StatelessWidget {
 }
 
 class _SelectField<T> extends StatelessWidget {
+  final bool compact;
   final String label;
   final T? value;
   final String hint;
@@ -560,6 +513,7 @@ class _SelectField<T> extends StatelessWidget {
   final bool isLoading;
 
   const _SelectField({
+    this.compact = false,
     required this.label,
     required this.value,
     required this.hint,
@@ -584,14 +538,17 @@ class _SelectField<T> extends StatelessWidget {
             letterSpacing: 0.2,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: compact ? 6 : 8),
         Stack(
           alignment: Alignment.centerRight,
           children: [
             Select<T>(
               value: value,
               isExpanded: true,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+              padding: EdgeInsets.symmetric(
+                horizontal: compact ? 12 : 14,
+                vertical: compact ? 11 : 13,
+              ),
               backgroundColor: scheme.surface.withValues(
                 alpha: isDark ? 0.22 : 0.74,
               ),
@@ -642,9 +599,15 @@ class _PhonePreviewFrameState extends State<_PhonePreviewFrame> {
   InAppWebViewController? _controller;
   bool _webReady = false;
 
+  bool get _hasHtml => (widget.html ?? '').trim().isNotEmpty;
+
   @override
   void didUpdateWidget(covariant _PhonePreviewFrame oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (!_hasHtml) {
+      _webReady = true;
+      return;
+    }
     if (oldWidget.html != widget.html &&
         _controller != null &&
         widget.html != null) {
@@ -694,7 +657,7 @@ class _PhonePreviewFrameState extends State<_PhonePreviewFrame> {
               color: scheme.surface,
               child: Stack(
                 children: [
-                  if ((widget.html ?? '').trim().isNotEmpty)
+                  if (_hasHtml)
                     InAppWebView(
                       initialData: InAppWebViewInitialData(
                         data: widget.html!,
@@ -730,7 +693,7 @@ class _PhonePreviewFrameState extends State<_PhonePreviewFrame> {
                         ),
                       ),
                     ),
-                  if (widget.loading || !_webReady)
+                  if (_hasHtml && (widget.loading || !_webReady))
                     Positioned.fill(
                       child: DecoratedBox(
                         decoration: BoxDecoration(
