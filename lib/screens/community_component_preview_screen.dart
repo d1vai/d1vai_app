@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
+import '../widgets/inapp_webview_settings.dart';
 import '../widgets/web_subpage_app_bar.dart';
 
 class CommunityComponentPreviewScreen extends StatefulWidget {
@@ -49,10 +50,7 @@ class _CommunityComponentPreviewScreenState
         children: [
           InAppWebView(
             initialUrlRequest: URLRequest(url: WebUri(_url.toString())),
-            initialSettings: InAppWebViewSettings(
-              transparentBackground: false,
-              mediaPlaybackRequiresUserGesture: false,
-            ),
+            initialSettings: buildAppWebViewSettings(),
             onWebViewCreated: (controller) => _controller = controller,
             onLoadStart: (controller, url) {
               if (!mounted) return;

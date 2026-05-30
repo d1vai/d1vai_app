@@ -7,6 +7,7 @@ import '../core/api_client.dart';
 import '../core/theme/locale_font_helper.dart';
 import '../l10n/app_localizations.dart';
 import '../utils/link_navigator.dart';
+import '../widgets/inapp_webview_settings.dart';
 import '../widgets/share_sheet.dart';
 import '../widgets/snackbar_helper.dart';
 import '../widgets/web_subpage_app_bar.dart';
@@ -207,6 +208,7 @@ class _ApiDocsScreenState extends State<ApiDocsScreen> {
         children: [
           InAppWebView(
             initialUrlRequest: URLRequest(url: WebUri(_viewUrl.toString())),
+            initialSettings: buildAppWebViewSettings(),
             pullToRefreshController: _pull,
             shouldOverrideUrlLoading: (controller, navigationAction) async {
               final webUri = navigationAction.request.url;

@@ -11,6 +11,7 @@ import 'package:d1vai_app/l10n/app_localizations.dart';
 
 import '../core/theme/locale_font_helper.dart';
 import '../utils/link_navigator.dart';
+import '../widgets/inapp_webview_settings.dart';
 import '../widgets/share_sheet.dart';
 import '../widgets/snackbar_helper.dart';
 import '../widgets/web_subpage_app_bar.dart';
@@ -389,6 +390,7 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
                   initialUrlRequest: URLRequest(
                     url: WebUri(_docUrl.toString()),
                   ),
+                  initialSettings: buildAppWebViewSettings(),
                   pullToRefreshController: _pullToRefreshController,
                   shouldOverrideUrlLoading:
                       (controller, navigationAction) async {

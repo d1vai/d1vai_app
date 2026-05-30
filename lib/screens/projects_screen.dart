@@ -127,39 +127,17 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
             children: [
               Padding(
                 padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildPageIntro(
+                child: SearchField(
+                  hintText: _t('projects_search_hint', 'Search projects...'),
+                  initialValue: provider.searchQuery,
+                  onChanged: _onSearchChanged,
+                  onSubmitted: _handleSearch,
+                  onClear: () {
+                    Provider.of<ProjectProvider>(
                       context,
-                      title: _t('projects_title', 'Projects'),
-                      subtitle: provider.searchQuery.trim().isEmpty
-                          ? _t(
-                              'projects_intro_subtitle',
-                              'Search, open, and manage your active workspace.',
-                            )
-                          : _t(
-                              'projects_searching_subtitle',
-                              'Filtered results for your current query.',
-                            ),
-                    ),
-                    const SizedBox(height: 14),
-                    SearchField(
-                      hintText: _t(
-                        'projects_search_hint',
-                        'Search projects...',
-                      ),
-                      initialValue: provider.searchQuery,
-                      onChanged: _onSearchChanged,
-                      onSubmitted: _handleSearch,
-                      onClear: () {
-                        Provider.of<ProjectProvider>(
-                          context,
-                          listen: false,
-                        ).setSearchQuery('');
-                      },
-                    ),
-                  ],
+                      listen: false,
+                    ).setSearchQuery('');
+                  },
                 ),
               ),
               Expanded(child: _buildProjectsBody(provider, desktop)),
@@ -337,38 +315,6 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       updatedText: _formatTimeAgo(project.updatedAt),
       onTap: () => context.push(buildProjectChatDetailRoute(project)),
       onChat: () => context.push(buildProjectChatDetailRoute(project)),
-    );
-  }
-
-  Widget _buildPageIntro(
-    BuildContext context, {
-    required String title,
-    String? subtitle,
-  }) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          if ((subtitle ?? '').isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              subtitle!,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ],
-      ),
     );
   }
 

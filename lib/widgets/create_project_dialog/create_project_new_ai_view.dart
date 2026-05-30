@@ -4,6 +4,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/model_config.dart';
 import '../../models/project.dart';
+import '../inapp_webview_settings.dart';
 import '../../utils/project_style_prompt.dart';
 import '../../utils/project_template_localizations.dart';
 import '../button.dart';
@@ -862,12 +863,8 @@ class _PhonePreviewFrameState extends State<_PhonePreviewFrame> {
                         data: widget.html!,
                         baseUrl: WebUri('https://d1v.ai'),
                       ),
-                      initialSettings: InAppWebViewSettings(
+                      initialSettings: buildAppWebViewSettings(
                         transparentBackground: true,
-                        javaScriptEnabled: true,
-                        supportZoom: false,
-                        disableHorizontalScroll: false,
-                        disableVerticalScroll: false,
                       ),
                       onWebViewCreated: (controller) {
                         _controller = controller;

@@ -6,6 +6,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../app_liquid_glass.dart';
+import '../inapp_webview_settings.dart';
 
 class FloatingPreviewDock extends StatefulWidget {
   final String previewUrl;
@@ -339,6 +340,9 @@ class _FloatingPreviewDockState extends State<FloatingPreviewDock> {
                 key: ValueKey('mini-preview-$url'),
                 contextMenu: ContextMenu(),
                 initialUrlRequest: URLRequest(url: WebUri(url)),
+                initialSettings: buildAppWebViewSettings(
+                  transparentBackground: true,
+                ),
                 onWebViewCreated: (controller) {
                   _miniController = controller;
                 },
@@ -544,6 +548,7 @@ class _PreviewExpandedDialogState extends State<_PreviewExpandedDialog> {
                   ),
                   contextMenu: ContextMenu(),
                   initialUrlRequest: URLRequest(url: WebUri(widget.previewUrl)),
+                  initialSettings: buildAppWebViewSettings(),
                   onWebViewCreated: (controller) {
                     _controller = controller;
                   },

@@ -3,6 +3,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
+import 'inapp_webview_settings.dart';
+
 class PhoneFrameWebPreview extends StatefulWidget {
   final String? url;
   final double? height;
@@ -306,6 +308,7 @@ class PhoneFrameWebPreviewState extends State<PhoneFrameWebPreview>
                                       initialUrlRequest: URLRequest(
                                         url: WebUri(widget.url!.trim()),
                                       ),
+                                      initialSettings: buildAppWebViewSettings(),
                                       gestureRecognizers: gestureRecognizers,
                                       onWebViewCreated: _onWebViewCreated,
                                       onLoadStart: _onLoadStart,

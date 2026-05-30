@@ -96,7 +96,12 @@ bool supportsMonacoTextPreview() {
   return switch (defaultTargetPlatform) {
     TargetPlatform.macOS => true,
     TargetPlatform.iOS => true,
-    TargetPlatform.android => true,
+    // Monaco currently hosts itself through webview_flutter on Android,
+    // while the rest of the app uses flutter_inappwebview. Running two
+    // different WebView platform-view stacks in the same mobile flow has
+    // been causing Android preview/open regressions, so keep Monaco preview
+    // disabled here until the native WebView stack is unified.
+    TargetPlatform.android => false,
     TargetPlatform.windows => true,
     TargetPlatform.linux => false,
     _ => false,

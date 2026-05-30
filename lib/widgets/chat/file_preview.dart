@@ -8,6 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:xml/xml.dart';
 
 import 'file_preview_utils.dart';
+import '../inapp_webview_settings.dart';
 import 'markdown_text.dart';
 import 'monaco_code_preview.dart';
 import 'project_chat/code_tab/code_tab_code_block.dart';
@@ -405,13 +406,7 @@ class _DocumentWebPreview extends StatelessWidget {
         mimeType: 'text/html',
         encoding: 'utf-8',
       ),
-      initialSettings: InAppWebViewSettings(
-        mediaPlaybackRequiresUserGesture: false,
-        allowsInlineMediaPlayback: true,
-        transparentBackground: true,
-        disableVerticalScroll: false,
-        disableHorizontalScroll: false,
-      ),
+      initialSettings: buildAppWebViewSettings(transparentBackground: true),
     );
   }
 }
@@ -2090,11 +2085,7 @@ class _MediaWebPreview extends StatelessWidget {
         mimeType: 'text/html',
         encoding: 'utf-8',
       ),
-      initialSettings: InAppWebViewSettings(
-        mediaPlaybackRequiresUserGesture: false,
-        allowsInlineMediaPlayback: true,
-        transparentBackground: true,
-      ),
+      initialSettings: buildAppWebViewSettings(transparentBackground: true),
     );
   }
 }

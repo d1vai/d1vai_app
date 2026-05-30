@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../utils/link_navigator.dart';
+import '../widgets/inapp_webview_settings.dart';
 import '../widgets/share_sheet.dart';
 import '../widgets/snackbar_helper.dart';
 import '../widgets/web_subpage_app_bar.dart';
@@ -116,6 +117,7 @@ class _AppDetailScreenState extends State<AppDetailScreen> {
         children: [
           InAppWebView(
             initialUrlRequest: URLRequest(url: WebUri(_url.toString())),
+            initialSettings: buildAppWebViewSettings(),
             pullToRefreshController: _pull,
             shouldOverrideUrlLoading: (controller, navigationAction) async {
               final webUri = navigationAction.request.url;
