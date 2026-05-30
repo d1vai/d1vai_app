@@ -8,6 +8,19 @@ import '../../providers/editor_preferences_provider.dart';
 import 'project_chat/code_tab/app_code_editor_controller.dart';
 import 'project_chat/code_tab/code_editor_theme_presets.dart';
 
+Future<bool> _tryDefineTheme(
+  monaco.MonacoController controller,
+  String themeId,
+  Map<String, dynamic> data,
+) async {
+  try {
+    await controller.defineThemeFromJson(themeId, data);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
 class MonacoCodePreview extends StatefulWidget {
   final String path;
   final String content;
@@ -218,7 +231,8 @@ class _MonacoCodePreviewState extends State<MonacoCodePreview> {
     _options = nextOptions;
 
     final themeId = monacoThemeIdForPreset('d1vai-preview', preset.id);
-    final didRegisterTheme = await controller.tryDefineTheme(
+    final didRegisterTheme = await _tryDefineTheme(
+      controller,
       themeId,
       buildMonacoThemeDataForPreset(
         preset,
@@ -262,14 +276,14 @@ class _MonacoCodePreviewState extends State<MonacoCodePreview> {
       prefersDark ? prefs.darkThemePresetId : prefs.lightThemePresetId,
     );
     final themeId = 'd1vai-preview-${preset.id}';
+    final editorOptions = options.copyWith(themeId: themeId);
 
     return Container(
       color: preset.gutterBackground,
       child: monaco.MonacoEditor(
         key: ValueKey('preview-${widget.path}'),
         controller: controller,
-        options: options,
-        themeId: themeId,
+        options: editorOptions,
         backgroundColor: preset.gutterBackground,
         showStatusBar: false,
         onSelectionChanged: widget.onActivatePosition == null

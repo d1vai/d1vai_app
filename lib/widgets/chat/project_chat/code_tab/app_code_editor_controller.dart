@@ -7,6 +7,19 @@ import '../../../../providers/editor_preferences_provider.dart';
 import 'code_editor_theme_presets.dart';
 import 'code_tab_editor_language.dart';
 
+Future<bool> _tryDefineTheme(
+  monaco.MonacoController controller,
+  String themeId,
+  Map<String, dynamic> data,
+) async {
+  try {
+    await controller.defineThemeFromJson(themeId, data);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
 class AppCodeEditorStats {
   final int lineCount;
   final int charCount;
@@ -268,7 +281,8 @@ class AppCodeEditorController extends ChangeNotifier {
 
     _monacoOptions = nextOptions;
     _lastMonacoPresentationKey = presentationKey;
-    final didRegisterTheme = await monacoController.tryDefineTheme(
+    final didRegisterTheme = await _tryDefineTheme(
+      monacoController,
       themeId,
       buildMonacoThemeDataForPreset(
         preset,

@@ -13,6 +13,19 @@ import 'snackbar_helper.dart';
 import 'chat/project_chat/code_tab/app_code_editor_controller.dart';
 import 'chat/project_chat/code_tab/code_editor_theme_presets.dart';
 
+Future<bool> _tryDefineTheme(
+  monaco.MonacoController controller,
+  String themeId,
+  Map<String, dynamic> data,
+) async {
+  try {
+    await controller.defineThemeFromJson(themeId, data);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
 class EditorPreferencesDialogBody extends StatelessWidget {
   const EditorPreferencesDialogBody({super.key});
 
@@ -443,6 +456,7 @@ class _EditorMonacoThemePreviewState extends State<EditorMonacoThemePreview> {
     final options = monaco.EditorOptions(
       language: monaco.MonacoLanguage.typescript,
       theme: baseTheme,
+      themeId: themeId,
       fontSize: widget.fontSize,
       fontFamily: 'Menlo, Monaco, Consolas, "Courier New", monospace',
       lineHeight: 1.35,
@@ -476,10 +490,10 @@ class _EditorMonacoThemePreviewState extends State<EditorMonacoThemePreview> {
               ),
               initialValue: EditorMonacoThemePreview._sample,
               options: options,
-              themeId: themeId,
               onReady: (controller) {
                 unawaited(() async {
-                  final didRegisterTheme = await controller.tryDefineTheme(
+                  final didRegisterTheme = await _tryDefineTheme(
+                    controller,
                     themeId,
                     buildMonacoThemeDataForPreset(
                       widget.preset,

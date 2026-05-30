@@ -376,7 +376,7 @@ packages:
       path: "third_party/flutter_monaco"
       relative: true
     source: path
-    version: "1.6.0"
+    version: "1.7.0"
   flutter_native_splash:
     dependency: "direct main"
     description:

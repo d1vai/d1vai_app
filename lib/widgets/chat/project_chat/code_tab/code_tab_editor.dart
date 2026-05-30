@@ -352,8 +352,7 @@ class _MonacoEditorSurface extends StatelessWidget {
       color: preset.gutterBackground,
       child: monaco.MonacoEditor(
         controller: monacoController,
-        options: options,
-        themeId: themeId,
+        options: options.copyWith(themeId: themeId),
         onReady: (_) {
           unawaited(
             controller.applyMonacoPresentation(
