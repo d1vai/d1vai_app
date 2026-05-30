@@ -64,6 +64,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   Timer? _workspacePollTimer;
   bool _didInitWorkspaceStatus = false;
   Map<String, dynamic>? _githubDashboardRepositories;
+  bool _githubDashboardLoading = false;
 
   late AnimationController _animationController;
   late AnimationController _workspaceBreathController;
@@ -332,16 +333,23 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Future<void> _loadGitHubDashboardRepositories() async {
+    if (mounted) {
+      setState(() {
+        _githubDashboardLoading = true;
+      });
+    }
     try {
       final payload = await _githubService.getDashboardRepositories();
       if (!mounted) return;
       setState(() {
         _githubDashboardRepositories = payload;
+        _githubDashboardLoading = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _githubDashboardRepositories = null;
+        _githubDashboardLoading = false;
       });
     }
   }
@@ -356,6 +364,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   bool _shouldShowGitHubRepositorySection() {
+    if (_githubDashboardLoading) return true;
     final payload = _githubDashboardRepositories;
     if (payload == null) return false;
     return payload['connected'] == true &&
@@ -1004,7 +1013,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         !isSearchResults && _shouldShowGitHubRepositorySection();
     final children = <Widget>[];
 
-    if (projects.isEmpty) {
+    if (projects.isEmpty && !projectProvider.isLoading) {
       children.add(
         CustomCard(
           child: Container(
@@ -1198,161 +1207,234 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
         ),
         const SizedBox(height: 8),
-        ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: repos.length,
-          separatorBuilder: (_, index) => const SizedBox(height: 12),
-          itemBuilder: (context, index) {
-            final repo = repos[index];
-            final repoName = (repo['name'] ?? repo['full_name'] ?? '')
-                .toString()
-                .trim();
-            final owner =
-                (repo['owner'] ?? repo['installation_account_login'] ?? '')
-                    .toString()
-                    .trim();
-            final descriptionRaw = (repo['description'] ?? '')
-                .toString()
-                .trim();
-            final description = descriptionRaw.isEmpty
-                ? _t(
-                    'dashboard_projects_subtitle',
-                    'Continue from the most recently touched projects.',
-                  )
-                : descriptionRaw;
-            final language = (repo['language'] ?? '').toString().trim();
-
-            return CustomCard(
-              child: InkWell(
-                borderRadius: BorderRadius.circular(20),
-                onTap: () => unawaited(_openGitHubRepositoryImport(repo)),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: colorScheme.primary.withValues(alpha: 0.10),
-                          borderRadius: BorderRadius.circular(14),
+        if (_githubDashboardLoading)
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 2,
+            separatorBuilder: (_, index) => const SizedBox(height: 12),
+            itemBuilder: (context, index) => CustomCard(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 154,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: colorScheme.surfaceContainerHighest.withValues(
+                          alpha: 0.88,
                         ),
-                        child: Icon(
-                          Icons.download_for_offline_rounded,
-                          color: colorScheme.primary,
-                          size: 22,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      width: double.infinity,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: colorScheme.surfaceContainerHighest.withValues(
+                          alpha: 0.72,
+                        ),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: 220,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: colorScheme.surfaceContainerHighest.withValues(
+                          alpha: 0.56,
+                        ),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: List.generate(
+                        4,
+                        (metricIndex) => Padding(
+                          padding: EdgeInsets.only(
+                            right: metricIndex == 3 ? 0 : 12,
+                          ),
+                          child: Container(
+                            width: 34,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: colorScheme.surfaceContainerHighest
+                                  .withValues(alpha: 0.66),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    repoName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: theme.textTheme.titleSmall?.copyWith(
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                ),
-                                if (owner.isNotEmpty) ...[
-                                  const SizedBox(width: 8),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          )
+        else
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: repos.length,
+            separatorBuilder: (_, index) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final repo = repos[index];
+              final repoName = (repo['name'] ?? repo['full_name'] ?? '')
+                  .toString()
+                  .trim();
+              final owner =
+                  (repo['owner'] ?? repo['installation_account_login'] ?? '')
+                      .toString()
+                      .trim();
+              final descriptionRaw = (repo['description'] ?? '')
+                  .toString()
+                  .trim();
+              final description = descriptionRaw.isEmpty
+                  ? _t(
+                      'dashboard_projects_subtitle',
+                      'Continue from the most recently touched projects.',
+                    )
+                  : descriptionRaw;
+              final language = (repo['language'] ?? '').toString().trim();
+
+              return CustomCard(
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () => unawaited(_openGitHubRepositoryImport(repo)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary.withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Icon(
+                            Icons.download_for_offline_rounded,
+                            color: colorScheme.primary,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
                                   Flexible(
                                     child: Text(
-                                      '@$owner',
+                                      repoName,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: theme.textTheme.labelMedium
+                                      style: theme.textTheme.titleSmall
                                           ?.copyWith(
-                                            color: colorScheme.onSurfaceVariant,
-                                            fontWeight: FontWeight.w500,
+                                            fontWeight: FontWeight.w800,
                                           ),
                                     ),
                                   ),
-                                ],
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              description,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                                height: 1.35,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Wrap(
-                              spacing: 14,
-                              runSpacing: 8,
-                              children: [
-                                if (language.isNotEmpty)
-                                  Text(
-                                    language.toUpperCase(),
-                                    style: theme.textTheme.labelSmall?.copyWith(
-                                      color: colorScheme.onSurfaceVariant,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.8,
+                                  if (owner.isNotEmpty) ...[
+                                    const SizedBox(width: 8),
+                                    Flexible(
+                                      child: Text(
+                                        '@$owner',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: theme.textTheme.labelMedium
+                                            ?.copyWith(
+                                              color:
+                                                  colorScheme.onSurfaceVariant,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                      ),
                                     ),
+                                  ],
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                description,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                  height: 1.35,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Wrap(
+                                spacing: 14,
+                                runSpacing: 8,
+                                children: [
+                                  if (language.isNotEmpty)
+                                    Text(
+                                      language.toUpperCase(),
+                                      style: theme.textTheme.labelSmall
+                                          ?.copyWith(
+                                            color: colorScheme.onSurfaceVariant,
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: 0.8,
+                                          ),
+                                    ),
+                                  _buildGitHubInlineMetric(
+                                    context,
+                                    icon: Icons.star_border_rounded,
+                                    value: _githubRepoMetric(
+                                      repo,
+                                      'stargazers_count',
+                                    ).toString(),
                                   ),
-                                _buildGitHubInlineMetric(
-                                  context,
-                                  icon: Icons.star_border_rounded,
-                                  value: _githubRepoMetric(
-                                    repo,
-                                    'stargazers_count',
-                                  ).toString(),
-                                ),
-                                _buildGitHubInlineMetric(
-                                  context,
-                                  icon: Icons.call_split_rounded,
-                                  value: _githubRepoMetric(
-                                    repo,
-                                    'forks_count',
-                                  ).toString(),
-                                ),
-                                _buildGitHubInlineMetric(
-                                  context,
-                                  icon: Icons.adjust_outlined,
-                                  value: _githubRepoMetric(
-                                    repo,
-                                    'issue_count',
-                                  ).toString(),
-                                ),
-                                _buildGitHubInlineMetric(
-                                  context,
-                                  icon: Icons.merge_type_rounded,
-                                  value: _githubRepoMetric(
-                                    repo,
-                                    'pull_request_count',
-                                  ).toString(),
-                                ),
-                                _buildGitHubActionMetric(context, repo),
-                              ],
-                            ),
-                          ],
+                                  _buildGitHubInlineMetric(
+                                    context,
+                                    icon: Icons.call_split_rounded,
+                                    value: _githubRepoMetric(
+                                      repo,
+                                      'forks_count',
+                                    ).toString(),
+                                  ),
+                                  _buildGitHubInlineMetric(
+                                    context,
+                                    icon: Icons.adjust_outlined,
+                                    value: _githubRepoMetric(
+                                      repo,
+                                      'issue_count',
+                                    ).toString(),
+                                  ),
+                                  _buildGitHubInlineMetric(
+                                    context,
+                                    icon: Icons.merge_type_rounded,
+                                    value: _githubRepoMetric(
+                                      repo,
+                                      'pull_request_count',
+                                    ).toString(),
+                                  ),
+                                  _buildGitHubActionMetric(context, repo),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Icon(
-                        Icons.chevron_right_rounded,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ],
+                        const SizedBox(width: 12),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
-        ),
+              );
+            },
+          ),
       ],
     );
   }
