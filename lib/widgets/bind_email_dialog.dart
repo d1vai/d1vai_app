@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:d1vai_app/l10n/app_localizations.dart';
 import '../services/d1vai_service.dart';
 import '../providers/auth_provider.dart';
 
@@ -177,6 +178,7 @@ class _BindEmailDialogState extends State<BindEmailDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
     return AlertDialog(
@@ -302,7 +304,7 @@ class _BindEmailDialogState extends State<BindEmailDialog> {
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: Text(
-            'Cancel',
+            loc?.translate('cancel') ?? 'Cancel',
             style: TextStyle(color: theme.colorScheme.onSurface),
           ),
         ),

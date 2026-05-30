@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:d1vai_app/l10n/app_localizations.dart';
 
 import '../models/local_workspace.dart';
 import '../providers/auth_provider.dart';
@@ -224,6 +225,7 @@ class _LocalWorkspaceScreenState extends State<LocalWorkspaceScreen> {
 
   void _showSyncToCloudDialog({String? feature}) {
     final label = (feature ?? 'This feature').trim();
+    final loc = AppLocalizations.of(context);
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -234,7 +236,7 @@ class _LocalWorkspaceScreenState extends State<LocalWorkspaceScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
+            child: Text(loc?.translate('cancel') ?? 'Cancel'),
           ),
           FilledButton(
             onPressed: () {

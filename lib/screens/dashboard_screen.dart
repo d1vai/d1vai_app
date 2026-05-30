@@ -9,6 +9,7 @@ import 'package:d1vai_app/models/user.dart';
 import 'package:d1vai_app/models/project.dart';
 import 'package:d1vai_app/models/prompt_activity.dart';
 import 'package:d1vai_app/services/d1vai_service.dart';
+import 'package:d1vai_app/services/github_service.dart';
 import 'package:d1vai_app/services/workspace_service.dart';
 import 'package:d1vai_app/widgets/create_project_dialog.dart';
 import 'package:d1vai_app/widgets/card.dart';
@@ -27,7 +28,9 @@ import 'package:d1vai_app/widgets/skeletons/prompt_activity_skeleton.dart';
 import 'package:d1vai_app/utils/chat_entry.dart';
 import 'package:d1vai_app/utils/desktop_layout.dart';
 import 'package:d1vai_app/core/theme/locale_font_helper.dart';
+import 'package:d1vai_app/widgets/adaptive_modal.dart';
 import 'package:d1vai_app/widgets/d1v_app_bar.dart';
+import 'package:d1vai_app/widgets/import_repository_dialog.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -49,6 +52,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   Future<PromptDailyActivity>? _promptActivityFuture;
   String? _promptActivityProjectId;
   final D1vaiService _service = D1vaiService();
+  final GitHubService _githubService = GitHubService();
   final WorkspaceService _workspaceService = WorkspaceService();
 
   WorkspaceStateInfo? _workspaceState;
@@ -59,6 +63,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   bool _workspaceActiveInFlight = false;
   Timer? _workspacePollTimer;
   bool _didInitWorkspaceStatus = false;
+  Map<String, dynamic>? _githubDashboardRepositories;
 
   late AnimationController _animationController;
   late AnimationController _workspaceBreathController;
@@ -317,9 +322,64 @@ class _DashboardScreenState extends State<DashboardScreen>
         projectId: _promptActivityProjectId,
       );
     }
-    await Provider.of<ProjectProvider>(context, listen: false).loadProjects();
+    await Future.wait<void>([
+      Provider.of<ProjectProvider>(context, listen: false).loadProjects(),
+      _loadGitHubDashboardRepositories(),
+    ]);
     if (mounted) {
       _animationController.forward(from: 0);
+    }
+  }
+
+  Future<void> _loadGitHubDashboardRepositories() async {
+    try {
+      final payload = await _githubService.getDashboardRepositories();
+      if (!mounted) return;
+      setState(() {
+        _githubDashboardRepositories = payload;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _githubDashboardRepositories = null;
+      });
+    }
+  }
+
+  List<Map<String, dynamic>> _unimportedGitHubRepositories() {
+    final items = _githubDashboardRepositories?['unimported_repositories'];
+    if (items is! List) return const <Map<String, dynamic>>[];
+    return items
+        .whereType<Map>()
+        .map((item) => item.cast<String, dynamic>())
+        .toList();
+  }
+
+  bool _shouldShowGitHubRepositorySection() {
+    final payload = _githubDashboardRepositories;
+    if (payload == null) return false;
+    return payload['connected'] == true &&
+        payload['token_valid'] == true &&
+        _unimportedGitHubRepositories().isNotEmpty;
+  }
+
+  Future<void> _openGitHubRepositoryImport(
+    Map<String, dynamic> repository,
+  ) async {
+    final installationId = (repository['installation_id'] as num?)?.toInt();
+    if (installationId == null) return;
+    final imported = await showAdaptiveModal<bool>(
+      context: context,
+      builder: (context) => ImportRepositoryDialog(
+        repository: repository,
+        installationId: installationId,
+      ),
+    );
+    if (imported == true && mounted) {
+      await Future.wait<void>([
+        Provider.of<ProjectProvider>(context, listen: false).refresh(),
+        _loadGitHubDashboardRepositories(),
+      ]);
     }
   }
 
@@ -835,7 +895,10 @@ class _DashboardScreenState extends State<DashboardScreen>
           );
         });
         await _refreshWorkspaceStatus(bypassCache: true);
-        await projectProvider.refresh();
+        await Future.wait<void>([
+          projectProvider.refresh(),
+          _loadGitHubDashboardRepositories(),
+        ]);
       },
       child: content,
     );
@@ -937,82 +1000,360 @@ class _DashboardScreenState extends State<DashboardScreen>
     final List<UserProject> projects = isSearchResults
         ? _searchResults.take(5).toList()
         : projectProvider.projects.take(5).toList();
+    final showGitHubRepositories =
+        !isSearchResults && _shouldShowGitHubRepositorySection();
+    final children = <Widget>[];
 
     if (projects.isEmpty) {
-      return CustomCard(
-        child: Container(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            children: [
-              Icon(Icons.folder_open, size: 48, color: Colors.grey.shade400),
-              const SizedBox(height: 16),
-              Text(
-                _t('dashboard_no_projects_title', 'No projects yet'),
-                style: TextStyle(color: Colors.grey.shade600),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _t(
-                  'dashboard_no_projects_hint',
-                  'Create your first project to get started',
+      children.add(
+        CustomCard(
+          child: Container(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              children: [
+                Icon(Icons.folder_open, size: 48, color: Colors.grey.shade400),
+                const SizedBox(height: 16),
+                Text(
+                  _t('dashboard_no_projects_title', 'No projects yet'),
+                  style: TextStyle(color: Colors.grey.shade600),
                 ),
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () {
-                  CreateProjectDialog.show(context);
-                },
-                icon: const Icon(Icons.add),
-                label: Text(_t('create_project', 'Create Project')),
-              ),
-            ],
+                const SizedBox(height: 8),
+                Text(
+                  _t(
+                    'dashboard_no_projects_hint',
+                    'Create your first project to get started',
+                  ),
+                  style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    CreateProjectDialog.show(context);
+                  },
+                  icon: const Icon(Icons.add),
+                  label: Text(_t('create_project', 'Create Project')),
+                ),
+              ],
+            ),
           ),
+        ),
+      );
+    } else {
+      children.add(
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: projects.length,
+          separatorBuilder: (context, index) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final project = projects[index];
+            return AnimatedBuilder(
+              animation: _animationController,
+              builder: (context, child) {
+                final intervalStart = index * 0.1;
+                final intervalEnd = (intervalStart + 0.4).clamp(0.0, 1.0);
+
+                final animation = CurvedAnimation(
+                  parent: _animationController,
+                  curve: Interval(
+                    intervalStart,
+                    intervalEnd,
+                    curve: Curves.easeOut,
+                  ),
+                );
+
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0, 0.2),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                );
+              },
+              child: ProjectCardTile(
+                project: project,
+                updatedText: _formatTimeAgo(project.updatedAt),
+                onTap: () => context.push(buildProjectChatDetailRoute(project)),
+                onChat: () =>
+                    context.push(buildProjectChatDetailRoute(project)),
+              ),
+            );
+          },
         ),
       );
     }
 
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: projects.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final project = projects[index];
-        return AnimatedBuilder(
-          animation: _animationController,
-          builder: (context, child) {
-            final intervalStart = index * 0.1;
-            final intervalEnd = (intervalStart + 0.4).clamp(0.0, 1.0);
+    if (showGitHubRepositories) {
+      if (children.isNotEmpty) {
+        children.add(const SizedBox(height: 20));
+      }
+      children.add(_buildGitHubAvailableRepositoriesSection(context));
+    }
 
-            final animation = CurvedAnimation(
-              parent: _animationController,
-              curve: Interval(
-                intervalStart,
-                intervalEnd,
-                curve: Curves.easeOut,
-              ),
-            );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children,
+    );
+  }
 
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0, 0.2),
-                  end: Offset.zero,
-                ).animate(animation),
-                child: child,
+  int _githubRepoMetric(Map<String, dynamic> repo, String key) {
+    final value = repo[key];
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return 0;
+  }
+
+  Color _githubActionStatusColor(
+    BuildContext context,
+    Map<String, dynamic> repo,
+  ) {
+    final status = (repo['action_status'] ?? '').toString().trim();
+    switch (status) {
+      case 'success':
+        return Colors.green;
+      case 'failed':
+        return Theme.of(context).colorScheme.error;
+      case 'in_progress':
+        return Colors.amber;
+      case 'neutral':
+        return Theme.of(context).colorScheme.outline;
+      default:
+        return Theme.of(
+          context,
+        ).colorScheme.onSurfaceVariant.withValues(alpha: 0.55);
+    }
+  }
+
+  Widget _buildGitHubInlineMetric(
+    BuildContext context, {
+    required IconData icon,
+    required String value,
+    Color? color,
+  }) {
+    final theme = Theme.of(context);
+    final iconColor = color ?? theme.colorScheme.onSurfaceVariant;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 15, color: iconColor),
+        const SizedBox(width: 4),
+        Text(
+          value,
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGitHubActionMetric(
+    BuildContext context,
+    Map<String, dynamic> repo,
+  ) {
+    final theme = Theme.of(context);
+    final dotColor = _githubActionStatusColor(context, repo);
+    final label = (repo['action_label'] ?? '').toString().trim();
+    return Tooltip(
+      message: label.isEmpty ? 'GitHub Actions' : label,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 6),
+          Icon(
+            Icons.play_circle_outline_rounded,
+            size: 15,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGitHubAvailableRepositoriesSection(BuildContext context) {
+    final repos = _unimportedGitHubRepositories()
+        .take(5)
+        .toList(growable: false);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildPageSectionHeader(
+          context,
+          title: _t('create_project_github_import_title', 'GitHub Import'),
+          subtitle: _t(
+            'github_connect_description',
+            'Connect your GitHub account to import repositories',
+          ),
+        ),
+        const SizedBox(height: 8),
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: repos.length,
+          separatorBuilder: (_, index) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final repo = repos[index];
+            final repoName = (repo['name'] ?? repo['full_name'] ?? '')
+                .toString()
+                .trim();
+            final owner =
+                (repo['owner'] ?? repo['installation_account_login'] ?? '')
+                    .toString()
+                    .trim();
+            final descriptionRaw = (repo['description'] ?? '')
+                .toString()
+                .trim();
+            final description = descriptionRaw.isEmpty
+                ? _t(
+                    'dashboard_projects_subtitle',
+                    'Continue from the most recently touched projects.',
+                  )
+                : descriptionRaw;
+            final language = (repo['language'] ?? '').toString().trim();
+
+            return CustomCard(
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: () => unawaited(_openGitHubRepositoryImport(repo)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(
+                          Icons.download_for_offline_rounded,
+                          color: colorScheme.primary,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    repoName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: theme.textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                                if (owner.isNotEmpty) ...[
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
+                                      '@$owner',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: theme.textTheme.labelMedium
+                                          ?.copyWith(
+                                            color: colorScheme.onSurfaceVariant,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              description,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                                height: 1.35,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 14,
+                              runSpacing: 8,
+                              children: [
+                                if (language.isNotEmpty)
+                                  Text(
+                                    language.toUpperCase(),
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.8,
+                                    ),
+                                  ),
+                                _buildGitHubInlineMetric(
+                                  context,
+                                  icon: Icons.star_border_rounded,
+                                  value: _githubRepoMetric(
+                                    repo,
+                                    'stargazers_count',
+                                  ).toString(),
+                                ),
+                                _buildGitHubInlineMetric(
+                                  context,
+                                  icon: Icons.call_split_rounded,
+                                  value: _githubRepoMetric(
+                                    repo,
+                                    'forks_count',
+                                  ).toString(),
+                                ),
+                                _buildGitHubInlineMetric(
+                                  context,
+                                  icon: Icons.adjust_outlined,
+                                  value: _githubRepoMetric(
+                                    repo,
+                                    'issue_count',
+                                  ).toString(),
+                                ),
+                                _buildGitHubInlineMetric(
+                                  context,
+                                  icon: Icons.merge_type_rounded,
+                                  value: _githubRepoMetric(
+                                    repo,
+                                    'pull_request_count',
+                                  ).toString(),
+                                ),
+                                _buildGitHubActionMetric(context, repo),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             );
           },
-          child: ProjectCardTile(
-            project: project,
-            updatedText: _formatTimeAgo(project.updatedAt),
-            onTap: () => context.push(buildProjectChatDetailRoute(project)),
-            onChat: () => context.push(buildProjectChatDetailRoute(project)),
-          ),
-        );
-      },
+        ),
+      ],
     );
   }
 

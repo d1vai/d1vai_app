@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:d1vai_app/l10n/app_localizations.dart';
 
 import '../../../../providers/editor_preferences_provider.dart';
 import '../../../../services/d1vai_service.dart';
@@ -251,7 +252,9 @@ class _CodeTabFileViewerPageState extends State<CodeTabFileViewerPage> {
             TextButton(
               onPressed: () =>
                   Navigator.of(context).pop(CodeTabEditLeaveAction.cancel),
-              child: const Text('Cancel'),
+              child: Text(
+                AppLocalizations.of(context)?.translate('cancel') ?? 'Cancel',
+              ),
             ),
             TextButton(
               onPressed: () =>

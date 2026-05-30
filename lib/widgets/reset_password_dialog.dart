@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:d1vai_app/l10n/app_localizations.dart';
 import '../services/d1vai_service.dart';
 
 class ResetPasswordDialog extends StatefulWidget {
@@ -165,6 +166,7 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
     return AlertDialog(
@@ -347,7 +349,7 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: Text(
-            'Cancel',
+            loc?.translate('cancel') ?? 'Cancel',
             style: TextStyle(color: theme.colorScheme.onSurface),
           ),
         ),

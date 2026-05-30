@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:d1vai_app/l10n/app_localizations.dart';
 import '../services/d1vai_service.dart';
 
 class SetPasswordDialog extends StatefulWidget {
@@ -85,6 +86,7 @@ class _SetPasswordDialogState extends State<SetPasswordDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
     return AlertDialog(
@@ -184,7 +186,7 @@ class _SetPasswordDialogState extends State<SetPasswordDialog> {
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: Text(
-            'Cancel',
+            loc?.translate('cancel') ?? 'Cancel',
             style: TextStyle(color: theme.colorScheme.onSurface),
           ),
         ),

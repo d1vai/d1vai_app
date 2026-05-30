@@ -918,7 +918,9 @@ class _MacosImportListenerState extends State<_MacosImportListener> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+              child: Text(
+                AppLocalizations.of(context)?.translate('cancel') ?? 'Cancel',
+              ),
             ),
             if (includeAttach)
               TextButton(

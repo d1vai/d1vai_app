@@ -46,6 +46,12 @@ class GitHubService {
         .toList();
   }
 
+  Future<Map<String, dynamic>> getDashboardRepositories() async {
+    return _apiClient.get<Map<String, dynamic>>(
+      '/api/github-app/dashboard-repositories',
+    );
+  }
+
   Future<Map<String, dynamic>> importProjectFromGitHubApp({
     required int installationId,
     required int repositoryId,

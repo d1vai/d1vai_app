@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:d1vai_app/l10n/app_localizations.dart';
 
 import '../../../../services/d1vai_service.dart';
 import '../../../snackbar_helper.dart';
@@ -503,7 +504,14 @@ class _RunSqlMigrationSheetState extends State<_RunSqlMigrationSheet> {
                     onPressed: _running
                         ? null
                         : () => Navigator.of(context).pop(),
-                    child: Text(_completed ? 'Close' : 'Cancel'),
+                    child: Text(
+                      _completed
+                          ? 'Close'
+                          : (AppLocalizations.of(
+                                  context,
+                                )?.translate('cancel') ??
+                                'Cancel'),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),

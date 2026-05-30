@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:d1vai_app/l10n/app_localizations.dart';
 import 'avatar_image.dart';
 import 'button.dart' as d1v;
 
@@ -552,6 +553,7 @@ class _AiAvatarSelectorDialogState extends State<AiAvatarSelectorDialog>
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final canConfirm = _selectedAvatar != null;
+    final loc = AppLocalizations.of(context);
 
     final confirm = AnimatedBuilder(
       animation: _breathController,
@@ -606,7 +608,7 @@ class _AiAvatarSelectorDialogState extends State<AiAvatarSelectorDialog>
           Expanded(
             child: d1v.Button(
               variant: d1v.ButtonVariant.outline,
-              text: 'Cancel',
+              text: loc?.translate('cancel') ?? 'Cancel',
               onPressed: () => Navigator.of(context).pop(),
               height: 48,
               borderRadius: 14,
