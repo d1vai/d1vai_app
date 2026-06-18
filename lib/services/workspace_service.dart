@@ -84,11 +84,14 @@ class WorkspaceService {
   static const _readyCacheMaxAge = Duration(seconds: 10);
   static const _defaultEnsureTimeout = Duration(minutes: 3);
   static const _modelSyncDedupe = Duration(seconds: 10);
+  static const _discoverInflightDedupe = Duration(seconds: 8);
 
   static Future<WorkspaceStateInfo>? _statusInFlight;
   static DateTime? _statusInFlightAt;
   static WorkspaceStateInfo? _lastStatus;
   static DateTime? _lastStatusAt;
+  static Future<WorkspaceStateInfo>? _discoverInFlight;
+  static DateTime? _discoverInFlightAt;
 
   static Future<WorkspaceConnection>? _ensureInFlight;
   static WorkspaceConnection? _lastReady;
@@ -118,6 +121,7 @@ class WorkspaceService {
       try {
         final data = await _apiClient.get<Map<String, dynamic>>(
           '/api/workspace/status',
+          queryParameters: const {'keepalive': 1},
         );
         final st = WorkspaceStateInfo.fromJson(data);
         _lastStatus = st;
@@ -132,14 +136,30 @@ class WorkspaceService {
   }
 
   Future<WorkspaceStateInfo> discoverWorkspace() async {
-    final data = await _apiClient.post<Map<String, dynamic>>(
-      '/api/workspace/discover',
-      {},
-    );
-    final st = WorkspaceStateInfo.fromJson(data);
-    _lastStatus = st;
-    _lastStatusAt = DateTime.now();
-    return st;
+    final now = DateTime.now();
+    if (_discoverInFlight != null && _discoverInFlightAt != null) {
+      if (now.difference(_discoverInFlightAt!) < _discoverInflightDedupe) {
+        return _discoverInFlight!;
+      }
+    }
+
+    _discoverInFlightAt = now;
+    _discoverInFlight = () async {
+      try {
+        final data = await _apiClient.post<Map<String, dynamic>>(
+          '/api/workspace/discover',
+          {},
+        );
+        final st = WorkspaceStateInfo.fromJson(data);
+        _lastStatus = st;
+        _lastStatusAt = DateTime.now();
+        return st;
+      } finally {
+        _discoverInFlight = null;
+      }
+    }();
+
+    return _discoverInFlight!;
   }
 
   bool _isTransientError(Object err) {
