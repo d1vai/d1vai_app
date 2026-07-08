@@ -308,7 +308,9 @@ class ApiClient {
 
     return executeWithRetry<T>(
       () {
-        final fut = client.post(uri, headers: headers, body: jsonEncode(body));
+        final fut = body == null
+            ? client.post(uri, headers: headers)
+            : client.post(uri, headers: headers, body: jsonEncode(body));
         return timeout != null ? fut.timeout(timeout) : fut;
       },
       fromJsonT,
