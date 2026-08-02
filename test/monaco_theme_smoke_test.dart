@@ -25,6 +25,11 @@ void main() {
     'all app editor presets can be registered through monaco controller',
     () async {
       final webview = FakeMonacoPlatformWebViewController();
+      webview.resultResolver = (_) => jsonEncode(const {
+        '__flutterMonacoEval': true,
+        'ok': true,
+        'isUndefined': true,
+      });
       final controller = await MonacoController.createForTesting(
         webViewController: webview,
         markReady: true,
@@ -32,14 +37,13 @@ void main() {
 
       for (final preset in codeEditorThemePresets) {
         final themeName = 'smoke-${preset.id}';
-        final didRegister = await controller.tryDefineTheme(
+        await controller.defineThemeFromJson(
           themeName,
           buildMonacoThemeDataForPreset(
             preset,
             baseTheme: preset.isDark ? 'vs-dark' : 'vs',
           ),
         );
-        expect(didRegister, isTrue, reason: preset.id);
         expect(
           webview.executed.any(
             (script) =>

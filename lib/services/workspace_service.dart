@@ -121,7 +121,7 @@ class WorkspaceService {
       try {
         final data = await _apiClient.get<Map<String, dynamic>>(
           '/api/workspace/status',
-          queryParameters: const {'keepalive': 1},
+          queryParams: const {'keepalive': '1'},
         );
         final st = WorkspaceStateInfo.fromJson(data);
         _lastStatus = st;
