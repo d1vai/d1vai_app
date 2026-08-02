@@ -3,8 +3,68 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SRC_DIR="${ROOT_DIR}/docs/readme-assets"
-OUT_DIR="${ROOT_DIR}/docs/store-assets-v2"
+LANGUAGE="${1:-en}"
+
+case "${LANGUAGE}" in
+  en|zh) ;;
+  *)
+    echo "Usage: $0 [en|zh]" >&2
+    exit 1
+    ;;
+esac
+
+if [[ "${LANGUAGE}" == "zh" ]]; then
+  SRC_DIR="${ROOT_DIR}/docs/readme-assets-zh"
+  OUT_DIR="${ROOT_DIR}/docs/store-assets-v2-zh"
+  DISPLAY_FONT="${ROOT_DIR}/assets/fonts/SmileySans-Oblique.ttf"
+  BODY_FONT="/System/Library/Fonts/Hiragino Sans GB.ttc"
+  BRAND_TEXT="d1v.ai 移动工作台"
+  FEATURE_HEADLINE="项目、AI 对话与账户控制，集中在一个移动工作台。"
+  FEATURE_BODY="为离开电脑也要持续推进 AI 工作流的团队，提供更完整、更可靠的移动控制面板。"
+  POSTER_HEADLINE="离开桌面之后，AI 原生工作的上下文也不该断。"
+  POSTER_BODY="d1v.ai 将首页、项目详情、AI 对话和账户控制串成一条完整的移动工作流。"
+  FOCUS_CHIP_A="状态"
+  FOCUS_CHIP_B="文件"
+  FOCUS_CHIP_C="预览"
+  slides=(
+    "01-home|hero|home-screen.png|AI 原生协作，从移动端直接开始。|创建项目、追踪动态、掌握工作区进展，让关键上下文始终在手边。"
+    "02-profile|stack|my-page-screen.png|你的身份、额度与设置，集中收束。|账户信息、积分余额和关键设置放在同一处，移动端也保持完整掌控感。"
+    "03-project|focus|project-detail-screen.png|项目详情，不必回到桌面才看得清。|在一个严肃的移动项目视图里查看状态、文件、预览上下文与交付信号。"
+    "04-chat|triptych|chat-with-ai-screen.png|直接在项目上下文中与 AI 推进执行。|从项目背景切入对话、生成方案并继续推进，不切产品，也不断线程。"
+  )
+  watch_slides=(
+    "01-home|home-screen.png|首页|项目与动态"
+    "02-profile|my-page-screen.png|我的|身份与设置"
+    "03-project|project-detail-screen.png|项目|状态与交付"
+    "04-chat|chat-with-ai-screen.png|AI 对话|贴着上下文执行"
+  )
+else
+  SRC_DIR="${ROOT_DIR}/docs/readme-assets"
+  OUT_DIR="${ROOT_DIR}/docs/store-assets-v2"
+  DISPLAY_FONT="/System/Library/Fonts/Avenir Next.ttc"
+  BODY_FONT="/System/Library/Fonts/SFNS.ttf"
+  BRAND_TEXT="d1v.ai mobile"
+  FEATURE_HEADLINE="Projects, chat, and account controls in one mobile workspace."
+  FEATURE_BODY="A more serious control plane for AI-native builders working away from desktop."
+  POSTER_HEADLINE="AI-native work should stay intact when you leave your desk."
+  POSTER_BODY="d1v.ai keeps home, project detail, chat with AI, and account controls connected inside one mobile workflow."
+  FOCUS_CHIP_A="Status"
+  FOCUS_CHIP_B="Files"
+  FOCUS_CHIP_C="Preview"
+  slides=(
+    "01-home|hero|home-screen.png|AI-native work starts on mobile.|Create projects, track activity, and keep the workspace in reach from the home surface."
+    "02-profile|stack|my-page-screen.png|Your workspace, identity, and controls.|Profile, credits, and settings stay close without making the mobile app feel like a thin companion."
+    "03-project|focus|project-detail-screen.png|Project detail without the desktop detour.|Open status, files, preview context, and delivery signals from a serious mobile project view."
+    "04-chat|triptych|chat-with-ai-screen.png|Chat with AI where the project already lives.|Move from project context into execution without switching products or losing the thread."
+  )
+  watch_slides=(
+    "01-home|home-screen.png|Home|Projects and activity"
+    "02-profile|my-page-screen.png|Profile|Identity and settings"
+    "03-project|project-detail-screen.png|Project|Status and delivery"
+    "04-chat|chat-with-ai-screen.png|AI Chat|Execution in context"
+  )
+fi
+
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "${TMP_DIR}"' EXIT
 
@@ -14,8 +74,6 @@ if [[ -z "${MAGICK_BIN}" ]]; then
   exit 1
 fi
 
-DISPLAY_FONT="/System/Library/Fonts/Avenir Next.ttc"
-BODY_FONT="/System/Library/Fonts/SFNS.ttf"
 APP_ICON="${ROOT_DIR}/ios/Runner/Assets.xcassets/AppIcon.appiconset/1024.png"
 
 for required in \
@@ -30,12 +88,7 @@ for required in \
   fi
 done
 
-rm -rf \
-  "${OUT_DIR}/app-store/iphone-6.9" \
-  "${OUT_DIR}/app-store" \
-  "${OUT_DIR}/google-play" \
-  "${OUT_DIR}/masters" \
-  "${OUT_DIR}/promo"
+rm -rf "${OUT_DIR}"
 
 mkdir -p \
   "${OUT_DIR}/app-store/iphone-6.5" \
@@ -49,24 +102,9 @@ mkdir -p \
   "${OUT_DIR}/google-play/phone" \
   "${OUT_DIR}/google-play/tablet-7" \
   "${OUT_DIR}/google-play/tablet-10" \
-  "${OUT_DIR}/google-play" \
   "${OUT_DIR}/promo" \
   "${OUT_DIR}/masters/phone" \
   "${OUT_DIR}/masters/ipad"
-
-slides=(
-  "01-home|hero|home-screen.png|AI-native work starts on mobile.|Create projects, track activity, and keep the workspace in reach from the home surface."
-  "02-profile|stack|my-page-screen.png|Your workspace, identity, and controls.|Profile, credits, and settings stay close without making the mobile app feel like a thin companion."
-  "03-project|focus|project-detail-screen.png|Project detail without the desktop detour.|Open status, files, preview context, and delivery signals from a serious mobile project view."
-  "04-chat|triptych|chat-with-ai-screen.png|Chat with AI where the project already lives.|Move from project context into execution without switching products or losing the thread."
-)
-
-watch_slides=(
-  "01-home|home-screen.png|Home|Projects and activity"
-  "02-profile|my-page-screen.png|Profile|Identity and settings"
-  "03-project|project-detail-screen.png|Project|Status and delivery"
-  "04-chat|chat-with-ai-screen.png|AI Chat|Execution in context"
-)
 
 render_text() {
   local width="$1"
@@ -127,7 +165,7 @@ build_brand_pill() {
 
   "${MAGICK_BIN}" "${APP_ICON}" -resize "${icon_size}x${icon_size}" "${TMP_DIR}/pill-icon.png"
 
-  render_text $((width - text_x - inset)) "${height}" $((height / 2 - 5)) "#dbe3fb" west "d1v.ai mobile" "${TMP_DIR}/pill-text.png"
+  render_text $((width - text_x - inset)) "${height}" $((height / 2 - 5)) "#dbe3fb" west "${BRAND_TEXT}" "${TMP_DIR}/pill-text.png"
 
   "${MAGICK_BIN}" "${TMP_DIR}/pill-base.png" \
     "${TMP_DIR}/pill-icon.png" -gravity west -geometry "+${inset}+0" -composite \
@@ -286,9 +324,9 @@ compose_focus() {
   render_display $((width * 70 / 100)) $((height / 8)) $((width / 18)) "#f5f7ff" west "${headline}" "${TMP_DIR}/headline.png"
   render_text $((width * 58 / 100)) $((height / 14)) $((width / 37)) "#c4cdea" west "${body}" "${TMP_DIR}/body.png"
   build_card "${source}" $((width * 94 / 100)) $((height * 66 / 100)) $((width / 24)) "${TMP_DIR}/card.png" 26 10
-  build_chip $((width / 6)) $((height / 28)) "Status" "${TMP_DIR}/chip-a.png"
-  build_chip $((width / 6)) $((height / 28)) "Files" "${TMP_DIR}/chip-b.png"
-  build_chip $((width / 6)) $((height / 28)) "Preview" "${TMP_DIR}/chip-c.png"
+  build_chip $((width / 6)) $((height / 28)) "${FOCUS_CHIP_A}" "${TMP_DIR}/chip-a.png"
+  build_chip $((width / 6)) $((height / 28)) "${FOCUS_CHIP_B}" "${TMP_DIR}/chip-b.png"
+  build_chip $((width / 6)) $((height / 28)) "${FOCUS_CHIP_C}" "${TMP_DIR}/chip-c.png"
 
   "${MAGICK_BIN}" "${TMP_DIR}/base.png" \
     "${TMP_DIR}/pill.png" -gravity northwest -geometry "+${pill_x}+${pill_y}" -composite \
@@ -413,9 +451,9 @@ compose_phone_focus() {
   render_display $((width * 70 / 100)) $((height / 8)) $((width / 18)) "#f5f7ff" west "${headline}" "${TMP_DIR}/headline.png"
   render_text $((width * 58 / 100)) $((height / 13)) $((width / 37)) "#c4cdea" west "${body}" "${TMP_DIR}/body.png"
   build_card "${source}" $((width * 96 / 100)) $((height * 70 / 100)) $((width / 24)) "${TMP_DIR}/card.png" 34 8 north
-  build_chip $((width / 6)) $((height / 28)) "Status" "${TMP_DIR}/chip-a.png"
-  build_chip $((width / 6)) $((height / 28)) "Files" "${TMP_DIR}/chip-b.png"
-  build_chip $((width / 6)) $((height / 28)) "Preview" "${TMP_DIR}/chip-c.png"
+  build_chip $((width / 6)) $((height / 28)) "${FOCUS_CHIP_A}" "${TMP_DIR}/chip-a.png"
+  build_chip $((width / 6)) $((height / 28)) "${FOCUS_CHIP_B}" "${TMP_DIR}/chip-b.png"
+  build_chip $((width / 6)) $((height / 28)) "${FOCUS_CHIP_C}" "${TMP_DIR}/chip-c.png"
 
   "${MAGICK_BIN}" "${TMP_DIR}/base.png" \
     "${TMP_DIR}/pill.png" -gravity northwest -geometry "+${pill_x}+${pill_y}" -composite \
@@ -536,9 +574,9 @@ compose_iphone65_focus() {
   render_display $((width * 70 / 100)) $((height / 8)) $((width / 18)) "#f5f7ff" west "${headline}" "${TMP_DIR}/headline.png"
   render_text $((width * 60 / 100)) $((height / 12)) $((width / 38)) "#c4cdea" west "${body}" "${TMP_DIR}/body.png"
   build_card "${source}" $((width * 96 / 100)) $((height * 52 / 100)) $((width / 24)) "${TMP_DIR}/card.png" 34 8 north
-  build_chip $((width / 6)) $((height / 30)) "Status" "${TMP_DIR}/chip-a.png"
-  build_chip $((width / 6)) $((height / 30)) "Files" "${TMP_DIR}/chip-b.png"
-  build_chip $((width / 6)) $((height / 30)) "Preview" "${TMP_DIR}/chip-c.png"
+  build_chip $((width / 6)) $((height / 30)) "${FOCUS_CHIP_A}" "${TMP_DIR}/chip-a.png"
+  build_chip $((width / 6)) $((height / 30)) "${FOCUS_CHIP_B}" "${TMP_DIR}/chip-b.png"
+  build_chip $((width / 6)) $((height / 30)) "${FOCUS_CHIP_C}" "${TMP_DIR}/chip-c.png"
 
   "${MAGICK_BIN}" "${TMP_DIR}/base.png" \
     "${TMP_DIR}/pill.png" -gravity northwest -geometry "+${pill_x}+${pill_y}" -composite \
@@ -635,14 +673,6 @@ compose_watch_poster() {
     "${out}"
 }
 
-resize_fill() {
-  local source="$1"
-  local width="$2"
-  local height="$3"
-  local out="$4"
-  "${MAGICK_BIN}" "${source}" -resize "${width}x${height}^" -gravity center -crop "${width}x${height}+0+0" +repage "${out}"
-}
-
 resize_fit() {
   local source="$1"
   local width="$2"
@@ -656,8 +686,8 @@ build_feature_graphic() {
 
   build_base 1024 500 "${TMP_DIR}/feature-base.png"
   build_brand_pill 330 44 "${TMP_DIR}/feature-pill.png"
-  render_display 430 178 32 "#f5f7ff" west "Projects, chat, and account controls in one mobile workspace." "${TMP_DIR}/feature-headline.png"
-  render_text 390 72 18 "#c4cdea" west "A more serious control plane for AI-native builders working away from desktop." "${TMP_DIR}/feature-body.png"
+  render_display 430 178 32 "#f5f7ff" west "${FEATURE_HEADLINE}" "${TMP_DIR}/feature-headline.png"
+  render_text 390 72 18 "#c4cdea" west "${FEATURE_BODY}" "${TMP_DIR}/feature-body.png"
   build_card "${SRC_DIR}/home-screen.png" 164 320 24 "${TMP_DIR}/fg-a.png" 24 10
   build_card "${SRC_DIR}/project-detail-screen.png" 164 344 24 "${TMP_DIR}/fg-b.png" 24 10
   build_card "${SRC_DIR}/chat-with-ai-screen.png" 164 320 24 "${TMP_DIR}/fg-c.png" 24 10
@@ -678,8 +708,8 @@ build_promo_poster() {
 
   build_base 1600 2000 "${TMP_DIR}/poster-base.png"
   build_brand_pill 440 58 "${TMP_DIR}/poster-pill.png"
-  render_display 1220 270 78 "#f5f7ff" west "AI-native work should stay intact when you leave your desk." "${TMP_DIR}/poster-headline.png"
-  render_text 1120 120 32 "#c4cdea" west "d1v.ai keeps home, project detail, chat with AI, and account controls connected inside one mobile workflow." "${TMP_DIR}/poster-body.png"
+  render_display 1220 270 78 "#f5f7ff" west "${POSTER_HEADLINE}" "${TMP_DIR}/poster-headline.png"
+  render_text 1120 120 32 "#c4cdea" west "${POSTER_BODY}" "${TMP_DIR}/poster-body.png"
   build_card "${SRC_DIR}/home-screen.png" 430 920 40 "${TMP_DIR}/poster-a.png" 24 10
   build_card "${SRC_DIR}/chat-with-ai-screen.png" 430 1040 40 "${TMP_DIR}/poster-b.png" 24 10
   build_card "${SRC_DIR}/my-page-screen.png" 430 920 40 "${TMP_DIR}/poster-c.png" 24 10
@@ -721,4 +751,4 @@ done < <(printf '%s\n' "${watch_slides[@]}")
 build_feature_graphic "${OUT_DIR}/google-play/feature-graphic-1024x500.png"
 build_promo_poster "${OUT_DIR}/promo/promo-poster-1600x2000.png"
 
-echo "Generated v2 store assets under ${OUT_DIR}"
+echo "Generated ${LANGUAGE} store assets under ${OUT_DIR}"

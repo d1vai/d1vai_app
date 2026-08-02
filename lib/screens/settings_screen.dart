@@ -27,6 +27,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  static const double _mobileTabBottomSpacing = 120;
   int _currentTab = 0;
 
   int _tabIndexFromValue(String? value) {
@@ -71,32 +72,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     final desktop = isDesktopLayout(context);
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+    final tabBottomSpacing = desktop
+        ? 0.0
+        : _mobileTabBottomSpacing + bottomInset;
     final tabs = [
       (
         label: loc?.translate('profile') ?? 'Profile',
         icon: Icons.person,
-        child: SettingsProfileTab(
-          onShowThemeDialog: _showThemeDialog,
-          onShowEditorPreferencesDialog: _showEditorPreferencesDialog,
-          onShowBindEmailDialog: _showBindEmailDialog,
-          onShowResetPasswordDialog: _showResetPasswordDialog,
-          onShowAboutDialog: _showAboutDialog,
+        child: _SettingsTabContentInset(
+          bottomSpacing: tabBottomSpacing,
+          child: SettingsProfileTab(
+            onShowThemeDialog: _showThemeDialog,
+            onShowEditorPreferencesDialog: _showEditorPreferencesDialog,
+            onShowBindEmailDialog: _showBindEmailDialog,
+            onShowResetPasswordDialog: _showResetPasswordDialog,
+            onShowAboutDialog: _showAboutDialog,
+          ),
         ),
       ),
       (
         label: loc?.translate('invites') ?? 'Invites',
         icon: Icons.group_add,
-        child: const SettingsInvitesTab(),
+        child: _SettingsTabContentInset(
+          bottomSpacing: tabBottomSpacing,
+          child: const SettingsInvitesTab(),
+        ),
       ),
       (
         label: loc?.translate('github') ?? 'GitHub',
         icon: Icons.code,
-        child: const SettingsGithubTab(),
+        child: _SettingsTabContentInset(
+          bottomSpacing: tabBottomSpacing,
+          child: const SettingsGithubTab(),
+        ),
       ),
       (
         label: loc?.translate('settings_api_key') ?? 'API Key',
         icon: Icons.key_rounded,
-        child: const SettingsApiKeysTab(),
+        child: _SettingsTabContentInset(
+          bottomSpacing: tabBottomSpacing,
+          child: const SettingsApiKeysTab(),
+        ),
       ),
     ];
 
@@ -834,6 +851,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SettingsTabContentInset extends StatelessWidget {
+  final Widget child;
+  final double bottomSpacing;
+
+  const _SettingsTabContentInset({
+    required this.child,
+    required this.bottomSpacing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (bottomSpacing <= 0) return child;
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomSpacing),
+      child: child,
     );
   }
 }

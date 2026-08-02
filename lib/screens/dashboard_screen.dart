@@ -113,10 +113,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   void _scheduleWorkspacePoll() {
     _workspacePollTimer?.cancel();
     if (!_didInitWorkspaceStatus || !mounted) return;
-    final delay =
-        (!_workspaceChecking && _workspacePhase == WorkspacePhase.ready)
-        ? const Duration(seconds: 30)
-        : const Duration(seconds: 5);
+    final delay = const Duration(seconds: 5);
     _workspacePollTimer = Timer(delay, () {
       if (!mounted || !_didInitWorkspaceStatus) return;
       unawaited(_refreshWorkspaceStatus(bypassCache: true));
@@ -210,11 +207,14 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Future<void> _bootstrapWorkspaceStatus() async {
-    await _refreshWorkspaceStatus(bypassCache: true);
-    if (!mounted || !_didInitWorkspaceStatus) return;
-    if (_workspacePhase != WorkspacePhase.ready) {
-      await _requestWorkspaceActive(silent: true);
-    }
+    setState(() {
+      _workspaceChecking = true;
+      if (_workspacePhase != WorkspacePhase.ready) {
+        _workspacePhase = WorkspacePhase.starting;
+      }
+      _workspaceError = null;
+    });
+    await _requestWorkspaceActive(silent: true);
   }
 
   String _workspaceStatusLabel() {

@@ -33,6 +33,8 @@ migrate_working_dir/
 /build/
 /coverage/
 docs/store-assets-v2/
+docs/store-assets-v2-zh/
+docs/readme-assets-zh/
 docs/readme-assets/iphone-6.5/
 docs/app-store-review/macos/local-assets/
 

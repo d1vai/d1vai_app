@@ -27,6 +27,7 @@ DEFAULT_SERVER_PORT = 7360
 DEFAULT_VIEWPORT_WIDTH = 660
 DEFAULT_VIEWPORT_HEIGHT = 1295
 DEFAULT_DEVICE_SCALE_FACTOR = 2
+DEFAULT_LANGUAGE_KEY = "en"
 MINT_TOKEN_SCRIPT = REPO_ROOT / "backend_admin" / "tools" / "mint_user_token.py"
 ROOT_VENV_PYTHON = REPO_ROOT / ".venv" / "bin" / "python"
 
@@ -103,6 +104,11 @@ def build_parser() -> argparse.ArgumentParser:
         type=float,
         default=DEFAULT_DEVICE_SCALE_FACTOR,
         help=f"Device scale factor for screenshots (default: {DEFAULT_DEVICE_SCALE_FACTOR})",
+    )
+    parser.add_argument(
+        "--language-key",
+        default=DEFAULT_LANGUAGE_KEY,
+        help=f"Language key stored in local preferences (default: {DEFAULT_LANGUAGE_KEY})",
     )
     parser.add_argument(
         "--include-extra-tabs",
@@ -266,6 +272,7 @@ def seed_auth(
     app_url: str,
     token: str,
     user_profile: dict,
+    language_key: str,
 ) -> None:
     driver.get(app_url)
     time.sleep(2.5)
@@ -275,10 +282,12 @@ def seed_auth(
         """
         localStorage.setItem('flutter.auth_token', arguments[0]);
         localStorage.setItem('flutter.auth_user', arguments[1]);
+        localStorage.setItem('language_code', arguments[2]);
         localStorage.removeItem('flutter.onboarding_data');
         """,
         stored_token,
         stored_user,
+        language_key,
     )
 
 
@@ -381,7 +390,13 @@ def main() -> int:
         device_scale_factor=args.device_scale_factor,
     )
     try:
-        seed_auth(driver, app_url, token, user_profile)
+        seed_auth(
+            driver,
+            app_url,
+            token,
+            user_profile,
+            args.language_key.strip() or DEFAULT_LANGUAGE_KEY,
+        )
         bootstrap_authenticated_app(driver, app_url)
         capture_routes(driver, app_url, output_dir, routes)
     finally:
@@ -399,6 +414,7 @@ def main() -> int:
         "app_url": app_url,
         "api_base": args.api_base.strip(),
         "project_id": args.project_id.strip(),
+        "language_key": args.language_key.strip() or DEFAULT_LANGUAGE_KEY,
         "screens": [filename for filename, _, _ in routes],
         "captured_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }
