@@ -3,10 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../core/theme/app_colors.dart';
 import '../core/theme/locale_font_helper.dart';
 import '../utils/desktop_layout.dart';
-import '../widgets/d1v_app_bar.dart';
 import '../widgets/snackbar_helper.dart';
 import '../widgets/share_sheet.dart';
 import '../l10n/app_localizations.dart';
@@ -193,13 +191,11 @@ class _DocsScreenState extends State<DocsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final showRecent = _searchController.text.trim().isEmpty;
     final desktop = isDesktopLayout(context);
     final hasRecent = _recentSlugs.isNotEmpty;
     return Scaffold(
-      appBar: D1VSimpleAppBar(
-        enableBreathing: false,
+      appBar: AppBar(
         title: Text(
           _t('docs_title', 'Documentation'),
           style: LocaleFontHelper.localizedTitleStyle(
@@ -208,17 +204,8 @@ class _DocsScreenState extends State<DocsScreen> {
           ),
         ),
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              isDark ? const Color(0xFF0B1220) : const Color(0xFFF8FAFC),
-              isDark ? const Color(0xFF111827) : const Color(0xFFFDF7FB),
-            ],
-          ),
-        ),
+      body: ColoredBox(
+        color: theme.colorScheme.surface,
         child: desktop
             ? DesktopContentFrame(
                 maxWidth: 1440,
@@ -254,7 +241,12 @@ class _DocsScreenState extends State<DocsScreen> {
                               ],
                             ),
                           ),
-                          const SizedBox(width: 24),
+                          VerticalDivider(
+                            width: 32,
+                            color: theme.colorScheme.outlineVariant.withValues(
+                              alpha: 0.65,
+                            ),
+                          ),
                           Expanded(
                             flex: 6,
                             child: SingleChildScrollView(
@@ -328,8 +320,8 @@ class _DocsScreenState extends State<DocsScreen> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 420,
-              mainAxisExtent: 170,
+              maxCrossAxisExtent: 460,
+              mainAxisExtent: 126,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
             ),
@@ -348,28 +340,13 @@ class _DocsScreenState extends State<DocsScreen> {
   Widget _buildSearchField(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.04)
-            : Colors.white.withValues(alpha: 0.86),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : colorScheme.outlineVariant.withValues(alpha: 0.85),
+    return Material(
+      color: colorScheme.surfaceContainerLowest,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.78),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.12)
-                : const Color(0xFF0F172A).withValues(alpha: 0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
       ),
       child: TextField(
         controller: _searchController,
@@ -390,15 +367,15 @@ class _DocsScreenState extends State<DocsScreen> {
                   },
                 ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide.none,
           ),
           filled: true,
@@ -420,21 +397,8 @@ class _DocsScreenState extends State<DocsScreen> {
   Widget _buildEmptyState(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.04)
-            : Colors.white.withValues(alpha: 0.8),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : colorScheme.outlineVariant.withValues(alpha: 0.8),
-        ),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 32),
       child: Column(
         children: [
           Icon(
@@ -493,9 +457,8 @@ class _DocsScreenState extends State<DocsScreen> {
             children: [
               if ((eyebrow ?? '').trim().isNotEmpty) ...[
                 Text(
-                  eyebrow!.toUpperCase(),
+                  eyebrow!,
                   style: theme.textTheme.labelMedium?.copyWith(
-                    letterSpacing: 1.1,
                     color: colorScheme.primary,
                     fontWeight: FontWeight.w700,
                   ),
@@ -506,7 +469,7 @@ class _DocsScreenState extends State<DocsScreen> {
                 title,
                 style: LocaleFontHelper.localizedTitleStyle(
                   context,
-                  theme.textTheme.titleLarge,
+                  theme.textTheme.titleMedium,
                 ),
               ),
             ],
@@ -521,7 +484,6 @@ class _DocsScreenState extends State<DocsScreen> {
   Widget _buildRecent(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
 
     DocItem? findBySlug(String slug) {
       for (final p in _pages) {
@@ -538,226 +500,128 @@ class _DocsScreenState extends State<DocsScreen> {
 
     if (items.isEmpty) return const SizedBox.shrink();
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.04)
-            : Colors.white.withValues(alpha: 0.82),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : colorScheme.outlineVariant.withValues(alpha: 0.8),
-        ),
-      ),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: items.map((p) {
-          return ActionChip(
-            avatar: Icon(p.icon, size: 16, color: colorScheme.primary),
-            label: Text(p.title),
-            labelStyle: theme.textTheme.labelLarge?.copyWith(
-              color: colorScheme.onSurface,
+    return Column(
+      children: [
+        for (var index = 0; index < items.length; index++) ...[
+          InkWell(
+            onTap: () => _navigateToDoc(context, items[index].href),
+            borderRadius: BorderRadius.circular(6),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+              child: Row(
+                children: [
+                  Icon(
+                    items[index].icon,
+                    size: 17,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      items[index].title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 18,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ],
+              ),
             ),
-            backgroundColor: isDark
-                ? colorScheme.primary.withValues(alpha: 0.12)
-                : const Color(0xFFF5F3FF),
-            side: BorderSide(
-              color: isDark
-                  ? colorScheme.primary.withValues(alpha: 0.26)
-                  : const Color(0xFFD9CCFF),
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(999),
-            ),
-            onPressed: () => _navigateToDoc(context, p.href),
-          );
-        }).toList(),
-      ),
+          ),
+          if (index != items.length - 1)
+            Divider(height: 1, color: colorScheme.outlineVariant),
+        ],
+      ],
     );
   }
 
   Widget _buildDocCard(BuildContext context, DocItem page, int index) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final accent = _accentForIndex(index);
-    final tag = _tagForItem(page);
 
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [
-                  Colors.white.withValues(alpha: 0.04),
-                  accent.withValues(alpha: 0.10),
-                ]
-              : [Colors.white, accent.withValues(alpha: 0.07)],
-        ),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : colorScheme.outlineVariant.withValues(alpha: 0.78),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.10)
-                : const Color(0xFF0F172A).withValues(alpha: 0.035),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Material(
+        color: colorScheme.surfaceContainerLowest,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.78),
           ),
-        ],
-      ),
-      child: InkWell(
-        onTap: () => _navigateToDoc(context, page.href),
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      accent.withValues(alpha: isDark ? 0.34 : 0.18),
-                      accent.withValues(alpha: isDark ? 0.16 : 0.08),
+        ),
+        child: InkWell(
+          onTap: () => _navigateToDoc(context, page.href),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    color: colorScheme.surfaceContainerHighest,
+                  ),
+                  child: Icon(
+                    page.icon,
+                    color: colorScheme.onSurfaceVariant,
+                    size: 19,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        page.title,
+                        style:
+                            LocaleFontHelper.localizedTitleStyle(
+                              context,
+                              theme.textTheme.titleSmall,
+                            )?.copyWith(
+                              color: colorScheme.onSurface,
+                              fontWeight: FontWeight.w700,
+                            ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        page.desc,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontSize: 12.5,
+                          height: 1.3,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ],
                   ),
-                  border: Border.all(
-                    color: accent.withValues(alpha: isDark ? 0.32 : 0.18),
-                  ),
                 ),
-                child: Icon(page.icon, color: accent, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Wrap(
-                            spacing: 8,
-                            runSpacing: 6,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            children: [
-                              Text(
-                                page.title,
-                                style:
-                                    LocaleFontHelper.localizedTitleStyle(
-                                      context,
-                                      theme.textTheme.titleMedium,
-                                    )?.copyWith(
-                                      color: colorScheme.onSurface,
-                                      fontWeight: FontWeight.w800,
-                                      height: 1.05,
-                                    ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 7,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.05)
-                                      : accent.withValues(alpha: 0.10),
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                child: Text(
-                                  tag,
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: accent,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 10.5,
-                                    letterSpacing: 0.2,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          (index + 1).toString().padLeft(2, '0'),
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      page.desc,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        fontSize: 13,
-                        height: 1.28,
-                      ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Icon(
-                  Icons.north_east_rounded,
-                  size: 16,
+                const SizedBox(width: 10),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 19,
                   color: colorScheme.onSurfaceVariant,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
-  }
-
-  Color _accentForIndex(int index) {
-    const accents = <Color>[
-      AppColors.primaryBrand,
-      AppColors.secondaryBrand,
-      AppColors.info,
-      AppColors.success,
-      Color(0xFF8B5CF6),
-      Color(0xFFF59E0B),
-    ];
-    return accents[index % accents.length];
-  }
-
-  String _tagForItem(DocItem page) {
-    final title = page.title.toLowerCase();
-    if (title.contains('api')) return 'Reference';
-    if (title.contains('faq')) return 'Support';
-    if (title.contains('pricing') || title.contains('refund')) return 'Policy';
-    if (title.contains('legal')) return 'Compliance';
-    if (title.contains('roadmap')) return 'Planning';
-    if (title.contains('architecture') || title.contains('integrations')) {
-      return 'Technical';
-    }
-    if (title.contains('overview') || title.contains('product')) return 'Core';
-    return 'Guide';
   }
 
   void _navigateToDoc(BuildContext context, String href) async {

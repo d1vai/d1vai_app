@@ -1086,8 +1086,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                 project: project,
                 updatedText: _formatTimeAgo(project.updatedAt),
                 onTap: () => context.push(buildProjectChatDetailRoute(project)),
-                onChat: () =>
-                    context.push(buildProjectChatDetailRoute(project)),
               ),
             );
           },

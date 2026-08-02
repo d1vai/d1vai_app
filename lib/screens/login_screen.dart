@@ -54,25 +54,14 @@ class _LoginModeTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final cs = Theme.of(context).colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-
     return Container(
-      height: 48,
+      height: 42,
+      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            cs.primary.withValues(alpha: isDark ? 0.28 : 0.14),
-            cs.tertiary.withValues(alpha: isDark ? 0.2 : 0.1),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: cs.outlineVariant.withValues(alpha: isDark ? 0.48 : 0.72),
-        ),
+        color: cs.surfaceContainerHighest.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.76)),
       ),
       child: Stack(
         children: [
@@ -84,26 +73,12 @@ class _LoginModeTabBar extends StatelessWidget {
                 : Alignment.centerRight,
             child: FractionallySizedBox(
               widthFactor: 0.5,
-              child: Padding(
-                padding: const EdgeInsets.all(3),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: cs.surface.withValues(alpha: isDark ? 0.88 : 0.96),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: cs.outlineVariant.withValues(
-                        alpha: isDark ? 0.55 : 0.85,
-                      ),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(
-                          alpha: isDark ? 0.2 : 0.1,
-                        ),
-                        blurRadius: isDark ? 8 : 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: cs.surface,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: cs.outlineVariant.withValues(alpha: 0.72),
                   ),
                 ),
               ),
@@ -116,7 +91,7 @@ class _LoginModeTabBar extends StatelessWidget {
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(6),
                     splashFactory: NoSplash.splashFactory,
                     highlightColor: Colors.transparent,
                     onTap: () => onChanged(mode),
@@ -129,7 +104,9 @@ class _LoginModeTabBar extends StatelessWidget {
                           fontWeight: isSelected
                               ? FontWeight.w600
                               : FontWeight.w500,
-                          color: isSelected ? cs.primary : cs.onSurfaceVariant,
+                          color: isSelected
+                              ? cs.onSurface
+                              : cs.onSurfaceVariant,
                         ),
                         child: Text(
                           mode.getLabel(context),
@@ -401,8 +378,8 @@ class _LoginScreenState extends State<LoginScreen> {
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     return FilledButton.styleFrom(
-      minimumSize: const Size(double.infinity, 56),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      minimumSize: const Size(double.infinity, 50),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       backgroundColor: cs.primary,
       foregroundColor: cs.onPrimary,
       disabledBackgroundColor: cs.surfaceContainerHighest.withValues(
@@ -449,10 +426,10 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
         style: FilledButton.styleFrom(
-          minimumSize: const Size(double.infinity, 54),
+          minimumSize: const Size(double.infinity, 50),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(8),
             side: BorderSide(
               color: cs.primary.withValues(alpha: isDark ? 0.3 : 0.14),
             ),
@@ -651,15 +628,13 @@ class _LoginScreenState extends State<LoginScreen> {
     BorderSide? side,
   }) {
     final cs = Theme.of(context).colorScheme;
-    final resolvedForegroundColor = foregroundColor ?? cs.onSurface;
-
     return OutlinedButton(
       onPressed: _isLoading ? null : onPressed,
       style: OutlinedButton.styleFrom(
         minimumSize: const Size(double.infinity, 48),
         backgroundColor: backgroundColor,
         foregroundColor: foregroundColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         side: side ?? BorderSide(color: cs.outlineVariant),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       ),
@@ -676,15 +651,7 @@ class _LoginScreenState extends State<LoginScreen> {
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),
           ),
-          SizedBox(
-            width: 22,
-            height: 22,
-            child: Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: 14,
-              color: resolvedForegroundColor.withValues(alpha: 0.64),
-            ),
-          ),
+          const SizedBox(width: 22, height: 22),
         ],
       ),
     );
@@ -858,7 +825,7 @@ class _LoginScreenState extends State<LoginScreen> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.primaryContainer,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         template.replaceAll('{code}', inviteCode),
@@ -894,30 +861,31 @@ class _LoginScreenState extends State<LoginScreen> {
             _buildInviteBanner(loc),
             const SizedBox(height: 16),
           ],
-          if (desktop)
+          if (!desktop) ...[
             Text(
-              loc?.translate('login_welcome_back') ?? 'Welcome back',
+              'd1v',
               style: Theme.of(
                 context,
-              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
-            )
-          else
-            const Text(
-              'd1vai',
-              style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
             ),
-          SizedBox(height: desktop ? 12 : 48),
-          if (desktop)
-            Text(
-              loc?.translate('login_desktop_intro') ??
-                  'Sign in to continue managing projects, previews, deployments, and workspace sessions.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                height: 1.45,
-              ),
+            const SizedBox(height: 20),
+          ],
+          Text(
+            loc?.translate('login_welcome_back') ?? 'Welcome back',
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            loc?.translate('login_desktop_intro') ??
+                'Sign in to continue managing projects, previews, deployments, and workspace sessions.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.45,
             ),
-          if (desktop) const SizedBox(height: 20),
+          ),
+          const SizedBox(height: 20),
           _LoginModeTabBar(selected: _loginMode, onChanged: _onModeChanged),
           const SizedBox(height: 24),
           AuthTextInput(
@@ -972,34 +940,19 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildDesktopHero(AppLocalizations? loc) {
+  Widget _buildDesktopIdentity(AppLocalizations? loc) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: LinearGradient(
-          colors: [
-            cs.primary.withValues(alpha: 0.12),
-            cs.tertiary.withValues(alpha: 0.1),
-            cs.surfaceContainerHigh.withValues(alpha: 0.7),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.6)),
-      ),
-      padding: const EdgeInsets.fromLTRB(28, 28, 28, 32),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 44, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const AuthDisplayControls(),
           const Spacer(),
           Text(
-            'd1vai',
-            style: theme.textTheme.displaySmall?.copyWith(
+            'd1v',
+            style: theme.textTheme.displayMedium?.copyWith(
               fontWeight: FontWeight.w800,
-              letterSpacing: -0.8,
             ),
           ),
           const SizedBox(height: 14),
@@ -1012,23 +965,23 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
+          Column(
             children: [
-              _LoginInfoChip(
+              _LoginCapabilityRow(
                 icon: Icons.description_outlined,
                 text:
                     loc?.translate('login_desktop_hero_chip_files') ??
                     'Code + file preview',
               ),
-              _LoginInfoChip(
+              const SizedBox(height: 14),
+              _LoginCapabilityRow(
                 icon: Icons.cloud_sync_outlined,
                 text:
                     loc?.translate('login_desktop_hero_chip_deploy') ??
                     'Preview and deploy flow',
               ),
-              _LoginInfoChip(
+              const SizedBox(height: 14),
+              _LoginCapabilityRow(
                 icon: Icons.analytics_outlined,
                 text:
                     loc?.translate('login_desktop_hero_chip_analytics') ??
@@ -1048,106 +1001,89 @@ class _LoginScreenState extends State<LoginScreen> {
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [cs.surface, cs.surfaceContainerLowest, cs.surface],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+      backgroundColor: cs.surface,
+      body: ColoredBox(
+        color: cs.surface,
         child: SafeArea(
-          child: desktop
-              ? DesktopContentFrame(
-                  maxWidth: 1220,
-                  padding: const EdgeInsets.fromLTRB(28, 22, 28, 28),
-                  child: SizedBox.expand(
-                    child: Row(
-                      children: [
-                        Expanded(flex: 12, child: _buildDesktopHero(loc)),
-                        const SizedBox(width: 24),
-                        Expanded(
-                          flex: 10,
-                          child: Align(
-                            alignment: Alignment.center,
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 520),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: cs.surface.withValues(alpha: 0.9),
-                                  borderRadius: BorderRadius.circular(28),
-                                  border: Border.all(
-                                    color: cs.outlineVariant.withValues(
-                                      alpha: 0.55,
-                                    ),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: desktop
+                    ? DesktopContentFrame(
+                        maxWidth: 1120,
+                        padding: const EdgeInsets.fromLTRB(32, 32, 32, 28),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 11,
+                              child: _buildDesktopIdentity(loc),
+                            ),
+                            VerticalDivider(
+                              width: 64,
+                              color: cs.outlineVariant.withValues(alpha: 0.7),
+                            ),
+                            Expanded(
+                              flex: 9,
+                              child: Align(
+                                alignment: Alignment.center,
+                                child: ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 440,
                                   ),
-                                ),
-                                padding: const EdgeInsets.fromLTRB(
-                                  24,
-                                  22,
-                                  24,
-                                  22,
-                                ),
-                                child: SingleChildScrollView(
-                                  child: _buildLoginForm(loc, desktop: true),
+                                  child: SingleChildScrollView(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 56,
+                                    ),
+                                    child: _buildLoginForm(loc, desktop: true),
+                                  ),
                                 ),
                               ),
                             ),
+                          ],
+                        ),
+                      )
+                    : Center(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.fromLTRB(20, 72, 20, 28),
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 440),
+                            child: _buildLoginForm(loc, desktop: false),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                )
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Align(
-                        alignment: Alignment.centerRight,
-                        child: AuthDisplayControls(),
                       ),
-                      const SizedBox(height: 40),
-                      _buildLoginForm(loc, desktop: false),
-                    ],
-                  ),
-                ),
+              ),
+              const Positioned(top: 8, right: 12, child: AuthDisplayControls()),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _LoginInfoChip extends StatelessWidget {
+class _LoginCapabilityRow extends StatelessWidget {
   final IconData icon;
   final String text;
 
-  const _LoginInfoChip({required this.icon, required this.text});
+  const _LoginCapabilityRow({required this.icon, required this.text});
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: cs.surface.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.5)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: cs.primary),
-          const SizedBox(width: 8),
-          Text(
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: theme.colorScheme.onSurfaceVariant),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
             text,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

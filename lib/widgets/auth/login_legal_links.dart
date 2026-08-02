@@ -14,15 +14,26 @@ class LoginLegalLinks extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    final theme = Theme.of(context);
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Text(
           agreementText,
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 4),
-        TextButton(onPressed: onOpenLegal, child: Text(legalLabel)),
+        TextButton(
+          onPressed: onOpenLegal,
+          style: TextButton.styleFrom(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+          ),
+          child: Text(legalLabel),
+        ),
       ],
     );
   }

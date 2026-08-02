@@ -71,26 +71,15 @@ class _AuthTextInputState extends State<AuthTextInput> {
     final borderColor = isFocused
         ? cs.primary.withValues(alpha: isDark ? 0.95 : 0.75)
         : cs.outlineVariant.withValues(alpha: isDark ? 0.72 : 0.9);
-    final fillColor = isDark
-        ? cs.surfaceContainerHigh.withValues(alpha: 0.55)
-        : cs.surface.withValues(alpha: 0.98);
+    final fillColor = cs.surfaceContainerLowest;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
       curve: Curves.easeOutCubic,
       decoration: BoxDecoration(
         color: fillColor,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: borderColor, width: isFocused ? 1.5 : 1),
-        boxShadow: [
-          BoxShadow(
-            color: isFocused
-                ? cs.primary.withValues(alpha: isDark ? 0.24 : 0.12)
-                : Colors.black.withValues(alpha: isDark ? 0.14 : 0.05),
-            blurRadius: isFocused ? 16 : 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: TextFormField(
         controller: widget.controller,
@@ -110,20 +99,16 @@ class _AuthTextInputState extends State<AuthTextInput> {
             color: cs.onSurfaceVariant.withValues(alpha: 0.82),
           ),
           contentPadding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
-          prefixIconConstraints: const BoxConstraints(minWidth: 56),
+          prefixIconConstraints: const BoxConstraints(minWidth: 48),
           prefixIcon: Padding(
-            padding: const EdgeInsets.only(left: 12, right: 4),
+            padding: const EdgeInsets.only(left: 12, right: 6),
             child: Align(
               widthFactor: 1,
               heightFactor: 1,
-              child: Container(
-                width: 30,
-                height: 30,
-                decoration: BoxDecoration(
-                  color: cs.primary.withValues(alpha: isDark ? 0.25 : 0.1),
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: Icon(widget.icon, size: 17, color: cs.primary),
+              child: Icon(
+                widget.icon,
+                size: 19,
+                color: isFocused ? cs.primary : cs.onSurfaceVariant,
               ),
             ),
           ),
@@ -293,9 +278,7 @@ class _AuthOtpInputState extends State<AuthOtpInput> {
                 : hasValue
                 ? cs.primary.withValues(alpha: 0.56)
                 : cs.outlineVariant.withValues(alpha: isDark ? 0.74 : 0.9);
-            final fillColor = isDark
-                ? cs.surfaceContainerHigh.withValues(alpha: 0.55)
-                : cs.surface.withValues(alpha: 0.98);
+            final fillColor = cs.surfaceContainerLowest;
 
             return Padding(
               padding: EdgeInsets.only(
@@ -308,20 +291,11 @@ class _AuthOtpInputState extends State<AuthOtpInput> {
                 height: cellHeight,
                 decoration: BoxDecoration(
                   color: fillColor,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: borderColor,
                     width: isFocused ? 1.6 : 1,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: isFocused
-                          ? cs.primary.withValues(alpha: isDark ? 0.24 : 0.12)
-                          : Colors.black.withValues(alpha: isDark ? 0.1 : 0.04),
-                      blurRadius: isFocused ? 14 : 6,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
                 ),
                 child: TextFormField(
                   controller: _controllers[index],

@@ -123,39 +123,34 @@ class AuthDisplayControls extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
     final loc = AppLocalizations.of(context);
-    final buttonStyle = OutlinedButton.styleFrom(
-      minimumSize: const Size(0, 40),
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      backgroundColor: cs.surface.withValues(alpha: isDark ? 0.72 : 0.86),
-      side: BorderSide(
-        color: cs.outlineVariant.withValues(alpha: isDark ? 0.45 : 0.75),
-      ),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    final themeLabel = loc?.translate('theme_title') ?? 'Theme';
+    final languageLabel = loc?.translate('language') ?? 'Language';
+
+    ButtonStyle buttonStyle() => IconButton.styleFrom(
+      minimumSize: const Size.square(40),
+      maximumSize: const Size.square(40),
+      backgroundColor: cs.surfaceContainerLowest,
+      foregroundColor: cs.onSurfaceVariant,
+      side: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.72)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     );
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        OutlinedButton.icon(
+        IconButton(
           onPressed: () => _showThemeSheet(context),
-          style: buttonStyle,
-          icon: const Icon(Icons.palette_outlined, size: 18),
-          label: Text(
-            loc?.translate('theme_title') ?? 'Theme',
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
+          style: buttonStyle(),
+          tooltip: themeLabel,
+          icon: const Icon(Icons.contrast_rounded, size: 19),
         ),
         const SizedBox(width: 8),
-        OutlinedButton.icon(
+        IconButton(
           onPressed: () => _showLanguageSheet(context),
-          style: buttonStyle,
-          icon: const Icon(Icons.language_outlined, size: 18),
-          label: Text(
-            loc?.translate('language') ?? 'Language',
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
+          style: buttonStyle(),
+          tooltip: languageLabel,
+          icon: const Icon(Icons.language_rounded, size: 19),
         ),
       ],
     );

@@ -15,8 +15,6 @@ import '../services/app_analytics_service.dart';
 import '../services/d1vai_service.dart';
 import '../utils/error_utils.dart';
 import '../widgets/adaptive_modal.dart';
-import '../widgets/app_glass_surface.dart';
-import '../widgets/app_liquid_glass.dart';
 import '../widgets/avatar_image.dart';
 import '../widgets/login_required_dialog.dart';
 import '../widgets/project_analytics/project_analytics_tab.dart';
@@ -32,7 +30,6 @@ import '../widgets/d1v_tab_bar_view.dart';
 import '../widgets/share_sheet.dart';
 import '../widgets/snackbar_helper.dart';
 import '../core/theme/app_colors.dart';
-import '../theme/d1v_theme_colors.dart';
 import '../core/auth_expiry_bus.dart';
 import '../l10n/app_localizations.dart';
 import '../utils/desktop_layout.dart';
@@ -63,6 +60,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   );
   static const double _macosTitleBarHeight = 34;
   static const double _macosTrafficLightsInset = 80;
+  static const List<int> _primaryTabIndices = [0, 4, 5];
+  static const List<int> _secondaryTabIndices = [1, 2, 3, 6];
 
   late final TabController _tabController;
   late final MacosMenuController _macosMenuController;
@@ -77,13 +76,37 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   String? _lastTrackedProjectId;
 
   final List<_TabItem> _tabs = const [
-    _TabItem('project_detail_tab_chat', 'Chat', Icons.chat),
-    _TabItem('project_detail_tab_environment', 'Environment', Icons.key),
-    _TabItem('project_detail_tab_database', 'Database', Icons.storage),
-    _TabItem('project_detail_tab_payment', 'Payment', Icons.payment),
-    _TabItem('project_detail_tab_deploy', 'Deploy', Icons.cloud_upload),
-    _TabItem('project_detail_tab_analytics', 'Analytics', Icons.analytics),
-    _TabItem('project_detail_tab_overview', 'Overview', Icons.dashboard),
+    _TabItem(
+      'project_detail_tab_chat',
+      'Chat',
+      Icons.chat_bubble_outline_rounded,
+    ),
+    _TabItem(
+      'project_detail_tab_environment',
+      'Environment',
+      Icons.key_outlined,
+    ),
+    _TabItem('project_detail_tab_database', 'Database', Icons.storage_outlined),
+    _TabItem(
+      'project_detail_tab_payment',
+      'Payment',
+      Icons.credit_card_outlined,
+    ),
+    _TabItem(
+      'project_detail_tab_deploy',
+      'Deploy',
+      Icons.rocket_launch_outlined,
+    ),
+    _TabItem(
+      'project_detail_tab_analytics',
+      'Analytics',
+      Icons.query_stats_rounded,
+    ),
+    _TabItem(
+      'project_detail_tab_overview',
+      'Overview',
+      Icons.grid_view_outlined,
+    ),
   ];
 
   String _t(String key, String fallback) {
@@ -428,12 +451,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     if (!isMacosDesktop) {
       return GlassPage(
         child: Scaffold(
-          appBar: isDesktopLayout(context)
-              ? null
-              : PreferredSize(
-                  preferredSize: const Size.fromHeight(kToolbarHeight),
-                  child: _buildGlassmorphicAppBar(context),
-                ),
+          appBar: _buildProjectWorkspaceAppBar(context, project),
           body: body,
         ),
       );
@@ -499,103 +517,139 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     );
   }
 
-  Widget _buildGlassmorphicAppBar(BuildContext context) {
+  PreferredSizeWidget _buildProjectWorkspaceAppBar(
+    BuildContext context,
+    UserProject? project,
+  ) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final isMobilePlatform =
-        defaultTargetPlatform == TargetPlatform.iOS ||
-        defaultTargetPlatform == TargetPlatform.android;
-    final useSoftLightBackground = isMobilePlatform && !isDark;
-    final activeText = D1VColors.getActiveText(context);
-    final inactiveText = D1VColors.getInactiveText(context);
-    final lightGlassShadow = <BoxShadow>[
-      BoxShadow(
-        color: theme.colorScheme.shadow.withValues(alpha: 0.08),
-        blurRadius: 18,
-        offset: const Offset(0, 8),
-      ),
-      BoxShadow(
-        color: Colors.white.withValues(alpha: 0.18),
-        blurRadius: 10,
-        offset: const Offset(0, 1),
-      ),
-    ];
+    final colorScheme = theme.colorScheme;
+    final projectName = project?.projectName.trim().isNotEmpty == true
+        ? project!.projectName.trim()
+        : _t('project_detail_not_found', 'Project');
 
-    return AppGlassSurface(
-      variant: AppLiquidGlassVariant.navigation,
-      borderRadius: BorderRadius.zero,
-      glassBorderRadius: 0,
-      glowIntensity: isDark ? 0.14 : 0.08,
-      useOwnLayer: isDark,
-      boxShadow: isDark ? null : lightGlassShadow,
-      overlayDecoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [
-                  D1VColors.deepBlueDark.withValues(alpha: 0.18),
-                  theme.colorScheme.primary.withValues(alpha: 0.08),
-                  theme.colorScheme.surface.withValues(alpha: 0.10),
-                ]
-              : [
-                  Colors.white.withValues(
-                    alpha: useSoftLightBackground ? 0.72 : 0.60,
-                  ),
-                  theme.colorScheme.surface.withValues(
-                    alpha: useSoftLightBackground ? 0.60 : 0.48,
-                  ),
-                  theme.colorScheme.surfaceContainerLowest.withValues(
-                    alpha: useSoftLightBackground ? 0.34 : 0.28,
-                  ),
-                ],
-        ),
-        border: Border(
-          bottom: BorderSide(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.08)
-                : theme.colorScheme.outlineVariant.withValues(alpha: 0.68),
-          ),
+    return AppBar(
+      toolbarHeight: 54,
+      titleSpacing: 0,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      backgroundColor: colorScheme.surface,
+      shape: Border(
+        bottom: BorderSide(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.68),
         ),
       ),
-      child: AppBar(
-        titleSpacing: 0,
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        foregroundColor: activeText,
-        actions: [
-          IconButton(
-            tooltip: _t('project_detail_share_title', 'Share'),
-            icon: const Icon(Icons.share),
-            onPressed: _shareProject,
+      title: Row(
+        children: [
+          if (project != null) ...[
+            Hero(
+              tag: 'project-emoji-${project.id}',
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(7),
+                  ),
+                  child: Text(
+                    project.emoji ?? '🚀',
+                    style: const TextStyle(fontSize: 17),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 9),
+          ],
+          Expanded(
+            child: Text(
+              projectName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ],
-        title: ClipRect(
-          child: D1VTabBar(
-            controller: _tabController,
-            isScrollable: true,
-            labelPadding: const EdgeInsets.symmetric(horizontal: 8),
-            labelColor: activeText,
-            unselectedLabelColor: inactiveText,
-            labelStyle: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
-            unselectedLabelStyle: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-            ),
-            tabs: _tabs
-                .map(
-                  (tab) => D1VTab(
-                    icon: tab.icon,
-                    text: _t(tab.labelKey, tab.fallback),
-                  ),
-                )
-                .toList(),
-          ),
-        ),
       ),
+      actions: [
+        IconButton(
+          tooltip: _t('project_detail_share_title', 'Share'),
+          icon: const Icon(Icons.ios_share_rounded, size: 20),
+          onPressed: project == null ? null : _shareProject,
+        ),
+        const SizedBox(width: 2),
+      ],
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(44),
+        child: SizedBox(height: 44, child: _buildProjectSectionNavigation()),
+      ),
+    );
+  }
+
+  Widget _buildProjectSectionNavigation({bool compact = false}) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return AnimatedBuilder(
+      animation: _tabController,
+      builder: (context, _) {
+        final selectedIndex = _tabController.index;
+        final secondarySelected = _secondaryTabIndices.contains(selectedIndex);
+        return Row(
+          children: [
+            for (final index in _primaryTabIndices)
+              Expanded(
+                child: _ProjectSectionButton(
+                  label: _t(_tabs[index].labelKey, _tabs[index].fallback),
+                  icon: _tabs[index].icon,
+                  selected: selectedIndex == index,
+                  compact: compact,
+                  onTap: () => _tabController.animateTo(index),
+                ),
+              ),
+            SizedBox(
+              width: compact ? 38 : 48,
+              child: PopupMenuButton<int>(
+                tooltip: _t('chat_menu_more', 'More'),
+                initialValue: secondarySelected ? selectedIndex : null,
+                onSelected: _tabController.animateTo,
+                position: PopupMenuPosition.under,
+                icon: Icon(
+                  Icons.more_horiz_rounded,
+                  size: compact ? 17 : 20,
+                  color: secondarySelected
+                      ? colorScheme.primary
+                      : colorScheme.onSurfaceVariant,
+                ),
+                itemBuilder: (context) => [
+                  for (final index in _secondaryTabIndices)
+                    PopupMenuItem<int>(
+                      value: index,
+                      child: Row(
+                        children: [
+                          Icon(_tabs[index].icon, size: 19),
+                          const SizedBox(width: 12),
+                          Text(
+                            _t(_tabs[index].labelKey, _tabs[index].fallback),
+                          ),
+                          if (selectedIndex == index) ...[
+                            const Spacer(),
+                            Icon(
+                              Icons.check_rounded,
+                              size: 18,
+                              color: colorScheme.primary,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -634,52 +688,29 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                   _MacosHeaderBackButton(onPressed: _handleBack),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: AnimatedBuilder(
-                      animation: _tabController,
-                      builder: (context, _) {
-                        return Row(
-                          children: [
-                            Flexible(
-                              child: Align(
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  title,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w400,
-                                    letterSpacing: 0.05,
-                                  ),
-                                ),
+                    child: Row(
+                      children: [
+                        Flexible(
+                          flex: 2,
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                child: Row(
-                                  children: [
-                                    for (var i = 0; i < _tabs.length; i++) ...[
-                                      if (i > 0) const SizedBox(width: 8),
-                                      _MacosProjectTabChip(
-                                        label: _t(
-                                          _tabs[i].labelKey,
-                                          _tabs[i].fallback,
-                                        ),
-                                        icon: _tabs[i].icon,
-                                        selected: _tabController.index == i,
-                                        onTap: () =>
-                                            _tabController.animateTo(i),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          flex: 5,
+                          child: _buildProjectSectionNavigation(compact: true),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -1286,16 +1317,18 @@ class _MacosHeaderBackButton extends StatelessWidget {
   }
 }
 
-class _MacosProjectTabChip extends StatelessWidget {
+class _ProjectSectionButton extends StatelessWidget {
   final String label;
   final IconData icon;
   final bool selected;
+  final bool compact;
   final VoidCallback onTap;
 
-  const _MacosProjectTabChip({
+  const _ProjectSectionButton({
     required this.label,
     required this.icon,
     required this.selected,
+    required this.compact,
     required this.onTap,
   });
 
@@ -1304,48 +1337,56 @@ class _MacosProjectTabChip extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            color: selected
-                ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.92)
-                : Colors.transparent,
-            border: Border.all(
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            curve: Curves.easeOutCubic,
+            padding: EdgeInsets.symmetric(horizontal: compact ? 4 : 8),
+            decoration: BoxDecoration(
               color: selected
-                  ? colorScheme.outlineVariant.withValues(alpha: 0.65)
-                  : colorScheme.outlineVariant.withValues(alpha: 0.28),
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: 12,
-                color: selected
-                    ? colorScheme.primary
-                    : colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w400,
-                  color: selected
-                      ? colorScheme.onSurface
-                      : colorScheme.onSurfaceVariant,
+                  ? colorScheme.primary.withValues(alpha: compact ? 0.08 : 0.06)
+                  : Colors.transparent,
+              border: Border(
+                bottom: BorderSide(
+                  width: compact ? 1.5 : 2,
+                  color: selected ? colorScheme.primary : Colors.transparent,
                 ),
               ),
-            ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: compact ? 13 : 16,
+                  color: selected
+                      ? colorScheme.primary
+                      : colorScheme.onSurfaceVariant,
+                ),
+                SizedBox(width: compact ? 3 : 6),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontSize: compact ? 10 : 11.5,
+                      color: selected
+                          ? colorScheme.onSurface
+                          : colorScheme.onSurfaceVariant,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

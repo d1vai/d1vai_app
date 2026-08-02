@@ -99,7 +99,17 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
   Widget build(BuildContext context) {
     final desktop = isDesktopLayout(context);
     return Scaffold(
-      appBar: AppBar(title: Text(_t('projects_title', 'Projects'))),
+      appBar: AppBar(
+        title: Text(_t('projects_title', 'Projects')),
+        actions: [
+          IconButton(
+            tooltip: _t('create_project', 'Create Project'),
+            onPressed: () => CreateProjectDialog.show(context),
+            icon: const Icon(Icons.add_rounded),
+          ),
+          const SizedBox(width: 4),
+        ],
+      ),
       body: Consumer<ProjectProvider>(
         builder: (context, provider, child) {
           if (provider.isLoading && provider.projects.isEmpty) {
@@ -148,13 +158,6 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
               ? DesktopContentFrame(maxWidth: 1420, child: content)
               : content;
         },
-      ),
-      floatingActionButton: FloatingActionButton(
-        tooltip: _t('create_project', 'Create Project'),
-        onPressed: () {
-          CreateProjectDialog.show(context);
-        },
-        child: const Icon(Icons.add),
       ),
     );
   }
@@ -258,7 +261,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                 maxCrossAxisExtent: 420,
-                mainAxisExtent: 214,
+                mainAxisExtent: 138,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
               ),
@@ -279,9 +282,10 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                 return _buildProjectCard(visibleProjects[index], context);
               },
             )
-          : ListView.builder(
+          : ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: visibleProjects.length + (provider.hasMore ? 1 : 0),
+              separatorBuilder: (_, _) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
                 if (index == visibleProjects.length) {
                   if (provider.isLoadingMore) {
@@ -314,7 +318,6 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       project: project,
       updatedText: _formatTimeAgo(project.updatedAt),
       onTap: () => context.push(buildProjectChatDetailRoute(project)),
-      onChat: () => context.push(buildProjectChatDetailRoute(project)),
     );
   }
 

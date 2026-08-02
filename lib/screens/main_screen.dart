@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
@@ -156,7 +154,7 @@ class _MainScreenState extends State<MainScreen> {
         ),
       );
     } else {
-      const navBarHeight = 104.0;
+      const navBarHeight = 76.0;
       content = PersistentTabView.custom(
         context,
         controller: _controller,
@@ -477,78 +475,102 @@ class _D1VBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final colorScheme = theme.colorScheme;
-    const tabWidth = 88.0;
-    final screenWidth =
-        MediaQuery.sizeOf(context).width -
-        MediaQuery.paddingOf(context).horizontal;
-    final centeredHorizontalPadding = math.max(
-      16.0,
-      (screenWidth - (items.length * tabWidth)) / 2,
-    );
-    final selectedIconColor = isDark
-        ? Colors.white
-        : colorScheme.onSurface.withValues(alpha: 0.96);
-    final unselectedIconColor = colorScheme.onSurfaceVariant.withValues(
-      alpha: isDark ? 0.78 : 0.70,
-    );
-    final indicatorColor = Colors.white.withValues(alpha: isDark ? 0.12 : 0.16);
-    final labelStyle = theme.textTheme.labelSmall?.copyWith(
-      fontSize: 10,
-      fontWeight: FontWeight.w600,
-      height: 1.0,
-      leadingDistribution: TextLeadingDistribution.even,
-      decoration: TextDecoration.none,
-      color: unselectedIconColor,
-    );
-    final indicatorSettings = LiquidGlassSettings(
-      glassColor: const Color(0x1AFFFFFF),
-      saturation: isDark ? 1.5 : 1.22,
-      refractiveIndex: 1.15,
-      thickness: 20,
-      lightIntensity: isDark ? 2 : 1.7,
-      // Light mode uses dark tab labels; the package default chromatic
-      // aberration creates visible yellow/blue fringe under text baselines.
-      chromaticAberration: isDark ? 0.5 : 0.0,
-      blur: 0,
-    );
-
-    return GlassBottomBar(
-      tabs: items
-          .map(
-            (item) => GlassBottomBarTab(
-              label: (item.title ?? '').trim().isEmpty ? null : item.title,
-              icon: item.inactiveIcon ?? item.icon,
-              activeIcon: item.icon,
-              glowColor: item.activeColorPrimary.withValues(
-                alpha: isDark ? 0.30 : 0.18,
-              ),
-              thickness: 0.8,
+    return Material(
+      color: colorScheme.surface.withValues(alpha: 0.98),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(
+              color: colorScheme.outlineVariant.withValues(alpha: 0.64),
             ),
-          )
-          .toList(growable: false),
-      selectedIndex: selectedIndex,
-      onTabSelected: onItemSelected,
-      quality: GlassQuality.premium,
-      horizontalPadding: centeredHorizontalPadding,
-      tabWidth: tabWidth,
-      labelFontSize: 10,
-      textStyle: labelStyle,
-      selectedIconColor: selectedIconColor,
-      unselectedIconColor: unselectedIconColor,
-      indicatorColor: indicatorColor,
-      indicatorSettings: indicatorSettings,
-      interactionBehavior: GlassInteractionBehavior.full,
-      // interactionGlowColor: colorScheme.primary.withValues(
-      //   alpha: isDark ? 0.34 : 0.20,
-      // ),
-      pressScale: 1.04,
-      indicatorExpansion: 14,
-      magnification: 1.02,
-      glowBlurRadius: 36,
-      glowSpreadRadius: 10,
-      glowOpacity: isDark ? 0.72 : 0.48,
+          ),
+        ),
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            height: 64,
+            child: Row(
+              children: [
+                for (var index = 0; index < items.length; index++)
+                  Expanded(
+                    child: _D1VMobileNavItem(
+                      item: items[index],
+                      selected: index == selectedIndex,
+                      onTap: () => onItemSelected(index),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _D1VMobileNavItem extends StatelessWidget {
+  final PersistentBottomNavBarItem item;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _D1VMobileNavItem({
+    required this.item,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final activeColor = colorScheme.onSurface;
+    final inactiveColor = colorScheme.onSurfaceVariant.withValues(alpha: 0.72);
+
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: item.title,
+      child: InkWell(
+        onTap: onTap,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 160),
+              curve: Curves.easeOutCubic,
+              width: 38,
+              height: 28,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: selected
+                    ? colorScheme.primary.withValues(alpha: 0.11)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: IconTheme(
+                data: IconThemeData(
+                  size: 21,
+                  color: selected ? activeColor : inactiveColor,
+                ),
+                child: item.inactiveIcon ?? item.icon,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              item.title ?? '',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontSize: 10.5,
+                height: 1,
+                color: selected ? activeColor : inactiveColor,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
