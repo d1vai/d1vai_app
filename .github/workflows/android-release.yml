@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   build-and-release:
-    runs-on: [self-hosted, linux, x64, d1vai]
+    runs-on: ubuntu-latest
     env:
       STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
       AMPLITUDE_API_KEY: ${{ secrets.AMPLITUDE_API_KEY }}
