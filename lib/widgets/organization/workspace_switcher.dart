@@ -181,7 +181,7 @@ class _WorkspacePicker extends StatelessWidget {
             _WorkspaceTile(
               name: organization.name,
               subtitle:
-                  '${organization.projectCount} ${_workspaceText(context, 'organization_projects', 'projects')} · ${organization.role}',
+                  '${organization.projectCount} ${_workspaceText(context, 'organization_projects', 'projects')} · ${organization.role == 'owner' ? _workspaceText(context, 'organization_owner', 'Owner') : _workspaceText(context, 'organization_member', 'Member')}',
               picture: organization.picture,
               organization: true,
               selected: provider.activeOrganizationId == organization.id,

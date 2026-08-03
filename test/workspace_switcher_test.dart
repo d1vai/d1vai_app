@@ -40,6 +40,8 @@ Future<void> _pumpSwitcher(
   WidgetTester tester, {
   required Size size,
   required bool expanded,
+  Locale locale = const Locale('en'),
+  ThemeMode themeMode = ThemeMode.light,
 }) async {
   SharedPreferences.setMockInitialValues({'active_organization_id': 7});
   final provider = OrganizationProvider(
@@ -54,11 +56,13 @@ Future<void> _pumpSwitcher(
     ChangeNotifierProvider.value(
       value: provider,
       child: MaterialApp(
+        locale: locale,
         theme: ThemeData(colorSchemeSeed: Colors.teal),
         darkTheme: ThemeData(
           brightness: Brightness.dark,
           colorSchemeSeed: Colors.teal,
         ),
+        themeMode: themeMode,
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
@@ -95,9 +99,33 @@ void main() {
   testWidgets('desktop workspace switcher shows organization role', (
     tester,
   ) async {
-    await _pumpSwitcher(tester, size: const Size(1200, 800), expanded: true);
+    await _pumpSwitcher(
+      tester,
+      size: const Size(1200, 800),
+      expanded: true,
+      themeMode: ThemeMode.dark,
+    );
     expect(find.text('Acme Design Studio'), findsOneWidget);
     expect(find.text('Owner'), findsOneWidget);
+    expect(
+      Theme.of(tester.element(find.byType(WorkspaceSwitcher))).brightness,
+      Brightness.dark,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('workspace picker localizes organization role', (tester) async {
+    await _pumpSwitcher(
+      tester,
+      size: const Size(390, 844),
+      expanded: false,
+      locale: const Locale('zh'),
+    );
+
+    await tester.tap(find.byType(WorkspaceSwitcher));
+    await tester.pumpAndSettle();
+
+    expect(find.text('4 个项目 · 所有者'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
