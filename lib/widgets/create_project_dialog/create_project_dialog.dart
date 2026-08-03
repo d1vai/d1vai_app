@@ -13,6 +13,7 @@ import '../../core/api_client.dart';
 import '../../models/model_config.dart';
 import '../../models/project.dart';
 import '../../providers/project_provider.dart';
+import '../../providers/organization_provider.dart';
 import '../../services/d1vai_service.dart';
 import '../../services/model_config_service.dart';
 import '../../services/workspace_service.dart';
@@ -790,6 +791,10 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     final selectedStyleId = _selectedStyleId == defaultProjectStyleId
         ? null
         : _selectedStyleId;
+    final organizationId = context
+        .read<OrganizationProvider>()
+        .activeOrganizationId;
+    _workspaceService.setOrganization(organizationId);
 
     try {
       final selectedModel = _selectedModelId.trim();
@@ -848,6 +853,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
         autoDeployOnExecute: _autoDeploy,
         enablePay: false,
         enableDatabase: true,
+        organizationId: organizationId,
       );
 
       if (!mounted) return;
@@ -927,6 +933,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
             autoDeployOnExecute: _autoDeploy,
             enablePay: false,
             enableDatabase: true,
+            organizationId: organizationId,
           );
 
           if (!mounted) return;

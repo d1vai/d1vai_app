@@ -75,9 +75,11 @@ WorkspacePhase normalizeWorkspacePhase(WorkspaceStateInfo? input) {
 
 class WorkspaceService {
   final ApiClient _apiClient;
+  int? _organizationId;
 
-  WorkspaceService({ApiClient? apiClient})
-    : _apiClient = apiClient ?? ApiClient();
+  WorkspaceService({ApiClient? apiClient, int? organizationId})
+    : _apiClient = apiClient ?? ApiClient(),
+      _organizationId = organizationId;
 
   static const _statusCacheMaxAge = Duration(milliseconds: 1500);
   static const _statusInflightDedupe = Duration(milliseconds: 800);
@@ -86,19 +88,34 @@ class WorkspaceService {
   static const _modelSyncDedupe = Duration(seconds: 10);
   static const _discoverInflightDedupe = Duration(seconds: 8);
 
-  static Future<WorkspaceStateInfo>? _statusInFlight;
-  static DateTime? _statusInFlightAt;
-  static WorkspaceStateInfo? _lastStatus;
-  static DateTime? _lastStatusAt;
-  static Future<WorkspaceStateInfo>? _discoverInFlight;
-  static DateTime? _discoverInFlightAt;
+  Future<WorkspaceStateInfo>? _statusInFlight;
+  DateTime? _statusInFlightAt;
+  WorkspaceStateInfo? _lastStatus;
+  DateTime? _lastStatusAt;
+  Future<WorkspaceStateInfo>? _discoverInFlight;
+  DateTime? _discoverInFlightAt;
 
-  static Future<WorkspaceConnection>? _ensureInFlight;
-  static WorkspaceConnection? _lastReady;
-  static DateTime? _lastReadyAt;
-  static String _lastModelSyncTarget = '';
-  static String _lastModelSyncModel = '';
-  static DateTime? _lastModelSyncAt;
+  Future<WorkspaceConnection>? _ensureInFlight;
+  WorkspaceConnection? _lastReady;
+  DateTime? _lastReadyAt;
+  String _lastModelSyncTarget = '';
+  String _lastModelSyncModel = '';
+  DateTime? _lastModelSyncAt;
+
+  void setOrganization(int? organizationId) {
+    if (_organizationId == organizationId) return;
+    _organizationId = organizationId;
+    _statusInFlight = null;
+    _lastStatus = null;
+    _lastStatusAt = null;
+    _discoverInFlight = null;
+    _lastReady = null;
+    _lastReadyAt = null;
+  }
+
+  Map<String, String> get _organizationQuery => _organizationId == null
+      ? const {}
+      : {'organization_id': _organizationId.toString()};
 
   Future<WorkspaceStateInfo> getWorkspaceStatus({
     bool bypassCache = false,
@@ -121,7 +138,7 @@ class WorkspaceService {
       try {
         final data = await _apiClient.get<Map<String, dynamic>>(
           '/api/workspace/status',
-          queryParams: const {'keepalive': '1'},
+          queryParams: {'keepalive': '1', ..._organizationQuery},
         );
         final st = WorkspaceStateInfo.fromJson(data);
         _lastStatus = st;
@@ -147,8 +164,10 @@ class WorkspaceService {
     _discoverInFlight = () async {
       try {
         final data = await _apiClient.post<Map<String, dynamic>>(
-          '/api/workspace/discover',
-          {},
+          _organizationId == null
+              ? '/api/workspace/discover'
+              : '/api/workspace/discover?organization_id=$_organizationId',
+          const {},
         );
         final st = WorkspaceStateInfo.fromJson(data);
         _lastStatus = st;

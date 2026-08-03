@@ -9,6 +9,7 @@ import 'package:d1vai_app/providers/locale_provider.dart';
 import 'package:d1vai_app/providers/macos_menu_controller.dart';
 import 'package:d1vai_app/providers/profile_provider.dart';
 import 'package:d1vai_app/providers/project_provider.dart';
+import 'package:d1vai_app/providers/organization_provider.dart';
 import 'package:d1vai_app/providers/theme_provider.dart';
 import 'package:d1vai_app/services/macos_folder_import_service.dart';
 import 'package:d1vai_app/services/macos_open_service.dart';
@@ -25,6 +26,7 @@ void main() {
           ChangeNotifierProvider(create: (_) => AuthProvider()),
           ChangeNotifierProvider(create: (_) => LocaleProvider()),
           ChangeNotifierProvider(create: (_) => ProjectProvider()),
+          ChangeNotifierProvider(create: (_) => OrganizationProvider()),
           ChangeNotifierProvider(create: (_) => ProfileProvider()),
           ChangeNotifierProvider(create: (_) => ThemeProvider()),
           ChangeNotifierProvider(create: (_) => MacosMenuController()),

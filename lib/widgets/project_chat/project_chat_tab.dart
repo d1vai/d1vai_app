@@ -55,6 +55,7 @@ class _PendingAppendItem {
 /// 项目详情页 - Chat Tab
 class ProjectChatTab extends StatefulWidget {
   final String projectId;
+  final int? organizationId;
   final String? previewUrl;
   final String? initialSubTab;
   final String? initialLocalEntryPath;
@@ -62,6 +63,7 @@ class ProjectChatTab extends StatefulWidget {
   const ProjectChatTab({
     super.key,
     required this.projectId,
+    this.organizationId,
     required this.previewUrl,
     this.initialSubTab,
     this.initialLocalEntryPath,

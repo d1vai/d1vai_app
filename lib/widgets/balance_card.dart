@@ -1,11 +1,22 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
+import '../l10n/app_localizations.dart';
+import '../models/organization.dart';
+import '../providers/organization_provider.dart';
+import '../services/organization_service.dart';
 import '../services/wallet_service.dart';
 import 'adaptive_modal.dart';
+import 'snackbar_helper.dart';
 import 'topup_dialog.dart';
 
 class BalanceCard extends StatefulWidget {
-  const BalanceCard({super.key});
+  final WalletService? walletService;
+  final OrganizationService? organizationService;
+
+  const BalanceCard({super.key, this.walletService, this.organizationService});
 
   @override
   State<BalanceCard> createState() => _BalanceCardState();
@@ -13,7 +24,8 @@ class BalanceCard extends StatefulWidget {
 
 class _BalanceCardState extends State<BalanceCard>
     with AutomaticKeepAliveClientMixin<BalanceCard> {
-  final WalletService _walletService = WalletService();
+  late final WalletService _walletService;
+  late final OrganizationService _organizationService;
   bool _isLoading = false;
   bool _isProcessingPayment = false;
   bool _showSuccessBanner = false;
@@ -21,11 +33,27 @@ class _BalanceCardState extends State<BalanceCard>
   double _expiringBalance = 0.0;
   double _nonExpiringBalance = 0.0;
   String? _expiringExpiresAt;
+  int? _loadedOrganizationId;
+  bool _hasLoadedScope = false;
+  bool _scopeLoadScheduled = false;
+
+  String _t(String key, String fallback) {
+    final value = AppLocalizations.of(context)?.translate(key);
+    return value == null || value == key ? fallback : value;
+  }
 
   @override
   void initState() {
     super.initState();
-    _loadBalance();
+    _walletService = widget.walletService ?? WalletService();
+    _organizationService = widget.organizationService ?? OrganizationService();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initializeScope());
+  }
+
+  Future<void> _initializeScope() async {
+    final organizations = context.read<OrganizationProvider>();
+    await organizations.load();
+    if (mounted) await _loadBalance();
   }
 
   Future<void> _handleTopUpSuccess() async {
@@ -44,18 +72,45 @@ class _BalanceCardState extends State<BalanceCard>
   }
 
   Future<void> _loadBalance() async {
+    final organizations = context.read<OrganizationProvider>();
+    final organization = organizations.activeOrganization;
+    final requestedOrganizationId = organization?.id;
+    _loadedOrganizationId = requestedOrganizationId;
+    _hasLoadedScope = true;
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final balance = await _walletService.getBalance();
+      if (organization == null) {
+        final balance = await _walletService.getBalance();
+        if (!mounted ||
+            context.read<OrganizationProvider>().activeOrganizationId !=
+                requestedOrganizationId) {
+          return;
+        }
+        setState(() {
+          _expiringBalance = balance.balanceExpiringUsd;
+          _nonExpiringBalance = balance.balanceNonExpiringUsd;
+          _expiringExpiresAt = balance.balanceExpiringExpiresAt;
+          _totalBalance =
+              balance.totalBalanceUsd ??
+              (_expiringBalance + _nonExpiringBalance);
+          _isLoading = false;
+        });
+        return;
+      }
+      final wallet = await _organizationService.getWallet(organization.slug);
+      if (!mounted ||
+          context.read<OrganizationProvider>().activeOrganizationId !=
+              requestedOrganizationId) {
+        return;
+      }
       setState(() {
-        _expiringBalance = balance.balanceExpiringUsd;
-        _nonExpiringBalance = balance.balanceNonExpiringUsd;
-        _expiringExpiresAt = balance.balanceExpiringExpiresAt;
-        _totalBalance =
-            balance.totalBalanceUsd ?? (_expiringBalance + _nonExpiringBalance);
+        _expiringBalance = wallet.expiringBalance;
+        _nonExpiringBalance = wallet.nonexpiringBalance;
+        _expiringExpiresAt = null;
+        _totalBalance = wallet.totalBalance;
         _isLoading = false;
       });
     } catch (e) {
@@ -70,6 +125,118 @@ class _BalanceCardState extends State<BalanceCard>
             content: Text('Failed to load balance: $e'),
             backgroundColor: Colors.red,
           ),
+        );
+      }
+    }
+  }
+
+  Future<void> _transferToOrganization(
+    List<OrganizationSummary> organizations,
+  ) async {
+    var selected = organizations.first;
+    final amountController = TextEditingController();
+    final transfer =
+        await showDialog<({OrganizationSummary organization, double amount})>(
+          context: context,
+          builder: (dialogContext) => StatefulBuilder(
+            builder: (context, setDialogState) => AlertDialog(
+              title: Text(_t('organization_fund', 'Transfer balance')),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  DropdownButtonFormField<int>(
+                    initialValue: selected.id,
+                    decoration: InputDecoration(
+                      labelText: _t('organization_manage', 'Organization'),
+                      prefixIcon: const Icon(Icons.business_outlined),
+                    ),
+                    items: [
+                      for (final organization in organizations)
+                        DropdownMenuItem(
+                          value: organization.id,
+                          child: Text(
+                            organization.name,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                    ],
+                    onChanged: (id) {
+                      if (id == null) return;
+                      setDialogState(() {
+                        selected = organizations.firstWhere(
+                          (item) => item.id == id,
+                        );
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: amountController,
+                    autofocus: true,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: InputDecoration(
+                      prefixText: r'$ ',
+                      labelText: _t('organization_amount', 'Amount'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    _t(
+                      'organization_fund_warning',
+                      'This transfer cannot be reversed. Confirm the amount before continuing.',
+                    ),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: Text(
+                    MaterialLocalizations.of(context).cancelButtonLabel,
+                  ),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    final amount = double.tryParse(
+                      amountController.text.trim(),
+                    );
+                    if (amount == null || amount <= 0) return;
+                    Navigator.pop(dialogContext, (
+                      organization: selected,
+                      amount: amount,
+                    ));
+                  },
+                  child: Text(_t('organization_confirm_transfer', 'Transfer')),
+                ),
+              ],
+            ),
+          ),
+        );
+    amountController.dispose();
+    if (transfer == null || !mounted) return;
+    try {
+      await _organizationService.fundWallet(
+        transfer.organization.slug,
+        transfer.amount,
+      );
+      if (!mounted) return;
+      await _loadBalance();
+      if (!mounted) return;
+      SnackBarHelper.showSuccess(
+        context,
+        title: _t('organization_fund_success', 'Balance transferred'),
+        message: transfer.organization.name,
+      );
+    } catch (error) {
+      if (mounted) {
+        SnackBarHelper.showError(
+          context,
+          title: _t('organization_fund_failed', 'Transfer failed'),
+          message: error.toString(),
         );
       }
     }
@@ -215,6 +382,23 @@ class _BalanceCardState extends State<BalanceCard>
   @override
   Widget build(BuildContext context) {
     super.build(context); // 必须调用 super.build 来保持状态
+    final organizations = context.watch<OrganizationProvider>();
+    final activeOrganization = organizations.activeOrganization;
+    final activeOrganizationId = activeOrganization?.id;
+    if (organizations.context != null &&
+        (!_hasLoadedScope || _loadedOrganizationId != activeOrganizationId) &&
+        !_scopeLoadScheduled) {
+      _scopeLoadScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        _scopeLoadScheduled = false;
+        if (mounted) await _loadBalance();
+      });
+    }
+    final manageableOrganizations =
+        organizations.context?.organizations
+            .where((organization) => organization.canManage)
+            .toList() ??
+        const <OrganizationSummary>[];
     final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
     return Card(
       child: Padding(
@@ -332,12 +516,17 @@ class _BalanceCardState extends State<BalanceCard>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Account Balance',
+                        activeOrganization?.name ?? 'Account Balance',
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.w600),
                       ),
                       Text(
-                        'Available credits for your projects',
+                        activeOrganization == null
+                            ? 'Available credits for your projects'
+                            : _t(
+                                'organization_shared_balance',
+                                'Shared balance',
+                              ),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Colors.grey.shade600,
                         ),
@@ -356,7 +545,9 @@ class _BalanceCardState extends State<BalanceCard>
                       : Icon(Icons.refresh, size: 20),
                 ),
                 const SizedBox(width: 8),
-                if (isIOS)
+                if (activeOrganization != null)
+                  const SizedBox.shrink()
+                else if (isIOS)
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -396,6 +587,20 @@ class _BalanceCardState extends State<BalanceCard>
                   ),
               ],
             ),
+            if (activeOrganization == null &&
+                manageableOrganizations.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerRight,
+                child: OutlinedButton.icon(
+                  onPressed: _isLoading
+                      ? null
+                      : () => _transferToOrganization(manageableOrganizations),
+                  icon: const Icon(Icons.move_up_outlined),
+                  label: Text(_t('organization_fund', 'Transfer balance')),
+                ),
+              ),
+            ],
             const SizedBox(height: 20),
             if (_isLoading && _totalBalance == 0.0)
               _buildSkeleton(context)

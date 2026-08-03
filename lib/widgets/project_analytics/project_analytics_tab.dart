@@ -72,7 +72,7 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab>
 
   final D1vaiService _d1vaiService = D1vaiService();
   final ChatService _chatService = ChatService();
-  final WorkspaceService _workspaceService = WorkspaceService();
+  late final WorkspaceService _workspaceService;
 
   Map<String, dynamic>? _values;
   Map<String, dynamic>? _activeVisitors;
@@ -215,6 +215,9 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab>
   @override
   void initState() {
     super.initState();
+    _workspaceService = WorkspaceService(
+      organizationId: widget.project.organizationId,
+    );
     _analyticsTabController = TabController(length: 7, vsync: this);
     _analyticsTabController.addListener(_handleAnalyticsTabChanged);
   }
@@ -264,6 +267,9 @@ class _ProjectAnalyticsTabState extends State<ProjectAnalyticsTab>
   @override
   void didUpdateWidget(covariant ProjectAnalyticsTab oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.project.organizationId != widget.project.organizationId) {
+      _workspaceService.setOrganization(widget.project.organizationId);
+    }
     final enabledChanged =
         oldWidget.project.analyticsId != widget.project.analyticsId;
     if (enabledChanged && _hasAnalyticsEnabled) {

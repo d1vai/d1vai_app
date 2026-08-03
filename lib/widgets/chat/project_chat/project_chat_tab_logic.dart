@@ -534,6 +534,7 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
   @override
   void initState() {
     super.initState();
+    _workspaceService = WorkspaceService(organizationId: widget.organizationId);
     _previewUrl = widget.previewUrl;
     _currentChatTabIndex = _chatSubTabIndexFromName(widget.initialSubTab);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -550,6 +551,10 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
   @override
   void didUpdateWidget(covariant ProjectChatTab oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.organizationId != widget.organizationId) {
+      _workspaceService.setOrganization(widget.organizationId);
+      unawaited(_bootstrapWorkspace());
+    }
     final nextUrl = widget.previewUrl;
     if (nextUrl != null &&
         nextUrl.trim().isNotEmpty &&
@@ -2306,7 +2311,8 @@ mixin _ProjectChatTabLogic on _ProjectChatTabStateBase {
     final contents = MessageParser.createMessageContentsFromPayload(payload);
     if (contents.isEmpty) return;
     final appendWsKey =
-        _extractWsKey(payload, type) ?? (turnId != null ? '$type:$turnId' : null);
+        _extractWsKey(payload, type) ??
+        (turnId != null ? '$type:$turnId' : null);
     _enqueuePendingAppend(
       ChatMessage(
         id: 'ws-${DateTime.now().millisecondsSinceEpoch}',

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:d1vai_app/providers/auth_provider.dart';
 import 'package:d1vai_app/providers/project_provider.dart';
+import 'package:d1vai_app/providers/organization_provider.dart';
 import 'package:d1vai_app/models/user.dart';
 import 'package:d1vai_app/models/project.dart';
 import 'package:d1vai_app/models/prompt_activity.dart';
@@ -27,10 +28,10 @@ import 'package:d1vai_app/widgets/skeletons/dashboard_skeleton.dart';
 import 'package:d1vai_app/widgets/skeletons/prompt_activity_skeleton.dart';
 import 'package:d1vai_app/utils/chat_entry.dart';
 import 'package:d1vai_app/utils/desktop_layout.dart';
-import 'package:d1vai_app/core/theme/locale_font_helper.dart';
 import 'package:d1vai_app/widgets/adaptive_modal.dart';
 import 'package:d1vai_app/widgets/d1v_app_bar.dart';
 import 'package:d1vai_app/widgets/import_repository_dialog.dart';
+import 'package:d1vai_app/widgets/organization/workspace_switcher.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -49,6 +50,8 @@ class _DashboardScreenState extends State<DashboardScreen>
   final TextEditingController _searchController = TextEditingController();
   List<UserProject> _searchResults = [];
   bool _didAutoLoadAfterLogin = false;
+  int? _organizationId;
+  bool _organizationScopeInitialized = false;
   Future<PromptDailyActivity>? _promptActivityFuture;
   String? _promptActivityProjectId;
   final D1vaiService _service = D1vaiService();
@@ -99,9 +102,42 @@ class _DashboardScreenState extends State<DashboardScreen>
     if (_didAutoLoadAfterLogin) return;
     if (auth.isAuthenticated) {
       _didAutoLoadAfterLogin = true;
-      _loadData();
-      _ensureWorkspaceStatusBootstrap();
+      unawaited(_initializeAuthenticatedData());
     }
+  }
+
+  Future<void> _initializeAuthenticatedData() async {
+    final organizations = context.read<OrganizationProvider>();
+    await organizations.load(force: true);
+    if (!mounted) return;
+    _organizationId = organizations.activeOrganizationId;
+    _organizationScopeInitialized = true;
+    _workspaceService.setOrganization(_organizationId);
+    await context.read<ProjectProvider>().setOrganization(
+      _organizationId,
+      load: false,
+    );
+    await _loadData();
+    _ensureWorkspaceStatusBootstrap();
+  }
+
+  Future<void> _changeOrganizationScope(int? organizationId) async {
+    if (!_organizationScopeInitialized || _organizationId == organizationId) {
+      return;
+    }
+    _organizationId = organizationId;
+    _workspacePollTimer?.cancel();
+    _workspaceService.setOrganization(organizationId);
+    setState(() {
+      _workspaceState = null;
+      _workspacePhase = WorkspacePhase.unknown;
+      _workspaceChecking = true;
+      _workspaceError = null;
+      _searchResults = [];
+    });
+    await context.read<ProjectProvider>().setOrganization(organizationId);
+    if (!mounted) return;
+    await _bootstrapWorkspaceStatus();
   }
 
   void _ensureWorkspaceStatusBootstrap() {
@@ -509,8 +545,19 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget build(BuildContext context) {
     final user = Provider.of<AuthProvider>(context).user;
     final projectProvider = Provider.of<ProjectProvider>(context);
+    final organizationProvider = Provider.of<OrganizationProvider>(context);
 
-    if (user != null && !_didInitWorkspaceStatus) {
+    if (_organizationScopeInitialized &&
+        organizationProvider.activeOrganizationId != _organizationId) {
+      final nextOrganizationId = organizationProvider.activeOrganizationId;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) unawaited(_changeOrganizationScope(nextOrganizationId));
+      });
+    }
+
+    if (user != null &&
+        _organizationScopeInitialized &&
+        !_didInitWorkspaceStatus) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         _ensureWorkspaceStatusBootstrap();
@@ -527,7 +574,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       pendingLoad = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        _loadData();
+        unawaited(_initializeAuthenticatedData());
       });
     }
 
@@ -554,13 +601,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   _performSearch(query);
                 },
               )
-            : Text(
-                _t('dashboard', 'Dashboard'),
-                style: LocaleFontHelper.localizedTitleStyle(
-                  context,
-                  Theme.of(context).textTheme.titleLarge,
-                ),
-              ),
+            : const WorkspaceSwitcher(),
         actions: [
           IconButton(
             tooltip: _t('dashboard_action_chat', 'Chat'),

@@ -163,6 +163,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _showSessionExpiredBanner = false;
 
+  String get _postLoginDestination {
+    final destination = GoRouterState.of(
+      context,
+    ).uri.queryParameters['redirect'];
+    if (destination != null &&
+        destination.startsWith('/') &&
+        !destination.startsWith('//')) {
+      return destination;
+    }
+    return '/dashboard';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -280,7 +292,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _otpCode,
       );
       _showSuccess(loc?.translate('login_success') ?? '登录成功');
-      if (mounted) context.go('/dashboard');
+      if (mounted) context.go(_postLoginDestination);
     } catch (e) {
       _showError(e.toString());
     } finally {
@@ -302,7 +314,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _passwordController.text,
       );
       _showSuccess(loc?.translate('login_success') ?? '登录成功');
-      if (mounted) context.go('/dashboard');
+      if (mounted) context.go(_postLoginDestination);
     } catch (e) {
       _showError(e.toString());
     } finally {
@@ -318,7 +330,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await authProvider.stageInvitationCode(widget.inviteCode ?? '');
       await authProvider.loginWithApple();
       _showSuccess(loc?.translate('login_success') ?? '登录成功');
-      if (mounted) context.go('/dashboard');
+      if (mounted) context.go(_postLoginDestination);
     } catch (e) {
       _showError(e.toString());
     } finally {
@@ -337,7 +349,7 @@ class _LoginScreenState extends State<LoginScreen> {
         inviteCode: widget.inviteCode,
       );
       _showSuccess(loc?.translate('login_success') ?? '登录成功');
-      if (mounted) context.go('/dashboard');
+      if (mounted) context.go(_postLoginDestination);
     } catch (e) {
       _showError(e.toString());
     } finally {

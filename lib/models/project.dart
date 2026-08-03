@@ -6,6 +6,7 @@ class UserProject {
   final String createdAt;
   final String updatedAt;
   final int userId;
+  final int? organizationId;
   final int projectPort;
   final String? emoji;
   final String? latestDevDeploymentUrl;
@@ -43,6 +44,7 @@ class UserProject {
     required this.createdAt,
     required this.updatedAt,
     required this.userId,
+    this.organizationId,
     required this.projectPort,
     this.emoji,
     this.latestDevDeploymentUrl,
@@ -102,6 +104,7 @@ class UserProject {
       createdAt: json['created_at']?.toString() ?? '',
       updatedAt: json['updated_at']?.toString() ?? '',
       userId: parseInt(json['user_id']) ?? 0,
+      organizationId: parseInt(json['organization_id']),
       projectPort: parseInt(json['project_port']) ?? 0,
       emoji: json['emoji']?.toString(),
       latestDevDeploymentUrl: json['latest_dev_deployment_url']?.toString(),
@@ -143,6 +146,7 @@ class UserProject {
       'created_at': createdAt,
       'updated_at': updatedAt,
       'user_id': userId,
+      'organization_id': organizationId,
       'project_port': projectPort,
       'emoji': emoji,
       'latest_dev_deployment_url': latestDevDeploymentUrl,
@@ -198,6 +202,7 @@ class UserProject {
     String? createdAt,
     String? updatedAt,
     int? userId,
+    int? organizationId,
     int? projectPort,
     String? emoji,
     String? latestDevDeploymentUrl,
@@ -232,6 +237,7 @@ class UserProject {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       userId: userId ?? this.userId,
+      organizationId: organizationId ?? this.organizationId,
       projectPort: projectPort ?? this.projectPort,
       emoji: emoji ?? this.emoji,
       latestDevDeploymentUrl:

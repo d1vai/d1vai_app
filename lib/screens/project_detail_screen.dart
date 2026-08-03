@@ -482,6 +482,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         ProjectChatTab(
           key: _chatTabKey,
           projectId: project.id,
+          organizationId: project.organizationId,
           previewUrl: project.preferredPreviewUrl,
           initialSubTab: widget.initialChatTab,
           initialLocalEntryPath: widget.initialLocalEntryPath,

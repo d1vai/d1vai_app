@@ -16,6 +16,7 @@ import 'providers/editor_preferences_provider.dart';
 import 'providers/locale_provider.dart';
 import 'providers/profile_provider.dart';
 import 'providers/project_provider.dart';
+import 'providers/organization_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/macos_menu_controller.dart';
 import 'router/app_router.dart';
@@ -102,6 +103,7 @@ Future<void> main([List<String> args = const <String>[]]) async {
           ChangeNotifierProvider(create: (_) => AuthProvider()),
           ChangeNotifierProvider(create: (_) => LocaleProvider()),
           ChangeNotifierProvider(create: (_) => ProjectProvider()),
+          ChangeNotifierProvider(create: (_) => OrganizationProvider()),
           ChangeNotifierProvider(create: (_) => ProfileProvider()),
           ChangeNotifierProvider(create: (_) => ThemeProvider()),
           ChangeNotifierProvider(create: (_) => EditorPreferencesProvider()),

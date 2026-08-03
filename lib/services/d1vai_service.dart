@@ -463,8 +463,11 @@ class D1vaiService {
   // ============================================
 
   /// 获取用户项目列表（带缓存）
-  Future<List<UserProject>> getUserProjects({bool forceRefresh = false}) async {
-    const cacheKey = 'user_projects';
+  Future<List<UserProject>> getUserProjects({
+    bool forceRefresh = false,
+    int? organizationId,
+  }) async {
+    final cacheKey = 'user_projects_${organizationId ?? 'personal'}';
 
     if (!forceRefresh) {
       // 尝试从缓存获取
@@ -483,6 +486,9 @@ class D1vaiService {
     // 缓存未命中或强制刷新，从 API 获取
     final data = await _apiClient.get<List<UserProject>>(
       '/api/projects',
+      queryParams: organizationId == null
+          ? null
+          : {'organization_id': organizationId.toString()},
       fromJsonT: (json) =>
           (json as List).map((e) => UserProject.fromJson(e)).toList(),
     );
@@ -570,6 +576,7 @@ class D1vaiService {
     bool? enablePay,
     bool? enableDatabase,
     bool? enableResend,
+    int? organizationId,
   }) async {
     return _apiClient.post(
       '/api/projects/create-with-integrations',
@@ -585,6 +592,7 @@ class D1vaiService {
         if (enablePay != null) 'enable_pay': enablePay,
         if (enableDatabase != null) 'enable_database': enableDatabase,
         if (enableResend != null) 'enable_resend': enableResend,
+        if (organizationId != null) 'organization_id': organizationId,
       },
       // Project bootstrap may involve remote template/git/bootstrap work.
       // Give it more headroom and retry transient network disconnects.

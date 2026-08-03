@@ -22,6 +22,7 @@ class ProjectProvider extends ChangeNotifier {
 
   // 错误状态
   String? _error;
+  int? _organizationId;
 
   // Getter
   List<UserProject> get projects => _projects;
@@ -33,6 +34,7 @@ class ProjectProvider extends ChangeNotifier {
   bool get isInitialLoading => _isLoading && _projects.isEmpty;
   String? get error => _error;
   int get totalProjects => _projects.length;
+  int? get organizationId => _organizationId;
 
   List<UserProject> get filteredProjects => _applyFilters();
 
@@ -67,6 +69,15 @@ class ProjectProvider extends ChangeNotifier {
     await loadProjects(forceRefresh: true);
   }
 
+  Future<void> setOrganization(int? organizationId, {bool load = true}) async {
+    if (_organizationId == organizationId) return;
+    _organizationId = organizationId;
+    _projects = [];
+    _resetPaging();
+    notifyListeners();
+    if (load) await loadProjects(forceRefresh: true);
+  }
+
   /// 加载更多数据
   Future<void> loadMore() async {
     if (!hasMore || _isLoading || _isLoadingMore) return;
@@ -97,6 +108,7 @@ class ProjectProvider extends ChangeNotifier {
       // 调用真实 API 获取项目列表
       final List<UserProject> newProjects = await _d1vaiService.getUserProjects(
         forceRefresh: forceRefresh,
+        organizationId: _organizationId,
       );
 
       // 始终用最新结果覆盖本地列表，避免重复追加。

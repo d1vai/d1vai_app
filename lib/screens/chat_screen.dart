@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:d1vai_app/models/message.dart';
 import 'package:d1vai_app/models/model_config.dart';
 import 'package:d1vai_app/models/outbox.dart';
+import 'package:d1vai_app/models/project.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
@@ -80,7 +81,7 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final ChatService _chatService = ChatService();
   final D1vaiService _d1vaiService = D1vaiService();
-  final WorkspaceService _workspaceService = WorkspaceService();
+  late final WorkspaceService _workspaceService;
   final ModelConfigService _modelConfigService = ModelConfigService();
   late final MacosMenuController _macosMenuController;
   final ScrollController _scrollController = ScrollController();
@@ -162,6 +163,13 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    final cachedProject = Provider.of<ProjectProvider>(
+      context,
+      listen: false,
+    ).getProjectById(widget.projectId);
+    _workspaceService = WorkspaceService(
+      organizationId: cachedProject?.organizationId,
+    );
     _macosMenuController = Provider.of<MacosMenuController>(
       context,
       listen: false,
@@ -180,9 +188,19 @@ class _ChatScreenState extends State<ChatScreen> {
             : cached.projectName,
       );
     });
-    unawaited(_bootstrapWorkspace());
+    unawaited(_bootstrapWorkspaceForProject(cachedProject));
     unawaited(_initialize());
     unawaited(_syncMiniPreviewUrl());
+  }
+
+  Future<void> _bootstrapWorkspaceForProject(UserProject? cachedProject) async {
+    try {
+      final project =
+          cachedProject ??
+          await _d1vaiService.getUserProjectById(widget.projectId);
+      _workspaceService.setOrganization(project.organizationId);
+    } catch (_) {}
+    if (mounted) await _bootstrapWorkspace();
   }
 
   @override
@@ -201,6 +219,7 @@ class _ChatScreenState extends State<ChatScreen> {
         _miniPreviewUrl = null;
         _miniPreviewReloadVersion = 0;
       });
+      unawaited(_bootstrapWorkspaceForProject(null));
       unawaited(_syncMiniPreviewUrl());
     }
   }

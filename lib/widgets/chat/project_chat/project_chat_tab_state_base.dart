@@ -5,7 +5,7 @@ enum WsConnectionState { idle, connecting, connected, failed }
 abstract class _ProjectChatTabStateBase extends State<ProjectChatTab>
     with AutomaticKeepAliveClientMixin {
   final ChatService _chatService = ChatService();
-  final WorkspaceService _workspaceService = WorkspaceService();
+  late final WorkspaceService _workspaceService;
   final ModelConfigService _modelConfigService = ModelConfigService();
   final StorageService _storageService = StorageService();
   final List<ChatMessage> _chatMessages = [];

@@ -25,6 +25,8 @@ import '../screens/api_docs_screen.dart';
 import '../screens/community_post_link_screen.dart';
 import '../screens/local_workspace_screen.dart';
 import '../screens/public_user_screen.dart';
+import '../screens/organization_screen.dart';
+import '../screens/organization_invitation_screen.dart';
 import '../providers/auth_provider.dart';
 
 const String _initialRouteOverride = String.fromEnvironment(
@@ -144,7 +146,8 @@ GoRouter createAppRouter() {
           state.matchedLocation.startsWith('/apps/') ||
           state.matchedLocation.startsWith('/docs/') ||
           state.matchedLocation.startsWith('/u/') ||
-          state.matchedLocation.startsWith('/c/');
+          state.matchedLocation.startsWith('/c/') ||
+          state.matchedLocation.startsWith('/organization-invite/');
 
       final isPublicSettings =
           state.matchedLocation == '/settings/language' ||
@@ -181,6 +184,12 @@ GoRouter createAppRouter() {
 
       // 如果已登录且在登录页，重定向到 dashboard
       if (isAuthenticated && isLoginPage) {
+        final destination = state.uri.queryParameters['redirect'];
+        if (destination != null &&
+            destination.startsWith('/') &&
+            !destination.startsWith('//')) {
+          return destination;
+        }
         return '/dashboard';
       }
 
@@ -256,6 +265,22 @@ GoRouter createAppRouter() {
           context,
           state,
           PublicUserScreen(slug: state.pathParameters['slug']!),
+        ),
+      ),
+      GoRoute(
+        path: '/organization/:slug',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          OrganizationScreen(slug: state.pathParameters['slug']!),
+        ),
+      ),
+      GoRoute(
+        path: '/organization-invite/:token',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          OrganizationInvitationScreen(token: state.pathParameters['token']!),
         ),
       ),
       GoRoute(
