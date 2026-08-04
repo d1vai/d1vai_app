@@ -182,55 +182,6 @@ class SettingsProfileTab extends StatelessWidget {
                   ),
                   ListTile(
                     leading: const Icon(
-                      Icons.email,
-                      color: AppColors.secondaryBrand,
-                    ),
-                    title: Text(loc?.translate('bind_email') ?? 'Bind Email'),
-                    subtitle: Text(
-                      loc?.translate('bind_email_subtitle') ??
-                          'Bind email to your account',
-                    ),
-                    trailing: const Icon(
-                      Icons.arrow_forward_ios,
-                      size: 16,
-                      color: AppColors.textSecondaryLight,
-                    ),
-                    onTap: user == null
-                        ? () => context.go('/login')
-                        : onShowBindEmailDialog,
-                  ),
-                  Divider(
-                    height: 1,
-                    color: isDark
-                        ? AppColors.borderDark
-                        : AppColors.borderLight,
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.lock, color: AppColors.error),
-                    title: Text(
-                      loc?.translate('reset_password') ?? 'Reset Password',
-                    ),
-                    subtitle: Text(
-                      loc?.translate('reset_password_subtitle') ??
-                          'Reset your login password',
-                    ),
-                    trailing: const Icon(
-                      Icons.arrow_forward_ios,
-                      size: 16,
-                      color: AppColors.textSecondaryLight,
-                    ),
-                    onTap: user == null
-                        ? () => context.go('/login')
-                        : onShowResetPasswordDialog,
-                  ),
-                  Divider(
-                    height: 1,
-                    color: isDark
-                        ? AppColors.borderDark
-                        : AppColors.borderLight,
-                  ),
-                  ListTile(
-                    leading: const Icon(
                       Icons.manage_accounts,
                       color: AppColors.info,
                     ),

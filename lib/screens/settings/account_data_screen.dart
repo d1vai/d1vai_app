@@ -10,6 +10,7 @@ import '../../services/d1vai_service.dart';
 import '../../utils/navigation_utils.dart';
 import '../../widgets/login_required_view.dart';
 import '../../widgets/snackbar_helper.dart';
+import '../../widgets/account_credentials_dialog.dart';
 
 class AccountDataScreen extends StatefulWidget {
   const AccountDataScreen({super.key});
@@ -306,7 +307,10 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
                     child: OutlinedButton.icon(
                       onPressed: () => context.push('/projects'),
                       icon: const Icon(Icons.folder_open),
-                      label: Text(loc?.translate('account_data_open_projects') ?? 'Open projects'),
+                      label: Text(
+                        loc?.translate('account_data_open_projects') ??
+                            'Open projects',
+                      ),
                     ),
                   ),
                 ],
@@ -346,6 +350,42 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              Card(
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.email_outlined),
+                      title: Text(loc?.translate('bind_email') ?? 'Bind Email'),
+                      subtitle: Text(
+                        loc?.translate('bind_email_subtitle') ??
+                            'Bind email to your account',
+                      ),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () => showAccountCredentialDialog(
+                        context,
+                        action: AccountCredentialAction.bindEmail,
+                      ),
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.lock_outline_rounded),
+                      title: Text(
+                        loc?.translate('reset_password') ?? 'Reset Password',
+                      ),
+                      subtitle: Text(
+                        loc?.translate('reset_password_subtitle') ??
+                            'Reset your login password',
+                      ),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () => showAccountCredentialDialog(
+                        context,
+                        action: AccountCredentialAction.resetPassword,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
