@@ -18,6 +18,7 @@ import '../card.dart';
 import '../chat/project_chat/status_dot.dart';
 import '../compact_selector.dart';
 import '../skeleton.dart';
+import '../adaptive_modal.dart';
 import 'project_domains_tab.dart';
 
 /// 项目详情页 - Deploy Tab
@@ -3271,108 +3272,113 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
         deployment.primaryCommitSha != null &&
         deployment.primaryCommitSha!.trim().isNotEmpty;
 
-    await showModalBottomSheet<void>(
+    await showAdaptiveModal<void>(
       context: context,
-      useRootNavigator: true,
       builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _t(
-                    'project_deploy_environment_deployment',
-                    '{env} deployment',
-                  ).replaceAll('{env}', deployment.environmentLabel),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${deployment.statusLabel} • ${deployment.id}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                if (deployment.statusMessage != null &&
-                    deployment.statusMessage!.trim().isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Text(
-                      deployment.statusMessage!.trim(),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
+        return AdaptiveModalContainer(
+          maxWidth: 560,
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _t(
+                      'project_deploy_environment_deployment',
+                      '{env} deployment',
+                    ).replaceAll('{env}', deployment.environmentLabel),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: canOpenUrl ? () => _openUrl(url) : null,
-                      icon: const Icon(Icons.open_in_new),
-                      label: Text(_t('project_deploy_open', 'Open')),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${deployment.statusLabel} • ${deployment.id}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
-                    OutlinedButton.icon(
-                      onPressed: canViewLogs
-                          ? () {
-                              Navigator.of(context).pop();
-                              _openLog(deployment);
-                            }
-                          : null,
-                      icon: const Icon(Icons.subject),
-                      label: Text(
-                        _t('project_deploy_build_logs', 'Build logs'),
+                  ),
+                  const SizedBox(height: 12),
+                  if (deployment.statusMessage != null &&
+                      deployment.statusMessage!.trim().isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        deployment.statusMessage!.trim(),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
                       ),
                     ),
-                    OutlinedButton.icon(
-                      onPressed: (canRevert && !_revertingCommit)
-                          ? () {
-                              Navigator.of(context).pop();
-                              _confirmRevertDeployment(deployment);
-                            }
-                          : null,
-                      icon: _revertingCommit
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.rotate_left),
-                      label: Text(
-                        _revertingCommit &&
-                                _revertingCommitSha ==
-                                    deployment.primaryCommitSha?.trim()
-                            ? _t('project_deploy_reverting', 'Reverting...')
-                            : _t(
-                                'project_deploy_revert_preview',
-                                'Revert + Preview',
-                              ),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: canOpenUrl ? () => _openUrl(url) : null,
+                        icon: const Icon(Icons.open_in_new),
+                        label: Text(_t('project_deploy_open', 'Open')),
                       ),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: widget.onAskAi == null
-                          ? null
-                          : () {
-                              Navigator.of(context).pop();
-                              final question = _t(
-                                'project_deploy_ai_prompt_environment',
-                                'Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?',
-                              ).replaceAll('{env}', deployment.environmentLabel);
-                              widget.onAskAi?.call(question);
-                            },
-                      icon: const Icon(Icons.smart_toy),
-                      label: Text(_t('project_deploy_ask_ai', 'Ask AI')),
-                    ),
-                  ],
-                ),
-              ],
+                      OutlinedButton.icon(
+                        onPressed: canViewLogs
+                            ? () {
+                                Navigator.of(context).pop();
+                                _openLog(deployment);
+                              }
+                            : null,
+                        icon: const Icon(Icons.subject),
+                        label: Text(
+                          _t('project_deploy_build_logs', 'Build logs'),
+                        ),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: (canRevert && !_revertingCommit)
+                            ? () {
+                                Navigator.of(context).pop();
+                                _confirmRevertDeployment(deployment);
+                              }
+                            : null,
+                        icon: _revertingCommit
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.rotate_left),
+                        label: Text(
+                          _revertingCommit &&
+                                  _revertingCommitSha ==
+                                      deployment.primaryCommitSha?.trim()
+                              ? _t('project_deploy_reverting', 'Reverting...')
+                              : _t(
+                                  'project_deploy_revert_preview',
+                                  'Revert + Preview',
+                                ),
+                        ),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: widget.onAskAi == null
+                            ? null
+                            : () {
+                                Navigator.of(context).pop();
+                                final question = _t(
+                                  'project_deploy_ai_prompt_environment',
+                                  'Can you provide insights and recommendations about the {env} deployment, including performance optimization, troubleshooting, and best practices?',
+                                ).replaceAll('{env}', deployment.environmentLabel);
+                                widget.onAskAi?.call(question);
+                              },
+                        icon: const Icon(Icons.smart_toy),
+                        label: Text(_t('project_deploy_ask_ai', 'Ask AI')),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         );

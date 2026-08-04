@@ -12,6 +12,7 @@ import 'package:d1vai_app/core/theme/app_colors.dart';
 import 'package:d1vai_app/l10n/app_localizations.dart';
 import 'package:d1vai_app/widgets/card.dart';
 import 'package:d1vai_app/widgets/snackbar_helper.dart';
+import 'package:d1vai_app/widgets/adaptive_modal.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -379,58 +380,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
     ProfileProvider profileProvider,
   ) {
     final loc = AppLocalizations.of(context);
-    showModalBottomSheet(
+    showAdaptiveModal<void>(
       context: context,
-      useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
       builder: (context) {
-        return SafeArea(
-          child: Wrap(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.camera_alt),
-                title: Text(
-                  loc?.translate('profile_take_photo') ?? 'Take Photo',
+        return AdaptiveModalContainer(
+          maxWidth: 420,
+          child: SafeArea(
+            top: false,
+            child: Wrap(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.camera_alt),
+                  title: Text(
+                    loc?.translate('profile_take_photo') ?? 'Take Photo',
+                  ),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final XFile? image = await _imagePicker.pickImage(
+                      source: ImageSource.camera,
+                      imageQuality: 85,
+                    );
+                    if (image != null) {
+                      await _handleAvatarUpload(image, profileProvider);
+                    }
+                  },
                 ),
-                onTap: () async {
-                  Navigator.pop(context);
-                  final XFile? image = await _imagePicker.pickImage(
-                    source: ImageSource.camera,
-                    imageQuality: 85,
-                  );
-                  if (image != null) {
-                    await _handleAvatarUpload(image, profileProvider);
-                  }
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: Text(
-                  loc?.translate('profile_choose_gallery') ??
-                      'Choose from Gallery',
+                ListTile(
+                  leading: const Icon(Icons.photo_library),
+                  title: Text(
+                    loc?.translate('profile_choose_gallery') ??
+                        'Choose from Gallery',
+                  ),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final XFile? image = await _imagePicker.pickImage(
+                      source: ImageSource.gallery,
+                      imageQuality: 85,
+                    );
+                    if (image != null) {
+                      await _handleAvatarUpload(image, profileProvider);
+                    }
+                  },
                 ),
-                onTap: () async {
-                  Navigator.pop(context);
-                  final XFile? image = await _imagePicker.pickImage(
-                    source: ImageSource.gallery,
-                    imageQuality: 85,
-                  );
-                  if (image != null) {
-                    await _handleAvatarUpload(image, profileProvider);
-                  }
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.auto_awesome),
-                title: Text(loc?.translate('profile_ai_random') ?? 'AI Random'),
-                onTap: () async {
-                  Navigator.pop(context);
-                  await _handleAiAvatarGeneration(profileProvider);
-                },
-              ),
-            ],
+                ListTile(
+                  leading: const Icon(Icons.auto_awesome),
+                  title: Text(
+                    loc?.translate('profile_ai_random') ?? 'AI Random',
+                  ),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await _handleAiAvatarGeneration(profileProvider);
+                  },
+                ),
+              ],
+            ),
           ),
         );
       },

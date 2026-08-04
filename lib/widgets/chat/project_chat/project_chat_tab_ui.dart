@@ -491,13 +491,9 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
   Future<void> _presentMobileChatSheet() async {
     final hostContext = context;
     final theme = Theme.of(hostContext);
-    await showModalBottomSheet<void>(
+    await showAdaptiveDraggableSheet<void>(
       context: hostContext,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      useSafeArea: false,
       enableDrag: false,
-      backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(
         alpha: theme.brightness == Brightness.dark ? 0.46 : 0.34,
       ),

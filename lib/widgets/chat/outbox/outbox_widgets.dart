@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../models/outbox.dart';
+import '../../adaptive_modal.dart';
 
 class OutboxBubbles extends StatefulWidget {
   final Color color;
@@ -487,22 +488,20 @@ Future<void> showOutboxSheet(
   required void Function(OutboxItem item) onDelete,
   required void Function(OutboxItem item, String nextPrompt) onUpdate,
 }) async {
-  await showModalBottomSheet<void>(
+  await showAdaptiveModal<void>(
     context: context,
-    useRootNavigator: true,
-    isScrollControlled: true,
-    useSafeArea: true,
-    backgroundColor: Theme.of(context).colorScheme.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
     builder: (context) {
-      return _OutboxSheet(
-        items: items,
-        mode: mode,
-        onClear: onClear,
-        onDelete: onDelete,
-        onUpdate: onUpdate,
+      return AdaptiveModalContainer(
+        maxWidth: 720,
+        desktopMaxHeightFactor: 0.9,
+        mobileMaxHeightFactor: 0.94,
+        child: _OutboxSheet(
+          items: items,
+          mode: mode,
+          onClear: onClear,
+          onDelete: onDelete,
+          onUpdate: onUpdate,
+        ),
       );
     },
   );
@@ -925,75 +924,75 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                                   onLongPress: isRunning
                                       ? null
                                       : () async {
-                                          await showModalBottomSheet<void>(
+                                          await showAdaptiveModal<void>(
                                             context: context,
-                                            useRootNavigator: true,
-                                            useSafeArea: true,
-                                            backgroundColor:
-                                                theme.colorScheme.surface,
-                                            shape: const RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.vertical(
-                                                    top: Radius.circular(18),
-                                                  ),
-                                            ),
                                             builder: (context) {
-                                              return SafeArea(
-                                                child: Column(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    ListTile(
-                                                      leading: const Icon(
-                                                        Icons.edit,
+                                              return AdaptiveModalContainer(
+                                                maxWidth: 400,
+                                                child: SafeArea(
+                                                  top: false,
+                                                  child: Column(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      ListTile(
+                                                        leading: const Icon(
+                                                          Icons.edit,
+                                                        ),
+                                                        title: const Text(
+                                                          'Edit',
+                                                        ),
+                                                        enabled: canEdit,
+                                                        onTap: !canEdit
+                                                            ? null
+                                                            : () {
+                                                                Navigator.pop(
+                                                                  context,
+                                                                );
+                                                                _startEdit(
+                                                                  item,
+                                                                );
+                                                              },
                                                       ),
-                                                      title: const Text('Edit'),
-                                                      enabled: canEdit,
-                                                      onTap: !canEdit
-                                                          ? null
-                                                          : () {
-                                                              Navigator.pop(
-                                                                context,
-                                                              );
-                                                              _startEdit(item);
-                                                            },
-                                                    ),
-                                                    ListTile(
-                                                      leading: const Icon(
-                                                        Icons.delete,
+                                                      ListTile(
+                                                        leading: const Icon(
+                                                          Icons.delete,
+                                                        ),
+                                                        title: const Text(
+                                                          'Delete',
+                                                        ),
+                                                        enabled: canEdit,
+                                                        onTap: !canEdit
+                                                            ? null
+                                                            : () {
+                                                                widget.onDelete(
+                                                                  item,
+                                                                );
+                                                                Navigator.pop(
+                                                                  context,
+                                                                );
+                                                                if (mounted) {
+                                                                  setState(
+                                                                    () {},
+                                                                  );
+                                                                }
+                                                              },
                                                       ),
-                                                      title: const Text(
-                                                        'Delete',
+                                                      const SizedBox(height: 6),
+                                                      ListTile(
+                                                        leading: const Icon(
+                                                          Icons.close,
+                                                        ),
+                                                        title: const Text(
+                                                          'Cancel',
+                                                        ),
+                                                        onTap: () =>
+                                                            Navigator.pop(
+                                                              context,
+                                                            ),
                                                       ),
-                                                      enabled: canEdit,
-                                                      onTap: !canEdit
-                                                          ? null
-                                                          : () {
-                                                              widget.onDelete(
-                                                                item,
-                                                              );
-                                                              Navigator.pop(
-                                                                context,
-                                                              );
-                                                              if (mounted) {
-                                                                setState(() {});
-                                                              }
-                                                            },
-                                                    ),
-                                                    const SizedBox(height: 6),
-                                                    ListTile(
-                                                      leading: const Icon(
-                                                        Icons.close,
-                                                      ),
-                                                      title: const Text(
-                                                        'Cancel',
-                                                      ),
-                                                      onTap: () =>
-                                                          Navigator.pop(
-                                                            context,
-                                                          ),
-                                                    ),
-                                                  ],
+                                                    ],
+                                                  ),
                                                 ),
                                               );
                                             },

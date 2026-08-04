@@ -15,6 +15,7 @@ import 'login_required_dialog.dart';
 import 'snackbar_helper.dart';
 import 'card.dart';
 import 'share_sheet.dart';
+import 'adaptive_modal.dart';
 import '../l10n/app_localizations.dart';
 
 /// 社区帖子卡片组件
@@ -631,57 +632,57 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
   /// 显示更多选项菜单
   void _showMoreOptions(BuildContext context) {
     HapticFeedback.selectionClick();
-    showModalBottomSheet(
+    showAdaptiveModal<void>(
       context: context,
-      useRootNavigator: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
       builder: (context) {
-        return SafeArea(
-          child: Wrap(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.share),
-                title: const Text('Share'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _sharePostSheet();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.visibility_off_outlined),
-                title: const Text('Hide'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _hidePost();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.block),
-                title: Text('Block @${widget.post.author?.slug ?? 'author'}'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _blockAuthor();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.bookmark_border),
-                title: const Text('Save'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _savePost(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.flag_outlined),
-                title: const Text('Report'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _reportPost(context);
-                },
-              ),
-            ],
+        return AdaptiveModalContainer(
+          maxWidth: 440,
+          child: SafeArea(
+            top: false,
+            child: Wrap(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.share),
+                  title: const Text('Share'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _sharePostSheet();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.visibility_off_outlined),
+                  title: const Text('Hide'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _hidePost();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.block),
+                  title: Text('Block @${widget.post.author?.slug ?? 'author'}'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _blockAuthor();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.bookmark_border),
+                  title: const Text('Save'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _savePost(context);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.flag_outlined),
+                  title: const Text('Report'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _reportPost(context);
+                  },
+                ),
+              ],
+            ),
           ),
         );
       },

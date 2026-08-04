@@ -35,6 +35,7 @@ import '../chat/project_chat/project_chat_top_bar.dart';
 import '../chat/project_chat/project_chat_web_view.dart';
 import '../progress_widget.dart';
 import '../snackbar_helper.dart';
+import '../adaptive_modal.dart';
 
 part '../chat/project_chat/project_chat_tab_logic.dart';
 part '../chat/project_chat/project_chat_tab_state_base.dart';

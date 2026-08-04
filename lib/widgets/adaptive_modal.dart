@@ -39,6 +39,28 @@ Future<T?> showAdaptiveModal<T>({
   );
 }
 
+/// Shared presentation shell for the one interaction that must stay draggable:
+/// the mobile project chat. Standard flows should use [showAdaptiveModal].
+Future<T?> showAdaptiveDraggableSheet<T>({
+  required BuildContext context,
+  required WidgetBuilder builder,
+  Color? barrierColor,
+  bool barrierDismissible = true,
+  bool enableDrag = false,
+}) {
+  return showModalBottomSheet<T>(
+    context: context,
+    useRootNavigator: true,
+    isDismissible: barrierDismissible,
+    enableDrag: enableDrag,
+    isScrollControlled: true,
+    useSafeArea: false,
+    backgroundColor: Colors.transparent,
+    barrierColor: barrierColor,
+    builder: builder,
+  );
+}
+
 class AdaptiveModalContainer extends StatelessWidget {
   final Widget child;
   final double maxWidth;

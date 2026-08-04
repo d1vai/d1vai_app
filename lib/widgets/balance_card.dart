@@ -243,72 +243,73 @@ class _BalanceCardState extends State<BalanceCard>
   }
 
   void _showBalanceDetails(BuildContext context) {
-    showModalBottomSheet(
+    showAdaptiveModal<void>(
       context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          left: 24,
-          right: 24,
-          top: 24,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.account_balance_wallet,
-                  color: Colors.deepPurple,
-                  size: 28,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Balance Details',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            _buildDetailRow(
-              'Non-expiring Balance',
-              '\$${_nonExpiringBalance.toStringAsFixed(2)}',
-              Icons.check_circle,
-              Colors.green,
-            ),
-            const Divider(height: 32),
-            _buildDetailRow(
-              'Expiring Balance',
-              '\$${_expiringBalance.toStringAsFixed(2)}',
-              Icons.schedule,
-              Colors.orange,
-              subtitle: _expiringExpiresAt != null
-                  ? 'Expires: ${_formatDate(_expiringExpiresAt!)}'
-                  : 'No expiry date',
-            ),
-            const Divider(height: 32),
-            Row(
-              children: [
-                Icon(Icons.info_outline, size: 16, color: Colors.grey.shade600),
-                const SizedBox(width: 8),
-                Text(
-                  'Estimated update time: ~15 minutes',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
-                ),
-              ],
-            ),
-          ],
+      builder: (context) => AdaptiveModalContainer(
+        maxWidth: 520,
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 18,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.account_balance_wallet,
+                    color: Colors.deepPurple,
+                    size: 28,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Balance Details',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              _buildDetailRow(
+                'Non-expiring Balance',
+                '\$${_nonExpiringBalance.toStringAsFixed(2)}',
+                Icons.check_circle,
+                Colors.green,
+              ),
+              const Divider(height: 32),
+              _buildDetailRow(
+                'Expiring Balance',
+                '\$${_expiringBalance.toStringAsFixed(2)}',
+                Icons.schedule,
+                Colors.orange,
+                subtitle: _expiringExpiresAt != null
+                    ? 'Expires: ${_formatDate(_expiringExpiresAt!)}'
+                    : 'No expiry date',
+              ),
+              const Divider(height: 32),
+              Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 16,
+                    color: Colors.grey.shade600,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Estimated update time: ~15 minutes',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

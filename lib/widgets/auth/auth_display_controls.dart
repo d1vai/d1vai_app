@@ -5,6 +5,7 @@ import '../../l10n/app_localizations.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../snackbar_helper.dart';
+import '../adaptive_modal.dart';
 
 class AuthDisplayControls extends StatelessWidget {
   const AuthDisplayControls({super.key});
@@ -30,34 +31,35 @@ class AuthDisplayControls extends StatelessWidget {
       ),
     ];
 
-    final selected = await showModalBottomSheet<AppThemeMode>(
+    final selected = await showAdaptiveModal<AppThemeMode>(
       context: context,
-      useRootNavigator: true,
-      showDragHandle: true,
       builder: (sheetContext) {
         final currentMode = context.watch<ThemeProvider>().themeMode;
-        return SafeArea(
-          top: false,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                title: Text(loc?.translate('choose_theme') ?? 'Choose Theme'),
-              ),
-              ...options.map(
-                (item) => ListTile(
-                  leading: Icon(item.icon),
-                  title: Text(item.label),
-                  trailing: currentMode == item.mode
-                      ? Icon(
-                          Icons.check,
-                          color: Theme.of(context).colorScheme.primary,
-                        )
-                      : null,
-                  onTap: () => Navigator.of(sheetContext).pop(item.mode),
+        return AdaptiveModalContainer(
+          maxWidth: 420,
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  title: Text(loc?.translate('choose_theme') ?? 'Choose Theme'),
                 ),
-              ),
-            ],
+                ...options.map(
+                  (item) => ListTile(
+                    leading: Icon(item.icon),
+                    title: Text(item.label),
+                    trailing: currentMode == item.mode
+                        ? Icon(
+                            Icons.check,
+                            color: Theme.of(context).colorScheme.primary,
+                          )
+                        : null,
+                    onTap: () => Navigator.of(sheetContext).pop(item.mode),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -79,37 +81,38 @@ class AuthDisplayControls extends StatelessWidget {
     final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
     final locales = LocaleProvider.settingsSupportedLocales;
 
-    final selected = await showModalBottomSheet<Locale>(
+    final selected = await showAdaptiveModal<Locale>(
       context: context,
-      useRootNavigator: true,
-      showDragHandle: true,
       builder: (sheetContext) {
         final current = context.watch<LocaleProvider>().locale;
-        return SafeArea(
-          top: false,
-          child: ListView(
-            shrinkWrap: true,
-            children: [
-              ListTile(title: Text(loc?.translate('language') ?? 'Language')),
-              ...locales.map((locale) {
-                final key = LocaleProvider.languageKeyFromLocale(locale);
-                final name = LocaleProvider.languageNames[key] ?? key;
-                final isSelected =
-                    locale.languageCode == current.languageCode &&
-                    (locale.scriptCode ?? '') == (current.scriptCode ?? '') &&
-                    (locale.countryCode ?? '') == (current.countryCode ?? '');
-                return ListTile(
-                  title: Text(name),
-                  trailing: isSelected
-                      ? Icon(
-                          Icons.check,
-                          color: Theme.of(context).colorScheme.primary,
-                        )
-                      : null,
-                  onTap: () => Navigator.of(sheetContext).pop(locale),
-                );
-              }),
-            ],
+        return AdaptiveModalContainer(
+          maxWidth: 420,
+          child: SafeArea(
+            top: false,
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                ListTile(title: Text(loc?.translate('language') ?? 'Language')),
+                ...locales.map((locale) {
+                  final key = LocaleProvider.languageKeyFromLocale(locale);
+                  final name = LocaleProvider.languageNames[key] ?? key;
+                  final isSelected =
+                      locale.languageCode == current.languageCode &&
+                      (locale.scriptCode ?? '') == (current.scriptCode ?? '') &&
+                      (locale.countryCode ?? '') == (current.countryCode ?? '');
+                  return ListTile(
+                    title: Text(name),
+                    trailing: isSelected
+                        ? Icon(
+                            Icons.check,
+                            color: Theme.of(context).colorScheme.primary,
+                          )
+                        : null,
+                    onTap: () => Navigator.of(sheetContext).pop(locale),
+                  );
+                }),
+              ],
+            ),
           ),
         );
       },
