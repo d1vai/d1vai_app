@@ -3,151 +3,104 @@ import 'package:flutter/services.dart';
 import '../../../models/message.dart';
 import '../code_highlight_block.dart';
 import 'tool_utils.dart';
+import '../../adaptive_modal.dart';
 
 class ToolDetailSheet {
   static Future<void> show(
     BuildContext context, {
     required ToolMessageContent content,
   }) async {
-    final theme = Theme.of(context);
     final status = coerceToolStatus(content.status, content.input);
     final toolName = content.name;
     final summary = toolSummary(toolName, content.input);
     final details = _ToolDetails.from(toolName, content.input);
 
-    await showModalBottomSheet<void>(
+    await showAdaptiveModal<void>(
       context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      showDragHandle: true,
       builder: (context) {
-        return DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.72,
-          minChildSize: 0.4,
-          maxChildSize: 0.95,
-          builder: (context, scrollController) {
-            return SafeArea(
-              top: false,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(16),
-                  ),
-                  border: Border.all(
-                    color: theme.colorScheme.outlineVariant.withValues(
-                      alpha: theme.brightness == Brightness.dark ? 0.55 : 0.65,
-                    ),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: theme.colorScheme.shadow.withValues(
-                        alpha: theme.brightness == Brightness.dark
-                            ? 0.35
-                            : 0.12,
-                      ),
-                      blurRadius: 18,
-                      offset: const Offset(0, -8),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(16),
-                  ),
-                  child: ListView(
-                    controller: scrollController,
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                    children: [
-                      _Header(
-                        toolName: toolName,
-                        status: status,
-                        summary: summary,
-                      ),
-                      const SizedBox(height: 12),
-                      if (details.primaryLines.isNotEmpty)
-                        _Section(
-                          title: 'Details',
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              for (final line in details.primaryLines)
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 6),
-                                  child: _KeyValueLine(
-                                    label: line.label,
-                                    value: line.value,
-                                  ),
-                                ),
-                              if (details.todos != null) ...[
-                                const SizedBox(height: 8),
-                                _TodoList(todos: details.todos!),
-                              ],
-                            ],
+        return AdaptiveModalContainer(
+          maxWidth: 720,
+          child: SafeArea(
+            top: false,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              children: [
+                _Header(toolName: toolName, status: status, summary: summary),
+                const SizedBox(height: 12),
+                if (details.primaryLines.isNotEmpty)
+                  _Section(
+                    title: 'Details',
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (final line in details.primaryLines)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: _KeyValueLine(
+                              label: line.label,
+                              value: line.value,
+                            ),
                           ),
-                        ),
-                      if (details.primaryLines.isNotEmpty)
-                        const SizedBox(height: 12),
-                      _Section(
-                        title: 'Input',
-                        subtitle: 'Parameters',
-                        trailing: _CopyButton(
-                          label: 'Copy input',
+                        if (details.todos != null) ...[
+                          const SizedBox(height: 8),
+                          _TodoList(todos: details.todos!),
+                        ],
+                      ],
+                    ),
+                  ),
+                if (details.primaryLines.isNotEmpty) const SizedBox(height: 12),
+                _Section(
+                  title: 'Input',
+                  subtitle: 'Parameters',
+                  trailing: _CopyButton(
+                    label: 'Copy input',
+                    onPressed: () async {
+                      await Clipboard.setData(
+                        ClipboardData(text: prettyJson(content.input)),
+                      );
+                      if (!context.mounted) return;
+                      _toast(context, 'Input copied');
+                    },
+                  ),
+                  child: _CodeBlock(
+                    text: prettyJson(content.input),
+                    terminalStyle: false,
+                    language: 'json',
+                    maxVisibleLines: 14,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _Section(
+                  title: (content.output?.isError == true)
+                      ? 'Output (error)'
+                      : 'Output',
+                  subtitle: (status == 'processing') ? 'Running…' : 'Result',
+                  trailing: (content.output?.text.trim().isNotEmpty ?? false)
+                      ? _CopyButton(
+                          label: 'Copy output',
                           onPressed: () async {
                             await Clipboard.setData(
-                              ClipboardData(text: prettyJson(content.input)),
+                              ClipboardData(text: content.output!.text),
                             );
                             if (!context.mounted) return;
-                            _toast(context, 'Input copied');
+                            _toast(context, 'Output copied');
                           },
-                        ),
-                        child: _CodeBlock(
-                          text: prettyJson(content.input),
-                          terminalStyle: false,
-                          language: 'json',
-                          maxVisibleLines: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      _Section(
-                        title: (content.output?.isError == true)
-                            ? 'Output (error)'
-                            : 'Output',
-                        subtitle: (status == 'processing')
-                            ? 'Running…'
-                            : 'Result',
-                        trailing:
-                            (content.output?.text.trim().isNotEmpty ?? false)
-                            ? _CopyButton(
-                                label: 'Copy output',
-                                onPressed: () async {
-                                  await Clipboard.setData(
-                                    ClipboardData(text: content.output!.text),
-                                  );
-                                  if (!context.mounted) return;
-                                  _toast(context, 'Output copied');
-                                },
-                              )
-                            : null,
-                        child:
-                            (content.output != null &&
-                                content.output!.text.trim().isNotEmpty)
-                            ? _CodeBlock(
-                                text: content.output!.text,
-                                terminalStyle: true,
-                                language: null,
-                                maxVisibleLines: 20,
-                              )
-                            : _EmptyOutput(status: status),
-                      ),
-                    ],
-                  ),
+                        )
+                      : null,
+                  child:
+                      (content.output != null &&
+                          content.output!.text.trim().isNotEmpty)
+                      ? _CodeBlock(
+                          text: content.output!.text,
+                          terminalStyle: true,
+                          language: null,
+                          maxVisibleLines: 20,
+                        )
+                      : _EmptyOutput(status: status),
                 ),
-              ),
-            );
-          },
+              ],
+            ),
+          ),
         );
       },
     );

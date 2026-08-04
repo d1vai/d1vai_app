@@ -49,6 +49,7 @@ class _CommunityScreenState extends State<CommunityScreen>
   bool _hasMore = true;
   bool _hasMoreComponents = true;
   String _searchQuery = '';
+  String _appliedSearchQuery = '';
   bool _isSearching = false;
   _CommunityTab _tab = _CommunityTab.posts;
   final Set<String> _hiddenPostSlugs = <String>{};
@@ -175,7 +176,9 @@ class _CommunityScreenState extends State<CommunityScreen>
       final posts = await _d1vaiService.getCommunityPosts(
         limit: _limit,
         offset: _offset,
-        searchQuery: _searchQuery.isNotEmpty ? _searchQuery : null,
+        searchQuery: _appliedSearchQuery.isNotEmpty
+            ? _appliedSearchQuery
+            : null,
       );
 
       if (!mounted || requestId != _loadRequestId) return;
@@ -216,7 +219,9 @@ class _CommunityScreenState extends State<CommunityScreen>
       final components = await _d1vaiService.getCommunityComponents(
         limit: _componentLimit,
         offset: _componentOffset,
-        searchQuery: _searchQuery.isNotEmpty ? _searchQuery : null,
+        searchQuery: _appliedSearchQuery.isNotEmpty
+            ? _appliedSearchQuery
+            : null,
       );
 
       if (!mounted || requestId != _loadRequestId) return;
@@ -244,6 +249,7 @@ class _CommunityScreenState extends State<CommunityScreen>
   Future<void> _performSearch(String query) async {
     setState(() {
       _searchQuery = query;
+      _appliedSearchQuery = query;
     });
     if (_isPostsTab) {
       await _loadPosts(refresh: true);
@@ -259,6 +265,9 @@ class _CommunityScreenState extends State<CommunityScreen>
     _searchDebounce?.cancel();
     _searchDebounce = Timer(const Duration(milliseconds: 300), () {
       if (!mounted) return;
+      setState(() {
+        _appliedSearchQuery = query;
+      });
       unawaited(
         _isPostsTab
             ? _loadPosts(refresh: true)
@@ -331,8 +340,8 @@ class _CommunityScreenState extends State<CommunityScreen>
   Widget _buildBody() {
     if (_tab == _CommunityTab.skills) {
       final skills = CommunitySkillsTab(
-        key: const ValueKey('community-skills'),
-        searchQuery: _searchQuery,
+        key: ValueKey('community-skills-$_appliedSearchQuery'),
+        searchQuery: _appliedSearchQuery,
       );
       if (!isDesktopLayout(context)) {
         return Column(

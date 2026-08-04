@@ -4,6 +4,7 @@ import 'package:d1vai_app/l10n/app_localizations.dart';
 
 import '../../../../services/d1vai_service.dart';
 import '../../../snackbar_helper.dart';
+import '../../../adaptive_modal.dart';
 
 enum _MigrationStep { plan, validate, approval, autoReview, execute }
 
@@ -24,34 +25,24 @@ Future<void> showRunSqlMigrationBottomSheet(
   }
 
   final hostContext = context;
-  await showModalBottomSheet<void>(
+  await showAdaptiveModal<void>(
     context: hostContext,
-    useRootNavigator: true,
-    isScrollControlled: true,
-    useSafeArea: true,
-    backgroundColor: Colors.transparent,
     builder: (sheetContext) {
-      final theme = Theme.of(sheetContext);
-      return FractionallySizedBox(
-        heightFactor: 0.92,
-        child: Container(
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: _RunSqlMigrationSheet(
-            projectId: projectId,
-            sql: sql,
-            sourcePath: sourcePath,
-            onSendToChat: (prompt) {
-              final encoded = Uri.encodeQueryComponent(prompt);
-              Navigator.of(sheetContext).pop();
-              GoRouter.of(
-                hostContext,
-              ).push('/projects/$projectId/chat?autoprompt=$encoded');
-            },
-          ),
+      return AdaptiveModalContainer(
+        maxWidth: 760,
+        desktopMaxHeightFactor: 0.92,
+        mobileMaxHeightFactor: 0.94,
+        child: _RunSqlMigrationSheet(
+          projectId: projectId,
+          sql: sql,
+          sourcePath: sourcePath,
+          onSendToChat: (prompt) {
+            final encoded = Uri.encodeQueryComponent(prompt);
+            Navigator.of(sheetContext).pop();
+            GoRouter.of(
+              hostContext,
+            ).push('/projects/$projectId/chat?autoprompt=$encoded');
+          },
         ),
       );
     },

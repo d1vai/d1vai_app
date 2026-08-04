@@ -19,6 +19,7 @@ class _CommunitySkillsTabState extends State<CommunitySkillsTab> {
   static const _pageSize = 20;
   final _service = D1vaiService();
   final List<CommunitySkill> _skills = [];
+  final ScrollController _scrollController = ScrollController();
   bool _loading = true;
   bool _loadingMore = false;
   bool _hasMore = true;
@@ -33,13 +34,33 @@ class _CommunitySkillsTabState extends State<CommunitySkillsTab> {
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     _load(refresh: true);
+  }
+
+  @override
+  void dispose() {
+    _scrollController
+      ..removeListener(_onScroll)
+      ..dispose();
+    super.dispose();
   }
 
   @override
   void didUpdateWidget(covariant CommunitySkillsTab oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.searchQuery != widget.searchQuery) _load(refresh: true);
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients ||
+        _loading ||
+        _loadingMore ||
+        !_hasMore) {
+      return;
+    }
+    final position = _scrollController.position;
+    if (position.extentAfter < 320) _load();
   }
 
   Future<void> _load({bool refresh = false}) async {
@@ -121,6 +142,7 @@ class _CommunitySkillsTabState extends State<CommunitySkillsTab> {
         builder: (context, constraints) {
           final wide = constraints.maxWidth >= 720;
           return GridView.builder(
+            controller: _scrollController,
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: wide ? 2 : 1,
@@ -132,17 +154,17 @@ class _CommunitySkillsTabState extends State<CommunitySkillsTab> {
             itemBuilder: (context, index) {
               if (index == _skills.length) {
                 return Center(
-                  child: OutlinedButton.icon(
-                    onPressed: _loadingMore ? null : () => _load(),
-                    icon: _loadingMore
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.expand_more_rounded),
-                    label: Text(_t('load_more', 'Load more')),
-                  ),
+                  child: _loadingMore
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : OutlinedButton.icon(
+                          onPressed: _load,
+                          icon: const Icon(Icons.expand_more_rounded),
+                          label: Text(_t('load_more', 'Load more')),
+                        ),
                 );
               }
               return _CommunitySkillCard(skill: _skills[index], t: _t);

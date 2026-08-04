@@ -7,6 +7,7 @@ import '../../../../services/d1vai_service.dart';
 import '../../file_preview.dart';
 import '../../file_preview_utils.dart';
 import '../../../snackbar_helper.dart';
+import '../../../adaptive_modal.dart';
 import 'code_tab_models.dart';
 import 'code_tab_run_migration_bottom_sheet.dart';
 import 'code_tab_views.dart';
@@ -17,27 +18,17 @@ Future<void> showProjectFileDetailBottomSheet(
   required String filePath,
   bool autoOpenMigration = false,
 }) async {
-  await showModalBottomSheet<void>(
+  await showAdaptiveModal<void>(
     context: context,
-    useRootNavigator: true,
-    isScrollControlled: true,
-    useSafeArea: true,
-    backgroundColor: Colors.transparent,
     builder: (context) {
-      final theme = Theme.of(context);
-      return FractionallySizedBox(
-        heightFactor: 0.92,
-        child: Container(
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: _ProjectFileDetailSheet(
-            projectId: projectId,
-            filePath: filePath,
-            autoOpenMigration: autoOpenMigration,
-          ),
+      return AdaptiveModalContainer(
+        maxWidth: 960,
+        desktopMaxHeightFactor: 0.92,
+        mobileMaxHeightFactor: 0.94,
+        child: _ProjectFileDetailSheet(
+          projectId: projectId,
+          filePath: filePath,
+          autoOpenMigration: autoOpenMigration,
         ),
       );
     },

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import '../app_menu_button.dart';
 import '../../models/message.dart';
+import '../adaptive_modal.dart';
 
 /// Message context menu actions
 enum MessageAction { copy, reply, forward, delete }
@@ -85,13 +86,8 @@ class MessageContextMenu extends StatelessWidget {
   }) async {
     final theme = Theme.of(context);
 
-    await showModalBottomSheet<void>(
+    await showAdaptiveModal<void>(
       context: context,
-      useRootNavigator: true,
-      backgroundColor: theme.colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (context) {
         Widget tile({
           required IconData icon,
@@ -113,57 +109,60 @@ class MessageContextMenu extends StatelessWidget {
           );
         }
 
-        return SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 42,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 8),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.outlineVariant,
-                    borderRadius: BorderRadius.circular(999),
+        return AdaptiveModalContainer(
+          maxWidth: 420,
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 42,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.outlineVariant,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
                   ),
-                ),
-                tile(
-                  icon: Icons.copy_rounded,
-                  label: 'Copy',
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    _copyMessageToClipboard(context, message);
-                  },
-                ),
-                tile(
-                  icon: Icons.reply_rounded,
-                  label: 'Reply',
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    onActionSelected?.call(MessageAction.reply);
-                  },
-                ),
-                tile(
-                  icon: Icons.forward_rounded,
-                  label: 'Forward',
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    onActionSelected?.call(MessageAction.forward);
-                  },
-                ),
-                if (showDelete)
                   tile(
-                    icon: Icons.delete_outline_rounded,
-                    label: 'Delete',
-                    color: theme.colorScheme.error,
+                    icon: Icons.copy_rounded,
+                    label: 'Copy',
                     onTap: () {
                       Navigator.of(context).pop();
-                      onActionSelected?.call(MessageAction.delete);
+                      _copyMessageToClipboard(context, message);
                     },
                   ),
-              ],
+                  tile(
+                    icon: Icons.reply_rounded,
+                    label: 'Reply',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      onActionSelected?.call(MessageAction.reply);
+                    },
+                  ),
+                  tile(
+                    icon: Icons.forward_rounded,
+                    label: 'Forward',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      onActionSelected?.call(MessageAction.forward);
+                    },
+                  ),
+                  if (showDelete)
+                    tile(
+                      icon: Icons.delete_outline_rounded,
+                      label: 'Delete',
+                      color: theme.colorScheme.error,
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        onActionSelected?.call(MessageAction.delete);
+                      },
+                    ),
+                ],
+              ),
             ),
           ),
         );
