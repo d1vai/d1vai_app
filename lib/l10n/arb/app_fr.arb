@@ -1541,5 +1541,9 @@
   "set_password": "Définir le mot de passe",
   "set_password_description": "Définissez un mot de passe pour activer la connexion par mot de passe.",
   "password_set_success": "Mot de passe défini avec succès",
-  "email_changed_success": "Adresse e-mail modifiée avec succès"
+  "email_changed_success": "Adresse e-mail modifiée avec succès",
+  "project_api_import": "Importer les variables d'environnement",
+  "project_api_overwrite_existing": "Remplacer les variables existantes",
+  "project_api_export": "Exporter .env",
+  "project_api_done": "Terminé"
 }

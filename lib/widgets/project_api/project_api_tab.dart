@@ -619,7 +619,10 @@ class _EnvErrorBanner extends StatelessWidget {
               ),
             ),
           ),
-          TextButton(onPressed: onRetry, child: const Text('Retry')),
+          TextButton(
+            onPressed: onRetry,
+            child: Text(_t(context, 'retry', 'Retry')),
+          ),
         ],
       ),
     );
@@ -946,7 +949,11 @@ class _ImportEnvDialogState extends State<_ImportEnvDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             AdaptiveModalHeader(
-              title: 'Import Environment Variables',
+              title: _t(
+                context,
+                'project_api_import',
+                'Import environment variables',
+              ),
               subtitle:
                   'Paste .env content below. Each line should follow KEY=value.',
               onClose: () => Navigator.of(context).pop(),
@@ -968,7 +975,13 @@ class _ImportEnvDialogState extends State<_ImportEnvDialog> {
               value: _overwrite,
               onChanged: (value) => setState(() => _overwrite = value),
               contentPadding: EdgeInsets.zero,
-              title: const Text('Overwrite existing variables'),
+              title: Text(
+                _t(
+                  context,
+                  'project_api_overwrite_existing',
+                  'Overwrite existing variables',
+                ),
+              ),
               subtitle: const Text(
                 'When enabled, imported keys replace existing values.',
               ),
@@ -979,7 +992,7 @@ class _ImportEnvDialogState extends State<_ImportEnvDialog> {
                 Expanded(
                   child: TextButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
+                    child: Text(_t(context, 'cancel', 'Cancel')),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -993,7 +1006,7 @@ class _ImportEnvDialogState extends State<_ImportEnvDialog> {
                               overwrite: _overwrite,
                             ),
                           ),
-                    child: const Text('Import'),
+                    child: Text(_t(context, 'import_action', 'Import')),
                   ),
                 ),
               ],
@@ -1021,7 +1034,7 @@ class _ExportEnvDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             AdaptiveModalHeader(
-              title: 'Export .env',
+              title: _t(context, 'project_api_export', 'Export .env'),
               subtitle: filename,
               onClose: () => Navigator.of(context).pop(),
             ),
@@ -1058,12 +1071,12 @@ class _ExportEnvDialog extends StatelessWidget {
                       if (!context.mounted) return;
                       SnackBarHelper.showSuccess(
                         context,
-                        title: 'Copied',
+                        title: _t(context, 'copied', 'Copied'),
                         message: filename,
                       );
                     },
                     icon: const Icon(Icons.copy_rounded),
-                    label: const Text('Copy'),
+                    label: Text(_t(context, 'copy', 'Copy')),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -1071,14 +1084,14 @@ class _ExportEnvDialog extends StatelessWidget {
                   child: OutlinedButton.icon(
                     onPressed: () => Share.share(content, subject: filename),
                     icon: const Icon(Icons.ios_share_rounded),
-                    label: const Text('Share'),
+                    label: Text(_t(context, 'docs_share', 'Share')),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Done'),
+                    child: Text(_t(context, 'project_api_done', 'Done')),
                   ),
                 ),
               ],

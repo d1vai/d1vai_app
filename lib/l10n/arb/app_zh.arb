@@ -1541,5 +1541,9 @@
   "set_password": "设置密码",
   "set_password_description": "为账户设置密码以启用密码登录。",
   "password_set_success": "密码设置成功",
-  "email_changed_success": "邮箱修改成功"
+  "email_changed_success": "邮箱修改成功",
+  "project_api_import": "导入环境变量",
+  "project_api_overwrite_existing": "覆盖已有变量",
+  "project_api_export": "导出 .env",
+  "project_api_done": "完成"
 }

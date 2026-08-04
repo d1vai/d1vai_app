@@ -1541,5 +1541,9 @@
   "set_password": "تعيين كلمة المرور",
   "set_password_description": "عيّن كلمة مرور لحسابك لتفعيل تسجيل الدخول بكلمة المرور.",
   "password_set_success": "تم تعيين كلمة المرور بنجاح",
-  "email_changed_success": "تم تغيير البريد الإلكتروني بنجاح"
+  "email_changed_success": "تم تغيير البريد الإلكتروني بنجاح",
+  "project_api_import": "استيراد متغيرات البيئة",
+  "project_api_overwrite_existing": "الكتابة فوق المتغيرات الحالية",
+  "project_api_export": "تصدير .env",
+  "project_api_done": "تم"
 }

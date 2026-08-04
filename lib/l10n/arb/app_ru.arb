@@ -1541,5 +1541,9 @@
   "set_password": "Установить пароль",
   "set_password_description": "Установите пароль для учетной записи, чтобы включить вход по паролю.",
   "password_set_success": "Пароль успешно установлен",
-  "email_changed_success": "Электронная почта успешно изменена"
+  "email_changed_success": "Электронная почта успешно изменена",
+  "project_api_import": "Импортировать переменные окружения",
+  "project_api_overwrite_existing": "Перезаписать существующие переменные",
+  "project_api_export": "Экспортировать .env",
+  "project_api_done": "Готово"
 }

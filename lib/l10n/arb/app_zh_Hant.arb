@@ -1541,5 +1541,9 @@
   "set_password": "設定密碼",
   "set_password_description": "為帳戶設定密碼以啟用密碼登入。",
   "password_set_success": "密碼設定成功",
-  "email_changed_success": "電子郵件修改成功"
+  "email_changed_success": "電子郵件修改成功",
+  "project_api_import": "匯入環境變數",
+  "project_api_overwrite_existing": "覆寫既有變數",
+  "project_api_export": "匯出 .env",
+  "project_api_done": "完成"
 }

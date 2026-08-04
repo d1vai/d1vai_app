@@ -1541,5 +1541,9 @@
   "set_password": "パスワードを設定",
   "set_password_description": "パスワードログインを有効にするため、アカウントのパスワードを設定します。",
   "password_set_success": "パスワードを設定しました",
-  "email_changed_success": "メールアドレスを変更しました"
+  "email_changed_success": "メールアドレスを変更しました",
+  "project_api_import": "環境変数をインポート",
+  "project_api_overwrite_existing": "既存の変数を上書き",
+  "project_api_export": ".env をエクスポート",
+  "project_api_done": "完了"
 }

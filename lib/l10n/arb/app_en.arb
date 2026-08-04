@@ -1541,5 +1541,9 @@
   "set_password": "Set Password",
   "set_password_description": "Set a password for your account to enable password login.",
   "password_set_success": "Password set successfully",
-  "email_changed_success": "Email changed successfully"
+  "email_changed_success": "Email changed successfully",
+  "project_api_import": "Import environment variables",
+  "project_api_overwrite_existing": "Overwrite existing variables",
+  "project_api_export": "Export .env",
+  "project_api_done": "Done"
 }

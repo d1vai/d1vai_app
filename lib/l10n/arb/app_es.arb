@@ -1541,5 +1541,9 @@
   "set_password": "Establecer contraseña",
   "set_password_description": "Establece una contraseña para tu cuenta y activa el inicio de sesión con contraseña.",
   "password_set_success": "Contraseña establecida correctamente",
-  "email_changed_success": "Correo electrónico cambiado correctamente"
+  "email_changed_success": "Correo electrónico cambiado correctamente",
+  "project_api_import": "Importar variables de entorno",
+  "project_api_overwrite_existing": "Sobrescribir variables existentes",
+  "project_api_export": "Exportar .env",
+  "project_api_done": "Listo"
 }
