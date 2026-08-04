@@ -8,12 +8,14 @@ class ProjectCardTile extends StatefulWidget {
   final UserProject project;
   final String updatedText;
   final VoidCallback onTap;
+  final VoidCallback? onOpenChat;
 
   const ProjectCardTile({
     super.key,
     required this.project,
     required this.updatedText,
     required this.onTap,
+    this.onOpenChat,
   });
 
   @override
@@ -204,12 +206,28 @@ class _ProjectCardTileState extends State<ProjectCardTile>
                             ),
                           ] else
                             const Spacer(),
-                          const SizedBox(width: 8),
-                          Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            size: 13,
-                            color: colorScheme.onSurfaceVariant.withValues(
-                              alpha: 0.72,
+                          const SizedBox(width: 4),
+                          Tooltip(
+                            message: 'Chat with AI',
+                            child: IconButton(
+                              onPressed: widget.onOpenChat ?? widget.onTap,
+                              visualDensity: VisualDensity.compact,
+                              constraints: const BoxConstraints.tightFor(
+                                width: 32,
+                                height: 32,
+                              ),
+                              style: IconButton.styleFrom(
+                                backgroundColor: colorScheme.primaryContainer
+                                    .withValues(alpha: isDark ? 0.34 : 0.7),
+                                foregroundColor: colorScheme.onPrimaryContainer,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(7),
+                                ),
+                              ),
+                              icon: const Icon(
+                                Icons.terminal_rounded,
+                                size: 17,
+                              ),
                             ),
                           ),
                         ],

@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
-
-import '../app_liquid_glass.dart';
 
 /// Floating chat button for mobile devices
 /// Shows current chat status and opens bottom sheet when tapped
@@ -61,9 +58,6 @@ class _FloatingChatButtonState extends State<FloatingChatButton>
     final theme = Theme.of(context);
     final isActive =
         widget.isDeploying || widget.isWorking || widget.isThinking;
-    final secondary = widget.secondaryLabel?.trim() ?? '';
-
-    // Determine status dot color
     Color statusColor;
     if (widget.isDeploying || widget.isWorking || widget.isThinking) {
       statusColor = widget.isDeploying
@@ -81,171 +75,58 @@ class _FloatingChatButtonState extends State<FloatingChatButton>
       statusColor = theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5);
     }
 
-    final bg = widget.isError
+    final background = widget.isError
         ? theme.colorScheme.errorContainer
-        : theme.colorScheme.primaryContainer;
-    final fg = widget.isError
-        ? theme.colorScheme.onErrorContainer
-        : theme.colorScheme.onPrimaryContainer;
-    final isDark = theme.brightness == Brightness.dark;
-    final glowColor = widget.isError
-        ? theme.colorScheme.error
         : theme.colorScheme.primary;
-
-    final shadow = isDark
-        ? <BoxShadow>[
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.35),
-              blurRadius: 14,
-              offset: const Offset(0, 8),
-            ),
-          ]
-        : <BoxShadow>[
-            BoxShadow(
-              color: theme.colorScheme.shadow.withValues(alpha: 0.20),
-              blurRadius: 14,
-              offset: const Offset(0, 8),
-            ),
-          ];
+    final foreground = widget.isError
+        ? theme.colorScheme.onErrorContainer
+        : theme.colorScheme.onPrimary;
 
     return Semantics(
       button: true,
-      label: 'Open chat',
+      label: 'Open chat, ${widget.statusLabel}',
       child: AnimatedBuilder(
         animation: _pressScale,
         builder: (context, child) {
-          final glow = isActive || _pressController.value > 0
-              ? [
-                  BoxShadow(
-                    color: glowColor.withValues(
-                      alpha: isDark
-                          ? 0.16 + 0.08 * _pressController.value
-                          : 0.08 + 0.06 * _pressController.value,
-                    ),
-                    blurRadius: isDark ? 18 : 14,
-                    offset: const Offset(0, 6),
-                  ),
-                ]
-              : const <BoxShadow>[];
-
           return Transform.scale(
             scale: _pressScale.value,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  widget.onPressed();
-                },
-                onTapDown: (_) => _pressController.forward(),
-                onTapCancel: () => _pressController.reverse(),
-                onTapUp: (_) => _pressController.reverse(),
-                borderRadius: BorderRadius.circular(999),
-                child: AppLiquidGlass(
-                  variant: AppLiquidGlassVariant.floating,
-                  borderRadius: 999,
-                  glowIntensity: isActive || _pressController.value > 0.01
-                      ? (isDark ? 0.52 : 0.22)
-                      : 0,
-                  settings: LiquidGlassSettings(
-                    blur: isDark ? 18 : 12,
-                    thickness: isDark ? 30 : 24,
-                    glassColor: bg.withValues(alpha: isDark ? 0.18 : 0.14),
-                    lightIntensity: isDark ? 0.22 : 0.32,
-                    saturation: isDark ? 1.18 : 1.08,
-                    glowIntensity: isDark ? 0.52 : 0.26,
-                    standardOpacityMultiplier: isDark ? 1 : 0.72,
-                  ),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    curve: Curves.easeOutCubic,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: bg.withValues(alpha: isDark ? 0.26 : 0.42),
-                      borderRadius: BorderRadius.circular(999),
-                      boxShadow: [...shadow, ...glow],
-                      border: Border.all(
-                        color: theme.colorScheme.outlineVariant.withValues(
-                          alpha: isDark ? 0.64 : 0.56,
-                        ),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+            child: Tooltip(
+              message: widget.statusLabel,
+              child: Material(
+                color: background,
+                elevation: 5,
+                shadowColor: theme.colorScheme.shadow.withValues(alpha: 0.28),
+                borderRadius: BorderRadius.circular(14),
+                child: InkWell(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    widget.onPressed();
+                  },
+                  onTapDown: (_) => _pressController.forward(),
+                  onTapCancel: () => _pressController.reverse(),
+                  onTapUp: (_) => _pressController.reverse(),
+                  borderRadius: BorderRadius.circular(14),
+                  child: SizedBox(
+                    width: 52,
+                    height: 52,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      clipBehavior: Clip.none,
                       children: [
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 180),
-                          curve: Curves.easeOutCubic,
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: fg.withValues(alpha: isActive ? 0.14 : 0.1),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: AnimatedSlide(
-                            duration: const Duration(milliseconds: 180),
-                            curve: Curves.easeOutCubic,
-                            offset: _pressController.value > 0
-                                ? const Offset(0, -0.04)
-                                : Offset.zero,
-                            child: Icon(
-                              Icons.chat_bubble_outline,
-                              size: 18,
-                              color: fg.withValues(alpha: 0.95),
-                            ),
-                          ),
+                        Icon(
+                          Icons.auto_awesome_rounded,
+                          size: 23,
+                          color: foreground,
                         ),
-                        const SizedBox(width: 10),
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Chat',
-                              style: theme.textTheme.labelLarge?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: fg.withValues(alpha: 0.95),
-                                height: 1.0,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              widget.statusLabel,
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: fg.withValues(alpha: 0.78),
-                                fontWeight: FontWeight.w700,
-                                height: 1.0,
-                              ),
-                            ),
-                            if (secondary.isNotEmpty) ...[
-                              const SizedBox(height: 3),
-                              ConstrainedBox(
-                                constraints: const BoxConstraints(
-                                  maxWidth: 128,
-                                ),
-                                child: Text(
-                                  secondary,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: fg.withValues(alpha: 0.58),
-                                    fontWeight: FontWeight.w600,
-                                    height: 1.0,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                        const SizedBox(width: 10),
-                        _StatusDot(
-                          color: statusColor,
-                          background: fg.withValues(alpha: 0.10),
-                          pulsing: isActive,
-                          emphasized: _pressController.value > 0.01,
+                        Positioned(
+                          top: -5,
+                          right: -5,
+                          child: _StatusDot(
+                            color: statusColor,
+                            background: theme.colorScheme.surface,
+                            pulsing: isActive,
+                            emphasized: _pressController.value > 0.01,
+                          ),
                         ),
                       ],
                     ),

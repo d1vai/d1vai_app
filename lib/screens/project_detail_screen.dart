@@ -60,8 +60,6 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   );
   static const double _macosTitleBarHeight = 34;
   static const double _macosTrafficLightsInset = 80;
-  static const List<int> _primaryTabIndices = [0, 4, 5];
-  static const List<int> _secondaryTabIndices = [1, 2, 3, 6];
 
   late final TabController _tabController;
   late final MacosMenuController _macosMenuController;
@@ -591,64 +589,29 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   }
 
   Widget _buildProjectSectionNavigation({bool compact = false}) {
-    final colorScheme = Theme.of(context).colorScheme;
     return AnimatedBuilder(
       animation: _tabController,
       builder: (context, _) {
         final selectedIndex = _tabController.index;
-        final secondarySelected = _secondaryTabIndices.contains(selectedIndex);
-        return Row(
-          children: [
-            for (final index in _primaryTabIndices)
-              Expanded(
-                child: _ProjectSectionButton(
-                  label: _t(_tabs[index].labelKey, _tabs[index].fallback),
-                  icon: _tabs[index].icon,
-                  selected: selectedIndex == index,
-                  compact: compact,
-                  onTap: () => _tabController.animateTo(index),
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.symmetric(horizontal: compact ? 2 : 8),
+          child: Row(
+            children: [
+              for (var index = 0; index < _tabs.length; index++)
+                SizedBox(
+                  width: compact ? 76 : 96,
+                  child: _ProjectSectionButton(
+                    label: _t(_tabs[index].labelKey, _tabs[index].fallback),
+                    icon: _tabs[index].icon,
+                    selected: selectedIndex == index,
+                    compact: compact,
+                    onTap: () => _tabController.animateTo(index),
+                  ),
                 ),
-              ),
-            SizedBox(
-              width: compact ? 38 : 48,
-              child: PopupMenuButton<int>(
-                tooltip: _t('chat_menu_more', 'More'),
-                initialValue: secondarySelected ? selectedIndex : null,
-                onSelected: _tabController.animateTo,
-                position: PopupMenuPosition.under,
-                icon: Icon(
-                  Icons.more_horiz_rounded,
-                  size: compact ? 17 : 20,
-                  color: secondarySelected
-                      ? colorScheme.primary
-                      : colorScheme.onSurfaceVariant,
-                ),
-                itemBuilder: (context) => [
-                  for (final index in _secondaryTabIndices)
-                    PopupMenuItem<int>(
-                      value: index,
-                      child: Row(
-                        children: [
-                          Icon(_tabs[index].icon, size: 19),
-                          const SizedBox(width: 12),
-                          Text(
-                            _t(_tabs[index].labelKey, _tabs[index].fallback),
-                          ),
-                          if (selectedIndex == index) ...[
-                            const Spacer(),
-                            Icon(
-                              Icons.check_rounded,
-                              size: 18,
-                              color: colorScheme.primary,
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );

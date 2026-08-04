@@ -6,6 +6,7 @@ import '../../l10n/app_localizations.dart';
 import '../../core/avatar_generator.dart';
 import '../../providers/organization_provider.dart';
 import '../adaptive_modal.dart';
+import '../avatar_image.dart';
 import '../snackbar_helper.dart';
 
 String _workspaceText(BuildContext context, String key, String fallback) {
@@ -291,21 +292,29 @@ class _WorkspaceAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final hasPicture = picture.trim().isNotEmpty;
+    if (hasPicture) {
+      return AvatarImage(
+        imageUrl: picture,
+        size: size,
+        placeholderText: name,
+        showBorder: true,
+        borderWidth: 1,
+        borderColor: scheme.outlineVariant.withValues(alpha: 0.66),
+      );
+    }
     return CircleAvatar(
       radius: size / 2,
       backgroundColor: organization
           ? scheme.secondaryContainer
           : scheme.primaryContainer,
-      backgroundImage: picture.isEmpty ? null : NetworkImage(picture),
-      child: picture.isEmpty
-          ? Icon(
-              organization ? Icons.business_rounded : Icons.person_rounded,
-              size: size * 0.52,
-              color: organization
-                  ? scheme.onSecondaryContainer
-                  : scheme.onPrimaryContainer,
-            )
-          : null,
+      child: Icon(
+        organization ? Icons.business_rounded : Icons.person_rounded,
+        size: size * 0.52,
+        color: organization
+            ? scheme.onSecondaryContainer
+            : scheme.onPrimaryContainer,
+      ),
     );
   }
 }

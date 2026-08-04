@@ -652,7 +652,6 @@ class _DashboardScreenState extends State<DashboardScreen>
     ProjectProvider projectProvider,
   ) {
     final loc = AppLocalizations.of(context);
-    final stats = projectProvider.getProjectStats();
     final desktop = isDesktopLayout(context);
 
     // 如果有错误，显示错误提示
@@ -679,8 +678,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                           _buildWorkspaceStatusWidget(),
                           const SizedBox(height: 20),
                         ],
-                        _buildStatsCards(stats, context),
-                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
@@ -822,8 +819,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                   _buildWorkspaceStatusWidget(),
                   const SizedBox(height: 20),
                 ],
-                _buildStatsCards(stats, context),
-                const SizedBox(height: 24),
                 if (user == null)
                   const SizedBox.shrink()
                 else
@@ -951,56 +946,6 @@ class _DashboardScreenState extends State<DashboardScreen>
         ]);
       },
       child: content,
-    );
-  }
-
-  /// 构建项目统计卡片
-  Widget _buildStatsCards(Map<String, int> stats, BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildStatCard(
-            _t('dashboard_stats_total', 'Total'),
-            stats['total'].toString(),
-            Icons.folder,
-            AppColors.info,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildStatCard(
-            _t('dashboard_stats_active', 'Active'),
-            stats['active'].toString(),
-            Icons.play_circle_outline,
-            AppColors.success,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildStatCard(
-            _t('dashboard_stats_archived', 'Archived'),
-            stats['archived'].toString(),
-            Icons.archive,
-            AppColors.warning,
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// 构建单个统计卡片
-  Widget _buildStatCard(
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return StatCard(
-      value: value,
-      label: label,
-      icon: icon,
-      valueColor: color,
-      glass: true,
     );
   }
 

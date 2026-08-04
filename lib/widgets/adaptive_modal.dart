@@ -151,28 +151,15 @@ class AdaptiveModalContainer extends StatelessWidget {
               settings: glassSettings,
               boxShadow: shadow,
               overlayDecoration: BoxDecoration(
+                color: theme.colorScheme.surface.withValues(
+                  alpha: isDark ? 0.94 : 0.98,
+                ),
                 border: Border.all(
                   color: theme.colorScheme.outlineVariant.withValues(
                     alpha: isDark ? 0.52 : 0.72,
                   ),
                 ),
                 borderRadius: surfaceBorderRadius,
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.white.withValues(alpha: isDark ? 0.06 : 0.22),
-                    Color.alphaBlend(
-                      theme.colorScheme.primary.withValues(
-                        alpha: isDark ? 0.08 : 0.04,
-                      ),
-                      theme.colorScheme.surface,
-                    ).withValues(alpha: isDark ? 0.92 : 0.96),
-                    theme.colorScheme.surface.withValues(
-                      alpha: isDark ? 0.92 : 0.98,
-                    ),
-                  ],
-                ),
               ),
               child: Material(
                 type: MaterialType.transparency,
