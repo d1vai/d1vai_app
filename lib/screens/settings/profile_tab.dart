@@ -7,7 +7,6 @@ import '../../l10n/app_localizations.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/profile_provider.dart';
-import '../../core/api_client.dart';
 import '../../widgets/avatar_image.dart';
 import '../../widgets/button.dart';
 import '../../widgets/card.dart';
@@ -110,31 +109,6 @@ class SettingsProfileTab extends StatelessWidget {
                         : AppColors.borderLight,
                   ),
                   ListTile(
-                    leading: const Icon(
-                      Icons.code,
-                      color: AppColors.secondaryBrand,
-                    ),
-                    title: Text(
-                      loc?.translate('settings_editor_title') ?? 'Code Editor',
-                    ),
-                    subtitle: Text(
-                      loc?.translate('settings_editor_entry_subtitle') ??
-                          'Theme, font, wrap',
-                    ),
-                    trailing: const Icon(
-                      Icons.arrow_forward_ios,
-                      size: 16,
-                      color: AppColors.textSecondaryLight,
-                    ),
-                    onTap: onShowEditorPreferencesDialog,
-                  ),
-                  Divider(
-                    height: 1,
-                    color: isDark
-                        ? AppColors.borderSubtleDark
-                        : AppColors.borderLight,
-                  ),
-                  ListTile(
                     leading: const Icon(Icons.language, color: AppColors.info),
                     title: Text(loc?.translate('language') ?? 'Language'),
                     subtitle: Text(localeProvider.currentLanguageName),
@@ -223,28 +197,6 @@ class SettingsProfileTab extends StatelessWidget {
                     ),
                     onTap: () {
                       context.push('/settings/help');
-                    },
-                  ),
-                  Divider(
-                    height: 1,
-                    color: isDark
-                        ? AppColors.borderDark
-                        : AppColors.borderLight,
-                  ),
-                  ListTile(
-                    leading: const Icon(
-                      Icons.settings_ethernet,
-                      color: AppColors.info,
-                    ),
-                    title: Text(loc?.translate('api_settings') ?? 'API'),
-                    subtitle: Text(ApiClient.baseUrl),
-                    trailing: const Icon(
-                      Icons.arrow_forward_ios,
-                      size: 16,
-                      color: AppColors.textSecondaryLight,
-                    ),
-                    onTap: () {
-                      context.push('/settings/api');
                     },
                   ),
                   Divider(

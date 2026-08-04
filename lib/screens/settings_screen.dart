@@ -11,9 +11,8 @@ import 'package:d1vai_app/widgets/button.dart';
 import 'package:d1vai_app/core/theme/app_colors.dart';
 import 'package:d1vai_app/core/theme/locale_font_helper.dart';
 import 'package:d1vai_app/screens/settings/profile_tab.dart';
-import 'package:d1vai_app/screens/settings/github_tab.dart';
 import 'package:d1vai_app/screens/settings/invites_tab.dart';
-import 'package:d1vai_app/screens/settings/api_keys_tab.dart';
+import 'package:d1vai_app/screens/settings/developer_tab.dart';
 import 'package:d1vai_app/utils/desktop_layout.dart';
 import 'package:d1vai_app/widgets/editor_preferences_dialog.dart';
 
@@ -39,7 +38,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       case 'api-key':
       case 'api_key':
       case 'apikey':
-        return 3;
+        return 2;
       case 'profile':
       default:
         return 0;
@@ -100,19 +99,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
       (
-        label: loc?.translate('github') ?? 'GitHub',
-        icon: Icons.code,
+        label: loc?.translate('developer') ?? 'Developer',
+        icon: Icons.code_rounded,
         child: _SettingsTabContentInset(
           bottomSpacing: tabBottomSpacing,
-          child: const SettingsGithubTab(),
-        ),
-      ),
-      (
-        label: loc?.translate('settings_api_key') ?? 'API Key',
-        icon: Icons.key_rounded,
-        child: _SettingsTabContentInset(
-          bottomSpacing: tabBottomSpacing,
-          child: const SettingsApiKeysTab(),
+          child: DeveloperSettingsTab(
+            onShowEditorPreferences: _showEditorPreferencesDialog,
+          ),
         ),
       ),
     ];
@@ -174,7 +167,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const SizedBox(width: 8),
                       _buildTabButton(2, tabs[2].label, tabs[2].icon),
                       const SizedBox(width: 8),
-                      _buildTabButton(3, tabs[3].label, tabs[3].icon),
                     ],
                   ),
                 ),
