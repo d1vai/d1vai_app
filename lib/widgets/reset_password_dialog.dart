@@ -67,7 +67,9 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
     final email = _emailController.text.trim();
 
     if (!_isValidEmail(email)) {
-      _showError('Please enter a valid email');
+      _showError(
+        context.tr('email_invalid', 'Please enter a valid email address'),
+      );
       return;
     }
 
@@ -79,7 +81,12 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
       await _service.postUserPasswordForgotSend(email);
 
       if (mounted) {
-        _showSuccess('Verification code sent');
+        _showSuccess(
+          context.tr(
+            'code_sent_success',
+            'Verification code sent successfully',
+          ),
+        );
         _startCountdown();
       }
     } catch (e) {
@@ -102,22 +109,33 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
     final confirmPassword = _confirmPasswordController.text;
 
     if (!_isValidEmail(email)) {
-      _showError('Please enter a valid email');
+      _showError(
+        context.tr('email_invalid', 'Please enter a valid email address'),
+      );
       return;
     }
 
     if (code.isEmpty || code.length < 4) {
-      _showError('Please enter the verification code');
+      _showError(
+        context.tr('verify_code_required', 'Please enter verification code'),
+      );
       return;
     }
 
     if (password.isEmpty || password.length < 6) {
-      _showError('Password must be at least 6 characters');
+      _showError(
+        context.tr(
+          'password_length_error',
+          'Password must be at least 6 characters',
+        ),
+      );
       return;
     }
 
     if (password != confirmPassword) {
-      _showError('Passwords do not match');
+      _showError(
+        context.tr('passwords_do_not_match', 'Passwords do not match'),
+      );
       return;
     }
 
@@ -129,7 +147,9 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
       await _service.postUserPasswordReset(email, code, password);
 
       if (mounted) {
-        _showSuccess('Password reset successfully');
+        _showSuccess(
+          context.tr('password_reset_success', 'Password reset successfully'),
+        );
         Navigator.of(context).pop();
         widget.onSuccess?.call();
       }
@@ -170,7 +190,7 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
     final theme = Theme.of(context);
 
     return AlertDialog(
-      title: const Text('Reset Password'),
+      title: Text(context.tr('reset_password', 'Reset Password')),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -178,7 +198,7 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
           children: [
             // Email 输入框
             Text(
-              'Email',
+              context.tr('email', 'Email'),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -204,7 +224,7 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
 
             // 验证码输入框
             Text(
-              'Verification Code',
+              context.tr('verify_code', 'Verification Code'),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -259,7 +279,9 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
                             ),
                           )
                         : Text(
-                            _countdown > 0 ? '${_countdown}s' : 'Send Code',
+                            _countdown > 0
+                                ? '${_countdown}s'
+                                : context.tr('send_code', 'Send Code'),
                             style: const TextStyle(fontSize: 13),
                           ),
                   ),
@@ -270,7 +292,7 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
 
             // 新密码输入框
             Text(
-              'New Password',
+              context.tr('new_password', 'New Password'),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -282,7 +304,10 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
               controller: _passwordController,
               obscureText: _obscurePassword,
               decoration: InputDecoration(
-                hintText: 'Enter new password',
+                hintText: context.tr(
+                  'enter_new_password',
+                  'Enter new password',
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -307,7 +332,7 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
 
             // 确认密码输入框
             Text(
-              'Confirm Password',
+              context.tr('confirm_password', 'Confirm Password'),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -319,7 +344,10 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
               controller: _confirmPasswordController,
               obscureText: _obscureConfirmPassword,
               decoration: InputDecoration(
-                hintText: 'Confirm new password',
+                hintText: context.tr(
+                  're_enter_new_password',
+                  'Re-enter new password',
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -376,7 +404,7 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
                 )
-              : const Text('Reset Password'),
+              : Text(context.tr('reset_password', 'Reset Password')),
         ),
       ],
     );

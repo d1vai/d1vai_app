@@ -1537,5 +1537,9 @@
   "community_author": "作者",
   "community_report": "檢舉",
   "community_coming_soon": "即將推出",
-  "community_save_coming_soon": "儲存功能即將推出"
+  "community_save_coming_soon": "儲存功能即將推出",
+  "set_password": "設定密碼",
+  "set_password_description": "為帳戶設定密碼以啟用密碼登入。",
+  "password_set_success": "密碼設定成功",
+  "email_changed_success": "電子郵件修改成功"
 }

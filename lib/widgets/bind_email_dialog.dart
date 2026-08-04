@@ -72,7 +72,9 @@ class _BindEmailDialogState extends State<BindEmailDialog> {
     final email = _emailController.text.trim();
 
     if (!_isValidEmail(email)) {
-      _showError('Please enter a valid email');
+      _showError(
+        context.tr('email_invalid', 'Please enter a valid email address'),
+      );
       return;
     }
 
@@ -88,7 +90,12 @@ class _BindEmailDialogState extends State<BindEmailDialog> {
       }
 
       if (mounted) {
-        _showSuccess('Verification code sent');
+        _showSuccess(
+          context.tr(
+            'code_sent_success',
+            'Verification code sent successfully',
+          ),
+        );
         _startCountdown();
       }
     } catch (e) {
@@ -109,12 +116,16 @@ class _BindEmailDialogState extends State<BindEmailDialog> {
     final code = _codeController.text.trim();
 
     if (!_isValidEmail(email)) {
-      _showError('Please enter a valid email');
+      _showError(
+        context.tr('email_invalid', 'Please enter a valid email address'),
+      );
       return;
     }
 
     if (code.isEmpty || code.length < 4) {
-      _showError('Please enter the verification code');
+      _showError(
+        context.tr('verify_code_required', 'Please enter verification code'),
+      );
       return;
     }
 
@@ -126,7 +137,9 @@ class _BindEmailDialogState extends State<BindEmailDialog> {
       if (widget.mode == EmailDialogMode.change) {
         await _service.postUserChangeEmailConfirm(email, code);
         if (mounted) {
-          _showSuccess('Email changed successfully');
+          _showSuccess(
+            context.tr('email_changed_success', 'Email changed successfully'),
+          );
         }
       } else {
         await _service.postUserBindEmailConfirm(email, code);
@@ -183,7 +196,9 @@ class _BindEmailDialogState extends State<BindEmailDialog> {
 
     return AlertDialog(
       title: Text(
-        widget.mode == EmailDialogMode.change ? 'Change Email' : 'Bind Email',
+        widget.mode == EmailDialogMode.change
+            ? context.tr('login_change_email', 'Change Email')
+            : context.tr('bind_email', 'Bind Email'),
       ),
       content: Form(
         key: _formKey,
@@ -193,7 +208,7 @@ class _BindEmailDialogState extends State<BindEmailDialog> {
           children: [
             // Email 输入框
             Text(
-              'Email',
+              context.tr('email', 'Email'),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -216,10 +231,16 @@ class _BindEmailDialogState extends State<BindEmailDialog> {
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter your email';
+                  return context.tr(
+                    'email_required',
+                    'Please enter email address',
+                  );
                 }
                 if (!_isValidEmail(value)) {
-                  return 'Please enter a valid email';
+                  return context.tr(
+                    'email_invalid',
+                    'Please enter a valid email address',
+                  );
                 }
                 return null;
               },
@@ -228,7 +249,7 @@ class _BindEmailDialogState extends State<BindEmailDialog> {
 
             // 验证码输入框
             Text(
-              'Verification Code',
+              context.tr('verify_code', 'Verification Code'),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -254,10 +275,16 @@ class _BindEmailDialogState extends State<BindEmailDialog> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter the code';
+                        return context.tr(
+                          'verify_code_required',
+                          'Please enter verification code',
+                        );
                       }
                       if (value.length < 4) {
-                        return 'Code must be at least 4 digits';
+                        return context.tr(
+                          'verify_code_complete',
+                          'Please enter complete verification code',
+                        );
                       }
                       return null;
                     },
@@ -290,7 +317,9 @@ class _BindEmailDialogState extends State<BindEmailDialog> {
                             ),
                           )
                         : Text(
-                            _countdown > 0 ? '${_countdown}s' : 'Send Code',
+                            _countdown > 0
+                                ? '${_countdown}s'
+                                : context.tr('send_code', 'Send Code'),
                             style: const TextStyle(fontSize: 13),
                           ),
                   ),
@@ -329,7 +358,7 @@ class _BindEmailDialogState extends State<BindEmailDialog> {
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
                 )
-              : const Text('Confirm'),
+              : Text(context.tr('confirm', 'Confirm')),
         ),
       ],
     );

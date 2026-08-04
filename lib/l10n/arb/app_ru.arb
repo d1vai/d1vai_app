@@ -1537,5 +1537,9 @@
   "community_author": "автор",
   "community_report": "Пожаловаться",
   "community_coming_soon": "Скоро",
-  "community_save_coming_soon": "Сохранение появится в ближайшее время"
+  "community_save_coming_soon": "Сохранение появится в ближайшее время",
+  "set_password": "Установить пароль",
+  "set_password_description": "Установите пароль для учетной записи, чтобы включить вход по паролю.",
+  "password_set_success": "Пароль успешно установлен",
+  "email_changed_success": "Электронная почта успешно изменена"
 }

@@ -1537,5 +1537,9 @@
   "community_author": "投稿者",
   "community_report": "報告",
   "community_coming_soon": "近日公開",
-  "community_save_coming_soon": "保存機能は近日公開です"
+  "community_save_coming_soon": "保存機能は近日公開です",
+  "set_password": "パスワードを設定",
+  "set_password_description": "パスワードログインを有効にするため、アカウントのパスワードを設定します。",
+  "password_set_success": "パスワードを設定しました",
+  "email_changed_success": "メールアドレスを変更しました"
 }

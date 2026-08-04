@@ -32,12 +32,19 @@ class _SetPasswordDialogState extends State<SetPasswordDialog> {
     final confirmPassword = _confirmPasswordController.text;
 
     if (password.isEmpty || password.length < 6) {
-      _showError('Password must be at least 6 characters');
+      _showError(
+        context.tr(
+          'password_length_error',
+          'Password must be at least 6 characters',
+        ),
+      );
       return;
     }
 
     if (password != confirmPassword) {
-      _showError('Passwords do not match');
+      _showError(
+        context.tr('passwords_do_not_match', 'Passwords do not match'),
+      );
       return;
     }
 
@@ -49,7 +56,9 @@ class _SetPasswordDialogState extends State<SetPasswordDialog> {
       await _service.postUserPasswordSet(password);
 
       if (mounted) {
-        _showSuccess('Password set successfully');
+        _showSuccess(
+          context.tr('password_set_success', 'Password set successfully'),
+        );
         Navigator.of(context).pop();
         widget.onSuccess?.call();
       }
@@ -90,14 +99,17 @@ class _SetPasswordDialogState extends State<SetPasswordDialog> {
     final theme = Theme.of(context);
 
     return AlertDialog(
-      title: const Text('Set Password'),
+      title: Text(context.tr('set_password', 'Set Password')),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Set a password for your account to enable password login.',
+              context.tr(
+                'set_password_description',
+                'Set a password for your account to enable password login.',
+              ),
               style: TextStyle(
                 fontSize: 14,
                 color: theme.colorScheme.onSurface,
@@ -107,7 +119,7 @@ class _SetPasswordDialogState extends State<SetPasswordDialog> {
 
             // 新密码输入框
             Text(
-              'New Password',
+              context.tr('new_password', 'New Password'),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -119,7 +131,10 @@ class _SetPasswordDialogState extends State<SetPasswordDialog> {
               controller: _passwordController,
               obscureText: _obscurePassword,
               decoration: InputDecoration(
-                hintText: 'Enter new password',
+                hintText: context.tr(
+                  'enter_new_password',
+                  'Enter new password',
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -144,7 +159,7 @@ class _SetPasswordDialogState extends State<SetPasswordDialog> {
 
             // 确认密码输入框
             Text(
-              'Confirm Password',
+              context.tr('confirm_password', 'Confirm Password'),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -156,7 +171,10 @@ class _SetPasswordDialogState extends State<SetPasswordDialog> {
               controller: _confirmPasswordController,
               obscureText: _obscureConfirmPassword,
               decoration: InputDecoration(
-                hintText: 'Confirm new password',
+                hintText: context.tr(
+                  're_enter_new_password',
+                  'Re-enter new password',
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -213,7 +231,7 @@ class _SetPasswordDialogState extends State<SetPasswordDialog> {
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
                 )
-              : const Text('Set Password'),
+              : Text(context.tr('set_password', 'Set Password')),
         ),
       ],
     );

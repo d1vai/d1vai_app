@@ -1537,5 +1537,9 @@
   "community_author": "auteur",
   "community_report": "Signaler",
   "community_coming_soon": "Bientôt disponible",
-  "community_save_coming_soon": "La fonction d'enregistrement arrive bientôt"
+  "community_save_coming_soon": "La fonction d'enregistrement arrive bientôt",
+  "set_password": "Définir le mot de passe",
+  "set_password_description": "Définissez un mot de passe pour activer la connexion par mot de passe.",
+  "password_set_success": "Mot de passe défini avec succès",
+  "email_changed_success": "Adresse e-mail modifiée avec succès"
 }

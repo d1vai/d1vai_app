@@ -1537,5 +1537,9 @@
   "community_author": "作者",
   "community_report": "举报",
   "community_coming_soon": "即将推出",
-  "community_save_coming_soon": "保存功能即将推出"
+  "community_save_coming_soon": "保存功能即将推出",
+  "set_password": "设置密码",
+  "set_password_description": "为账户设置密码以启用密码登录。",
+  "password_set_success": "密码设置成功",
+  "email_changed_success": "邮箱修改成功"
 }
