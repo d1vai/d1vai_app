@@ -53,6 +53,17 @@ class AppTheme {
         color: AppColors.borderLight,
         thickness: 1,
       ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: AppColors.surfaceLight,
+        surfaceTintColor: Colors.transparent,
+        elevation: 10,
+        modalElevation: 10,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        dragHandleColor: AppColors.borderLight,
+        showDragHandle: false,
+      ),
       textSelectionTheme: TextSelectionThemeData(
         cursorColor: AppColors.primaryBrand,
         selectionColor: AppColors.primaryBrand.withValues(alpha: 0.22),
@@ -102,6 +113,17 @@ class AppTheme {
       dividerTheme: const DividerThemeData(
         color: AppColors.borderDark,
         thickness: 1,
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: AppColors.surfaceDark,
+        surfaceTintColor: Colors.transparent,
+        elevation: 10,
+        modalElevation: 10,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        dragHandleColor: AppColors.borderDark,
+        showDragHandle: false,
       ),
       textSelectionTheme: TextSelectionThemeData(
         cursorColor: AppColors.primaryBrand,
