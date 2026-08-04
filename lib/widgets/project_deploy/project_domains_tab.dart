@@ -36,7 +36,8 @@ class _ProjectDomainsTabState extends State<ProjectDomainsTab> {
   bool _mutating = false;
   String? _error;
   Timer? _pollTimer;
-  DateTime? _pollStartedAt;
+  final Map<int, DateTime> _pollStartedAt = {};
+  final Set<int> _pollInFlight = {};
 
   String _t(String key, String fallback) {
     final value = AppLocalizations.of(context)?.translate(key);
@@ -56,6 +57,8 @@ class _ProjectDomainsTabState extends State<ProjectDomainsTab> {
     if (oldWidget.projectId != widget.projectId) {
       _pollTimer?.cancel();
       _domains = const [];
+      _pollStartedAt.clear();
+      _pollInFlight.clear();
       _platformDomain = widget.platformDomain;
       unawaited(_load(showLoading: true));
     }
@@ -67,7 +70,13 @@ class _ProjectDomainsTabState extends State<ProjectDomainsTab> {
     super.dispose();
   }
 
-  bool get _hasPendingDomains => _domains.any((domain) => domain.isPendingDns);
+  bool _shouldPoll(ProjectCustomDomain domain) {
+    if (!domain.isPendingDns) return false;
+    final startedAt = _pollStartedAt.putIfAbsent(domain.id, DateTime.now);
+    return DateTime.now().difference(startedAt) < _maximumPollDuration;
+  }
+
+  bool get _hasPollablePendingDomains => _domains.any(_shouldPoll);
 
   Future<void> _load({
     bool showLoading = false,
@@ -88,6 +97,11 @@ class _ProjectDomainsTabState extends State<ProjectDomainsTab> {
         _loading = false;
         _error = null;
       });
+      _pollStartedAt.removeWhere(
+        (domainId, _) => !_domains.any(
+          (domain) => domain.id == domainId && domain.isPendingDns,
+        ),
+      );
       _syncPolling();
     } catch (error) {
       if (!mounted) return;
@@ -113,42 +127,54 @@ class _ProjectDomainsTabState extends State<ProjectDomainsTab> {
   }
 
   void _syncPolling() {
-    if (!_hasPendingDomains) {
+    _pollStartedAt.removeWhere(
+      (domainId, _) => !_domains.any(
+        (domain) => domain.id == domainId && domain.isPendingDns,
+      ),
+    );
+    if (!_hasPollablePendingDomains) {
       _pollTimer?.cancel();
       _pollTimer = null;
-      _pollStartedAt = null;
       return;
     }
-    _pollStartedAt ??= DateTime.now();
     _pollTimer ??= Timer.periodic(_pollInterval, (_) {
-      final startedAt = _pollStartedAt;
-      if (startedAt == null ||
-          DateTime.now().difference(startedAt) >= _maximumPollDuration) {
-        _pollTimer?.cancel();
-        _pollTimer = null;
-        return;
-      }
       unawaited(_verifyPendingDomains());
     });
   }
 
   Future<void> _verifyPendingDomains() async {
-    if (_mutating || !_hasPendingDomains) return;
-    try {
-      await Future.wait(
-        _domains
-            .where((domain) => domain.isPendingDns)
-            .map(
-              (domain) => _service.verifyProjectCustomDomain(
-                widget.projectId,
-                domain.id,
-              ),
-            ),
-      );
-      await _load(reportError: false);
-    } catch (_) {
-      // DNS propagation can be incomplete. The next polling attempt retries.
+    if (_mutating || !_hasPollablePendingDomains) return;
+    final candidates = _domains
+        .where(
+          (domain) => _shouldPoll(domain) && !_pollInFlight.contains(domain.id),
+        )
+        .toList(growable: false);
+    if (candidates.isEmpty) {
+      _syncPolling();
+      return;
     }
+    await Future.wait(
+      candidates.map((domain) async {
+        _pollInFlight.add(domain.id);
+        try {
+          final updated = await _service.verifyProjectCustomDomain(
+            widget.projectId,
+            domain.id,
+          );
+          if (!mounted) return;
+          setState(() {
+            _domains = _domains
+                .map((item) => item.id == updated.id ? updated : item)
+                .toList(growable: false);
+          });
+        } catch (_) {
+          // DNS propagation can be delayed. The next polling attempt retries.
+        } finally {
+          _pollInFlight.remove(domain.id);
+        }
+      }),
+    );
+    if (mounted) _syncPolling();
   }
 
   Future<void> _copy(String value, String label) async {
@@ -208,6 +234,7 @@ class _ProjectDomainsTabState extends State<ProjectDomainsTab> {
       setState(() {
         _domains = [..._domains.where((item) => item.id != added.id), added];
       });
+      _pollStartedAt[added.id] = DateTime.now();
       _syncPolling();
     } catch (error) {
       if (!mounted) return;
@@ -234,6 +261,7 @@ class _ProjectDomainsTabState extends State<ProjectDomainsTab> {
             .map((item) => item.id == updated.id ? updated : item)
             .toList(growable: false);
       });
+      if (!updated.isPendingDns) _pollStartedAt.remove(updated.id);
       _syncPolling();
     } catch (error) {
       if (!mounted) return;
@@ -284,6 +312,8 @@ class _ProjectDomainsTabState extends State<ProjectDomainsTab> {
             .where((item) => item.id != domain.id)
             .toList(growable: false);
       });
+      _pollStartedAt.remove(domain.id);
+      _pollInFlight.remove(domain.id);
       _syncPolling();
     } catch (error) {
       if (!mounted) return;
@@ -452,8 +482,9 @@ class _PlatformDomainCard extends StatelessWidget {
               children: [
                 Text(label, style: theme.textTheme.labelMedium),
                 const SizedBox(height: 2),
-                Text(
+                SelectableText(
                   domain,
+                  maxLines: 2,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -540,11 +571,31 @@ class _DomainCard extends StatelessWidget {
           _StatusPill(label: statusLabel, color: statusColor),
           if (!verified) ...[
             const SizedBox(height: 12),
-            Text(
-              t('project_domains_dns_records', 'DNS records'),
-              style: theme.textTheme.labelLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    t('project_domains_dns_records', 'DNS records'),
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: t('project_domains_dns_records', 'DNS records'),
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => onCopy(
+                    domain.verification
+                        .map(
+                          (record) =>
+                              '${record.type}\t${record.domain}\t${record.value}',
+                        )
+                        .join('\n'),
+                    t('project_domains_dns_records', 'DNS records'),
+                  ),
+                  icon: const Icon(Icons.copy_all_outlined, size: 18),
+                ),
+              ],
             ),
             const SizedBox(height: 7),
             ...domain.verification.map(
