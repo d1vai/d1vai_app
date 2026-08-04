@@ -520,12 +520,6 @@ class _DomainCard extends StatelessWidget {
                   ),
                 ),
               ),
-              if (domain.isPrimary)
-                _StatusPill(
-                  label: t('project_domains_primary', 'Primary'),
-                  color: cs.primary,
-                ),
-              const SizedBox(width: 4),
               IconButton(
                 tooltip: t('project_domains_domain', 'Domain'),
                 onPressed: () => onCopy(
