@@ -97,3 +97,12 @@ class _AppLocalizationsDelegate
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
 }
+
+/// Keeps UI code concise while ensuring every user-facing string is resolved
+/// through the active locale rather than embedded in a widget tree.
+extension AppLocalizationContext on BuildContext {
+  String tr(String key, String fallback) {
+    final value = AppLocalizations.of(this)?.translate(key);
+    return value == null || value == key ? fallback : value;
+  }
+}

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../app_menu_button.dart';
 import '../../models/message.dart';
 import '../adaptive_modal.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Message context menu actions
 enum MessageAction { copy, reply, forward, delete }
@@ -45,25 +46,25 @@ class MessageContextMenu extends StatelessWidget {
         color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
       ),
       actions: [
-        const AppMenuAction(
+        AppMenuAction(
           value: MessageAction.copy,
-          label: 'Copy',
+          label: context.tr('copy', 'Copy'),
           icon: Icons.copy,
         ),
-        const AppMenuAction(
+        AppMenuAction(
           value: MessageAction.reply,
-          label: 'Reply',
+          label: context.tr('chat_reply', 'Reply'),
           icon: Icons.reply,
         ),
-        const AppMenuAction(
+        AppMenuAction(
           value: MessageAction.forward,
-          label: 'Forward',
+          label: context.tr('chat_forward', 'Forward'),
           icon: Icons.forward,
         ),
         if (showDelete)
-          const AppMenuAction(
+          AppMenuAction(
             value: MessageAction.delete,
-            label: 'Delete',
+            label: context.tr('delete', 'Delete'),
             icon: Icons.delete_outline,
             destructive: true,
           ),
@@ -129,7 +130,7 @@ class MessageContextMenu extends StatelessWidget {
                   ),
                   tile(
                     icon: Icons.copy_rounded,
-                    label: 'Copy',
+                    label: context.tr('copy', 'Copy'),
                     onTap: () {
                       Navigator.of(context).pop();
                       _copyMessageToClipboard(context, message);
@@ -137,7 +138,7 @@ class MessageContextMenu extends StatelessWidget {
                   ),
                   tile(
                     icon: Icons.reply_rounded,
-                    label: 'Reply',
+                    label: context.tr('chat_reply', 'Reply'),
                     onTap: () {
                       Navigator.of(context).pop();
                       onActionSelected?.call(MessageAction.reply);
@@ -145,7 +146,7 @@ class MessageContextMenu extends StatelessWidget {
                   ),
                   tile(
                     icon: Icons.forward_rounded,
-                    label: 'Forward',
+                    label: context.tr('chat_forward', 'Forward'),
                     onTap: () {
                       Navigator.of(context).pop();
                       onActionSelected?.call(MessageAction.forward);
@@ -154,7 +155,7 @@ class MessageContextMenu extends StatelessWidget {
                   if (showDelete)
                     tile(
                       icon: Icons.delete_outline_rounded,
-                      label: 'Delete',
+                      label: context.tr('delete', 'Delete'),
                       color: theme.colorScheme.error,
                       onTap: () {
                         Navigator.of(context).pop();

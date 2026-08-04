@@ -114,12 +114,19 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
         _isLiked = previousLiked;
         _likeCount = previousCount;
       });
-      SnackBarHelper.showError(context, title: 'Like failed', message: '$e');
+      SnackBarHelper.showError(
+        context,
+        title: context.tr('community_like_failed', 'Like failed'),
+        message: '$e',
+      );
       return;
     }
     SnackBarHelper.showSuccess(
       context,
-      title: _isLiked ? 'Liked' : 'Unliked',
+      title: context.tr(
+        _isLiked ? 'community_liked' : 'community_unliked',
+        _isLiked ? 'Liked' : 'Unliked',
+      ),
       message: widget.post.title,
     );
   }
@@ -157,8 +164,11 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
     widget.onHidePost?.call(slug);
     SnackBarHelper.showSuccess(
       context,
-      title: 'Hidden',
-      message: 'This post will be hidden on this device',
+      title: context.tr('community_hidden_title', 'Hidden'),
+      message: context.tr(
+        'community_hidden_message',
+        'This post will be hidden on this device',
+      ),
     );
   }
 
@@ -168,8 +178,11 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
     if (slug.isEmpty) {
       SnackBarHelper.showInfo(
         context,
-        title: 'Block',
-        message: 'Missing author identifier',
+        title: context.tr('community_block_title', 'Block'),
+        message: context.tr(
+          'community_missing_author',
+          'Missing author identifier',
+        ),
       );
       return;
     }
@@ -184,8 +197,13 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
     widget.onBlockAuthor?.call(slug);
     SnackBarHelper.showSuccess(
       context,
-      title: 'Blocked',
-      message: 'You will no longer see posts from @$slug',
+      title: context.tr('community_blocked_title', 'Blocked'),
+      message: context
+          .tr(
+            'community_blocked_message',
+            'You will no longer see posts from @{slug}',
+          )
+          .replaceAll('{slug}', slug),
     );
   }
 
@@ -489,7 +507,10 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
                                         ),
                                         onPressed: () =>
                                             _showMoreOptions(context),
-                                        tooltip: 'More',
+                                        tooltip: context.tr(
+                                          'chat_menu_more',
+                                          'More',
+                                        ),
                                         visualDensity: VisualDensity.compact,
                                       ),
                                     ],
@@ -584,7 +605,7 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
                                   const Spacer(),
                                   _ActionPill(
                                     icon: Icons.share,
-                                    label: 'Share',
+                                    label: context.tr('docs_share', 'Share'),
                                     onTap: _sharePostSheet,
                                   ),
                                 ],
@@ -643,7 +664,7 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
               children: [
                 ListTile(
                   leading: const Icon(Icons.share),
-                  title: const Text('Share'),
+                  title: Text(context.tr('docs_share', 'Share')),
                   onTap: () {
                     Navigator.pop(context);
                     _sharePostSheet();
@@ -651,7 +672,7 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
                 ),
                 ListTile(
                   leading: const Icon(Icons.visibility_off_outlined),
-                  title: const Text('Hide'),
+                  title: Text(context.tr('community_hide', 'Hide')),
                   onTap: () {
                     Navigator.pop(context);
                     _hidePost();
@@ -659,7 +680,9 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
                 ),
                 ListTile(
                   leading: const Icon(Icons.block),
-                  title: Text('Block @${widget.post.author?.slug ?? 'author'}'),
+                  title: Text(
+                    '${context.tr('community_block_title', 'Block')} @${widget.post.author?.slug ?? context.tr('community_author', 'author')}',
+                  ),
                   onTap: () {
                     Navigator.pop(context);
                     _blockAuthor();
@@ -667,7 +690,7 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
                 ),
                 ListTile(
                   leading: const Icon(Icons.bookmark_border),
-                  title: const Text('Save'),
+                  title: Text(context.tr('save', 'Save')),
                   onTap: () {
                     Navigator.pop(context);
                     _savePost(context);
@@ -675,7 +698,7 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
                 ),
                 ListTile(
                   leading: const Icon(Icons.flag_outlined),
-                  title: const Text('Report'),
+                  title: Text(context.tr('community_report', 'Report')),
                   onTap: () {
                     Navigator.pop(context);
                     _reportPost(context);
@@ -694,8 +717,11 @@ class _PostCardState extends State<PostCard> with TickerProviderStateMixin {
     if (!_ensureLoggedIn()) return;
     SnackBarHelper.showInfo(
       context,
-      title: 'Coming Soon',
-      message: 'Save functionality coming soon',
+      title: context.tr('community_coming_soon', 'Coming soon'),
+      message: context.tr(
+        'community_save_coming_soon',
+        'Save functionality coming soon',
+      ),
     );
   }
 

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../models/outbox.dart';
 import '../../adaptive_modal.dart';
+import '../../../l10n/app_localizations.dart';
 
 class OutboxBubbles extends StatefulWidget {
   final Color color;
@@ -570,11 +571,21 @@ class _OutboxSheetState extends State<_OutboxSheet> {
 
   String _hint() {
     final mode = widget.mode;
-    if (mode == OutboxMode.waitingModel) return 'Waiting for model…';
-    if (mode == OutboxMode.waitingWorkspace) return 'Waiting for workspace…';
-    if (mode == OutboxMode.waitingTask) return 'Waiting for current run…';
-    if (mode == OutboxMode.dispatching) return 'Sending…';
-    if (mode == OutboxMode.pausedError) return 'Paused (an item failed).';
+    if (mode == OutboxMode.waitingModel) {
+      return context.tr('outbox_waiting_model', 'Waiting for model…');
+    }
+    if (mode == OutboxMode.waitingWorkspace) {
+      return context.tr('outbox_waiting_workspace', 'Waiting for workspace…');
+    }
+    if (mode == OutboxMode.waitingTask) {
+      return context.tr('outbox_waiting_task', 'Waiting for current run…');
+    }
+    if (mode == OutboxMode.dispatching) {
+      return context.tr('chat_status_sending', 'Sending…');
+    }
+    if (mode == OutboxMode.pausedError) {
+      return context.tr('outbox_paused_error', 'Paused (an item failed).');
+    }
     return '';
   }
 
@@ -611,7 +622,7 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                 child: Row(
                   children: [
                     Text(
-                      'Outbox',
+                      context.tr('outbox_title', 'Outbox'),
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -626,7 +637,7 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                           _controller.clear();
                         });
                       },
-                      child: const Text('Clear'),
+                      child: Text(context.tr('clear', 'Clear')),
                     ),
                   ],
                 ),
@@ -648,7 +659,7 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                 child: items.isEmpty
                     ? Center(
                         child: Text(
-                          'No queued messages.',
+                          context.tr('outbox_empty', 'No queued messages.'),
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: fgMuted,
                           ),
@@ -731,13 +742,13 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                                 children: [
                                   iconBtn(
                                     icon: Icons.close,
-                                    tooltip: 'Cancel',
+                                    tooltip: context.tr('cancel', 'Cancel'),
                                     onTap: _cancelEdit,
                                   ),
                                   const SizedBox(width: 8),
                                   iconBtn(
                                     icon: Icons.check,
-                                    tooltip: 'Save',
+                                    tooltip: context.tr('save', 'Save'),
                                     onTap: canSave
                                         ? () => _saveEdit(item)
                                         : null,
@@ -755,7 +766,7 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                               children: [
                                 iconBtn(
                                   icon: Icons.edit,
-                                  tooltip: 'Edit',
+                                  tooltip: context.tr('edit', 'Edit'),
                                   onTap: canEdit
                                       ? () => _startEdit(item)
                                       : null,
@@ -763,7 +774,7 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                                 const SizedBox(width: 8),
                                 iconBtn(
                                   icon: Icons.delete_outline,
-                                  tooltip: 'Delete',
+                                  tooltip: context.tr('delete', 'Delete'),
                                   onTap: canEdit
                                       ? () {
                                           widget.onDelete(item);
@@ -818,7 +829,10 @@ class _OutboxSheetState extends State<_OutboxSheet> {
                               maxLines: 3,
                               textCapitalization: TextCapitalization.sentences,
                               decoration: InputDecoration(
-                                hintText: 'Edit message…',
+                                hintText: context.tr(
+                                  'outbox_edit_message',
+                                  'Edit message…',
+                                ),
                                 isDense: true,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),

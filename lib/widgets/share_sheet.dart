@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 
 import 'snackbar_helper.dart';
 import 'adaptive_modal.dart';
+import '../l10n/app_localizations.dart';
 
 /// Shared share/copy UI so screens don't re-implement share logic.
 ///
@@ -118,7 +119,7 @@ class _ShareSheetBody extends StatelessWidget {
                       Text(
                         title?.trim().isNotEmpty == true
                             ? title!.trim()
-                            : 'Share',
+                            : context.tr('docs_share', 'Share'),
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w800,
                         ),
@@ -127,7 +128,10 @@ class _ShareSheetBody extends StatelessWidget {
                       Text(
                         desc.isNotEmpty
                             ? desc
-                            : 'Send this link to your team or copy it for later.',
+                            : context.tr(
+                                'share_sheet_description',
+                                'Send this link to your team or copy it for later.',
+                              ),
                         maxLines: 4,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -168,8 +172,11 @@ class _ShareSheetBody extends StatelessWidget {
                       if (!context.mounted) return;
                       SnackBarHelper.showSuccess(
                         context,
-                        title: 'Copied',
-                        message: 'Link copied to clipboard',
+                        title: context.tr('copied', 'Copied'),
+                        message: context.tr(
+                          'share_sheet_link_copied',
+                          'Link copied to clipboard',
+                        ),
                       );
                       Navigator.of(context).pop();
                     },
@@ -181,7 +188,9 @@ class _ShareSheetBody extends StatelessWidget {
                       ),
                     ),
                     icon: const Icon(Icons.link_rounded),
-                    label: const Text('Copy link'),
+                    label: Text(
+                      context.tr('share_sheet_copy_link', 'Copy link'),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -199,7 +208,7 @@ class _ShareSheetBody extends StatelessWidget {
                       ),
                     ),
                     icon: const Icon(Icons.arrow_outward_rounded),
-                    label: const Text('Share'),
+                    label: Text(context.tr('docs_share', 'Share')),
                   ),
                 ),
               ],
