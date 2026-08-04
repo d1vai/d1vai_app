@@ -5,6 +5,7 @@ import '../models/user.dart';
 import '../models/project.dart';
 import '../models/community_post.dart';
 import '../models/community_component.dart';
+import '../models/community_skill.dart';
 import '../models/prompt_activity.dart';
 
 import '../models/deployment.dart';
@@ -926,6 +927,24 @@ class D1vaiService {
       'content_type': 'community_component',
       'content_id': componentId,
     });
+  }
+
+  Future<List<CommunitySkill>> getCommunitySkills({
+    int limit = 20,
+    int offset = 0,
+    String? searchQuery,
+  }) async {
+    final query = <String>['limit=$limit', 'offset=$offset'];
+    if ((searchQuery ?? '').trim().isNotEmpty) {
+      query.add('q=${Uri.encodeQueryComponent(searchQuery!.trim())}');
+    }
+    return _apiClient.get<List<CommunitySkill>>(
+      '/api/community-skills?${query.join('&')}',
+      fromJsonT: (json) => (json as List)
+          .whereType<Map>()
+          .map((item) => CommunitySkill.fromJson(item.cast<String, dynamic>()))
+          .toList(growable: false),
+    );
   }
 
   // ============================================

@@ -18,6 +18,7 @@ import '../widgets/d1v_app_bar.dart';
 import '../widgets/login_required_dialog.dart';
 import '../widgets/post_card.dart';
 import '../widgets/search_field.dart';
+import '../widgets/community_skills_tab.dart';
 import 'community_component_preview_screen.dart';
 import 'post_detail_screen.dart';
 
@@ -246,7 +247,7 @@ class _CommunityScreenState extends State<CommunityScreen>
     });
     if (_isPostsTab) {
       await _loadPosts(refresh: true);
-    } else {
+    } else if (_tab == _CommunityTab.components) {
       await _loadComponents(refresh: true);
     }
   }
@@ -261,7 +262,9 @@ class _CommunityScreenState extends State<CommunityScreen>
       unawaited(
         _isPostsTab
             ? _loadPosts(refresh: true)
-            : _loadComponents(refresh: true),
+            : _tab == _CommunityTab.components
+            ? _loadComponents(refresh: true)
+            : Future<void>.value(),
       );
     });
   }
@@ -292,10 +295,12 @@ class _CommunityScreenState extends State<CommunityScreen>
             ? AppBarSearchField(
                 hintText: isPostsView
                     ? _t('community_search_hint', 'Search posts...')
-                    : _t(
+                    : _tab == _CommunityTab.components
+                    ? _t(
                         'community_search_components_hint',
                         'Search components...',
-                      ),
+                      )
+                    : _t('community_search_skills_hint', 'Search skills...'),
                 autofocus: true,
                 onChanged: _scheduleSearch,
                 onClear: _clearSearch,
@@ -324,6 +329,32 @@ class _CommunityScreenState extends State<CommunityScreen>
   }
 
   Widget _buildBody() {
+    if (_tab == _CommunityTab.skills) {
+      final skills = CommunitySkillsTab(
+        key: const ValueKey('community-skills'),
+        searchQuery: _searchQuery,
+      );
+      if (!isDesktopLayout(context)) {
+        return Column(
+          children: [
+            _buildFilterBar(),
+            Expanded(child: skills),
+          ],
+        );
+      }
+      return DesktopContentFrame(
+        maxWidth: 1440,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+              child: _buildFilterBar(),
+            ),
+            Expanded(child: skills),
+          ],
+        ),
+      );
+    }
     final visiblePosts = _visiblePosts(_posts);
     final desktop = isDesktopLayout(context);
     final isPostsView = _isPostsTab;
@@ -547,6 +578,8 @@ class _CommunityScreenState extends State<CommunityScreen>
       unawaited(
         next == _CommunityTab.components
             ? _loadComponents(refresh: true)
+            : next == _CommunityTab.skills
+            ? Future<void>.value()
             : _loadPosts(refresh: true),
       );
     }
@@ -566,6 +599,7 @@ class _CommunityScreenState extends State<CommunityScreen>
         'community_empty_components',
         'No components.',
       ),
+      _CommunityTab.skills => _t('community_no_skills_yet', 'No skills yet.'),
     };
 
     return Container(
@@ -831,7 +865,7 @@ class _CommunityScreenState extends State<CommunityScreen>
   }
 }
 
-enum _CommunityTab { posts, components, myPosts }
+enum _CommunityTab { posts, components, skills, myPosts }
 
 extension on _CommunityScreenState {
   bool get _isPostsTab =>
@@ -876,6 +910,13 @@ class _CommunityTabs extends StatelessWidget {
               label: t('community_tab_components', 'Components'),
               selected: selectedTab == _CommunityTab.components,
               onTap: () => onSelected(_CommunityTab.components),
+            ),
+          ),
+          Expanded(
+            child: _CommunityTabButton(
+              label: t('community_tab_skills', 'Skills'),
+              selected: selectedTab == _CommunityTab.skills,
+              onTap: () => onSelected(_CommunityTab.skills),
             ),
           ),
           Expanded(
