@@ -12,7 +12,6 @@ import '../../services/d1vai_service.dart';
 import '../../utils/error_utils.dart';
 import '../adaptive_modal.dart';
 import '../app_menu_button.dart';
-import '../card.dart';
 import '../snackbar_helper.dart';
 import 'env_var_editor_dialog.dart';
 import 'env_var_loading_skeleton.dart';
@@ -355,7 +354,9 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
       final content = (data['content'] ?? '').toString();
       final filename = (data['filename'] ?? '${widget.projectId}.env')
           .toString();
-      unawaited(AppAnalyticsService.instance.trackEnvVarExported(widget.projectId));
+      unawaited(
+        AppAnalyticsService.instance.trackEnvVarExported(widget.projectId),
+      );
       await showAdaptiveModal<void>(
         context: context,
         builder: (context) =>
@@ -387,7 +388,9 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
         title: _t('project_api_sync_vercel', 'Sync to Vercel'),
         message: message,
       );
-      unawaited(AppAnalyticsService.instance.trackEnvVarSynced(widget.projectId));
+      unawaited(
+        AppAnalyticsService.instance.trackEnvVarSynced(widget.projectId),
+      );
       await _loadEnvVars();
     } catch (e) {
       if (!mounted) return;
@@ -429,131 +432,76 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CustomCard(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _t(
-                                'project_api_environment_variables',
-                                'Environment Variables',
-                              ),
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.3,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Manage runtime secrets, export a full .env snapshot, and keep Vercel in sync from one dense workspace.',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: cs.onSurfaceVariant,
-                                height: 1.35,
-                              ),
-                            ),
-                          ],
+                      Text(
+                        _t(
+                          'project_api_environment_variables',
+                          'Environment Variables',
+                        ),
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      _EnvStatPill(
-                        label: _t('project_api_total', 'Total'),
-                        value: '${_envVars.length}',
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: [
-                      OutlinedButton.icon(
-                        onPressed: _isLoadingEnvVars
-                            ? null
-                            : () => _toggleShowValues(!_showValues),
-                        icon: Icon(
-                          _showValues
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                        ),
-                        label: Text(
-                          _showValues ? 'Hide Values' : 'Show Values',
-                        ),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: _isImporting ? null : _openImportDialog,
-                        icon: _isImporting
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.upload_file_outlined),
-                        label: const Text('Import'),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: _isExporting ? null : _openExportDialog,
-                        icon: _isExporting
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.download_outlined),
-                        label: const Text('Export'),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: _isSyncing ? null : _syncToVercel,
-                        icon: _isSyncing
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.sync_outlined),
-                        label: const Text('Sync to Vercel'),
-                      ),
-                      FilledButton.icon(
-                        onPressed: _isLoadingEnvVars
-                            ? null
-                            : _showCreateEnvVarDialog,
-                        icon: const Icon(Icons.add_rounded),
-                        label: const Text('Add Variable'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _EnvInlinePill(
-                        icon: _showValues
-                            ? Icons.lock_open_rounded
-                            : Icons.lock_outline_rounded,
-                        text: _showValues
+                      const SizedBox(height: 4),
+                      Text(
+                        _showValues
                             ? _t('project_api_values_visible', 'Values visible')
                             : _t('project_api_values_masked', 'Values masked'),
-                      ),
-                      _EnvInlinePill(
-                        icon: Icons.key_rounded,
-                        text:
-                            '${_envVars.where((e) => e.isSensitive).length} sensitive',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: cs.onSurfaceVariant,
+                        ),
                       ),
                     ],
+                  ),
+                ),
+                Tooltip(
+                  message: _t('project_api_add_variable', 'Add variable'),
+                  child: IconButton.filled(
+                    onPressed: _isLoadingEnvVars
+                        ? null
+                        : _showCreateEnvVarDialog,
+                    icon: const Icon(Icons.add_rounded),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _EnvToolbarButton(
+                    tooltip: _showValues ? 'Hide values' : 'Show values',
+                    onPressed: _isLoadingEnvVars
+                        ? null
+                        : () => _toggleShowValues(!_showValues),
+                    icon: _showValues
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                  ),
+                  _EnvToolbarButton(
+                    tooltip: _t('import_action', 'Import'),
+                    onPressed: _isImporting ? null : _openImportDialog,
+                    icon: Icons.upload_file_outlined,
+                    loading: _isImporting,
+                  ),
+                  _EnvToolbarButton(
+                    tooltip: _t('project_api_export', 'Export'),
+                    onPressed: _isExporting ? null : _openExportDialog,
+                    icon: Icons.download_outlined,
+                    loading: _isExporting,
+                  ),
+                  _EnvToolbarButton(
+                    tooltip: _t('project_api_sync_vercel', 'Sync to Vercel'),
+                    onPressed: _isSyncing ? null : _syncToVercel,
+                    icon: Icons.sync_outlined,
+                    loading: _isSyncing,
                   ),
                 ],
               ),
@@ -605,69 +553,35 @@ class _ProjectApiTabState extends State<ProjectApiTab> {
   }
 }
 
-class _EnvStatPill extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _EnvStatPill({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: Color.alphaBlend(cs.primary.withValues(alpha: 0.10), cs.surface),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cs.primary.withValues(alpha: 0.18)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: cs.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: cs.primary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EnvInlinePill extends StatelessWidget {
+class _EnvToolbarButton extends StatelessWidget {
+  final String tooltip;
+  final VoidCallback? onPressed;
   final IconData icon;
-  final String text;
+  final bool loading;
 
-  const _EnvInlinePill({required this.icon, required this.text});
+  const _EnvToolbarButton({
+    required this.tooltip,
+    required this.onPressed,
+    required this.icon,
+    this.loading = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.28)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: cs.onSurfaceVariant),
-          const SizedBox(width: 8),
-          Text(text),
-        ],
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: Tooltip(
+        message: tooltip,
+        child: IconButton.outlined(
+          onPressed: onPressed,
+          icon: loading
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Icon(icon),
+        ),
       ),
     );
   }
@@ -902,9 +816,11 @@ class _EnvVarDenseItem extends StatelessWidget {
               ),
             ],
           ),
-          if ((envVar.description ?? '').trim().isNotEmpty || timestamp.isNotEmpty)
+          if ((envVar.description ?? '').trim().isNotEmpty ||
+              timestamp.isNotEmpty)
             const SizedBox(height: 6),
-          if ((envVar.description ?? '').trim().isNotEmpty || timestamp.isNotEmpty)
+          if ((envVar.description ?? '').trim().isNotEmpty ||
+              timestamp.isNotEmpty)
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
