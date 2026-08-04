@@ -18,6 +18,7 @@ import '../card.dart';
 import '../chat/project_chat/status_dot.dart';
 import '../compact_selector.dart';
 import '../skeleton.dart';
+import 'project_domains_tab.dart';
 
 /// 项目详情页 - Deploy Tab
 class ProjectDeployTab extends StatefulWidget {
@@ -38,7 +39,7 @@ class ProjectDeployTab extends StatefulWidget {
 
 enum _DeploymentEnvFilter { all, dev, prod }
 
-enum _DeployWorkspaceTab { timeline, deployments, releases }
+enum _DeployWorkspaceTab { timeline, deployments, releases, domains }
 
 class _TimelineCommit {
   final String sha;
@@ -1625,6 +1626,12 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                   Icons.inventory_2_outlined,
                   _t('project_deploy_releases', 'Releases'),
                 ),
+                const SizedBox(height: 8),
+                tab(
+                  _DeployWorkspaceTab.domains,
+                  Icons.language_rounded,
+                  _t('project_domains_tab', 'Domains'),
+                ),
               ],
             )
           : Row(
@@ -1645,6 +1652,12 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                   _DeployWorkspaceTab.releases,
                   Icons.inventory_2_outlined,
                   _t('project_deploy_releases', 'Releases'),
+                ),
+                const SizedBox(width: 8),
+                tab(
+                  _DeployWorkspaceTab.domains,
+                  Icons.language_rounded,
+                  _t('project_domains_tab', 'Domains'),
                 ),
               ],
             ),
@@ -1831,6 +1844,11 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
         return _buildDeploymentHistoryCard();
       case _DeployWorkspaceTab.releases:
         return _buildReleasesCard(project);
+      case _DeployWorkspaceTab.domains:
+        return ProjectDomainsTab(
+          projectId: project.id,
+          platformDomain: project.vercelProdDomain,
+        );
     }
   }
 

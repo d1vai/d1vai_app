@@ -8,6 +8,7 @@ import '../models/community_component.dart';
 import '../models/prompt_activity.dart';
 
 import '../models/deployment.dart';
+import '../models/project_custom_domain.dart';
 import 'cache_service.dart';
 
 class D1vaiService {
@@ -1827,6 +1828,47 @@ class D1vaiService {
     if (nested is Map<String, dynamic>) return nested;
     if (nested is Map) return nested.cast<String, dynamic>();
     return response;
+  }
+
+  Future<ProjectCustomDomainsResponse> getProjectCustomDomains(
+    String projectId,
+  ) async {
+    return _apiClient.get<ProjectCustomDomainsResponse>(
+      '/api/deployment/$projectId/domains',
+      fromJsonT: (json) => ProjectCustomDomainsResponse.fromJson(
+        (json as Map).cast<String, dynamic>(),
+      ),
+    );
+  }
+
+  Future<ProjectCustomDomain> addProjectCustomDomain(
+    String projectId, {
+    required String domain,
+  }) async {
+    return _apiClient.post<ProjectCustomDomain>(
+      '/api/deployment/$projectId/domains',
+      {'domain': domain},
+      fromJsonT: (json) =>
+          ProjectCustomDomain.fromJson((json as Map).cast<String, dynamic>()),
+    );
+  }
+
+  Future<ProjectCustomDomain> verifyProjectCustomDomain(
+    String projectId,
+    int domainId,
+  ) async {
+    return _apiClient.post<ProjectCustomDomain>(
+      '/api/deployment/$projectId/domains/$domainId/verify',
+      {},
+      fromJsonT: (json) =>
+          ProjectCustomDomain.fromJson((json as Map).cast<String, dynamic>()),
+    );
+  }
+
+  Future<void> deleteProjectCustomDomain(String projectId, int domainId) async {
+    await _apiClient.delete<void>(
+      '/api/deployment/$projectId/domains/$domainId',
+    );
   }
 
   Future<Map<String, dynamic>> configureProjectRootDirectory(
