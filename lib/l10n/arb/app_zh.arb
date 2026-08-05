@@ -83,6 +83,8 @@
   "loading": "加载中...",
   "login": "登录",
   "login_failed": "登录失败",
+  "apple_login_canceled_title": "已取消登录",
+  "apple_login_canceled_message": "您已取消 Apple 登录。",
   "login_first": "请先登录",
   "login_required_button": "去登录",
   "login_required_create_post_message": "你需要先登录才能发布帖子",

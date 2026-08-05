@@ -81,6 +81,8 @@
   "loading": "読み込み中...",
   "login": "ログイン",
   "login_failed": "ログインに失敗しました",
+  "apple_login_canceled_title": "サインインをキャンセルしました",
+  "apple_login_canceled_message": "Appleでのサインインをキャンセルしました。",
   "login_first": "先にログインしてください",
   "login_required_button": "ログイン",
   "login_required_create_post_message": "投稿を作成するにはログインしてください。",

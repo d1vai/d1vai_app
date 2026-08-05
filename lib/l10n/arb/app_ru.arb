@@ -81,6 +81,8 @@
   "loading": "Загрузка...",
   "login": "Войти",
   "login_failed": "Ошибка входа",
+  "apple_login_canceled_title": "Вход отменён",
+  "apple_login_canceled_message": "Вы отменили вход через Apple.",
   "login_first": "Пожалуйста, войдите сначала",
   "login_required_button": "Войти",
   "login_required_create_post_message": "Чтобы создать публикацию, необходимо войти в систему.",

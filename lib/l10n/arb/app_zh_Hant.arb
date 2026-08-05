@@ -83,6 +83,8 @@
   "loading": "載入中...",
   "login": "登入",
   "login_failed": "登入失敗",
+  "apple_login_canceled_title": "已取消登入",
+  "apple_login_canceled_message": "你已取消 Apple 登入。",
   "login_first": "請先登入",
   "login_required_button": "前往登入",
   "login_required_create_post_message": "你需要先登入才能發佈貼文",

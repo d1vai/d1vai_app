@@ -83,6 +83,8 @@
   "loading": "Loading...",
   "login": "Login",
   "login_failed": "Login failed",
+  "apple_login_canceled_title": "Sign-in canceled",
+  "apple_login_canceled_message": "You canceled Apple sign-in.",
   "login_first": "Please login first",
   "login_required_button": "Login",
   "login_required_create_post_message": "You need to log in to create a post.",

@@ -81,6 +81,8 @@
   "loading": "جاري التحميل...",
   "login": "تسجيل الدخول",
   "login_failed": "فشل في تسجيل الدخول",
+  "apple_login_canceled_title": "تم إلغاء تسجيل الدخول",
+  "apple_login_canceled_message": "لقد ألغيت تسجيل الدخول باستخدام Apple.",
   "login_first": "يرجى تسجيل الدخول أولاً",
   "login_required_button": "تسجيل الدخول",
   "login_required_create_post_message": "تحتاج إلى تسجيل الدخول لإنشاء منشور.",

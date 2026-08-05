@@ -81,6 +81,8 @@
   "loading": "Cargando...",
   "login": "Iniciar sesión",
   "login_failed": "Error al iniciar sesión",
+  "apple_login_canceled_title": "Inicio de sesión cancelado",
+  "apple_login_canceled_message": "Cancelaste el inicio de sesión con Apple.",
   "login_first": "Por favor inicie sesión primero",
   "login_required_button": "Iniciar sesión",
   "login_required_create_post_message": "Necesitas iniciar sesión para crear una publicación.",

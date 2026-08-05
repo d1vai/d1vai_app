@@ -81,6 +81,8 @@
   "loading": "Chargement...",
   "login": "Se connecter",
   "login_failed": "Échec de la connexion",
+  "apple_login_canceled_title": "Connexion annulée",
+  "apple_login_canceled_message": "Vous avez annulé la connexion avec Apple.",
   "login_first": "Veuillez d'abord vous connecter",
   "login_required_button": "Se connecter",
   "login_required_create_post_message": "Vous devez vous connecter pour créer une publication.",

@@ -13,6 +13,7 @@ import 'package:d1vai_app/widgets/auth/auth_input_fields.dart';
 import 'package:d1vai_app/widgets/auth/auth_display_controls.dart';
 import 'package:d1vai_app/widgets/share_sheet.dart';
 import 'package:d1vai_app/l10n/app_localizations.dart';
+import 'package:d1vai_app/utils/apple_sign_in_error.dart';
 import '../utils/desktop_layout.dart';
 
 /// 登录模式枚举
@@ -332,7 +333,21 @@ class _LoginScreenState extends State<LoginScreen> {
       _showSuccess(loc?.translate('login_success') ?? '登录成功');
       if (mounted) context.go(_postLoginDestination);
     } catch (e) {
-      _showError(e.toString());
+      if (isAppleSignInCancellation(e)) {
+        if (mounted) {
+          SnackBarHelper.showInfo(
+            context,
+            title:
+                loc?.translate('apple_login_canceled_title') ??
+                'Sign-in canceled',
+            message:
+                loc?.translate('apple_login_canceled_message') ??
+                'You canceled Apple sign-in.',
+          );
+        }
+      } else {
+        _showError(e.toString());
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -873,15 +888,6 @@ class _LoginScreenState extends State<LoginScreen> {
             _buildInviteBanner(loc),
             const SizedBox(height: 16),
           ],
-          if (!desktop) ...[
-            Text(
-              'd1v',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 20),
-          ],
           Text(
             loc?.translate('login_welcome_back') ?? 'Welcome back',
             style: Theme.of(
@@ -1006,6 +1012,51 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  Widget _buildMobileIdentity(AppLocalizations? loc, {required bool compact}) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: cs.primary,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'd1v',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: cs.onPrimary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                loc?.translate('login_desktop_hero_subtitle') ??
+                    'Your project workspace',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: cs.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: compact ? 24 : 36),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
@@ -1054,14 +1105,38 @@ class _LoginScreenState extends State<LoginScreen> {
                           ],
                         ),
                       )
-                    : Center(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.fromLTRB(20, 72, 20, 28),
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 440),
-                            child: _buildLoginForm(loc, desktop: false),
-                          ),
-                        ),
+                    : LayoutBuilder(
+                        builder: (context, constraints) {
+                          final compact = constraints.maxHeight < 700;
+                          final horizontalPadding = constraints.maxWidth < 360
+                              ? 16.0
+                              : 24.0;
+                          return SingleChildScrollView(
+                            keyboardDismissBehavior:
+                                ScrollViewKeyboardDismissBehavior.onDrag,
+                            padding: EdgeInsets.fromLTRB(
+                              horizontalPadding,
+                              compact ? 64 : 80,
+                              horizontalPadding,
+                              compact ? 20 : 32,
+                            ),
+                            child: Center(
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 440,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    _buildMobileIdentity(loc, compact: compact),
+                                    _buildLoginForm(loc, desktop: false),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
               ),
               const Positioned(top: 8, right: 12, child: AuthDisplayControls()),

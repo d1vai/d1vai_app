@@ -52,6 +52,7 @@ Future<T?> showAdaptiveDraggableSheet<T>({
     context: context,
     useRootNavigator: true,
     isDismissible: barrierDismissible,
+    barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
     enableDrag: enableDrag,
     isScrollControlled: true,
     useSafeArea: false,

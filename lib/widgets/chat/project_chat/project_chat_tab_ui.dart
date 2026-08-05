@@ -493,6 +493,7 @@ mixin _ProjectChatTabUI on _ProjectChatTabStateBase {
     final theme = Theme.of(hostContext);
     await showAdaptiveDraggableSheet<void>(
       context: hostContext,
+      barrierDismissible: true,
       enableDrag: false,
       barrierColor: Colors.black.withValues(
         alpha: theme.brightness == Brightness.dark ? 0.46 : 0.34,
