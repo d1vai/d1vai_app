@@ -9,6 +9,8 @@ class CommunitySkill {
   final String? version;
   final String? riskLevel;
   final String? publisherName;
+  final String? publisherLogin;
+  final String? publisherAvatarUrl;
 
   const CommunitySkill({
     required this.id,
@@ -21,6 +23,8 @@ class CommunitySkill {
     this.version,
     this.riskLevel,
     this.publisherName,
+    this.publisherLogin,
+    this.publisherAvatarUrl,
   });
 
   factory CommunitySkill.fromJson(Map<String, dynamic> json) {
@@ -41,6 +45,10 @@ class CommunitySkill {
       publisherName: publisher is Map
           ? (publisher['name'] ?? publisher['username'] ?? publisher['email'])
                 ?.toString()
+          : null,
+      publisherLogin: publisher is Map ? publisher['login']?.toString() : null,
+      publisherAvatarUrl: publisher is Map
+          ? publisher['avatar_url']?.toString()
           : null,
     );
   }

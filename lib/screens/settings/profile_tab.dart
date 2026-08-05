@@ -21,6 +21,7 @@ class SettingsProfileTab extends StatelessWidget {
     required this.onShowBindEmailDialog,
     required this.onShowResetPasswordDialog,
     required this.onShowAboutDialog,
+    required this.onShowDeveloperSettings,
   });
 
   final VoidCallback onShowThemeDialog;
@@ -28,6 +29,7 @@ class SettingsProfileTab extends StatelessWidget {
   final VoidCallback onShowBindEmailDialog;
   final VoidCallback onShowResetPasswordDialog;
   final VoidCallback onShowAboutDialog;
+  final VoidCallback onShowDeveloperSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +39,11 @@ class SettingsProfileTab extends StatelessWidget {
         final localeProvider = Provider.of<LocaleProvider>(context);
         final user = authProvider.user;
         final isDark = Theme.of(context).brightness == Brightness.dark;
+
+        String text(String key, String fallback) {
+          final value = loc?.translate(key);
+          return value == null || value == key ? fallback : value;
+        }
 
         return ListView(
           padding: const EdgeInsets.all(16),
@@ -174,6 +181,33 @@ class SettingsProfileTab extends StatelessWidget {
                     onTap: user == null
                         ? () => context.go('/login')
                         : () => context.push('/settings/account-data'),
+                  ),
+                  Divider(
+                    height: 1,
+                    color: isDark
+                        ? AppColors.borderDark
+                        : AppColors.borderLight,
+                  ),
+                  ListTile(
+                    leading: const Icon(
+                      Icons.code_rounded,
+                      color: AppColors.info,
+                    ),
+                    title: Text(text('developer', 'Developer')),
+                    subtitle: Text(
+                      text(
+                        'developer_settings_subtitle',
+                        'Connections, keys, editor, and API diagnostics.',
+                      ),
+                    ),
+                    trailing: const Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: AppColors.textSecondaryLight,
+                    ),
+                    onTap: user == null
+                        ? () => context.go('/login')
+                        : onShowDeveloperSettings,
                   ),
                   Divider(
                     height: 1,

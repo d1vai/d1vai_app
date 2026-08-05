@@ -26,6 +26,8 @@
   "create_project": "إنشاء مشروع",
   "dark_mode": "الوضع الداكن",
   "dashboard": "لوحة التحكم",
+  "developer": "المطور",
+  "developer_settings_subtitle": "إدارة الاتصالات والمفاتيح والمحرر وتشخيصات API.",
   "delete": "Delete",
   "docs": "المستندات",
   "edit": "Edit",

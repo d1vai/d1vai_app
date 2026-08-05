@@ -46,7 +46,7 @@ class WebSubPageAppBar extends StatelessWidget implements PreferredSizeWidget {
         borderRadius: BorderRadius.zero,
         glassBorderRadius: 0,
         glowIntensity: isDark ? 0.12 : 0.06,
-        useOwnLayer: isDark,
+        useOwnLayer: true,
         overlayDecoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,

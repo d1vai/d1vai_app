@@ -26,6 +26,8 @@
   "create_project": "プロジェクトを作成",
   "dark_mode": "ダークモード",
   "dashboard": "ダッシュボード",
+  "developer": "開発者",
+  "developer_settings_subtitle": "接続、キー、エディター、API 診断を管理します。",
   "delete": "Delete",
   "docs": "ドキュメント",
   "edit": "Edit",

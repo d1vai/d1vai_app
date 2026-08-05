@@ -785,6 +785,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                         onShowBindEmailDialog: _showBindEmailDialog,
                         onShowResetPasswordDialog: _showResetPasswordDialog,
                         onShowAboutDialog: _showAboutDialog,
+                        onShowDeveloperSettings: () =>
+                            context.go('/settings?tab=developer'),
                       ),
                     ),
                   ],

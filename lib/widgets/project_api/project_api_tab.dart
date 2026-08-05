@@ -16,6 +16,12 @@ import '../snackbar_helper.dart';
 import 'env_var_editor_dialog.dart';
 import 'env_var_loading_skeleton.dart';
 
+String _t(BuildContext context, String key, String fallback) {
+  final value = AppLocalizations.of(context)?.translate(key);
+  if (value == null || value == key) return fallback;
+  return value;
+}
+
 class ProjectApiTab extends StatefulWidget {
   final String projectId;
 

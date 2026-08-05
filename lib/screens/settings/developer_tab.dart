@@ -8,10 +8,12 @@ import 'github_tab.dart';
 
 class DeveloperSettingsTab extends StatefulWidget {
   final VoidCallback onShowEditorPreferences;
+  final VoidCallback? onBack;
 
   const DeveloperSettingsTab({
     super.key,
     required this.onShowEditorPreferences,
+    this.onBack,
   });
 
   @override
@@ -48,6 +50,15 @@ class _DeveloperSettingsTabState extends State<DeveloperSettingsTab> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        if (widget.onBack != null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: IconButton(
+              tooltip: _t('back', 'Back'),
+              onPressed: widget.onBack,
+              icon: const Icon(Icons.arrow_back_rounded),
+            ),
+          ),
         Text(
           _t('developer', 'Developer'),
           style: theme.textTheme.titleLarge?.copyWith(

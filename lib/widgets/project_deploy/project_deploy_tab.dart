@@ -21,6 +21,12 @@ import '../skeleton.dart';
 import '../adaptive_modal.dart';
 import 'project_domains_tab.dart';
 
+String _t(BuildContext context, String key, String fallback) {
+  final value = AppLocalizations.of(context)?.translate(key);
+  if (value == null || value == key) return fallback;
+  return value;
+}
+
 /// 项目详情页 - Deploy Tab
 class ProjectDeployTab extends StatefulWidget {
   final UserProject project;
@@ -3588,7 +3594,10 @@ class _InlineDeployError extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          TextButton(onPressed: onRetry, child: Text(_t('retry', 'Retry'))),
+          TextButton(
+            onPressed: onRetry,
+            child: Text(_t(context, 'retry', 'Retry')),
+          ),
         ],
       ),
     );

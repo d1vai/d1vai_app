@@ -601,6 +601,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                   _performSearch(query);
                 },
               )
+            : user == null
+            ? null
             : const WorkspaceSwitcher(),
         actions: [
           IconButton(

@@ -168,7 +168,7 @@ class AdaptiveModalContainer extends StatelessWidget {
               borderRadius: surfaceBorderRadius,
               glassBorderRadius: 28,
               glowIntensity: isDark ? 0.14 : 0.08,
-              useOwnLayer: !mobile,
+              useOwnLayer: true,
               quality: GlassQuality.premium,
               settings: glassSettings,
               boxShadow: shadow,

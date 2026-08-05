@@ -258,7 +258,7 @@ class _D1VGlassHeaderShell extends StatelessWidget {
         glowIntensity: isDark
             ? 0.10 + glowIntensity * 0.04
             : 0.04 + glowIntensity * 0.03,
-        useOwnLayer: isDark,
+        useOwnLayer: true,
         quality: GlassQuality.premium,
         settings: glassSettings,
         boxShadow: isDark ? null : lightGlassShadow,

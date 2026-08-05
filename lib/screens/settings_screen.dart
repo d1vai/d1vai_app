@@ -28,27 +28,38 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   static const double _mobileTabBottomSpacing = 120;
   int _currentTab = 0;
+  bool _showDeveloperSettings = false;
 
   int _tabIndexFromValue(String? value) {
     switch ((value ?? '').trim().toLowerCase()) {
       case 'invites':
         return 1;
       case 'github':
-        return 2;
+      case 'developer':
       case 'api-key':
       case 'api_key':
       case 'apikey':
-        return 2;
+        return 0;
       case 'profile':
       default:
         return 0;
     }
   }
 
+  bool _isDeveloperTab(String? value) {
+    final tab = (value ?? '').trim().toLowerCase();
+    return tab == 'developer' ||
+        tab == 'github' ||
+        tab == 'api-key' ||
+        tab == 'api_key' ||
+        tab == 'apikey';
+  }
+
   @override
   void initState() {
     super.initState();
     _currentTab = _tabIndexFromValue(widget.initialTab);
+    _showDeveloperSettings = _isDeveloperTab(widget.initialTab);
     // 不在这里直接根据一次性的 user 快照判断是否登录，
     // 而是在 build 中结合 AuthProvider 的 isLoading / user 状态做判断，
     // 避免刚进入页面时 Auth 还在初始化导致误弹登录弹窗。
@@ -62,6 +73,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (nextTab != _currentTab) {
         setState(() {
           _currentTab = nextTab;
+          _showDeveloperSettings = _isDeveloperTab(widget.initialTab);
         });
       }
     }
@@ -75,19 +87,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final tabBottomSpacing = desktop
         ? 0.0
         : _mobileTabBottomSpacing + bottomInset;
+    final profileContent = _showDeveloperSettings
+        ? DeveloperSettingsTab(
+            onShowEditorPreferences: _showEditorPreferencesDialog,
+            onBack: () => setState(() => _showDeveloperSettings = false),
+          )
+        : SettingsProfileTab(
+            onShowThemeDialog: _showThemeDialog,
+            onShowEditorPreferencesDialog: _showEditorPreferencesDialog,
+            onShowBindEmailDialog: _showBindEmailDialog,
+            onShowResetPasswordDialog: _showResetPasswordDialog,
+            onShowAboutDialog: _showAboutDialog,
+            onShowDeveloperSettings: () {
+              setState(() => _showDeveloperSettings = true);
+            },
+          );
+
     final tabs = [
       (
         label: loc?.translate('profile') ?? 'Profile',
         icon: Icons.person,
         child: _SettingsTabContentInset(
           bottomSpacing: tabBottomSpacing,
-          child: SettingsProfileTab(
-            onShowThemeDialog: _showThemeDialog,
-            onShowEditorPreferencesDialog: _showEditorPreferencesDialog,
-            onShowBindEmailDialog: _showBindEmailDialog,
-            onShowResetPasswordDialog: _showResetPasswordDialog,
-            onShowAboutDialog: _showAboutDialog,
-          ),
+          child: profileContent,
         ),
       ),
       (
@@ -96,16 +118,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: _SettingsTabContentInset(
           bottomSpacing: tabBottomSpacing,
           child: const SettingsInvitesTab(),
-        ),
-      ),
-      (
-        label: loc?.translate('developer') ?? 'Developer',
-        icon: Icons.code_rounded,
-        child: _SettingsTabContentInset(
-          bottomSpacing: tabBottomSpacing,
-          child: DeveloperSettingsTab(
-            onShowEditorPreferences: _showEditorPreferencesDialog,
-          ),
         ),
       ),
     ];
@@ -164,8 +176,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _buildTabButton(0, tabs[0].label, tabs[0].icon),
                       const SizedBox(width: 8),
                       _buildTabButton(1, tabs[1].label, tabs[1].icon),
-                      const SizedBox(width: 8),
-                      _buildTabButton(2, tabs[2].label, tabs[2].icon),
                       const SizedBox(width: 8),
                     ],
                   ),

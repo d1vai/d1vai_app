@@ -26,6 +26,8 @@
   "create_project": "Create Project",
   "dark_mode": "Dark Mode",
   "dashboard": "Dashboard",
+  "developer": "Developer",
+  "developer_settings_subtitle": "Connections, keys, editor, and API diagnostics.",
   "delete": "Delete",
   "docs": "Docs",
   "edit": "Edit",

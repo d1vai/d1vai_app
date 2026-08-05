@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../l10n/app_localizations.dart';
 import '../models/community_skill.dart';
 import '../services/d1vai_service.dart';
+import 'avatar_image.dart';
 import 'card.dart';
 
 class CommunitySkillsTab extends StatefulWidget {
@@ -146,7 +147,7 @@ class _CommunitySkillsTabState extends State<CommunitySkillsTab> {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: wide ? 2 : 1,
-              mainAxisExtent: 190,
+              mainAxisExtent: wide ? 216 : 224,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
             ),
@@ -261,16 +262,33 @@ class _CommunitySkillCard extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
+              _PublisherAvatar(skill: skill),
+              const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  skill.publisherName?.trim().isNotEmpty == true
-                      ? skill.publisherName!
-                      : skill.slug,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: cs.onSurfaceVariant,
-                  ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      skill.publisherName?.trim().isNotEmpty == true
+                          ? skill.publisherName!
+                          : skill.slug,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if (skill.publisherLogin?.trim().isNotEmpty == true)
+                      Text(
+                        '@${skill.publisherLogin}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: cs.onSurfaceVariant,
+                        ),
+                      ),
+                  ],
                 ),
               ),
               IconButton(
@@ -281,6 +299,38 @@ class _CommunitySkillCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PublisherAvatar extends StatelessWidget {
+  final CommunitySkill skill;
+
+  const _PublisherAvatar({required this.skill});
+
+  @override
+  Widget build(BuildContext context) {
+    final avatarUrl = skill.publisherAvatarUrl?.trim() ?? '';
+    final publisherName = skill.publisherName?.trim() ?? skill.slug;
+    if (avatarUrl.isNotEmpty) {
+      return AvatarImage(
+        imageUrl: avatarUrl,
+        size: 30,
+        borderRadius: BorderRadius.circular(15),
+        placeholderText: publisherName,
+      );
+    }
+
+    return CircleAvatar(
+      radius: 15,
+      child: Text(
+        publisherName.isEmpty
+            ? '?'
+            : publisherName.substring(0, 1).toUpperCase(),
+        style: Theme.of(
+          context,
+        ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w800),
       ),
     );
   }

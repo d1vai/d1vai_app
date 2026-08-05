@@ -26,6 +26,8 @@
   "create_project": "Создать проект",
   "dark_mode": "Темная тема",
   "dashboard": "Панель управления",
+  "developer": "Разработка",
+  "developer_settings_subtitle": "Подключения, ключи, редактор и диагностика API.",
   "delete": "Delete",
   "docs": "Документы",
   "edit": "Edit",

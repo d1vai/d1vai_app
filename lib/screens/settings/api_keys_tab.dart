@@ -28,14 +28,25 @@ class _SettingsApiKeysTabState extends State<SettingsApiKeysTab> {
   String? _latestSecret;
   String? _error;
   List<Map<String, dynamic>> _items = const <Map<String, dynamic>>[];
+  bool _loadStarted = false;
 
   @override
   void initState() {
     super.initState();
-    _load();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final user = context.watch<AuthProvider>().user;
+    if (!_loadStarted && user != null) {
+      _loadStarted = true;
+      _load();
+    }
   }
 
   Future<void> _load() async {
+    if (context.read<AuthProvider>().user == null) return;
     setState(() {
       _loading = true;
       _error = null;
@@ -334,9 +345,11 @@ class _SettingsApiKeysTabState extends State<SettingsApiKeysTab> {
                         .toString()
                         .trim()
                         .isNotEmpty;
-                    final name = (item['name'] ??
-                            (loc?.translate('api_keys_unnamed') ?? 'Unnamed key'))
-                        .toString();
+                    final name =
+                        (item['name'] ??
+                                (loc?.translate('api_keys_unnamed') ??
+                                    'Unnamed key'))
+                            .toString();
                     final prefix = '${item['key_prefix'] ?? ''}...';
                     final description = (item['description'] ?? '')
                         .toString()
@@ -367,8 +380,8 @@ class _SettingsApiKeysTabState extends State<SettingsApiKeysTab> {
                                         name,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                        style:
-                                            theme.textTheme.titleSmall?.copyWith(
+                                        style: theme.textTheme.titleSmall
+                                            ?.copyWith(
                                               fontWeight: FontWeight.w800,
                                               fontSize: 12.5,
                                             ),
@@ -417,9 +430,12 @@ class _SettingsApiKeysTabState extends State<SettingsApiKeysTab> {
                                   size: ButtonSize.sm,
                                   onPressed: _revoking
                                       ? null
-                                      : () => _confirmRevoke(context, item, loc),
+                                      : () =>
+                                            _confirmRevoke(context, item, loc),
                                   text:
-                                      loc?.translate('api_keys_revoke_button') ??
+                                      loc?.translate(
+                                        'api_keys_revoke_button',
+                                      ) ??
                                       'Revoke',
                                 )
                               else
@@ -500,7 +516,9 @@ class _ApiKeyTag extends StatelessWidget {
       decoration: BoxDecoration(
         color: scheme.surfaceContainerHighest.withValues(alpha: 0.72),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.22)),
+        border: Border.all(
+          color: scheme.outlineVariant.withValues(alpha: 0.22),
+        ),
       ),
       child: Text(
         text,

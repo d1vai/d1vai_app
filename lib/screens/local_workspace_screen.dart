@@ -764,6 +764,8 @@ class _LocalWorkspaceScreenState extends State<LocalWorkspaceScreen> {
                           onShowBindEmailDialog: _showBindEmailDialog,
                           onShowResetPasswordDialog: _showResetPasswordDialog,
                           onShowAboutDialog: _showAboutDialog,
+                          onShowDeveloperSettings: () =>
+                              context.go('/settings?tab=developer'),
                         ),
                       ),
                     ],

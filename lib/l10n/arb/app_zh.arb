@@ -26,6 +26,8 @@
   "create_project": "新建项目",
   "dark_mode": "深色模式",
   "dashboard": "工作台",
+  "developer": "开发者",
+  "developer_settings_subtitle": "管理 GitHub、API 密钥、代码编辑器和 API 诊断。",
   "delete": "Delete",
   "docs": "文档",
   "edit": "Edit",

@@ -26,6 +26,8 @@
   "create_project": "Créer un projet",
   "dark_mode": "Mode sombre",
   "dashboard": "Tableau de bord",
+  "developer": "Développeur",
+  "developer_settings_subtitle": "Connexions, clés, éditeur et diagnostics API.",
   "delete": "Delete",
   "docs": "Documents",
   "edit": "Edit",
