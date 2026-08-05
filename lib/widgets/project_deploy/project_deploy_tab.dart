@@ -976,7 +976,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                 if (!mounted) return;
                 SnackBarHelper.showSuccess(
                   context,
-                  title: 'Branches merged',
+                  title: _t('project_deploy_branches_merged', 'Branches merged'),
                   message: 'Merged $headBranch into $baseBranch',
                 );
                 setState(() {
@@ -1000,7 +1000,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                 });
                 SnackBarHelper.showError(
                   context,
-                  title: 'Merge failed',
+                  title: _t('project_deploy_merge_failed', 'Merge failed'),
                   message: msg,
                 );
               }
@@ -1986,7 +1986,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                 onPressed: _openBranchMergeDialog,
                 style: _denseFilledButtonStyle(context),
                 icon: const Icon(Icons.call_merge_rounded, size: 18),
-                label: const Text('Merge branches'),
+                label: Text(_t('project_deploy_merge_branches', 'Merge branches')),
               ),
             ],
           ),
@@ -2323,7 +2323,7 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
         onPressed: _openBranchMergeDialog,
         style: _denseOutlinedButtonStyle(context),
         icon: const Icon(Icons.merge_type_rounded),
-        label: const Text('Merge branches'),
+        label: Text(_t('project_deploy_merge_branches', 'Merge branches')),
       ),
       FilledButton.icon(
         onPressed: _deployingProduction
@@ -3588,7 +3588,7 @@ class _InlineDeployError extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          TextButton(onPressed: onRetry, child: const Text('Retry')),
+          TextButton(onPressed: onRetry, child: Text(_t('retry', 'Retry'))),
         ],
       ),
     );

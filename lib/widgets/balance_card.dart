@@ -576,7 +576,7 @@ class _BalanceCardState extends State<BalanceCard>
                                 TopUpDialog(onSuccess: _handleTopUpSuccess),
                           ),
                     icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Top up'),
+                    label: Text(_t('topup', 'Top up')),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.deepPurple,
                       foregroundColor: Colors.white,
