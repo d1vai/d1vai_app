@@ -5,7 +5,7 @@ class AuthTextInput extends StatefulWidget {
   final TextEditingController controller;
   final String labelText;
   final String hintText;
-  final IconData icon;
+  final IconData? icon;
   final TextInputType keyboardType;
   final bool obscureText;
   final bool enabled;
@@ -17,7 +17,7 @@ class AuthTextInput extends StatefulWidget {
     required this.controller,
     required this.labelText,
     required this.hintText,
-    required this.icon,
+    this.icon,
     this.keyboardType = TextInputType.text,
     this.obscureText = false,
     this.enabled = true,
@@ -65,65 +65,83 @@ class _AuthTextInputState extends State<AuthTextInput> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
     final isFocused = _focusNode.hasFocus;
 
     final borderColor = isFocused
-        ? cs.primary.withValues(alpha: isDark ? 0.95 : 0.75)
-        : cs.outlineVariant.withValues(alpha: isDark ? 0.72 : 0.9);
+        ? cs.primary
+        : cs.outlineVariant.withValues(alpha: 0.9);
     final fillColor = cs.surfaceContainerLowest;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      curve: Curves.easeOutCubic,
-      decoration: BoxDecoration(
-        color: fillColor,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: borderColor, width: isFocused ? 1.5 : 1),
-      ),
-      child: TextFormField(
-        controller: widget.controller,
-        focusNode: _focusNode,
-        enabled: widget.enabled,
-        keyboardType: widget.keyboardType,
-        obscureText: widget.obscureText ? _isObscured : false,
-        validator: widget.validator,
-        autofillHints: widget.autofillHints,
-        style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          labelText: widget.labelText,
-          hintText: widget.hintText,
-          labelStyle: TextStyle(color: cs.onSurfaceVariant),
-          hintStyle: TextStyle(
-            color: cs.onSurfaceVariant.withValues(alpha: 0.82),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.labelText,
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: cs.onSurface,
+            fontWeight: FontWeight.w600,
           ),
-          contentPadding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
-          prefixIconConstraints: const BoxConstraints(minWidth: 48),
-          prefixIcon: Padding(
-            padding: const EdgeInsets.only(left: 12, right: 6),
-            child: Align(
-              widthFactor: 1,
-              heightFactor: 1,
-              child: Icon(
-                widget.icon,
-                size: 19,
-                color: isFocused ? cs.primary : cs.onSurfaceVariant,
+        ),
+        const SizedBox(height: 6),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOutCubic,
+          decoration: BoxDecoration(
+            color: fillColor,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: borderColor, width: isFocused ? 1.5 : 1),
+          ),
+          child: TextFormField(
+            controller: widget.controller,
+            focusNode: _focusNode,
+            enabled: widget.enabled,
+            keyboardType: widget.keyboardType,
+            obscureText: widget.obscureText ? _isObscured : false,
+            validator: widget.validator,
+            autofillHints: widget.autofillHints,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w400,
+            ),
+            decoration: InputDecoration(
+              isDense: true,
+              border: InputBorder.none,
+              hintText: widget.hintText,
+              hintStyle: TextStyle(
+                color: cs.onSurfaceVariant.withValues(alpha: 0.72),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 15,
+              ),
+              prefixIconConstraints: const BoxConstraints(minWidth: 42),
+              prefixIcon: widget.icon == null
+                  ? null
+                  : Icon(
+                      widget.icon,
+                      size: 18,
+                      color: isFocused ? cs.primary : cs.onSurfaceVariant,
+                    ),
+              suffixIcon: widget.obscureText
+                  ? IconButton(
+                      tooltip: _isObscured ? 'Show password' : 'Hide password',
+                      onPressed: () =>
+                          setState(() => _isObscured = !_isObscured),
+                      icon: Icon(
+                        _isObscured
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        size: 19,
+                      ),
+                    )
+                  : null,
+              errorStyle: theme.textTheme.bodySmall?.copyWith(
+                color: cs.error,
+                height: 1.25,
               ),
             ),
           ),
-          suffixIcon: widget.obscureText
-              ? IconButton(
-                  tooltip: _isObscured ? 'Show password' : 'Hide password',
-                  onPressed: () => setState(() => _isObscured = !_isObscured),
-                  icon: Icon(
-                    _isObscured ? Icons.visibility_off : Icons.visibility,
-                    color: cs.onSurfaceVariant,
-                  ),
-                )
-              : null,
         ),
-      ),
+      ],
     );
   }
 }
@@ -266,7 +284,7 @@ class _AuthOtpInputState extends State<AuthOtpInput> {
         final cellWidth = computed < 34
             ? 34.0
             : (computed > 54 ? 54.0 : computed);
-        final cellHeight = cellWidth > 46 ? 60.0 : 54.0;
+        final cellHeight = cellWidth > 46 ? 52.0 : 48.0;
 
         return Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -294,7 +312,7 @@ class _AuthOtpInputState extends State<AuthOtpInput> {
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: borderColor,
-                    width: isFocused ? 1.6 : 1,
+                    width: isFocused ? 1.5 : 1,
                   ),
                 ),
                 child: TextFormField(
@@ -310,7 +328,7 @@ class _AuthOtpInputState extends State<AuthOtpInput> {
                   decoration: const InputDecoration(
                     counterText: '',
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(vertical: 14),
+                    contentPadding: EdgeInsets.symmetric(vertical: 10),
                   ),
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),

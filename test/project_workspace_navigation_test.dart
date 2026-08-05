@@ -100,6 +100,47 @@ void main() {
     await tester.pump();
 
     expect(find.byType(LoginScreen), findsOneWidget);
+    expect(find.text('Welcome back'), findsNothing);
+    expect(find.text('d1v'), findsNothing);
+    expect(
+      find.text(
+        'Continuing signs you in. New accounts are created automatically.',
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('login keeps secondary authentication choices collapsed', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => ThemeProvider()),
+          ChangeNotifierProvider(create: (_) => LocaleProvider()),
+        ],
+        child: const MaterialApp(home: LoginScreen()),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Sign in with Google').hitTestable(), findsNothing);
+    await tester.tap(find.text('More sign-in options'));
+    await tester.pumpAndSettle();
+    expect(find.text('Sign in with Google').hitTestable(), findsOneWidget);
+
+    await tester.tap(find.text('More sign-in options'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Login with Password'));
+    await tester.pumpAndSettle();
+    expect(find.text('Login with Code'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

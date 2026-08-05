@@ -46,89 +46,6 @@ enum LoginMode {
   }
 }
 
-// ─── 独立的 Tab 切换栏，避免父级 setState 时重建 ───────────────────────────────
-class _LoginModeTabBar extends StatelessWidget {
-  final LoginMode selected;
-  final ValueChanged<LoginMode> onChanged;
-
-  const _LoginModeTabBar({required this.selected, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      height: 42,
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.76)),
-      ),
-      child: Stack(
-        children: [
-          AnimatedAlign(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOutCubic,
-            alignment: selected == LoginMode.code
-                ? Alignment.centerLeft
-                : Alignment.centerRight,
-            child: FractionallySizedBox(
-              widthFactor: 0.5,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: cs.surface,
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                    color: cs.outlineVariant.withValues(alpha: 0.72),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Row(
-            children: LoginMode.values.map((mode) {
-              final isSelected = mode == selected;
-              return Expanded(
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(6),
-                    splashFactory: NoSplash.splashFactory,
-                    highlightColor: Colors.transparent,
-                    onTap: () => onChanged(mode),
-                    child: Center(
-                      child: AnimatedDefaultTextStyle(
-                        duration: const Duration(milliseconds: 160),
-                        curve: Curves.easeOutCubic,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: isSelected
-                              ? FontWeight.w600
-                              : FontWeight.w500,
-                          color: isSelected
-                              ? cs.onSurface
-                              : cs.onSurfaceVariant,
-                        ),
-                        child: Text(
-                          mode.getLabel(context),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: false,
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class LoginScreen extends StatefulWidget {
   final bool sessionExpired;
   final String? inviteCode;
@@ -146,6 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // 登录模式
   LoginMode _loginMode = LoginMode.code;
+  bool _showMoreLoginOptions = false;
 
   // 登录相关状态
   bool _isLoading = false;
@@ -421,10 +339,9 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildCodeModeContent(AppLocalizations? loc) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
 
     if (!_isCodeSent) {
-      return FilledButton.tonalIcon(
+      return FilledButton.icon(
         onPressed: _isSendingCode || (_countdownSeconds < 60 && _isCodeSent)
             ? null
             : _sendCode,
@@ -434,10 +351,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 height: 16,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(cs.primary),
+                  valueColor: AlwaysStoppedAnimation<Color>(cs.onPrimary),
                 ),
               )
-            : Icon(Icons.send_outlined, size: 18, color: cs.primary),
+            : const Icon(Icons.arrow_forward_rounded, size: 18),
         label: Text(
           _isSendingCode
               ? loc?.translate('sending') ?? '发送中...'
@@ -445,32 +362,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     ? _countdownText
                     : (_isCodeSent
                           ? loc?.translate('resend_code') ?? '重新发送验证码'
-                          : loc?.translate('send_code') ?? '发送验证码')),
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: cs.primary,
-          ),
+                          : loc?.translate('login_continue') ?? 'Continue')),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         ),
-        style: FilledButton.styleFrom(
-          minimumSize: const Size(double.infinity, 50),
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: BorderSide(
-              color: cs.primary.withValues(alpha: isDark ? 0.3 : 0.14),
-            ),
-          ),
-          backgroundColor: isDark
-              ? cs.surfaceContainerHigh.withValues(alpha: 0.76)
-              : cs.primary.withValues(alpha: 0.08),
-          foregroundColor: cs.primary,
-          disabledBackgroundColor: isDark
-              ? cs.surfaceContainerHighest.withValues(alpha: 0.5)
-              : cs.surfaceContainerHigh.withValues(alpha: 0.72),
-          disabledForegroundColor: cs.onSurfaceVariant.withValues(alpha: 0.7),
-          elevation: 0,
-        ),
+        style: _primaryButtonStyle(context),
       );
     }
 
@@ -570,7 +465,6 @@ class _LoginScreenState extends State<LoginScreen> {
           controller: _passwordController,
           labelText: loc?.translate('password') ?? '密码',
           hintText: loc?.translate('enter_password') ?? '请输入密码',
-          icon: Icons.lock_outline,
           obscureText: true,
           autofillHints: const [AutofillHints.password],
           validator: (value) {
@@ -780,9 +674,39 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildMobileOAuthSection() {
+  Widget _buildSocialLoginSection() {
     final cs = Theme.of(context).colorScheme;
     final loc = AppLocalizations.of(context);
+    final isApplePlatform = Platform.isIOS || Platform.isMacOS;
+
+    final googleButton = _buildOAuthButton(
+      label: loc?.translate('login_with_google') ?? 'Sign in with Google',
+      onPressed: () => _loginWithOAuth('google'),
+      leading: _buildGoogleMark(),
+      backgroundColor: cs.surface,
+      foregroundColor: cs.onSurface,
+      side: BorderSide(color: cs.outlineVariant),
+    );
+    final secondaryButtons = <Widget>[
+      if (isApplePlatform) googleButton,
+      _buildOAuthButton(
+        label: loc?.translate('login_with_github') ?? 'Sign in with GitHub',
+        onPressed: () => _loginWithOAuth('github'),
+        leading: _buildGitHubMark(),
+        backgroundColor: cs.surface,
+        foregroundColor: cs.onSurface,
+        side: BorderSide(color: cs.outlineVariant),
+      ),
+      _buildOAuthButton(
+        label:
+            loc?.translate('login_with_microsoft') ?? 'Sign in with Microsoft',
+        onPressed: () => _loginWithOAuth('microsoft'),
+        leading: _buildMicrosoftMark(),
+        backgroundColor: cs.surface,
+        foregroundColor: cs.onSurface,
+        side: BorderSide(color: cs.outlineVariant),
+      ),
+    ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -793,48 +717,61 @@ class _LoginScreenState extends State<LoginScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Text(
-                loc?.translate('login_other_options') ??
-                    'Other sign-in options',
-                style: TextStyle(
-                  color: cs.onSurfaceVariant,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
+                loc?.translate('or') ?? 'or',
+                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12),
               ),
             ),
             Expanded(child: Divider(color: cs.outlineVariant)),
           ],
         ),
         const SizedBox(height: 14),
-        _buildOAuthButton(
-          label: loc?.translate('login_with_google') ?? 'Sign in with Google',
-          onPressed: () => _loginWithOAuth('google'),
-          leading: _buildGoogleMark(),
-          backgroundColor: cs.surface,
-          foregroundColor: cs.onSurface,
-          side: BorderSide(color: cs.outlineVariant),
+        if (isApplePlatform) _buildAppleLoginButton() else googleButton,
+        TextButton.icon(
+          onPressed: () =>
+              setState(() => _showMoreLoginOptions = !_showMoreLoginOptions),
+          icon: AnimatedRotation(
+            turns: _showMoreLoginOptions ? 0.5 : 0,
+            duration: const Duration(milliseconds: 180),
+            child: const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
+          ),
+          label: Text(
+            loc?.translate('login_more_options') ?? 'More sign-in options',
+          ),
         ),
-        const SizedBox(height: 12),
-        _buildOAuthButton(
-          label: loc?.translate('login_with_github') ?? 'Sign in with GitHub',
-          onPressed: () => _loginWithOAuth('github'),
-          leading: _buildGitHubMark(),
-          backgroundColor: cs.surface,
-          foregroundColor: cs.onSurface,
-          side: BorderSide(color: cs.outlineVariant),
-        ),
-        const SizedBox(height: 12),
-        _buildOAuthButton(
-          label:
-              loc?.translate('login_with_microsoft') ??
-              'Sign in with Microsoft',
-          onPressed: () => _loginWithOAuth('microsoft'),
-          leading: _buildMicrosoftMark(),
-          backgroundColor: cs.surface,
-          foregroundColor: cs.onSurface,
-          side: BorderSide(color: cs.outlineVariant),
+        AnimatedCrossFade(
+          firstChild: const SizedBox(width: double.infinity),
+          secondChild: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var index = 0; index < secondaryButtons.length; index++) ...[
+                secondaryButtons[index],
+                if (index < secondaryButtons.length - 1)
+                  const SizedBox(height: 10),
+              ],
+            ],
+          ),
+          crossFadeState: _showMoreLoginOptions
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
+          duration: const Duration(milliseconds: 180),
+          sizeCurve: Curves.easeOutCubic,
         ),
       ],
+    );
+  }
+
+  Widget _buildLoginModeAction(AppLocalizations? loc) {
+    final usePassword = _loginMode == LoginMode.password;
+    return Center(
+      child: TextButton(
+        onPressed: () =>
+            _onModeChanged(usePassword ? LoginMode.code : LoginMode.password),
+        child: Text(
+          usePassword
+              ? loc?.translate('login_with_code') ?? 'Login with Code'
+              : loc?.translate('login_with_password') ?? 'Login with Password',
+        ),
+      ),
     );
   }
 
@@ -888,13 +825,10 @@ class _LoginScreenState extends State<LoginScreen> {
             _buildInviteBanner(loc),
             const SizedBox(height: 16),
           ],
-          _LoginModeTabBar(selected: _loginMode, onChanged: _onModeChanged),
-          const SizedBox(height: 24),
           AuthTextInput(
             controller: _emailController,
             labelText: loc?.translate('email_address') ?? '邮箱地址',
             hintText: loc?.translate('enter_email') ?? '请输入您的邮箱',
-            icon: Icons.email_outlined,
             keyboardType: TextInputType.emailAddress,
             autofillHints: const [AutofillHints.username, AutofillHints.email],
             validator: (value) {
@@ -909,31 +843,34 @@ class _LoginScreenState extends State<LoginScreen> {
               return null;
             },
           ),
-          const SizedBox(height: 8),
-          Text(
-            loc?.translate('login_auto_register_hint') ??
-                'New accounts are created automatically after verification.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+          const SizedBox(height: 18),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            clipBehavior: Clip.hardEdge,
+            child: KeyedSubtree(
+              key: ValueKey(_loginMode),
+              child: _loginMode == LoginMode.code
+                  ? _buildCodeModeContent(loc)
+                  : _buildPasswordModeContent(loc),
             ),
           ),
-          const SizedBox(height: 18),
-          IndexedStack(
-            index: _loginMode.index,
-            children: [
-              _buildCodeModeContent(loc),
-              _buildPasswordModeContent(loc),
-            ],
+          const SizedBox(height: 6),
+          _buildLoginModeAction(loc),
+          const SizedBox(height: 10),
+          _buildSocialLoginSection(),
+          const SizedBox(height: 24),
+          Text(
+            loc?.translate('login_auto_register_hint') ??
+                'Continuing signs you in. New accounts are created automatically.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.4,
+            ),
           ),
-          if (Platform.isIOS || Platform.isMacOS) ...[
-            const SizedBox(height: 16),
-            _buildAppleLoginButton(),
-          ],
-          if (Platform.isIOS || Platform.isAndroid || Platform.isMacOS) ...[
-            const SizedBox(height: 16),
-            _buildMobileOAuthSection(),
-          ],
-          SizedBox(height: desktop ? 24 : 40),
+          const SizedBox(height: 4),
           LoginLegalLinks(
             agreementText:
                 loc?.translate('agree_terms') ?? '登录即表示您同意我们的服务条款和隐私政策',
@@ -944,60 +881,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 hideHeader: true,
               ).toString(),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDesktopIdentity(AppLocalizations? loc) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 44, 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Spacer(),
-          Text(
-            'd1v',
-            style: theme.textTheme.displayMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            loc?.translate('login_desktop_hero_subtitle') ??
-                'Desktop workspace for project chat, file preview, deploy inspection, and production follow-through.',
-            style: theme.textTheme.titleMedium?.copyWith(
-              height: 1.45,
-              color: cs.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 24),
-          Column(
-            children: [
-              _LoginCapabilityRow(
-                icon: Icons.description_outlined,
-                text:
-                    loc?.translate('login_desktop_hero_chip_files') ??
-                    'Code + file preview',
-              ),
-              const SizedBox(height: 14),
-              _LoginCapabilityRow(
-                icon: Icons.cloud_sync_outlined,
-                text:
-                    loc?.translate('login_desktop_hero_chip_deploy') ??
-                    'Preview and deploy flow',
-              ),
-              const SizedBox(height: 14),
-              _LoginCapabilityRow(
-                icon: Icons.analytics_outlined,
-                text:
-                    loc?.translate('login_desktop_hero_chip_analytics') ??
-                    'Analytics and runtime status',
-              ),
-            ],
           ),
         ],
       ),
@@ -1019,37 +902,13 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               Positioned.fill(
                 child: desktop
-                    ? DesktopContentFrame(
-                        maxWidth: 1120,
-                        padding: const EdgeInsets.fromLTRB(32, 32, 32, 28),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              flex: 11,
-                              child: _buildDesktopIdentity(loc),
-                            ),
-                            VerticalDivider(
-                              width: 64,
-                              color: cs.outlineVariant.withValues(alpha: 0.7),
-                            ),
-                            Expanded(
-                              flex: 9,
-                              child: Align(
-                                alignment: Alignment.center,
-                                child: ConstrainedBox(
-                                  constraints: const BoxConstraints(
-                                    maxWidth: 440,
-                                  ),
-                                  child: SingleChildScrollView(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 56,
-                                    ),
-                                    child: _buildLoginForm(loc, desktop: true),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                    ? Center(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.fromLTRB(32, 72, 32, 40),
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 420),
+                            child: _buildLoginForm(loc, desktop: true),
+                          ),
                         ),
                       )
                     : LayoutBuilder(
@@ -1084,33 +943,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _LoginCapabilityRow extends StatelessWidget {
-  final IconData icon;
-  final String text;
-
-  const _LoginCapabilityRow({required this.icon, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: theme.colorScheme.onSurfaceVariant),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            text,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

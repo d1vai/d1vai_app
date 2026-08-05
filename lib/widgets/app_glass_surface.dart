@@ -23,7 +23,7 @@ class AppGlassSurface extends StatelessWidget {
     this.borderRadius = BorderRadius.zero,
     this.glassBorderRadius = 0,
     this.glowIntensity = 0,
-    this.useOwnLayer = false,
+    this.useOwnLayer = true,
     this.quality = GlassQuality.premium,
     this.settings,
     this.overlayDecoration,

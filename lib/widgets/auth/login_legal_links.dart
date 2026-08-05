@@ -31,6 +31,9 @@ class LoginLegalLinks extends StatelessWidget {
           style: TextButton.styleFrom(
             visualDensity: VisualDensity.compact,
             padding: const EdgeInsets.symmetric(horizontal: 6),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            textStyle: theme.textTheme.labelSmall,
           ),
           child: Text(legalLabel),
         ),

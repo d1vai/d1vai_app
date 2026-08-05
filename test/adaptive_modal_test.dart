@@ -1,8 +1,22 @@
 import 'package:d1vai_app/widgets/adaptive_modal.dart';
+import 'package:d1vai_app/widgets/app_glass_surface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('premium glass surface provisions its own layer by default', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(body: AppGlassSurface(child: SizedBox.expand())),
+      ),
+    );
+
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('draggable bottom sheet closes when tapping outside', (
     tester,
   ) async {
