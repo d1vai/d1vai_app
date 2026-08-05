@@ -81,6 +81,7 @@
   "loading": "Cargando...",
   "login": "Iniciar sesión",
   "login_failed": "Error al iniciar sesión",
+  "login_auto_register_hint": "Las cuentas nuevas se crean automáticamente después de la verificación.",
   "apple_login_canceled_title": "Inicio de sesión cancelado",
   "apple_login_canceled_message": "Cancelaste el inicio de sesión con Apple.",
   "login_first": "Por favor inicie sesión primero",

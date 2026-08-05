@@ -83,6 +83,7 @@
   "loading": "Loading...",
   "login": "Login",
   "login_failed": "Login failed",
+  "login_auto_register_hint": "New accounts are created automatically after verification.",
   "apple_login_canceled_title": "Sign-in canceled",
   "apple_login_canceled_message": "You canceled Apple sign-in.",
   "login_first": "Please login first",

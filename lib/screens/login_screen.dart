@@ -888,22 +888,6 @@ class _LoginScreenState extends State<LoginScreen> {
             _buildInviteBanner(loc),
             const SizedBox(height: 16),
           ],
-          Text(
-            loc?.translate('login_welcome_back') ?? 'Welcome back',
-            style: Theme.of(
-              context,
-            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            loc?.translate('login_desktop_intro') ??
-                'Sign in to continue managing projects, previews, deployments, and workspace sessions.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 20),
           _LoginModeTabBar(selected: _loginMode, onChanged: _onModeChanged),
           const SizedBox(height: 24),
           AuthTextInput(
@@ -924,6 +908,14 @@ class _LoginScreenState extends State<LoginScreen> {
               }
               return null;
             },
+          ),
+          const SizedBox(height: 8),
+          Text(
+            loc?.translate('login_auto_register_hint') ??
+                'New accounts are created automatically after verification.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 18),
           IndexedStack(
@@ -1012,51 +1004,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildMobileIdentity(AppLocalizations? loc, {required bool compact}) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: cs.primary,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                'd1v',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: cs.onPrimary,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                loc?.translate('login_desktop_hero_subtitle') ??
-                    'Your project workspace',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: cs.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: compact ? 24 : 36),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
@@ -1125,14 +1072,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 constraints: const BoxConstraints(
                                   maxWidth: 440,
                                 ),
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    _buildMobileIdentity(loc, compact: compact),
-                                    _buildLoginForm(loc, desktop: false),
-                                  ],
-                                ),
+                                child: _buildLoginForm(loc, desktop: false),
                               ),
                             ),
                           );

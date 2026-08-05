@@ -83,6 +83,7 @@
   "loading": "加载中...",
   "login": "登录",
   "login_failed": "登录失败",
+  "login_auto_register_hint": "未注册的账户将在验证后自动完成注册。",
   "apple_login_canceled_title": "已取消登录",
   "apple_login_canceled_message": "您已取消 Apple 登录。",
   "login_first": "请先登录",

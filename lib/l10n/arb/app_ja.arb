@@ -81,6 +81,7 @@
   "loading": "読み込み中...",
   "login": "ログイン",
   "login_failed": "ログインに失敗しました",
+  "login_auto_register_hint": "未登録のアカウントは認証後に自動作成されます。",
   "apple_login_canceled_title": "サインインをキャンセルしました",
   "apple_login_canceled_message": "Appleでのサインインをキャンセルしました。",
   "login_first": "先にログインしてください",

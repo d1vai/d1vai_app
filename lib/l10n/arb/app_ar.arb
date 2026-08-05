@@ -81,6 +81,7 @@
   "loading": "جاري التحميل...",
   "login": "تسجيل الدخول",
   "login_failed": "فشل في تسجيل الدخول",
+  "login_auto_register_hint": "يتم إنشاء الحسابات الجديدة تلقائيًا بعد التحقق.",
   "apple_login_canceled_title": "تم إلغاء تسجيل الدخول",
   "apple_login_canceled_message": "لقد ألغيت تسجيل الدخول باستخدام Apple.",
   "login_first": "يرجى تسجيل الدخول أولاً",

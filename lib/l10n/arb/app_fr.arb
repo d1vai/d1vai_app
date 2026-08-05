@@ -81,6 +81,7 @@
   "loading": "Chargement...",
   "login": "Se connecter",
   "login_failed": "Échec de la connexion",
+  "login_auto_register_hint": "Les nouveaux comptes sont créés automatiquement après vérification.",
   "apple_login_canceled_title": "Connexion annulée",
   "apple_login_canceled_message": "Vous avez annulé la connexion avec Apple.",
   "login_first": "Veuillez d'abord vous connecter",

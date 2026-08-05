@@ -81,6 +81,7 @@
   "loading": "Загрузка...",
   "login": "Войти",
   "login_failed": "Ошибка входа",
+  "login_auto_register_hint": "Новые аккаунты создаются автоматически после подтверждения.",
   "apple_login_canceled_title": "Вход отменён",
   "apple_login_canceled_message": "Вы отменили вход через Apple.",
   "login_first": "Пожалуйста, войдите сначала",
