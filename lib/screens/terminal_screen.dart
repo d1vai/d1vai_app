@@ -43,6 +43,7 @@ class _TerminalScreenState extends State<TerminalScreen>
   bool _scopeLoading = true;
   bool _scopeChangeScheduled = false;
   bool _oneShotCtrl = false;
+  Timer? _backgroundDetachTimer;
 
   @override
   void initState() {
@@ -172,6 +173,7 @@ class _TerminalScreenState extends State<TerminalScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _backgroundDetachTimer?.cancel();
     _session.removeListener(_onSessionChanged);
     if (_ownsSession) _session.dispose();
     super.dispose();
@@ -180,6 +182,32 @@ class _TerminalScreenState extends State<TerminalScreen>
   @override
   void didChangeMetrics() {
     if (mounted) setState(() {});
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.resumed:
+        _backgroundDetachTimer?.cancel();
+        _backgroundDetachTimer = null;
+        if (_session.suspended) unawaited(_session.resume());
+        break;
+      case AppLifecycleState.paused:
+      case AppLifecycleState.hidden:
+        if (!_hasLiveSession || _backgroundDetachTimer != null) return;
+        _backgroundDetachTimer = Timer(const Duration(seconds: 10), () {
+          _backgroundDetachTimer = null;
+          if (mounted) unawaited(_session.suspend());
+        });
+        break;
+      case AppLifecycleState.detached:
+        _backgroundDetachTimer?.cancel();
+        _backgroundDetachTimer = null;
+        unawaited(_session.shutdown());
+        break;
+      case AppLifecycleState.inactive:
+        break;
+    }
   }
 
   @override

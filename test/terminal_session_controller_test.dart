@@ -61,6 +61,8 @@ class FakeWorkspace implements WorkspaceReadinessService {
 
 class FakeGateway implements ShellSessionGateway {
   int creates = 0;
+  int refreshCalls = 0;
+  bool failRefresh = false;
   final List<String> closed = <String>[];
   final List<String?> createdProjects = <String?>[];
 
@@ -87,8 +89,16 @@ class FakeGateway implements ShellSessionGateway {
       metadata(sessionId);
 
   @override
-  Future<ShellConnection> refreshTicket(String sessionId) async =>
-      connection(sessionId);
+  Future<ShellConnection> refreshTicket(String sessionId) async {
+    refreshCalls += 1;
+    if (failRefresh) {
+      throw const TerminalTransportFailure(
+        'ticket_refresh_failed',
+        retryable: true,
+      );
+    }
+    return connection(sessionId);
+  }
 }
 
 class FakeTransport implements TerminalTransportClient {
@@ -313,6 +323,77 @@ void main() {
       expect(controller.exitCode, 130);
       await Future<void>.delayed(Duration.zero);
       expect(gateway.closed, ['sh_1', 'sh_2']);
+      controller.dispose();
+    },
+  );
+
+  test('detaches in background and resumes the same backend session', () async {
+    final gateway = FakeGateway();
+    final transports = <FakeTransport>[];
+    final controller = TerminalSessionController(
+      workspace: FakeWorkspace(),
+      api: gateway,
+      transportFactory: () {
+        final transport = FakeTransport();
+        transports.add(transport);
+        return transport;
+      },
+    );
+
+    await controller.start();
+    transports.single.ready();
+    await controller.suspend();
+
+    expect(controller.suspended, isTrue);
+    expect(controller.phase, TerminalSessionPhase.reconnecting);
+    expect(controller.sessionId, 'sh_1');
+    expect(transports.single.closed, isTrue);
+    expect(gateway.closed, isEmpty);
+
+    await controller.resume();
+    expect(gateway.refreshCalls, 1);
+    expect(transports, hasLength(2));
+    expect(controller.phase, TerminalSessionPhase.reconnecting);
+    transports.last.ready();
+
+    expect(controller.suspended, isFalse);
+    expect(controller.phase, TerminalSessionPhase.ready);
+    expect(controller.sessionId, 'sh_1');
+    expect(gateway.creates, 1);
+
+    await controller.shutdown();
+    expect(gateway.closed, ['sh_1']);
+    controller.dispose();
+  });
+
+  test(
+    'creates a fresh session when background ticket refresh fails',
+    () async {
+      final gateway = FakeGateway();
+      final transports = <FakeTransport>[];
+      final controller = TerminalSessionController(
+        workspace: FakeWorkspace(),
+        api: gateway,
+        transportFactory: () {
+          final transport = FakeTransport();
+          transports.add(transport);
+          return transport;
+        },
+      );
+
+      await controller.start();
+      transports.single.ready();
+      await controller.suspend();
+      gateway.failRefresh = true;
+      await controller.resume();
+
+      expect(gateway.refreshCalls, 1);
+      expect(gateway.creates, 2);
+      expect(gateway.closed, ['sh_1']);
+      expect(controller.sessionId, 'sh_2');
+      expect(controller.phase, TerminalSessionPhase.connecting);
+
+      await controller.shutdown();
       controller.dispose();
     },
   );

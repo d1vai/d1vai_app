@@ -30,6 +30,8 @@ class _FakeWorkspace implements WorkspaceReadinessService {
 
 class _FakeGateway implements ShellSessionGateway {
   int creates = 0;
+  int refreshCalls = 0;
+  ShellConnection? latestConnection;
 
   @override
   Future<ShellConnection> create({
@@ -39,7 +41,7 @@ class _FakeGateway implements ShellSessionGateway {
     required int rows,
   }) async {
     creates += 1;
-    return ShellConnection(
+    final connection = ShellConnection(
       sessionId: 'session-$creates',
       workspaceScope: 'user:7',
       projectId: projectId,
@@ -53,6 +55,8 @@ class _FakeGateway implements ShellSessionGateway {
       connectionTicket: 'secret',
       ticketExpiresAt: DateTime.utc(2026, 8, 24),
     );
+    latestConnection = connection;
+    return connection;
   }
 
   @override
@@ -64,8 +68,10 @@ class _FakeGateway implements ShellSessionGateway {
       _metadata(sessionId);
 
   @override
-  Future<ShellConnection> refreshTicket(String sessionId) =>
-      throw UnimplementedError();
+  Future<ShellConnection> refreshTicket(String sessionId) {
+    refreshCalls += 1;
+    return SynchronousFuture(latestConnection!);
+  }
 
   ShellSessionMetadata _metadata(String sessionId) => ShellSessionMetadata(
     sessionId: sessionId,
@@ -87,6 +93,7 @@ class _FakeTransport implements TerminalTransportClient {
       StreamController<TerminalTransportFailure>.broadcast(sync: true);
   ShellConnection? connection;
   final List<List<int>> inputs = <List<int>>[];
+  bool closed = false;
 
   @override
   Stream<TerminalServerControl> get controls => controlController.stream;
@@ -108,6 +115,7 @@ class _FakeTransport implements TerminalTransportClient {
 
   @override
   Future<void> close({bool detach = true}) {
+    closed = true;
     return SynchronousFuture<void>(null);
   }
 
@@ -198,11 +206,16 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    final transport = _FakeTransport();
+    final transports = <_FakeTransport>[];
+    final gateway = _FakeGateway();
     final session = TerminalSessionController(
       workspace: _FakeWorkspace(),
-      api: _FakeGateway(),
-      transportFactory: () => transport,
+      api: gateway,
+      transportFactory: () {
+        final transport = _FakeTransport();
+        transports.add(transport);
+        return transport;
+      },
     );
 
     await tester.pumpWidget(
@@ -247,6 +260,7 @@ void main() {
     );
 
     await session.start();
+    final transport = transports.single;
     transport.ready();
     await tester.pump();
     await tester.tap(find.byKey(const ValueKey('terminal-key-ctrl')));
@@ -261,7 +275,14 @@ void main() {
       <int>[99],
     ]);
 
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pump(const Duration(seconds: 9));
+    expect(session.suspended, isFalse);
+    await tester.pump(const Duration(seconds: 2));
+    expect(session.suspended, isTrue);
+
     await tester.pumpWidget(const SizedBox.shrink());
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     session.dispose();
   });
 

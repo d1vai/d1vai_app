@@ -41,6 +41,7 @@ class TerminalSessionController extends ChangeNotifier {
   String? _errorCode;
   int? _exitCode;
   bool _retryable = false;
+  bool _suspended = false;
   int _columns = 120;
   int _rows = 40;
   int? _lastResizeColumns;
@@ -71,6 +72,7 @@ class TerminalSessionController extends ChangeNotifier {
   String? get errorCode => _errorCode;
   int? get exitCode => _exitCode;
   bool get retryable => _retryable;
+  bool get suspended => _suspended;
   int get columns => _columns;
   int get rows => _rows;
   bool get acceptsInput => _phase == TerminalSessionPhase.ready;
@@ -94,6 +96,7 @@ class TerminalSessionController extends ChangeNotifier {
     _errorCode = null;
     _exitCode = null;
     _retryable = false;
+    _suspended = false;
     _setPhase(TerminalSessionPhase.checking);
 
     await _closeCurrent(deleteSession: true);
@@ -122,17 +125,11 @@ class TerminalSessionController extends ChangeNotifier {
       _sessionId = connection.sessionId;
       _cwd = connection.cwd;
 
-      final transport = _transportFactory();
-      _transport = transport;
-      _outputSubscription = transport.output.listen(_handleOutput);
-      _controlSubscription = transport.controls.listen(
-        (control) => _handleControl(generation, connection, control),
+      await _connect(
+        generation,
+        connection,
+        phase: TerminalSessionPhase.connecting,
       );
-      _failureSubscription = transport.failures.listen(
-        (failure) => _handleFailure(generation, failure),
-      );
-      _setPhase(TerminalSessionPhase.connecting);
-      await transport.connect(connection, columns: _columns, rows: _rows);
     } catch (error) {
       if (!_isCurrent(generation)) return;
       _setFailure(_failureCode(error), retryable: _isRetryable(error));
@@ -153,6 +150,54 @@ class TerminalSessionController extends ChangeNotifier {
       columns: columns,
       rows: rows,
     );
+  }
+
+  Future<void> suspend() async {
+    _ensureNotDisposed();
+    if (_suspended || _phase != TerminalSessionPhase.ready) return;
+    ++_generation;
+    _resizeTimer?.cancel();
+    _resizeTimer = null;
+    _suspended = true;
+    _setPhase(TerminalSessionPhase.reconnecting);
+    await _closeTransport();
+  }
+
+  Future<void> resume() async {
+    _ensureNotDisposed();
+    if (!_suspended) return;
+    final sessionId = _sessionId;
+    if (sessionId == null) {
+      _suspended = false;
+      await retry();
+      return;
+    }
+    final generation = ++_generation;
+    _setPhase(TerminalSessionPhase.reconnecting);
+    try {
+      final connection = await _api.refreshTicket(sessionId);
+      if (!_isCurrent(generation)) return;
+      if (connection.sessionId != sessionId ||
+          connection.projectId != _projectId) {
+        throw const TerminalTransportFailure('terminal_session_mismatch');
+      }
+      _cwd = connection.cwd;
+      _suspended = false;
+      await _connect(
+        generation,
+        connection,
+        phase: TerminalSessionPhase.reconnecting,
+      );
+    } catch (_) {
+      if (!_isCurrent(generation)) return;
+      _suspended = false;
+      await start(
+        projectId: _projectId,
+        organizationId: _organizationId,
+        columns: _columns,
+        rows: _rows,
+      );
+    }
   }
 
   void sendInput(List<int> bytes) {
@@ -189,6 +234,7 @@ class TerminalSessionController extends ChangeNotifier {
     ++_generation;
     _resizeTimer?.cancel();
     _resizeTimer = null;
+    _suspended = false;
     await _closeCurrent(deleteSession: true);
     _setPhase(TerminalSessionPhase.idle);
   }
@@ -234,6 +280,24 @@ class TerminalSessionController extends ChangeNotifier {
     }
   }
 
+  Future<void> _connect(
+    int generation,
+    ShellConnection connection, {
+    required TerminalSessionPhase phase,
+  }) async {
+    final transport = _transportFactory();
+    _transport = transport;
+    _outputSubscription = transport.output.listen(_handleOutput);
+    _controlSubscription = transport.controls.listen(
+      (control) => _handleControl(generation, connection, control),
+    );
+    _failureSubscription = transport.failures.listen(
+      (failure) => _handleFailure(generation, failure),
+    );
+    _setPhase(phase);
+    await transport.connect(connection, columns: _columns, rows: _rows);
+  }
+
   void _handleFailure(int generation, TerminalTransportFailure failure) {
     if (!_isCurrent(generation)) return;
     _setFailure(failure.code, retryable: failure.retryable);
@@ -241,6 +305,7 @@ class TerminalSessionController extends ChangeNotifier {
   }
 
   void _setFailure(String code, {required bool retryable}) {
+    _suspended = false;
     _errorCode = code;
     _retryable = retryable;
     final normalized = code.toLowerCase();
@@ -259,12 +324,20 @@ class TerminalSessionController extends ChangeNotifier {
   Future<void> _closeCurrent({required bool deleteSession}) async {
     _resizeTimer?.cancel();
     _resizeTimer = null;
-    final transport = _transport;
     final sessionId = _sessionId;
-    _transport = null;
     _sessionId = null;
     _lastResizeColumns = null;
     _lastResizeRows = null;
+
+    await _closeTransport();
+    if (deleteSession && sessionId != null) {
+      await _closeBackendSession(sessionId);
+    }
+  }
+
+  Future<void> _closeTransport() async {
+    final transport = _transport;
+    _transport = null;
 
     await _outputSubscription?.cancel();
     await _controlSubscription?.cancel();
@@ -274,9 +347,6 @@ class TerminalSessionController extends ChangeNotifier {
     _failureSubscription = null;
     if (transport != null) {
       await transport.close(detach: true);
-    }
-    if (deleteSession && sessionId != null) {
-      await _closeBackendSession(sessionId);
     }
   }
 
