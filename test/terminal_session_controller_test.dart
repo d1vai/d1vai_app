@@ -249,6 +249,33 @@ void main() {
     controller.dispose();
   });
 
+  test('chunks large paste input without changing PTY bytes', () async {
+    final transport = FakeTransport();
+    final controller = TerminalSessionController(
+      workspace: FakeWorkspace(),
+      api: FakeGateway(),
+      transportFactory: () => transport,
+    );
+    await controller.start();
+    transport.ready();
+    final input = List<int>.generate(
+      terminalMaxBinaryPayloadBytes * 2 + 17,
+      (index) => index % 256,
+    );
+
+    controller.sendInput(input);
+
+    expect(transport.inputs, hasLength(3));
+    expect(transport.inputs.map((chunk) => chunk.length), <int>[
+      terminalMaxBinaryPayloadBytes,
+      terminalMaxBinaryPayloadBytes,
+      17,
+    ]);
+    expect(transport.inputs.expand((chunk) => chunk), input);
+    await controller.shutdown();
+    controller.dispose();
+  });
+
   test('maps server denial, capacity, and transport failure states', () async {
     Future<void> verifyControl(
       String code,

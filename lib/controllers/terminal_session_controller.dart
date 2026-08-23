@@ -202,7 +202,19 @@ class TerminalSessionController extends ChangeNotifier {
 
   void sendInput(List<int> bytes) {
     if (!acceptsInput || bytes.isEmpty) return;
-    _transport?.sendInput(bytes);
+    final transport = _transport;
+    if (transport == null) return;
+    for (
+      var offset = 0;
+      offset < bytes.length;
+      offset += terminalMaxBinaryPayloadBytes
+    ) {
+      final end = (offset + terminalMaxBinaryPayloadBytes).clamp(
+        0,
+        bytes.length,
+      );
+      transport.sendInput(bytes.sublist(offset, end));
+    }
   }
 
   void sendSignal(String signal) {
