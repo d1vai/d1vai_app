@@ -396,17 +396,19 @@ class _TerminalToolbar extends StatelessWidget {
                 ],
               );
             }
-            return SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  workspace,
-                  const SizedBox(width: 8),
-                  SizedBox(width: 220, child: project),
-                  const SizedBox(width: 8),
-                  ...trailing,
-                ],
-              ),
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: workspace),
+                    const SizedBox(width: 8),
+                    ...trailing,
+                  ],
+                ),
+                const SizedBox(height: 8),
+                SizedBox(width: double.infinity, child: project),
+              ],
             );
           },
         ),

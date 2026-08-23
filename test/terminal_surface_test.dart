@@ -11,6 +11,7 @@ import 'package:d1vai_app/services/terminal_protocol.dart';
 import 'package:d1vai_app/services/terminal_transport.dart';
 import 'package:d1vai_app/services/workspace_service.dart';
 import 'package:d1vai_app/widgets/terminal/terminal_surface.dart';
+import 'package:d1vai_app/widgets/terminal/terminal_mobile_keys.dart';
 import 'package:d1vai_app/widgets/terminal/terminal_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -236,6 +237,22 @@ void main() {
       find.byKey(const ValueKey('terminal-project-picker')),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const ValueKey('terminal-project-picker')).hitTestable(),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('terminal-open-button')).hitTestable(),
+      findsOneWidget,
+    );
+    for (final key in const <String>[
+      'terminal-project-picker',
+      'terminal-open-button',
+    ]) {
+      final bounds = tester.getRect(find.byKey(ValueKey(key)));
+      expect(bounds.left, greaterThanOrEqualTo(0));
+      expect(bounds.right, lessThanOrEqualTo(390));
+    }
     expect(tester.takeException(), isNull);
     expect(
       tester
@@ -328,5 +345,238 @@ void main() {
 
     await tester.pumpWidget(const SizedBox.shrink());
     session.dispose();
+  });
+
+  testWidgets(
+    'keeps one live session across responsive locale and theme changes',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final transports = <_FakeTransport>[];
+      final gateway = _FakeGateway();
+      final session = TerminalSessionController(
+        workspace: _FakeWorkspace(),
+        api: gateway,
+        transportFactory: () {
+          final transport = _FakeTransport();
+          transports.add(transport);
+          return transport;
+        },
+      );
+
+      Future<void> pumpTerminal({
+        required Size size,
+        required Brightness brightness,
+        required Locale locale,
+      }) async {
+        tester.view.physicalSize = size;
+        debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+        try {
+          await tester.pumpWidget(
+            MultiProvider(
+              providers: [
+                ChangeNotifierProvider(create: (_) => OrganizationProvider()),
+                ChangeNotifierProvider(create: (_) => ProjectProvider()),
+              ],
+              child: MaterialApp(
+                locale: locale,
+                supportedLocales: const <Locale>[
+                  Locale('en'),
+                  Locale('ja'),
+                  Locale('ar'),
+                ],
+                localizationsDelegates: const [
+                  AppLocalizations.delegate,
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                ],
+                theme: ThemeData.light(),
+                darkTheme: ThemeData.dark(),
+                themeAnimationDuration: Duration.zero,
+                themeMode: brightness == Brightness.dark
+                    ? ThemeMode.dark
+                    : ThemeMode.light,
+                home: TerminalScreen(
+                  controller: session,
+                  bootstrapScope: false,
+                ),
+              ),
+            ),
+          );
+          await tester.pump();
+        } finally {
+          debugDefaultTargetPlatformOverride = null;
+        }
+      }
+
+      await pumpTerminal(
+        size: const Size(390, 844),
+        brightness: Brightness.light,
+        locale: const Locale('en'),
+      );
+      await session.start();
+      transports.single.ready();
+      await tester.pump();
+      final originalTerminal = tester
+          .state<TerminalSurfaceState>(find.byType(TerminalSurface))
+          .terminal;
+
+      const cases = <({Size size, Brightness brightness, Locale locale})>[
+        (
+          size: Size(390, 844),
+          brightness: Brightness.light,
+          locale: Locale('en'),
+        ),
+        (
+          size: Size(390, 844),
+          brightness: Brightness.dark,
+          locale: Locale('ar'),
+        ),
+        (
+          size: Size(768, 1024),
+          brightness: Brightness.light,
+          locale: Locale('ar'),
+        ),
+        (
+          size: Size(768, 1024),
+          brightness: Brightness.dark,
+          locale: Locale('ja'),
+        ),
+        (
+          size: Size(1440, 900),
+          brightness: Brightness.light,
+          locale: Locale('ja'),
+        ),
+        (
+          size: Size(1440, 900),
+          brightness: Brightness.dark,
+          locale: Locale('ar'),
+        ),
+      ];
+
+      for (final testCase in cases) {
+        await pumpTerminal(
+          size: testCase.size,
+          brightness: testCase.brightness,
+          locale: testCase.locale,
+        );
+
+        final surface = tester.state<TerminalSurfaceState>(
+          find.byType(TerminalSurface),
+        );
+        expect(surface.terminal, same(originalTerminal));
+        expect(gateway.creates, 1);
+        expect(transports, hasLength(1));
+        expect(
+          tester.widget<TerminalView>(find.byType(TerminalView)).theme,
+          isA<TerminalTheme>().having(
+            (theme) => theme.background,
+            'background',
+            testCase.brightness == Brightness.dark
+                ? d1vTerminalDarkTheme.background
+                : d1vTerminalLightTheme.background,
+          ),
+        );
+        expect(
+          find.byType(TerminalMobileKeys),
+          testCase.size.width < 880 ? findsOneWidget : findsNothing,
+        );
+        expect(tester.takeException(), isNull);
+      }
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      session.dispose();
+    },
+  );
+
+  testWidgets('matches representative responsive terminal goldens', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    const cases =
+        <({String name, Size size, Brightness brightness, Locale locale})>[
+          (
+            name: 'phone_light_en',
+            size: Size(390, 844),
+            brightness: Brightness.light,
+            locale: Locale('en'),
+          ),
+          (
+            name: 'tablet_dark_ja',
+            size: Size(768, 1024),
+            brightness: Brightness.dark,
+            locale: Locale('ja'),
+          ),
+          (
+            name: 'desktop_light_ar',
+            size: Size(1440, 900),
+            brightness: Brightness.light,
+            locale: Locale('ar'),
+          ),
+        ];
+
+    for (final testCase in cases) {
+      final session = TerminalSessionController(
+        workspace: _FakeWorkspace(),
+        api: _FakeGateway(),
+        transportFactory: _FakeTransport.new,
+      );
+      tester.view.physicalSize = testCase.size;
+      debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+      try {
+        await tester.pumpWidget(
+          MultiProvider(
+            providers: [
+              ChangeNotifierProvider(create: (_) => OrganizationProvider()),
+              ChangeNotifierProvider(create: (_) => ProjectProvider()),
+            ],
+            child: MaterialApp(
+              locale: testCase.locale,
+              supportedLocales: const <Locale>[
+                Locale('en'),
+                Locale('ja'),
+                Locale('ar'),
+              ],
+              localizationsDelegates: const [
+                AppLocalizations.delegate,
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              theme: ThemeData.light(),
+              darkTheme: ThemeData.dark(),
+              themeAnimationDuration: Duration.zero,
+              themeMode: testCase.brightness == Brightness.dark
+                  ? ThemeMode.dark
+                  : ThemeMode.light,
+              home: RepaintBoundary(
+                child: TerminalScreen(
+                  controller: session,
+                  bootstrapScope: false,
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+
+      await expectLater(
+        find.byType(RepaintBoundary).first,
+        matchesGoldenFile('goldens/terminal_${testCase.name}.png'),
+      );
+      expect(tester.takeException(), isNull);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      session.dispose();
+    }
   });
 }
