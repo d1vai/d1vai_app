@@ -84,6 +84,7 @@ class _FakeTransport implements TerminalTransportClient {
   final failureController =
       StreamController<TerminalTransportFailure>.broadcast(sync: true);
   ShellConnection? connection;
+  final List<List<int>> inputs = <List<int>>[];
 
   @override
   Stream<TerminalServerControl> get controls => controlController.stream;
@@ -111,7 +112,7 @@ class _FakeTransport implements TerminalTransportClient {
   @override
   void resize({required int columns, required int rows}) {}
   @override
-  void sendInput(List<int> payload) {}
+  void sendInput(List<int> payload) => inputs.add(List<int>.from(payload));
   @override
   void signal(String signal) {}
 
@@ -195,10 +196,11 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
+    final transport = _FakeTransport();
     final session = TerminalSessionController(
       workspace: _FakeWorkspace(),
       api: _FakeGateway(),
-      transportFactory: _FakeTransport.new,
+      transportFactory: () => transport,
     );
 
     await tester.pumpWidget(
@@ -220,6 +222,42 @@ void main() {
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);
+    expect(
+      tester
+          .widget<AnimatedPadding>(
+            find.byKey(const ValueKey('terminal-safe-insets')),
+          )
+          .padding,
+      const EdgeInsets.only(bottom: 76),
+    );
+
+    tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+    addTearDown(tester.view.resetViewInsets);
+    tester.binding.handleMetricsChanged();
+    await tester.pump();
+    expect(
+      tester
+          .widget<AnimatedPadding>(
+            find.byKey(const ValueKey('terminal-safe-insets')),
+          )
+          .padding,
+      const EdgeInsets.only(bottom: 300),
+    );
+
+    await session.start();
+    transport.ready();
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('terminal-key-ctrl')));
+    await tester.pump();
+    final surface = tester.state<TerminalSurfaceState>(
+      find.byType(TerminalSurface),
+    );
+    surface.terminal.textInput('c');
+    surface.terminal.textInput('c');
+    expect(transport.inputs.take(2), <List<int>>[
+      <int>[3],
+      <int>[99],
+    ]);
 
     await tester.pumpWidget(const SizedBox.shrink());
     session.dispose();

@@ -13,6 +13,7 @@ import '../services/workspace_service.dart';
 import '../utils/desktop_layout.dart';
 import '../widgets/organization/workspace_switcher.dart';
 import '../widgets/terminal/terminal_project_picker.dart';
+import '../widgets/terminal/terminal_mobile_keys.dart';
 import '../widgets/terminal/terminal_surface.dart';
 
 class TerminalScreen extends StatefulWidget {
@@ -31,7 +32,8 @@ class TerminalScreen extends StatefulWidget {
   State<TerminalScreen> createState() => _TerminalScreenState();
 }
 
-class _TerminalScreenState extends State<TerminalScreen> {
+class _TerminalScreenState extends State<TerminalScreen>
+    with WidgetsBindingObserver {
   late final TerminalSessionController _session;
   late final bool _ownsSession;
   final GlobalKey<TerminalSurfaceState> _surfaceKey = GlobalKey();
@@ -40,10 +42,12 @@ class _TerminalScreenState extends State<TerminalScreen> {
   bool _scopeObserved = false;
   bool _scopeLoading = true;
   bool _scopeChangeScheduled = false;
+  bool _oneShotCtrl = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _ownsSession = widget.controller == null;
     _session =
         widget.controller ??
@@ -108,6 +112,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
       _scopeLoading = true;
       _organizationId = organizationId;
       _selectedProjectId = null;
+      _oneShotCtrl = false;
     });
     await _session.shutdown();
     _surfaceKey.currentState?.clear();
@@ -131,7 +136,10 @@ class _TerminalScreenState extends State<TerminalScreen> {
     final normalized = _normalizeProjectId(projectId);
     if (normalized == _selectedProjectId) return;
     final restart = _hasLiveSession;
-    setState(() => _selectedProjectId = normalized);
+    setState(() {
+      _selectedProjectId = normalized;
+      _oneShotCtrl = false;
+    });
     if (restart) await _start();
   }
 
@@ -146,6 +154,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
   }
 
   Future<void> _close() async {
+    if (_oneShotCtrl) setState(() => _oneShotCtrl = false);
     await _session.shutdown();
     _surfaceKey.currentState?.clear();
   }
@@ -162,15 +171,29 @@ class _TerminalScreenState extends State<TerminalScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _session.removeListener(_onSessionChanged);
     if (_ownsSession) _session.dispose();
     super.dispose();
   }
 
   @override
+  void didChangeMetrics() {
+    if (mounted) setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) {
     final projects = context.watch<ProjectProvider>();
     final desktop = isDesktopLayout(context);
+    final view = View.of(context);
+    final keyboardInset = view.viewInsets.bottom / view.devicePixelRatio;
+    const mobileNavigationClearance = 76.0;
+    final bottomClearance = desktop
+        ? 0.0
+        : keyboardInset > 0
+        ? keyboardInset
+        : mobileNavigationClearance;
     final targetKey =
         '${_organizationId ?? 'personal'}:'
         '${_selectedProjectId ?? 'workspace'}';
@@ -185,32 +208,70 @@ class _TerminalScreenState extends State<TerminalScreen> {
     );
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
-      body: SafeArea(
-        top: false,
-        child: Padding(
-          padding: EdgeInsets.all(desktop ? 20 : 0),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(desktop ? 8 : 0),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.outlineVariant,
-                ),
-              ),
-              child: Column(
-                children: [
-                  toolbar,
-                  Expanded(
-                    child: TerminalSurface(
-                      key: _surfaceKey,
-                      session: _session,
-                      targetKey: targetKey,
-                      onOpen: _scopeLoading ? null : _start,
-                      onRetry: _scopeLoading ? null : _start,
-                    ),
+      body: AnimatedPadding(
+        key: const ValueKey('terminal-safe-insets'),
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        padding: EdgeInsets.only(bottom: bottomClearance),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: EdgeInsets.all(desktop ? 20 : 0),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(desktop ? 8 : 0),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outlineVariant,
                   ),
-                ],
+                ),
+                child: Column(
+                  children: [
+                    toolbar,
+                    Expanded(
+                      child: TerminalSurface(
+                        key: _surfaceKey,
+                        session: _session,
+                        targetKey: targetKey,
+                        onOpen: _scopeLoading ? null : _start,
+                        onRetry: _scopeLoading ? null : _start,
+                        oneShotCtrl: _oneShotCtrl,
+                        onOneShotCtrlConsumed: () {
+                          if (mounted && _oneShotCtrl) {
+                            setState(() => _oneShotCtrl = false);
+                          }
+                        },
+                      ),
+                    ),
+                    if (!desktop)
+                      TerminalMobileKeys(
+                        enabled: _session.acceptsInput,
+                        ctrlArmed: _oneShotCtrl,
+                        onCtrlToggle: () {
+                          setState(() => _oneShotCtrl = !_oneShotCtrl);
+                          _surfaceKey.currentState?.requestFocus();
+                        },
+                        onKey: (key) => _surfaceKey.currentState?.sendKey(key),
+                        onCopy: () {
+                          final surface = _surfaceKey.currentState;
+                          if (surface != null) {
+                            unawaited(surface.copySelection());
+                          }
+                        },
+                        onPaste: () {
+                          final surface = _surfaceKey.currentState;
+                          if (surface != null) {
+                            unawaited(surface.pasteClipboard());
+                          }
+                        },
+                        onHideKeyboard: () {
+                          _surfaceKey.currentState?.hideKeyboard();
+                        },
+                      ),
+                  ],
+                ),
               ),
             ),
           ),

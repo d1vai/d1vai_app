@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:xterm/xterm.dart';
 
 import '../../controllers/terminal_session_controller.dart';
@@ -15,6 +16,8 @@ class TerminalSurface extends StatefulWidget {
   final VoidCallback? onOpen;
   final VoidCallback? onRetry;
   final Terminal? terminal;
+  final bool oneShotCtrl;
+  final VoidCallback? onOneShotCtrlConsumed;
 
   const TerminalSurface({
     super.key,
@@ -23,6 +26,8 @@ class TerminalSurface extends StatefulWidget {
     this.onOpen,
     this.onRetry,
     this.terminal,
+    this.oneShotCtrl = false,
+    this.onOneShotCtrlConsumed,
   });
 
   @override
@@ -34,6 +39,8 @@ class TerminalSurfaceState extends State<TerminalSurface> {
   late final TerminalController terminalController;
   late final FocusNode focusNode;
   StreamSubscription<String>? _outputSubscription;
+  bool _bypassOneShotCtrl = false;
+  bool _oneShotCtrlConsumed = false;
 
   @override
   void initState() {
@@ -41,9 +48,7 @@ class TerminalSurfaceState extends State<TerminalSurface> {
     terminal = widget.terminal ?? Terminal(maxLines: 5000);
     terminalController = TerminalController();
     focusNode = FocusNode(debugLabel: 'container-terminal');
-    terminal.onOutput = (data) {
-      widget.session.sendInput(utf8.encode(data));
-    };
+    terminal.onOutput = _handleTerminalOutput;
     terminal.onResize = (columns, rows, _, _) {
       widget.session.updateSize(columns, rows);
     };
@@ -53,10 +58,11 @@ class TerminalSurfaceState extends State<TerminalSurface> {
   @override
   void didUpdateWidget(covariant TerminalSurface oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (!widget.oneShotCtrl || !oldWidget.oneShotCtrl) {
+      _oneShotCtrlConsumed = false;
+    }
     if (oldWidget.session != widget.session) {
-      terminal.onOutput = (data) {
-        widget.session.sendInput(utf8.encode(data));
-      };
+      terminal.onOutput = _handleTerminalOutput;
       _listenToOutput();
     }
     if (oldWidget.targetKey != widget.targetKey) {
@@ -78,6 +84,71 @@ class TerminalSurfaceState extends State<TerminalSurface> {
   }
 
   void requestFocus() => focusNode.requestFocus();
+
+  void sendKey(TerminalKey key, {bool ctrl = false}) {
+    if (!widget.session.acceptsInput) return;
+    final applyOneShotCtrl = _hasOneShotCtrl;
+    terminal.keyInput(key, ctrl: ctrl || applyOneShotCtrl);
+    if (applyOneShotCtrl) _consumeOneShotCtrl();
+    requestFocus();
+  }
+
+  Future<void> copySelection() async {
+    final selection = terminalController.selection;
+    if (selection == null) return;
+    final text = terminal.buffer.getText(selection);
+    if (text.isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: text));
+  }
+
+  Future<void> pasteClipboard() async {
+    if (!widget.session.acceptsInput) return;
+    final value = await Clipboard.getData(Clipboard.kTextPlain);
+    final text = value?.text ?? '';
+    if (text.isEmpty) return;
+    _bypassOneShotCtrl = true;
+    try {
+      terminal.paste(text);
+    } finally {
+      _bypassOneShotCtrl = false;
+    }
+    if (_hasOneShotCtrl) _consumeOneShotCtrl();
+    requestFocus();
+  }
+
+  void hideKeyboard() => focusNode.unfocus();
+
+  void _handleTerminalOutput(String data) {
+    if (!_hasOneShotCtrl || _bypassOneShotCtrl) {
+      widget.session.sendInput(utf8.encode(data));
+      return;
+    }
+    final runes = data.runes.toList(growable: false);
+    if (runes.length == 1) {
+      final code = runes.single;
+      final lower = code >= 0x41 && code <= 0x5A ? code + 0x20 : code;
+      if (lower >= 0x61 && lower <= 0x7A) {
+        widget.session.sendInput(<int>[lower - 0x60]);
+        _consumeOneShotCtrl();
+        return;
+      }
+      if (code >= 0x5B && code <= 0x5F) {
+        widget.session.sendInput(<int>[code - 0x40]);
+        _consumeOneShotCtrl();
+        return;
+      }
+    }
+    widget.session.sendInput(utf8.encode(data));
+    _consumeOneShotCtrl();
+  }
+
+  bool get _hasOneShotCtrl => widget.oneShotCtrl && !_oneShotCtrlConsumed;
+
+  void _consumeOneShotCtrl() {
+    if (!_hasOneShotCtrl) return;
+    _oneShotCtrlConsumed = true;
+    widget.onOneShotCtrlConsumed?.call();
+  }
 
   @override
   void dispose() {
