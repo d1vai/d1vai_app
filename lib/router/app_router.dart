@@ -133,6 +133,7 @@ GoRouter createAppRouter() {
       final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
       final isMainTab =
           state.matchedLocation == '/dashboard' ||
+          state.matchedLocation == '/terminal' ||
           state.matchedLocation == '/community' ||
           state.matchedLocation == '/docs' ||
           state.matchedLocation == '/orders' ||
@@ -225,11 +226,22 @@ GoRouter createAppRouter() {
         ),
       ),
       GoRoute(
+        path: '/terminal',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          MainScreen(
+            initialIndex: 1,
+            terminalInitialProjectId: state.uri.queryParameters['project'],
+          ),
+        ),
+      ),
+      GoRoute(
         path: '/community',
         pageBuilder: (context, state) => _buildPageWithTransition(
           context,
           state,
-          const MainScreen(initialIndex: 1),
+          const MainScreen(initialIndex: 2),
         ),
       ),
       GoRoute(
@@ -237,7 +249,7 @@ GoRouter createAppRouter() {
         pageBuilder: (context, state) => _buildPageWithTransition(
           context,
           state,
-          const MainScreen(initialIndex: 2),
+          const MainScreen(initialIndex: 3),
         ),
       ),
       GoRoute(
@@ -305,7 +317,7 @@ GoRouter createAppRouter() {
           context,
           state,
           MainScreen(
-            initialIndex: 3,
+            initialIndex: 4,
             settingsInitialTab: state.uri.queryParameters['tab'],
           ),
         ),
