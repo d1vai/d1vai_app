@@ -232,11 +232,7 @@ class ApiClient {
       if (t.isEmpty) {
         debugPrint('$_debugPrefix 🔐 Auth: missing');
       } else {
-        final suffix = t.length <= 6 ? t : t.substring(t.length - 6);
-        final kind = t.startsWith('eyJ') ? 'jwt' : 'opaque';
-        debugPrint(
-          '$_debugPrefix 🔐 Auth: present kind=$kind len=${t.length} suffix=$suffix',
-        );
+        debugPrint('$_debugPrefix 🔐 Auth: present');
       }
     }
 

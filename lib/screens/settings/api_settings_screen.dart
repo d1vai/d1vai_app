@@ -190,9 +190,6 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
 
     final prefs = await SharedPreferences.getInstance();
     final token = (prefs.getString('auth_token') ?? '').trim();
-    final tokenSuffix = token.isEmpty
-        ? ''
-        : (token.length <= 6 ? token : token.substring(token.length - 6));
     final claims = token.isEmpty ? null : _decodeJwtClaims(token);
 
     String? expIso;
@@ -209,8 +206,6 @@ class _ApiSettingsScreenState extends State<ApiSettingsScreen> {
       'env_base_url=${ApiClient.envBaseUrl}',
       'override_base_url=${ApiClient.runtimeBaseUrl ?? ''}',
       'auth_token_present=${token.isNotEmpty}',
-      if (token.isNotEmpty)
-        'auth_token_len=${token.length} suffix=$tokenSuffix',
       if (claims != null && claims['type'] != null)
         "jwt_type=${claims['type']}",
       if (claims != null && claims['sub'] != null) "jwt_sub=${claims['sub']}",
