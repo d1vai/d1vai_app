@@ -70,6 +70,7 @@ jobs:
       - name: Verify terminal release gate
         shell: bash
         env:
+          CODE_SIGNING_ALLOWED: "NO"
           D1V_TERMINAL_RELEASE_DEVICE_ID: macos
         run: bash tool/verify_terminal_release.sh
 
