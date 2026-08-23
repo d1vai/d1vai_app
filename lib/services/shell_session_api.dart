@@ -1,12 +1,28 @@
 import '../core/api_client.dart';
 import '../models/shell_session.dart';
 
-class ShellSessionApi {
+abstract interface class ShellSessionGateway {
+  Future<ShellConnection> create({
+    String? projectId,
+    int? organizationId,
+    required int columns,
+    required int rows,
+  });
+
+  Future<ShellSessionMetadata> get(String sessionId);
+
+  Future<ShellConnection> refreshTicket(String sessionId);
+
+  Future<ShellSessionMetadata> close(String sessionId);
+}
+
+class ShellSessionApi implements ShellSessionGateway {
   final ApiClient _apiClient;
 
   ShellSessionApi({ApiClient? apiClient})
     : _apiClient = apiClient ?? ApiClient();
 
+  @override
   Future<ShellConnection> create({
     String? projectId,
     int? organizationId,
@@ -38,6 +54,7 @@ class ShellSessionApi {
     return ShellConnection.fromJson(data);
   }
 
+  @override
   Future<ShellSessionMetadata> get(String sessionId) async {
     final data = await _apiClient.get<Map<String, dynamic>>(
       _sessionEndpoint(sessionId),
@@ -46,6 +63,7 @@ class ShellSessionApi {
     return ShellSessionMetadata.fromJson(data);
   }
 
+  @override
   Future<ShellConnection> refreshTicket(String sessionId) async {
     final data = await _apiClient.post<Map<String, dynamic>>(
       '${_sessionEndpoint(sessionId)}/ticket',
@@ -55,6 +73,7 @@ class ShellSessionApi {
     return ShellConnection.fromJson(data);
   }
 
+  @override
   Future<ShellSessionMetadata> close(String sessionId) async {
     final data = await _apiClient.delete<Map<String, dynamic>>(
       _sessionEndpoint(sessionId),

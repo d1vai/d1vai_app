@@ -56,7 +56,25 @@ class TerminalTransportFailure implements Exception {
   String toString() => 'TerminalTransportFailure: $code';
 }
 
-class TerminalTransport {
+abstract interface class TerminalTransportClient {
+  Stream<Uint8List> get output;
+  Stream<TerminalServerControl> get controls;
+  Stream<TerminalTransportFailure> get failures;
+  bool get isReady;
+
+  Future<void> connect(
+    ShellConnection connection, {
+    required int columns,
+    required int rows,
+  });
+
+  void sendInput(List<int> payload);
+  void resize({required int columns, required int rows});
+  void signal(String signal);
+  Future<void> close({bool detach = true});
+}
+
+class TerminalTransport implements TerminalTransportClient {
   final TerminalSocketConnector _connector;
   final bool allowInsecureLocalhost;
   final Duration heartbeatInterval;
@@ -84,11 +102,16 @@ class TerminalTransport {
     this.heartbeatTimeout = const Duration(seconds: 10),
   }) : _connector = connector ?? WebSocketTerminalSocket.connect;
 
+  @override
   Stream<Uint8List> get output => _outputController.stream;
+  @override
   Stream<TerminalServerControl> get controls => _controlController.stream;
+  @override
   Stream<TerminalTransportFailure> get failures => _failureController.stream;
+  @override
   bool get isReady => _serverReady && !_closed;
 
+  @override
   Future<void> connect(
     ShellConnection connection, {
     required int columns,
@@ -138,21 +161,25 @@ class TerminalTransport {
     }
   }
 
+  @override
   void sendInput(List<int> payload) {
     _requireReady();
     _socket!.add(encodeTerminalInput(payload));
   }
 
+  @override
   void resize({required int columns, required int rows}) {
     _requireReady();
     _socket!.add(encodeTerminalResize(columns: columns, rows: rows));
   }
 
+  @override
   void signal(String signal) {
     _requireReady();
     _socket!.add(encodeTerminalSignal(signal));
   }
 
+  @override
   Future<void> close({bool detach = true}) async {
     if (_closed) return;
     _closed = true;

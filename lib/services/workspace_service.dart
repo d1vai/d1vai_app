@@ -52,6 +52,11 @@ enum WorkspacePhase {
   error,
 }
 
+abstract interface class WorkspaceReadinessService {
+  void setScope({int? organizationId, String? projectId});
+  Future<WorkspaceConnection> ensureWorkspaceReady({Duration? timeout});
+}
+
 WorkspacePhase normalizeWorkspacePhase(WorkspaceStateInfo? input) {
   if (input == null) return WorkspacePhase.unknown;
   if (input.isReady) return WorkspacePhase.ready;
@@ -73,7 +78,7 @@ WorkspacePhase normalizeWorkspacePhase(WorkspaceStateInfo? input) {
   return WorkspacePhase.unknown;
 }
 
-class WorkspaceService {
+class WorkspaceService implements WorkspaceReadinessService {
   final ApiClient _apiClient;
   int? _organizationId;
   String? _projectId;
@@ -115,6 +120,7 @@ class WorkspaceService {
     setScope(organizationId: _organizationId, projectId: projectId);
   }
 
+  @override
   void setScope({int? organizationId, String? projectId}) {
     final normalizedProjectId = _normalizeProjectId(projectId);
     if (_organizationId == organizationId &&
@@ -238,6 +244,7 @@ class WorkspaceService {
     }
   }
 
+  @override
   Future<WorkspaceConnection> ensureWorkspaceReady({Duration? timeout}) async {
     final now = DateTime.now();
     if (_lastReady != null && _lastReadyAt != null) {
