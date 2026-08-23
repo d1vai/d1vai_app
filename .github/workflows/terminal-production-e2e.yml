@@ -24,24 +24,6 @@ jobs:
       D1V_E2E_SECONDARY_AUTH_TOKEN: ${{ secrets.D1V_E2E_SECONDARY_AUTH_TOKEN }}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-          submodules: recursive
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-
-      - name: Enable macOS desktop
-        run: flutter config --enable-macos-desktop
-
-      - name: Install dependencies
-        run: flutter pub get
-
       - name: Validate production acceptance inputs
         shell: bash
         run: |
@@ -67,6 +49,24 @@ jobs:
             echo "D1V_E2E_ORGANIZATION_ID must be a positive integer." >&2
             exit 1
           fi
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Enable macOS desktop
+        run: flutter config --enable-macos-desktop
+
+      - name: Install dependencies
+        run: flutter pub get
 
       - name: Verify production launcher contract
         shell: bash

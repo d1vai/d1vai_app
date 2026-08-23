@@ -46,6 +46,9 @@ fail "workflow environment does not match the production matrix" unless environm
 
 steps = job.fetch("steps")
 fail "workflow must define steps" unless steps.is_a?(Array) && !steps.empty?
+unless steps.first["name"] == "Validate production acceptance inputs"
+  fail "workflow must validate production inputs before setup work"
+end
 uses = steps.map { |step| step["uses"] }.compact
 if uses.any? { |action| action.include?("upload-artifact") }
   fail "production E2E must not upload artifacts"
