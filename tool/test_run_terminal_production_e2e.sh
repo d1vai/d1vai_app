@@ -29,32 +29,32 @@ expect_rejected \
 
 expect_rejected \
   "D1V_E2E_PROJECT_ID is required" \
-  D1V_E2E_AUTH_TOKEN=fixture-primary-secret \
   -u D1V_E2E_PROJECT_ID \
+  D1V_E2E_AUTH_TOKEN=fixture-primary-secret \
   D1V_E2E_DEVICE_ID=test-device
 
 expect_rejected \
   "A Flutter device id is required" \
+  -u D1V_E2E_DEVICE_ID \
   D1V_E2E_AUTH_TOKEN=fixture-primary-secret \
-  D1V_E2E_PROJECT_ID=fixture-project \
-  -u D1V_E2E_DEVICE_ID
+  D1V_E2E_PROJECT_ID=fixture-project
 
 expect_rejected \
   "D1V_E2E_ORGANIZATION_ID is required" \
+  -u D1V_E2E_ORGANIZATION_ID \
   D1V_E2E_AUTH_TOKEN=fixture-primary-secret \
   D1V_E2E_PROJECT_ID=fixture-project \
   D1V_E2E_DEVICE_ID=test-device \
-  D1V_E2E_REQUIRE_FULL_MATRIX=1 \
-  -u D1V_E2E_ORGANIZATION_ID
+  D1V_E2E_REQUIRE_FULL_MATRIX=1
 
 expect_rejected \
   "D1V_E2E_SECONDARY_AUTH_TOKEN is required" \
+  -u D1V_E2E_SECONDARY_AUTH_TOKEN \
   D1V_E2E_AUTH_TOKEN=fixture-primary-secret \
   D1V_E2E_PROJECT_ID=fixture-project \
   D1V_E2E_DEVICE_ID=test-device \
   D1V_E2E_REQUIRE_FULL_MATRIX=1 \
-  D1V_E2E_ORGANIZATION_ID=42 \
-  -u D1V_E2E_SECONDARY_AUTH_TOKEN
+  D1V_E2E_ORGANIZATION_ID=42
 
 capture_file="${fixture_root}/defines-path"
 stub_flutter="${fixture_root}/flutter"

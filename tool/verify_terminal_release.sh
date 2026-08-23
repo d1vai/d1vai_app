@@ -59,9 +59,18 @@ flutter analyze "${terminal_files[@]}"
 bash -n "${shell_files[@]}"
 bash tool/test_run_terminal_production_e2e.sh
 
-if rg -n \
-  'auth_token_(len|suffix)|Auth: present.*(kind|len|suffix)|suffix=\$tokenSuffix' \
-  lib integration_test; then
+auth_fingerprint_pattern='auth_token_(len|suffix)|Auth: present.*(kind|len|suffix)|suffix=\$tokenSuffix'
+if command -v rg >/dev/null 2>&1; then
+  auth_fingerprint_matches() {
+    rg -n "${auth_fingerprint_pattern}" lib integration_test
+  }
+else
+  auth_fingerprint_matches() {
+    grep -R -n -E "${auth_fingerprint_pattern}" lib integration_test
+  }
+fi
+
+if auth_fingerprint_matches; then
   echo "Authentication fingerprint logging is forbidden" >&2
   exit 1
 fi
