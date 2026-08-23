@@ -41,12 +41,18 @@ terminal_files=(
 shell_files=(
   tool/run_terminal_production_e2e.sh
   tool/test_run_terminal_production_e2e.sh
+  tool/test_terminal_production_e2e_workflow.sh
   tool/verify_terminal_release.sh
+)
+
+workflow_files=(
+  .github/workflows/terminal-production-e2e.yml
 )
 
 for required_file in \
   "${terminal_files[@]}" \
-  "${shell_files[@]}"; do
+  "${shell_files[@]}" \
+  "${workflow_files[@]}"; do
   if [[ ! -f "${required_file}" ]]; then
     echo "Missing terminal release input: ${required_file}" >&2
     exit 1
@@ -58,6 +64,7 @@ flutter analyze "${terminal_files[@]}"
 
 bash -n "${shell_files[@]}"
 bash tool/test_run_terminal_production_e2e.sh
+bash tool/test_terminal_production_e2e_workflow.sh
 
 auth_fingerprint_pattern='auth_token_(len|suffix)|Auth: present.*(kind|len|suffix)|suffix=\$tokenSuffix'
 if command -v rg >/dev/null 2>&1; then

@@ -1,0 +1,79 @@
+name: Verify Terminal Production E2E
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: terminal-production-e2e
+  cancel-in-progress: false
+
+jobs:
+  full-production-matrix:
+    runs-on: macos-latest
+    timeout-minutes: 25
+    env:
+      CODE_SIGNING_ALLOWED: "NO"
+      D1V_E2E_API_BASE_URL: https://api.d1v.ai
+      D1V_E2E_REQUIRE_FULL_MATRIX: "1"
+      D1V_E2E_AUTH_TOKEN: ${{ secrets.D1V_E2E_AUTH_TOKEN }}
+      D1V_E2E_PROJECT_ID: ${{ secrets.D1V_E2E_PROJECT_ID }}
+      D1V_E2E_ORGANIZATION_ID: ${{ secrets.D1V_E2E_ORGANIZATION_ID }}
+      D1V_E2E_SECONDARY_AUTH_TOKEN: ${{ secrets.D1V_E2E_SECONDARY_AUTH_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Enable macOS desktop
+        run: flutter config --enable-macos-desktop
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Validate production acceptance inputs
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
+            echo "Production E2E must run from the main branch." >&2
+            exit 1
+          fi
+
+          required_vars=(
+            D1V_E2E_AUTH_TOKEN
+            D1V_E2E_PROJECT_ID
+            D1V_E2E_ORGANIZATION_ID
+            D1V_E2E_SECONDARY_AUTH_TOKEN
+          )
+          for var_name in "${required_vars[@]}"; do
+            if [[ -z "${!var_name}" ]]; then
+              echo "Missing required production E2E secret: ${var_name}" >&2
+              exit 1
+            fi
+          done
+
+          if [[ ! "${D1V_E2E_ORGANIZATION_ID}" =~ ^[1-9][0-9]*$ ]]; then
+            echo "D1V_E2E_ORGANIZATION_ID must be a positive integer." >&2
+            exit 1
+          fi
+
+      - name: Verify production launcher contract
+        shell: bash
+        run: |
+          bash -n tool/run_terminal_production_e2e.sh
+          bash tool/test_run_terminal_production_e2e.sh
+
+      - name: Run full Flutter production terminal matrix
+        shell: bash
+        run: bash tool/run_terminal_production_e2e.sh macos
