@@ -62,6 +62,10 @@ jobs:
         shell: bash
         run: flutter analyze --no-fatal-infos lib test tool
 
+      - name: Verify terminal release gate
+        shell: bash
+        run: bash tool/verify_terminal_release.sh
+
       - name: Build Windows app
         shell: bash
         run: >

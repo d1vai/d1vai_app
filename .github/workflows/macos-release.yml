@@ -67,6 +67,12 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Verify terminal release gate
+        shell: bash
+        env:
+          D1V_TERMINAL_RELEASE_DEVICE_ID: macos
+        run: bash tool/verify_terminal_release.sh
+
       - name: Validate signing and notarization secrets
         shell: bash
         run: |

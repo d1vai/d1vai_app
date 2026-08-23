@@ -107,6 +107,10 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Verify terminal release gate
+        shell: bash
+        run: bash tool/verify_terminal_release.sh
+
       - name: Validate mobile payment secrets
         shell: bash
         run: |
