@@ -76,6 +76,8 @@ dependencies:
     path: third_party/nativeapi-flutter/packages/nativeapi
   archive: ^4.0.7
   xml: ^6.6.1
+  xterm: ^4.0.0
+  web_socket_channel: ^3.0.3
 
 dev_dependencies:
   flutter_test:
