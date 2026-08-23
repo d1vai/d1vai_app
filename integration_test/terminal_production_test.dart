@@ -236,6 +236,27 @@ int _occurrences(String value, String needle) {
   return value.split(needle).length - 1;
 }
 
+bool _markerUsesNamedForeground(
+  Terminal terminal,
+  String marker,
+  int colorIndex,
+) {
+  final expectedForeground = CellColor.named | colorIndex;
+  final lines = terminal.buffer.lines;
+  for (var lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+    final line = lines[lineIndex];
+    final start = line.getText().indexOf(marker);
+    if (start < 0 || start + marker.length > line.length) continue;
+    for (var offset = 0; offset < marker.length; offset += 1) {
+      if (line.getForeground(start + offset) != expectedForeground) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
 Future<void> _emitMarker(
   _ProductionTerminalHarness harness,
   String marker,
@@ -294,6 +315,10 @@ void main() {
         (text) => text.contains(ansiMarker),
         description: 'ANSI command result',
       );
+      expect(
+        _markerUsesNamedForeground(harness.surface.terminal, ansiMarker, 1),
+        isTrue,
+      );
 
       final semanticMarker = 'D1V_FLUTTER_SEMANTIC_$runId';
       _typeCommand(
@@ -304,6 +329,10 @@ void main() {
         harness,
         (text) => text.contains(semanticMarker),
         description: 'semantic command result',
+      );
+      expect(
+        _markerUsesNamedForeground(harness.surface.terminal, semanticMarker, 3),
+        isTrue,
       );
 
       final completionName = 'd1v-flutter-$runId-completion.txt';
@@ -481,6 +510,7 @@ void main() {
       );
       await _emitMarker(primary, 'D1V_FLUTTER_PRIVATE_SYNC_$runId');
       await primary.dispose();
+      expect(primary.gateway.closedSessionIds, hasLength(1));
 
       await _configureIdentity(_secondaryToken, organizationId: organizationId);
       final secondary = _ProductionTerminalHarness(
@@ -499,8 +529,16 @@ void main() {
       await tester.pump(const Duration(seconds: 3));
       expect(secondary.text, isNot(contains(privateCommand)));
       secondary.surface.terminal.textInput('\x03');
+
+      secondary.surface.terminal.textInput('\x12');
+      secondary.surface.terminal.textInput('D1V_FLUTTER_PRIVATE_');
+      await tester.pump(const Duration(seconds: 3));
+      expect(secondary.text, isNot(contains(privateCommand)));
+      secondary.surface.terminal.textInput('\x03');
+
       await _emitMarker(secondary, 'D1V_FLUTTER_SECONDARY_DONE_$runId');
       await secondary.dispose();
+      expect(secondary.gateway.closedSessionIds, hasLength(1));
 
       await _configureIdentity(_primaryToken, organizationId: organizationId);
       final cleanup = _ProductionTerminalHarness(
@@ -516,6 +554,8 @@ void main() {
         "| sort -rn); do history -d \"\$n\"; done; history -w",
       );
       await _emitMarker(cleanup, 'D1V_FLUTTER_PRIVATE_CLEAN_$runId');
+      await cleanup.dispose();
+      expect(cleanup.gateway.closedSessionIds, hasLength(1));
       expect(tester.takeException(), isNull);
     },
     skip: !_hasFullMatrix,
