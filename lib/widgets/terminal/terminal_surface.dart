@@ -9,6 +9,7 @@ import '../../controllers/terminal_session_controller.dart';
 import '../../l10n/app_localizations.dart';
 import 'terminal_status_overlay.dart';
 import 'terminal_theme.dart';
+import 'terminal_output_highlighter.dart';
 
 class TerminalSurface extends StatefulWidget {
   final TerminalSessionController session;
@@ -41,6 +42,8 @@ class TerminalSurfaceState extends State<TerminalSurface> {
   StreamSubscription<String>? _outputSubscription;
   bool _bypassOneShotCtrl = false;
   bool _oneShotCtrlConsumed = false;
+  final TerminalOutputHighlighter _outputHighlighter =
+      TerminalOutputHighlighter();
 
   @override
   void initState() {
@@ -75,10 +78,14 @@ class TerminalSurfaceState extends State<TerminalSurface> {
     _outputSubscription = widget.session.output
         .cast<List<int>>()
         .transform(utf8.decoder)
-        .listen(terminal.write);
+        .listen((data) {
+          final highlighted = _outputHighlighter.add(data);
+          if (highlighted.isNotEmpty) terminal.write(highlighted);
+        });
   }
 
   void clear() {
+    _outputHighlighter.reset();
     terminal.buffer.clear();
     terminal.notifyListeners();
   }
