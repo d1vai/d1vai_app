@@ -131,10 +131,10 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Sign in with Google').hitTestable(), findsNothing);
+    expect(find.text('Sign in with GitHub').hitTestable(), findsNothing);
     await tester.tap(find.text('More sign-in options'));
     await tester.pumpAndSettle();
-    expect(find.text('Sign in with Google').hitTestable(), findsOneWidget);
+    expect(find.text('Sign in with GitHub').hitTestable(), findsOneWidget);
 
     await tester.tap(find.text('More sign-in options'));
     await tester.pumpAndSettle();

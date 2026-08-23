@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   const service = LocalWorkspaceService();
+  final isSupportedDesktop = Platform.isMacOS || Platform.isWindows;
 
   group('LocalWorkspaceService.readFile', () {
     late Directory tempDir;
@@ -19,28 +20,59 @@ void main() {
       }
     });
 
-    test('reads text files as decoded text', () async {
-      final file = File('${tempDir.path}/notes.txt');
-      await file.writeAsString('hello local workspace');
+    test(
+      'reads text files as decoded text',
+      () async {
+        final file = File('${tempDir.path}/notes.txt');
+        await file.writeAsString('hello local workspace');
 
-      final result = await service.readFile(tempDir.path, 'notes.txt');
+        final result = await service.readFile(tempDir.path, 'notes.txt');
 
-      expect(result.path, 'notes.txt');
-      expect(result.isBinary, isFalse);
-      expect(result.content, 'hello local workspace');
-      expect(result.size, greaterThan(0));
-    });
+        expect(result.path, 'notes.txt');
+        expect(result.isBinary, isFalse);
+        expect(result.content, 'hello local workspace');
+        expect(result.size, greaterThan(0));
+      },
+      skip: isSupportedDesktop
+          ? false
+          : 'Local workspace files are unsupported on this platform.',
+    );
 
-    test('returns placeholder content for binary files', () async {
-      final file = File('${tempDir.path}/image.bin');
-      await file.writeAsBytes(<int>[0, 159, 250, 88, 10, 11, 12]);
+    test(
+      'returns placeholder content for binary files',
+      () async {
+        final file = File('${tempDir.path}/image.bin');
+        await file.writeAsBytes(<int>[0, 159, 250, 88, 10, 11, 12]);
 
-      final result = await service.readFile(tempDir.path, 'image.bin');
+        final result = await service.readFile(tempDir.path, 'image.bin');
 
-      expect(result.path, 'image.bin');
-      expect(result.isBinary, isTrue);
-      expect(result.content, isEmpty);
-      expect(result.size, 7);
-    });
+        expect(result.path, 'image.bin');
+        expect(result.isBinary, isTrue);
+        expect(result.content, isEmpty);
+        expect(result.size, 7);
+      },
+      skip: isSupportedDesktop
+          ? false
+          : 'Local workspace files are unsupported on this platform.',
+    );
+
+    test(
+      'rejects local file access on unsupported platforms',
+      () async {
+        expect(
+          () => service.readFile(tempDir.path, 'notes.txt'),
+          throwsA(
+            isA<Exception>().having(
+              (error) => error.toString(),
+              'message',
+              contains('only supported on macOS and Windows'),
+            ),
+          ),
+        );
+      },
+      skip: isSupportedDesktop
+          ? 'Unsupported-platform behavior is covered on Linux.'
+          : false,
+    );
   });
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:d1vai_app/controllers/terminal_session_controller.dart';
 import 'package:d1vai_app/l10n/app_localizations.dart';
@@ -492,91 +493,93 @@ void main() {
     },
   );
 
-  testWidgets('matches representative responsive terminal goldens', (
-    tester,
-  ) async {
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+  testWidgets(
+    'matches representative responsive terminal goldens',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-    const cases =
-        <({String name, Size size, Brightness brightness, Locale locale})>[
-          (
-            name: 'phone_light_en',
-            size: Size(390, 844),
-            brightness: Brightness.light,
-            locale: Locale('en'),
-          ),
-          (
-            name: 'tablet_dark_ja',
-            size: Size(768, 1024),
-            brightness: Brightness.dark,
-            locale: Locale('ja'),
-          ),
-          (
-            name: 'desktop_light_ar',
-            size: Size(1440, 900),
-            brightness: Brightness.light,
-            locale: Locale('ar'),
-          ),
-        ];
+      const cases =
+          <({String name, Size size, Brightness brightness, Locale locale})>[
+            (
+              name: 'phone_light_en',
+              size: Size(390, 844),
+              brightness: Brightness.light,
+              locale: Locale('en'),
+            ),
+            (
+              name: 'tablet_dark_ja',
+              size: Size(768, 1024),
+              brightness: Brightness.dark,
+              locale: Locale('ja'),
+            ),
+            (
+              name: 'desktop_light_ar',
+              size: Size(1440, 900),
+              brightness: Brightness.light,
+              locale: Locale('ar'),
+            ),
+          ];
 
-    for (final testCase in cases) {
-      final session = TerminalSessionController(
-        workspace: _FakeWorkspace(),
-        api: _FakeGateway(),
-        transportFactory: _FakeTransport.new,
-      );
-      tester.view.physicalSize = testCase.size;
-      debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
-      try {
-        await tester.pumpWidget(
-          MultiProvider(
-            providers: [
-              ChangeNotifierProvider(create: (_) => OrganizationProvider()),
-              ChangeNotifierProvider(create: (_) => ProjectProvider()),
-            ],
-            child: MaterialApp(
-              locale: testCase.locale,
-              supportedLocales: const <Locale>[
-                Locale('en'),
-                Locale('ja'),
-                Locale('ar'),
+      for (final testCase in cases) {
+        final session = TerminalSessionController(
+          workspace: _FakeWorkspace(),
+          api: _FakeGateway(),
+          transportFactory: _FakeTransport.new,
+        );
+        tester.view.physicalSize = testCase.size;
+        debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+        try {
+          await tester.pumpWidget(
+            MultiProvider(
+              providers: [
+                ChangeNotifierProvider(create: (_) => OrganizationProvider()),
+                ChangeNotifierProvider(create: (_) => ProjectProvider()),
               ],
-              localizationsDelegates: const [
-                AppLocalizations.delegate,
-                GlobalMaterialLocalizations.delegate,
-                GlobalWidgetsLocalizations.delegate,
-                GlobalCupertinoLocalizations.delegate,
-              ],
-              theme: ThemeData.light(),
-              darkTheme: ThemeData.dark(),
-              themeAnimationDuration: Duration.zero,
-              themeMode: testCase.brightness == Brightness.dark
-                  ? ThemeMode.dark
-                  : ThemeMode.light,
-              home: RepaintBoundary(
-                child: TerminalScreen(
-                  controller: session,
-                  bootstrapScope: false,
+              child: MaterialApp(
+                locale: testCase.locale,
+                supportedLocales: const <Locale>[
+                  Locale('en'),
+                  Locale('ja'),
+                  Locale('ar'),
+                ],
+                localizationsDelegates: const [
+                  AppLocalizations.delegate,
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                ],
+                theme: ThemeData.light(),
+                darkTheme: ThemeData.dark(),
+                themeAnimationDuration: Duration.zero,
+                themeMode: testCase.brightness == Brightness.dark
+                    ? ThemeMode.dark
+                    : ThemeMode.light,
+                home: RepaintBoundary(
+                  child: TerminalScreen(
+                    controller: session,
+                    bootstrapScope: false,
+                  ),
                 ),
               ),
             ),
-          ),
+          );
+          await tester.pump();
+        } finally {
+          debugDefaultTargetPlatformOverride = null;
+        }
+
+        await expectLater(
+          find.byType(RepaintBoundary).first,
+          matchesGoldenFile('goldens/terminal_${testCase.name}.png'),
         );
-        await tester.pump();
-      } finally {
-        debugDefaultTargetPlatformOverride = null;
+        expect(tester.takeException(), isNull);
+
+        await tester.pumpWidget(const SizedBox.shrink());
+        session.dispose();
       }
-
-      await expectLater(
-        find.byType(RepaintBoundary).first,
-        matchesGoldenFile('goldens/terminal_${testCase.name}.png'),
-      );
-      expect(tester.takeException(), isNull);
-
-      await tester.pumpWidget(const SizedBox.shrink());
-      session.dispose();
-    }
-  });
+    },
+    skip: !Platform.isMacOS, // Goldens use the macOS font rasterizer.
+  );
 }
