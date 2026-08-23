@@ -76,6 +76,63 @@ void main() {
     expect(captured?.body, '{}');
   });
 
+  test('workspace status and discover preserve project scope safely', () async {
+    SharedPreferences.setMockInitialValues({'auth_token': 'test-token'});
+    final requests = <http.Request>[];
+    final client = MockClient((request) async {
+      requests.add(request);
+      return http.Response(
+        jsonEncode({
+          'code': 0,
+          'msg': 'success',
+          'data': {'status': 'ACTIVE', 'ip': '10.0.0.9', 'port': 8080},
+        }),
+        200,
+        headers: {'content-type': 'application/json'},
+      );
+    });
+    final service = WorkspaceService(
+      apiClient: ApiClient(client: client),
+      organizationId: 7,
+      projectId: ' project one ',
+    );
+
+    await service.getWorkspaceStatus();
+    await service.discoverWorkspace();
+
+    expect(requests, hasLength(2));
+    for (final request in requests) {
+      expect(request.url.queryParameters['organization_id'], '7');
+      expect(request.url.queryParameters['project_id'], 'project one');
+    }
+    expect(requests.last.url.path, '/api/workspace/discover');
+    expect(requests.last.body, '{}');
+  });
+
+  test('changing the project invalidates cached workspace readiness', () async {
+    SharedPreferences.setMockInitialValues({'auth_token': 'test-token'});
+    var requests = 0;
+    final client = MockClient((request) async {
+      requests += 1;
+      return http.Response(
+        jsonEncode({
+          'code': 0,
+          'msg': 'success',
+          'data': {'status': 'ACTIVE', 'ip': '10.0.0.$requests', 'port': 8080},
+        }),
+        200,
+        headers: {'content-type': 'application/json'},
+      );
+    });
+    final service = WorkspaceService(apiClient: ApiClient(client: client));
+
+    expect((await service.getWorkspaceStatus()).ip, '10.0.0.1');
+    expect((await service.getWorkspaceStatus()).ip, '10.0.0.1');
+    service.setProject('project-2');
+    expect((await service.getWorkspaceStatus()).ip, '10.0.0.2');
+    expect(requests, 2);
+  });
+
   test('project model preserves organization workspace scope', () {
     final project = UserProject.fromJson({
       'id': 'project-1',

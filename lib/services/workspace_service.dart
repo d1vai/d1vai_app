@@ -76,10 +76,15 @@ WorkspacePhase normalizeWorkspacePhase(WorkspaceStateInfo? input) {
 class WorkspaceService {
   final ApiClient _apiClient;
   int? _organizationId;
+  String? _projectId;
 
-  WorkspaceService({ApiClient? apiClient, int? organizationId})
-    : _apiClient = apiClient ?? ApiClient(),
-      _organizationId = organizationId;
+  WorkspaceService({
+    ApiClient? apiClient,
+    int? organizationId,
+    String? projectId,
+  }) : _apiClient = apiClient ?? ApiClient(),
+       _organizationId = organizationId,
+       _projectId = _normalizeProjectId(projectId);
 
   static const _statusCacheMaxAge = Duration(milliseconds: 1500);
   static const _statusInflightDedupe = Duration(milliseconds: 800);
@@ -103,8 +108,21 @@ class WorkspaceService {
   DateTime? _lastModelSyncAt;
 
   void setOrganization(int? organizationId) {
-    if (_organizationId == organizationId) return;
+    setScope(organizationId: organizationId, projectId: _projectId);
+  }
+
+  void setProject(String? projectId) {
+    setScope(organizationId: _organizationId, projectId: projectId);
+  }
+
+  void setScope({int? organizationId, String? projectId}) {
+    final normalizedProjectId = _normalizeProjectId(projectId);
+    if (_organizationId == organizationId &&
+        _projectId == normalizedProjectId) {
+      return;
+    }
     _organizationId = organizationId;
+    _projectId = normalizedProjectId;
     _statusInFlight = null;
     _lastStatus = null;
     _lastStatusAt = null;
@@ -113,9 +131,10 @@ class WorkspaceService {
     _lastReadyAt = null;
   }
 
-  Map<String, String> get _organizationQuery => _organizationId == null
-      ? const {}
-      : {'organization_id': _organizationId.toString()};
+  Map<String, String> get _scopeQuery => <String, String>{
+    if (_organizationId != null) 'organization_id': _organizationId.toString(),
+    'project_id': ?_projectId,
+  };
 
   Future<WorkspaceStateInfo> getWorkspaceStatus({
     bool bypassCache = false,
@@ -138,7 +157,7 @@ class WorkspaceService {
       try {
         final data = await _apiClient.get<Map<String, dynamic>>(
           '/api/workspace/status',
-          queryParams: {'keepalive': '1', ..._organizationQuery},
+          queryParams: {'keepalive': '1', ..._scopeQuery},
         );
         final st = WorkspaceStateInfo.fromJson(data);
         _lastStatus = st;
@@ -163,11 +182,10 @@ class WorkspaceService {
     _discoverInFlightAt = now;
     _discoverInFlight = () async {
       try {
-        final data = await _apiClient.post<Map<String, dynamic>>(
-          _organizationId == null
-              ? '/api/workspace/discover'
-              : '/api/workspace/discover?organization_id=$_organizationId',
-          const {},
+        final data = await _apiClient.postWithQuery<Map<String, dynamic>>(
+          '/api/workspace/discover',
+          _scopeQuery,
+          const <String, dynamic>{},
         );
         final st = WorkspaceStateInfo.fromJson(data);
         _lastStatus = st;
@@ -294,4 +312,9 @@ class WorkspaceService {
       _ensureInFlight = null;
     }
   }
+}
+
+String? _normalizeProjectId(String? value) {
+  final normalized = value?.trim() ?? '';
+  return normalized.isEmpty ? null : normalized;
 }
