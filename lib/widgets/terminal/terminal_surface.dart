@@ -10,6 +10,7 @@ import '../../l10n/app_localizations.dart';
 import 'terminal_status_overlay.dart';
 import 'terminal_theme.dart';
 import 'terminal_output_highlighter.dart';
+import 'terminal_output_pump.dart';
 
 class TerminalSurface extends StatefulWidget {
   final TerminalSessionController session;
@@ -44,6 +45,7 @@ class TerminalSurfaceState extends State<TerminalSurface> {
   bool _oneShotCtrlConsumed = false;
   final TerminalOutputHighlighter _outputHighlighter =
       TerminalOutputHighlighter();
+  late final TerminalOutputPump _outputPump;
 
   @override
   void initState() {
@@ -51,6 +53,19 @@ class TerminalSurfaceState extends State<TerminalSurface> {
     terminal = widget.terminal ?? Terminal(maxLines: 5000);
     terminalController = TerminalController();
     focusNode = FocusNode(debugLabel: 'container-terminal');
+    _outputPump = TerminalOutputPump(
+      write: (data) {
+        final highlighted = _outputHighlighter.add(data);
+        if (highlighted.isNotEmpty) terminal.write(highlighted);
+      },
+      schedule: scheduleMicrotask,
+      scheduleContinuation: (callback) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) callback();
+        });
+        WidgetsBinding.instance.ensureVisualUpdate();
+      },
+    );
     terminal.onOutput = _handleTerminalOutput;
     terminal.onResize = (columns, rows, _, _) {
       widget.session.updateSize(columns, rows);
@@ -78,13 +93,11 @@ class TerminalSurfaceState extends State<TerminalSurface> {
     _outputSubscription = widget.session.output
         .cast<List<int>>()
         .transform(utf8.decoder)
-        .listen((data) {
-          final highlighted = _outputHighlighter.add(data);
-          if (highlighted.isNotEmpty) terminal.write(highlighted);
-        });
+        .listen(_outputPump.add);
   }
 
   void clear() {
+    _outputPump.clear();
     _outputHighlighter.reset();
     terminal.buffer.clear();
     terminal.notifyListeners();
@@ -160,6 +173,7 @@ class TerminalSurfaceState extends State<TerminalSurface> {
   @override
   void dispose() {
     _outputSubscription?.cancel();
+    _outputPump.dispose();
     terminal.onOutput = null;
     terminal.onResize = null;
     terminalController.dispose();
