@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:d1vai_app/controllers/terminal_session_controller.dart';
+import 'package:d1vai_app/l10n/app_localizations.dart';
 import 'package:d1vai_app/models/shell_session.dart';
 import 'package:d1vai_app/providers/organization_provider.dart';
 import 'package:d1vai_app/providers/project_provider.dart';
@@ -12,6 +13,7 @@ import 'package:d1vai_app/services/workspace_service.dart';
 import 'package:d1vai_app/widgets/terminal/terminal_surface.dart';
 import 'package:d1vai_app/widgets/terminal/terminal_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -258,6 +260,50 @@ void main() {
       <int>[3],
       <int>[99],
     ]);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    session.dispose();
+  });
+
+  testWidgets('localizes Arabic chrome while terminal output stays LTR', (
+    tester,
+  ) async {
+    final session = TerminalSessionController(
+      workspace: _FakeWorkspace(),
+      api: _FakeGateway(),
+      transportFactory: _FakeTransport.new,
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('ar'),
+        supportedLocales: const <Locale>[Locale('ar')],
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: Scaffold(
+          body: TerminalSurface(
+            session: session,
+            targetKey: 'personal:workspace',
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('الطرفية مغلقة'), findsOneWidget);
+    final directions = tester
+        .widgetList<Directionality>(
+          find.descendant(
+            of: find.byType(TerminalSurface),
+            matching: find.byType(Directionality),
+          ),
+        )
+        .map((widget) => widget.textDirection);
+    expect(directions, contains(TextDirection.ltr));
+    expect(AppLocalizations(const Locale('ja')).translate('terminal'), 'ターミナル');
 
     await tester.pumpWidget(const SizedBox.shrink());
     session.dispose();
