@@ -269,6 +269,45 @@ Future<void> _emitMarker(
   );
 }
 
+Future<void> _cleanupHistoryMarkers(
+  WidgetTester tester, {
+  required String token,
+  required String projectId,
+  required String historyPattern,
+  int? organizationId,
+}) async {
+  if (!RegExp(r'^[A-Z0-9_()|]+$').hasMatch(historyPattern)) {
+    throw ArgumentError.value(historyPattern, 'historyPattern');
+  }
+
+  await _configureIdentity(token, organizationId: organizationId);
+  final harness = _ProductionTerminalHarness(tester, projectId: projectId);
+  try {
+    await harness.mount();
+    if (organizationId == null) {
+      await harness.openFromUi();
+    } else {
+      await harness.openOrganization(organizationId);
+    }
+    final done =
+        'D1V_FLUTTER_TEARDOWN_${DateTime.now().microsecondsSinceEpoch}';
+    _typeCommand(
+      harness.surface,
+      " for n in \$(history | awk '/$historyPattern/ {print \$1}' "
+      '| sort -rn); do history -d "\$n"; done; history -w; '
+      "printf '${_octalUtf8('$done\n')}'",
+    );
+    await _waitForText(
+      harness,
+      (text) => text.contains(done),
+      description: 'history teardown',
+    );
+  } finally {
+    await harness.dispose();
+    await _clearIdentity();
+  }
+}
+
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
@@ -277,8 +316,21 @@ void main() {
     (tester) async {
       final apiUri = Uri.parse(_apiBaseUrl);
       expect(apiUri.scheme, 'https');
-      await _configureIdentity(_primaryToken);
       addTearDown(_clearIdentity);
+      final runId = DateTime.now().microsecondsSinceEpoch.toString();
+      final historySuffix = runId.substring(runId.length - 6);
+      final historyPattern = 'D1V_FLUTTER_(RIGHT|END|CTRL_R)_$historySuffix';
+      var historyCleaned = false;
+      addTearDown(() async {
+        if (historyCleaned) return;
+        await _cleanupHistoryMarkers(
+          tester,
+          token: _primaryToken,
+          projectId: _projectId.trim(),
+          historyPattern: historyPattern,
+        );
+      });
+      await _configureIdentity(_primaryToken);
 
       final harness = _ProductionTerminalHarness(
         tester,
@@ -301,7 +353,6 @@ void main() {
         description: 'server-resolved project directory',
       );
 
-      final runId = DateTime.now().microsecondsSinceEpoch.toString();
       final unicodeMarker = 'D1V_FLUTTER_中文_$runId';
       await _emitMarker(harness, unicodeMarker);
 
@@ -406,7 +457,6 @@ void main() {
       expect(harness.text, contains('D1V_NO_DOCKER_SOCKET'));
       expect(harness.text, contains('D1V_NO_HOST_MOUNT'));
 
-      final historySuffix = runId.substring(runId.length - 6);
       final rightCommand = 'echo D1V_FLUTTER_RIGHT_$historySuffix';
       final endCommand = 'echo D1V_FLUTTER_END_$historySuffix';
       final reverseCommand = 'echo D1V_FLUTTER_CTRL_R_$historySuffix';
@@ -471,10 +521,11 @@ void main() {
 
       _typeCommand(
         harness.surface,
-        " for n in \$(history | awk '/D1V_FLUTTER_(RIGHT|END|CTRL_R)_/ "
+        " for n in \$(history | awk '/$historyPattern/ "
         "{print \$1}' | sort -rn); do history -d \"\$n\"; done; history -w",
       );
       await _emitMarker(harness, 'D1V_FLUTTER_PRIMARY_DONE_$runId');
+      historyCleaned = true;
       expect(tester.takeException(), isNull);
     },
     skip: !_hasPrimary,
@@ -488,9 +539,21 @@ void main() {
       final runId = DateTime.now().microsecondsSinceEpoch.toString();
       final privateCommand =
           'echo D1V_FLUTTER_PRIVATE_${runId.substring(runId.length - 8)}';
+      final historyPattern = privateCommand.substring('echo '.length);
+      var historyCleaned = false;
 
-      await _configureIdentity(_primaryToken, organizationId: organizationId);
       addTearDown(_clearIdentity);
+      addTearDown(() async {
+        if (historyCleaned) return;
+        await _cleanupHistoryMarkers(
+          tester,
+          token: _primaryToken,
+          projectId: _projectId.trim(),
+          historyPattern: historyPattern,
+          organizationId: organizationId,
+        );
+      });
+      await _configureIdentity(_primaryToken, organizationId: organizationId);
       final primary = _ProductionTerminalHarness(
         tester,
         projectId: _projectId.trim(),
@@ -550,10 +613,11 @@ void main() {
       await cleanup.openOrganization(organizationId);
       _typeCommand(
         cleanup.surface,
-        " for n in \$(history | awk '/D1V_FLUTTER_PRIVATE_/ {print \$1}' "
+        " for n in \$(history | awk '/$historyPattern/ {print \$1}' "
         "| sort -rn); do history -d \"\$n\"; done; history -w",
       );
       await _emitMarker(cleanup, 'D1V_FLUTTER_PRIVATE_CLEAN_$runId');
+      historyCleaned = true;
       await cleanup.dispose();
       expect(cleanup.gateway.closedSessionIds, hasLength(1));
       expect(tester.takeException(), isNull);
