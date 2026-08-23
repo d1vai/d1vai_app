@@ -97,6 +97,7 @@ jobs:
         shell: bash
         run: |
           KEYCHAIN_PASSWORD="$(openssl rand -hex 16)"
+          echo "::add-mask::${KEYCHAIN_PASSWORD}"
           CERT_PATH="${RUNNER_TEMP}/developer-id.p12"
           KEYCHAIN_PATH="${RUNNER_TEMP}/build.keychain-db"
 
