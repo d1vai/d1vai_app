@@ -211,7 +211,11 @@ void main() {
       expect(transport.signals, ['SIGINT']);
       expect(transport.resizes, [(90, 28)]);
 
-      await controller.shutdown();
+      final shutdown = controller.shutdown(
+        minimumClosingDuration: const Duration(milliseconds: 10),
+      );
+      expect(controller.phase, TerminalSessionPhase.closing);
+      await shutdown;
       expect(controller.phase, TerminalSessionPhase.idle);
       expect(transport.closed, isTrue);
       expect(gateway.closed, ['sh_1']);

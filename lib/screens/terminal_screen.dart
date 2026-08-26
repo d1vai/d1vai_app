@@ -150,6 +150,7 @@ class _TerminalScreenState extends State<TerminalScreen>
     TerminalSessionPhase.creating ||
     TerminalSessionPhase.connecting ||
     TerminalSessionPhase.ready ||
+    TerminalSessionPhase.closing ||
     TerminalSessionPhase.reconnecting => true,
     _ => false,
   };
@@ -188,7 +189,9 @@ class _TerminalScreenState extends State<TerminalScreen>
 
   Future<void> _close() async {
     if (_oneShotCtrl) setState(() => _oneShotCtrl = false);
-    await _session.shutdown();
+    await _session.shutdown(
+      minimumClosingDuration: TerminalSurfaceState.closeTransitionDuration,
+    );
     _surfaceKey.currentState?.clear();
   }
 
@@ -385,6 +388,7 @@ class _TerminalToolbar extends StatelessWidget {
       TerminalSessionPhase.creating ||
       TerminalSessionPhase.connecting ||
       TerminalSessionPhase.ready ||
+      TerminalSessionPhase.closing ||
       TerminalSessionPhase.reconnecting => true,
       _ => false,
     };
@@ -412,7 +416,8 @@ class _TerminalToolbar extends StatelessWidget {
             tooltip: running
                 ? context.tr('terminal_action_close', 'Close terminal')
                 : context.tr('terminal_action_open', 'Open terminal'),
-            onPressed: scopeLoading
+            onPressed:
+                scopeLoading || session.phase == TerminalSessionPhase.closing
                 ? null
                 : running
                 ? onClose
@@ -450,6 +455,7 @@ class _TerminalStatusChip extends StatelessWidget {
       TerminalSessionPhase.waking ||
       TerminalSessionPhase.creating ||
       TerminalSessionPhase.connecting ||
+      TerminalSessionPhase.closing ||
       TerminalSessionPhase.reconnecting => true,
       _ => false,
     };
@@ -525,6 +531,10 @@ class _TerminalStatusChip extends StatelessWidget {
         TerminalSessionPhase.reconnecting => context.tr(
           'terminal_status_reconnecting',
           'Reconnecting',
+        ),
+        TerminalSessionPhase.closing => context.tr(
+          'terminal_status_closing',
+          'Closing terminal',
         ),
         TerminalSessionPhase.exited => context.tr(
           'terminal_status_exited',

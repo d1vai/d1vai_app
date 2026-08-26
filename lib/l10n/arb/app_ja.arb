@@ -1574,6 +1574,7 @@
   "terminal_key_up": "前のコマンド",
   "terminal_status_capacity": "ターミナルセッションの上限に達しました",
   "terminal_status_checking": "ワークスペースを確認中",
+  "terminal_status_closing": "ターミナルを終了中",
   "terminal_status_connecting": "接続中",
   "terminal_status_creating": "ターミナルセッションを作成中",
   "terminal_status_denied": "ターミナルへのアクセスが拒否されました",

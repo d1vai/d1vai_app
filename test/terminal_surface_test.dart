@@ -284,6 +284,57 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('reverses the gate and keeps the gear moving while closing', (
+    tester,
+  ) async {
+    var phase = TerminalSessionPhase.ready;
+    late StateSetter setHostState;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(disableAnimations: false),
+          child: Scaffold(
+            body: StatefulBuilder(
+              builder: (context, setState) {
+                setHostState = setState;
+                return Stack(children: [TerminalStatusOverlay(phase: phase)]);
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    setHostState(() => phase = TerminalSessionPhase.closing);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(find.byKey(const ValueKey('terminal-boot-gate')), findsOneWidget);
+    expect(find.text('Closing terminal'), findsOneWidget);
+    final firstRotation = tester
+        .widget<Transform>(find.byKey(const ValueKey('terminal-gate-gear')))
+        .transform
+        .entry(0, 0);
+
+    await tester.pump(const Duration(milliseconds: 200));
+    final secondRotation = tester
+        .widget<Transform>(find.byKey(const ValueKey('terminal-gate-gear')))
+        .transform
+        .entry(0, 0);
+    expect(secondRotation, isNot(closeTo(firstRotation, 0.001)));
+
+    setHostState(() => phase = TerminalSessionPhase.idle);
+    await tester.pump();
+    expect(find.byKey(const ValueKey('terminal-boot-gate')), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 721));
+    await tester.pump();
+    expect(find.byKey(const ValueKey('terminal-boot-gate')), findsNothing);
+    expect(find.text('Connect to your workspace'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('resets the terminal cursor before a new session', (
     tester,
   ) async {

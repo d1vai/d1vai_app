@@ -1574,6 +1574,7 @@
   "terminal_key_up": "上一個命令",
   "terminal_status_capacity": "終端機工作階段已達上限",
   "terminal_status_checking": "正在檢查工作區",
+  "terminal_status_closing": "正在關閉終端機",
   "terminal_status_connecting": "正在連線",
   "terminal_status_creating": "正在建立終端機工作階段",
   "terminal_status_denied": "沒有終端機存取權限",

@@ -1574,6 +1574,7 @@
   "terminal_key_up": "Commande précédente",
   "terminal_status_capacity": "Limite de sessions atteinte",
   "terminal_status_checking": "Vérification de l’espace de travail",
+  "terminal_status_closing": "Fermeture du terminal",
   "terminal_status_connecting": "Connexion",
   "terminal_status_creating": "Création de la session terminal",
   "terminal_status_denied": "Accès au terminal refusé",

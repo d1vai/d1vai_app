@@ -1574,6 +1574,7 @@
   "terminal_key_up": "Предыдущая команда",
   "terminal_status_capacity": "Достигнут лимит сеансов терминала",
   "terminal_status_checking": "Проверка рабочего пространства",
+  "terminal_status_closing": "Закрытие терминала",
   "terminal_status_connecting": "Подключение",
   "terminal_status_creating": "Создание сеанса терминала",
   "terminal_status_denied": "Доступ к терминалу запрещён",

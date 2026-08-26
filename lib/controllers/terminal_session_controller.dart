@@ -15,6 +15,7 @@ enum TerminalSessionPhase {
   creating,
   connecting,
   ready,
+  closing,
   reconnecting,
   exited,
   denied,
@@ -240,13 +241,26 @@ class TerminalSessionController extends ChangeNotifier {
     });
   }
 
-  Future<void> shutdown() async {
+  Future<void> shutdown({
+    Duration minimumClosingDuration = Duration.zero,
+  }) async {
     if (_disposed) return;
+    if (_phase != TerminalSessionPhase.idle) {
+      _setPhase(TerminalSessionPhase.closing);
+    }
     ++_generation;
     _resizeTimer?.cancel();
     _resizeTimer = null;
     _suspended = false;
-    await _closeCurrent(deleteSession: true);
+    final close = _closeCurrent(deleteSession: true);
+    if (minimumClosingDuration > Duration.zero) {
+      await Future.wait<void>([
+        close,
+        Future<void>.delayed(minimumClosingDuration),
+      ]);
+    } else {
+      await close;
+    }
     _setPhase(TerminalSessionPhase.idle);
   }
 

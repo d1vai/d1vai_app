@@ -37,6 +37,8 @@ class TerminalSurface extends StatefulWidget {
 }
 
 class TerminalSurfaceState extends State<TerminalSurface> {
+  static const closeTransitionDuration = Duration(milliseconds: 1120);
+
   late final Terminal terminal;
   late final TerminalController terminalController;
   late final FocusNode focusNode;

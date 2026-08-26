@@ -1574,6 +1574,7 @@
   "terminal_key_up": "上一条命令",
   "terminal_status_capacity": "终端会话数已达上限",
   "terminal_status_checking": "正在检查工作区",
+  "terminal_status_closing": "正在关闭终端",
   "terminal_status_connecting": "正在连接",
   "terminal_status_creating": "正在创建终端会话",
   "terminal_status_denied": "没有终端访问权限",

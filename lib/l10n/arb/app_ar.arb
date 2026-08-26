@@ -1574,6 +1574,7 @@
   "terminal_key_up": "الأمر السابق",
   "terminal_status_capacity": "تم بلوغ حد جلسات الطرفية",
   "terminal_status_checking": "جارٍ فحص مساحة العمل",
+  "terminal_status_closing": "جارٍ إغلاق الطرفية",
   "terminal_status_connecting": "جارٍ الاتصال",
   "terminal_status_creating": "جارٍ إنشاء جلسة الطرفية",
   "terminal_status_denied": "تم رفض الوصول إلى الطرفية",

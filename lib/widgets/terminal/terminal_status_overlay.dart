@@ -37,6 +37,8 @@ class _TerminalStatusOverlayState extends State<TerminalStatusOverlay>
   late final AnimationController _openingController;
   Timer? _readyTimer;
   bool _showBootGate = false;
+  bool _showClosingGate = false;
+  bool _closeAnimationComplete = false;
   bool _reduceMotion = false;
   TerminalSessionPhase _displayPhase = TerminalSessionPhase.creating;
 
@@ -74,6 +76,16 @@ class _TerminalStatusOverlayState extends State<TerminalStatusOverlay>
     super.didUpdateWidget(oldWidget);
     final wasPending = _isPending(oldWidget.phase);
     final isPending = _isPending(widget.phase);
+
+    if (widget.phase == TerminalSessionPhase.closing) {
+      if (oldWidget.phase != TerminalSessionPhase.closing) _beginClosing();
+      return;
+    }
+
+    if (oldWidget.phase == TerminalSessionPhase.closing) {
+      if (_closeAnimationComplete) _finishClosing();
+      return;
+    }
 
     if (isPending) {
       _displayPhase = widget.phase;
@@ -153,6 +165,25 @@ class _TerminalStatusOverlayState extends State<TerminalStatusOverlay>
     _playOpening();
   }
 
+  void _beginClosing() {
+    _readyTimer?.cancel();
+    _readyTimer = null;
+    _showBootGate = false;
+    _showClosingGate = true;
+    _closeAnimationComplete = false;
+    _displayPhase = TerminalSessionPhase.closing;
+    _openingController.stop();
+    _openingController.duration = _reduceMotion
+        ? _reducedOpeningDuration
+        : _openingDuration;
+    _openingController.value = 1;
+    _startupController.stop();
+    _startupController.value = 0;
+    if (!_reduceMotion) _startupController.repeat();
+    HapticFeedback.mediumImpact();
+    _playClosing();
+  }
+
   Future<void> _playOpening() async {
     try {
       await _openingController.forward(from: 0).orCancel;
@@ -164,6 +195,25 @@ class _TerminalStatusOverlayState extends State<TerminalStatusOverlay>
     }
   }
 
+  Future<void> _playClosing() async {
+    try {
+      await _openingController.reverse(from: 1).orCancel;
+    } on TickerCanceled {
+      return;
+    }
+    if (!mounted) return;
+    _closeAnimationComplete = true;
+    if (widget.phase != TerminalSessionPhase.closing) {
+      setState(_finishClosing);
+    }
+  }
+
+  void _finishClosing() {
+    _startupController.stop();
+    _showClosingGate = false;
+    _closeAnimationComplete = false;
+  }
+
   void _resetMechanicalStage() {
     _readyTimer?.cancel();
     _readyTimer = null;
@@ -172,10 +222,20 @@ class _TerminalStatusOverlayState extends State<TerminalStatusOverlay>
     _openingController.stop();
     _openingController.value = 0;
     _showBootGate = false;
+    _showClosingGate = false;
+    _closeAnimationComplete = false;
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_showClosingGate) {
+      return _TerminalMechanicalGate(
+        phase: TerminalSessionPhase.closing,
+        startup: _startupController,
+        opening: _openingController,
+        reduceMotion: _reduceMotion,
+      );
+    }
     if (widget.phase == TerminalSessionPhase.ready) {
       return _showBootGate
           ? _TerminalMechanicalGate(
@@ -302,6 +362,10 @@ class _TerminalStatusOverlayState extends State<TerminalStatusOverlay>
       'terminal_status_reconnecting',
       'Reconnecting',
     ),
+    TerminalSessionPhase.closing => context.tr(
+      'terminal_status_closing',
+      'Closing terminal',
+    ),
     TerminalSessionPhase.exited =>
       widget.exitCode == null
           ? context.tr('terminal_status_exited', 'Process exited')
@@ -346,6 +410,7 @@ class _TerminalMechanicalGate extends StatelessWidget {
             animation: Listenable.merge([startup, opening]),
             builder: (context, _) {
               final raw = opening.value;
+              final closing = phase == TerminalSessionPhase.closing;
               final elapsedMs =
                   startup.lastElapsedDuration?.inMilliseconds ?? 0;
               final ingress =
@@ -385,7 +450,9 @@ class _TerminalMechanicalGate extends StatelessWidget {
               final panelFade = reduceMotion
                   ? 1 - Curves.easeOut.transform(raw)
                   : 1 - Curves.easeOut.transform(_interval(raw, 0.68, 0.94));
-              final latchFade = reduceMotion
+              final latchFade = closing
+                  ? panelFade
+                  : reduceMotion
                   ? panelFade
                   : 1 - Curves.easeOut.transform(_interval(raw, 0.09, 0.30));
               final seamFlash = raw == 0
@@ -453,6 +520,7 @@ class _TerminalMechanicalGate extends StatelessWidget {
                           loop: loop,
                           pulse: seamFlash.clamp(0.0, 1.0),
                           opening: raw,
+                          closing: closing,
                         ),
                       ),
                     ),
@@ -486,8 +554,12 @@ class _TerminalMechanicalGate extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.only(top: 104),
                       child: Opacity(
-                        opacity: (ingress * (1 - _interval(raw, 0.04, 0.22)))
-                            .clamp(0.0, 1.0),
+                        opacity:
+                            (ingress *
+                                    (closing
+                                        ? panelFade
+                                        : 1 - _interval(raw, 0.04, 0.22)))
+                                .clamp(0.0, 1.0),
                         child: _TerminalStartupLabel(phase: phase),
                       ),
                     ),
@@ -507,24 +579,28 @@ class _TerminalGearCore extends StatelessWidget {
   final double loop;
   final double pulse;
   final double opening;
+  final bool closing;
 
   const _TerminalGearCore({
     required this.scheme,
     required this.loop,
     required this.pulse,
     required this.opening,
+    required this.closing,
   });
 
   @override
   Widget build(BuildContext context) {
-    final rotationWeight =
-        1 - Curves.easeOut.transform(_interval(opening, 0, 0.18));
+    final rotationWeight = closing
+        ? 1.0
+        : 1 - Curves.easeOut.transform(_interval(opening, 0, 0.18));
     return SizedBox.square(
       dimension: 60,
       child: Stack(
         alignment: Alignment.center,
         children: [
           Transform.rotate(
+            key: const ValueKey('terminal-gate-gear'),
             angle: loop * math.pi * 2 * rotationWeight,
             child: Icon(
               Icons.settings_rounded,
@@ -602,6 +678,10 @@ class _TerminalStartupLabel extends StatelessWidget {
       TerminalSessionPhase.reconnecting => context.tr(
         'terminal_status_reconnecting',
         'Reconnecting',
+      ),
+      TerminalSessionPhase.closing => context.tr(
+        'terminal_status_closing',
+        'Closing terminal',
       ),
       _ => context.tr('terminal_status_ready', 'Ready'),
     };
