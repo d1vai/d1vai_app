@@ -187,6 +187,12 @@ void main() {
     await tester.pump();
     expect(find.byKey(const ValueKey('terminal-boot-gate')), findsOneWidget);
 
+    // Cwd and other ready-session metadata can rebuild the surface immediately
+    // after the ready control message arrives.
+    setHostState(() {});
+    await tester.pump();
+    expect(find.byKey(const ValueKey('terminal-boot-gate')), findsOneWidget);
+
     await tester.pump(const Duration(milliseconds: 449));
     expect(find.byKey(const ValueKey('terminal-boot-gate')), findsOneWidget);
 
@@ -237,6 +243,81 @@ void main() {
 
     await tester.pump(const Duration(milliseconds: 900));
     expect(find.byKey(const ValueKey('terminal-boot-gate')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('opens the gate when fast startup skips pending frames', (
+    tester,
+  ) async {
+    var phase = TerminalSessionPhase.idle;
+    late StateSetter setHostState;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(disableAnimations: false),
+          child: Scaffold(
+            body: StatefulBuilder(
+              builder: (context, setState) {
+                setHostState = setState;
+                return Stack(children: [TerminalStatusOverlay(phase: phase)]);
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    setHostState(() => phase = TerminalSessionPhase.ready);
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('terminal-boot-gate')), findsOneWidget);
+    expect(find.text('Connecting'), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 649));
+    expect(find.byKey(const ValueKey('terminal-boot-gate')), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 1));
+    await tester.pump(const Duration(milliseconds: 1121));
+    await tester.pump();
+    expect(find.byKey(const ValueKey('terminal-boot-gate')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('resets the terminal cursor before a new session', (
+    tester,
+  ) async {
+    final session = TerminalSessionController(
+      workspace: _FakeWorkspace(),
+      api: _FakeGateway(),
+      transportFactory: _FakeTransport.new,
+    );
+    final terminal = Terminal(maxLines: 5000);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: TerminalSurface(
+            session: session,
+            targetKey: 'cursor-reset',
+            terminal: terminal,
+          ),
+        ),
+      ),
+    );
+
+    terminal.setCursor(0, terminal.viewHeight ~/ 2);
+    expect(terminal.buffer.cursorY, greaterThan(0));
+
+    tester.state<TerminalSurfaceState>(find.byType(TerminalSurface)).clear();
+    terminal.write('first command');
+
+    expect(terminal.buffer.cursorY, 0);
+    expect(terminal.buffer.lines[0].toString(), startsWith('first command'));
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+    session.dispose();
     expect(tester.takeException(), isNull);
   });
 

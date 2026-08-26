@@ -99,7 +99,13 @@ class TerminalSurfaceState extends State<TerminalSurface> {
   void clear() {
     _outputPump.clear();
     _outputHighlighter.reset();
+    terminal.useMainBuffer();
+    terminal.setOriginMode(false);
+    terminal.buffer.resetVerticalMargins();
     terminal.buffer.clear();
+    terminal.buffer.setCursor(0, 0);
+    terminal.clearAltBuffer();
+    terminalController.clearSelection();
     terminal.notifyListeners();
   }
 
@@ -203,7 +209,7 @@ class TerminalSurfaceState extends State<TerminalSurface> {
                   terminal,
                   controller: terminalController,
                   focusNode: focusNode,
-                  autofocus: true,
+                  autofocus: false,
                   theme: terminalTheme,
                   keyboardAppearance: brightness,
                   deleteDetection: true,

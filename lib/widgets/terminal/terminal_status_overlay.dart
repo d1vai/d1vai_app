@@ -81,9 +81,23 @@ class _TerminalStatusOverlayState extends State<TerminalStatusOverlay>
       return;
     }
 
-    if (wasPending && widget.phase == TerminalSessionPhase.ready) {
+    if (oldWidget.phase != TerminalSessionPhase.ready &&
+        widget.phase == TerminalSessionPhase.ready) {
+      // A fast transport can move idle -> creating -> connecting -> ready
+      // between frames. Build the startup gate here if pending was never
+      // rendered so success still has a visible mechanical transition.
+      if (!wasPending) {
+        _beginStartup(TerminalSessionPhase.connecting);
+      }
       _showBootGate = true;
       _scheduleOpening();
+      return;
+    }
+
+    // Ready sessions can notify again for cwd/output metadata while the gate
+    // is opening. Those rebuilds must not reset the in-flight animation.
+    if (oldWidget.phase == TerminalSessionPhase.ready &&
+        widget.phase == TerminalSessionPhase.ready) {
       return;
     }
 
