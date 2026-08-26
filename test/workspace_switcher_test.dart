@@ -40,6 +40,7 @@ Future<void> _pumpSwitcher(
   WidgetTester tester, {
   required Size size,
   required bool expanded,
+  bool avatarOnly = false,
   Locale locale = const Locale('en'),
   ThemeMode themeMode = ThemeMode.light,
 }) async {
@@ -75,7 +76,10 @@ Future<void> _pumpSwitcher(
             alignment: Alignment.topLeft,
             child: SizedBox(
               width: expanded ? 240 : 220,
-              child: WorkspaceSwitcher(expanded: expanded),
+              child: WorkspaceSwitcher(
+                expanded: expanded,
+                avatarOnly: avatarOnly,
+              ),
             ),
           ),
         ),
@@ -111,6 +115,24 @@ void main() {
       Theme.of(tester.element(find.byType(WorkspaceSwitcher))).brightness,
       Brightness.dark,
     );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('avatar-only workspace switcher keeps selection interaction', (
+    tester,
+  ) async {
+    await _pumpSwitcher(
+      tester,
+      size: const Size(390, 844),
+      expanded: false,
+      avatarOnly: true,
+    );
+
+    expect(find.text('Acme Design Studio'), findsNothing);
+    expect(find.byIcon(Icons.business_rounded), findsOneWidget);
+    await tester.tap(find.byType(WorkspaceSwitcher));
+    await tester.pumpAndSettle();
+    expect(find.text('Workspaces'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

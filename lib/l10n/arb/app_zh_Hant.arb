@@ -1583,6 +1583,7 @@
   "terminal_status_idle": "連線至工作區",
   "terminal_idle_description": "在目前選取的工作區中啟動命令列工作階段。",
   "terminal_status_ready": "就緒",
+  "terminal_status_online": "在線",
   "terminal_status_reconnecting": "正在重新連線",
   "terminal_status_waking": "正在啟動工作區",
   "terminal_target_no_projects": "沒有相符的專案",

@@ -547,6 +547,14 @@ void main() {
     final transport = transports.single;
     transport.ready();
     await tester.pump();
+    expect(
+      find.byKey(const ValueKey('terminal-online-indicator')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('terminal-connection-status')).hitTestable(),
+      findsOneWidget,
+    );
     await tester.tap(find.byKey(const ValueKey('terminal-key-ctrl')));
     await tester.pump();
     final surface = tester.state<TerminalSurfaceState>(

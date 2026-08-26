@@ -1583,6 +1583,7 @@
   "terminal_status_idle": "Conéctate al espacio de trabajo",
   "terminal_idle_description": "Inicia una sesión de línea de comandos en el espacio de trabajo seleccionado.",
   "terminal_status_ready": "Listo",
+  "terminal_status_online": "En línea",
   "terminal_status_reconnecting": "Reconectando",
   "terminal_status_waking": "Iniciando espacio de trabajo",
   "terminal_target_no_projects": "No hay proyectos coincidentes",

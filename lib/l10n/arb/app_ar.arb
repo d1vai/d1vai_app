@@ -1583,6 +1583,7 @@
   "terminal_status_idle": "اتصل بمساحة العمل",
   "terminal_idle_description": "ابدأ جلسة سطر أوامر في مساحة العمل المحددة.",
   "terminal_status_ready": "جاهز",
+  "terminal_status_online": "متصل",
   "terminal_status_reconnecting": "جارٍ إعادة الاتصال",
   "terminal_status_waking": "جارٍ تشغيل مساحة العمل",
   "terminal_target_no_projects": "لا توجد مشاريع مطابقة",

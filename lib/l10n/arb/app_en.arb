@@ -1583,6 +1583,7 @@
   "terminal_status_idle": "Connect to your workspace",
   "terminal_idle_description": "Start a command-line session in the selected workspace.",
   "terminal_status_ready": "Ready",
+  "terminal_status_online": "Online",
   "terminal_status_reconnecting": "Reconnecting",
   "terminal_status_waking": "Starting workspace",
   "terminal_target_no_projects": "No matching projects",

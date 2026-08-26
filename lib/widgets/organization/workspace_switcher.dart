@@ -16,9 +16,15 @@ String _workspaceText(BuildContext context, String key, String fallback) {
 
 class WorkspaceSwitcher extends StatelessWidget {
   final bool expanded;
+  final bool avatarOnly;
   final VoidCallback? onChanged;
 
-  const WorkspaceSwitcher({super.key, this.expanded = false, this.onChanged});
+  const WorkspaceSwitcher({
+    super.key,
+    this.expanded = false,
+    this.avatarOnly = false,
+    this.onChanged,
+  });
 
   Future<void> _open(BuildContext context) async {
     final provider = context.read<OrganizationProvider>();
@@ -36,7 +42,7 @@ class WorkspaceSwitcher extends StatelessWidget {
     final organization = provider.activeOrganization;
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    return Semantics(
+    final switcher = Semantics(
       button: true,
       label: _workspaceText(context, 'organization_switch', 'Switch workspace'),
       child: InkWell(
@@ -44,7 +50,9 @@ class WorkspaceSwitcher extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         child: Container(
           constraints: const BoxConstraints(minHeight: 44),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          padding: avatarOnly
+              ? const EdgeInsets.all(7)
+              : const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
           decoration: BoxDecoration(
             color: scheme.surfaceContainerHigh.withValues(alpha: 0.62),
             borderRadius: BorderRadius.circular(8),
@@ -53,7 +61,9 @@ class WorkspaceSwitcher extends StatelessWidget {
             ),
           ),
           child: Row(
-            mainAxisSize: expanded ? MainAxisSize.max : MainAxisSize.min,
+            mainAxisSize: avatarOnly || !expanded
+                ? MainAxisSize.min
+                : MainAxisSize.max,
             children: [
               _WorkspaceAvatar(
                 name: provider.workspaceName,
@@ -64,59 +74,64 @@ class WorkspaceSwitcher extends StatelessWidget {
                 organization: organization != null,
                 size: 28,
               ),
-              const SizedBox(width: 9),
-              Flexible(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      provider.workspaceName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    if (expanded)
+              if (!avatarOnly) ...[
+                const SizedBox(width: 9),
+                Flexible(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        organization == null
-                            ? _workspaceText(
-                                context,
-                                'organization_personal',
-                                'Personal workspace',
-                              )
-                            : organization.role == 'owner'
-                            ? _workspaceText(
-                                context,
-                                'organization_owner',
-                                'Owner',
-                              )
-                            : _workspaceText(
-                                context,
-                                'organization_member',
-                                'Member',
-                              ),
+                        provider.workspaceName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
-                  ],
+                      if (expanded)
+                        Text(
+                          organization == null
+                              ? _workspaceText(
+                                  context,
+                                  'organization_personal',
+                                  'Personal workspace',
+                                )
+                              : organization.role == 'owner'
+                              ? _workspaceText(
+                                  context,
+                                  'organization_owner',
+                                  'Owner',
+                                )
+                              : _workspaceText(
+                                  context,
+                                  'organization_member',
+                                  'Member',
+                                ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 4),
-              Icon(
-                Icons.unfold_more_rounded,
-                size: 18,
-                color: scheme.onSurfaceVariant,
-              ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.unfold_more_rounded,
+                  size: 18,
+                  color: scheme.onSurfaceVariant,
+                ),
+              ],
             ],
           ),
         ),
       ),
     );
+    return avatarOnly
+        ? Tooltip(message: provider.workspaceName, child: switcher)
+        : switcher;
   }
 }
 

@@ -1583,6 +1583,7 @@
   "terminal_status_idle": "Подключиться к рабочей области",
   "terminal_idle_description": "Запустите сеанс командной строки в выбранной рабочей области.",
   "terminal_status_ready": "Готово",
+  "terminal_status_online": "В сети",
   "terminal_status_reconnecting": "Повторное подключение",
   "terminal_status_waking": "Запуск рабочего пространства",
   "terminal_target_no_projects": "Нет подходящих проектов",

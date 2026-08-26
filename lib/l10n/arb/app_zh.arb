@@ -1583,6 +1583,7 @@
   "terminal_status_idle": "连接到工作区",
   "terminal_idle_description": "在当前选择的工作区中启动命令行会话。",
   "terminal_status_ready": "就绪",
+  "terminal_status_online": "在线",
   "terminal_status_reconnecting": "正在重新连接",
   "terminal_status_waking": "正在启动工作区",
   "terminal_target_no_projects": "没有匹配的项目",

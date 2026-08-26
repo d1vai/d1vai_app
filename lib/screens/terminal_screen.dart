@@ -395,9 +395,9 @@ class _TerminalToolbar extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 620;
-        final workspace = SizedBox(
-          width: compact ? 112 : 220,
-          child: const WorkspaceSwitcher(),
+        const workspace = SizedBox(
+          width: 44,
+          child: WorkspaceSwitcher(avatarOnly: true),
         );
         final project = TerminalProjectPicker(
           projects: projects,
@@ -459,40 +459,41 @@ class _TerminalStatusChip extends StatelessWidget {
       TerminalSessionPhase.reconnecting => true,
       _ => false,
     };
-    final scheme = Theme.of(context).colorScheme;
     return Tooltip(
       message: session.cwd ?? _phaseLabel(context, session.phase),
       child: Semantics(
         liveRegion: true,
         label: _phaseLabel(context, session.phase),
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 32, minWidth: 32),
-          padding: const EdgeInsets.symmetric(horizontal: 9),
-          decoration: BoxDecoration(
-            color: ready
-                ? scheme.primaryContainer
-                : scheme.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(8),
-          ),
+        child: SizedBox(
+          key: const ValueKey('terminal-connection-status'),
+          height: 32,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               if (pending)
-                const SizedBox.square(
-                  dimension: 14,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Theme.of(context).colorScheme.secondary,
+                  ),
                 )
+              else if (ready)
+                const _OnlinePulse()
               else
                 Icon(
-                  ready ? Icons.circle : Icons.circle_outlined,
+                  Icons.circle_outlined,
                   size: 10,
-                  color: ready ? scheme.primary : scheme.onSurfaceVariant,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               if (!compact && !pending && ready) ...[
                 const SizedBox(width: 6),
                 Text(
-                  context.tr('terminal_status_ready', 'Ready'),
-                  style: Theme.of(context).textTheme.labelMedium,
+                  context.tr('terminal_status_online', 'Online'),
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: const Color(0xFF16A34A),
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ],
@@ -553,6 +554,106 @@ class _TerminalStatusChip extends StatelessWidget {
           'Terminal connection failed',
         ),
       };
+}
+
+class _OnlinePulse extends StatefulWidget {
+  const _OnlinePulse();
+
+  @override
+  State<_OnlinePulse> createState() => _OnlinePulseState();
+}
+
+class _OnlinePulseState extends State<_OnlinePulse>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scale;
+  late final Animation<double> _opacity;
+  bool? _reduceMotion;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    );
+    final curved = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+    );
+    _scale = Tween<double>(begin: 0.72, end: 1.28).animate(curved);
+    _opacity = Tween<double>(begin: 0.48, end: 0).animate(curved);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    if (reduceMotion == _reduceMotion) return;
+    _reduceMotion = reduceMotion;
+    if (reduceMotion) {
+      _controller
+        ..stop()
+        ..value = 0;
+    } else {
+      _controller.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const online = Color(0xFF22C55E);
+    return RepaintBoundary(
+      child: SizedBox.square(
+        key: const ValueKey('terminal-online-indicator'),
+        dimension: 18,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            if (!(_reduceMotion ?? false))
+              FadeTransition(
+                opacity: _opacity,
+                child: ScaleTransition(
+                  scale: _scale,
+                  child: const DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: online,
+                      shape: BoxShape.circle,
+                    ),
+                    child: SizedBox.square(dimension: 14),
+                  ),
+                ),
+              ),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: online,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.surface,
+                  width: 2,
+                ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x5522C55E),
+                    blurRadius: 5,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: const SizedBox.square(dimension: 10),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 String? _normalizeProjectId(String? value) {

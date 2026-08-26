@@ -1583,6 +1583,7 @@
   "terminal_status_idle": "ワークスペースに接続",
   "terminal_idle_description": "選択したワークスペースでコマンドラインセッションを開始します。",
   "terminal_status_ready": "準備完了",
+  "terminal_status_online": "オンライン",
   "terminal_status_reconnecting": "再接続中",
   "terminal_status_waking": "ワークスペースを起動中",
   "terminal_target_no_projects": "一致するプロジェクトはありません",
