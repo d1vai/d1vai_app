@@ -947,8 +947,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 project: project,
                 updatedText: _formatTimeAgo(project.updatedAt),
                 onTap: () => context.push(buildProjectChatDetailRoute(project)),
-                onOpenChat: () =>
-                    context.push(buildProjectChatDetailRoute(project)),
+                onOpenChat: () => context.push('/projects/${project.id}/chat'),
                 onOpenTerminal: () {
                   final uri = Uri(
                     path: '/terminal',

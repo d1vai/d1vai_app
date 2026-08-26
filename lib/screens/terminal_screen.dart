@@ -432,7 +432,7 @@ class _TerminalToolbar extends StatelessWidget {
             workspace,
             const SizedBox(width: 6),
             Expanded(child: project),
-            const SizedBox(width: 6),
+            const SizedBox(width: 10),
             ...trailing,
           ],
         );
