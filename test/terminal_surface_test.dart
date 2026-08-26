@@ -13,6 +13,7 @@ import 'package:d1vai_app/services/terminal_transport.dart';
 import 'package:d1vai_app/services/workspace_service.dart';
 import 'package:d1vai_app/widgets/terminal/terminal_surface.dart';
 import 'package:d1vai_app/widgets/terminal/terminal_mobile_keys.dart';
+import 'package:d1vai_app/widgets/terminal/terminal_status_overlay.dart';
 import 'package:d1vai_app/widgets/terminal/terminal_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -137,6 +138,139 @@ class _FakeTransport implements TerminalTransportClient {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  testWidgets('keeps startup motion continuous before opening the gate', (
+    tester,
+  ) async {
+    var phase = TerminalSessionPhase.creating;
+    late StateSetter setHostState;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(disableAnimations: false),
+          child: Scaffold(
+            body: StatefulBuilder(
+              builder: (context, setState) {
+                setHostState = setState;
+                return Stack(
+                  children: [
+                    const Positioned.fill(
+                      child: ColoredBox(color: Colors.black),
+                    ),
+                    TerminalStatusOverlay(phase: phase),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Creating terminal session'), findsOneWidget);
+    expect(find.byKey(const ValueKey('terminal-boot-gate')), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 200));
+    if (Platform.isMacOS) {
+      await expectLater(
+        find.byKey(const ValueKey('terminal-boot-gate')),
+        matchesGoldenFile('goldens/terminal_startup_gate.png'),
+      );
+    }
+    setHostState(() => phase = TerminalSessionPhase.connecting);
+    await tester.pump();
+    expect(find.text('Connecting'), findsOneWidget);
+    expect(find.byKey(const ValueKey('terminal-boot-gate')), findsOneWidget);
+
+    setHostState(() => phase = TerminalSessionPhase.ready);
+    await tester.pump();
+    expect(find.byKey(const ValueKey('terminal-boot-gate')), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 449));
+    expect(find.byKey(const ValueKey('terminal-boot-gate')), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 1));
+    await tester.pump(const Duration(milliseconds: 430));
+    expect(find.byKey(const ValueKey('terminal-boot-gate')), findsOneWidget);
+    if (Platform.isMacOS) {
+      await expectLater(
+        find.byKey(const ValueKey('terminal-boot-gate')),
+        matchesGoldenFile('goldens/terminal_boot_gate_midpoint.png'),
+      );
+    }
+
+    await tester.pump(const Duration(milliseconds: 700));
+    await tester.pump();
+    expect(find.byKey(const ValueKey('terminal-boot-gate')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('cancels the pending gate opening when startup fails', (
+    tester,
+  ) async {
+    var phase = TerminalSessionPhase.creating;
+    late StateSetter setHostState;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(disableAnimations: false),
+          child: Scaffold(
+            body: StatefulBuilder(
+              builder: (context, setState) {
+                setHostState = setState;
+                return Stack(children: [TerminalStatusOverlay(phase: phase)]);
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pump(const Duration(milliseconds: 120));
+    setHostState(() => phase = TerminalSessionPhase.error);
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('terminal-boot-gate')), findsNothing);
+    expect(find.text('Terminal connection failed'), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 900));
+    expect(find.byKey(const ValueKey('terminal-boot-gate')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('uses a short fade when reduced motion is enabled', (
+    tester,
+  ) async {
+    var phase = TerminalSessionPhase.creating;
+    late StateSetter setHostState;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(disableAnimations: true),
+          child: Scaffold(
+            body: StatefulBuilder(
+              builder: (context, setState) {
+                setHostState = setState;
+                return Stack(children: [TerminalStatusOverlay(phase: phase)]);
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    setHostState(() => phase = TerminalSessionPhase.ready);
+    await tester.pump();
+    expect(find.byKey(const ValueKey('terminal-boot-gate')), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 180));
+    await tester.pump();
+    expect(find.byKey(const ValueKey('terminal-boot-gate')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('preserves split UTF-8 output and follows app theme in place', (
     tester,

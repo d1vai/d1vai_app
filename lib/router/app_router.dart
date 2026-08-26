@@ -85,6 +85,55 @@ Page<dynamic> _buildChatExpandPage(
   );
 }
 
+Page<dynamic> _buildProjectDetailPage(
+  BuildContext context,
+  GoRouterState state,
+  Widget child,
+) {
+  final reduceMotion = MediaQuery.disableAnimationsOf(context);
+  return CustomTransitionPage(
+    key: state.pageKey,
+    transitionDuration: reduceMotion
+        ? Duration.zero
+        : const Duration(milliseconds: 420),
+    reverseTransitionDuration: reduceMotion
+        ? Duration.zero
+        : const Duration(milliseconds: 320),
+    child: child,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      if (reduceMotion) return child;
+
+      final entrance = CurvedAnimation(
+        parent: animation,
+        curve: const Interval(0, 0.88, curve: Curves.easeOutExpo),
+        reverseCurve: Curves.easeInCubic,
+      );
+      final opacity = Tween<double>(begin: 0.32, end: 1).animate(
+        CurvedAnimation(
+          parent: animation,
+          curve: const Interval(0, 0.62, curve: Curves.easeOutCubic),
+          reverseCurve: Curves.easeInCubic,
+        ),
+      );
+
+      return FadeTransition(
+        opacity: opacity,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.018),
+            end: Offset.zero,
+          ).animate(entrance),
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.992, end: 1).animate(entrance),
+            alignment: Alignment.topCenter,
+            child: child,
+          ),
+        ),
+      );
+    },
+  );
+}
+
 class _ClearSnackBarsNavigatorObserver extends NavigatorObserver {
   void _clearSnackBars() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -403,7 +452,7 @@ GoRouter createAppRouter() {
       ),
       GoRoute(
         path: '/projects/:id',
-        pageBuilder: (context, state) => _buildPageWithTransition(
+        pageBuilder: (context, state) => _buildProjectDetailPage(
           context,
           state,
           ProjectDetailScreen(

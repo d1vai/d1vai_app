@@ -115,6 +115,43 @@ void main() {
     expect(openedProject, isFalse);
   });
 
+  testWidgets('project card compresses before activating', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 360,
+            height: 174,
+            child: ProjectCardTile(
+              project: _baseProject,
+              updatedText: '1h ago',
+              onTap: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final card = find.byKey(const ValueKey('project-card-motion-project-123'));
+    final gesture = await tester.startGesture(tester.getCenter(card));
+    await tester.pump(const Duration(milliseconds: 120));
+    await tester.pump(const Duration(milliseconds: 105));
+
+    final pressedTransform = tester.widget<Transform>(card);
+    expect(pressedTransform.transform.getTranslation().y, closeTo(1.8, 0.05));
+
+    final scaleTransform = tester.widget<Transform>(
+      find.byKey(const ValueKey('project-card-scale-project-123')),
+    );
+    expect(scaleTransform.transform.entry(0, 0), closeTo(0.976, 0.01));
+    expect(scaleTransform.transform.entry(1, 1), closeTo(0.976, 0.01));
+
+    await gesture.cancel();
+    await tester.pumpAndSettle();
+    final releasedTransform = tester.widget<Transform>(card);
+    expect(releasedTransform.transform.getTranslation().y, closeTo(0, 0.01));
+  });
+
   testWidgets('project chat action stays separate from the card action', (
     tester,
   ) async {

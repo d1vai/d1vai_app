@@ -476,7 +476,8 @@ class _D1VBottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    return Material(
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    return ColoredBox(
       color: colorScheme.surface.withValues(alpha: 0.98),
       child: DecoratedBox(
         decoration: BoxDecoration(
@@ -495,8 +496,11 @@ class _D1VBottomNavBar extends StatelessWidget {
                 for (var index = 0; index < items.length; index++)
                   Expanded(
                     child: _D1VMobileNavItem(
+                      key: ValueKey('main-nav-item-$index'),
+                      index: index,
                       item: items[index],
                       selected: index == selectedIndex,
+                      reduceMotion: reduceMotion,
                       onTap: () => onItemSelected(index),
                     ),
                   ),
@@ -510,13 +514,18 @@ class _D1VBottomNavBar extends StatelessWidget {
 }
 
 class _D1VMobileNavItem extends StatelessWidget {
+  final int index;
   final PersistentBottomNavBarItem item;
   final bool selected;
+  final bool reduceMotion;
   final VoidCallback onTap;
 
   const _D1VMobileNavItem({
+    super.key,
+    required this.index,
     required this.item,
     required this.selected,
+    required this.reduceMotion,
     required this.onTap,
   });
 
@@ -526,46 +535,73 @@ class _D1VMobileNavItem extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final activeColor = colorScheme.onSurface;
     final inactiveColor = colorScheme.onSurfaceVariant.withValues(alpha: 0.72);
+    final icon = selected ? item.icon : (item.inactiveIcon ?? item.icon);
+    final duration = reduceMotion
+        ? Duration.zero
+        : const Duration(milliseconds: 220);
 
     return Semantics(
       button: true,
       selected: selected,
       label: item.title,
-      child: InkWell(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: onTap,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 160),
-              curve: Curves.easeOutCubic,
+            SizedBox(
               width: 38,
               height: 28,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: selected
-                    ? colorScheme.primary.withValues(alpha: 0.11)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: IconTheme(
-                data: IconThemeData(
-                  size: 21,
-                  color: selected ? activeColor : inactiveColor,
+              child: Center(
+                child: AnimatedContainer(
+                  key: ValueKey('main-nav-selection-$index'),
+                  duration: duration,
+                  curve: Curves.easeOutCubic,
+                  width: 38,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? colorScheme.primary.withValues(alpha: 0.11)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Center(
+                    child: IconTheme(
+                      key: ValueKey(
+                        'main-nav-icon-${item.title}-${selected ? 'active' : 'inactive'}',
+                      ),
+                      data: IconThemeData(
+                        size: 21,
+                        color: selected ? activeColor : inactiveColor,
+                      ),
+                      child: icon,
+                    ),
+                  ),
                 ),
-                child: item.inactiveIcon ?? item.icon,
               ),
             ),
             const SizedBox(height: 3),
-            Text(
-              item.title ?? '',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.labelSmall?.copyWith(
-                fontSize: 10.5,
-                height: 1,
-                color: selected ? activeColor : inactiveColor,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+            AnimatedDefaultTextStyle(
+              duration: duration,
+              curve: Curves.easeOutCubic,
+              style:
+                  theme.textTheme.labelSmall?.copyWith(
+                    fontSize: 10.5,
+                    height: 1,
+                    color: selected ? activeColor : inactiveColor,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  ) ??
+                  TextStyle(
+                    fontSize: 10.5,
+                    height: 1,
+                    color: selected ? activeColor : inactiveColor,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  ),
+              child: Text(
+                item.title ?? '',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

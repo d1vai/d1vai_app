@@ -548,6 +548,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           if (project != null) ...[
             Hero(
               tag: 'project-emoji-${project.id}',
+              transitionOnUserGestures: true,
+              createRectTween: (begin, end) =>
+                  MaterialRectCenterArcTween(begin: begin, end: end),
               child: Material(
                 color: Colors.transparent,
                 child: Container(

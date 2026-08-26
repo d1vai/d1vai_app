@@ -35,8 +35,8 @@ class _ProjectCardTileState extends State<ProjectCardTile>
     super.initState();
     _pressController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 90),
-      reverseDuration: const Duration(milliseconds: 140),
+      duration: const Duration(milliseconds: 105),
+      reverseDuration: const Duration(milliseconds: 240),
     );
   }
 
@@ -95,203 +95,224 @@ class _ProjectCardTileState extends State<ProjectCardTile>
     final hasProduction =
         (project.latestProdDeploymentUrl ?? '').trim().isNotEmpty ||
         (project.vercelProdDomain ?? '').trim().isNotEmpty;
-    final scale = Tween<double>(begin: 1, end: 0.988).animate(
-      CurvedAnimation(parent: _pressController, curve: Curves.easeOutCubic),
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final pressAnimation = CurvedAnimation(
+      parent: _pressController,
+      curve: Curves.easeOutExpo,
+      reverseCurve: Curves.easeOutBack,
     );
 
-    return ScaleTransition(
-      scale: scale,
-      child: Material(
-        color: colorScheme.surfaceContainerLow,
-        clipBehavior: Clip.antiAlias,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: BorderSide(
-            color: colorScheme.outlineVariant.withValues(
-              alpha: isDark ? 0.70 : 0.82,
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: pressAnimation,
+        builder: (context, child) {
+          final progress = reduceMotion ? 0.0 : pressAnimation.value;
+          return Transform.translate(
+            key: ValueKey('project-card-motion-${project.id}'),
+            offset: Offset(0, 1.8 * progress),
+            child: Transform.scale(
+              key: ValueKey('project-card-scale-${project.id}'),
+              scale: 1 - (0.024 * progress),
+              alignment: Alignment.center,
+              child: child,
+            ),
+          );
+        },
+        child: Material(
+          color: colorScheme.surfaceContainerLow,
+          clipBehavior: Clip.antiAlias,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: BorderSide(
+              color: colorScheme.outlineVariant.withValues(
+                alpha: isDark ? 0.70 : 0.82,
+              ),
             ),
           ),
-        ),
-        child: InkWell(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            widget.onTap();
-          },
-          onTapDown: (_) => _pressController.forward(),
-          onTapCancel: () => _pressController.reverse(),
-          onTapUp: (_) => _pressController.reverse(),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Hero(
-                      tag: _heroTag(project.id),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: colorScheme.surfaceContainerHighest
-                                .withValues(alpha: isDark ? 0.58 : 0.72),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            project.emoji ?? '📦',
-                            style: const TextStyle(fontSize: 22),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 11),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            project.projectName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              height: 1.2,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            project.projectDescription.isEmpty
-                                ? (branch.isEmpty
-                                      ? 'Project workspace'
-                                      : branch)
-                                : project.projectDescription,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Tooltip(
-                      message:
-                          loc?.translate('terminal_action_open') ??
-                          'Open terminal',
-                      child: IconButton(
-                        key: ValueKey('project-terminal-${project.id}'),
-                        onPressed: widget.onOpenTerminal ?? widget.onTap,
-                        visualDensity: VisualDensity.compact,
-                        constraints: const BoxConstraints.tightFor(
-                          width: 34,
-                          height: 34,
-                        ),
-                        style: IconButton.styleFrom(
-                          foregroundColor: colorScheme.onSurfaceVariant,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(7),
-                          ),
-                        ),
-                        icon: const Icon(Icons.terminal_rounded, size: 18),
-                      ),
-                    ),
-                    const SizedBox(width: 2),
-                    Tooltip(
-                      message: loc?.translate('chat') ?? 'Chat',
-                      child: IconButton(
-                        key: ValueKey('project-chat-${project.id}'),
-                        onPressed: widget.onOpenChat ?? widget.onTap,
-                        visualDensity: VisualDensity.compact,
-                        constraints: const BoxConstraints.tightFor(
-                          width: 34,
-                          height: 34,
-                        ),
-                        style: IconButton.styleFrom(
-                          foregroundColor: colorScheme.onSurfaceVariant,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(7),
-                          ),
-                        ),
-                        icon: const Icon(
-                          Icons.chat_bubble_outline_rounded,
-                          size: 18,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    _ProjectStatus(label: status.label, color: status.color),
-                    const SizedBox(width: 10),
-                    _ProjectPill(
-                      label: hasProduction ? 'Production' : 'Development',
-                      color: hasProduction
-                          ? colorScheme.primary
-                          : colorScheme.onSurfaceVariant,
-                    ),
-                    const Spacer(),
-                    Icon(
-                      Icons.schedule_rounded,
-                      size: 14,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        widget.updatedText,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.end,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                if (project.analyticsEnabled == true ||
-                    project.hasDatabaseEnabled ||
-                    project.hasPaymentEnabled ||
-                    branch.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  Divider(height: 1, color: colorScheme.outlineVariant),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 6,
+          child: InkWell(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              widget.onTap();
+            },
+            onTapDown: (_) => _pressController.forward(),
+            onTapCancel: () => _pressController.reverse(),
+            onTapUp: (_) => _pressController.reverse(),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (project.analyticsEnabled == true)
-                        const _ProjectCapability(
-                          icon: Icons.bar_chart_rounded,
-                          label: 'Analytics',
+                      Hero(
+                        tag: _heroTag(project.id),
+                        transitionOnUserGestures: true,
+                        createRectTween: (begin, end) =>
+                            MaterialRectCenterArcTween(begin: begin, end: end),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: colorScheme.surfaceContainerHighest
+                                  .withValues(alpha: isDark ? 0.58 : 0.72),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              project.emoji ?? '📦',
+                              style: const TextStyle(fontSize: 22),
+                            ),
+                          ),
                         ),
-                      if (project.hasDatabaseEnabled)
-                        const _ProjectCapability(
-                          icon: Icons.storage_rounded,
-                          label: 'Database',
+                      ),
+                      const SizedBox(width: 11),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              project.projectName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                height: 1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              project.projectDescription.isEmpty
+                                  ? (branch.isEmpty
+                                        ? 'Project workspace'
+                                        : branch)
+                                  : project.projectDescription,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
                         ),
-                      if (project.hasPaymentEnabled)
-                        const _ProjectCapability(
-                          icon: Icons.credit_card_rounded,
-                          label: 'Payments',
+                      ),
+                      const SizedBox(width: 8),
+                      Tooltip(
+                        message:
+                            loc?.translate('terminal_action_open') ??
+                            'Open terminal',
+                        child: IconButton(
+                          key: ValueKey('project-terminal-${project.id}'),
+                          onPressed: widget.onOpenTerminal ?? widget.onTap,
+                          visualDensity: VisualDensity.compact,
+                          constraints: const BoxConstraints.tightFor(
+                            width: 34,
+                            height: 34,
+                          ),
+                          style: IconButton.styleFrom(
+                            foregroundColor: colorScheme.onSurfaceVariant,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(7),
+                            ),
+                          ),
+                          icon: const Icon(Icons.terminal_rounded, size: 18),
                         ),
-                      if (branch.isNotEmpty)
-                        _ProjectCapability(
-                          icon: Icons.account_tree_outlined,
-                          label: branch,
+                      ),
+                      const SizedBox(width: 2),
+                      Tooltip(
+                        message: loc?.translate('chat') ?? 'Chat',
+                        child: IconButton(
+                          key: ValueKey('project-chat-${project.id}'),
+                          onPressed: widget.onOpenChat ?? widget.onTap,
+                          visualDensity: VisualDensity.compact,
+                          constraints: const BoxConstraints.tightFor(
+                            width: 34,
+                            height: 34,
+                          ),
+                          style: IconButton.styleFrom(
+                            foregroundColor: colorScheme.onSurfaceVariant,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(7),
+                            ),
+                          ),
+                          icon: const Icon(
+                            Icons.chat_bubble_outline_rounded,
+                            size: 18,
+                          ),
                         ),
+                      ),
                     ],
                   ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      _ProjectStatus(label: status.label, color: status.color),
+                      const SizedBox(width: 10),
+                      _ProjectPill(
+                        label: hasProduction ? 'Production' : 'Development',
+                        color: hasProduction
+                            ? colorScheme.primary
+                            : colorScheme.onSurfaceVariant,
+                      ),
+                      const Spacer(),
+                      Icon(
+                        Icons.schedule_rounded,
+                        size: 14,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          widget.updatedText,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.end,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (project.analyticsEnabled == true ||
+                      project.hasDatabaseEnabled ||
+                      project.hasPaymentEnabled ||
+                      branch.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Divider(height: 1, color: colorScheme.outlineVariant),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 6,
+                      children: [
+                        if (project.analyticsEnabled == true)
+                          const _ProjectCapability(
+                            icon: Icons.bar_chart_rounded,
+                            label: 'Analytics',
+                          ),
+                        if (project.hasDatabaseEnabled)
+                          const _ProjectCapability(
+                            icon: Icons.storage_rounded,
+                            label: 'Database',
+                          ),
+                        if (project.hasPaymentEnabled)
+                          const _ProjectCapability(
+                            icon: Icons.credit_card_rounded,
+                            label: 'Payments',
+                          ),
+                        if (branch.isNotEmpty)
+                          _ProjectCapability(
+                            icon: Icons.account_tree_outlined,
+                            label: branch,
+                          ),
+                      ],
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),

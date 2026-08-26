@@ -425,6 +425,148 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
   }
 
+  Widget _buildSearchTitle(User? user) {
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final child = _isSearching
+        ? TextField(
+            key: const ValueKey('dashboard-search-field'),
+            controller: _searchController,
+            autofocus: true,
+            decoration: InputDecoration(
+              hintText: _t('projects_search_hint', 'Search projects...'),
+              border: InputBorder.none,
+              hintStyle: TextStyle(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurfaceVariant.withValues(alpha: 0.78),
+              ),
+            ),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            onChanged: _performSearch,
+          )
+        : user == null
+        ? const SizedBox.shrink(key: ValueKey('dashboard-search-idle'))
+        : const KeyedSubtree(
+            key: ValueKey('dashboard-workspace-switcher'),
+            child: WorkspaceSwitcher(),
+          );
+
+    return AnimatedSwitcher(
+      duration: reduceMotion
+          ? Duration.zero
+          : const Duration(milliseconds: 340),
+      reverseDuration: reduceMotion
+          ? Duration.zero
+          : const Duration(milliseconds: 240),
+      switchInCurve: Curves.easeOutExpo,
+      switchOutCurve: Curves.easeInCubic,
+      layoutBuilder: (currentChild, previousChildren) => Stack(
+        alignment: Alignment.centerLeft,
+        children: [...previousChildren, ?currentChild],
+      ),
+      transitionBuilder: (child, animation) {
+        final isSearchField =
+            child.key == const ValueKey('dashboard-search-field');
+        final offset = isSearchField
+            ? const Offset(0.055, 0)
+            : const Offset(-0.035, 0);
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween<Offset>(begin: offset, end: Offset.zero).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutExpo),
+            ),
+            child: child,
+          ),
+        );
+      },
+      child: child,
+    );
+  }
+
+  Widget _buildSearchActionIcon() {
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final icon = _isSearching ? Icons.close_rounded : Icons.search_rounded;
+    return AnimatedSwitcher(
+      duration: reduceMotion
+          ? Duration.zero
+          : const Duration(milliseconds: 240),
+      reverseDuration: reduceMotion
+          ? Duration.zero
+          : const Duration(milliseconds: 200),
+      switchInCurve: Curves.easeOutBack,
+      switchOutCurve: Curves.easeInCubic,
+      transitionBuilder: (child, animation) {
+        final isClose = child.key == const ValueKey('dashboard-search-close');
+        return FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.76, end: 1).animate(animation),
+            child: RotationTransition(
+              turns: Tween<double>(
+                begin: isClose ? -0.10 : 0.10,
+                end: 0,
+              ).animate(animation),
+              child: child,
+            ),
+          ),
+        );
+      },
+      child: Icon(
+        icon,
+        key: ValueKey(
+          _isSearching ? 'dashboard-search-close' : 'dashboard-search-open',
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnimatedProjectList(
+    BuildContext context,
+    ProjectProvider projectProvider, {
+    required bool isSearchResults,
+  }) {
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    return RepaintBoundary(
+      child: AnimatedSwitcher(
+        duration: reduceMotion
+            ? Duration.zero
+            : const Duration(milliseconds: 300),
+        reverseDuration: reduceMotion
+            ? Duration.zero
+            : const Duration(milliseconds: 220),
+        switchInCurve: Curves.easeOutExpo,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (child, animation) {
+          final isResults =
+              child.key == const ValueKey('dashboard-project-search-results');
+          return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: Offset(0, isResults ? 0.022 : -0.014),
+                end: Offset.zero,
+              ).animate(animation),
+              child: child,
+            ),
+          );
+        },
+        child: KeyedSubtree(
+          key: ValueKey(
+            isSearchResults
+                ? 'dashboard-project-search-results'
+                : 'dashboard-project-recents',
+          ),
+          child: _buildProjectList(
+            context,
+            projectProvider,
+            isSearchResults: isSearchResults,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<AuthProvider>(context).user;
@@ -465,29 +607,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     return Scaffold(
       appBar: D1VSimpleAppBar(
         enableBreathing: false,
-        title: _isSearching
-            ? TextField(
-                controller: _searchController,
-                autofocus: true,
-                decoration: InputDecoration(
-                  hintText: _t('projects_search_hint', 'Search projects...'),
-                  border: InputBorder.none,
-                  hintStyle: TextStyle(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.78),
-                  ),
-                ),
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-                onChanged: (query) {
-                  _performSearch(query);
-                },
-              )
-            : user == null
-            ? null
-            : const WorkspaceSwitcher(),
+        title: _buildSearchTitle(user),
         actions: [
           IconButton(
             tooltip: _t('dashboard_action_chat', 'Chat'),
@@ -497,8 +617,11 @@ class _DashboardScreenState extends State<DashboardScreen>
             },
           ),
           IconButton(
-            icon: Icon(_isSearching ? Icons.close : Icons.search),
+            icon: _buildSearchActionIcon(),
             onPressed: () {
+              if (_isSearching) {
+                FocusManager.instance.primaryFocus?.unfocus();
+              }
               setState(() {
                 _isSearching = !_isSearching;
                 if (!_isSearching) {
@@ -616,7 +739,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                             onAction: () => context.go('/login'),
                           )
                         else
-                          _buildProjectList(
+                          _buildAnimatedProjectList(
                             context,
                             projectProvider,
                             isSearchResults:
@@ -677,7 +800,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                     onAction: () => context.go('/login'),
                   )
                 else
-                  _buildProjectList(
+                  _buildAnimatedProjectList(
                     context,
                     projectProvider,
                     isSearchResults:
