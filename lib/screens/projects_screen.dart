@@ -261,7 +261,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                 maxCrossAxisExtent: 420,
-                mainAxisExtent: 138,
+                mainAxisExtent: 174,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
               ),
@@ -318,6 +318,17 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       project: project,
       updatedText: _formatTimeAgo(project.updatedAt),
       onTap: () => context.push(buildProjectChatDetailRoute(project)),
+      onOpenChat: () => context.push(buildProjectChatDetailRoute(project)),
+      onOpenTerminal: () {
+        final uri = Uri(
+          path: '/terminal',
+          queryParameters: <String, String>{
+            'project': project.id,
+            'start': '1',
+          },
+        );
+        context.go(uri.toString());
+      },
     );
   }
 

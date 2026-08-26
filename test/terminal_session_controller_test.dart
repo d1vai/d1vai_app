@@ -187,7 +187,6 @@ void main() {
 
       expect(phases, [
         TerminalSessionPhase.checking,
-        TerminalSessionPhase.waking,
         TerminalSessionPhase.creating,
         TerminalSessionPhase.connecting,
       ]);
@@ -221,7 +220,30 @@ void main() {
     },
   );
 
-  test('ignores a stale wake-up when the target changes', () async {
+  test(
+    'creates a shell session while generic workspace readiness is pending',
+    () async {
+      final pendingReadiness = Completer<WorkspaceConnection>();
+      final workspace = FakeWorkspace(ensurePlan: [pendingReadiness]);
+      final gateway = FakeGateway();
+      final transport = FakeTransport();
+      final controller = TerminalSessionController(
+        workspace: workspace,
+        api: gateway,
+        transportFactory: () => transport,
+      );
+
+      await controller.start(projectId: 'project-1');
+
+      expect(workspace.ensureCalls, 0);
+      expect(gateway.creates, 1);
+      expect(controller.phase, TerminalSessionPhase.connecting);
+      await controller.shutdown();
+      controller.dispose();
+    },
+  );
+
+  test('replaces the shell session when the target changes', () async {
     final firstWake = Completer<WorkspaceConnection>();
     final workspace = FakeWorkspace(ensurePlan: [firstWake, null]);
     final gateway = FakeGateway();
@@ -236,15 +258,14 @@ void main() {
       },
     );
 
-    final firstStart = controller.start(projectId: 'project-old');
-    await Future<void>.delayed(Duration.zero);
+    await controller.start(projectId: 'project-old');
     await controller.start(projectId: 'project-new');
-    firstWake.complete(const WorkspaceConnection(ip: '10.0.0.1', port: 8080));
-    await firstStart;
 
-    expect(gateway.creates, 1);
-    expect(gateway.createdProjects, ['project-new']);
-    expect(transports.single.connectionValue?.projectId, 'project-new');
+    expect(workspace.ensureCalls, 0);
+    expect(gateway.creates, 2);
+    expect(gateway.createdProjects, ['project-old', 'project-new']);
+    expect(gateway.closed, ['sh_1']);
+    expect(transports.last.connectionValue?.projectId, 'project-new');
     await controller.shutdown();
     controller.dispose();
   });

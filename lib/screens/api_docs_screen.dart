@@ -139,7 +139,7 @@ class _ApiDocsScreenState extends State<ApiDocsScreen> {
               theme.textTheme.titleLarge,
             ),
           ),
-          fallbackRoute: '/docs',
+          fallbackRoute: '/settings/help/docs',
         ),
         body: Center(
           child: Padding(
@@ -173,7 +173,7 @@ class _ApiDocsScreenState extends State<ApiDocsScreen> {
             Theme.of(context).textTheme.titleLarge,
           ),
         ),
-        fallbackRoute: '/docs',
+        fallbackRoute: '/settings/help/docs',
         actions: [
           IconButton(
             tooltip: loc?.translate('docs_share') ?? 'Share',

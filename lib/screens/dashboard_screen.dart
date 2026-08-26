@@ -8,8 +8,6 @@ import 'package:d1vai_app/providers/project_provider.dart';
 import 'package:d1vai_app/providers/organization_provider.dart';
 import 'package:d1vai_app/models/user.dart';
 import 'package:d1vai_app/models/project.dart';
-import 'package:d1vai_app/models/prompt_activity.dart';
-import 'package:d1vai_app/services/d1vai_service.dart';
 import 'package:d1vai_app/services/github_service.dart';
 import 'package:d1vai_app/services/workspace_service.dart';
 import 'package:d1vai_app/widgets/create_project_dialog.dart';
@@ -19,13 +17,10 @@ import 'package:d1vai_app/utils/error_utils.dart';
 import 'package:d1vai_app/core/auth_expiry_bus.dart';
 import 'package:d1vai_app/widgets/login_required_view.dart';
 import 'package:d1vai_app/l10n/app_localizations.dart';
-import 'package:d1vai_app/widgets/compact_selector.dart';
 import 'package:d1vai_app/widgets/dashboard/workspace_status_badge.dart';
-import 'package:d1vai_app/widgets/prompt_activity_heatmap.dart';
 import 'package:d1vai_app/widgets/snackbar_helper.dart';
 import 'package:d1vai_app/screens/projects/widgets/project_card_tile.dart';
 import 'package:d1vai_app/widgets/skeletons/dashboard_skeleton.dart';
-import 'package:d1vai_app/widgets/skeletons/prompt_activity_skeleton.dart';
 import 'package:d1vai_app/utils/chat_entry.dart';
 import 'package:d1vai_app/utils/desktop_layout.dart';
 import 'package:d1vai_app/widgets/adaptive_modal.dart';
@@ -42,19 +37,12 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen>
     with TickerProviderStateMixin {
-  static const String _allProjectsOptionValue = '__all_projects__';
-  static const int _promptActivityDays =
-      161; // 23 weeks, denser timeline while staying readable on mobile.
-
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   List<UserProject> _searchResults = [];
   bool _didAutoLoadAfterLogin = false;
   int? _organizationId;
   bool _organizationScopeInitialized = false;
-  Future<PromptDailyActivity>? _promptActivityFuture;
-  String? _promptActivityProjectId;
-  final D1vaiService _service = D1vaiService();
   final GitHubService _githubService = GitHubService();
   final WorkspaceService _workspaceService = WorkspaceService();
 
@@ -67,7 +55,6 @@ class _DashboardScreenState extends State<DashboardScreen>
   Timer? _workspacePollTimer;
   bool _didInitWorkspaceStatus = false;
   Map<String, dynamic>? _githubDashboardRepositories;
-  bool _githubDashboardLoading = false;
 
   late AnimationController _animationController;
   late AnimationController _workspaceBreathController;
@@ -137,6 +124,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     });
     await context.read<ProjectProvider>().setOrganization(organizationId);
     if (!mounted) return;
+    unawaited(_loadGitHubDashboardRepositories());
     await _bootstrapWorkspaceStatus();
   }
 
@@ -345,24 +333,12 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   /// 加载数据
   Future<void> _loadData() async {
-    // Start heatmap fetch early; UI will render as soon as data arrives.
-    if (mounted) {
-      setState(() {
-        _promptActivityFuture = _service.getPromptDailyActivity(
-          days: _promptActivityDays,
-          projectId: _promptActivityProjectId,
-        );
-      });
-    } else {
-      _promptActivityFuture = _service.getPromptDailyActivity(
-        days: _promptActivityDays,
-        projectId: _promptActivityProjectId,
-      );
-    }
-    await Future.wait<void>([
-      Provider.of<ProjectProvider>(context, listen: false).loadProjects(),
-      _loadGitHubDashboardRepositories(),
-    ]);
+    // Project cards animate from an opacity of zero. Do not make their first
+    // paint wait for the optional GitHub recommendation request: it may be
+    // slow, while the project list is already interactive underneath.
+    final projects = Provider.of<ProjectProvider>(context, listen: false);
+    unawaited(_loadGitHubDashboardRepositories());
+    await projects.loadProjects();
     if (mounted) {
       _animationController.forward(from: 0);
     }
@@ -371,7 +347,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   Future<void> _loadGitHubDashboardRepositories() async {
     if (mounted) {
       setState(() {
-        _githubDashboardLoading = true;
+        _githubDashboardRepositories = null;
       });
     }
     try {
@@ -379,13 +355,11 @@ class _DashboardScreenState extends State<DashboardScreen>
       if (!mounted) return;
       setState(() {
         _githubDashboardRepositories = payload;
-        _githubDashboardLoading = false;
       });
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
       setState(() {
         _githubDashboardRepositories = null;
-        _githubDashboardLoading = false;
       });
     }
   }
@@ -400,7 +374,6 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   bool _shouldShowGitHubRepositorySection() {
-    if (_githubDashboardLoading) return true;
     final payload = _githubDashboardRepositories;
     if (payload == null) return false;
     return payload['connected'] == true &&
@@ -426,95 +399,6 @@ class _DashboardScreenState extends State<DashboardScreen>
         _loadGitHubDashboardRepositories(),
       ]);
     }
-  }
-
-  void _reloadPromptActivity() {
-    setState(() {
-      _promptActivityFuture = _service.getPromptDailyActivity(
-        days: _promptActivityDays,
-        projectId: _promptActivityProjectId,
-      );
-    });
-  }
-
-  String _projectDisplayName(UserProject p) {
-    final name = p.projectName.trim();
-    return name.isEmpty ? p.id : name;
-  }
-
-  String _allProjectsLabel(BuildContext context) {
-    return _t('dashboard_all_projects', 'All projects');
-  }
-
-  Widget _buildPromptActivityHeaderTrailing(ProjectProvider projectProvider) {
-    final projects = projectProvider.projects;
-    final isLoading = projectProvider.isLoading;
-    final projectsForMenu = projects.take(80).toList(growable: false);
-    UserProject? selectedProject;
-    final selectedId = _promptActivityProjectId;
-    if (selectedId != null) {
-      for (final p in projectsForMenu) {
-        if (p.id == selectedId) {
-          selectedProject = p;
-          break;
-        }
-      }
-    }
-
-    final pickerLabel = selectedProject == null
-        ? _allProjectsLabel(context)
-        : _projectDisplayName(selectedProject);
-    final options = <CompactSelectorOption>[
-      CompactSelectorOption(
-        value: _allProjectsOptionValue,
-        label: _allProjectsLabel(context),
-      ),
-      ...projectsForMenu.map(
-        (p) =>
-            CompactSelectorOption(value: p.id, label: _projectDisplayName(p)),
-      ),
-    ];
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        CompactSelector(
-          options: options,
-          value: _promptActivityProjectId ?? _allProjectsOptionValue,
-          displayLabel: pickerLabel,
-          placeholder: _allProjectsLabel(context),
-          tooltip: _t('dashboard_switch_project', 'Switch project'),
-          leadingIcon: Icons.folder_open_rounded,
-          minWidth: 100,
-          maxWidth: 142,
-          isLoading: isLoading,
-          onChanged: isLoading
-              ? null
-              : (value) {
-                  setState(() {
-                    _promptActivityProjectId = value == _allProjectsOptionValue
-                        ? null
-                        : value;
-                  });
-                  _reloadPromptActivity();
-                },
-        ),
-        if (selectedProject != null)
-          IconButton(
-            tooltip: _t('dashboard_open_project', 'Open project'),
-            visualDensity: VisualDensity.compact,
-            constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
-            padding: const EdgeInsets.all(4),
-            icon: const Icon(Icons.open_in_new_rounded, size: 17),
-            onPressed: () {
-              final pid = _promptActivityProjectId;
-              if (pid == null) return;
-              context.push('/projects/$pid');
-            },
-          ),
-        if (selectedProject != null && isLoading) ...[const SizedBox(width: 2)],
-      ],
-    );
   }
 
   @override
@@ -689,74 +573,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (user != null)
-                          FutureBuilder<PromptDailyActivity>(
-                            future: _promptActivityFuture,
-                            builder: (context, snapshot) {
-                              if (_promptActivityFuture == null) {
-                                return const SizedBox.shrink();
-                              }
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return const PromptActivitySkeleton();
-                              }
-                              if (snapshot.hasError || !snapshot.hasData) {
-                                return CustomCard(
-                                  glass: true,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16),
-                                    child: Text(
-                                      loc?.translate('failed_to_load') ??
-                                          'Failed to load',
-                                      style: TextStyle(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.error,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }
-                              return PromptActivityHeatmap(
-                                activity: snapshot.data!,
-                                title: _t(
-                                  'dashboard_activity_title',
-                                  'Activity',
-                                ),
-                                subtitle: _t(
-                                  'dashboard_activity_subtitle',
-                                  'Recent prompt usage across your workspace.',
-                                ),
-                                headerTrailing:
-                                    _buildPromptActivityHeaderTrailing(
-                                      projectProvider,
-                                    ),
-                                onDayTap: (isoDate, count) {
-                                  final message =
-                                      _t(
-                                            'dashboard_prompt_activity_day_message',
-                                            '{count} prompts on {date}',
-                                          )
-                                          .replaceAll(
-                                            '{count}',
-                                            count.toString(),
-                                          )
-                                          .replaceAll('{date}', isoDate);
-                                  SnackBarHelper.showInfo(
-                                    context,
-                                    title: _t(
-                                      'dashboard_prompt_activity_title',
-                                      'Prompt activity',
-                                    ),
-                                    message: message,
-                                    position: SnackBarPosition.top,
-                                    duration: const Duration(seconds: 2),
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                        const SizedBox(height: 24),
                         _buildPageSectionHeader(
                           context,
                           title:
@@ -821,66 +637,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                   _buildWorkspaceStatusWidget(),
                   const SizedBox(height: 20),
                 ],
-                if (user == null)
-                  const SizedBox.shrink()
-                else
-                  FutureBuilder<PromptDailyActivity>(
-                    future: _promptActivityFuture,
-                    builder: (context, snapshot) {
-                      if (_promptActivityFuture == null) {
-                        return const SizedBox.shrink();
-                      }
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const PromptActivitySkeleton();
-                      }
-                      if (snapshot.hasError || !snapshot.hasData) {
-                        return CustomCard(
-                          glass: true,
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Text(
-                              loc?.translate('failed_to_load') ??
-                                  'Failed to load',
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.error,
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-                      return PromptActivityHeatmap(
-                        activity: snapshot.data!,
-                        title: _t('dashboard_activity_title', 'Activity'),
-                        subtitle: _t(
-                          'dashboard_activity_subtitle',
-                          'Recent prompt usage across your workspace.',
-                        ),
-                        headerTrailing: _buildPromptActivityHeaderTrailing(
-                          projectProvider,
-                        ),
-                        onDayTap: (isoDate, count) {
-                          final message =
-                              _t(
-                                    'dashboard_prompt_activity_day_message',
-                                    '{count} prompts on {date}',
-                                  )
-                                  .replaceAll('{count}', count.toString())
-                                  .replaceAll('{date}', isoDate);
-                          SnackBarHelper.showInfo(
-                            context,
-                            title: _t(
-                              'dashboard_prompt_activity_title',
-                              'Prompt activity',
-                            ),
-                            message: message,
-                            position: SnackBarPosition.top,
-                            duration: const Duration(seconds: 2),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                const SizedBox(height: 24),
                 _buildPageSectionHeader(
                   context,
                   title: _isSearching && _searchController.text.isNotEmpty
@@ -935,12 +691,6 @@ class _DashboardScreenState extends State<DashboardScreen>
     if (user == null) return content;
     return RefreshIndicator(
       onRefresh: () async {
-        setState(() {
-          _promptActivityFuture = _service.getPromptDailyActivity(
-            days: _promptActivityDays,
-            projectId: _promptActivityProjectId,
-          );
-        });
         await _refreshWorkspaceStatus(bypassCache: true);
         await Future.wait<void>([
           projectProvider.refresh(),
@@ -1074,6 +824,18 @@ class _DashboardScreenState extends State<DashboardScreen>
                 project: project,
                 updatedText: _formatTimeAgo(project.updatedAt),
                 onTap: () => context.push(buildProjectChatDetailRoute(project)),
+                onOpenChat: () =>
+                    context.push(buildProjectChatDetailRoute(project)),
+                onOpenTerminal: () {
+                  final uri = Uri(
+                    path: '/terminal',
+                    queryParameters: <String, String>{
+                      'project': project.id,
+                      'start': '1',
+                    },
+                  );
+                  context.go(uri.toString());
+                },
               ),
             );
           },
@@ -1193,234 +955,161 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
         ),
         const SizedBox(height: 8),
-        if (_githubDashboardLoading)
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: 2,
-            separatorBuilder: (_, index) => const SizedBox(height: 12),
-            itemBuilder: (context, index) => CustomCard(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 154,
-                      height: 14,
-                      decoration: BoxDecoration(
-                        color: colorScheme.surfaceContainerHighest.withValues(
-                          alpha: 0.88,
-                        ),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Container(
-                      width: double.infinity,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: colorScheme.surfaceContainerHighest.withValues(
-                          alpha: 0.72,
-                        ),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      width: 220,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: colorScheme.surfaceContainerHighest.withValues(
-                          alpha: 0.56,
-                        ),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Row(
-                      children: List.generate(
-                        4,
-                        (metricIndex) => Padding(
-                          padding: EdgeInsets.only(
-                            right: metricIndex == 3 ? 0 : 12,
-                          ),
-                          child: Container(
-                            width: 34,
-                            height: 12,
-                            decoration: BoxDecoration(
-                              color: colorScheme.surfaceContainerHighest
-                                  .withValues(alpha: 0.66),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          )
-        else
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: repos.length,
-            separatorBuilder: (_, index) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final repo = repos[index];
-              final repoName = (repo['name'] ?? repo['full_name'] ?? '')
-                  .toString()
-                  .trim();
-              final owner =
-                  (repo['owner'] ?? repo['installation_account_login'] ?? '')
-                      .toString()
-                      .trim();
-              final descriptionRaw = (repo['description'] ?? '')
-                  .toString()
-                  .trim();
-              final description = descriptionRaw.isEmpty
-                  ? _t(
-                      'dashboard_projects_subtitle',
-                      'Continue from the most recently touched projects.',
-                    )
-                  : descriptionRaw;
-              final language = (repo['language'] ?? '').toString().trim();
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: repos.length,
+          separatorBuilder: (_, index) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final repo = repos[index];
+            final repoName = (repo['name'] ?? repo['full_name'] ?? '')
+                .toString()
+                .trim();
+            final owner =
+                (repo['owner'] ?? repo['installation_account_login'] ?? '')
+                    .toString()
+                    .trim();
+            final descriptionRaw = (repo['description'] ?? '')
+                .toString()
+                .trim();
+            final description = descriptionRaw.isEmpty
+                ? _t(
+                    'dashboard_projects_subtitle',
+                    'Continue from the most recently touched projects.',
+                  )
+                : descriptionRaw;
+            final language = (repo['language'] ?? '').toString().trim();
 
-              return CustomCard(
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(20),
-                  onTap: () => unawaited(_openGitHubRepositoryImport(repo)),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: colorScheme.primary.withValues(alpha: 0.10),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Icon(
-                            Icons.download_for_offline_rounded,
-                            color: colorScheme.primary,
-                            size: 22,
-                          ),
+            return CustomCard(
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: () => unawaited(_openGitHubRepositoryImport(repo)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(14),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
+                        child: Icon(
+                          Icons.download_for_offline_rounded,
+                          color: colorScheme.primary,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    repoName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: theme.textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                                if (owner.isNotEmpty) ...[
+                                  const SizedBox(width: 8),
                                   Flexible(
                                     child: Text(
-                                      repoName,
+                                      '@$owner',
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: theme.textTheme.titleSmall
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                    ),
-                                  ),
-                                  if (owner.isNotEmpty) ...[
-                                    const SizedBox(width: 8),
-                                    Flexible(
-                                      child: Text(
-                                        '@$owner',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: theme.textTheme.labelMedium
-                                            ?.copyWith(
-                                              color:
-                                                  colorScheme.onSurfaceVariant,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                description,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: colorScheme.onSurfaceVariant,
-                                  height: 1.35,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Wrap(
-                                spacing: 14,
-                                runSpacing: 8,
-                                children: [
-                                  if (language.isNotEmpty)
-                                    Text(
-                                      language.toUpperCase(),
-                                      style: theme.textTheme.labelSmall
+                                      style: theme.textTheme.labelMedium
                                           ?.copyWith(
                                             color: colorScheme.onSurfaceVariant,
-                                            fontWeight: FontWeight.w700,
-                                            letterSpacing: 0.8,
+                                            fontWeight: FontWeight.w500,
                                           ),
                                     ),
-                                  _buildGitHubInlineMetric(
-                                    context,
-                                    icon: Icons.star_border_rounded,
-                                    value: _githubRepoMetric(
-                                      repo,
-                                      'stargazers_count',
-                                    ).toString(),
                                   ),
-                                  _buildGitHubInlineMetric(
-                                    context,
-                                    icon: Icons.call_split_rounded,
-                                    value: _githubRepoMetric(
-                                      repo,
-                                      'forks_count',
-                                    ).toString(),
-                                  ),
-                                  _buildGitHubInlineMetric(
-                                    context,
-                                    icon: Icons.adjust_outlined,
-                                    value: _githubRepoMetric(
-                                      repo,
-                                      'issue_count',
-                                    ).toString(),
-                                  ),
-                                  _buildGitHubInlineMetric(
-                                    context,
-                                    icon: Icons.merge_type_rounded,
-                                    value: _githubRepoMetric(
-                                      repo,
-                                      'pull_request_count',
-                                    ).toString(),
-                                  ),
-                                  _buildGitHubActionMetric(context, repo),
                                 ],
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              description,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                                height: 1.35,
                               ),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 14,
+                              runSpacing: 8,
+                              children: [
+                                if (language.isNotEmpty)
+                                  Text(
+                                    language.toUpperCase(),
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.8,
+                                    ),
+                                  ),
+                                _buildGitHubInlineMetric(
+                                  context,
+                                  icon: Icons.star_border_rounded,
+                                  value: _githubRepoMetric(
+                                    repo,
+                                    'stargazers_count',
+                                  ).toString(),
+                                ),
+                                _buildGitHubInlineMetric(
+                                  context,
+                                  icon: Icons.call_split_rounded,
+                                  value: _githubRepoMetric(
+                                    repo,
+                                    'forks_count',
+                                  ).toString(),
+                                ),
+                                _buildGitHubInlineMetric(
+                                  context,
+                                  icon: Icons.adjust_outlined,
+                                  value: _githubRepoMetric(
+                                    repo,
+                                    'issue_count',
+                                  ).toString(),
+                                ),
+                                _buildGitHubInlineMetric(
+                                  context,
+                                  icon: Icons.merge_type_rounded,
+                                  value: _githubRepoMetric(
+                                    repo,
+                                    'pull_request_count',
+                                  ).toString(),
+                                ),
+                                _buildGitHubActionMetric(context, repo),
+                              ],
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 12),
-                        Icon(
-                          Icons.chevron_right_rounded,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 12),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ],
                   ),
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          },
+        ),
       ],
     );
   }

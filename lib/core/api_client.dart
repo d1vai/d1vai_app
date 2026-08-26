@@ -282,6 +282,47 @@ class ApiClient {
     );
   }
 
+  /// Fetches a binary response while retaining the normal authenticated client
+  /// behavior. This is used for resources such as storage image previews.
+  Future<Uint8List> getBytes(
+    String endpoint, {
+    Duration? timeout,
+    String? baseUrlOverride,
+  }) async {
+    final headers = await _getHeaders();
+    final hasAuthToken = headers.containsKey('Authorization');
+    final uri = _buildUri(endpoint, baseUrlOverride: baseUrlOverride);
+
+    debugPrint('$_debugPrefix 🌐 API Request: GET (bytes) $uri');
+    final future = client.get(uri, headers: headers);
+    final response = timeout != null
+        ? await future.timeout(timeout)
+        : await future;
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return response.bodyBytes;
+    }
+
+    final responseBody = utf8.decode(response.bodyBytes, allowMalformed: true);
+    _noteLastApiError(
+      endpoint: endpoint,
+      statusCode: response.statusCode,
+      message: responseBody,
+    );
+    if (response.statusCode == 401 &&
+        hasAuthToken &&
+        !_isPublicEndpoint(endpoint)) {
+      AuthExpiryBus.trigger(endpoint: endpoint);
+      throw AuthExpiredException(
+        responseBody.isEmpty ? 'Unauthorized' : responseBody,
+      );
+    }
+    throw ApiClientException(
+      responseBody.isEmpty ? 'Request failed' : responseBody,
+      statusCode: response.statusCode,
+    );
+  }
+
   Future<T> postWithQuery<T>(
     String endpoint,
     Map<String, String> queryParams,

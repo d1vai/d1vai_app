@@ -11,6 +11,8 @@ import '../../widgets/avatar_image.dart';
 import '../../widgets/button.dart';
 import '../../widgets/card.dart';
 import '../../widgets/login_required_view.dart';
+import '../../widgets/prompt_activity_card.dart';
+import '../../widgets/settings/settings_entry_hero.dart';
 
 /// Profile tab for the settings screen.
 class SettingsProfileTab extends StatelessWidget {
@@ -21,7 +23,7 @@ class SettingsProfileTab extends StatelessWidget {
     required this.onShowBindEmailDialog,
     required this.onShowResetPasswordDialog,
     required this.onShowAboutDialog,
-    required this.onShowDeveloperSettings,
+    this.showPromptActivity = false,
   });
 
   final VoidCallback onShowThemeDialog;
@@ -29,7 +31,7 @@ class SettingsProfileTab extends StatelessWidget {
   final VoidCallback onShowBindEmailDialog;
   final VoidCallback onShowResetPasswordDialog;
   final VoidCallback onShowAboutDialog;
-  final VoidCallback onShowDeveloperSettings;
+  final bool showPromptActivity;
 
   @override
   Widget build(BuildContext context) {
@@ -135,8 +137,9 @@ class SettingsProfileTab extends StatelessWidget {
                         : AppColors.borderLight,
                   ),
                   ListTile(
-                    leading: const Icon(
-                      Icons.notifications,
+                    leading: const SettingsEntryHero(
+                      tag: SettingsEntryHero.notificationsTag,
+                      icon: Icons.notifications,
                       color: AppColors.warning,
                     ),
                     title: Text(
@@ -162,8 +165,9 @@ class SettingsProfileTab extends StatelessWidget {
                         : AppColors.borderLight,
                   ),
                   ListTile(
-                    leading: const Icon(
-                      Icons.manage_accounts,
+                    leading: const SettingsEntryHero(
+                      tag: SettingsEntryHero.accountDataTag,
+                      icon: Icons.manage_accounts,
                       color: AppColors.info,
                     ),
                     title: Text(
@@ -189,8 +193,9 @@ class SettingsProfileTab extends StatelessWidget {
                         : AppColors.borderLight,
                   ),
                   ListTile(
-                    leading: const Icon(
-                      Icons.code_rounded,
+                    leading: const SettingsEntryHero(
+                      tag: SettingsEntryHero.developerTag,
+                      icon: Icons.code_rounded,
                       color: AppColors.info,
                     ),
                     title: Text(text('developer', 'Developer')),
@@ -207,7 +212,7 @@ class SettingsProfileTab extends StatelessWidget {
                     ),
                     onTap: user == null
                         ? () => context.go('/login')
-                        : onShowDeveloperSettings,
+                        : () => context.push('/settings/developer'),
                   ),
                   Divider(
                     height: 1,
@@ -216,7 +221,11 @@ class SettingsProfileTab extends StatelessWidget {
                         : AppColors.borderLight,
                   ),
                   ListTile(
-                    leading: const Icon(Icons.help, color: AppColors.success),
+                    leading: const SettingsEntryHero(
+                      tag: SettingsEntryHero.helpSupportTag,
+                      icon: Icons.help,
+                      color: AppColors.success,
+                    ),
                     title: Text(
                       loc?.translate('help_support') ?? 'Help & Support',
                     ),
@@ -260,6 +269,10 @@ class SettingsProfileTab extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
+            if (showPromptActivity && user != null) ...[
+              const PromptActivityCard(),
+              const SizedBox(height: 16),
+            ],
             Center(
               child: Button(
                 variant: ButtonVariant.ghost,

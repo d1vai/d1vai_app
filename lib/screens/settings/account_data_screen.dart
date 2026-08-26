@@ -11,6 +11,8 @@ import '../../utils/navigation_utils.dart';
 import '../../widgets/login_required_view.dart';
 import '../../widgets/snackbar_helper.dart';
 import '../../widgets/account_credentials_dialog.dart';
+import '../../core/theme/app_colors.dart';
+import '../../widgets/settings/settings_entry_hero.dart';
 
 class AccountDataScreen extends StatefulWidget {
   const AccountDataScreen({super.key});
@@ -328,7 +330,17 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(loc?.translate('account_data_title') ?? 'Account & Data'),
+        title: Row(
+          children: [
+            const SettingsEntryHero(
+              tag: SettingsEntryHero.accountDataTag,
+              icon: Icons.manage_accounts,
+              color: AppColors.info,
+            ),
+            const SizedBox(width: 10),
+            Text(loc?.translate('account_data_title') ?? 'Account & Data'),
+          ],
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => NavigationUtils.popOrGo(context, '/settings'),

@@ -2,6 +2,9 @@ import 'package:d1vai_app/models/project.dart';
 import 'package:d1vai_app/providers/locale_provider.dart';
 import 'package:d1vai_app/providers/theme_provider.dart';
 import 'package:d1vai_app/screens/docs_screen.dart';
+import 'package:d1vai_app/screens/help_support_screen.dart';
+import 'package:d1vai_app/screens/settings/developer_settings_screen.dart';
+import 'package:d1vai_app/widgets/settings/settings_entry_hero.dart';
 import 'package:d1vai_app/screens/login_screen.dart';
 import 'package:d1vai_app/screens/projects/widgets/project_card_tile.dart';
 import 'package:d1vai_app/utils/chat_entry.dart';
@@ -62,7 +65,7 @@ void main() {
             alignment: Alignment.topLeft,
             child: SizedBox(
               width: 300,
-              height: 138,
+              height: 174,
               child: ProjectCardTile(
                 project: _baseProject,
                 updatedText: '1h ago',
@@ -79,6 +82,66 @@ void main() {
     expect(tester.takeException(), isNull);
     await tester.tap(find.text('Customer portal'));
     expect(opened, isTrue);
+  });
+
+  testWidgets('project terminal action stays separate from the card action', (
+    tester,
+  ) async {
+    var openedProject = false;
+    var openedTerminal = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 360,
+            height: 174,
+            child: ProjectCardTile(
+              project: _baseProject,
+              updatedText: '1h ago',
+              onTap: () => openedProject = true,
+              onOpenTerminal: () => openedTerminal = true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(
+      find.byKey(const ValueKey('project-terminal-project-123')),
+    );
+
+    expect(openedTerminal, isTrue);
+    expect(openedProject, isFalse);
+  });
+
+  testWidgets('project chat action stays separate from the card action', (
+    tester,
+  ) async {
+    var openedProject = false;
+    var openedChat = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 360,
+            height: 174,
+            child: ProjectCardTile(
+              project: _baseProject,
+              updatedText: '1h ago',
+              onTap: () => openedProject = true,
+              onOpenChat: () => openedChat = true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('project-chat-project-123')));
+
+    expect(openedChat, isTrue);
+    expect(openedProject, isFalse);
   });
 
   testWidgets('login layout fits a mobile viewport', (tester) async {
@@ -155,6 +218,37 @@ void main() {
     await tester.pump();
 
     expect(find.byType(DocsScreen), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('help and support keeps the docs catalog and email CTA', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: HelpSupportScreen()));
+    await tester.pump();
+
+    expect(find.text('Help & Support'), findsOneWidget);
+    expect(find.text('Search docs, workflows, API, setup...'), findsOneWidget);
+    expect(find.text('Browse all documents'), findsOneWidget);
+    expect(find.text('Still need help?'), findsOneWidget);
+    expect(find.text('Contact Support'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('developer settings is a standalone page with the entry hero', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: DeveloperSettingsScreen()));
+    await tester.pump();
+
+    expect(find.text('Developer'), findsWidgets);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Hero && widget.tag == SettingsEntryHero.developerTag,
+      ),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 }

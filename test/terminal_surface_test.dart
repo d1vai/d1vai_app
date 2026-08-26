@@ -332,7 +332,8 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('الطرفية مغلقة'), findsOneWidget);
+    expect(find.text('اتصل بمساحة العمل'), findsOneWidget);
+    expect(find.text('اتصال بالطرفية'), findsOneWidget);
     final directions = tester
         .widgetList<Directionality>(
           find.descendant(

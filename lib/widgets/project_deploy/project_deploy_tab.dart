@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/deployment.dart';
 import '../../models/project.dart';
+import '../../models/production_workflows.dart';
 import '../../services/app_analytics_service.dart';
 import '../../services/d1vai_service.dart';
 import '../../core/auth_expiry_bus.dart';
@@ -721,71 +722,9 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
     setState(() => _deployingProduction = true);
     try {
       final service = D1vaiService();
-      final headBranch = _resolveDevBranch();
-      final baseBranch = _resolveMainBranch();
-      final latestDev = await service.getGitHubBranchCommits(
-        widget.project.id,
-        branch: headBranch,
-        limit: 1,
-      );
-      final latestMain = await service.getGitHubBranchCommits(
-        widget.project.id,
-        branch: baseBranch,
-        limit: 1,
-      );
-      final devSha = latestDev.isEmpty
-          ? null
-          : _extractCommitSha(latestDev.first);
-      final mainSha = latestMain.isEmpty
-          ? null
-          : _extractCommitSha(latestMain.first);
-      final shouldMerge =
-          devSha == null || mainSha == null || devSha != mainSha;
-
-      if (shouldMerge) {
-        if (!mounted) return;
-        await service.mergeGitHubBranches(
-          widget.project.id,
-          baseBranch: baseBranch,
-          headBranch: headBranch,
-          commitMessage: 'Merge $headBranch into $baseBranch',
-        );
-      }
-
+      final preflight = await service.getReleasePreflight(widget.project.id);
       if (!mounted) return;
-      final res = await service.deployProjectToProduction(widget.project.id);
-      final url = _normalizeHttpUrl(
-        (res['production_url'] ?? res['vercel_url'] ?? '').toString(),
-      );
-      final msg = (res['message'] ?? '').toString().trim();
-      if (!mounted) return;
-      SnackBarHelper.showSuccess(
-        context,
-        title: shouldMerge
-            ? _t(
-                'project_deploy_prod_merged_triggered',
-                'Merged and deployed to production',
-              )
-            : _t(
-                'project_deploy_prod_triggered',
-                'Production deploy triggered',
-              ),
-        message: (url != null && url.isNotEmpty)
-            ? url
-            : (msg.isNotEmpty ? msg : _t('project_deploy_ok', 'OK')),
-        actionLabel: (url != null && url.isNotEmpty)
-            ? _t('project_deploy_open', 'Open')
-            : null,
-        onActionPressed: (url != null && url.isNotEmpty)
-            ? () => _openUrl(url)
-            : null,
-      );
-      unawaited(
-        AppAnalyticsService.instance.trackDeployProduction(widget.project.id),
-      );
-      await widget.onRefreshProject?.call();
-      await _loadDeployments();
-      await _loadReleases();
+      await _showReleaseDialog(preflight);
     } catch (e) {
       if (!mounted) return;
       final msg = humanizeError(e);
@@ -807,6 +746,236 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
       if (mounted) {
         setState(() => _deployingProduction = false);
       }
+    }
+  }
+
+  Future<void> _showReleaseDialog(ReleasePreflight preflight) async {
+    var copyDevelopmentData = false;
+    var confirmedReuse = false;
+    final productionValues = <String, String>{};
+    final decisions = <String, ReleaseEnvDecision>{
+      for (final variable in preflight.variables)
+        variable['key']?.toString() ?? '': ReleaseEnvDecision(
+          key: variable['key']?.toString() ?? '',
+          action: variable['prod_configured'] == true
+              ? 'use_prod_existing'
+              : (variable['recommended_action']?.toString() ?? 'omit'),
+        ),
+    }..remove('');
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final requiresConfirmation = decisions.values.any(
+            (decision) => decision.action == 'reuse_dev',
+          );
+          final missingProductionValues = decisions.values.any(
+            (decision) =>
+                decision.action == 'set_prod' &&
+                (productionValues[decision.key] ?? '').trim().isEmpty,
+          );
+          return AlertDialog(
+            title: const Text('Release to production'),
+            content: SizedBox(
+              width: 560,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      preflight.firstRelease
+                          ? 'First release creates an isolated production database.'
+                          : 'This release reuses the isolated production database.',
+                    ),
+                    const SizedBox(height: 12),
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: copyDevelopmentData,
+                      onChanged: preflight.firstRelease
+                          ? (value) => setDialogState(
+                              () => copyDevelopmentData = value == true,
+                            )
+                          : null,
+                      title: const Text('Copy development data'),
+                      subtitle: const Text(
+                        'Only for initial demos or setup. It cannot merge into an existing production database.',
+                      ),
+                    ),
+                    const Divider(),
+                    const Text(
+                      'Production variables',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    for (final variable in preflight.variables)
+                      _releaseVariableControl(
+                        variable,
+                        decisions,
+                        productionValues,
+                        setDialogState,
+                      ),
+                    if (requiresConfirmation)
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        value: confirmedReuse,
+                        onChanged: (value) => setDialogState(
+                          () => confirmedReuse = value == true,
+                        ),
+                        title: const Text(
+                          'I understand selected development credentials will be available to production.',
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: Text(_t('cancel', 'Cancel')),
+              ),
+              FilledButton(
+                onPressed:
+                    (requiresConfirmation && !confirmedReuse) ||
+                        missingProductionValues
+                    ? null
+                    : () async {
+                        try {
+                          final release = await D1vaiService()
+                              .createProductionRelease(
+                                widget.project.id,
+                                confirmManagedReuse: confirmedReuse,
+                                copyDevelopmentData: copyDevelopmentData,
+                                environmentDecisions: decisions.values
+                                    .toList(growable: false)
+                                    .map(
+                                      (decision) => ReleaseEnvDecision(
+                                        key: decision.key,
+                                        action: decision.action,
+                                        value: decision.action == 'set_prod'
+                                            ? productionValues[decision.key]
+                                            : decision.value,
+                                      ),
+                                    )
+                                    .toList(growable: false),
+                              );
+                          if (!dialogContext.mounted) return;
+                          Navigator.of(dialogContext).pop();
+                          unawaited(_watchRelease(release));
+                        } catch (cause) {
+                          if (dialogContext.mounted)
+                            SnackBarHelper.showError(
+                              dialogContext,
+                              title: _t('error', 'Error'),
+                              message: humanizeError(cause),
+                            );
+                        }
+                      },
+                child: const Text('Release'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _releaseVariableControl(
+    Map<String, dynamic> variable,
+    Map<String, ReleaseEnvDecision> decisions,
+    Map<String, String> productionValues,
+    StateSetter setDialogState,
+  ) {
+    final key = variable['key']?.toString() ?? '';
+    final current = decisions[key]?.action ?? 'omit';
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(child: Text(key, overflow: TextOverflow.ellipsis)),
+              DropdownButton<String>(
+                value: current,
+                items: const [
+                  DropdownMenuItem(
+                    value: 'use_prod_existing',
+                    child: Text('Keep production'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'reuse_dev',
+                    child: Text('Reuse development'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'set_prod',
+                    child: Text('Set new value'),
+                  ),
+                  DropdownMenuItem(value: 'omit', child: Text('Do not copy')),
+                ],
+                onChanged: (value) {
+                  if (value != null)
+                    setDialogState(
+                      () => decisions[key] = ReleaseEnvDecision(
+                        key: key,
+                        action: value,
+                      ),
+                    );
+                },
+              ),
+            ],
+          ),
+          if (current == 'set_prod')
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: TextFormField(
+                initialValue: productionValues[key] ?? '',
+                obscureText: variable['is_sensitive'] == true,
+                onChanged: (value) => productionValues[key] = value,
+                decoration: const InputDecoration(
+                  isDense: true,
+                  border: OutlineInputBorder(),
+                  labelText: 'Production value',
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _watchRelease(ProductionRelease release) async {
+    var current = release;
+    while (mounted && current.isActive) {
+      await Future<void>.delayed(const Duration(seconds: 2));
+      try {
+        current = await D1vaiService().getProductionRelease(
+          widget.project.id,
+          current.id,
+        );
+      } catch (_) {
+        break;
+      }
+    }
+    if (!mounted) return;
+    if (current.isSucceeded) {
+      SnackBarHelper.showSuccess(
+        context,
+        title: 'Production is ready',
+        message: 'Release completed successfully.',
+      );
+      unawaited(
+        AppAnalyticsService.instance.trackDeployProduction(widget.project.id),
+      );
+      await widget.onRefreshProject?.call();
+      await _loadDeployments();
+      await _loadReleases();
+    } else {
+      SnackBarHelper.showError(
+        context,
+        title: 'Release failed',
+        message: current.errorMessage ?? 'Release did not finish.',
+      );
     }
   }
 
@@ -982,7 +1151,10 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                 if (!mounted) return;
                 SnackBarHelper.showSuccess(
                   context,
-                  title: _t('project_deploy_branches_merged', 'Branches merged'),
+                  title: _t(
+                    'project_deploy_branches_merged',
+                    'Branches merged',
+                  ),
                   message: 'Merged $headBranch into $baseBranch',
                 );
                 setState(() {
@@ -1992,7 +2164,9 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
                 onPressed: _openBranchMergeDialog,
                 style: _denseFilledButtonStyle(context),
                 icon: const Icon(Icons.call_merge_rounded, size: 18),
-                label: Text(_t('project_deploy_merge_branches', 'Merge branches')),
+                label: Text(
+                  _t('project_deploy_merge_branches', 'Merge branches'),
+                ),
               ),
             ],
           ),

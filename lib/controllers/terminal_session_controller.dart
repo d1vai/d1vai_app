@@ -106,11 +106,10 @@ class TerminalSessionController extends ChangeNotifier {
       organizationId: organizationId,
       projectId: normalizedProjectId,
     );
-    _setPhase(TerminalSessionPhase.waking);
     try {
-      await _workspace.ensureWorkspaceReady();
-      if (!_isCurrent(generation)) return;
-
+      // The shell-session endpoint owns workspace allocation and returns the
+      // connection ticket. Waiting for a generic workspace IP here can stall
+      // terminal startup when status is READY but endpoint metadata is stale.
       _setPhase(TerminalSessionPhase.creating);
       final connection = await _api.create(
         projectId: normalizedProjectId,

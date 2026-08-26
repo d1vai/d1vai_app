@@ -3,10 +3,14 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../models/database_table.dart';
 import '../../models/project.dart';
+import '../../models/production_workflows.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/organization_provider.dart';
 import '../../services/d1vai_service.dart';
 import '../../core/auth_expiry_bus.dart';
 import '../../utils/error_utils.dart';
@@ -56,6 +60,9 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
   _DbViewMode _viewMode = _DbViewMode.tables;
   final List<_DbBranchItem> _branches = [];
   String _selectedBranch = '';
+  DbEnvironment _environment = DbEnvironment.dev;
+  ProductionEnvironmentStatus? _productionStatus;
+  bool _isLoadingProductionStatus = false;
   bool _showActivationGuide = false;
 
   String _t(String key, String fallback) {
@@ -183,6 +190,31 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
 
   bool get _hasDatabaseEnabled => widget.project.hasDatabaseEnabled;
 
+  bool get _canEditCurrentEnvironment {
+    if (_environment == DbEnvironment.dev) return true;
+    final userId = context.read<AuthProvider>().user?.id;
+    if (widget.project.organizationId == null)
+      return userId == widget.project.userId;
+    final organizations =
+        context.read<OrganizationProvider>().context?.organizations ?? const [];
+    return organizations
+        .where((item) => item.id == widget.project.organizationId)
+        .any((item) => item.canManage);
+  }
+
+  bool _ensureWriteAllowed() {
+    if (_canEditCurrentEnvironment &&
+        !(_productionStatus?.isLegacyShared ?? false))
+      return true;
+    SnackBarHelper.showError(
+      context,
+      title: _t('error', 'Error'),
+      message:
+          'Production database editing is available only to the project or organization owner.',
+    );
+    return false;
+  }
+
   _DbTableMeta? get _selectedTableMeta {
     if (_selectedTableKey.trim().isEmpty) return null;
     return _tableMetaByKey[_selectedTableKey];
@@ -194,6 +226,7 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
       _showActivationGuide = false;
     });
 
+    await _loadProductionStatus();
     await _loadBranches();
     if (_showActivationGuide) {
       if (mounted) {
@@ -218,7 +251,10 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
     });
 
     try {
-      final branchData = await _service.getProjectDbBranches(widget.project.id);
+      final branchData = await _service.getProjectDbBranches(
+        widget.project.id,
+        environment: _environment,
+      );
       final branches = <_DbBranchItem>[];
       for (final b in branchData) {
         if (b is! Map) continue;
@@ -284,11 +320,27 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
     }
   }
 
+  Future<void> _loadProductionStatus() async {
+    if (_isLoadingProductionStatus) return;
+    setState(() => _isLoadingProductionStatus = true);
+    try {
+      final status = await _service.getProductionEnvironmentStatus(
+        widget.project.id,
+      );
+      if (mounted) setState(() => _productionStatus = status);
+    } catch (_) {
+      // Development remains fully usable when the status endpoint is temporarily unavailable.
+    } finally {
+      if (mounted) setState(() => _isLoadingProductionStatus = false);
+    }
+  }
+
   Future<void> _loadTables() async {
     try {
       final schemaData = await _service.getProjectDbSchema(
         widget.project.id,
         branch: _selectedBranch.trim().isEmpty ? null : _selectedBranch.trim(),
+        environment: _environment,
         withRowCounts: true,
         includeViews: true,
       );
@@ -473,6 +525,7 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
         selected.schema,
         selected.name,
         branch: _selectedBranch.trim().isEmpty ? null : _selectedBranch.trim(),
+        environment: _environment,
         limit: _rowsPageSize,
         offset: _rowsPageIndex * _rowsPageSize,
       );
@@ -607,6 +660,7 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
     required bool isInsert,
     Map<String, dynamic>? sourceRow,
   }) async {
+    if (!_ensureWriteAllowed()) return;
     final editable = table.columns
         .where((col) => !col.isPrimaryKey)
         .toList(growable: false);
@@ -701,6 +755,7 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                                 branch: _selectedBranch.trim().isEmpty
                                     ? null
                                     : _selectedBranch.trim(),
+                                environment: _environment,
                                 values: values,
                               );
                             } else {
@@ -712,6 +767,7 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                                 branch: _selectedBranch.trim().isEmpty
                                     ? null
                                     : _selectedBranch.trim(),
+                                environment: _environment,
                                 where: _buildRowWhere(table, sourceRow),
                                 values: values,
                               );
@@ -779,6 +835,7 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
   }
 
   Future<void> _deleteRow(_DbTableMeta table, Map<String, dynamic> row) async {
+    if (!_ensureWriteAllowed()) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
@@ -815,6 +872,7 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
         table.schema,
         table.name,
         branch: _selectedBranch.trim().isEmpty ? null : _selectedBranch.trim(),
+        environment: _environment,
         where: _buildRowWhere(table, row),
       );
       if (!mounted) return;
@@ -991,6 +1049,68 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
               ),
             ],
           ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: SegmentedButton<DbEnvironment>(
+                  segments: [
+                    const ButtonSegment(
+                      value: DbEnvironment.dev,
+                      label: Text('Development'),
+                    ),
+                    ButtonSegment(
+                      value: DbEnvironment.prod,
+                      enabled: _productionStatus?.canOpen ?? false,
+                      label: Text('Production'),
+                    ),
+                  ],
+                  selected: {_environment},
+                  onSelectionChanged: (values) =>
+                      unawaited(_handleEnvironmentChanged(values.first)),
+                ),
+              ),
+              if (_environment == DbEnvironment.dev &&
+                  !(_productionStatus?.canOpen ?? false))
+                Tooltip(
+                  message:
+                      'Production becomes available after a successful release.',
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: Icon(
+                      Icons.help_outline_rounded,
+                      size: 18,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              if (_environment == DbEnvironment.dev &&
+                  _productionStatus?.isReady == true) ...[
+                const SizedBox(width: 8),
+                OutlinedButton(
+                  onPressed: _openPromotionDialog,
+                  child: const Text('Migrate to production'),
+                ),
+              ],
+            ],
+          ),
+          if (_environment == DbEnvironment.prod &&
+              _productionStatus?.isLegacyShared == true)
+            const Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: Text(
+                'This project still shares its legacy development database. Production is read-only and migration is unavailable.',
+              ),
+            ),
+          if (_environment == DbEnvironment.dev &&
+              !(_productionStatus?.canOpen ?? false) &&
+              !_isLoadingProductionStatus)
+            const Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: Text(
+                'Production becomes available after a successful release.',
+              ),
+            ),
           const SizedBox(height: 10),
           Row(
             children: [
@@ -1679,6 +1799,192 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
       _rowsPageIndex = 0;
     });
     await _refreshActiveTab();
+  }
+
+  Future<void> _handleEnvironmentChanged(DbEnvironment next) async {
+    if (next == _environment) return;
+    if (next == DbEnvironment.prod && !(_productionStatus?.canOpen ?? false))
+      return;
+    setState(() {
+      _environment = next;
+      _selectedBranch = '';
+      _selectedTableKey = '';
+      _rows.clear();
+      _tables.clear();
+      _tableMetaByKey.clear();
+      _migrationPlans.clear();
+      _rowsPageIndex = 0;
+    });
+    await _loadBranches();
+    await _refreshActiveTab();
+  }
+
+  Future<void> _openPromotionDialog() async {
+    DatabasePromotionPreflight? preflight;
+    String? error;
+    var loading = true;
+    var destructiveConfirmed = false;
+    var copyData = false;
+    try {
+      preflight = await _service.getDatabasePromotionPreflight(
+        widget.project.id,
+        sourceBranch: _selectedBranch.isEmpty ? null : _selectedBranch,
+      );
+    } catch (cause) {
+      error = humanizeError(cause);
+    }
+    loading = false;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final blockedDataCopy =
+              copyData &&
+              (preflight?.tablesWithoutPrimaryKey.isNotEmpty ?? false);
+          return AlertDialog(
+            title: const Text('Migrate to production'),
+            content: SizedBox(
+              width: 520,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Migrate database structure',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Required. Development schema changes are reviewed before production is changed.',
+                    ),
+                    if (loading)
+                      const Padding(
+                        padding: EdgeInsets.all(20),
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else if (error != null)
+                      Text(
+                        error!,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      )
+                    else if (preflight != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        '${preflight!.addedTables} tables added, ${preflight!.changedTables} changed, ${preflight!.removedTables} removed.',
+                      ),
+                      if (preflight!.destructive)
+                        CheckboxListTile(
+                          contentPadding: EdgeInsets.zero,
+                          value: destructiveConfirmed,
+                          onChanged: (value) => setDialogState(
+                            () => destructiveConfirmed = value == true,
+                          ),
+                          title: const Text(
+                            'I confirm destructive schema changes',
+                          ),
+                          subtitle: const Text(
+                            'This includes dropped tables, columns, or narrowed types.',
+                          ),
+                        ),
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        value: copyData,
+                        onChanged: (value) =>
+                            setDialogState(() => copyData = value == true),
+                        title: const Text(
+                          'Copy newly created development data',
+                        ),
+                        subtitle: const Text(
+                          'Production rows are never overwritten. Missing primary keys or conflicts abort this data step.',
+                        ),
+                      ),
+                      if (blockedDataCopy)
+                        Text(
+                          'Data copy is blocked: ${preflight!.tablesWithoutPrimaryKey.join(', ')}',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: Text(_t('cancel', 'Cancel')),
+              ),
+              FilledButton(
+                onPressed:
+                    loading ||
+                        error != null ||
+                        blockedDataCopy ||
+                        (preflight?.destructive == true &&
+                            !destructiveConfirmed)
+                    ? null
+                    : () async {
+                        try {
+                          final job = await _service.startDatabasePromotion(
+                            widget.project.id,
+                            sourceBranch: _selectedBranch.isEmpty
+                                ? null
+                                : _selectedBranch,
+                            confirmDestructiveSchema: destructiveConfirmed,
+                            copyNewData: copyData,
+                          );
+                          if (!dialogContext.mounted) return;
+                          Navigator.of(dialogContext).pop();
+                          unawaited(_watchPromotion(job));
+                        } catch (cause) {
+                          setDialogState(() => error = humanizeError(cause));
+                        }
+                      },
+                child: const Text('Start migration'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _watchPromotion(DatabasePromotionJob job) async {
+    var current = job;
+    String? lastPhase;
+    while (mounted && current.isActive) {
+      if (current.phase != lastPhase) {
+        lastPhase = current.phase;
+        SnackBarHelper.showInfo(
+          context,
+          title: 'Database migration',
+          message: 'Working: ${current.phase.replaceAll('_', ' ')}',
+        );
+      }
+      await Future<void>.delayed(const Duration(seconds: 2));
+      try {
+        current = await _service.getDatabasePromotionStatus(
+          widget.project.id,
+          current.id,
+        );
+      } catch (_) {
+        break;
+      }
+    }
+    if (!mounted) return;
+    SnackBarHelper.showInfo(
+      context,
+      title: current.isSucceeded
+          ? _t('success', 'Success')
+          : _t('error', 'Error'),
+      message: current.isSucceeded
+          ? 'Database migration completed.'
+          : (current.errorMessage ?? 'Database migration did not finish.'),
+    );
+    if (current.isSucceeded) await _refreshActiveTab();
   }
 
   Future<void> _refreshActiveTab() async {
@@ -2441,11 +2747,7 @@ class _EnableDatabaseCard extends StatelessWidget {
     final theme = Theme.of(context);
     return ProjectActivationPanel(
       icon: Icons.storage_rounded,
-      title: _t(
-        context,
-        'project_database_enable_title',
-        'Enable Database',
-      ),
+      title: _t(context, 'project_database_enable_title', 'Enable Database'),
       description: _t(
         context,
         'project_database_enable_hint',
@@ -2457,28 +2759,15 @@ class _EnableDatabaseCard extends StatelessWidget {
           'project_database_feature_serverless',
           'Serverless Postgres on Neon',
         ),
-        _t(
-          context,
-          'project_database_feature_ssl',
-          'Secure SSL connections',
-        ),
-        _t(
-          context,
-          'project_database_feature_branching',
-          'Branching support',
-        ),
+        _t(context, 'project_database_feature_ssl', 'Secure SSL connections'),
+        _t(context, 'project_database_feature_branching', 'Branching support'),
       ],
       actionLabel: enabling
           ? _t(context, 'project_database_enabling', 'Enabling...')
-          : _t(
-              context,
-              'project_database_enable_action',
-              'Enable Database',
-            ),
+          : _t(context, 'project_database_enable_action', 'Enable Database'),
       isLoading: enabling,
       onPressed: onEnable,
       accentColor: theme.colorScheme.primary,
     );
   }
 }
-

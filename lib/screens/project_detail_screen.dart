@@ -24,6 +24,7 @@ import '../widgets/project_database/project_database_tab.dart';
 import '../widgets/project_deploy/project_deploy_tab.dart';
 import '../widgets/project_overview/project_overview_tab.dart';
 import '../widgets/project_payment/project_payment_tab.dart';
+import '../widgets/project_storage/project_storage_tab.dart';
 import 'settings/profile_tab.dart';
 import '../widgets/editor_preferences_dialog.dart';
 import '../widgets/d1v_tab_bar_view.dart';
@@ -100,6 +101,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
       'Analytics',
       Icons.query_stats_rounded,
     ),
+    _TabItem('project_detail_tab_storage', 'Storage', Icons.folder_outlined),
     _TabItem(
       'project_detail_tab_overview',
       'Overview',
@@ -191,8 +193,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         return 4;
       case 'analytics':
         return 5;
-      case 'overview':
+      case 'storage':
+      case 'files':
         return 6;
+      case 'overview':
+        return 7;
       default:
         return 0;
     }
@@ -507,6 +512,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           onAskAi: _handleAskAi,
           onRefreshProject: _loadProject,
         ),
+        ProjectStorageTab(project: project),
         ProjectOverviewTab(
           project: project,
           onRefreshProject: _loadProject,
@@ -589,31 +595,16 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   }
 
   Widget _buildProjectSectionNavigation({bool compact = false}) {
-    return AnimatedBuilder(
-      animation: _tabController,
-      builder: (context, _) {
-        final selectedIndex = _tabController.index;
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          padding: EdgeInsets.symmetric(horizontal: compact ? 2 : 8),
-          child: Row(
-            children: [
-              for (var index = 0; index < _tabs.length; index++)
-                SizedBox(
-                  width: compact ? 76 : 96,
-                  child: _ProjectSectionButton(
-                    label: _t(_tabs[index].labelKey, _tabs[index].fallback),
-                    icon: _tabs[index].icon,
-                    selected: selectedIndex == index,
-                    compact: compact,
-                    onTap: () => _tabController.animateTo(index),
-                  ),
-                ),
-            ],
+    return _ProjectSectionNavigation(
+      controller: _tabController,
+      compact: compact,
+      items: [
+        for (final tab in _tabs)
+          _ProjectNavigationItem(
+            label: _t(tab.labelKey, tab.fallback),
+            icon: tab.icon,
           ),
-        );
-      },
+      ],
     );
   }
 
@@ -785,8 +776,6 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                         onShowBindEmailDialog: _showBindEmailDialog,
                         onShowResetPasswordDialog: _showResetPasswordDialog,
                         onShowAboutDialog: _showAboutDialog,
-                        onShowDeveloperSettings: () =>
-                            context.go('/settings?tab=developer'),
                       ),
                     ),
                   ],
@@ -1283,17 +1272,179 @@ class _MacosHeaderBackButton extends StatelessWidget {
   }
 }
 
+class _ProjectNavigationItem {
+  final String label;
+  final IconData icon;
+
+  const _ProjectNavigationItem({required this.label, required this.icon});
+}
+
+class _ProjectSectionNavigation extends StatefulWidget {
+  final TabController controller;
+  final List<_ProjectNavigationItem> items;
+  final bool compact;
+
+  const _ProjectSectionNavigation({
+    required this.controller,
+    required this.items,
+    required this.compact,
+  });
+
+  @override
+  State<_ProjectSectionNavigation> createState() =>
+      _ProjectSectionNavigationState();
+}
+
+class _ProjectSectionNavigationState extends State<_ProjectSectionNavigation> {
+  late final ScrollController _scrollController;
+  Animation<double>? _tabAnimation;
+  int _focusedIndex = -1;
+
+  double get _itemWidth => widget.compact ? 76 : 96;
+  double get _horizontalPadding => widget.compact ? 2 : 8;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController()..addListener(_onScroll);
+    _attachTabAnimation();
+    _focusedIndex = widget.controller.index;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _focusActiveTab());
+  }
+
+  @override
+  void didUpdateWidget(covariant _ProjectSectionNavigation oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      _tabAnimation?.removeListener(_onTabProgress);
+      _attachTabAnimation();
+      _focusedIndex = widget.controller.index;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _focusActiveTab());
+    }
+  }
+
+  void _attachTabAnimation() {
+    _tabAnimation = widget.controller.animation;
+    _tabAnimation?.addListener(_onTabProgress);
+  }
+
+  void _onScroll() {
+    if (mounted) setState(() {});
+  }
+
+  void _onTabProgress() {
+    if (!mounted) return;
+    final index = (_tabAnimation?.value ?? widget.controller.index.toDouble())
+        .round()
+        .clamp(0, widget.items.length - 1);
+    if (index != _focusedIndex) {
+      _focusedIndex = index;
+      _focusActiveTab(index);
+    }
+    setState(() {});
+  }
+
+  void _focusActiveTab([int? requestedIndex]) {
+    if (!_scrollController.hasClients) return;
+    final index = requestedIndex ?? widget.controller.index;
+    final position = _scrollController.position;
+    final target =
+        (_horizontalPadding +
+                index * _itemWidth -
+                (position.viewportDimension - _itemWidth) / 2)
+            .clamp(position.minScrollExtent, position.maxScrollExtent)
+            .toDouble();
+    if ((position.pixels - target).abs() < 2) return;
+    _scrollController.animateTo(
+      target,
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  @override
+  void dispose() {
+    _tabAnimation?.removeListener(_onTabProgress);
+    _scrollController
+      ..removeListener(_onScroll)
+      ..dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tabPosition =
+        _tabAnimation?.value ?? widget.controller.index.toDouble();
+    const indicatorWidth = 24.0;
+    final indicatorLeft =
+        _horizontalPadding +
+        tabPosition * _itemWidth +
+        (_itemWidth - indicatorWidth) / 2 -
+        (_scrollController.hasClients ? _scrollController.offset : 0);
+    final color = Theme.of(context).colorScheme.primary;
+
+    return Stack(
+      clipBehavior: Clip.hardEdge,
+      children: [
+        SingleChildScrollView(
+          controller: _scrollController,
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.symmetric(horizontal: _horizontalPadding),
+          child: Row(
+            children: [
+              for (var index = 0; index < widget.items.length; index++)
+                SizedBox(
+                  width: _itemWidth,
+                  child: _ProjectSectionButton(
+                    label: widget.items[index].label,
+                    icon: widget.items[index].icon,
+                    selectionProgress: (1 - (tabPosition - index).abs())
+                        .clamp(0.0, 1.0)
+                        .toDouble(),
+                    compact: widget.compact,
+                    onTap: () => widget.controller.animateTo(index),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        Positioned(
+          left: indicatorLeft,
+          bottom: widget.compact ? 2 : 3,
+          child: IgnorePointer(
+            child: Container(
+              width: indicatorWidth,
+              height: 2.5,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(99),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.22),
+                    blurRadius: 5,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _ProjectSectionButton extends StatelessWidget {
   final String label;
   final IconData icon;
-  final bool selected;
+  final double selectionProgress;
   final bool compact;
   final VoidCallback onTap;
 
   const _ProjectSectionButton({
     required this.label,
     required this.icon,
-    required this.selected,
+    required this.selectionProgress,
     required this.compact,
     required this.onTap,
   });
@@ -1302,56 +1453,77 @@ class _ProjectSectionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final selected = selectionProgress >= 0.5;
+    final activeColor = Color.lerp(
+      colorScheme.onSurfaceVariant,
+      colorScheme.primary,
+      selectionProgress,
+    )!;
+    final labelColor = Color.lerp(
+      colorScheme.onSurfaceVariant,
+      colorScheme.onSurface,
+      selectionProgress,
+    )!;
 
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: label,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 160),
-            curve: Curves.easeOutCubic,
-            padding: EdgeInsets.symmetric(horizontal: compact ? 4 : 8),
-            decoration: BoxDecoration(
-              color: selected
-                  ? colorScheme.primary.withValues(alpha: compact ? 0.08 : 0.06)
-                  : Colors.transparent,
-              border: Border(
-                bottom: BorderSide(
-                  width: compact ? 1.5 : 2,
-                  color: selected ? colorScheme.primary : Colors.transparent,
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        button: true,
+        selected: selected,
+        label: label,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(compact ? 8 : 10),
+            onTap: onTap,
+            child: Transform.scale(
+              scale: 0.985 + selectionProgress * 0.015,
+              child: Container(
+                margin: const EdgeInsets.symmetric(vertical: 3),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(
+                    alpha: (compact ? 0.10 : 0.08) * selectionProgress,
+                  ),
+                  borderRadius: BorderRadius.circular(compact ? 8 : 10),
+                ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.only(
+                        left: compact ? 4 : 8,
+                        right: compact ? 4 : 8,
+                        bottom: compact ? 7 : 8,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            icon,
+                            size: compact ? 13 : 16,
+                            color: activeColor,
+                          ),
+                          SizedBox(width: compact ? 3 : 6),
+                          Flexible(
+                            child: Text(
+                              label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.labelMedium?.copyWith(
+                                fontSize: compact ? 10 : 11.5,
+                                color: labelColor,
+                                fontWeight: selected
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  size: compact ? 13 : 16,
-                  color: selected
-                      ? colorScheme.primary
-                      : colorScheme.onSurfaceVariant,
-                ),
-                SizedBox(width: compact ? 3 : 6),
-                Flexible(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      fontSize: compact ? 10 : 11.5,
-                      color: selected
-                          ? colorScheme.onSurface
-                          : colorScheme.onSurfaceVariant,
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
             ),
           ),
         ),

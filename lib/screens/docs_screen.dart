@@ -5,12 +5,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/theme/locale_font_helper.dart';
 import '../utils/desktop_layout.dart';
+import '../utils/navigation_utils.dart';
 import '../widgets/snackbar_helper.dart';
 import '../widgets/share_sheet.dart';
+import '../core/theme/app_colors.dart';
+import '../widgets/settings/settings_entry_hero.dart';
 import '../l10n/app_localizations.dart';
 
 class DocsScreen extends StatefulWidget {
-  const DocsScreen({super.key});
+  final bool showSupportCta;
+
+  const DocsScreen({super.key, this.showSupportCta = false});
 
   @override
   State<DocsScreen> createState() => _DocsScreenState();
@@ -20,6 +25,7 @@ class _DocsScreenState extends State<DocsScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   static const _prefsKeyRecent = 'docs_recent_slugs';
+  static const _supportEmail = 'support@d1v.ai';
   late final Future<SharedPreferences> _prefsFuture;
   List<String> _recentSlugs = <String>[];
 
@@ -196,12 +202,34 @@ class _DocsScreenState extends State<DocsScreen> {
     final hasRecent = _recentSlugs.isNotEmpty;
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          _t('docs_title', 'Documentation'),
-          style: LocaleFontHelper.localizedTitleStyle(
-            context,
-            theme.textTheme.titleLarge,
-          ),
+        title: Row(
+          children: [
+            if (widget.showSupportCta) ...[
+              const SettingsEntryHero(
+                tag: SettingsEntryHero.helpSupportTag,
+                icon: Icons.help,
+                color: AppColors.success,
+              ),
+              const SizedBox(width: 10),
+            ],
+            Expanded(
+              child: Text(
+                widget.showSupportCta
+                    ? _t('help_support', 'Help & Support')
+                    : _t('docs_title', 'Documentation'),
+                style: LocaleFontHelper.localizedTitleStyle(
+                  context,
+                  theme.textTheme.titleLarge,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        leading: IconButton(
+          tooltip: _t('back', 'Back'),
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => NavigationUtils.popOrGo(context, '/settings/help'),
         ),
       ),
       body: ColoredBox(
@@ -250,7 +278,7 @@ class _DocsScreenState extends State<DocsScreen> {
                           Expanded(
                             flex: 6,
                             child: SingleChildScrollView(
-                              child: _buildDocsCatalog(context),
+                              child: _buildCatalogWithSupportCta(context),
                             ),
                           ),
                         ],
@@ -262,7 +290,7 @@ class _DocsScreenState extends State<DocsScreen> {
                           const SizedBox(height: 18),
                           Expanded(
                             child: SingleChildScrollView(
-                              child: _buildDocsCatalog(context),
+                              child: _buildCatalogWithSupportCta(context),
                             ),
                           ),
                         ],
@@ -273,12 +301,24 @@ class _DocsScreenState extends State<DocsScreen> {
                 children: [
                   _buildSearchField(context),
                   const SizedBox(height: 14),
-                  _buildDocsCatalog(context),
+                  _buildCatalogWithSupportCta(context),
                 ],
               ),
       ),
     );
   }
+
+  Widget _buildCatalogWithSupportCta(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _buildDocsCatalog(context),
+      if (widget.showSupportCta) ...[
+        const SizedBox(height: 28),
+        _buildSupportCta(context),
+        const SizedBox(height: 20),
+      ],
+    ],
+  );
 
   Widget _buildDocsCatalog(BuildContext context) {
     final showRecent = _searchController.text.trim().isEmpty;
@@ -622,6 +662,84 @@ class _DocsScreenState extends State<DocsScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildSupportCta(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: .72)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            _t('help_support_cta_title', 'Still need help?'),
+            style: LocaleFontHelper.localizedTitleStyle(
+              context,
+              theme.textTheme.titleMedium,
+            )?.copyWith(fontWeight: FontWeight.w700),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _t(
+              'help_support_cta_subtitle',
+              'Our support team is here to assist you',
+            ),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colors.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          FilledButton.icon(
+            onPressed: () => _launchSupportEmail(context),
+            icon: const Icon(Icons.email_outlined),
+            label: Text(_t('contact_support', 'Contact Support')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _launchSupportEmail(BuildContext context) async {
+    final emailUri = Uri(
+      scheme: 'mailto',
+      path: _supportEmail,
+      query: 'subject=Help & Support Request',
+    );
+    try {
+      if (await canLaunchUrl(emailUri)) {
+        await launchUrl(emailUri);
+        return;
+      }
+      if (context.mounted) {
+        SnackBarHelper.showError(
+          context,
+          title: _t('error', 'Error'),
+          message: _t(
+            'help_support_email_open_failed',
+            'Could not open email app. Please email us at {email}',
+          ).replaceAll('{email}', _supportEmail),
+        );
+      }
+    } catch (error) {
+      if (context.mounted) {
+        SnackBarHelper.showError(
+          context,
+          title: _t('error', 'Error'),
+          message: _t(
+            'help_support_email_open_error',
+            'Failed to open email: {error}',
+          ).replaceAll('{error}', error.toString()),
+        );
+      }
+    }
   }
 
   void _navigateToDoc(BuildContext context, String href) async {

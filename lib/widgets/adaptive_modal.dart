@@ -28,7 +28,10 @@ Future<T?> showAdaptiveModal<T>({
       isScrollControlled: isScrollControlled,
       useSafeArea: useSafeArea,
       backgroundColor: Colors.transparent,
-      builder: builder,
+      builder: (sheetContext) => _BottomSheetDismissRegion(
+        dismissible: barrierDismissible,
+        child: builder(sheetContext),
+      ),
     );
   }
 
@@ -58,7 +61,37 @@ Future<T?> showAdaptiveDraggableSheet<T>({
     useSafeArea: false,
     backgroundColor: Colors.transparent,
     barrierColor: barrierColor,
-    builder: builder,
+    builder: (sheetContext) => _BottomSheetDismissRegion(
+      dismissible: barrierDismissible,
+      child: builder(sheetContext),
+    ),
+  );
+}
+
+/// A bottom-sheet builder can intentionally occupy the full available height
+/// (for example with [DraggableScrollableSheet]). Keep a transparent dismiss
+/// target behind its visible surface so the exposed area always closes it.
+class _BottomSheetDismissRegion extends StatelessWidget {
+  final bool dismissible;
+  final Widget child;
+
+  const _BottomSheetDismissRegion({
+    required this.dismissible,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) => Stack(
+    fit: StackFit.expand,
+    children: [
+      Positioned.fill(
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: dismissible ? () => Navigator.of(context).maybePop() : null,
+        ),
+      ),
+      child,
+    ],
   );
 }
 

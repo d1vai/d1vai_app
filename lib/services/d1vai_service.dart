@@ -10,6 +10,7 @@ import '../models/prompt_activity.dart';
 
 import '../models/deployment.dart';
 import '../models/project_custom_domain.dart';
+import '../models/production_workflows.dart';
 import 'cache_service.dart';
 
 class D1vaiService {
@@ -685,6 +686,53 @@ class D1vaiService {
   // Storage Methods - 存储相关方法
   // ============================================
 
+  /// Project-managed storage integration state shown on the project Storage tab.
+  Future<Map<String, dynamic>> getProjectStorageStatus(String projectId) {
+    return _apiClient.get<Map<String, dynamic>>(
+      '/api/projects/$projectId/integrations/storage-status',
+    );
+  }
+
+  /// The provider-backed managed file list for the project Storage tab.
+  Future<List<Map<String, dynamic>>> getProjectStorageFiles(
+    String projectId,
+  ) async {
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      '/api/projects/$projectId/integrations/storage-files',
+    );
+    final raw = response['files'];
+    return (raw is List ? raw : const <dynamic>[])
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList(growable: false);
+  }
+
+  Future<void> ensureProjectStorage(String projectId) async {
+    await _apiClient.post<dynamic>(
+      '/api/projects/$projectId/integrations/ensure',
+      {'storage': true},
+    );
+  }
+
+  Future<void> deleteManagedProjectStorageFile(
+    String projectId,
+    String fileId,
+  ) async {
+    await _apiClient.delete<dynamic>(
+      '/api/projects/$projectId/integrations/storage-files/${Uri.encodeComponent(fileId)}',
+    );
+  }
+
+  Future<Uint8List> getManagedProjectStorageFilePreview(
+    String projectId,
+    String fileId,
+  ) {
+    return _apiClient.getBytes(
+      '/api/projects/$projectId/integrations/storage-files/${Uri.encodeComponent(fileId)}',
+      timeout: const Duration(seconds: 30),
+    );
+  }
+
   /// 获取项目存储结构
   Future<Map<String, dynamic>> getProjectStorageStructure(
     String projectId, {
@@ -955,12 +1003,14 @@ class D1vaiService {
   Future<Map<String, dynamic>> getProjectDbSchema(
     String projectId, {
     String? branch,
+    DbEnvironment environment = DbEnvironment.dev,
     bool includeViews = false,
     bool withRowCounts = false,
     bool includeSystemSchemas = false,
   }) async {
     final queryParams = <String, String>{};
     if (branch != null) queryParams['branch'] = branch;
+    queryParams['environment'] = environment.wireValue;
     if (includeViews) queryParams['include_views'] = 'true';
     if (withRowCounts) queryParams['with_row_counts'] = 'true';
     if (includeSystemSchemas) {
@@ -977,6 +1027,7 @@ class D1vaiService {
   Future<Map<String, dynamic>> getProjectDbData(
     String projectId, {
     String? branch,
+    DbEnvironment environment = DbEnvironment.dev,
     int limitPerTable = 100,
     bool includeViews = false,
     bool includeSystemSchemas = false,
@@ -985,6 +1036,7 @@ class D1vaiService {
       'limit_per_table': limitPerTable.toString(),
     };
     if (branch != null) queryParams['branch'] = branch;
+    queryParams['environment'] = environment.wireValue;
     if (includeViews) queryParams['include_views'] = 'true';
     if (includeSystemSchemas) {
       queryParams['include_system_schemas'] = 'true';
@@ -1002,6 +1054,7 @@ class D1vaiService {
     String schema,
     String table, {
     String? branch,
+    DbEnvironment environment = DbEnvironment.dev,
     int limit = 100,
     int offset = 0,
     String? filters,
@@ -1011,6 +1064,7 @@ class D1vaiService {
       'offset': offset.toString(),
     };
     if (branch != null) queryParams['branch'] = branch;
+    queryParams['environment'] = environment.wireValue;
     if (filters != null) queryParams['filters'] = filters;
 
     return _apiClient.get<List<dynamic>>(
@@ -1027,6 +1081,7 @@ class D1vaiService {
     String? schemaName,
     List<String>? primaryKey,
     String? branch,
+    DbEnvironment environment = DbEnvironment.dev,
   }) async {
     return _apiClient
         .post<Map<String, dynamic>>('/api/projects/$projectId/db/tables', {
@@ -1035,6 +1090,7 @@ class D1vaiService {
           if (schemaName != null) 'schema_name': schemaName,
           if (primaryKey != null) 'primary_key': primaryKey,
           if (branch != null) 'branch': branch,
+          'environment': environment.wireValue,
         });
   }
 
@@ -1045,10 +1101,15 @@ class D1vaiService {
     String table, {
     required String newTableName,
     String? branch,
+    DbEnvironment environment = DbEnvironment.dev,
   }) async {
     return _apiClient.post<Map<String, dynamic>>(
       '/api/projects/$projectId/db/tables/$schema/$table/rename',
-      {'new_table_name': newTableName, if (branch != null) 'branch': branch},
+      {
+        'new_table_name': newTableName,
+        if (branch != null) 'branch': branch,
+        'environment': environment.wireValue,
+      },
     );
   }
 
@@ -1059,10 +1120,15 @@ class D1vaiService {
     String table, {
     required Map<String, dynamic> values,
     String? branch,
+    DbEnvironment environment = DbEnvironment.dev,
   }) async {
     return _apiClient.post<Map<String, dynamic>>(
       '/api/projects/$projectId/db/tables/$schema/$table/rows',
-      {'values': values, if (branch != null) 'branch': branch},
+      {
+        'values': values,
+        if (branch != null) 'branch': branch,
+        'environment': environment.wireValue,
+      },
     );
   }
 
@@ -1074,10 +1140,16 @@ class D1vaiService {
     required Map<String, dynamic> where,
     required Map<String, dynamic> values,
     String? branch,
+    DbEnvironment environment = DbEnvironment.dev,
   }) async {
     return _apiClient.patch<Map<String, dynamic>>(
       '/api/projects/$projectId/db/tables/$schema/$table/rows',
-      {'where': where, 'values': values, if (branch != null) 'branch': branch},
+      {
+        'where': where,
+        'values': values,
+        if (branch != null) 'branch': branch,
+        'environment': environment.wireValue,
+      },
     );
   }
 
@@ -1088,17 +1160,86 @@ class D1vaiService {
     String table, {
     required Map<String, dynamic> where,
     String? branch,
+    DbEnvironment environment = DbEnvironment.dev,
   }) async {
     return _apiClient.post<Map<String, dynamic>>(
       '/api/projects/$projectId/db/tables/$schema/$table/rows/delete',
-      {'where': where, if (branch != null) 'branch': branch},
+      {
+        'where': where,
+        if (branch != null) 'branch': branch,
+        'environment': environment.wireValue,
+      },
     );
   }
 
   /// 获取项目数据库分支列表
-  Future<List<dynamic>> getProjectDbBranches(String projectId) async {
+  Future<List<dynamic>> getProjectDbBranches(
+    String projectId, {
+    DbEnvironment environment = DbEnvironment.dev,
+  }) async {
     return _apiClient.get<List<dynamic>>(
       '/api/projects/$projectId/db/branches',
+      queryParams: {'environment': environment.wireValue},
+    );
+  }
+
+  Future<ProductionEnvironmentStatus> getProductionEnvironmentStatus(
+    String projectId,
+  ) {
+    return _apiClient.get<ProductionEnvironmentStatus>(
+      '/api/projects/$projectId/env-vars/production-status',
+      fromJsonT: (json) => ProductionEnvironmentStatus.fromJson(
+        Map<String, dynamic>.from(json as Map),
+      ),
+    );
+  }
+
+  Future<DatabasePromotionPreflight> getDatabasePromotionPreflight(
+    String projectId, {
+    String? sourceBranch,
+    String? targetBranch,
+  }) {
+    return _apiClient.get<DatabasePromotionPreflight>(
+      '/api/projects/$projectId/db/promotions/preflight',
+      queryParams: {
+        if (sourceBranch != null) 'source_branch': sourceBranch,
+        if (targetBranch != null) 'target_branch': targetBranch,
+      },
+      fromJsonT: (json) => DatabasePromotionPreflight.fromJson(
+        Map<String, dynamic>.from(json as Map),
+      ),
+    );
+  }
+
+  Future<DatabasePromotionJob> startDatabasePromotion(
+    String projectId, {
+    String? sourceBranch,
+    String? targetBranch,
+    required bool confirmDestructiveSchema,
+    required bool copyNewData,
+  }) {
+    return _apiClient.post<DatabasePromotionJob>(
+      '/api/projects/$projectId/db/promotions',
+      {
+        if (sourceBranch != null) 'source_branch': sourceBranch,
+        if (targetBranch != null) 'target_branch': targetBranch,
+        'apply_schema': true,
+        'confirm_destructive_schema': confirmDestructiveSchema,
+        'copy_new_data': copyNewData,
+      },
+      fromJsonT: (json) =>
+          DatabasePromotionJob.fromJson(Map<String, dynamic>.from(json as Map)),
+    );
+  }
+
+  Future<DatabasePromotionJob> getDatabasePromotionStatus(
+    String projectId,
+    String promotionId,
+  ) {
+    return _apiClient.get<DatabasePromotionJob>(
+      '/api/projects/$projectId/db/promotions/$promotionId',
+      fromJsonT: (json) =>
+          DatabasePromotionJob.fromJson(Map<String, dynamic>.from(json as Map)),
     );
   }
 
@@ -1675,6 +1816,129 @@ class D1vaiService {
     );
   }
 
+  Future<List<dynamic>> getPayWebhooks(String projectId) =>
+      _apiClient.get<List<dynamic>>('/api/projects/$projectId/pay/webhooks');
+
+  Future<Map<String, dynamic>> createPayWebhook(
+    String projectId, {
+    required String name,
+    required String url,
+    required List<String> events,
+    bool isActive = true,
+  }) => _apiClient.post<Map<String, dynamic>>(
+    '/api/projects/$projectId/pay/webhooks',
+    {'name': name, 'url': url, 'events': events, 'isActive': isActive},
+  );
+
+  Future<Map<String, dynamic>> updatePayWebhook(
+    String projectId,
+    String webhookId,
+    Map<String, dynamic> payload,
+  ) => _apiClient.patch<Map<String, dynamic>>(
+    '/api/projects/$projectId/pay/webhooks/$webhookId',
+    payload,
+  );
+
+  Future<Map<String, dynamic>> regeneratePayWebhookSecret(
+    String projectId,
+    String webhookId,
+  ) => _apiClient.post<Map<String, dynamic>>(
+    '/api/projects/$projectId/pay/webhooks/$webhookId/regenerate-secret',
+    const {},
+  );
+
+  Future<void> deletePayWebhook(String projectId, String webhookId) =>
+      _apiClient.delete<void>(
+        '/api/projects/$projectId/pay/webhooks/$webhookId',
+      );
+
+  Future<List<dynamic>> getPayBankAccounts(String projectId) => _apiClient
+      .get<List<dynamic>>('/api/projects/$projectId/pay/bank-accounts');
+
+  Future<Map<String, dynamic>> createPayBankAccount(
+    String projectId,
+    Map<String, dynamic> payload,
+  ) => _apiClient.post<Map<String, dynamic>>(
+    '/api/projects/$projectId/pay/bank-accounts',
+    payload,
+  );
+
+  Future<void> setDefaultPayBankAccount(String projectId, String bankId) =>
+      _apiClient.put<void>(
+        '/api/projects/$projectId/pay/bank-accounts/$bankId/set-default',
+        const {},
+      );
+
+  Future<void> deletePayBankAccount(String projectId, String bankId) =>
+      _apiClient.delete<void>(
+        '/api/projects/$projectId/pay/bank-accounts/$bankId',
+      );
+
+  Future<List<dynamic>> getPayWithdrawals(String projectId) async {
+    try {
+      return await _apiClient.get<List<dynamic>>(
+        '/api/projects/$projectId/pay/withdrawals',
+      );
+    } catch (_) {
+      return _apiClient.get<List<dynamic>>(
+        '/api/projects/$projectId/pay/withdrawal-requests',
+      );
+    }
+  }
+
+  Future<Map<String, dynamic>> createPayWithdrawal(
+    String projectId,
+    Map<String, dynamic> payload,
+  ) async {
+    try {
+      return await _apiClient.post<Map<String, dynamic>>(
+        '/api/projects/$projectId/pay/withdrawals',
+        payload,
+      );
+    } catch (_) {
+      return _apiClient.post<Map<String, dynamic>>(
+        '/api/projects/$projectId/pay/withdrawal-requests',
+        payload,
+      );
+    }
+  }
+
+  Future<List<dynamic>> getProjectNotificationRules(String projectId) =>
+      _apiClient.get<List<dynamic>>(
+        '/api/projects/$projectId/notification-rules',
+      );
+
+  Future<Map<String, dynamic>> createProjectNotificationRule(
+    String projectId,
+    Map<String, dynamic> payload,
+  ) => _apiClient.post<Map<String, dynamic>>(
+    '/api/projects/$projectId/notification-rules',
+    payload,
+  );
+
+  Future<Map<String, dynamic>> updateProjectNotificationRule(
+    String projectId,
+    int ruleId,
+    Map<String, dynamic> payload,
+  ) => _apiClient.patch<Map<String, dynamic>>(
+    '/api/projects/$projectId/notification-rules/$ruleId',
+    payload,
+  );
+
+  Future<void> deleteProjectNotificationRule(String projectId, int ruleId) =>
+      _apiClient.delete<void>(
+        '/api/projects/$projectId/notification-rules/$ruleId',
+      );
+
+  Future<Map<String, dynamic>> testProjectNotificationRule(
+    String projectId,
+    int ruleId, {
+    String? eventType,
+  }) => _apiClient.post<Map<String, dynamic>>(
+    '/api/projects/$projectId/notification-rules/$ruleId/test',
+    {if (eventType != null) 'event_type': eventType},
+  );
+
   // ============================================
   // Environment Variables Methods - 环境变量方法
   // ============================================
@@ -1825,6 +2089,62 @@ class D1vaiService {
     if (nested is Map<String, dynamic>) return nested;
     if (nested is Map) return nested.cast<String, dynamic>();
     return response;
+  }
+
+  Future<ReleasePreflight> getReleasePreflight(String projectId) {
+    return _apiClient.get<ReleasePreflight>(
+      '/api/deployment/$projectId/release-preflight',
+      fromJsonT: (json) =>
+          ReleasePreflight.fromJson(Map<String, dynamic>.from(json as Map)),
+    );
+  }
+
+  Future<ProductionRelease> createProductionRelease(
+    String projectId, {
+    String? expectedDevCommitSha,
+    required bool confirmManagedReuse,
+    required bool copyDevelopmentData,
+    required List<ReleaseEnvDecision> environmentDecisions,
+  }) {
+    return _apiClient.post<ProductionRelease>(
+      '/api/deployment/$projectId/releases',
+      {
+        'idempotency_key':
+            'app-$projectId-${DateTime.now().microsecondsSinceEpoch}',
+        if ((expectedDevCommitSha ?? '').trim().isNotEmpty)
+          'expected_dev_commit_sha': expectedDevCommitSha,
+        'confirm_managed_reuse': confirmManagedReuse,
+        'copy_development_data': copyDevelopmentData,
+        'environment_decisions': environmentDecisions
+            .map((item) => item.toJson())
+            .toList(growable: false),
+      },
+      fromJsonT: (json) =>
+          ProductionRelease.fromJson(Map<String, dynamic>.from(json as Map)),
+    );
+  }
+
+  Future<ProductionRelease> getProductionRelease(
+    String projectId,
+    String releaseId,
+  ) {
+    return _apiClient.get<ProductionRelease>(
+      '/api/deployment/$projectId/releases/$releaseId',
+      fromJsonT: (json) =>
+          ProductionRelease.fromJson(Map<String, dynamic>.from(json as Map)),
+    );
+  }
+
+  Future<ProductionRelease> retryProductionRelease(
+    String projectId,
+    String releaseId,
+  ) {
+    return _apiClient.post<ProductionRelease>(
+      '/api/deployment/$projectId/releases/$releaseId/retry',
+      const {},
+      fromJsonT: (json) =>
+          ProductionRelease.fromJson(Map<String, dynamic>.from(json as Map)),
+    );
   }
 
   /// 部署预览版本

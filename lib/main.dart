@@ -384,12 +384,12 @@ class MyApp extends StatelessWidget {
             onSelected: () => _appRouter.go('/community'),
           ),
           PlatformMenuItem(
-            label: 'Docs',
+            label: 'Help & Support',
             shortcut: const SingleActivator(
               LogicalKeyboardKey.digit3,
               meta: true,
             ),
-            onSelected: () => _appRouter.go('/docs'),
+            onSelected: () => _appRouter.go('/settings/help'),
           ),
           PlatformMenuItem(
             label: 'Settings',
@@ -481,8 +481,8 @@ class MyApp extends StatelessWidget {
         label: 'Help',
         menus: <PlatformMenuItem>[
           PlatformMenuItem(
-            label: 'Docs',
-            onSelected: () => _appRouter.go('/docs'),
+            label: 'Help & Support',
+            onSelected: () => _appRouter.go('/settings/help'),
           ),
           PlatformMenuItem(
             label: 'API Settings',

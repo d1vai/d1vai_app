@@ -76,7 +76,13 @@ dependencies:
     path: third_party/nativeapi-flutter/packages/nativeapi
   archive: ^4.0.7
   xml: ^6.6.1
-  xterm: ^4.0.0
+  # xterm 4.0.0 corrupts indexed buffer lines when full-screen terminal
+  # programs scroll a DECSTBM region. Keep the upstream ownership fix pinned
+  # until it is included in a published xterm release.
+  xterm:
+    git:
+      url: https://github.com/TerminalStudio/xterm.dart.git
+      ref: 6887944e729580df12cc38487270b95f178a7c92
   web_socket_channel: ^3.0.3
 
 dev_dependencies:

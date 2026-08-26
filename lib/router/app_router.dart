@@ -20,7 +20,9 @@ import '../screens/order_screen.dart';
 import '../screens/projects_screen.dart';
 import '../screens/settings/api_settings_screen.dart';
 import '../screens/settings/account_data_screen.dart';
+import '../screens/settings/developer_settings_screen.dart';
 import '../screens/doc_detail_screen.dart';
+import '../screens/docs_screen.dart';
 import '../screens/api_docs_screen.dart';
 import '../screens/community_post_link_screen.dart';
 import '../screens/local_workspace_screen.dart';
@@ -135,13 +137,13 @@ GoRouter createAppRouter() {
           state.matchedLocation == '/dashboard' ||
           state.matchedLocation == '/terminal' ||
           state.matchedLocation == '/community' ||
-          state.matchedLocation == '/docs' ||
           state.matchedLocation == '/orders' ||
           state.matchedLocation == '/settings';
 
       final isPublicStandalone =
           (!isIOS && state.matchedLocation == '/pricing') ||
           state.matchedLocation == '/local-workspace' ||
+          state.matchedLocation == '/docs' ||
           state.matchedLocation == '/api-docs' ||
           state.matchedLocation == '/openapi' ||
           state.matchedLocation.startsWith('/apps/') ||
@@ -153,7 +155,8 @@ GoRouter createAppRouter() {
       final isPublicSettings =
           state.matchedLocation == '/settings/language' ||
           state.matchedLocation == '/settings/api' ||
-          state.matchedLocation == '/settings/help';
+          state.matchedLocation == '/settings/help' ||
+          state.matchedLocation == '/settings/help/docs';
 
       // 如果正在加载，保持在当前页面
       if (isLoading && !isSplashPage) {
@@ -233,6 +236,7 @@ GoRouter createAppRouter() {
           MainScreen(
             initialIndex: 1,
             terminalInitialProjectId: state.uri.queryParameters['project'],
+            terminalAutoStart: state.uri.queryParameters['start'] == '1',
           ),
         ),
       ),
@@ -246,11 +250,8 @@ GoRouter createAppRouter() {
       ),
       GoRoute(
         path: '/docs',
-        pageBuilder: (context, state) => _buildPageWithTransition(
-          context,
-          state,
-          const MainScreen(initialIndex: 3),
-        ),
+        pageBuilder: (context, state) =>
+            _buildPageWithTransition(context, state, const DocsScreen()),
       ),
       GoRoute(
         path: '/docs/:slug',
@@ -313,11 +314,22 @@ GoRouter createAppRouter() {
       ),
       GoRoute(
         path: '/settings',
+        redirect: (context, state) {
+          final tab = state.uri.queryParameters['tab']?.trim().toLowerCase();
+          if (tab == 'developer' ||
+              tab == 'github' ||
+              tab == 'api-key' ||
+              tab == 'api_key' ||
+              tab == 'apikey') {
+            return '/settings/developer';
+          }
+          return null;
+        },
         pageBuilder: (context, state) => _buildPageWithTransition(
           context,
           state,
           MainScreen(
-            initialIndex: 4,
+            initialIndex: 3,
             settingsInitialTab: state.uri.queryParameters['tab'],
           ),
         ),
@@ -349,6 +361,10 @@ GoRouter createAppRouter() {
             _buildPageWithTransition(context, state, const HelpSupportScreen()),
       ),
       GoRoute(
+        path: '/settings/help/docs',
+        redirect: (context, state) => '/settings/help',
+      ),
+      GoRoute(
         path: '/settings/api',
         pageBuilder: (context, state) =>
             _buildPageWithTransition(context, state, const ApiSettingsScreen()),
@@ -359,8 +375,16 @@ GoRouter createAppRouter() {
             _buildPageWithTransition(context, state, const AccountDataScreen()),
       ),
       GoRoute(
+        path: '/settings/developer',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+          context,
+          state,
+          const DeveloperSettingsScreen(),
+        ),
+      ),
+      GoRoute(
         path: '/settings/github',
-        redirect: (context, state) => '/settings?tab=github',
+        redirect: (context, state) => '/settings/developer',
       ),
       GoRoute(
         path: '/projects',

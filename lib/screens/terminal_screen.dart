@@ -6,24 +6,29 @@ import 'package:provider/provider.dart';
 import '../controllers/terminal_session_controller.dart';
 import '../l10n/app_localizations.dart';
 import '../models/project.dart';
+import '../providers/auth_provider.dart';
 import '../providers/organization_provider.dart';
 import '../providers/project_provider.dart';
 import '../services/shell_session_api.dart';
 import '../services/workspace_service.dart';
 import '../utils/desktop_layout.dart';
 import '../widgets/organization/workspace_switcher.dart';
+import '../widgets/login_required_dialog.dart';
+import '../widgets/login_required_view.dart';
 import '../widgets/terminal/terminal_project_picker.dart';
 import '../widgets/terminal/terminal_mobile_keys.dart';
 import '../widgets/terminal/terminal_surface.dart';
 
 class TerminalScreen extends StatefulWidget {
   final String? initialProjectId;
+  final bool autoStart;
   final TerminalSessionController? controller;
   final bool bootstrapScope;
 
   const TerminalScreen({
     super.key,
     this.initialProjectId,
+    this.autoStart = false,
     this.controller,
     this.bootstrapScope = true,
   });
@@ -44,6 +49,14 @@ class _TerminalScreenState extends State<TerminalScreen>
   bool _scopeChangeScheduled = false;
   bool _oneShotCtrl = false;
   Timer? _backgroundDetachTimer;
+
+  AuthProvider? _authProviderOrNull() {
+    try {
+      return Provider.of<AuthProvider>(context, listen: false);
+    } on ProviderNotFoundException {
+      return null;
+    }
+  }
 
   @override
   void initState() {
@@ -80,6 +93,11 @@ class _TerminalScreenState extends State<TerminalScreen>
   }
 
   Future<void> _bootstrap() async {
+    final auth = _authProviderOrNull();
+    if (auth != null && auth.user == null) {
+      if (mounted) setState(() => _scopeLoading = false);
+      return;
+    }
     final organizations = context.read<OrganizationProvider>();
     final projects = context.read<ProjectProvider>();
     await organizations.load();
@@ -93,6 +111,9 @@ class _TerminalScreenState extends State<TerminalScreen>
       _selectedProjectId = null;
     }
     setState(() => _scopeLoading = false);
+    if (widget.autoStart && mounted) {
+      unawaited(_start());
+    }
   }
 
   void _scheduleOrganizationChange(int? organizationId) {
@@ -145,6 +166,17 @@ class _TerminalScreenState extends State<TerminalScreen>
   }
 
   Future<void> _start() async {
+    final auth = _authProviderOrNull();
+    if (auth != null && auth.user == null) {
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (_) => const LoginRequiredDialog(
+          message: 'Please log in before opening a terminal connection.',
+        ),
+      );
+      return;
+    }
     _surfaceKey.currentState?.clear();
     await _session.start(
       projectId: _selectedProjectId,
@@ -212,6 +244,15 @@ class _TerminalScreenState extends State<TerminalScreen>
 
   @override
   Widget build(BuildContext context) {
+    final auth = _authProviderOrNull();
+    if (auth != null && auth.user == null) {
+      return Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
+        body: const LoginRequiredView(
+          message: 'Please log in to open and use a terminal connection.',
+        ),
+      );
+    }
     final projects = context.watch<ProjectProvider>();
     final desktop = isDesktopLayout(context);
     final view = View.of(context);
@@ -238,6 +279,15 @@ class _TerminalScreenState extends State<TerminalScreen>
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
+      appBar: AppBar(
+        toolbarHeight: 52,
+        titleSpacing: desktop ? 12 : 8,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        title: toolbar,
+      ),
       body: AnimatedPadding(
         key: const ValueKey('terminal-safe-insets'),
         duration: const Duration(milliseconds: 180),
@@ -257,7 +307,6 @@ class _TerminalScreenState extends State<TerminalScreen>
                 ),
                 child: Column(
                   children: [
-                    toolbar,
                     Expanded(
                       child: TerminalSurface(
                         key: _surfaceKey,
@@ -330,7 +379,6 @@ class _TerminalToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final running = switch (session.phase) {
       TerminalSessionPhase.checking ||
       TerminalSessionPhase.waking ||
@@ -340,87 +388,59 @@ class _TerminalToolbar extends StatelessWidget {
       TerminalSessionPhase.reconnecting => true,
       _ => false,
     };
-    return Material(
-      color: scheme.surface,
-      child: Container(
-        constraints: const BoxConstraints(minHeight: 60),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
-        ),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final compact = constraints.maxWidth < 700;
-            final workspace = SizedBox(
-              width: compact ? 178 : 220,
-              child: const WorkspaceSwitcher(),
-            );
-            final project = TerminalProjectPicker(
-              projects: projects,
-              selectedProjectId: selectedProjectId,
-              enabled: !scopeLoading,
-              onSelected: onProjectSelected,
-            );
-            final trailing = <Widget>[
-              _TerminalStatusChip(session: session),
-              const SizedBox(width: 4),
-              IconButton(
-                key: ValueKey(
-                  running ? 'terminal-close-button' : 'terminal-open-button',
-                ),
-                constraints: const BoxConstraints.tightFor(
-                  width: 44,
-                  height: 44,
-                ),
-                tooltip: running
-                    ? context.tr('terminal_action_close', 'Close terminal')
-                    : context.tr('terminal_action_open', 'Open terminal'),
-                onPressed: scopeLoading
-                    ? null
-                    : running
-                    ? onClose
-                    : onOpen,
-                icon: Icon(
-                  running ? Icons.close_rounded : Icons.play_arrow_rounded,
-                ),
-              ),
-            ];
-            if (!compact) {
-              return Row(
-                children: [
-                  workspace,
-                  const SizedBox(width: 8),
-                  Expanded(child: project),
-                  const SizedBox(width: 8),
-                  ...trailing,
-                ],
-              );
-            }
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Expanded(child: workspace),
-                    const SizedBox(width: 8),
-                    ...trailing,
-                  ],
-                ),
-                const SizedBox(height: 8),
-                SizedBox(width: double.infinity, child: project),
-              ],
-            );
-          },
-        ),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 620;
+        final workspace = SizedBox(
+          width: compact ? 112 : 220,
+          child: const WorkspaceSwitcher(),
+        );
+        final project = TerminalProjectPicker(
+          projects: projects,
+          selectedProjectId: selectedProjectId,
+          enabled: !scopeLoading,
+          onSelected: onProjectSelected,
+        );
+        final trailing = <Widget>[
+          _TerminalStatusChip(session: session, compact: compact),
+          const SizedBox(width: 4),
+          IconButton(
+            key: ValueKey(
+              running ? 'terminal-close-button' : 'terminal-open-button',
+            ),
+            constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+            tooltip: running
+                ? context.tr('terminal_action_close', 'Close terminal')
+                : context.tr('terminal_action_open', 'Open terminal'),
+            onPressed: scopeLoading
+                ? null
+                : running
+                ? onClose
+                : onOpen,
+            icon: Icon(
+              running ? Icons.close_rounded : Icons.play_arrow_rounded,
+            ),
+          ),
+        ];
+        return Row(
+          children: [
+            workspace,
+            const SizedBox(width: 6),
+            Expanded(child: project),
+            const SizedBox(width: 6),
+            ...trailing,
+          ],
+        );
+      },
     );
   }
 }
 
 class _TerminalStatusChip extends StatelessWidget {
   final TerminalSessionController session;
+  final bool compact;
 
-  const _TerminalStatusChip({required this.session});
+  const _TerminalStatusChip({required this.session, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
@@ -462,7 +482,7 @@ class _TerminalStatusChip extends StatelessWidget {
                   size: 10,
                   color: ready ? scheme.primary : scheme.onSurfaceVariant,
                 ),
-              if (!pending && ready) ...[
+              if (!compact && !pending && ready) ...[
                 const SizedBox(width: 6),
                 Text(
                   context.tr('terminal_status_ready', 'Ready'),

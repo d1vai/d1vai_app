@@ -265,7 +265,7 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
               theme.textTheme.titleLarge,
             ),
           ),
-          fallbackRoute: '/docs',
+          fallbackRoute: '/settings/help/docs',
         ),
         body: Center(
           child: Padding(
@@ -305,7 +305,7 @@ class _DocDetailScreenState extends State<DocDetailScreen> {
             theme.textTheme.titleLarge,
           ),
         ),
-        fallbackRoute: '/docs',
+        fallbackRoute: '/settings/help/docs',
         actions: [
           IconButton(
             tooltip: loc?.translate('docs_share') ?? 'Share',

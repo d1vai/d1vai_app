@@ -49,6 +49,11 @@ class GitHubService {
   Future<Map<String, dynamic>> getDashboardRepositories() async {
     return _apiClient.get<Map<String, dynamic>>(
       '/api/github-app/dashboard-repositories',
+      // The backend also fetches repository metrics from GitHub. Bound this
+      // request so the dashboard can surface a retry action instead of
+      // leaving the import area in a permanent loading state.
+      retries: 1,
+      timeout: const Duration(seconds: 45),
     );
   }
 
@@ -157,11 +162,11 @@ class GitHubService {
           'repository_full_name': repositoryFullName,
           'project_name': projectName,
           'project_description': projectDescription,
-          if (repositoryUrl != null) 'repository_url': repositoryUrl,
-          if (repositorySshUrl != null) 'repository_ssh_url': repositorySshUrl,
+          'repository_url': ?repositoryUrl,
+          'repository_ssh_url': ?repositorySshUrl,
           'default_branch': defaultBranch,
           'is_private': isPrivate,
-          if (primaryLanguage != null) 'primary_language': primaryLanguage,
+          'primary_language': ?primaryLanguage,
         }, timeout: const Duration(minutes: 4));
   }
 }

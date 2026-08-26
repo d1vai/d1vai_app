@@ -71,4 +71,31 @@ void main() {
       expect(output, isNot(contains('len=')));
     },
   );
+
+  test(
+    'getBytes keeps authentication and returns unparsed binary data',
+    () async {
+      final preferences = await SharedPreferences.getInstance();
+      await preferences.setString('auth_token', 'storage-preview-token');
+      addTearDown(() => preferences.remove('auth_token'));
+      final client = MockClient((request) async {
+        expect(request.method, 'GET');
+        expect(
+          request.url.path,
+          '/api/projects/project-1/integrations/storage-files/file-1',
+        );
+        expect(
+          request.headers['authorization'],
+          'Bearer storage-preview-token',
+        );
+        return http.Response.bytes(<int>[0x89, 0x50, 0x4e, 0x47], 200);
+      });
+
+      final bytes = await ApiClient(
+        client: client,
+      ).getBytes('/api/projects/project-1/integrations/storage-files/file-1');
+
+      expect(bytes, orderedEquals(<int>[0x89, 0x50, 0x4e, 0x47]));
+    },
+  );
 }

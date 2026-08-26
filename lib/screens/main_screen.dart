@@ -10,19 +10,20 @@ import '../widgets/organization/workspace_switcher.dart';
 import 'dashboard_screen.dart';
 import 'terminal_screen.dart';
 import 'community_screen.dart';
-import 'docs_screen.dart';
 import 'settings_screen.dart';
 
 class MainScreen extends StatefulWidget {
   final int initialIndex;
   final String? settingsInitialTab;
   final String? terminalInitialProjectId;
+  final bool terminalAutoStart;
 
   const MainScreen({
     super.key,
     this.initialIndex = 0,
     this.settingsInitialTab,
     this.terminalInitialProjectId,
+    this.terminalAutoStart = false,
   });
 
   @override
@@ -41,9 +42,11 @@ class _MainScreenState extends State<MainScreen> {
   List<Widget> _buildScreens() {
     return [
       const DashboardScreen(),
-      TerminalScreen(initialProjectId: widget.terminalInitialProjectId),
+      TerminalScreen(
+        initialProjectId: widget.terminalInitialProjectId,
+        autoStart: widget.terminalAutoStart,
+      ),
       const CommunityScreen(),
-      const DocsScreen(),
       SettingsScreen(initialTab: widget.settingsInitialTab),
     ];
   }
@@ -86,15 +89,6 @@ class _MainScreenState extends State<MainScreen> {
         ),
       ),
       PersistentBottomNavBarItem(
-        icon: const Icon(Icons.menu_book_rounded),
-        inactiveIcon: const Icon(Icons.menu_book_outlined),
-        title: (loc?.translate('docs') ?? 'Docs'),
-        activeColorPrimary: theme.colorScheme.primary,
-        inactiveColorPrimary: theme.colorScheme.onSurface.withValues(
-          alpha: 0.6,
-        ),
-      ),
-      PersistentBottomNavBarItem(
         icon: const Icon(Icons.settings_rounded),
         inactiveIcon: const Icon(Icons.settings_outlined),
         title: (loc?.translate('settings') ?? 'Settings'),
@@ -131,7 +125,6 @@ class _MainScreenState extends State<MainScreen> {
           SingleActivator(LogicalKeyboardKey.digit2, meta: true): _NavIntent(1),
           SingleActivator(LogicalKeyboardKey.digit3, meta: true): _NavIntent(2),
           SingleActivator(LogicalKeyboardKey.digit4, meta: true): _NavIntent(3),
-          SingleActivator(LogicalKeyboardKey.digit5, meta: true): _NavIntent(4),
         },
         child: Actions(
           actions: <Type, Action<Intent>>{

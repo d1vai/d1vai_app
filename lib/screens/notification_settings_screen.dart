@@ -3,6 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../utils/navigation_utils.dart';
 import '../widgets/snackbar_helper.dart';
+import '../core/theme/app_colors.dart';
+import '../widgets/settings/settings_entry_hero.dart';
 
 /// 通知设置页面
 ///
@@ -108,7 +110,17 @@ class _NotificationSettingsScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notification Settings'),
+        title: const Row(
+          children: [
+            SettingsEntryHero(
+              tag: SettingsEntryHero.notificationsTag,
+              icon: Icons.notifications,
+              color: AppColors.warning,
+            ),
+            SizedBox(width: 10),
+            Text('Notification Settings'),
+          ],
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => NavigationUtils.popOrGo(context, '/settings'),
