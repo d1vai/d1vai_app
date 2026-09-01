@@ -59,7 +59,7 @@ cd "$REPO_ROOT"
 flutter config --no-analytics --enable-macos-desktop
 flutter --version
 flutter precache --macos
-rm -rf macos/Pods macos/.symlinks macos/Runner.xcworkspace macos/Podfile.lock macos/Flutter/ephemeral
+rm -rf macos/Pods macos/.symlinks macos/Podfile.lock macos/Flutter/ephemeral
 flutter pub get
 flutter build macos --config-only --release
 
