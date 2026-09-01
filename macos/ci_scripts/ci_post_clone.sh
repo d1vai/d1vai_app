@@ -61,6 +61,7 @@ flutter --version
 flutter precache --macos
 rm -rf macos/Pods macos/.symlinks macos/Runner.xcworkspace macos/Podfile.lock macos/Flutter/ephemeral
 flutter pub get
+flutter build macos --config-only --release
 
 append_dart_define STRIPE_PUBLISHABLE_KEY "${STRIPE_PUBLISHABLE_KEY:-}"
 append_dart_define AMPLITUDE_API_KEY "${AMPLITUDE_API_KEY:-}"
