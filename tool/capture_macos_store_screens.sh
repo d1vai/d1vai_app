@@ -19,6 +19,14 @@ LOCALES=(
   ro fi nl pt_BR pt_PT es vi ar ko ms
 )
 
+ONLY_SCREENS=""
+for ((index = 1; index <= $#; index++)); do
+  if [[ "${!index}" == "--only-screens" ]]; then
+    value_index=$((index + 1))
+    ONLY_SCREENS="${!value_index:-}"
+  fi
+done
+
 "${PYTHON_BIN}" "${ROOT_DIR}/tool/capture_store_screens.py" \
   --all-languages \
   --fast \
@@ -27,7 +35,8 @@ LOCALES=(
   --viewport-width 1440 \
   --viewport-height 900 \
   --device-scale-factor 1 \
-  --output-dir "${TMP_ROOT}"
+  --output-dir "${TMP_ROOT}" \
+  "$@"
 
 declare -a SOURCES=(
   home-screen.png terminal-screen.png community-screen.png my-page-screen.png
@@ -42,6 +51,13 @@ for locale in "${LOCALES[@]}"; do
   locale_dir="${OUT_ROOT}/${locale}"
   mkdir -p "${locale_dir}"
   for index in "${!SOURCES[@]}"; do
+    if [[ -n "${ONLY_SCREENS}" ]]; then
+      screen_name="${TARGETS[$index]#??-}"
+      screen_name="${screen_name%.png}"
+      if [[ ",${ONLY_SCREENS}," != *",${screen_name},"* ]]; then
+        continue
+      fi
+    fi
     cp "${TMP_ROOT}/${locale}/${SOURCES[$index]}" "${locale_dir}/${TARGETS[$index]}"
   done
 done

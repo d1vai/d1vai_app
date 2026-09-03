@@ -21,13 +21,19 @@ REPO_ROOT = APP_ROOT.parent
 DEFAULT_OUTPUT_DIR = APP_ROOT / "docs" / "readme-assets"
 DEFAULT_APP_URL = "http://localhost:7357"
 DEFAULT_API_BASE = "https://api.d1v.ai"
-DEFAULT_PROJECT_ID = "ai_assistant_saas_ml66gp5172"
+DEFAULT_PROJECT_ID = "africa_client_dev_system_rtyv8h2741"
 DEFAULT_EMAIL = "aboutmydreams@163.com"
 DEFAULT_SERVER_PORT = 7360
 DEFAULT_VIEWPORT_WIDTH = 660
 DEFAULT_VIEWPORT_HEIGHT = 1295
 DEFAULT_DEVICE_SCALE_FACTOR = 2
 DEFAULT_LANGUAGE_KEY = "en"
+SUPPORTED_LANGUAGE_KEYS = (
+    "en", "zh", "zh_Hant", "es", "fr", "de", "pt_BR", "pt_PT", "ja",
+    "ko", "ru", "ar", "hi", "id", "th", "vi", "tr", "it", "nl", "pl",
+    "sv", "cs", "he", "uk", "da", "nb", "fi", "ro", "hu", "el", "bg",
+    "fa", "bn", "ms", "fil",
+)
 MINT_TOKEN_SCRIPT = REPO_ROOT / "backend_admin" / "tools" / "mint_user_token.py"
 ROOT_VENV_PYTHON = REPO_ROOT / ".venv" / "bin" / "python"
 
@@ -109,6 +115,32 @@ def build_parser() -> argparse.ArgumentParser:
         "--language-key",
         default=DEFAULT_LANGUAGE_KEY,
         help=f"Language key stored in local preferences (default: {DEFAULT_LANGUAGE_KEY})",
+    )
+    parser.add_argument(
+        "--all-languages",
+        action="store_true",
+        help="Capture every supported locale into a separate output directory.",
+    )
+    parser.add_argument(
+        "--fast",
+        action="store_true",
+        help="Use short waits suitable for already-warmed local builds.",
+    )
+    parser.add_argument(
+        "--skip-existing",
+        action="store_true",
+        help="Keep existing screenshots and capture only missing route files.",
+    )
+    parser.add_argument(
+        "--only-screens",
+        default="",
+        help="Comma-separated screen names to capture (for example: project,chat).",
+    )
+    parser.add_argument(
+        "--content-wait-seconds",
+        type=float,
+        default=0,
+        help="Additional wait after each selected route so API-backed UI can finish loading.",
     )
     parser.add_argument(
         "--include-extra-tabs",
@@ -200,6 +232,7 @@ def build_release_web(api_base: str) -> None:
             "web",
             "--release",
             f"--dart-define=API_BASE_URL={api_base}",
+            "--dart-define=STORE_SCREENSHOT_MODE=true",
         ],
         cwd=str(APP_ROOT),
     )
@@ -282,7 +315,7 @@ def seed_auth(
         """
         localStorage.setItem('flutter.auth_token', arguments[0]);
         localStorage.setItem('flutter.auth_user', arguments[1]);
-        localStorage.setItem('language_code', arguments[2]);
+        localStorage.setItem('flutter.language_code', JSON.stringify(arguments[2]));
         localStorage.removeItem('flutter.onboarding_data');
         """,
         stored_token,
@@ -291,16 +324,37 @@ def seed_auth(
     )
 
 
-def bootstrap_authenticated_app(driver: webdriver.Chrome, app_url: str) -> None:
+def bootstrap_authenticated_app(driver: webdriver.Chrome, app_url: str, fast: bool = False) -> None:
     dashboard_url = f"{app_url.rstrip('/')}/#/dashboard"
     driver.get(dashboard_url)
     driver.refresh()
-    wait_for_flutter_frame(driver, 12)
+    wait_for_flutter_frame(driver, 3 if fast else 12, settle_seconds=0.35 if fast else 2)
     # Give AuthProvider enough time to restore the user and fan out to dependents.
-    time.sleep(6)
+    time.sleep(2 if fast else 6)
 
 
-def wait_for_flutter_frame(driver: webdriver.Chrome, seconds: float) -> None:
+def switch_language(
+    driver: webdriver.Chrome,
+    app_url: str,
+    language_key: str,
+    fast: bool = False,
+) -> None:
+    """Apply locale after provider startup so its async default cannot win."""
+    driver.execute_script(
+        "localStorage.setItem('flutter.language_code', JSON.stringify(arguments[0]));"
+        "window.location.href = arguments[1] + '/#/dashboard';",
+        language_key,
+        app_url.rstrip('/'),
+    )
+    wait_for_flutter_frame(driver, 3 if fast else 12, settle_seconds=0.35 if fast else 2)
+    time.sleep(0.8 if fast else 6)
+
+
+def wait_for_flutter_frame(
+    driver: webdriver.Chrome,
+    seconds: float,
+    settle_seconds: float = 2,
+) -> None:
     deadline = time.time() + seconds
     while time.time() < deadline:
         ready = driver.execute_script(
@@ -313,7 +367,7 @@ def wait_for_flutter_frame(driver: webdriver.Chrome, seconds: float) -> None:
             """
         )
         if ready:
-            time.sleep(2)
+            time.sleep(settle_seconds)
             return
         time.sleep(0.5)
 
@@ -323,6 +377,8 @@ def capture_routes(
     app_url: str,
     output_dir: Path,
     routes: Iterable[tuple[str, str, float]],
+    fast: bool = False,
+    content_wait_seconds: float = 0,
 ) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     for filename, route, wait_seconds in routes:
@@ -338,8 +394,14 @@ def capture_routes(
             """,
             route,
         )
-        wait_for_flutter_frame(driver, wait_seconds)
-        time.sleep(1.5)
+        wait_for_flutter_frame(
+            driver,
+            min(wait_seconds, 2) if fast else wait_seconds,
+            settle_seconds=0.25 if fast else 2,
+        )
+        time.sleep(0.25 if fast else 1.5)
+        if content_wait_seconds > 0:
+            time.sleep(content_wait_seconds)
         target = output_dir / filename
         if not driver.get_screenshot_as_file(str(target)):
             raise RuntimeError(f"Failed to save screenshot to {target}")
@@ -370,14 +432,30 @@ def main() -> int:
 
     routes = [
         ("home-screen.png", "/dashboard", 8),
+        ("terminal-screen.png", "/terminal", 10),
+        ("community-screen.png", "/community", 10),
         ("my-page-screen.png", "/profile", 8),
         ("project-detail-screen.png", f"/projects/{args.project_id.strip()}?tab=overview", 12),
         ("chat-with-ai-screen.png", f"/projects/{args.project_id.strip()}/chat", 14),
     ]
+    screen_aliases = {
+        "home": "home-screen.png",
+        "terminal": "terminal-screen.png",
+        "community": "community-screen.png",
+        "profile": "my-page-screen.png",
+        "project": "project-detail-screen.png",
+        "chat": "chat-with-ai-screen.png",
+    }
+    selected = {
+        screen_aliases.get(value.strip(), value.strip())
+        for value in args.only_screens.split(",")
+        if value.strip()
+    }
+    if selected:
+        routes = [route for route in routes if route[0] in selected]
     if args.include_extra_tabs:
         routes.extend(
             [
-                ("community-screen.png", "/community", 10),
                 ("orders-screen.png", "/orders?tab=usage", 12),
                 ("docs-screen.png", "/docs", 10),
             ]
@@ -390,15 +468,31 @@ def main() -> int:
         device_scale_factor=args.device_scale_factor,
     )
     try:
-        seed_auth(
-            driver,
-            app_url,
-            token,
-            user_profile,
+        language_keys = SUPPORTED_LANGUAGE_KEYS if args.all_languages else (
             args.language_key.strip() or DEFAULT_LANGUAGE_KEY,
         )
-        bootstrap_authenticated_app(driver, app_url)
-        capture_routes(driver, app_url, output_dir, routes)
+        for language_key in language_keys:
+            language_output_dir = (
+                output_dir / language_key if args.all_languages else output_dir
+            )
+            seed_auth(driver, app_url, token, user_profile, language_key)
+            bootstrap_authenticated_app(driver, app_url, fast=args.fast)
+            switch_language(driver, app_url, language_key, fast=args.fast)
+            language_routes = tuple(
+                route
+                for route in routes
+                if not args.skip_existing
+                or not (language_output_dir / route[0]).exists()
+            )
+            if language_routes:
+                capture_routes(
+                    driver,
+                    app_url,
+                    language_output_dir,
+                    language_routes,
+                    fast=args.fast,
+                    content_wait_seconds=args.content_wait_seconds,
+                )
     finally:
         driver.quit()
         subprocess.run(["rm", "-rf", profile_dir], check=False)
@@ -414,7 +508,8 @@ def main() -> int:
         "app_url": app_url,
         "api_base": args.api_base.strip(),
         "project_id": args.project_id.strip(),
-        "language_key": args.language_key.strip() or DEFAULT_LANGUAGE_KEY,
+        "language_key": "all" if args.all_languages else (args.language_key.strip() or DEFAULT_LANGUAGE_KEY),
+        "languages": list(SUPPORTED_LANGUAGE_KEYS if args.all_languages else (args.language_key.strip() or DEFAULT_LANGUAGE_KEY,)),
         "screens": [filename for filename, _, _ in routes],
         "captured_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }

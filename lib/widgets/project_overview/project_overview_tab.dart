@@ -21,6 +21,8 @@ import '../../services/d1vai_service.dart';
 import '../../utils/error_utils.dart';
 import '../progress_widget.dart';
 
+const bool _storeScreenshotMode = bool.fromEnvironment('STORE_SCREENSHOT_MODE');
+
 /// 项目详情页 - 概览 Tab
 class ProjectOverviewTab extends StatefulWidget {
   final UserProject project;
@@ -510,7 +512,9 @@ class _OverviewHeroPanel extends StatelessWidget {
   }
 
   Widget _buildMetaRail(BuildContext context, String? previewUrl) {
-    final owner = (ownerEmail ?? '').trim().isEmpty
+    final owner = _storeScreenshotMode
+        ? '-'
+        : (ownerEmail ?? '').trim().isEmpty
         ? _t(context, 'project_overview_stats_unknown', 'Unknown')
         : ownerEmail!;
     final analytics = project.hasAnalyticsId

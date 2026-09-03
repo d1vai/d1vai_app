@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+const bool _storeScreenshotMode = bool.fromEnvironment('STORE_SCREENSHOT_MODE');
+
 class WorkspaceStatusBadge extends StatelessWidget {
   final String statusText;
   final String tooltip;
@@ -22,6 +24,10 @@ class WorkspaceStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (_storeScreenshotMode) {
+      return const SizedBox.shrink();
+    }
+
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final appBarFg =

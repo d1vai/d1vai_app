@@ -67,6 +67,10 @@ class AppLocalizations {
       return 'zh';
     }
 
+    if (locale.languageCode == 'pt') {
+      return locale.countryCode == 'PT' ? 'pt_PT' : 'pt_BR';
+    }
+
     return locale.languageCode;
   }
 

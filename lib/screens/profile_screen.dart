@@ -14,6 +14,8 @@ import 'package:d1vai_app/widgets/card.dart';
 import 'package:d1vai_app/widgets/snackbar_helper.dart';
 import 'package:d1vai_app/widgets/adaptive_modal.dart';
 
+const bool _storeScreenshotMode = bool.fromEnvironment('STORE_SCREENSHOT_MODE');
+
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -153,7 +155,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         _buildInfoCard(
           loc?.translate('email') ?? 'Email',
-          user.email ?? (loc?.translate('profile_not_set') ?? 'Not set'),
+          _storeScreenshotMode
+              ? '-'
+              : user.email ?? (loc?.translate('profile_not_set') ?? 'Not set'),
           Icons.email,
         ),
         _buildInfoCard(
@@ -178,12 +182,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 12),
         _buildInfoCard(
           loc?.translate('profile_referral_code') ?? 'Referral Code',
-          user.referralCode,
+          _storeScreenshotMode ? '-' : user.referralCode,
           Icons.card_giftcard,
         ),
         _buildInfoCard(
           loc?.translate('profile_invite_code') ?? 'Invite Code',
-          user.inviteCode,
+          _storeScreenshotMode ? '-' : user.inviteCode,
           Icons.group_add,
         ),
       ],
