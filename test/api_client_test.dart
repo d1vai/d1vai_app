@@ -1,3 +1,5 @@
+import 'dart:ui' show Locale;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -5,6 +7,7 @@ import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:d1vai_app/core/api_client.dart';
+import 'package:d1vai_app/core/locale_bus.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -13,6 +16,13 @@ void main() {
     'postWithQuery keeps the request body empty when body is null',
     () async {
       SharedPreferences.setMockInitialValues(<String, Object>{});
+      LocaleBus.set(
+        const Locale.fromSubtags(
+          languageCode: 'zh',
+          scriptCode: 'Hans',
+          countryCode: 'CN',
+        ),
+      );
 
       final client = MockClient((request) async {
         expect(request.method, 'POST');
@@ -20,6 +30,8 @@ void main() {
         expect(request.url.queryParameters['email'], 'test@example.com');
         expect(request.url.queryParameters['locale'], 'zh-CN');
         expect(request.headers['content-type'], 'application/json');
+        expect(request.headers['x-d1v-locale'], 'zh-Hans-CN');
+        expect(request.headers['accept-language'], 'zh-Hans-CN');
         expect(request.bodyBytes, isEmpty);
 
         return http.Response(

@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http_parser/http_parser.dart';
 import '../utils/image_compressor.dart';
 import 'auth_expiry_bus.dart';
+import 'locale_bus.dart';
 
 class ApiResponse<T> {
   final int code;
@@ -238,6 +239,7 @@ class ApiClient {
 
     final apiHost = Uri.tryParse(baseUrl)?.host ?? '';
     final isD1vDomain = apiHost.endsWith('d1v.ai');
+    final localeTag = LocaleBus.languageTag;
 
     return {
       'Accept': 'application/json',
@@ -248,6 +250,8 @@ class ApiClient {
       if (isD1vDomain) 'Referer': 'https://www.d1v.ai/',
       'User-Agent': 'd1vai_app',
       'X-D1V-Client': 'd1vai_app',
+      if (localeTag.isNotEmpty) 'X-D1V-Locale': localeTag,
+      if (localeTag.isNotEmpty) 'Accept-Language': localeTag,
     };
   }
 

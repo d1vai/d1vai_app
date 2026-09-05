@@ -16,6 +16,7 @@ import '../services/storage_service.dart';
 import '../services/cache_service.dart';
 import '../widgets/avatar_image.dart';
 import '../core/auth_expiry_bus.dart';
+import '../core/locale_bus.dart';
 
 class AuthProvider extends ChangeNotifier {
   static const String _defaultInviteCode = 'D1VLAB';
@@ -207,6 +208,7 @@ class AuthProvider extends ChangeNotifier {
         'email': credential.email ?? '',
         'given_name': credential.givenName ?? '',
         'family_name': credential.familyName ?? '',
+        'locale': LocaleBus.languageTag,
       });
 
       if (token == null) {
