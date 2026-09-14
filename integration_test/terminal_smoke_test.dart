@@ -165,7 +165,10 @@ void main() {
         },
       ),
     );
-    await tester.pumpAndSettle();
+    // Terminal status effects can keep macOS test frames active when the app
+    // window is not foregrounded. The initial frame is all this journey needs.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.byType(TerminalMobileKeys), findsOneWidget);
     expect(
@@ -199,7 +202,8 @@ void main() {
     expect(transport.inputs.last, <int>[27, 91, 67]);
 
     setHostState(() => dark = true);
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
     expect(gateway.creates, 1);
     expect(
       tester.state<TerminalSurfaceState>(find.byType(TerminalSurface)).terminal,
