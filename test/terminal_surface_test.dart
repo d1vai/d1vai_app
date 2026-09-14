@@ -31,6 +31,31 @@ class _FakeWorkspace implements WorkspaceReadinessService {
   void setScope({int? organizationId, String? projectId}) {}
 }
 
+class _TerminalGoldenComparator extends LocalFileComparator {
+  _TerminalGoldenComparator(super.testFile);
+
+  // Flutter engine updates can alter terminal font antialiasing by a few pixels
+  // while preserving the rendered layout. Keep meaningful visual regressions
+  // failing while allowing those platform rasterization differences.
+  static const _maxDiffPercent = 0.002;
+
+  @override
+  Future<bool> compare(Uint8List imageBytes, Uri golden) async {
+    final result = await GoldenFileComparator.compareLists(
+      imageBytes,
+      await getGoldenBytes(golden),
+    );
+    if (result.passed || result.diffPercent <= _maxDiffPercent) {
+      result.dispose();
+      return true;
+    }
+
+    final error = await generateFailureOutput(result, golden, basedir);
+    result.dispose();
+    throw FlutterError(error);
+  }
+}
+
 class _FakeGateway implements ShellSessionGateway {
   int creates = 0;
   int refreshCalls = 0;
@@ -138,6 +163,12 @@ class _FakeTransport implements TerminalTransportClient {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  if (Platform.isMacOS) {
+    goldenFileComparator = _TerminalGoldenComparator(
+      Uri.file('${Directory.current.path}/test/terminal_surface_test.dart'),
+    );
+  }
 
   testWidgets('keeps startup motion continuous before opening the gate', (
     tester,
