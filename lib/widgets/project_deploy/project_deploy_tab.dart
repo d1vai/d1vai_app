@@ -395,13 +395,6 @@ class _ProjectDeployTabState extends State<ProjectDeployTab>
     );
   }
 
-  String? _extractCommitSha(dynamic commit) {
-    if (commit is! Map) return null;
-    final sha = commit['sha']?.toString().trim();
-    if (sha == null || sha.isEmpty) return null;
-    return sha;
-  }
-
   _ReleaseCommit? _parseReleaseCommit(dynamic raw) {
     if (raw is! Map) return null;
     final sha = raw['sha']?.toString().trim() ?? '';

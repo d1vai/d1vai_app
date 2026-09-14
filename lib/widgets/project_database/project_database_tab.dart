@@ -1873,9 +1873,9 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                     else if (preflight != null) ...[
                       const SizedBox(height: 12),
                       Text(
-                        '${preflight!.addedTables} tables added, ${preflight!.changedTables} changed, ${preflight!.removedTables} removed.',
+                        '${preflight.addedTables} tables added, ${preflight.changedTables} changed, ${preflight.removedTables} removed.',
                       ),
-                      if (preflight!.destructive)
+                      if (preflight.destructive)
                         CheckboxListTile(
                           contentPadding: EdgeInsets.zero,
                           value: destructiveConfirmed,
@@ -1903,7 +1903,7 @@ class _ProjectDatabaseTabState extends State<ProjectDatabaseTab> {
                       ),
                       if (blockedDataCopy)
                         Text(
-                          'Data copy is blocked: ${preflight!.tablesWithoutPrimaryKey.join(', ')}',
+                          'Data copy is blocked: ${preflight.tablesWithoutPrimaryKey.join(', ')}',
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.error,
                           ),
