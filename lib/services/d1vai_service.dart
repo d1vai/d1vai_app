@@ -148,6 +148,8 @@ class D1vaiService {
     return _apiClient.post<String?>('/api/user/login', {
       'email': email,
       'verify_code': pin,
+      'locale': _resolveLocaleTag(),
+      'client_language': _resolveLocaleTag(),
     }, fromJsonT: (json) => json as String?);
   }
 
@@ -156,6 +158,8 @@ class D1vaiService {
     return _apiClient.post<String?>('/api/user/login/password', {
       'email': email,
       'password': password,
+      'locale': _resolveLocaleTag(),
+      'client_language': _resolveLocaleTag(),
     }, fromJsonT: (json) => json as String?);
   }
 
@@ -207,6 +211,8 @@ class D1vaiService {
   }) async {
     return _apiClient.post<String?>('/api/oauth/$provider/exchange', {
       'code': code,
+      'locale': _resolveLocaleTag(),
+      'client_language': _resolveLocaleTag(),
     }, fromJsonT: (json) => json as String?);
   }
 
@@ -232,6 +238,8 @@ class D1vaiService {
       queryParameters: {
         ...base.queryParameters,
         'redirectTo': redirectTo,
+        'locale': _resolveLocaleTag(),
+        'client_language': _resolveLocaleTag(),
         if ((inviteCode ?? '').trim().isNotEmpty) 'invite': inviteCode!.trim(),
       },
     );

@@ -178,7 +178,9 @@ class _OnboardingWizardState extends State<OnboardingWizard>
         if (mounted) Navigator.of(context).pop();
       }
     } catch (e) {
-      _showError(_t('onboarding_complete_failed', 'Failed to complete onboarding: $e'));
+      _showError(
+        _t('onboarding_complete_failed', 'Failed to complete onboarding: $e'),
+      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -199,9 +201,20 @@ class _OnboardingWizardState extends State<OnboardingWizard>
       setState(() => _isGeneratingAvatars = false);
 
       if (avatars.isEmpty) {
-        _showError(_t('onboarding_ai_avatar_generate_failed', 'Failed to generate AI avatars'));
+        _showError(
+          _t(
+            'onboarding_ai_avatar_generate_failed',
+            'Failed to generate AI avatars',
+          ),
+        );
         return;
       }
+
+      setState(() {
+        _aiAvatars
+          ..clear()
+          ..addAll(avatars);
+      });
 
       // 显示带动画的 AI Avatar 选择对话框
       if (!mounted) return;
@@ -242,14 +255,24 @@ class _OnboardingWizardState extends State<OnboardingWizard>
                     await Future.delayed(const Duration(milliseconds: 100));
 
                     if (!mounted) return;
-                    _showSuccess(_t('onboarding_avatar_select_success', 'Avatar selected successfully'));
+                    _showSuccess(
+                      _t(
+                        'onboarding_avatar_select_success',
+                        'Avatar selected successfully',
+                      ),
+                    );
                   } catch (e) {
                     if (!mounted) return;
 
                     await Future.delayed(const Duration(milliseconds: 100));
 
                     if (!mounted) return;
-                    _showError(_t('onboarding_avatar_select_failed', 'Failed to select avatar: $e'));
+                    _showError(
+                      _t(
+                        'onboarding_avatar_select_failed',
+                        'Failed to select avatar: $e',
+                      ),
+                    );
                   }
                 },
                 onRefresh: () async {
@@ -271,6 +294,13 @@ class _OnboardingWizardState extends State<OnboardingWizard>
                       currentAvatars.addAll(newAvatars);
                       isGenerating = false;
                     });
+                    if (mounted) {
+                      setState(() {
+                        _aiAvatars
+                          ..clear()
+                          ..addAll(newAvatars);
+                      });
+                    }
                   } catch (e) {
                     if (!dialogContext.mounted) return;
 
@@ -279,7 +309,12 @@ class _OnboardingWizardState extends State<OnboardingWizard>
                     });
 
                     if (!mounted) return;
-                    _showError(_t('onboarding_avatar_refresh_failed', 'Failed to refresh avatars: $e'));
+                    _showError(
+                      _t(
+                        'onboarding_avatar_refresh_failed',
+                        'Failed to refresh avatars: $e',
+                      ),
+                    );
                   }
                 },
               );
@@ -336,7 +371,9 @@ class _OnboardingWizardState extends State<OnboardingWizard>
       }
     } catch (e) {
       if (!mounted) return;
-      _showError(_t('onboarding_avatar_pick_failed', 'Failed to pick image: $e'));
+      _showError(
+        _t('onboarding_avatar_pick_failed', 'Failed to pick image: $e'),
+      );
     }
   }
 
@@ -638,7 +675,10 @@ class _OnboardingWizardState extends State<OnboardingWizard>
           decoration: InputDecoration(
             labelText: _t('onboarding_invite_label', 'Invite code'),
             hintText: _t('onboarding_invite_hint', 'Enter invite code'),
-            border: const OutlineInputBorder(),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
             filled: true,
             fillColor: colorScheme.surfaceContainerHighest.withValues(
               alpha: 0.5,
@@ -682,7 +722,10 @@ class _OnboardingWizardState extends State<OnboardingWizard>
             decoration: InputDecoration(
               labelText: _t('company_name', 'Company Name'),
               hintText: _t('company_name_hint', 'Enter your company name'),
-              border: const OutlineInputBorder(),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
               filled: true,
               fillColor: colorScheme.surfaceContainerHighest.withValues(
                 alpha: 0.5,
@@ -699,7 +742,10 @@ class _OnboardingWizardState extends State<OnboardingWizard>
             decoration: InputDecoration(
               labelText: _t('company_website', 'Company Website'),
               hintText: 'https://example.com',
-              border: const OutlineInputBorder(),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
               filled: true,
               fillColor: colorScheme.surfaceContainerHighest.withValues(
                 alpha: 0.5,
